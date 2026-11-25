@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -25,6 +25,6 @@ public class ExquisiteFirecraft extends Card {
         )))));
 
         // Exquisite Firecraft deals 4 damage to any target.
-        addSpellEffect(new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(DealDamageEffect.toAnyTarget(4));
     }
 }

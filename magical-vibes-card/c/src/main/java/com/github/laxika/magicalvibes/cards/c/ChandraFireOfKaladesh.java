@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -32,7 +32,7 @@ public class ChandraFireOfKaladesh extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(1),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(1),
                         new ConditionalEffect(
                                 new SelfDealtDamageThisTurn(3),
                                 new ExileSelfAndReturnTransformedEffect())

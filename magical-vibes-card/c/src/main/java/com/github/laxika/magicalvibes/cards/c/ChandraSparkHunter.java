@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -103,7 +103,7 @@ public class ChandraSparkHunter extends Card {
                 -7,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL),
-                                new DealDamageToAnyTargetEffect(3)),
+                                DealDamageEffect.toAnyTarget(3)),
                         "Whenever an artifact you control enters, this emblem deals 3 damage to any target.")),
                 "−7: You get an emblem with \"Whenever an artifact you control enters, this emblem deals "
                         + "3 damage to any target.\""

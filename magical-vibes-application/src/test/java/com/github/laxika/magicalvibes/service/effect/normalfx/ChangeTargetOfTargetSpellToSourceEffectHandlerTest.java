@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -105,7 +105,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
         private Card createDamageSpellCard(String name, int damage) {
             Card card = createCard(name);
             card.setType(CardType.INSTANT);
-            card.addSpellEffect(new DealDamageToAnyTargetEffect(damage));
+            card.addSpellEffect(DealDamageEffect.toAnyTarget(damage));
             return card;
         }
 

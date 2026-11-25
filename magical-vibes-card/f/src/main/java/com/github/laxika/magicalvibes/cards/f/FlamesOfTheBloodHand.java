@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeThisTurnEffect;
 
 @CardRegistration(set = "BOK", collectorNumber = "101")
@@ -17,6 +17,6 @@ public class FlamesOfTheBloodHand extends Card {
 
         // Flames of the Blood Hand deals 4 damage to target player or planeswalker.
         // The damage can't be prevented.
-        addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(4, true));
+        addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(4).unpreventable());
     }
 }

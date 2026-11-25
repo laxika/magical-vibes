@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -36,8 +36,8 @@ public class VolcanicOffering extends Card {
         target(new PermanentPredicateTargetFilter(nonbasicLand,
                 "Target must be a nonbasic land you don't control"))
                 .addSpellEffect(new DestroyTargetPermanentEffect());
-        DealDamageToTargetCreatureEffect firstCreatureDamage = new DealDamageToTargetCreatureEffect(7);
-        DealDamageToTargetCreatureEffect secondCreatureDamage = new DealDamageToTargetCreatureEffect(7);
+        DealDamageEffect firstCreatureDamage = DealDamageEffect.toTargetCreature(7);
+        DealDamageEffect secondCreatureDamage = DealDamageEffect.toTargetCreature(7);
         target(new PermanentPredicateTargetFilter(opposingCreature,
                 "Target must be a creature you don't control"))
                 .bindEffect(firstCreatureDamage);

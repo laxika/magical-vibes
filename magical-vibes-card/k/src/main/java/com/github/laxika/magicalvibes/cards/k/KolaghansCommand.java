@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -53,7 +53,7 @@ public class KolaghansCommand extends Card {
                         artifact),
                 new ChooseOneEffect.ChooseOneOption(
                         "Kolaghan's Command deals 2 damage to any target",
-                        new DealDamageToAnyTargetEffect(2))
+                        DealDamageEffect.toAnyTarget(2))
         ), 2));
     }
 }

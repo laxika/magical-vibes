@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ import java.util.List;
 public class OathOfKaya extends Card {
 
     public OathOfKaya() {
-        var dealDamageToAnyTarget = new DealDamageToAnyTargetEffect(3);
+        var dealDamageToAnyTarget = DealDamageEffect.toAnyTarget(3);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

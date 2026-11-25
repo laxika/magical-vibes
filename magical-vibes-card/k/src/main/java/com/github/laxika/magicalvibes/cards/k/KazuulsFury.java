@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class KazuulsFury extends Card {
                         "Kazuul's Fury deals damage equal to the sacrificed creature's power to any target",
                         List.of(
                                 new SacrificeCreatureCost(false, true),
-                                new DealDamageToAnyTargetEffect(new XValue()))),
+                                DealDamageEffect.toAnyTarget(new XValue()))),
                 new ChooseOneEffect.ChooseOneOption("Kazuul's Cliffs", List.of())
         )));
     }

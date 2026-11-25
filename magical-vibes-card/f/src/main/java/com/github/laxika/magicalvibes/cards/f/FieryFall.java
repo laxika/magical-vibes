@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
@@ -24,7 +24,7 @@ public class FieryFall extends Card {
 
     public FieryFall() {
         // Fiery Fall deals 5 damage to target creature.
-        addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+        addSpellEffect(DealDamageEffect.toTargetCreature(5));
 
         // Basic landcycling {1}{R} ({1}{R}, Discard this card: Search your library for a basic land
         // card, reveal it, put it into your hand, then shuffle.) — discard cost is intrinsic.

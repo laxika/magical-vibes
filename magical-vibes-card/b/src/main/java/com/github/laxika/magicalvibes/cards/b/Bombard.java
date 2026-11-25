@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "93")
 @CardRegistration(set = "EOE", collectorNumber = "129")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 public class Bombard extends Card {
 
     public Bombard() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreature(4));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -24,7 +24,7 @@ public class SunfireTorch extends Card {
                 new MayEffect(
                         new SacrificePermanentThenEffect(
                                 new PermanentNamedPredicate("Sunfire Torch"),
-                                new DealDamageToAnyTargetEffect(2),
+                                DealDamageEffect.toAnyTarget(2),
                                 "Sunfire Torch").sacrificingGrantingPermanent(),
                         "You may sacrifice Sunfire Torch?")),
                 Subjects.attachedCreature()));

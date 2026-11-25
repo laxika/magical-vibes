@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -23,7 +23,7 @@ public class CosisRavager extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"))
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new MayEffect(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(1),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(1),
                         "Deal 1 damage to target player or planeswalker?"));
     }
 }

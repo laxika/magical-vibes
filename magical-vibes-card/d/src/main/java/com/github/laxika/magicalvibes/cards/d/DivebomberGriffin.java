@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -19,7 +19,7 @@ public class DivebomberGriffin extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(3)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(3)),
                 "{T}, Sacrifice this creature: It deals 3 damage to target attacking or blocking creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

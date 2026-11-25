@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
@@ -12,7 +12,7 @@ public class TouchOfDeath extends Card {
 
     public TouchOfDeath() {
         // "Touch of Death deals 1 damage to target player or planeswalker." (target auto-derived)
-        addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+        addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(1));
         // "You gain 1 life."
         addSpellEffect(new GainLifeEffect(1));
         // "Draw a card at the beginning of the next turn's upkeep."

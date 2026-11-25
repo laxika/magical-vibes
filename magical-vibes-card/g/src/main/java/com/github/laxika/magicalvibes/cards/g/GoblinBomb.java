@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -39,7 +39,7 @@ public class GoblinBomb extends Card {
                 List.of(
                         new RemoveCounterFromSourceCost(5, CounterType.FUSE),
                         new SacrificeSelfCost(),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(20)
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(20)
                 ),
                 "Remove five fuse counters from Goblin Bomb and sacrifice it: Goblin Bomb deals 20 damage to target player or planeswalker."
         ));

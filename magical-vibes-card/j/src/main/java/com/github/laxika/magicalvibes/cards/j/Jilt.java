@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,6 +16,6 @@ public class Jilt extends Card {
         addStaticEffect(new KickerEffect("{1}{R}"));
         target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
         targetWhenKicked(TargetFilters.creature(), 0, 0, 1, 1)
-                .addSpellEffect(new ConditionalEffect(new Kicked(), new DealDamageToTargetCreatureEffect(2)));
+                .addSpellEffect(new ConditionalEffect(new Kicked(), DealDamageEffect.toTargetCreature(2)));
     }
 }

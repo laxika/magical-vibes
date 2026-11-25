@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +36,7 @@ public class NahiriStormOfStone extends Card {
                 new ReduceEquipCostEffect(1)));
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new DealDamageToTargetCreatureEffect(new XValue())),
+                List.of(DealDamageEffect.toTargetCreature(new XValue())),
                 "−X: Nahiri, Storm of Stone deals X damage to target tapped creature.",
                 new PermanentPredicateTargetFilter(TAPPED_CREATURE, "Target must be a tapped creature")
         ));

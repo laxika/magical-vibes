@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -20,7 +20,7 @@ public class ChompingMastasaur extends Card {
         var nonlandCard = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
         var discardThenSeekAndDamage = SequenceEffect.of(
                 new DiscardCardThenEffect(null,
-                        new DealDamageToAnyTargetEffect(new LastDiscardedCardManaValue()), "a card"),
+                        DealDamageEffect.toAnyTarget(new LastDiscardedCardManaValue()), "a card"),
                 new SeekLibraryToHandEffect(nonlandCard));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), discardThenSeekAndDamage);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -61,7 +61,7 @@ public class SorinImperiousBloodlord extends Card {
                                 new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
                                         SequenceEffect.of(
-                                        new DealDamageToAnyTargetEffect(3),
+                                        DealDamageEffect.toAnyTarget(3),
                                         new GainLifeEffect(3))))),
                         "Sacrifice a Vampire?")),
                 "+1: You may sacrifice a Vampire. When you do, Sorin deals 3 damage to any target and you gain 3 life."

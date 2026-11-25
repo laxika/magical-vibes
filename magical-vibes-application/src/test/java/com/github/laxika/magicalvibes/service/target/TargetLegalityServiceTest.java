@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.target;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -25,7 +26,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -260,7 +260,7 @@ class TargetLegalityServiceTest {
         card.setType(CardType.INSTANT);
         card.setManaCost("{R}");
         card.setColor(color);
-        card.addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        card.addSpellEffect(DealDamageEffect.toAnyTarget(2));
         return card;
     }
 
@@ -1430,7 +1430,7 @@ class TargetLegalityServiceTest {
             card.setManaCost("{R}");
             card.setColor(CardColor.RED);
             card.target(null, minTargets, maxTargets)
-                    .addSpellEffect(new DealDamageToAnyTargetEffect(2));
+                    .addSpellEffect(DealDamageEffect.toAnyTarget(2));
             return card;
         }
 
@@ -1695,7 +1695,7 @@ class TargetLegalityServiceTest {
                     new PermanentIsCreaturePredicate(), "Target must be a creature"));
             spell.target(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"))
-                    .addSpellEffect(new DealDamageToAnyTargetEffect(2));
+                    .addSpellEffect(DealDamageEffect.toAnyTarget(2));
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             doThrow(new IllegalStateException("Target must be an artifact"))
                     .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());

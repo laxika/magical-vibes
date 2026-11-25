@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class JayaVeneratedFiremage extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DealDamageToAnyTargetEffect(2)),
+                List.of(DealDamageEffect.toAnyTarget(2)),
                 "−2: Jaya deals 2 damage to any target."
         ));
     }

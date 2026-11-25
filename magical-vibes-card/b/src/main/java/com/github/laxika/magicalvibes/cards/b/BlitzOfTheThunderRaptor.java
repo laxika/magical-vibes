@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -18,7 +18,6 @@ public class BlitzOfTheThunderRaptor extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER), true));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER)).exilingIfItWouldDie());
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "141")
 @CardRegistration(set = "SOI", collectorNumber = "153")
@@ -10,6 +10,6 @@ public class DualShot extends Card {
 
     public DualShot() {
         // Dual Shot deals 1 damage to each of up to two target creatures.
-        target(0, 2).addSpellEffect(new DealDamageToTargetCreatureEffect(1));
+        target(0, 2).addSpellEffect(DealDamageEffect.toTargetCreature(1));
     }
 }

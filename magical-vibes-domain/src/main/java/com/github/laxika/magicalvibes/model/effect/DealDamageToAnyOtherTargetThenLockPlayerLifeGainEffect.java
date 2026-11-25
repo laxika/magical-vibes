@@ -25,7 +25,7 @@ public record DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffect(DynamicAmou
 
     @Override
     public TargetFilter triggeredTargetFilter() {
-        return DealDamageToAnyTargetEffect.anyOtherTargetFilter();
+        return DealDamageEffect.anyOtherTargetFilter();
     }
 
     @Override

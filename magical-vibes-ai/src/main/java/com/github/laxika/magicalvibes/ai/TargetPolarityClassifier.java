@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -402,9 +401,6 @@ public class TargetPolarityClassifier {
             }
             return damage.canDamageCreatures() ? TargetPolarity.HARMFUL_DAMAGE : TargetPolarity.HARMFUL;
         }
-        if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect) {
-            return TargetPolarity.HARMFUL_DAMAGE;
-        }
 
         // "The next time target creature would deal damage this turn, prevent that damage" aims at an opponent's
         // creature (Awe Strike, Dazzling Reflection); "it deals double that damage instead" at your own.
@@ -761,7 +757,6 @@ public class TargetPolarityClassifier {
             entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetCreaturesThenCreateTokensEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("FlipUntilLoseOrStopEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("WhammyBurnEffect", TargetPolarity.HARMFUL_DAMAGE),

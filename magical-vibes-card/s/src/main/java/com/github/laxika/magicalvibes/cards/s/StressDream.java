@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,7 +12,7 @@ public class StressDream extends Card {
 
     public StressDream() {
         // Stress Dream deals 5 damage to up to one target creature.
-        target(TargetFilters.creature(), 0, 1).addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+        target(TargetFilters.creature(), 0, 1).addSpellEffect(DealDamageEffect.toTargetCreature(5));
 
         // Look at the top two cards of your library. Put one of those cards into your hand and
         // the other on the bottom of your library.

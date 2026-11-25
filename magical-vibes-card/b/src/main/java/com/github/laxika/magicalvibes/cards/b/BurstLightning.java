@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "119")
@@ -16,7 +16,7 @@ public class BurstLightning extends Card {
     public BurstLightning() {
         addStaticEffect(new KickerEffect("{4}"));
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
-                new DealDamageToAnyTargetEffect(2),
-                new DealDamageToAnyTargetEffect(4)));
+                DealDamageEffect.toAnyTarget(2),
+                DealDamageEffect.toAnyTarget(4)));
     }
 }

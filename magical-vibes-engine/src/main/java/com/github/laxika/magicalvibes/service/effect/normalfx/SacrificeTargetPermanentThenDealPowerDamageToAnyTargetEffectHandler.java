@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
@@ -72,7 +72,7 @@ public class SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffectHandler
         reflexiveContext.setEventValue(Math.max(0, result.lastKnownPower()));
         queueReflexiveAbilityEffectHandler.resolve(gameData, reflexiveContext,
                 new QueueReflexiveAbilityEffect(
-                        DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new EventValue())));
+                        DealDamageEffect.toAnyTarget(new EventValue()).byTriggeringPermanent()));
         log.info("Game {} - {} sacrificed a creature and queued power damage", gameData.id,
                 target.getCard().getName());
     }

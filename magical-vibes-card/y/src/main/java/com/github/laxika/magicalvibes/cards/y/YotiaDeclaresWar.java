@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -46,7 +46,7 @@ public class YotiaDeclaresWar extends Card {
                         "any number of untapped artifacts you control to tap"),
                 new TapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)),
                 QueueReflexiveAbilityEffect.withEventValue(
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new EventValue()),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new EventValue()),
                         new AmountThisWay(StepKind.TAP))));
 
         addTrigger(Triggers.chapter(3), new AnimatePermanentsEffect(

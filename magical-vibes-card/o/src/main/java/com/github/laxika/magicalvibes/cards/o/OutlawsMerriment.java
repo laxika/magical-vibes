@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -36,7 +36,7 @@ public class OutlawsMerriment extends Card {
                         token("Human Rogue", 1, 2, List.of(CardSubtype.HUMAN, CardSubtype.ROGUE),
                                 Set.of(Keyword.HASTE),
                                 List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
-                                        new DealDamageToAnyTargetEffect(1))))))));
+                                        DealDamageEffect.toAnyTarget(1))))))));
     }
 
     private static CreateTokenEffect token(String name, int power, int toughness,

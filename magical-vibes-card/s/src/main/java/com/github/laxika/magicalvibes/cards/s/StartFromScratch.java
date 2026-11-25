@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,7 +16,7 @@ public class StartFromScratch extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Start from Scratch deals 1 damage to any target",
-                        new DealDamageToAnyTargetEffect(1)),
+                        DealDamageEffect.toAnyTarget(1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact",
                         new DestroyTargetPermanentEffect(),

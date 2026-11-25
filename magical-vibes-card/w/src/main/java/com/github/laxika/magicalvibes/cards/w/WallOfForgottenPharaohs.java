@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -21,7 +21,7 @@ public class WallOfForgottenPharaohs extends Card {
         // {T}: This creature deals 1 damage to target player or planeswalker.
         // Activate only if you control a Desert or there is a Desert card in your graveyard.
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(1)),
                 "{T}: Wall of Forgotten Pharaohs deals 1 damage to target player or planeswalker. "
                         + "Activate only if you control a Desert or there is a Desert card in your graveyard.")
                 .withActivationCondition(

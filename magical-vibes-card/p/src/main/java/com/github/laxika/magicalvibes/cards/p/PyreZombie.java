@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -40,7 +40,7 @@ public class PyreZombie extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(2)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(2)),
                 "{1}{R}{R}, Sacrifice this creature: It deals 2 damage to any target."
         ));
     }

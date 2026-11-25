@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -22,7 +22,7 @@ public class BloodhallPriest extends Card {
         // Whenever this creature enters or attacks, if you have no cards in hand,
         // this creature deals 2 damage to any target.
         TriggerOptions emptyHand = TriggerOptions.DEFAULT.withInterveningIf(new ControllerHandEmpty());
-        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(2);
+        DealDamageEffect damage = DealDamageEffect.toAnyTarget(2);
         addTrigger(Triggers.enters(ObjectRelation.THIS), emptyHand, damage);
         addTrigger(Triggers.attacks(), emptyHand, damage);
     }

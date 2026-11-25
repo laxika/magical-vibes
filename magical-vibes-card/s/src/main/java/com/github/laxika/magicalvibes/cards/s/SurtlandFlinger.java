@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -32,7 +32,7 @@ public class SurtlandFlinger extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
-                                new DealDamageToAnyTargetEffect(new Sum(AmountThisWay.sacrificedPower(),
+                                DealDamageEffect.toAnyTarget(new Sum(AmountThisWay.sacrificedPower(),
                                         AmountThisWay.sacrificedPower().matching(
                                                 new PermanentHasSubtypePredicate(CardSubtype.GIANT))))))),
                         "Sacrifice another creature?"));

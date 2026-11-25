@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,6 +20,6 @@ public class Simulacrum extends Card {
         addSpellEffect(new GainLifeEffect(new DamageDealtToControllerThisTurn()));
 
         // "Simulacrum deals damage to target creature you control equal to the damage dealt to you this turn."
-        target(TargetFilters.creatureYouControl()).addSpellEffect(new DealDamageToTargetCreatureEffect(new DamageDealtToControllerThisTurn()));
+        target(TargetFilters.creatureYouControl()).addSpellEffect(DealDamageEffect.toTargetCreature(new DamageDealtToControllerThisTurn()));
     }
 }

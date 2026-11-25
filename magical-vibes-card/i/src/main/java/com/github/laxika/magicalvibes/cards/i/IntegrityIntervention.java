@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -32,7 +32,7 @@ public class IntegrityIntervention extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target");
         List<CardEffect> intervention = List.of(
-                new DealDamageToAnyTargetEffect(3),
+                DealDamageEffect.toAnyTarget(3),
                 new GainLifeEffect(3));
 
         addSpellEffect(new ChooseOneEffect(List.of(

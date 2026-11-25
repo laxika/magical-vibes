@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -16,7 +16,7 @@ public class JudgmentBolt extends Card {
     public JudgmentBolt() {
         PermanentCount equipmentCount = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER);
-        addSimultaneousSpellEffects(new DealDamageToTargetCreatureEffect(5),
+        addSimultaneousSpellEffects(DealDamageEffect.toTargetCreature(5),
                 new DealDamageToPlayersEffect(equipmentCount, Subjects.controllerOf(Subjects.target())));
     }
 }

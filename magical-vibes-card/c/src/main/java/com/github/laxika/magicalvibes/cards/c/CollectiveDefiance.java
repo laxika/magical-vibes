@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsHandThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -47,11 +46,11 @@ public class CollectiveDefiance extends Card {
                         playerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Collective Defiance deals 4 damage to target creature",
-                        new DealDamageToTargetCreatureEffect(4),
+                        DealDamageEffect.toTargetCreature(4),
                         creatureFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Collective Defiance deals 3 damage to target opponent or planeswalker",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT),
+                        DealDamageEffect.toTargetOpponentOrPlaneswalker(3),
                         opponentOrPlaneswalkerFilter)
         )));
     }

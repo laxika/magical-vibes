@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -260,8 +260,8 @@ class TriggerTargetCollectorTest {
         lenient().when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
         lenient().when(gameQueryService.isCreature(gd, noncreature)).thenReturn(false);
 
-        // DealDamageToAnyTargetEffect can target players AND permanents.
-        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+        // DealDamageEffect can target players AND permanents.
+        List<CardEffect> effects = List.of(DealDamageEffect.toAnyTarget(1));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
@@ -284,7 +284,7 @@ class TriggerTargetCollectorTest {
         // Fire Snake's "destroy target land": the filter's predicate governs, not creaturesOnly.
         TargetFilter filter = new PermanentPredicateTargetFilter(
                 new PermanentTruePredicate(), "Target can be any permanent");
-        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+        List<CardEffect> effects = List.of(DealDamageEffect.toAnyTarget(1));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
@@ -305,7 +305,7 @@ class TriggerTargetCollectorTest {
         lenient().when(predicateEvaluationService.matchesFilters(
                 eq(noncreature), anySet(), any(FilterContext.class))).thenReturn(true);
         TargetFilter filter = TargetFilters.landYouControl();
-        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+        List<CardEffect> effects = List.of(DealDamageEffect.toAnyTarget(1));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
@@ -323,7 +323,7 @@ class TriggerTargetCollectorTest {
         lenient().when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
         lenient().when(gameQueryService.isCreature(gd, land)).thenReturn(false);
 
-        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+        List<CardEffect> effects = List.of(DealDamageEffect.toAnyTarget(1));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
@@ -349,7 +349,7 @@ class TriggerTargetCollectorTest {
         lenient().when(gameQueryService.isCreature(gd, planeswalker)).thenReturn(false);
         lenient().when(gameQueryService.isPlaneswalker(gd, planeswalker)).thenReturn(true);
 
-        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+        List<CardEffect> effects = List.of(DealDamageEffect.toAnyTarget(1));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);

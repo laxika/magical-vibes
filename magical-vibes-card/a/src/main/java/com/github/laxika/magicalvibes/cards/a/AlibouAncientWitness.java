@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -41,6 +41,6 @@ public class AlibouAncientWitness extends Card {
 
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(artifactCreature)),
-                SequenceEffect.of(new DealDamageToAnyTargetEffect(tappedArtifacts), new ScryEffect(tappedArtifacts)));
+                SequenceEffect.of(DealDamageEffect.toAnyTarget(tappedArtifacts), new ScryEffect(tappedArtifacts)));
     }
 }

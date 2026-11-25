@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class WillOfTheMardu extends Card {
                                 CardColor.RED, List.of(CardSubtype.WARRIOR), Set.of(), Set.of())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Will of the Mardu deals damage to target creature equal to the number of creatures you control",
-                        new DealDamageToTargetCreatureEffect(creaturesYouControl))
+                        DealDamageEffect.toTargetCreature(creaturesYouControl))
         ), new ControlledCommanderAsCast()));
     }
 }

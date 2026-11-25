@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 
 import java.util.List;
@@ -23,8 +23,7 @@ public class KilnmouthDragon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToAnyTargetEffect(
-                        new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
+                List.of(DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
                 "{T}: This creature deals damage equal to the number of +1/+1 counters on it to any target."
         ));
     }

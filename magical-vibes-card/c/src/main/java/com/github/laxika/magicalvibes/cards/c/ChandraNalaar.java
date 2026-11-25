@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -28,7 +26,7 @@ public class ChandraNalaar extends Card {
         // +1: Chandra Nalaar deals 1 damage to target player or planeswalker.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DealDamageToAnyTargetEffect(1)),
+                List.of(DealDamageEffect.toAnyTarget(1)),
                 "+1: Chandra Nalaar deals 1 damage to target player or planeswalker.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),
@@ -38,7 +36,7 @@ public class ChandraNalaar extends Card {
 
         // −X: Chandra Nalaar deals X damage to target creature.
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new DealDamageToTargetCreatureEffect(new XValue())),
+                List.of(DealDamageEffect.toTargetCreature(new XValue())),
                 "\u2212X: Chandra Nalaar deals X damage to target creature.",
                 null
         ));
@@ -48,7 +46,7 @@ public class ChandraNalaar extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(SequenceEffect.simultaneous(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(10),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(10),
                         DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new Fixed(10)))),
                 "\u22128: Chandra Nalaar deals 10 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls.",
                 new PermanentPredicateTargetFilter(

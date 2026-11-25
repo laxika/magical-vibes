@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class Hateflayer extends Card {
         // {2}{R}, {Q}: This creature deals damage equal to its power to any target.
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}{R}",
-                List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
+                List.of(DealDamageEffect.toAnyTarget(new SourcePower())),
                 "{2}{R}, {Q}: This creature deals damage equal to its power to any target."
         ).withRequiresUntap());
     }

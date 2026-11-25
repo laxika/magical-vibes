@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class SilverBolt extends Card {
                 "{3}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToTargetCreatureEffect(3),
+                        DealDamageEffect.toTargetCreature(3),
                         new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
                                 new PermanentHasSubtypePredicate(CardSubtype.WEREWOLF)))
                 ),

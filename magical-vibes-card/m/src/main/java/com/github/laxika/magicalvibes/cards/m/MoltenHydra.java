@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 
@@ -27,7 +27,7 @@ public class MoltenHydra extends Card {
                 null,
                 List.of(
                         new RemoveAllCountersAsCostEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToAnyTargetEffect(new XValue())
+                        DealDamageEffect.toAnyTarget(new XValue())
                 ),
                 "{T}, Remove all +1/+1 counters from Molten Hydra: It deals damage to any target equal to the number of +1/+1 counters removed this way."
         ));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -24,8 +24,7 @@ public class Corrupt extends Card {
 
     public Corrupt() {
         // Deals damage to any target equal to the number of Swamps you control...
-        addSpellEffect(new DealDamageToAnyTargetEffect(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER))
+        addSpellEffect(DealDamageEffect.toAnyTarget(new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER))
                 .recordingDamageDealt());
 
         addSpellEffect(new GainLifeEffect(new EventValue()));

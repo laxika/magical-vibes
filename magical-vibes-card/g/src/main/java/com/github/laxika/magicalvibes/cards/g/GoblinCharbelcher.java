@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,9 +35,9 @@ public class GoblinCharbelcher extends Card {
                 "{3}",
                 List.of(new RevealCardsFromTopUntilEffect(landCard),
                         new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, mountain),
-                                new DealDamageToAnyTargetEffect(new Scaled(AmountThisWay.revealedCards(new CardNotPredicate(landCard)), 2))),
+                                DealDamageEffect.toAnyTarget(new Scaled(AmountThisWay.revealedCards(new CardNotPredicate(landCard)), 2))),
                         new ConditionalEffect(new NotCondition(HappenedThisWay.toACard(StepKind.REVEAL, mountain)),
-                                new DealDamageToAnyTargetEffect(AmountThisWay.revealedCards(new CardNotPredicate(landCard)))),
+                                DealDamageEffect.toAnyTarget(AmountThisWay.revealedCards(new CardNotPredicate(landCard)))),
                         PutCardsIntoLibraryEffect.onBottom(Subjects.revealedThisWay())),
                 "{3}, {T}: Reveal cards from the top of your library until you reveal a land card."
                         + " This artifact deals damage equal to the number of nonland cards revealed this way to any target."

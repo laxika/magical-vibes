@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -20,7 +20,6 @@ public class RedHulk extends Card {
         addTrigger(Triggers.dealtDamage(),
                 SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                        new QueueReflexiveAbilityEffect(DealDamageToAnyTargetEffect.toAnyOtherTarget(
-                                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)))));
+                        new QueueReflexiveAbilityEffect(DealDamageEffect.toAnyOtherTarget(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)))));
     }
 }

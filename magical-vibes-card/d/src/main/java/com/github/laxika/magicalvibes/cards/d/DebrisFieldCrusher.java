@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -30,7 +30,7 @@ import java.util.Set;
 public class DebrisFieldCrusher extends Card {
 
     public DebrisFieldCrusher() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
@@ -29,7 +29,7 @@ public class IcatianJavelineers extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.JAVELIN),
-                        new DealDamageToAnyTargetEffect(1)
+                        DealDamageEffect.toAnyTarget(1)
                 ),
                 "{T}, Remove a javelin counter from this creature: It deals 1 damage to any target."
         ));

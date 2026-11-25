@@ -1289,7 +1289,7 @@ The other callers need no gate, re-verified rather than assumed: `CombatDamageSe
 `checkOpponentCreatureDealtDamageTriggers` pair reads `defDamageTaken` / `atkDamageTaken`, which only
 ever hold combat creatures. `dealCreatureDamageUnpreventable` carries a byte-identical copy of the
 whole block and was also left alone: its only callers are
-`DealDamageToTargetCreatureEffectHandler:63` and `:93`, so a non-creature cannot reach it.
+`DealDamageEffectHandler`, so a non-creature cannot reach it.
 
 Checked and **not** a defect: `checkCreatureDamageToYouOrYourPermanentTriggers` (Mangara's Equity)
 applies `trigger.damagedPermanentFilter()` through `PredicateEvaluationService` in

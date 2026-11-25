@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -40,7 +40,7 @@ public class PathToTheWorldTree extends Card {
                         new GainLifeEffect(2),
                         new DrawCardEffect(2),
                         new LoseLifeEffect(2, Subjects.targetPlayer()),
-                        new DealDamageToTargetCreatureEffect(2),
+                        DealDamageEffect.toTargetCreature(2),
                         new CreateTokenEffect("Bear", 2, 2, CardColor.GREEN,
                                 List.of(CardSubtype.BEAR), Set.of(), Set.of())
                 ),

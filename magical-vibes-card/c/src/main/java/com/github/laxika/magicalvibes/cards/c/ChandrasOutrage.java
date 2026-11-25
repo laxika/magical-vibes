@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M11", collectorNumber = "128")
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class ChandrasOutrage extends Card {
 
     public ChandrasOutrage() {
-        addSimultaneousSpellEffects(new DealDamageToTargetCreatureEffect(4),
+        addSimultaneousSpellEffects(DealDamageEffect.toTargetCreature(4),
                 new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())));
     }
 }

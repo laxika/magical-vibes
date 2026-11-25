@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlledMountAsCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -24,8 +24,8 @@ public class SteerClear extends Card {
                 "Target must be an attacking or blocking creature"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new ControlledMountAsCast(),
-                new DealDamageToTargetCreatureEffect(2),
-                new DealDamageToTargetCreatureEffect(4)
+                DealDamageEffect.toTargetCreature(2),
+                DealDamageEffect.toTargetCreature(4)
         ));
     }
 }

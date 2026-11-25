@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,8 +14,8 @@ public class ElectrostaticBolt extends Card {
     public ElectrostaticBolt() {
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentIsArtifactPredicate()),
-                new DealDamageToTargetCreatureEffect(2),
-                new DealDamageToTargetCreatureEffect(4)
+                DealDamageEffect.toTargetCreature(2),
+                DealDamageEffect.toTargetCreature(4)
         ));
     }
 }

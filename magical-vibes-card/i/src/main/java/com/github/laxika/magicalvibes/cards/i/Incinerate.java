@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "213")
 @CardRegistration(set = "5ED", collectorNumber = "242")
@@ -18,6 +18,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Incinerate extends Card {
 
     public Incinerate() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(3, true));
+        addSpellEffect(DealDamageEffect.toAnyTarget(3).cantBeRegenerated());
     }
 }

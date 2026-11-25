@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -27,7 +27,7 @@ public class IrohsDemonstration extends Card {
                         new DealDamageToEachMatchingPermanentEffect(1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Iroh's Demonstration deals 4 damage to target creature",
-                        new DealDamageToTargetCreatureEffect(4),
+                        DealDamageEffect.toTargetCreature(4),
                         TargetFilters.creature())
         )));
     }

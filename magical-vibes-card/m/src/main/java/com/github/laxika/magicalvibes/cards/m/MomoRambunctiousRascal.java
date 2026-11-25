@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,6 +29,6 @@ public class MomoRambunctiousRascal extends Card {
                 tappedOpponentCreature,
                 "Target must be a tapped creature an opponent controls"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureEffect(4, tappedOpponentCreature));
+                DealDamageEffect.toTargetCreature(4, tappedOpponentCreature));
     }
 }

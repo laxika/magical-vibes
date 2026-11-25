@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -20,7 +20,7 @@ public class GruulGuildmage extends Card {
                 "{3}{R}",
                 List.of(
                         new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land", false),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(2)
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(2)
                 ),
                 "{3}{R}, Sacrifice a land: This creature deals 2 damage to target player or planeswalker."
         ));

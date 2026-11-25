@@ -2,14 +2,14 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "BNG", collectorNumber = "89")
 public class BoltOfKeranos extends Card {
 
     public BoltOfKeranos() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(DealDamageEffect.toAnyTarget(3));
         addSpellEffect(new ScryEffect(1));
     }
 }

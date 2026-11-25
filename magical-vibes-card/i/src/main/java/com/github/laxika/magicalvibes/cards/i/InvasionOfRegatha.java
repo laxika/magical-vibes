@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -25,7 +24,7 @@ public class InvasionOfRegatha extends Card {
         setBackFaceCard(new DisciplesOfTheInferno());
         setAllowSharedTargets(true);
 
-        var dealDamageToAnyTarget = new DealDamageToAnyTargetEffect(4);
+        var dealDamageToAnyTarget = DealDamageEffect.toAnyTarget(4);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsBattlePredicate(),
@@ -34,7 +33,7 @@ public class InvasionOfRegatha extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be another battle or opponent"))
                 .bindEffect(dealDamageToAnyTarget);
-        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(1);
+        var dealDamageToTargetCreature = DealDamageEffect.toTargetCreature(1);
         target(TargetFilters.creature(), 0, 1)
                 .bindEffect(dealDamageToTargetCreature);
         addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToAnyTarget, dealDamageToTargetCreature);

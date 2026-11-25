@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.d.DwarvenRuins;
 import com.github.laxika.magicalvibes.cards.o.Orgg;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FarrelsMantle.class, FarrelitePriest.class, Orgg.class, DwarvenRuins.class})
+@CardUsed({FarrelsMantle.class, FarrelitePriest.class, Orgg.class, DwarvenRuins.class, WhipOfErebos.class})
 class FarrelsMantleTest extends BaseCardTest {
 
     private Permanent addEnchantedAttacker() {
@@ -246,5 +247,22 @@ class FarrelsMantleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An enchanted attacker that left before the ability resolves deals its last-known power plus two with the lifelink it had as it left")
+    void departedAttackerDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        Permanent attacker = addEnchantedAttacker();
+        Permanent victim = addVictim();
+
+        advanceToUnblockedTrigger();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player1, 23);
     }
 }

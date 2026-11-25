@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class NoiseMarine extends Card {
     public NoiseMarine() {
         addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToAnyTargetEffect(new SpellsCastThisTurn(CountScope.CONTROLLER)));
+                DealDamageEffect.toAnyTarget(new SpellsCastThisTurn(CountScope.CONTROLLER)));
     }
 }

@@ -4,14 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "90")
 public class MobJustice extends Card {
 
     public MobJustice() {
-        addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
+        addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }
 }

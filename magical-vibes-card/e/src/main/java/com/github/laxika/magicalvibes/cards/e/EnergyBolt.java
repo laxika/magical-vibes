@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -19,7 +19,7 @@ public class EnergyBolt extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Energy Bolt deals X damage to target player or planeswalker",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue())),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(new XValue())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player gains X life",
                         new GainLifeEffect(new XValue(), Subjects.targetPlayer()))

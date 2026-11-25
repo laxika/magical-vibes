@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllMatchingCardsFromLibraryWithSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -37,8 +37,7 @@ public class CalderaBreaker extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileAllMatchingCardsFromLibraryWithSourceThenEffect(
                         new CardSubtypePredicate(CardSubtype.MOUNTAIN),
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                new EventValue(), creatureOrPlaneswalkerAnOpponentControls)));
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new EventValue(), creatureOrPlaneswalkerAnOpponentControls)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new ReturnAllCardsExiledWithSourceEffect(),
                 new ConjureCardNamedIntoLibraryEffect("MIR", "202", 4)));

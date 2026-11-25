@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -51,7 +51,7 @@ public class BrimstoneMage extends Card {
         return new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToAnyTargetEffect(amount)),
+                List.of(DealDamageEffect.toAnyTarget(amount)),
                 "{T}: Brimstone Mage deals " + amount + " damage to any target."
         );
     }

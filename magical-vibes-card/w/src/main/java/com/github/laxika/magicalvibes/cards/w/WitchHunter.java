@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class WitchHunter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(1)),
                 "{T}: This creature deals 1 damage to target player or planeswalker."
         ));
 

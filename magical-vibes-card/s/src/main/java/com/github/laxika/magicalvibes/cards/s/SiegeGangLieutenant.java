@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -59,7 +59,7 @@ public class SiegeGangLieutenant extends Card {
                                 "Sacrifice a Goblin",
                                 false
                         ),
-                        new DealDamageToAnyTargetEffect(1)),
+                        DealDamageEffect.toAnyTarget(1)),
                 "{2}, Sacrifice a Goblin: Siege-Gang Lieutenant deals 1 damage to any target."
         ));
     }

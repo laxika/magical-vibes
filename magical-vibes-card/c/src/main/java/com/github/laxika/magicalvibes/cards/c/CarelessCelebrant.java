@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,6 +32,6 @@ public class CarelessCelebrant extends Card {
                 creatureOrPlaneswalkerAnOpponentControls,
                 "Target must be a creature or planeswalker an opponent controls"
         )).addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(2, creatureOrPlaneswalkerAnOpponentControls));
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(2, creatureOrPlaneswalkerAnOpponentControls));
     }
 }

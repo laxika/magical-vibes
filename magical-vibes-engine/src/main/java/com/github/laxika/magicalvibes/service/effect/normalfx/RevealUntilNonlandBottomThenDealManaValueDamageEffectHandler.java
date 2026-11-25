@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +33,7 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
     private final GameQueryService gameQueryService;
 
     /** "When you reveal a nonland card this way, [this] deals damage equal to that card's mana value to any target." */
-    private static final CardEffect REFLEXIVE_DAMAGE = new DealDamageToAnyTargetEffect(new EventValue(), false, false);
+    private static final CardEffect REFLEXIVE_DAMAGE = DealDamageEffect.toAnyTarget(new EventValue());
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

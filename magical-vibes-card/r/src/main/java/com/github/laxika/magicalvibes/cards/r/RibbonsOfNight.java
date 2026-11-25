@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +16,7 @@ public class RibbonsOfNight extends Card {
 
     public RibbonsOfNight() {
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(4))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(4))
                 .addSpellEffect(new GainLifeEffect(4));
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLUE), new DrawCardEffect(1)));

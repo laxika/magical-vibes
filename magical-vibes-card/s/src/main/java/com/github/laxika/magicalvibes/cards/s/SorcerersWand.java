@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -25,8 +25,8 @@ public class SorcerersWand extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new ConditionalReplacementEffect(new SourceHasSubtype(CardSubtype.WIZARD), new DealDamageToAnyTargetEffect(1),
-                                new DealDamageToAnyTargetEffect(2)
+                        List.of(new ConditionalReplacementEffect(new SourceHasSubtype(CardSubtype.WIZARD), DealDamageEffect.toAnyTarget(1),
+                                DealDamageEffect.toAnyTarget(2)
                         )),
                         "{T}: This creature deals 1 damage to target player or planeswalker. If this creature is a Wizard, it deals 2 damage instead.",
                         new PermanentPredicateTargetFilter(

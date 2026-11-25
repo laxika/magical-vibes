@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -26,7 +26,7 @@ public class TeamAvatar extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{W}",
-                List.of(new DealDamageToTargetCreatureEffect(creaturesYouControl)),
+                List.of(DealDamageEffect.toTargetCreature(creaturesYouControl)),
                 "{2}{W}, Discard this card: It deals damage equal to the number of creatures you control to target creature.",
                 TargetFilters.creature()));
     }

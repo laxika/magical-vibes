@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,6 +21,6 @@ public class StompingSlabs extends Card {
         addSpellEffect(RevealTopCardOfLibraryEffect.topCards(Subjects.you(), new Fixed(7)));
         addSpellEffect(PutCardsIntoLibraryEffect.onBottom(Subjects.revealedThisWay()));
         addSpellEffect(new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, new CardNamedPredicate("Stomping Slabs")),
-                        new DealDamageToAnyTargetEffect(7)));
+                        DealDamageEffect.toAnyTarget(7)));
     }
 }

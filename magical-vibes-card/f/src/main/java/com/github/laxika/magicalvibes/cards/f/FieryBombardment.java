@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class FieryBombardment extends Card {
                 "{2}",
                 List.of(
                         new SacrificeCreatureCost(ManaColor.RED),
-                        new DealDamageToAnyTargetEffect(new XValue())
+                        DealDamageEffect.toAnyTarget(new XValue())
                 ),
                 "Chroma — {2}, Sacrifice a creature: This enchantment deals damage to any target "
                         + "equal to the number of red mana symbols in the sacrificed creature's mana cost."

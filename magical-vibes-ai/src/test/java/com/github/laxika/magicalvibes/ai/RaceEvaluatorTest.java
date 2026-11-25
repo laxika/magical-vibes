@@ -12,9 +12,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -209,7 +208,7 @@ class RaceEvaluatorTest {
         @Test
         void creatureOnlyDamageDoesNotCountAsBurn() {
             Card spell = new Card();
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(5));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
         }
@@ -217,7 +216,7 @@ class RaceEvaluatorTest {
         @Test
         void variableDamageDoesNotCountAsFixedBurn() {
             Card spell = new Card();
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
         }

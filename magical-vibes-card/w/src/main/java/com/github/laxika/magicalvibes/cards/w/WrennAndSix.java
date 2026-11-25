@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -37,7 +37,7 @@ public class WrennAndSix extends Card {
         // −1: Wrenn and Six deals 1 damage to any target.
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new DealDamageToAnyTargetEffect(1)),
+                List.of(DealDamageEffect.toAnyTarget(1)),
                 "−1: Wrenn and Six deals 1 damage to any target."
         ));
 

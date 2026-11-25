@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class UnleashTheInferno extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"))
-                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(7));
+                .addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(7));
 
         PermanentPredicate artifactOrEnchantmentOpponentControls = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

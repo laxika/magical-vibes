@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnedGraveyardCardValue;
@@ -46,7 +46,7 @@ public class VengefulRebirth extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addSpellEffect(new DealDamageToAnyTargetEffect(new EventValue(), false, false, 0));
+        )).addSpellEffect(DealDamageEffect.toAnyTargetInGroup(new EventValue(), 0));
 
         // Exile Vengeful Rebirth.
         addSpellEffect(new ExileSpellEffect());

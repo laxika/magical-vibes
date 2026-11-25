@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,7 +16,7 @@ import java.util.List;
 public class CratersClaws extends Card {
 
     public CratersClaws() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(new Sum(
+        addSpellEffect(DealDamageEffect.toAnyTarget(new Sum(
                 new XValue(),
                 new FixedIfCondition(new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(4)))), 2, 0))));

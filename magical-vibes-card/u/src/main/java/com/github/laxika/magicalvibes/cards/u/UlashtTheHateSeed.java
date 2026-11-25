@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -46,7 +46,7 @@ public class UlashtTheHateSeed extends Card {
                 false,
                 ACTIVATION_COST,
                 List.of(new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToTargetCreatureEffect(1)),
+                        DealDamageEffect.toTargetCreature(1)),
                 "{1}, Remove a +1/+1 counter from Ulasht: Ulasht deals 1 damage to target creature.",
                 TargetFilters.creature()
         ));

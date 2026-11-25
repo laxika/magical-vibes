@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class GoblinCannon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new DealDamageToAnyTargetEffect(1), new SacrificeSelfEffect()),
+                List.of(DealDamageEffect.toAnyTarget(1), new SacrificeSelfEffect()),
                 "{2}: This artifact deals 1 damage to any target. Sacrifice this artifact."
         ));
     }

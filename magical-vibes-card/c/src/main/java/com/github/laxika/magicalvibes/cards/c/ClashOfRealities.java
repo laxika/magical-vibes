@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -40,7 +40,7 @@ public class ClashOfRealities extends Card {
 
     public ClashOfRealities() {
         MayEffect spiritAbility = new MayEffect(
-                new DealDamageToTargetCreatureEffect(3, NON_SPIRIT_CREATURE),
+                DealDamageEffect.toTargetCreature(3, NON_SPIRIT_CREATURE),
                 "Have this Spirit deal 3 damage to target non-Spirit creature?");
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
@@ -52,7 +52,7 @@ public class ClashOfRealities extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(
-                        new DealDamageToTargetCreatureEffect(3, SPIRIT_CREATURE),
+                        DealDamageEffect.toTargetCreature(3, SPIRIT_CREATURE),
                         "Have this creature deal 3 damage to target Spirit creature?")),
                 Subjects.allCreatures(),
                 NON_SPIRIT_CREATURE));

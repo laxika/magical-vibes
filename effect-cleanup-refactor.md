@@ -27,7 +27,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C as a generic "unless" record in step 10, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs D11 to D22 (one per group) and D23 (the owner's perpetual "it" decision) done 2026-11-25; the defect queue keeps the lines left, each with what it needs. Next: step 10 (needs the owner's sign-off per verb). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source.  |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Run Remove counters done 2026-11-25 (`RemoveCountersEffect`, the source record renamed, absorbs the target, plural-target and two mass records). Defect run D24 (2026-11-25) cleared the Damage run's prevention-path difference (plan section 2 (a)): one permanent-damage path. Next: Damage, then "unless" (owner's order) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Run Remove counters done 2026-11-25 (`RemoveCountersEffect`, the source record renamed, absorbs the target, plural-target and two mass records). Defect run D24 (2026-11-25) cleared the Damage run's prevention-path difference (plan section 2 (a)): one permanent-damage path. Run Damage done 2026-11-25 (`DealDamageEffect`, the any-target record renamed, absorbs the creature, creature-or-planeswalker, player-or-planeswalker and permanent records; 1,614 card files). Next: "unless" (owner's order) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,996 / 2,422 (after step 10 run Remove counters) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,992 / 2,418 (after step 10 run Damage) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -293,8 +293,7 @@ Depends on: 5 and 6 done for the verb.
 High churn, low behaviour risk. After steps 5 and 6 the high-use siblings of a verb differ only in
 their subject component and constructor shapes: `BoostSelfEffect` (1,079 cards),
 `BoostTargetCreatureEffect` (1,356), `BoostAllOwnCreaturesEffect` (418), `BoostAllCreaturesEffect`
-(195); `DealDamageToAnyTargetEffect` (740), `DealDamageToTargetCreatureEffect` (569),
-`DealDamageToTargetPlayerOrPlaneswalkerEffect` (148); the counters pair (done: run Counters, `PutCountersEffect`). One run merges one verb into one record with static
+(195); the damage records (done: run Damage, `DealDamageEffect`, 1,614 card files); the counters pair (done: run Counters, `PutCountersEffect`). One run merges one verb into one record with static
 factories that read like the old names, rewrites every card with a script, and deletes the others.
 
 Before each run, state the verb, the card-file count and the factory names, and ask. After each run,
@@ -444,7 +443,7 @@ Step and choice records:
   `IncreaseActivationCostEffect` take any `DynamicAmount` (`CountersOnSource` for "for each counter"); a turn-limited static
   cost change is `ConditionalEffect(ControllerTurn(), …)`; `IntensifySourceCardEffect` takes a `DynamicAmount`.
 - Damage, boost, draw (fold run 2): `BoostTargetCreatureEffect(createdThisResolution(), …)` ("that creature gets +N/+M" after a
-  token step) and `Duration.PERMANENT` (no stated duration, CR 611.2a); `DealDamageToTargetCreatureEffect(thisWay(kind), n)` (the
+  token step) and `Duration.PERMANENT` (no stated duration, CR 611.2a); `DealDamageEffect.to(thisWay(kind), n)` (the
   creature a `ChoosePermanentsEffect` chose); "choose a creature type, [verb] for each permanent of it you control" is
   `ChooseCreatureTypeAtResolutionEffect` + the verb over `PermanentCount(PermanentHasTypeChosenThisResolutionPredicate, CONTROLLER)`;
   `TargetPolarityClassifier` reads a negatively `Scaled` boost as a debuff.
@@ -848,7 +847,7 @@ Delayed and global triggers:
 
 - `TargetSpec.chosenAtRandom` / `atRandom()`: "target … chosen at random", read by `CardEffect.targetChosenAtRandom()` at the stack door and the activation path; it fires "becomes the target" abilities and the crime event (CR 601.2c, 603.3d, 700.13) (fold run 26b).
 - `Subjects.targetPlayerChosenAtRandom()` (`PlayerSubject.TargetPlayer.chosenAtRandom`): "target opponent chosen at random", "select target player at random", for `DealDamageToPlayersEffect`, `DiscardEffect` and `GainControlOfTargetEffect.gainedBy`; opponent-only through the card's target filter (fold run 26b).
-- `DealDamageToAnyTargetEffect.toAnyTargetChosenAtRandom(amount)` and `SourceFightsTargetCreatureEffect.atRandom()`; the survivor's fight form goes through `FightSupport.fight` (fold run 26b).
+- `DealDamageEffect.toAnyTargetChosenAtRandom(amount)` and `SourceFightsTargetCreatureEffect.atRandom()`; the survivor's fight form goes through `FightSupport.fight` (fold run 26b).
 
 - `SubjectResolutionService.namesPlayer(gameData, source, controller, player, subject)`: also judges `controllerOf(attached())`, "enchanted creature's controller" (fold run 34).
 - `OpponentsCantCastSpellsMatchingPredicateEffect`: amounts bound for the casting player; {X} spells are offered unless every X is stopped; `AmountEvaluationService.bindAmounts(…, asSpell)` and `bindTriggeringSpellManaValue(…, asSpell)` count X (fold run 34).
@@ -1232,6 +1231,20 @@ The scratch files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a
 - `Subjects.sourceObjectCard()` / `SubjectResolutionService.sourceObjectCard(gd, entry, effect)`: "this card" as the same object in whatever zone the ability refers to it; no card once it has changed zones. Perpetual verbs and graveyard cast permissions.
 - `PerpetuallyBoostCardEffect.toCards(CardSubject, DynamicAmount, DynamicAmount)`.
 
+- `DealDamageEffect` (step 10 run Damage): one source deals N damage to one recipient. `Recipient` kind (any target, creature,
+  creature or planeswalker, player or planeswalker, permanent) fixes `targetSpec()`; factories `toAnyTarget`, `toAnyTargetInGroup`,
+  `toAnyOtherTarget`, `toEventObject`, `toAnyTargetOfAnOpponentsChoice`, `toAnyTargetChosenAtRandom`, `toTargetCreature`,
+  `to(PermanentSubject, amount)`, `toTargetCreatureOrPlaneswalker`, `toTargetPlayerOrPlaneswalker`, `toTargetOpponentOrPlaneswalker`,
+  `toTargetPermanent`; riders `byTriggeringPermanent()`, `unpreventable()`, `unpreventableWhen(c)`, `unpreventableAndUnredirectableWhen(c)`,
+  `cantBeRegenerated()`, `withUnconditionalRegenerationPrevention()`, `exilingDamagedCreaturesThatWouldDie()`, `exilingIfItWouldDie()`,
+  `exilingPermanentsDealtDamage()`, `recordingDamageDealt()`, `withDamage(a)`. Every kind: one permanent-damage path, DEAL_DAMAGE begun,
+  one excess tracker (CR 120.4a, 120.10; the dealer's deathtouch), the win check. The creature kinds loop over the effect's targets; the
+  any-target kind can't (Magma Burst kicked: its unbound part would hit the kicked target too).
+- `DamageSupport.entryDealtByTriggeringPermanent` is the one "it deals" carrier (run Damage): a departed dealer is its departure snapshot
+  first (its keywords as it left, a static grant's included), then the trigger-time snapshot; an entry that names no triggering
+  permanent is dealt by its source (a self-triggered "this or another X enters, it deals"). Its damage result is added to the resolving
+  entry's DEAL_DAMAGE step.
+
 ### Blocked causes still open
 
 Counts are ledger rows of existing classes whose latest note names the cause (approximate, by keyword).
@@ -1292,6 +1305,14 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
   (madness, discard / sacrifice / life-paid triggers), and pin today's behaviour (flashback, ward countering an ability, one
   test per ransom kind). Order: Counters, then Damage, then "unless"; Boost where it fits. The gift opponent stays deferred.
 
+- **2026-11-25, step 10 run Damage** (the owner's go-ahead, with these answers): (1) one run, all five one-recipient records (any
+  target, creature, creature or planeswalker, player or planeswalker, permanent) with one permanent-damage path (D24 answered the plan's
+  question 5); the target loop is one rule only if every kind's own targets give the same result, else per kind with the reason. (2) The
+  survivor is renamed `DealDamageEffect` (handler `DealDamageEffectHandler`), every call site on factories and chained riders. (3) Pin all
+  triggering-dealer cards, then route every kind through `DamageSupport.entryDealtByTriggeringPermanent`; a pin that changes is decided
+  by the rule (CR 608.2h: the object as it exists or most recently existed deals it), with a failing-first test. (4) One excess detection
+  list (the union, guarded by "the amount doesn't read the event value" and "not `recordDamageDealt`") and one formula for every kind
+  (CR 120.4a, 120.10), deathtouch the dealer's; the excess-risk files checked by hand and by their tests.
 - **2026-11-25, step 10 run Remove counters** (the plan's four questions): the survivor `RemoveCounterFromSourceEffect` is renamed
   `RemoveCountersEffect` (handler `RemoveCountersEffectHandler`) with `fromSelf` / `fromSelfCountingTargetPlayer` / `fromTarget`
   factories, all 128 card files moved to them; the 4 mass cards come in as `controlledBy(...)` subjects (their summary log goes); Gremlin
@@ -1338,7 +1359,7 @@ there and updates them when it lands.
   matching / of-type / fusion forms) for a later "remove all" run, and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
   `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a
   batched path in `PutCountersEffect` first (owner's decision 2026-11-25).
-- **Damage**: `DealDamageToTargetPermanentEffect` with the creature-or-planeswalker damage records (5g).
+- **Damage**: the five one-recipient records are `DealDamageEffect` (run Damage). Left for later runs: the player subject record `DealDamageToPlayersEffect` (a `to(PlayerSubject)` fold, its per-player amounts fixed first, CR 608.2h); mass and set damage (`MassDamageEffect`, `DealDamageToEachMatchingPermanentEffect`, `DealDamageToEachTargetEffect`, `DealDamageToPermanentsTargetControlsEffect`, `DealDamageToDefendingPlayerCreaturesEffect`: a "mass damage" run, one event for many recipients); another dealer (bite, fight, `TargetCreatureDealsPowerDamageToAnyTargetEffect`, the `ControlledCreaturesDeal…` records: a "dealer" run); divided damage (`DealDividedDamageEffect`, CR 601.2d); excess redirected (`DealDamageToTargetCreatureWithExcessToControllerEffect`); the cost combinators (`PayXManaDealXDamageToAnyTargetEffect`, the "unless takes damage" records) for the "unless" run.
 - **Destroy**: `DestroyEachTargetPermanentEffect` and `DestroyAllPermanentsEffect` (5a).
 - **Tokens and conjure**: `CreateTokenCopyOfSourceEffect` (5l); the two multi-card battlefield conjure records kept apart in run 30
   (`ConjureCardToBattlefieldEffect`, 25 cards; `ConjureCardNamedOntoBattlefieldEffect`, 9).
@@ -5987,6 +6008,67 @@ application classes incl. `EffectCountRatchetTest`), 0 failures.
 
 **For the next run.** The Damage merge (plan `s10-damage`): the merged handler needs no second permanent path now; question 5 is answered
 by this run, questions 1 to 4 wait on the owner.
+
+### Step 10, run Damage (2026-11-25)
+
+One source deals N damage to one recipient, signed off by the owner on 2026-11-25 (decisions under Standing knowledge). The any-target
+record is renamed `DealDamageEffect` (handler `DealDamageEffectHandler`) and absorbs `DealDamageToTargetCreatureEffect`,
+`DealDamageToTargetCreatureOrPlaneswalkerEffect`, `DealDamageToTargetPlayerOrPlaneswalkerEffect` and `DealDamageToTargetPermanentEffect`
+as a `Recipient` kind (factories and riders under Shared pieces). Ledger: 4 absorbed, 1 survivor. Ratchet 2,996 / 2,422 → 2,992 / 2,418.
+Nothing persists effect class names (no `@JsonTypeInfo`; networking, frontend, scripts name none); `TargetPolarityClassifier`'s name
+entry and C-PW branch and `InstantCategoryClassifier`'s C-PW line were dead (the `DamageDealingEffect` branch answers first) and went.
+No `CONVERSION_VERSION` bump (no mapper or enum change).
+
+**Premise.** After D24 there is one permanent-damage path (plan section 2 (a) no longer held): every targeted kind goes through
+`resolveAnyTargetDamage`; "can't be prevented" is one flag for every kind (`dealCreatureDamageUnpreventable` set the same event fields,
+deleted with `resolveCreatureTargetDamage` and `computeExcessDamageToTargetedPermanent`). The target loop stays per kind (owner's question
+1): the creature kinds deal to each of the effect's targets (Dual Shot), the any-target kind to one, since an unbound any-target part of a
+two-target spell (Magma Burst kicked) would hit the other part's target.
+
+**Card rewrite.** 1,614 card files (1,738 calls) by a scratch script (balanced parentheses, 30 shapes, loud failure on any other shape,
+variable types resolved for the ambiguous arities, leftover-name check; deleted): any target 808 (17 by the triggering permanent), creature
+617, creature or planeswalker 121, player or planeswalker 124, opponent or planeswalker 38, subjects 28, permanent 3. Oracle text checked for 1,610 files with the MCP `get_card` implementation (recipient wording, "can't be
+prevented", "can't be regenerated", exile riders, "it deals"), back faces through their front card: 1,596 matched automatically, 14 by hand
+(the "damage can't be prevented this turn" cards use their own record); not checked: Lazier Goblin, Lightning Colt, Sliv-Mizzet, Trial and
+Error (MB1, in no feed). Engine, domain and AI sites (24) and 51 test files by hand or by the same script.
+
+**Behaviour changes** (failing-first, each seen failing on the old code):
+- Terror of the Peaks deals the damage itself, "equal to that creature's power" (Oracle; its ruling): it was dealt by the entering
+  creature (its lifelink gained life). `TerrorOfThePeaksTest`. Éomer, King of Rohan ("Éomer deals") is the plain source form.
+- A departed triggering dealer is its departure snapshot before the trigger-time one (CR 608.2h, "as it most recently existed"): Gaze of
+  Pain's attacker that left kept no Whip of Erebos lifelink. `GazeOfPainTest`.
+- The target-permanent kind begins its DEAL_DAMAGE step (`StepResultsTest`); a triggering dealer's damage now reaches the resolving
+  entry's DEAL_DAMAGE step (any-target and player-or-planeswalker kinds lost it in the carrier; `DealDamageEffectTest`).
+- Excess damage reads the dealer's deathtouch (CR 120.4a), not the ability's (`DealDamageEffectTest`); one formula and one detection list
+  for every kind (owner's question 4), measured before the damage (the creature kind read toughness after it: wither or infect damage
+  lowered it). Check of the 63 excess-risk files: no card changes which effect is tracked (the new union readers sit only beside
+  event-value amounts, which the guard excludes; Corrupt records instead); all their test classes pass.
+- Archery Training's granted any-target damage keeps every component when its counters are bound (`ActivatedAbilityExecutionServiceTest`).
+- A self-triggered "this or another X enters, it deals" names no triggering permanent: the carrier deals it from the source (Scourge of
+  Valkas' own entry kept working through the any-target record's fallback; pinned, see below).
+
+**Pins added first** (passed on the old code and after): a departed dealer with Whip of Erebos lifelink for Aether Charge, Bélakor,
+Fiendlash, Flayer of the Hatebound, Immersturm, Éomer, Defiant Thundermaw (Invasion of Tarkir), Extra Arms (and its live lifelink), Farrel's
+Mantle, Rage Forger, Pyrogoyf, Scourge of Valkas (and its own entry with lifelink), The Sea Devils, Lukka's emblem (Mila); Wrathful Red
+Dragon's lethally damaged Dragon. The plan's other pins existed (`PermanentDamagePathTest`, the card tests named in section 5).
+
+**Tests changed.** The two handler tests are one `DealDamageEffectHandlerTest` (creature cases `@Nested`); tests use the factories.
+**Shared engine files that changed meaning.** `DealDamageEffect` / `DealDamageEffectHandler` (new); `DamageSupport` (carrier snapshot
+order and source fallback; three methods deleted); `ActivatedAbilityExecutionService` (`withDamage`); `EffectResolution` (converge and
+mana-spent readers on the creature kind only, as before); `DamageTargetValidators` (keyed on the merged record, opponent relation only).
+
+**Tests run** (after the merge, XML of this run): 1,658 card classes (every rewritten card's class, back faces under their front card,
+every `Prevent|Protection|Unpreventable|Redirect|Excess|Deathtouch|Lifelink|Infect` class) 15,126 tests; 69 application, AI and
+carrier classes (the 36 the plan names, the pins, `PermanentDamagePathTest`, both ratchets, `GameDataDeepCopyTest`) — 0 failures.
+
+**Seen, not changed** (defect queue): self-triggered "this or another X enters" entries record no triggering permanent, so other
+`triggering()` readers there may find nothing (fairly sure). AGENTS.md's reuse example names the old any-target record (owner's file).
+
+**For the next run.** The generic "unless" record (owner's order; Standing knowledge's decision of 2026-11-25). Damage siblings left out:
+`DealDamageToPlayersEffect` (a `to(PlayerSubject)` fold of this record; amounts per player fixed first), the mass and set damage records (a
+"mass damage" run), the other-dealer records (bite, fight, power damage: a "dealer" run), `DealDividedDamageEffect` (division as cast),
+`DealDamageToTargetCreatureWithExcessToControllerEffect` (a modified damage event), and the pay / "unless takes damage" damage records,
+which go with the "unless" run.
 
 ## Prompt
 

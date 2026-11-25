@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.g.GrandmotherRaviSengir;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -36,7 +36,7 @@ public class InvasionOfUlgrotha extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any other target")).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                SequenceEffect.of(new DealDamageToAnyTargetEffect(3), new GainLifeEffect(3)));
+                SequenceEffect.of(DealDamageEffect.toAnyTarget(3), new GainLifeEffect(3)));
     }
 
     @Override

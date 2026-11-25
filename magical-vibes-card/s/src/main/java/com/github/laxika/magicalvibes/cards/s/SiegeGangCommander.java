@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -42,7 +42,7 @@ public class SiegeGangCommander extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         "Sacrifice a Goblin",
                         false
-                ), new DealDamageToAnyTargetEffect(2)),
+                ), DealDamageEffect.toAnyTarget(2)),
                 "{1}{R}, Sacrifice a Goblin: Siege-Gang Commander deals 2 damage to any target."
         ));
     }

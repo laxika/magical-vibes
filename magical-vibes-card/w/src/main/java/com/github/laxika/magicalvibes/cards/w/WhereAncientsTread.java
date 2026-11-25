@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -21,6 +21,6 @@ public class WhereAncientsTread extends Card {
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentPowerAtLeastPredicate(5))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayEffect(new DealDamageToAnyTargetEffect(5), "Deal 5 damage to any target?"));
+                new MayEffect(DealDamageEffect.toAnyTarget(5), "Deal 5 damage to any target?"));
     }
 }

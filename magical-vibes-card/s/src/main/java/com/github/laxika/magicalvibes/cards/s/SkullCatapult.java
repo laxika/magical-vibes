@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class SkullCatapult extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new DealDamageToAnyTargetEffect(2)
+                        DealDamageEffect.toAnyTarget(2)
                 ),
                 "{1}, {T}, Sacrifice a creature: Skull Catapult deals 2 damage to any target."
         ));

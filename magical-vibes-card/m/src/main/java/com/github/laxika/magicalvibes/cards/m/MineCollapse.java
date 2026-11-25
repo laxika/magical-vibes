@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -21,6 +21,6 @@ public class MineCollapse extends Card {
                 new ControllerTurn(), false));
 
         // Mine Collapse deals 5 damage to target creature or planeswalker.
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(5));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(5));
     }
 }

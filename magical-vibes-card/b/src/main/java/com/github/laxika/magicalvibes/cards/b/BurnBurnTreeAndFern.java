@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -25,7 +25,7 @@ public class BurnBurnTreeAndFern extends Card {
         PermanentPredicate opponentCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
-        addTrigger(Triggers.chapter(1), new DealDamageToTargetCreatureEffect(6, opponentCreature));
+        addTrigger(Triggers.chapter(1), DealDamageEffect.toTargetCreature(6, opponentCreature));
         setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(
                         opponentCreature, "Target must be a creature an opponent controls")));

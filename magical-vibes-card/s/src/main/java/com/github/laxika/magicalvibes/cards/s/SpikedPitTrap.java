@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,9 +24,9 @@ public class SpikedPitTrap extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new RollD20Effect(
-                                new DealDamageToTargetCreatureEffect(5),
+                                DealDamageEffect.toTargetCreature(5),
                                 SequenceEffect.of(
-                                        new DealDamageToTargetCreatureEffect(5),
+                                        DealDamageEffect.toTargetCreature(5),
                                         CreateTokenEffect.ofTreasureToken(1)))
                 ),
                 "{5}, {T}, Sacrifice Spiked Pit Trap: Choose target creature, then roll a d20. 1-9 | This artifact deals 5 damage to that creature. 10-20 | This artifact deals 5 damage to that creature. Create a Treasure token.",

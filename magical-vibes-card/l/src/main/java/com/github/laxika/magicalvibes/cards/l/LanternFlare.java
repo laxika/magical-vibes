@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,12 +31,12 @@ public class LanternFlare extends Card {
                 .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         SequenceEffect.of(
-                                new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
+                                DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()),
                                 new GainLifeEffect(new XValue()))))
                 .addSpellEffect(new ConditionalEffect(
                         new NotCondition(new CastForAlternateCost()),
                         SequenceEffect.of(
-                                new DealDamageToTargetCreatureOrPlaneswalkerEffect(creaturesYouControl),
+                                DealDamageEffect.toTargetCreatureOrPlaneswalker(creaturesYouControl),
                                 new GainLifeEffect(creaturesYouControl))));
     }
 

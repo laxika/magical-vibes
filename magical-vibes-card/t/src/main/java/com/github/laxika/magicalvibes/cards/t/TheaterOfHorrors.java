@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -33,7 +33,7 @@ public class TheaterOfHorrors extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}",
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1, PlayerRelation.OPPONENT)),
+                List.of(DealDamageEffect.toTargetOpponentOrPlaneswalker(1)),
                 "{3}{R}: This enchantment deals 1 damage to target opponent or planeswalker.",
                 new AnyTargetPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,6 +20,6 @@ public class SizzlingBarrage extends Card {
                         new PermanentBlockedThisTurnPredicate()
                 )),
                 "Target must be a creature that blocked this turn"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(4));
     }
 }

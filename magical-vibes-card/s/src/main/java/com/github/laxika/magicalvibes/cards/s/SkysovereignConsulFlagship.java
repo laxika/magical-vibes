@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -40,8 +40,8 @@ public class SkysovereignConsulFlagship extends Card {
                 targetRestriction,
                 "Target must be a creature or planeswalker an opponent controls");
 
-        DealDamageToTargetCreatureOrPlaneswalkerEffect damage =
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(3, targetRestriction);
+        DealDamageEffect damage =
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(3, targetRestriction);
         target(targetFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), damage);
         addTrigger(Triggers.attacks(), damage);
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class KeldonMegaliths extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}",
-                List.of(new DealDamageToAnyTargetEffect(1)),
+                List.of(DealDamageEffect.toAnyTarget(1)),
                 "Hellbent — {1}{R}, {T}: This land deals 1 damage to any target. Activate only if you have no cards in hand."
         ).withMaxCardsInHand(0));
     }

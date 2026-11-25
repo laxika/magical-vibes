@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,8 +18,8 @@ public class CinderStrike extends Card {
         addCastingCost(new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1, true));
 
         SpellTarget creatureTarget = target(TargetFilters.creature());
-        creatureTarget.addSpellEffect(new ConditionalEffect(new PutCounterCostPaid(), new DealDamageToTargetCreatureEffect(4)));
+        creatureTarget.addSpellEffect(new ConditionalEffect(new PutCounterCostPaid(), DealDamageEffect.toTargetCreature(4)));
         creatureTarget.addSpellEffect(new ConditionalEffect(new NotCondition(new PutCounterCostPaid()),
-                        new DealDamageToTargetCreatureEffect(2)));
+                        DealDamageEffect.toTargetCreature(2)));
     }
 }

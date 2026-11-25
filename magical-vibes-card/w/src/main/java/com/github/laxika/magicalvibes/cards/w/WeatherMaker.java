@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -40,7 +40,7 @@ public class WeatherMaker extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(3, CounterType.CHARGE),
-                        new DealDamageToAnyTargetEffect(3)
+                        DealDamageEffect.toAnyTarget(3)
                 ),
                 "{T}, Remove three charge counters from this artifact: It deals 3 damage to any target."
         ));

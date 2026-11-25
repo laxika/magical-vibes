@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -33,7 +33,7 @@ public class MizziumMortars extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{R}{R}{R}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new DealDamageToTargetCreatureEffect(4),
+                DealDamageEffect.toTargetCreature(4),
                 new MassDamageEffect(4, false, false,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
         target(TargetFilters.creatureAnOpponentControls());

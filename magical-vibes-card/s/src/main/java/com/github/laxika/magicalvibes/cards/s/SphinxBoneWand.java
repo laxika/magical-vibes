@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -32,7 +32,7 @@ public class SphinxBoneWand extends Card {
                 new MayEffect(SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.CHARGE),
                         new ConditionalEffect(new SourceIsOnBattlefield(),
-                                new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE)))
+                                DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.CHARGE)))
                 ), "Put a charge counter on Sphinx-Bone Wand?"));
     }
 }

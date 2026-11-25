@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -41,7 +41,7 @@ public class SorinVengefulBloodlord extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(1)),
                 "+2: Sorin deals 1 damage to target player or planeswalker."));
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(

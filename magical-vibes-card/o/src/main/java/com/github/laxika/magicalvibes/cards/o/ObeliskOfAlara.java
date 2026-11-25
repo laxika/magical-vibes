@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -35,7 +35,7 @@ public class ObeliskOfAlara extends Card {
 
         // {1}{R}, {T}: This artifact deals 3 damage to target player or planeswalker.
         addActivatedAbility(new ActivatedAbility(true, "{1}{R}",
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(3)),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(3)),
                 "{1}{R}, {T}: This artifact deals 3 damage to target player or planeswalker."));
 
         // {1}{G}, {T}: Target creature gets +4/+4 until end of turn.

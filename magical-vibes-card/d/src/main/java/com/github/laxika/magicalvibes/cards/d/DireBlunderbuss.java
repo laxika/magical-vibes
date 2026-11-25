@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -24,7 +24,7 @@ public class DireBlunderbuss extends Card {
                 new MayEffect(
                         new SacrificePermanentThenEffect(
                                 new PermanentIsArtifactPredicate(),
-                                new DealDamageToTargetCreatureEffect(new SourcePower()),
+                                DealDamageEffect.toTargetCreature(new SourcePower()),
                                 "an artifact other than Dire Blunderbuss").excludingGrantingPermanent(),
                         "Sacrifice an artifact other than Dire Blunderbuss?")),
                 Subjects.attachedCreature()));

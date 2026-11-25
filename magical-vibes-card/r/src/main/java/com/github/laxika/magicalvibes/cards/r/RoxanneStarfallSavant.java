@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class RoxanneStarfallSavant extends Card {
             Set.of(),
             false,
             true,
-            List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(2))),
+            List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(2))),
             List.of(ManaAbilities.tapForAnyColor()),
             false,
             false,

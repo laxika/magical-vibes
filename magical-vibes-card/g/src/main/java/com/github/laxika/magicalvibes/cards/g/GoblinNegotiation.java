@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class GoblinNegotiation extends Card {
 
     public GoblinNegotiation() {
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(new XValue()))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(new XValue()))
                 .addSpellEffect(new CreateTokenEffect(new EventValue(), "Goblin", 1, 1,
                         CardColor.RED, List.of(CardSubtype.GOBLIN), Set.of(), Set.of()));
     }

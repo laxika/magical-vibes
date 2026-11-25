@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -26,8 +26,7 @@ public class CollisionCourse extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Collision Course deals X damage to target creature",
-                        new DealDamageToTargetCreatureEffect(
-                                new PermanentCount(creatureOrVehicle, CountScope.CONTROLLER)),
+                        DealDamageEffect.toTargetCreature(new PermanentCount(creatureOrVehicle, CountScope.CONTROLLER)),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact",

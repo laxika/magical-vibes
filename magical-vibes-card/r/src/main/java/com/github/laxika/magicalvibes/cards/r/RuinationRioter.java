@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +18,7 @@ public class RuinationRioter extends Card {
         CardsInGraveyard landsInGraveyard = new CardsInGraveyard(
                 new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
-                new DealDamageToAnyTargetEffect(landsInGraveyard),
+                DealDamageEffect.toAnyTarget(landsInGraveyard),
                 "Have Ruination Rioter deal damage to any target?"));
     }
 }

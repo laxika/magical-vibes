@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -24,6 +24,6 @@ public class Fireblast extends Card {
                 new SacrificePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)))));
 
         // Fireblast deals 4 damage to any target.
-        addSpellEffect(new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(DealDamageEffect.toAnyTarget(4));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.g.GokaTheUnjust;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,7 +27,7 @@ public class InitiateOfBlood extends Card {
                 true,
                 null,
                 List.of(
-                        new DealDamageToTargetCreatureEffect(1),
+                        DealDamageEffect.toTargetCreature(1),
                         new ResolveEffectOnTargetDeathThisTurnEffect(new TransformToBackFaceEffect(true))
                 ),
                 "{T}: Initiate of Blood deals 1 damage to target creature that was dealt damage this turn. "

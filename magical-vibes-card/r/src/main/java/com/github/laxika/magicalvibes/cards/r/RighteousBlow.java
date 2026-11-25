@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -26,6 +26,6 @@ public class RighteousBlow extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(2));
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(2));
     }
 }

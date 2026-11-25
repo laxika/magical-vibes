@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class YouHearSomethingOnWatch extends Card {
                         new BoostAllOwnCreaturesEffect(1, 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "This spell deals 5 damage to target attacking creature",
-                        new DealDamageToTargetCreatureEffect(5),
+                        DealDamageEffect.toTargetCreature(5),
                         TargetFilters.attackingCreature())
         )));
     }

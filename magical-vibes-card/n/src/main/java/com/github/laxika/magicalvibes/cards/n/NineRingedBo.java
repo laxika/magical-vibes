@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,7 +23,7 @@ public class NineRingedBo extends Card {
                 true,
                 null,
                 List.of(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect(),
-                        new DealDamageToTargetCreatureEffect(1)),
+                        DealDamageEffect.toTargetCreature(1)),
                 "{T}: This artifact deals 1 damage to target Spirit creature. If that creature would die this turn, exile it instead.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

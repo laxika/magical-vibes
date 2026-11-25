@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -11,6 +11,6 @@ public class DevourInFlames extends Card {
 
     public DevourInFlames() {
         addCastingCost(new ReturnPermanentToHandCost(new PermanentIsLandPredicate()));
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(5));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(5));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class FlamingTyrannosaurus extends Card {
         // Paradox — Whenever you cast a spell from anywhere other than your hand, this creature
         // deals 3 damage to any target. Then put a +1/+1 counter on this creature.
         List<CardEffect> paradox = List.of(
-                new DealDamageToAnyTargetEffect(3),
+                DealDamageEffect.toAnyTarget(3),
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND), paradox.toArray(CardEffect[]::new));
 

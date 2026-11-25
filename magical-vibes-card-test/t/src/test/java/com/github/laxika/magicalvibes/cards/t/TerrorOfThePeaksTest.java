@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TerrorOfThePeaks.class, HillGiant.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({TerrorOfThePeaks.class, HillGiant.class, GrizzlyBears.class, LightningBolt.class, VampireNighthawk.class})
 class TerrorOfThePeaksTest extends BaseCardTest {
 
     @Test
@@ -188,5 +189,24 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(spell));
         harness.addMana(player2, color, amount);
+    }
+
+    @Test
+    @DisplayName("Terror of the Peaks deals the damage, not the entering creature: the entering creature's lifelink gains no life")
+    void terrorOfThePeaksIsTheSourceOfTheDamage() {
+        harness.addToBattlefield(player1, new TerrorOfThePeaks());
+        harness.setHand(player1, List.of(new VampireNighthawk()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        UUID terrorId = harness.getPermanentId(player1, "Terror of the Peaks");
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(terrorId, 0)).isEqualTo(2);
     }
 }

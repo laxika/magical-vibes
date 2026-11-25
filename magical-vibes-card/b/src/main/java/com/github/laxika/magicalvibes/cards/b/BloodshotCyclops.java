@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class BloodshotCyclops extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, true),
-                        new DealDamageToAnyTargetEffect(new XValue())
+                        DealDamageEffect.toAnyTarget(new XValue())
                 ),
                 "{T}, Sacrifice a creature: Bloodshot Cyclops deals damage equal to the "
                         + "sacrificed creature's power to any target."

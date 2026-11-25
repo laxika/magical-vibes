@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -55,7 +55,7 @@ public class KarnLivingLegacy extends Card {
                                 null,
                                 List.of(
                                         new TapMultiplePermanentsCost(1, new PermanentIsArtifactPredicate()),
-                                        new DealDamageToAnyTargetEffect(1)),
+                                        DealDamageEffect.toAnyTarget(1)),
                                 "Tap an untapped artifact you control: This emblem deals 1 damage to any target."
                         )))),
                 "\u22127: You get an emblem with \"Tap an untapped artifact you control: This emblem deals "

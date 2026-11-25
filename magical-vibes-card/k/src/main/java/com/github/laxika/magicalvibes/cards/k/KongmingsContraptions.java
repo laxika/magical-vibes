@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public class KongmingsContraptions extends Card {
 
     public KongmingsContraptions() {
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToTargetCreatureEffect(2)),
+                List.of(DealDamageEffect.toTargetCreature(2)),
                 "{T}: This creature deals 2 damage to target attacking creature. Activate only during the "
                         + "declare attackers step and only if you've been attacked this step.",
                 TargetFilters.attackingCreature(),

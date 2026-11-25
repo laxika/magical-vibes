@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +29,7 @@ public class CollisionColossus extends Card {
                 flyingCreature, "Target must be a creature with flying.");
         TargetFilter creatureTarget = TargetFilters.creature();
 
-        CardEffect collision = new DealDamageToTargetCreatureEffect(6, flyingCreature);
+        CardEffect collision = DealDamageEffect.toTargetCreature(6, flyingCreature);
         List<CardEffect> colossus = List.of(
                 new BoostTargetCreatureEffect(4, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));

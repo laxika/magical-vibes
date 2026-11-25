@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -20,7 +20,7 @@ public class OrcishHellraiser extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
-        )).addTrigger(Triggers.dies(ObjectRelation.THIS), new DealDamageToTargetPlayerOrPlaneswalkerEffect(2));
+        )).addTrigger(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.toTargetPlayerOrPlaneswalker(2));
 
         // Echo {R}.
         addStaticEffect(new EchoEffect("{R}"));

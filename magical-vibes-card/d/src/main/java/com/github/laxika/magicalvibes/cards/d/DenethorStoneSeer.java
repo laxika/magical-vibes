@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -45,8 +45,8 @@ public class DenethorStoneSeer extends Card {
         SpellTarget damageTarget = target(anyTarget);
         BecomeMonarchEffect monarchEffect =
                 new BecomeMonarchEffect(Subjects.targetPlayer(monarchTarget.getIndex()));
-        DealDamageToAnyTargetEffect damageEffect =
-                DealDamageToAnyTargetEffect.forTargetGroup(3, damageTarget.getIndex());
+        DealDamageEffect damageEffect =
+                DealDamageEffect.toAnyTargetInGroup(3, damageTarget.getIndex());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

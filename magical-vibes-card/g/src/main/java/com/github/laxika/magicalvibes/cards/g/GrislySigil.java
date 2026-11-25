@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -40,11 +40,11 @@ public class GrislySigil extends Card {
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentDealtNoncombatDamageThisTurnPredicate()),
                 SequenceEffect.of(
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(1),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(1),
                         new GainLifeEffect(1)
                 ),
                 SequenceEffect.of(
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(3),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(3),
                         new GainLifeEffect(3)
                 )
         ));

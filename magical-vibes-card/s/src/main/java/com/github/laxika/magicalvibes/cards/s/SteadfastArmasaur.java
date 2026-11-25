@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,7 +19,7 @@ public class SteadfastArmasaur extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{W}",
-                List.of(new DealDamageToTargetCreatureEffect(new SourceToughness())),
+                List.of(DealDamageEffect.toTargetCreature(new SourceToughness())),
                 "{1}{W}, {T}: Steadfast Armasaur deals damage equal to its toughness to target creature blocking or blocked by it.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -17,7 +17,7 @@ public class BarrageOgre extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), new DealDamageToAnyTargetEffect(2)),
+                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), DealDamageEffect.toAnyTarget(2)),
                 "{T}, Sacrifice an artifact: Barrage Ogre deals 2 damage to any target."
         ));
     }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -38,7 +38,7 @@ public class SyndicateGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{B}",
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT)),
+                List.of(DealDamageEffect.toTargetOpponentOrPlaneswalker(2)),
                 "{4}{B}, {T}: This creature deals 2 damage to target opponent or planeswalker.",
                 new AnyTargetPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -18,7 +18,7 @@ public class OrcishBloodpainter extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "Sacrifice a creature", false),
-                        new DealDamageToAnyTargetEffect(1)
+                        DealDamageEffect.toAnyTarget(1)
                 ),
                 "{T}, Sacrifice a creature: This creature deals 1 damage to any target."
         ));

@@ -374,7 +374,7 @@ void abilityFizzlesWhenTargetRemoved() {
 
 ## Recipe: dies → targeted trigger (any target — creature or player)
 
-Variant for cards like Perilous Myr, Pitchburn Devils — `DealDamageToAnyTargetEffect` allows choosing a creature OR a player.
+Variant for cards like Perilous Myr, Pitchburn Devils — `DealDamageEffect` allows choosing a creature OR a player.
 
 The combat-death helper and creature-target tests are identical to the creature-only recipe above. The difference is the player-targeting tests:
 

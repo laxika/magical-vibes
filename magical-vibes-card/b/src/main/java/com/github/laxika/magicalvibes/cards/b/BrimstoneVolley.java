@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "132")
 @CardRegistration(set = "SIS", collectorNumber = "38")
@@ -15,8 +15,8 @@ public class BrimstoneVolley extends Card {
         // Brimstone Volley deals 3 damage to any target.
         // Morbid — Brimstone Volley deals 5 damage instead if a creature died this turn.
         addSpellEffect(new ConditionalReplacementEffect(new Morbid(), 
-                new DealDamageToAnyTargetEffect(3),
-                new DealDamageToAnyTargetEffect(5)
+                DealDamageEffect.toAnyTarget(3),
+                DealDamageEffect.toAnyTarget(5)
         ));
     }
 }

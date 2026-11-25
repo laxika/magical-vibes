@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -19,8 +18,8 @@ public class BurningSunsAvatar extends Card {
         setAllowSharedTargets(true);
 
         // Deals 3 damage to target opponent or planeswalker
-        DealDamageToTargetPlayerOrPlaneswalkerEffect opponentDamage =
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT);
+        DealDamageEffect opponentDamage =
+                DealDamageEffect.toTargetOpponentOrPlaneswalker(3);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
@@ -28,7 +27,7 @@ public class BurningSunsAvatar extends Card {
         )).bindEffect(opponentDamage);
 
         // Deals 3 damage to up to one target creature
-        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(3);
+        DealDamageEffect creatureDamage = DealDamageEffect.toTargetCreature(3);
         target(TargetFilters.creature(), 0, 1).bindEffect(creatureDamage);
         addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS), opponentDamage, creatureDamage);
     }

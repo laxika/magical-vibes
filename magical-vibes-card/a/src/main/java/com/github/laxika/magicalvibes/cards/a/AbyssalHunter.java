@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 
@@ -24,7 +24,7 @@ public class AbyssalHunter extends Card {
                 "{B}",
                 List.of(
                         new TapPermanentsEffect(Subjects.target()),
-                        new DealDamageToTargetCreatureEffect(new SourcePower())
+                        DealDamageEffect.toTargetCreature(new SourcePower())
                 ),
                 "{B}, {T}: Tap target creature. This creature deals damage equal to its power to that creature.",
                 TargetFilters.creature()

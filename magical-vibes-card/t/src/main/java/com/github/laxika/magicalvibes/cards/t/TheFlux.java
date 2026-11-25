@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -27,7 +27,7 @@ public class TheFlux extends Card {
     ));
 
     public TheFlux() {
-        addTrigger(Triggers.chapter(1), new DealDamageToTargetCreatureEffect(4, OPPONENT_CREATURE));
+        addTrigger(Triggers.chapter(1), DealDamageEffect.toTargetCreature(4, OPPONENT_CREATURE));
         setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(OPPONENT_CREATURE,
                         "Must target a creature an opponent controls")

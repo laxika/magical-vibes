@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -55,7 +55,7 @@ public class LoreholdCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Lorehold Command deals 3 damage to any target. Target player gains 3 life",
                         List.of(
-                                new DealDamageToAnyTargetEffect(3),
+                                DealDamageEffect.toAnyTarget(3),
                                 new GainLifeEffect(3, Subjects.targetPlayer())),
                         List.of(anyTarget, new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),

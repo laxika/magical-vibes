@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class MercurialChemister extends Card {
         addActivatedAbility(new ActivatedAbility(true, "{R}",
                 List.of(
                         new DiscardCardTypeCost(null, null, false, 1, false, true),
-                        new DealDamageToTargetCreatureEffect(new XValue())),
+                        DealDamageEffect.toTargetCreature(new XValue())),
                 "{R}, {T}, Discard a card: This creature deals damage to target creature equal to the discarded card's mana value.",
                 TargetFilters.creature()));
     }

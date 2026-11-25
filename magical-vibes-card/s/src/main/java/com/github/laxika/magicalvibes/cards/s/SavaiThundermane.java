@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -16,7 +16,7 @@ public class SavaiThundermane extends Card {
         addTrigger(Triggers.youCycleCard(),
                 new MayPayManaEffect("{2}",
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
-                                new DealDamageToTargetCreatureEffect(2),
+                                DealDamageEffect.toTargetCreature(2),
                                 new GainLifeEffect(2))),
                         "Pay {2} to deal 2 damage to target creature and gain 2 life?"));
     }

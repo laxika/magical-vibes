@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,8 +20,7 @@ public class GempalmIncinerator extends Card {
 
     public GempalmIncinerator() {
         addTrigger(Triggers.youCycleThisCard(), new MayEffect(
-                new DealDamageToTargetCreatureEffect(
-                        new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN), CountScope.ANY_PLAYER)),
+                DealDamageEffect.toTargetCreature(new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN), CountScope.ANY_PLAYER)),
                 "Have Gempalm Incinerator deal damage equal to the number of Goblins on the battlefield?"));
         addCycling("{1}{R}");
     }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +21,7 @@ public class ThreeBowlsOfPorridge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 COST,
-                List.of(new DealDamageToTargetCreatureEffect(2)),
+                List.of(DealDamageEffect.toTargetCreature(2)),
                 "{2}, {T}: This artifact deals 2 damage to target creature."
         ).withMaxActivationsPerGame(1));
 

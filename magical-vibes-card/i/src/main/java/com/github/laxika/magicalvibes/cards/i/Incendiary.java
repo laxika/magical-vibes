@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -37,6 +37,6 @@ public class Incendiary extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"))
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.FUSE)));
+                        DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.FUSE)));
     }
 }

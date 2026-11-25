@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class PainKami extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(new XValue())),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(new XValue())),
                 "{X}{R}, Sacrifice Pain Kami: It deals X damage to target creature."
         ));
     }

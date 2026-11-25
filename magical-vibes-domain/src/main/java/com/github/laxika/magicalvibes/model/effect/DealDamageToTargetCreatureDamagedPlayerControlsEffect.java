@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * of their choice that player controls instead": deals {@code damage} to a creature the spell's target player (or the
  * target planeswalker's controller) controls, chosen as the spell resolves, by that player when
  * {@code targetPlayerChooses}, else by the spell's controller. A triggered ability's "deals damage to target creature
- * that player controls" is {@link DealDamageToTargetCreatureEffect} with a
+ * that player controls" is {@link DealDamageEffect} with a
  * {@code PermanentControlledByTriggeringPlayerPredicate}.
  */
 public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage,

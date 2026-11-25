@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -36,7 +36,7 @@ public class TajuruArcher extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new MayEffect(new DealDamageToTargetCreatureEffect(allies, false, flyingCreature),
+                new MayEffect(DealDamageEffect.toTargetCreature(allies, flyingCreature),
                         "Have Tajuru Archer deal damage to target creature with flying?"));
     }
 }

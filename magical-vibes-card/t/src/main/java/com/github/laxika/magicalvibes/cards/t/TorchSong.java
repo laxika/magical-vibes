@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -28,7 +28,7 @@ public class TorchSong extends Card {
                 "{2}{R}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.VERSE))
+                        DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.VERSE))
                 ),
                 "{2}{R}, Sacrifice Torch Song: It deals X damage to any target, where X is the number of verse counters on it."
         ));

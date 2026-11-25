@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
 import com.github.laxika.magicalvibes.cards.d.DragonEgg;
 import com.github.laxika.magicalvibes.cards.d.DragonlordDromoka;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WrathfulRedDragon.class, DragonEgg.class, DragonlordDromoka.class, GrizzlyBears.class, Shock.class})
+@CardUsed({WrathfulRedDragon.class, DragonEgg.class, DragonlordDromoka.class, GrizzlyBears.class, Shock.class, FurnaceWhelp.class})
 class WrathfulRedDragonTest extends BaseCardTest {
 
     @Test
@@ -124,5 +125,22 @@ class WrathfulRedDragonTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A Dragon destroyed by the damage still deals the reflected damage as it last existed")
+    void lethallyDamagedDragonStillDealsTheReflectedDamage() {
+        harness.addToBattlefield(player1, new WrathfulRedDragon());
+        harness.addToBattlefield(player1, new FurnaceWhelp());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Furnace Whelp"));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Furnace Whelp");
+        harness.assertLife(player2, 18);
     }
 }

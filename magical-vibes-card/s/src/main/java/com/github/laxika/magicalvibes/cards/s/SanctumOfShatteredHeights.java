@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -34,7 +34,7 @@ public class SanctumOfShatteredHeights extends Card {
                         new DiscardCardTypeCost(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.LAND),
                                 new CardSubtypePredicate(CardSubtype.SHRINE))), "land or Shrine"),
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(shrinesYouControl)
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(shrinesYouControl)
                 ),
                 "{1}, Discard a land card or Shrine card: Sanctum of Shattered Heights deals X damage to target creature or planeswalker, where X is the number of Shrines you control.",
                 new PermanentPredicateTargetFilter(

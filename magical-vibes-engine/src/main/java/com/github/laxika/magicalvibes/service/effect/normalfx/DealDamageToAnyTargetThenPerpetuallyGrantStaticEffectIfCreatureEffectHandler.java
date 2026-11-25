@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectIfCreatureEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final DealDamageToAnyTargetEffectHandler damageHandler;
+    private final DealDamageEffectHandler damageHandler;
     private final PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler staticEffectHandler;
     private final GameQueryService gameQueryService;
 
@@ -36,7 +36,7 @@ public class DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectIfCreatureEffe
             return;
         }
 
-        damageHandler.resolve(gameData, entry, new DealDamageToAnyTargetEffect(combined.damage()));
+        damageHandler.resolve(gameData, entry, DealDamageEffect.toAnyTarget(combined.damage()));
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null && gameQueryService.isCreature(gameData, target)) {

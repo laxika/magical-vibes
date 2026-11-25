@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ForetellCast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -21,7 +21,7 @@ public class IronVerdict extends Card {
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(5));
         addCastingOption(new ForetellCast("{W}"));
     }
 }

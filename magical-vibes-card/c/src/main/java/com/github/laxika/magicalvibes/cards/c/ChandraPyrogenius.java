@@ -4,10 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -27,14 +26,14 @@ public class ChandraPyrogenius extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new DealDamageToTargetCreatureEffect(4)),
+                List.of(DealDamageEffect.toTargetCreature(4)),
                 "\u22123: Chandra deals 4 damage to target creature."
         ));
 
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(SequenceEffect.simultaneous(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(6),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(6),
                         DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new Fixed(6)))),
                 "\u221210: Chandra deals 6 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls.",
                 new PermanentPredicateTargetFilter(

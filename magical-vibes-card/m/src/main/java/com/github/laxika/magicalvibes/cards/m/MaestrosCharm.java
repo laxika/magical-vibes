@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -30,7 +30,7 @@ public class MaestrosCharm extends Card {
                                 new GainLifeEffect(3))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Maestros Charm deals 5 damage to target creature or planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(5),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(5),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

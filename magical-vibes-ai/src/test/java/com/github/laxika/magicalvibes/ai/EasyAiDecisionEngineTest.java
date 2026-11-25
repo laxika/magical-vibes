@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -111,7 +112,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -783,7 +783,7 @@ class EasyAiDecisionEngineTest {
             modalSpell.setManaCost("{R}{W}");
             modalSpell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
-                            new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
+                            new DrawCardEffect(1), DealDamageEffect.toTargetPlayerOrPlaneswalker(1))),
                     new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
             testHarness.setHand(aiTestPlayer, List.of(modalSpell));
 

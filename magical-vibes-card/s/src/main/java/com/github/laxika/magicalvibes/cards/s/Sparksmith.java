@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +24,7 @@ public class Sparksmith extends Card {
                 true,
                 null,
                 List.of(SequenceEffect.simultaneous(
-                        new DealDamageToTargetCreatureEffect(goblinCount),
+                        DealDamageEffect.toTargetCreature(goblinCount),
                         new DealDamageToPlayersEffect(goblinCount, Subjects.you())
                 )),
                 "{T}: This creature deals X damage to target creature and X damage to you, where X is the number of Goblins on the battlefield."

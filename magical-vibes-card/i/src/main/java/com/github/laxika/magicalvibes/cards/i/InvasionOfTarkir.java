@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -22,8 +22,7 @@ public class InvasionOfTarkir extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new RevealAnyNumberOfCardsFromHandEffect(new CardSubtypePredicate(CardSubtype.DRAGON)),
-                new QueueReflexiveAbilityEffect(DealDamageToAnyTargetEffect.toAnyOtherTarget(
-                        new Sum(new Fixed(2), new EventValue()))));
+                new QueueReflexiveAbilityEffect(DealDamageEffect.toAnyOtherTarget(new Sum(new Fixed(2), new EventValue()))));
     }
 
     @Override

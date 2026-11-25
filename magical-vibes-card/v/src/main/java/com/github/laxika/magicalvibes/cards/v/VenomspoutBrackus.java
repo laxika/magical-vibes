@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -23,7 +23,7 @@ public class VenomspoutBrackus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{G}",
-                List.of(new DealDamageToTargetCreatureEffect(5)),
+                List.of(DealDamageEffect.toTargetCreature(5)),
                 "{1}{G}, {T}: This creature deals 5 damage to target attacking or blocking creature with flying.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

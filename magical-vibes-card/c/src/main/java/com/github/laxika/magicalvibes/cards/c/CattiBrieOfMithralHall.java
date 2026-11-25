@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,7 +36,7 @@ public class CattiBrieOfMithralHall extends Card {
                 "{1}",
                 List.of(
                         new RemoveAllCountersAsCostEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToTargetCreatureEffect(new XValue())
+                        DealDamageEffect.toTargetCreature(new XValue())
                 ),
                 "{1}, Remove all +1/+1 counters from Catti-brie: It deals X damage to target attacking or blocking creature an opponent controls, where X is the number of counters removed this way.",
                 new PermanentPredicateTargetFilter(

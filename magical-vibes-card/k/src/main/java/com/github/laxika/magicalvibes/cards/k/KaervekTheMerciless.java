@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TSP", collectorNumber = "242")
@@ -16,6 +16,6 @@ public class KaervekTheMerciless extends Card {
 
     public KaervekTheMerciless() {
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
-                new DealDamageToAnyTargetEffect(new TargetSpellManaValue()));
+                DealDamageEffect.toAnyTarget(new TargetSpellManaValue()));
     }
 }

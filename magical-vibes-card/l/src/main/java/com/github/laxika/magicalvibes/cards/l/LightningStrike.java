@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "149")
 @CardRegistration(set = "M15", collectorNumber = "155")
@@ -17,6 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 public class LightningStrike extends Card {
 
     public LightningStrike() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(DealDamageEffect.toAnyTarget(3));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ import java.util.List;
 public class SummonKujata extends Card {
 
     public SummonKujata() {
-        addTrigger(Triggers.chapter(1), new DealDamageToTargetCreatureEffect(3));
+        addTrigger(Triggers.chapter(1), DealDamageEffect.toTargetCreature(3));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2)));
 

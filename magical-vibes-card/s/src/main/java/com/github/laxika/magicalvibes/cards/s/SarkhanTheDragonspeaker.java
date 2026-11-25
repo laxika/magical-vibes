@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -43,7 +43,7 @@ public class SarkhanTheDragonspeaker extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new DealDamageToTargetCreatureEffect(4)),
+                List.of(DealDamageEffect.toTargetCreature(4)),
                 "\u22123: Sarkhan deals 4 damage to target creature."
         ));
 

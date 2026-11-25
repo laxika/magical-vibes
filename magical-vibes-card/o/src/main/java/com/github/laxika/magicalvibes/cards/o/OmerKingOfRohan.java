@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -45,7 +45,7 @@ public class OmerKingOfRohan extends Card {
                 "Target must be a player"))
                 .bindEffect(targetPlayerBecomesMonarch);
 
-        var dealDamageToAnyTarget = DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower());
+        var dealDamageToAnyTarget = DealDamageEffect.toAnyTarget(new SourcePower());
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

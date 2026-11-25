@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +25,7 @@ public class ArceeSharpshooter extends Card {
                 "{1}",
                 List.of(
                         new RemoveOneOrMoreCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToTargetCreatureEffect(new XValue()),
+                        DealDamageEffect.toTargetCreature(new XValue()),
                         new TransformSelfEffect()
                 ),
                 "{1}, Remove one or more +1/+1 counters from Arcee: It deals that much damage to target creature. Convert Arcee.",

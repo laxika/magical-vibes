@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -25,7 +25,7 @@ public class SlagStrider extends Card {
                 false,
                 "{1}",
                 List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
-                        new DealDamageToAnyTargetEffect(1)),
+                        DealDamageEffect.toAnyTarget(1)),
                 "{1}, Sacrifice an artifact: Slag Strider deals 1 damage to any target."
         ));
     }

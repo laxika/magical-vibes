@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -20,7 +20,7 @@ public class ElectrostaticBlast extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public ElectrostaticBlast() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(DealDamageEffect.toAnyTarget(2));
         addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                 INSTANT_OR_SORCERY,
                 List.of(new ExileTopCardMayPlayThisTurnEffect(3, false).upTo(1))));

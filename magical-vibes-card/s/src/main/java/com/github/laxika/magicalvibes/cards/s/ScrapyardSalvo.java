@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -21,7 +21,6 @@ public class ScrapyardSalvo extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
-        )).addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                new CardsInGraveyard(new CardTypePredicate(CardType.ARTIFACT), CountScope.CONTROLLER)));
+        )).addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(new CardsInGraveyard(new CardTypePredicate(CardType.ARTIFACT), CountScope.CONTROLLER)));
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerControlsCreaturesThenPerpetuallyBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsHandThenSeeksEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -36,7 +36,7 @@ public class ChaosBalor extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Chaos Balor deals 2 damage to target player and they create two Treasure tokens.",
                         List.of(
-                                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),
+                                DealDamageEffect.toTargetPlayerOrPlaneswalker(2),
                                 new CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofTreasureToken(2))),
                         playerTarget),
                 new ChooseOneEffect.ChooseOneOption(

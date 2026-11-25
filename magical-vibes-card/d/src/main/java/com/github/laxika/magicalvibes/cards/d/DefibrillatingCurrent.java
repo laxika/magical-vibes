@@ -2,14 +2,14 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "TDM", collectorNumber = "177")
 public class DefibrillatingCurrent extends Card {
 
     public DefibrillatingCurrent() {
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(4));
         addSpellEffect(new GainLifeEffect(2));
     }
 }

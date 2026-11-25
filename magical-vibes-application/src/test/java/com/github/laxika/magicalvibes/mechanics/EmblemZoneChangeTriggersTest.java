@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -72,7 +72,7 @@ class EmblemZoneChangeTriggersTest extends BaseCardTest {
     @Test
     @DisplayName("A targeted emblem enters ability queues its target choice carrying the entering permanent")
     void targetedEmblemEntersAbilityQueuesItsTargetChoice() {
-        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(3);
+        DealDamageEffect damage = DealDamageEffect.toAnyTarget(3);
         Card source = emblemOf(player1.getId(), new TriggeredAbility(
                 Triggers.enters(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL), damage));
 

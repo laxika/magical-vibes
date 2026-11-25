@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class SpikeshotGoblin extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
+                List.of(DealDamageEffect.toAnyTarget(new SourcePower())),
                 "{R}, {T}: This creature deals damage equal to its power to any target."
         ));
     }

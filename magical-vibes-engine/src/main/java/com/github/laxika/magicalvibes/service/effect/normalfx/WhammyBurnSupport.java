@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.WhammyBurnContinuationEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
@@ -79,7 +79,7 @@ public class WhammyBurnSupport {
         if (entry == null) {
             throw new IllegalStateException("Whammy Burn continuation has no parked spell resolution");
         }
-        List<CardEffect> damageEffect = List.of(new DealDamageToAnyTargetEffect(damage));
+        List<CardEffect> damageEffect = List.of(DealDamageEffect.toAnyTarget(damage));
         entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, damageEffect);
     }
 }

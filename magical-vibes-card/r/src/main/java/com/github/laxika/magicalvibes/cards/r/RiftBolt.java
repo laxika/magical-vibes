@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 public class RiftBolt extends Card {
 
     public RiftBolt() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(DealDamageEffect.toAnyTarget(3));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{R}",

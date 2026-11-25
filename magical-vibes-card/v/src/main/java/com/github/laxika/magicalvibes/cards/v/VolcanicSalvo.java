@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,6 @@ public class VolcanicSalvo extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
                 "Targets must be creatures or planeswalkers"), 0, 2)
-                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                        new Fixed(6)));
+                .addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new Fixed(6)));
     }
 }

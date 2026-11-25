@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -25,8 +25,8 @@ public class SummaryJudgment extends Card {
                 "Target must be a tapped creature"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new CastDuringMainPhase(),
-                new DealDamageToTargetCreatureEffect(3),
-                new DealDamageToTargetCreatureEffect(5)
+                DealDamageEffect.toTargetCreature(3),
+                DealDamageEffect.toTargetCreature(5)
         ));
     }
 }

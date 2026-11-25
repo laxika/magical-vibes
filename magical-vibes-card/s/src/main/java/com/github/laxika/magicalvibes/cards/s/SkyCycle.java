@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,7 +25,7 @@ public class SkyCycle extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE), CountScope.CONTROLLER);
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DealDamageToTargetCreatureEffect(new Scaled(vehiclesYouControl, 2)));
+                        DealDamageEffect.toTargetCreature(new Scaled(vehiclesYouControl, 2)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

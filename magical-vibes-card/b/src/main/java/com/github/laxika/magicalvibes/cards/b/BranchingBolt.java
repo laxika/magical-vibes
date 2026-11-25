@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,19 +38,19 @@ public class BranchingBolt extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Branching Bolt deals 3 damage to target creature with flying",
-                        new DealDamageToTargetCreatureEffect(3),
+                        DealDamageEffect.toTargetCreature(3),
                         creatureWithFlying
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Branching Bolt deals 3 damage to target creature without flying",
-                        new DealDamageToTargetCreatureEffect(3),
+                        DealDamageEffect.toTargetCreature(3),
                         creatureWithoutFlying
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Branching Bolt deals 3 damage to target creature with flying and target creature without flying",
                         List.<CardEffect>of(
-                                new DealDamageToTargetCreatureEffect(3),
-                                new DealDamageToTargetCreatureEffect(3)
+                                DealDamageEffect.toTargetCreature(3),
+                                DealDamageEffect.toTargetCreature(3)
                         ),
                         List.of(creatureWithFlying, creatureWithoutFlying)
                 )

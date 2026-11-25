@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -37,7 +37,7 @@ public class GarrukRelentless extends Card {
         // That creature deals damage equal to its power to him.
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new DealDamageToTargetCreatureEffect(3),
+                List.of(DealDamageEffect.toTargetCreature(3),
                         new TargetDealsPowerDamageToTargetEffect(Subjects.target(), Subjects.source())),
                 "0: Garruk Relentless deals 3 damage to target creature. That creature deals damage equal to its power to him.",
                 TargetFilters.creature()

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -25,7 +25,7 @@ public class UginTheSpiritDragon extends Card {
     public UginTheSpiritDragon() {
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new DealDamageToAnyTargetEffect(3)),
+                List.of(DealDamageEffect.toAnyTarget(3)),
                 "+2: Ugin deals 3 damage to any target."
         ));
 

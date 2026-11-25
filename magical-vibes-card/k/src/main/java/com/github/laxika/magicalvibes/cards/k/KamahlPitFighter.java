@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "214")
 @CardRegistration(set = "ODY", collectorNumber = "198")
@@ -15,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class KamahlPitFighter extends Card {
 
     public KamahlPitFighter() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(3)), "{T}: Kamahl, Pit Fighter deals 3 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(DealDamageEffect.toAnyTarget(3)), "{T}: Kamahl, Pit Fighter deals 3 damage to any target."));
     }
 }

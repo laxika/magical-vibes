@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -33,7 +33,7 @@ public class TinderWall extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(2)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(2)),
                 "{R}, Sacrifice Tinder Wall: It deals 2 damage to target creature it's blocking.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
@@ -18,7 +18,7 @@ public class NeedleDrop extends Card {
                 new PermanentDealtDamageThisTurnPredicate(),
                 new PlayerDealtDamageThisTurnPredicate(),
                 "Target must have been dealt damage this turn"
-        )).addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        )).addSpellEffect(DealDamageEffect.toAnyTarget(1));
 
         addSpellEffect(new DrawCardEffect(1));
     }

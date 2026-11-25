@@ -4,13 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "EOE", collectorNumber = "152")
 public class PlasmaBolt extends Card {
 
     public PlasmaBolt() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(
-                new FixedIfCondition(new VoidCondition(), 3, 2)));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new FixedIfCondition(new VoidCondition(), 3, 2)));
     }
 }

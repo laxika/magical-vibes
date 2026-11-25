@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -27,7 +27,7 @@ public class ChamberSentry extends Card {
                 "{X}",
                 List.of(
                         new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToAnyTargetEffect(new XValue())
+                        DealDamageEffect.toAnyTarget(new XValue())
                 ),
                 "{X}, {T}, Remove X +1/+1 counters from this creature: It deals X damage to any target."
         ));

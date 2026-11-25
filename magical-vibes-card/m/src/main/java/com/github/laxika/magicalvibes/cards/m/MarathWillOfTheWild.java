@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
@@ -53,7 +53,7 @@ public class MarathWillOfTheWild extends Card {
                 false,
                 "{X}",
                 List.of(new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToAnyTargetEffect(new XValue())),
+                        DealDamageEffect.toAnyTarget(new XValue())),
                 costText + "Marath deals X damage to any target." + xCantBeZero,
                 anyTarget
         ).withMinimumXValue(1));

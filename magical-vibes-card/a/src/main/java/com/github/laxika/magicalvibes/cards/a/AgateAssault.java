@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -21,7 +21,7 @@ public class AgateAssault extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Agate Assault deals 4 damage to target creature. If that creature would die this turn, exile it instead",
                         List.of(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect(),
-                                new DealDamageToAnyTargetEffect(new Fixed(4))),
+                                DealDamageEffect.toAnyTarget(new Fixed(4))),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."

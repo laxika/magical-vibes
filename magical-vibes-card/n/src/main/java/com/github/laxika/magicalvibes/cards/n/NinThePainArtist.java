@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class NinThePainArtist extends Card {
                 true,
                 "{X}{U}{R}",
                 List.of(
-                        new DealDamageToTargetCreatureEffect(new XValue()),
+                        DealDamageEffect.toTargetCreature(new XValue()),
                         new DrawCardEffect(new XValue(), Subjects.controllerOf(Subjects.target()))),
                 "{X}{U}{R}, {T}: Nin deals X damage to target creature. That creature's controller draws X cards.",
                 TargetFilters.creature()));

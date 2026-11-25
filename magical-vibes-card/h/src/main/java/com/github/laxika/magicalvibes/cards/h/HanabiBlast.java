@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnThisSpellToHandThenDiscardAtRandomEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "170")
@@ -13,7 +13,7 @@ public class HanabiBlast extends Card {
         // then discard a card at random.
         //
         // The bounce precedes the discard, so the spell itself can be the card discarded at random.
-        addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(DealDamageEffect.toAnyTarget(2));
         addSpellEffect(new ReturnThisSpellToHandThenDiscardAtRandomEffect());
     }
 }

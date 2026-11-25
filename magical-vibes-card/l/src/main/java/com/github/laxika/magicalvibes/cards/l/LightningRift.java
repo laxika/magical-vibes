@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +15,7 @@ public class LightningRift extends Card {
     public LightningRift() {
         addTrigger(Triggers.playerCyclesCard(), new MayPayManaEffect(
                 "{1}",
-                new DealDamageToAnyTargetEffect(2),
+                DealDamageEffect.toAnyTarget(2),
                 "Pay {1} to have Lightning Rift deal 2 damage to any target?"));
     }
 }

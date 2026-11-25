@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.mechanics;
 
 import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.h.Humility;
@@ -32,7 +33,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -246,7 +246,7 @@ class TriggerPipelineTest extends BaseCardTest {
     @Test
     void aTargetedTriggerWaitsForItsTarget() {
         Permanent bears = battlefieldCreatureWith(Triggers.dies(ObjectRelation.THIS),
-                new DealDamageToAnyTargetEffect(2));
+                DealDamageEffect.toAnyTarget(2));
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
 
@@ -255,7 +255,7 @@ class TriggerPipelineTest extends BaseCardTest {
             assertThat(interaction).isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
             PermanentChoiceContext.AttackTriggerTarget target = (PermanentChoiceContext.AttackTriggerTarget) interaction;
             assertThat(target.sourceCard().getId()).isEqualTo(bears.getCard().getId());
-            assertThat(target.effects()).containsExactly(new DealDamageToAnyTargetEffect(2));
+            assertThat(target.effects()).containsExactly(DealDamageEffect.toAnyTarget(2));
             assertThat(target.triggerRecord().isParkedAtStackDoor()).isTrue();
         });
     }

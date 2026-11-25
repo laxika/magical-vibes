@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class NeonatesRush extends Card {
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         // Neonate's Rush deals 1 damage to target creature and 1 damage to its controller. Draw a card.
-        addSimultaneousSpellEffects(new DealDamageToTargetCreatureEffect(1),
+        addSimultaneousSpellEffects(DealDamageEffect.toTargetCreature(1),
                 new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.target())));
         addSpellEffect(new DrawCardEffect(1));
     }

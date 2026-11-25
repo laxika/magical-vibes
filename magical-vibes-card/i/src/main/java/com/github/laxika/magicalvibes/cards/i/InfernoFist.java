@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,7 +32,7 @@ public class InfernoFist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(2)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(2)),
                 "{R}, Sacrifice this Aura: This Aura deals 2 damage to any target.",
                 new AnyTargetPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

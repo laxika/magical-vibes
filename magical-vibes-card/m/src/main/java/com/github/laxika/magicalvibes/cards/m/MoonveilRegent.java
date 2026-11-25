@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +18,6 @@ public class MoonveilRegent extends Card {
         addTrigger(Triggers.youCastSpell().anySpell(),
                 new MayEffect(new DiscardOwnHandThenDrawEffect(new TriggeringSpellColorCount()), "Discard your hand and draw a card for each of that spell's colors?"));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new DealDamageToAnyTargetEffect(new ColorsAmongControlledPermanents()));
+                DealDamageEffect.toAnyTarget(new ColorsAmongControlledPermanents()));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -23,7 +23,7 @@ public class ToralfHammer extends Card {
                         "{1}{R}",
                         List.of(
                                 new UnattachSourceEquipmentCost(),
-                                new DealDamageToAnyTargetEffect(3),
+                                DealDamageEffect.toAnyTarget(3),
                                 ReturnToHandEffect.grantingEquipment()
                         ),
                         "{1}{R}, {T}, Unattach Toralf's Hammer: It deals 3 damage to any target. "

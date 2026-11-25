@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class BurningAnger extends Card {
                         new ActivatedAbility(
                                 true,
                                 null,
-                                List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
+                                List.of(DealDamageEffect.toAnyTarget(new SourcePower())),
                                 "{T}: This creature deals damage equal to its power to any target."
                         ),
                         Subjects.attachedCreature()

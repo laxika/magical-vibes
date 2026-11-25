@@ -47,7 +47,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -527,12 +527,12 @@ class SpellEvaluatorTest {
         // SacrificeSelfCost + DealDamage — only damage should be scored
         List<CardEffect> effects = List.of(
                 new SacrificeSelfCost(),
-                new DealDamageToAnyTargetEffect(1));
+                DealDamageEffect.toAnyTarget(1));
 
         double value = spellEvaluator.evaluateAbilityEffects(gd, effects, player1.getId());
 
         // Should only include the damage value, not the cost
-        // DealDamageToAnyTargetEffect(1) → falls through to evaluateSingleEffect → face damage = 1*1.5
+        // DealDamageEffect(1) → falls through to evaluateSingleEffect → face damage = 1*1.5
         assertThat(value).isGreaterThan(0.0);
     }
 

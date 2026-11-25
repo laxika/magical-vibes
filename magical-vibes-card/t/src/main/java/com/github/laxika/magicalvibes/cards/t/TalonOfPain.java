@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -30,7 +30,7 @@ public class TalonOfPain extends Card {
                 "{X}",
                 List.of(
                         new RemoveXCountersFromSourceCost(CounterType.CHARGE),
-                        new DealDamageToAnyTargetEffect(new XValue())
+                        DealDamageEffect.toAnyTarget(new XValue())
                 ),
                 "{X}, {T}, Remove X charge counters from this artifact: It deals X damage to any target."
         ));

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -40,8 +40,7 @@ public class OmnathLocusOfTheRoil extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a creature, planeswalker, battle, or player"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL), CountScope.CONTROLLER)));
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL), CountScope.CONTROLLER)));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),

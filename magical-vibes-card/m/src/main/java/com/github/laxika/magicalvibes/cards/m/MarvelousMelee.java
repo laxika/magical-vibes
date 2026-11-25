@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
@@ -15,7 +15,7 @@ public class MarvelousMelee extends Card {
 
     public MarvelousMelee() {
         // Marvelous Melee deals 6 damage to target creature.
-        addSpellEffect(new DealDamageToTargetCreatureEffect(6));
+        addSpellEffect(DealDamageEffect.toTargetCreature(6));
 
         // Basic landcycling {2} ({2}, Discard this card: Search your library for a basic land card,
         // reveal it, put it into your hand, then shuffle.)

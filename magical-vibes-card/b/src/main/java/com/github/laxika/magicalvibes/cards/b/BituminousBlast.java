@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "34")
@@ -22,6 +22,6 @@ public class BituminousBlast extends Card {
         addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
 
         // Bituminous Blast deals 4 damage to target creature.
-        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreature(4));
     }
 }

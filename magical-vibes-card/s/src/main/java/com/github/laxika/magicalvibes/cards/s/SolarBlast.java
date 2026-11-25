@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SolarBlast extends Card {
 
     public SolarBlast() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
         addCycling("{1}{R}{R}");
         addTrigger(Triggers.youCycleThisCard(), new MayEffect(
-                new DealDamageToAnyTargetEffect(1), "Deal 1 damage to the chosen target?"));
+                DealDamageEffect.toAnyTarget(1), "Deal 1 damage to the chosen target?"));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -16,8 +16,7 @@ public class PyreSledgeArsonist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new DealDamageToAnyTargetEffect(
-                        new PermanentsSacrificedThisTurn(CountScope.CONTROLLER))),
+                List.of(DealDamageEffect.toAnyTarget(new PermanentsSacrificedThisTurn(CountScope.CONTROLLER))),
                 "{1}, {T}: This creature deals X damage to any target, where X is the number of permanents you've sacrificed this turn."
         ));
     }

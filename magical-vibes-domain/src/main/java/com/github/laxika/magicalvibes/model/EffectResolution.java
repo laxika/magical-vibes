@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,7 +22,6 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -559,9 +559,10 @@ public final class EffectResolution {
             return true;
         }
         boolean dealsConvergeDamage = effects.stream()
-                .filter(DealDamageToTargetCreatureEffect.class::isInstance)
-                .map(DealDamageToTargetCreatureEffect.class::cast)
-                .anyMatch(effect -> effect.damage() instanceof XValue);
+                .filter(DealDamageEffect.class::isInstance)
+                .map(DealDamageEffect.class::cast)
+                .anyMatch(effect -> effect.recipient() == DealDamageEffect.Recipient.CREATURE
+                        && effect.damage() instanceof XValue);
         boolean usesExcessDamage = effects.stream()
                 .filter(ExileTopCardMayPlayThisTurnEffect.class::isInstance)
                 .map(ExileTopCardMayPlayThisTurnEffect.class::cast)
@@ -708,7 +709,7 @@ public final class EffectResolution {
         if (e instanceof EnterWithCountersEffect enterWithCounters) {
             return enterWithCounters.count() instanceof ManaSpentToCast;
         }
-        if (e instanceof DealDamageToTargetCreatureEffect d) {
+        if (e instanceof DealDamageEffect d && d.recipient() == DealDamageEffect.Recipient.CREATURE) {
             return d.damage() instanceof ManaSpentToCast;
         }
         if (e instanceof LookAtTopCardsEffect look) {

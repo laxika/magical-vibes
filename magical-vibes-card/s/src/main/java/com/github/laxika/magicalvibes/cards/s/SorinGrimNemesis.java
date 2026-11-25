@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.HighestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
@@ -39,7 +39,7 @@ public class SorinGrimNemesis extends Card {
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
                 List.of(
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()),
                         new GainLifeEffect(new XValue())
                 ),
                 "−X: Sorin, Grim Nemesis deals X damage to target creature or planeswalker and you gain X life.",

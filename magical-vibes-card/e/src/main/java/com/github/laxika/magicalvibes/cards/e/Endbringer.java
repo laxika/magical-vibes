@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -24,7 +24,7 @@ public class Endbringer extends Card {
                 Subjects.source()));
 
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
+                List.of(DealDamageEffect.toAnyTarget(1)),
                 "{T}: Endbringer deals 1 damage to any target."));
 
         addActivatedAbility(new ActivatedAbility(true, "{C}",

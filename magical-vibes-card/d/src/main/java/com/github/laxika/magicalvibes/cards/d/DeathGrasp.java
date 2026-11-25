@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "95")
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class DeathGrasp extends Card {
 
     public DeathGrasp() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()));
         addSpellEffect(new GainLifeEffect(new XValue()));
     }
 }

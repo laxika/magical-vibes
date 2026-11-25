@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +24,7 @@ public class ArbalestElite extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{W}",
-                List.of(new DealDamageToTargetCreatureEffect(3),
+                List.of(DealDamageEffect.toTargetCreature(3),
                         new SkipNextUntapEffect(Subjects.source(), 1, false, false, true)),
                 "{2}{W}, {T}: This creature deals 3 damage to target attacking or blocking creature. "
                         + "This creature doesn't untap during your next untap step.",

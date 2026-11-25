@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.SpellTarget;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -53,8 +53,7 @@ public class EverythingPizza extends Card {
 
         GainLifeEffect gainLife = new GainLifeEffect(3, Subjects.targetPlayer());
         DrawCardEffect draw = new DrawCardEffect(1, Subjects.targetPlayer());
-        DealDamageToAnyTargetEffect damage = DealDamageToAnyTargetEffect.forTargetGroup(3,
-                damageTarget.getIndex());
+        DealDamageEffect damage = DealDamageEffect.toAnyTargetInGroup(3, damageTarget.getIndex());
         PutCountersEffect counters = new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 3);
         registerEffectTargetIndex(gainLife, playerTarget.getIndex());

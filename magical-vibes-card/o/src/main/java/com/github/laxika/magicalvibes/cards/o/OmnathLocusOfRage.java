@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "ZNC", collectorNumber = "97")
 public class OmnathLocusOfRage extends Card {
 
-    private static final DealDamageToAnyTargetEffect DEATH_DAMAGE = new DealDamageToAnyTargetEffect(3);
+    private static final DealDamageEffect DEATH_DAMAGE = DealDamageEffect.toAnyTarget(3);
 
     public OmnathLocusOfRage() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new CreateTokenEffect(

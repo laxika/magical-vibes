@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.FieryFall;
 import com.github.laxika.magicalvibes.cards.m.MightOfAlara;
@@ -51,7 +51,7 @@ class ZombieOutlanderTest extends BaseCardTest {
         card.setType(CardType.INSTANT);
         card.setManaCost(manaCost);
         card.setColor(color);
-        card.addSpellEffect(new DealDamageToTargetCreatureEffect(1));
+        card.addSpellEffect(DealDamageEffect.toTargetCreature(1));
         return card;
     }
 

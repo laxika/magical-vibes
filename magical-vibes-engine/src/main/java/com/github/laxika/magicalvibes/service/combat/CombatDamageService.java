@@ -2311,7 +2311,7 @@ public class CombatDamageService {
     /**
      * Runs a damage-dealing action with every prevention path suppressed when the source permanent's
      * damage can't be prevented (Malignus). Reuses the global preventability gate for the duration of
-     * the event — the same shape {@code DealDamageToAnyTargetEffectHandler} uses for Banefire — so no
+     * the event — the same shape {@code DealDamageEffectHandler} uses for Banefire — so no
      * prevention site needs to learn about the source.
      */
     private void withSourceUnpreventableDamage(GameData gameData, Permanent source, Runnable action) {

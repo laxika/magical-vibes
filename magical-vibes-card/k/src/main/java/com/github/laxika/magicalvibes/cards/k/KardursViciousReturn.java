@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -26,7 +26,7 @@ public class KardursViciousReturn extends Card {
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
-                                new DealDamageToAnyTargetEffect(3)))),
+                                DealDamageEffect.toAnyTarget(3)))),
                 "Sacrifice a creature?"));
 
         addTrigger(Triggers.chapter(2), new DiscardEffect(1, Subjects.eachPlayer()));

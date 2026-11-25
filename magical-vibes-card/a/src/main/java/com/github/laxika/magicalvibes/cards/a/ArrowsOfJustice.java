@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -27,6 +27,6 @@ public class ArrowsOfJustice extends Card {
                 )),
                 "Target must be an attacking or blocking creature"
         ))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(4));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -19,7 +19,7 @@ public class TickingGnomes extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(1)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(1)),
                 "Sacrifice Ticking Gnomes: It deals 1 damage to any target."
         ));
     }

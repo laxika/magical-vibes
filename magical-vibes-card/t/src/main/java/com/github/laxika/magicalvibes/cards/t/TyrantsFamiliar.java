@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,6 +35,6 @@ public class TyrantsFamiliar extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withEventCondition(lieutenant), new DealDamageToTargetCreatureEffect(7));
+                        TriggerOptions.DEFAULT.withEventCondition(lieutenant), DealDamageEffect.toTargetCreature(7));
     }
 }

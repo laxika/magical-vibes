@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -14,7 +14,7 @@ public class GiantsIre extends Card {
 
     public GiantsIre() {
         // Deals 4 damage to target player or planeswalker. (target auto-derived)
-        addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(4));
         // If you control a Giant, draw a card.
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),

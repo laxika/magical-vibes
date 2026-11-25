@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CastCardsWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
@@ -31,7 +31,7 @@ public class ChandraAblaze extends Card {
                 +1,
                 List.of(new DiscardEffect(1, Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.toACard(StepKind.DISCARD, redCard),
-                                new DealDamageToAnyTargetEffect(4))),
+                                DealDamageEffect.toAnyTarget(4))),
                 "+1: Discard a card. If a red card is discarded this way, Chandra deals 4 damage to any target."
         ));
 

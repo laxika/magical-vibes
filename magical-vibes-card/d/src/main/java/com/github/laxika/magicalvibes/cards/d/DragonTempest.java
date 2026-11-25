@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,7 +42,7 @@ public class DragonTempest extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new PermanentCount(
-                        new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER)));
+                DealDamageEffect.toAnyTarget(new PermanentCount(
+                        new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER)).byTriggeringPermanent());
     }
 }

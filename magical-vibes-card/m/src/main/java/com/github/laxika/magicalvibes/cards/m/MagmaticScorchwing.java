@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.NoCardsInLibraryMatching;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -25,6 +25,6 @@ public class MagmaticScorchwing extends Card {
                         new NoCardsInLibraryMatching(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.LAND),
                                 new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC)))))),
-                new DealDamageToAnyTargetEffect(3));
+                DealDamageEffect.toAnyTarget(3));
     }
 }

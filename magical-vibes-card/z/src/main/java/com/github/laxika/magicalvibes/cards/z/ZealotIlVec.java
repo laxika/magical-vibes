@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -16,7 +16,7 @@ public class ZealotIlVec extends Card {
         // target creature. If you do, prevent all combat damage this creature would deal this turn.
         addTrigger(Triggers.attacksUnblocked(),
                 new MayEffect(SequenceEffect.of(
-                        new DealDamageToTargetCreatureEffect(1),
+                        DealDamageEffect.toTargetCreature(1),
                         PreventDamageEffect.allCombatBySelf()),
                         "have it deal 1 damage to a target creature?"));
     }

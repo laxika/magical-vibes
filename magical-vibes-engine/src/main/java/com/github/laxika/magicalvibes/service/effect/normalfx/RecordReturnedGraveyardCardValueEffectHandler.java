@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link RecordReturnedGraveyardCardValueEffect}: sets the entry's event value to the
  * requested characteristic of the card actually returned to the controller's hand by the preceding
- * graveyard return, else 0. A following {@code DealDamageToAnyTargetEffect(new EventValue())} reads
+ * graveyard return, else 0. A following {@code DealDamageEffect.toAnyTarget(new EventValue())} reads
  * it (0 deals no damage).
  */
 @Component

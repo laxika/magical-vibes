@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -17,8 +17,8 @@ public class FlamingGambit extends Card {
 
     public FlamingGambit() {
         XValue damage = new XValue();
-        DealDamageToTargetPlayerOrPlaneswalkerEffect playerDamage =
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(damage);
+        DealDamageEffect playerDamage =
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(damage);
 
         addCastingOption(new FlashbackCast("{X}{R}{R}"));
         addSpellEffect(new ConditionalReplacementEffect(

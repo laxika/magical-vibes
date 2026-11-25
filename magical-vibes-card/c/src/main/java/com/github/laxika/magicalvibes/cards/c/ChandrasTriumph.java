@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,8 +32,8 @@ public class ChandrasTriumph extends Card {
 
         addSpellEffect(new ConditionalReplacementEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.CHANDRA)),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(3, creatureOrPlaneswalkerAnOpponentControls),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(5, creatureOrPlaneswalkerAnOpponentControls)
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(3, creatureOrPlaneswalkerAnOpponentControls),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(5, creatureOrPlaneswalkerAnOpponentControls)
         ));
     }
 }

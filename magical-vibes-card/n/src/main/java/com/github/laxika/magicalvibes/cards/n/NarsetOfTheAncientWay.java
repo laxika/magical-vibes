@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -44,8 +43,7 @@ public class NarsetOfTheAncientWay extends Card {
                         new MayEffect(
                                 new DiscardCardThenEffect(
                                         null,
-                                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                                new LastDiscardedCardManaValue()),
+                                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new LastDiscardedCardManaValue()),
                                         "a card",
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
                                 "Discard a card?")
@@ -58,7 +56,7 @@ public class NarsetOfTheAncientWay extends Card {
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.youCastSpell()
                                 .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                                new DealDamageToAnyTargetEffect(2)),
+                                DealDamageEffect.toAnyTarget(2)),
                         "Whenever you cast a noncreature spell, this emblem deals 2 damage to any target.")),
                 "\u22126: You get an emblem with \"Whenever you cast a noncreature spell, this emblem deals 2 damage to any target.\""
         ));

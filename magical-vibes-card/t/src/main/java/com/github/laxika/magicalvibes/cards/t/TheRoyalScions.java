@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -48,7 +48,7 @@ public class TheRoyalScions extends Card {
                 List.of(new DrawCardEffect(4),
                         new ConditionalEffect(HappenedThisWay.atLeast(StepKind.DRAW, 4),
                                 new QueueReflexiveAbilityEffect(
-                                        new DealDamageToAnyTargetEffect(new CardsInHand(CountScope.CONTROLLER))))),
+                                        DealDamageEffect.toAnyTarget(new CardsInHand(CountScope.CONTROLLER))))),
                 "\u22128: Draw four cards. When you do, The Royal Scions deals damage to any target equal to the number of cards in your hand."
         ));
     }

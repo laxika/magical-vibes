@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,7 +35,7 @@ public class DeadBeforeSunrise extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
+                        List.of(DealDamageEffect.toAnyTarget(new SourcePower())),
                         "{T}: This creature deals damage equal to its power to target creature.",
                         TargetFilters.creature()),
                 Subjects.otherCreaturesYouControl(),

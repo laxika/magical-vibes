@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.q;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class QuicksilverDagger extends Card {
                                 true,
                                 null,
                                 List.of(
-                                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(1),
+                                        DealDamageEffect.toTargetPlayerOrPlaneswalker(1),
                                         new DrawCardEffect(1)
                                 ),
                                 "{T}: This creature deals 1 damage to target player or planeswalker. You draw a card."

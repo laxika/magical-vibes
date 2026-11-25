@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -31,7 +31,7 @@ public class IncendiaryCommand extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Incendiary Command deals 4 damage to target player or planeswalker",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(4),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(4),
                         new AnyTargetPredicateTargetFilter(
                                 new PermanentIsPlaneswalkerPredicate(),
                                 new PlayerRelationPredicate(PlayerRelation.ANY),

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -22,8 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -97,7 +96,7 @@ class ValidTargetServiceTest {
         when(gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)).thenReturn(true);
 
         assertThat(validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, source,
-                List.of(new DealDamageToTargetCreatureEffect(1)), null, target, player1Id)).isFalse();
+                List.of(DealDamageEffect.toTargetCreature(1)), null, target, player1Id)).isFalse();
     }
 
     @Test
@@ -109,7 +108,7 @@ class ValidTargetServiceTest {
         when(gameQueryService.findPermanentController(gameData, target.getId())).thenReturn(player2Id);
 
         assertThat(validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, source,
-                List.of(new DealDamageToTargetCreatureEffect(1)), null, target, player1Id)).isFalse();
+                List.of(DealDamageEffect.toTargetCreature(1)), null, target, player1Id)).isFalse();
     }
 
     @Mock private GameQueryService gameQueryService;
@@ -449,7 +448,7 @@ class ValidTargetServiceTest {
         void returnsCreatures_forAnyTargetSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -469,7 +468,7 @@ class ValidTargetServiceTest {
         void excludesNonCreatures_forAnyTargetSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             Card enchantmentCard = new Card();
             enchantmentCard.setName("Test Enchantment");
@@ -489,7 +488,7 @@ class ValidTargetServiceTest {
         void returnsOnlyPermanents_forPermanentOnlySpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -507,7 +506,7 @@ class ValidTargetServiceTest {
             Card spell = createCard();
             spell.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Target must be a creature"))
-                    .addSpellEffect(new DealDamageToAnyTargetEffect(3));
+                    .addSpellEffect(DealDamageEffect.toAnyTarget(3));
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
@@ -552,7 +551,7 @@ class ValidTargetServiceTest {
         void excludesAlreadySelectedTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -659,8 +658,8 @@ class ValidTargetServiceTest {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
             // Create a multi-target spell via the target builder API
-            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
-            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(DealDamageEffect.toAnyTarget(1));
+            spell.target(null, 1, 2).addSpellEffect(DealDamageEffect.toAnyTarget(1));
 
             when(gameQueryService.isCreature(eq(gameData), any(Permanent.class))).thenReturn(true);
 
@@ -678,7 +677,7 @@ class ValidTargetServiceTest {
         void excludesShroudPermanents() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -696,7 +695,7 @@ class ValidTargetServiceTest {
         void setsMinMaxTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.target(null, 1, 1).addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.target(null, 1, 1).addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);
@@ -843,7 +842,7 @@ class ValidTargetServiceTest {
             spell.setColor(CardColor.WHITE);
             spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
-                            new DealDamageToTargetCreatureEffect(3)),
+                            DealDamageEffect.toTargetCreature(3)),
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
                             new DealDamageToPlayersEffect(3, Subjects.eachPlayer())),
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target player",
@@ -868,7 +867,7 @@ class ValidTargetServiceTest {
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
                             new DealDamageToPlayersEffect(3, Subjects.eachPlayer())),
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
-                            new DealDamageToTargetCreatureEffect(3))
+                            DealDamageEffect.toTargetCreature(3))
             )));
             addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -894,7 +893,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -987,7 +986,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)), "Deal 2 damage to any target");
+                    List.of(DealDamageEffect.toAnyTarget(2)), "Deal 2 damage to any target");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1031,7 +1030,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1049,7 +1048,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1069,7 +1068,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent ownCreature = addPermanentToBattlefield(player1Id, createCreatureCard());
 
@@ -1089,7 +1088,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1108,7 +1107,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1126,7 +1125,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1144,7 +1143,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1198,7 +1197,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1216,7 +1215,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)), "Deal 2 damage to any target");
+                    List.of(DealDamageEffect.toAnyTarget(2)), "Deal 2 damage to any target");
 
             when(gameQueryService.playerHasShroud(gameData, player1Id)).thenReturn(false);
             when(gameQueryService.playerHasShroud(gameData, player2Id)).thenReturn(true);
@@ -1233,7 +1232,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)), "Deal 2 damage to any target");
+                    List.of(DealDamageEffect.toAnyTarget(2)), "Deal 2 damage to any target");
 
             when(gameQueryService.playerHasHexproof(gameData, player2Id)).thenReturn(true);
 
@@ -1249,7 +1248,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)), "Deal 2 damage to any target",
+                    List.of(DealDamageEffect.toAnyTarget(2)), "Deal 2 damage to any target",
                     new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent"));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
@@ -1264,7 +1263,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)), "Deal 2 damage to any target",
+                    List.of(DealDamageEffect.toAnyTarget(2)), "Deal 2 damage to any target",
                     new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.SELF), "target self"));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
@@ -1279,7 +1278,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);
@@ -1293,7 +1292,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage to target creature");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage to target creature");
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1311,7 +1310,7 @@ class ValidTargetServiceTest {
             PlayerPredicateTargetFilter filter = new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent's creature");
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage", filter);
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage", filter);
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1432,7 +1431,7 @@ class ValidTargetServiceTest {
             PlayerPredicateTargetFilter playerFilter = new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent");
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)),
+                    List.of(DealDamageEffect.toAnyTarget(2)),
                     "Deal 2 damage", List.of(playerFilter), 1, 2);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
@@ -1452,7 +1451,7 @@ class ValidTargetServiceTest {
             PlayerPredicateTargetFilter playerFilter = new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.ANY), "target player");
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)),
+                    List.of(DealDamageEffect.toAnyTarget(2)),
                     "Deal 2 damage", List.of(playerFilter, playerFilter), 2, 2);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
@@ -1469,7 +1468,7 @@ class ValidTargetServiceTest {
             sourceCard.setColor(CardColor.RED);
             // Non-PlayerPredicateTargetFilter → targets permanents
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    List.of(DealDamageEffect.toTargetCreature(2)),
                     "Deal 2 damage", List.of(), 1, 2);
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
@@ -1488,7 +1487,7 @@ class ValidTargetServiceTest {
             PlayerPredicateTargetFilter playerFilter = new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.ANY), "target player");
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToAnyTargetEffect(2)),
+                    List.of(DealDamageEffect.toAnyTarget(2)),
                     "Deal 2 damage", List.of(playerFilter), 2, 3);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
@@ -1528,7 +1527,7 @@ class ValidTargetServiceTest {
         void multiTarget_filtersToSharedCreatureType() {
             Card sourceCard = createCreatureCard();
             ActivatedAbility ability = new ActivatedAbility(true, "{4}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    List.of(DealDamageEffect.toTargetCreature(2)),
                     "Deal 2 damage to two creatures", List.of(), 2, 2)
                     .withMultiTargetConstraint(
                             com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
@@ -1553,7 +1552,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{X}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    List.of(DealDamageEffect.toTargetCreature(2)),
                     "X target creatures", null, null, null, null, List.of(), 0, 100)
                     .withXScaledTargets();
 
@@ -1570,7 +1569,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{X}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    List.of(DealDamageEffect.toTargetCreature(2)),
                     "X target creatures", null, null, null, null, List.of(), 0, 100)
                     .withXScaledTargets();
 
@@ -1584,7 +1583,7 @@ class ValidTargetServiceTest {
         void exactXTargetsReportsAnnouncedCountAboveOneHundred() {
             Card sourceCard = createCreatureCard();
             ActivatedAbility ability = new ActivatedAbility(true, "{X}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    List.of(DealDamageEffect.toTargetCreature(2)),
                     "X target creatures").withExactXTargets();
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
@@ -1603,7 +1602,7 @@ class ValidTargetServiceTest {
             when(gameQueryService.findPermanentById(gameData, source.getId())).thenReturn(source);
 
             ActivatedAbility ability = new ActivatedAbility(true, "{W}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    List.of(DealDamageEffect.toTargetCreature(2)),
                     "Up to verse counters target creatures", null, null, null, null,
                     List.of(), 0, 100)
                     .withSourceCounterScaledTargets(CounterType.VERSE);
@@ -1629,7 +1628,7 @@ class ValidTargetServiceTest {
         void returnsTrue_whenValidPermanentExists() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1643,7 +1642,7 @@ class ValidTargetServiceTest {
         void returnsFalse_whenNoPermanentTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             // No permanents on any battlefield
 
@@ -1669,7 +1668,7 @@ class ValidTargetServiceTest {
         void returnsFalse_whenAllShrouded() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1736,7 +1735,7 @@ class ValidTargetServiceTest {
         void returnsTrue_anyTarget_whenPlayersValid() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
             when(gameQueryService.hasKeyword(gameData, creature, Keyword.SHROUD)).thenReturn(true);
@@ -1761,7 +1760,7 @@ class ValidTargetServiceTest {
         void returnsTrue_anyTarget_ownCreature() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             addPermanentToBattlefield(player1Id, createCreatureCard());
 
@@ -1777,8 +1776,8 @@ class ValidTargetServiceTest {
         void returnsTrue_multiTarget_withPlayerTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
-            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(DealDamageEffect.toAnyTarget(1));
+            spell.target(null, 1, 2).addSpellEffect(DealDamageEffect.toAnyTarget(1));
 
             boolean result = validTargetService.hasValidTargetsForSpell(gameData, spell, player1Id);
 
@@ -1790,8 +1789,8 @@ class ValidTargetServiceTest {
         void returnsFalse_multiTarget_allPlayersShrouded() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
-            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(DealDamageEffect.toAnyTarget(1));
+            spell.target(null, 1, 2).addSpellEffect(DealDamageEffect.toAnyTarget(1));
 
             when(gameQueryService.playerHasShroud(gameData, player1Id)).thenReturn(true);
             when(gameQueryService.playerHasShroud(gameData, player2Id)).thenReturn(true);
@@ -1817,7 +1816,7 @@ class ValidTargetServiceTest {
         void nullAlreadySelectedIds() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1833,7 +1832,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage");
+                    List.of(DealDamageEffect.toTargetCreature(2)), "Deal 2 damage");
 
             addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1848,7 +1847,7 @@ class ValidTargetServiceTest {
         void planeswalkerIsValidAnyTarget() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             Card planeswalkerCard = new Card();
             planeswalkerCard.setName("Test Planeswalker");
@@ -1921,7 +1920,7 @@ class ValidTargetServiceTest {
         void multiplePermanentsEvaluated() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             Permanent creature1 = addPermanentToBattlefield(player1Id, createCreatureCard());
             Permanent creature2 = addPermanentToBattlefield(player2Id, createCreatureCard());

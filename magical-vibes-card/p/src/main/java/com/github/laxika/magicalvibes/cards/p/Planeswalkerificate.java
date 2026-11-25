@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBecomesLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.InitializeEnchantedPermanentToughnessAsLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -50,7 +50,7 @@ public class Planeswalkerificate extends Card {
                 Subjects.attached()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ActivatedAbility.variableLoyaltyAbility(
-                        List.of(new DealDamageToAnyTargetEffect(new XValue())),
+                        List.of(DealDamageEffect.toAnyTarget(new XValue())),
                         "−X: This planeswalker deals X damage to any target.",
                         null
                 ).withToughnessAsLoyalty(),

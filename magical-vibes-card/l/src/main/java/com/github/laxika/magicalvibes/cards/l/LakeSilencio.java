@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -21,6 +21,6 @@ public class LakeSilencio extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                         new MarkTargetCreatureExileInsteadOfDieThisTurnEffect(),
-                        new DealDamageToTargetCreatureEffect(6)));
+                        DealDamageEffect.toTargetCreature(6)));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -64,7 +64,7 @@ public class DawnsireSunstarDreadnought extends Card {
                 "Target must be a creature or planeswalker"
         ), 0, 1).addTrigger(Triggers.youAttack(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(10, CounterType.CHARGE)),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(100, creatureOrPlaneswalker)
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(100, creatureOrPlaneswalker)
         );
     }
 }

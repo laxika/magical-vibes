@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -22,7 +22,7 @@ public class BenBenAkkiHermit extends Card {
     public BenBenAkkiHermit() {
         // {T}: Ben-Ben deals damage to target attacking creature equal to the number of untapped Mountains you control.
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToTargetCreatureEffect(new PermanentCount(
+                List.of(DealDamageEffect.toTargetCreature(new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                                 new PermanentNotPredicate(new PermanentIsTappedPredicate())

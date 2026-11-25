@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,7 @@ public class TogetherAsOne extends Card {
         )).addSpellEffect(new DrawCardEffect(new XValue(), Subjects.targetPlayer()));
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentTruePredicate(),
-                new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a legal damage target")).addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+                new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a legal damage target")).addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()));
         addSpellEffect(new GainLifeEffect(new XValue()));
     }
 }

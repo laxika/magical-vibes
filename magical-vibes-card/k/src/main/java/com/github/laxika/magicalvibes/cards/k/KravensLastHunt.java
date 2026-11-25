@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,8 +30,7 @@ public class KravensLastHunt extends Card {
     public KravensLastHunt() {
         addTrigger(Triggers.chapter(1), SequenceEffect.of(new MillEffect(5, Subjects.you()),
                 new ConditionalEffect(HappenedThisWay.atLeast(StepKind.MILL, 5),
-                        new QueueReflexiveAbilityEffect(new DealDamageToTargetCreatureEffect(
-                                new GreatestPowerAmongCardsInGraveyard(
+                        new QueueReflexiveAbilityEffect(DealDamageEffect.toTargetCreature(new GreatestPowerAmongCardsInGraveyard(
                                         new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))))));
 
         addTrigger(Triggers.chapter(2), new BoostTargetCreatureEffect(2, 2));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -18,8 +18,7 @@ public class GoShintaiOfAncientWars extends Card {
     public GoShintaiOfAncientWars() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayPayManaEffect("{1}",
-                        new QueueReflexiveAbilityEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                                new PermanentCount(
+                        new QueueReflexiveAbilityEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(new PermanentCount(
                                         new PermanentHasSubtypePredicate(CardSubtype.SHRINE),
                                         CountScope.CONTROLLER))),
                         "Pay {1} to deal damage to target player or planeswalker?"));

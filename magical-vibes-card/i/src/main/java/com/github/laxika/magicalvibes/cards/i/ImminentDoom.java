@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
@@ -27,7 +27,7 @@ public class ImminentDoom extends Card {
         // spell's mana value.
         addTrigger(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryManaValueEqualsSourceCountersPredicate(CounterType.DOOM)),
-                new DealDamageToAnyTargetEffect(new TargetSpellManaValue()),
+                DealDamageEffect.toAnyTarget(new TargetSpellManaValue()),
                 PutCountersEffect.onSelf(CounterType.DOOM));
     }
 }

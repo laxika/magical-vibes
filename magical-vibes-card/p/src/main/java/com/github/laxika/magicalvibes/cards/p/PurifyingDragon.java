@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class PurifyingDragon extends Card {
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(), new ConditionalReplacementEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
-                        new DealDamageToTargetCreatureEffect(1),
-                        new DealDamageToTargetCreatureEffect(2)));
+                        DealDamageEffect.toTargetCreature(1),
+                        DealDamageEffect.toTargetCreature(2)));
     }
 }

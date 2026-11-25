@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -25,7 +25,7 @@ public class HobgoblinBanditLord extends Card {
         var goblinsEntered = new PermanentsEnteredBattlefieldThisTurn(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), CountScope.CONTROLLER);
         addActivatedAbility(new ActivatedAbility(true, "{R}",
-                List.of(new DealDamageToAnyTargetEffect(goblinsEntered)),
+                List.of(DealDamageEffect.toAnyTarget(goblinsEntered)),
                 "{R}, {T}: This creature deals damage equal to the number of Goblins that entered the battlefield under your control this turn to any target."));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -15,8 +15,8 @@ import java.util.List;
 public class TrickShot extends Card {
 
     public TrickShot() {
-        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(6);
-        DealDamageToTargetCreatureEffect tokenDamage = new DealDamageToTargetCreatureEffect(2);
+        DealDamageEffect creatureDamage = DealDamageEffect.toTargetCreature(6);
+        DealDamageEffect tokenDamage = DealDamageEffect.toTargetCreature(2);
         target(TargetFilters.creature()).bindEffect(creatureDamage);
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

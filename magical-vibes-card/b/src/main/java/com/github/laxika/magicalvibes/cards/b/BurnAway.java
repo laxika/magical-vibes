@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
@@ -15,7 +15,7 @@ public class BurnAway extends Card {
         // Burn Away deals 6 damage to target creature. When that creature dies this turn, exile its
         // controller's graveyard.
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(6))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(6))
                 .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
                         new ExileGraveyardCardsEffect(GraveyardExileScope.DYING_CREATURE_CONTROLLER)));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.planar;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -137,7 +138,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void targetedChaosUsesExistingChoiceAndDamageResolution() {
         faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
-                new DealDamageToAnyTargetEffect(2)));
+                DealDamageEffect.toAnyTarget(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.beginTriggerChoices();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -175,7 +176,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void targetedChaosAbilityTakesItsUntargetedEffectOntoOneStackObject() {
         Card plane = fixture("Test plane", CardType.PLANE);
-        plane.addTrigger(Triggers.chaosEnsues(), new DealDamageToAnyTargetEffect(2), new GainLifeEffect(2));
+        plane.addTrigger(Triggers.chaosEnsues(), DealDamageEffect.toAnyTarget(2), new GainLifeEffect(2));
         faceUp(plane);
         harness.inMutationScope(() -> planar.chaos(gd));
         assertThat(gd.stack).isEmpty();
@@ -191,7 +192,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void targetedEncounterIsNotSkippedWhileWaitingForItsTarget() {
         gd.planechase.deck.addFirst(fixture("Test phenomenon", CardType.PHENOMENON,
-                Triggers.encounterThis(), new DealDamageToAnyTargetEffect(2)));
+                Triggers.encounterThis(), DealDamageEffect.toAnyTarget(2)));
         harness.inMutationScope(() -> planar.reveal(gd, true));
         assertThat(planar.checkPhenomena(gd)).isFalse();
         harness.beginTriggerChoices();
@@ -334,7 +335,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void simulationCopiesPendingPlanarTargetSnapshots() {
         faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
-                new DealDamageToAnyTargetEffect(2)));
+                DealDamageEffect.toAnyTarget(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
         var original = (PermanentChoiceContext.AttackTriggerTarget) gd.pendingInteractions.getFirst();
         GameData copy = gd.simulationCopy();
@@ -438,7 +439,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void queuedTargetsPreventRollingBeforeTheTriggerIsPutOnTheStack() {
         faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
-                new DealDamageToAnyTargetEffect(2)));
+                DealDamageEffect.toAnyTarget(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
         assertThat(planar.canRollAtThisTime(gd, player1.getId())).isFalse();
     }

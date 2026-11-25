@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -42,7 +41,7 @@ public class KothFireOfResistance extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new DealDamageToTargetCreatureEffect(new PermanentCount(
+                List.of(DealDamageEffect.toTargetCreature(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER))),
                 "\u22123: Koth deals damage to target creature equal to the number of Mountains you control."
         ));
@@ -51,7 +50,7 @@ public class KothFireOfResistance extends Card {
                 -7,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.enters(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
-                                ObjectRelation.YOU_CONTROL), new DealDamageToAnyTargetEffect(4)),
+                                ObjectRelation.YOU_CONTROL), DealDamageEffect.toAnyTarget(4)),
                         "Whenever a Mountain you control enters, this emblem deals 4 damage to any target."
                 )),
                 "\u22127: You get an emblem with \"Whenever a Mountain you control enters, this emblem deals 4 damage to any target.\""

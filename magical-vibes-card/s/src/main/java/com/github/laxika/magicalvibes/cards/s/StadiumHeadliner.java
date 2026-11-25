@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +30,7 @@ public class StadiumHeadliner extends Card {
                 "{1}{R}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToTargetCreatureEffect(new PermanentCount(
+                        DealDamageEffect.toTargetCreature(new PermanentCount(
                                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER))),
                 "{1}{R}, Sacrifice this creature: It deals damage equal to the number of creatures you control to target creature.",
                 TargetFilters.creature()

@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -36,7 +35,7 @@ public class RalIzzetViceroy extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new DealDamageToTargetCreatureEffect(new Sum(
+                List.of(DealDamageEffect.toTargetCreature(new Sum(
                         new CardsInExile(INSTANT_OR_SORCERY, CountScope.CONTROLLER),
                         new CardsInGraveyard(INSTANT_OR_SORCERY, CountScope.CONTROLLER)))),
                 "−3: Ral deals damage to target creature equal to the total number of instant and sorcery cards you own in exile and in your graveyard."
@@ -46,7 +45,7 @@ public class RalIzzetViceroy extends Card {
                 -8,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY),
-                                new DealDamageToAnyTargetEffect(4), new DrawCardEffect(2)),
+                                DealDamageEffect.toAnyTarget(4), new DrawCardEffect(2)),
                         "Whenever you cast an instant or sorcery spell, this emblem deals 4 damage to any target and you draw two cards.")),
                 "−8: You get an emblem with \"Whenever you cast an instant or sorcery spell, this emblem deals 4 damage to any target and you draw two cards.\""
         ));

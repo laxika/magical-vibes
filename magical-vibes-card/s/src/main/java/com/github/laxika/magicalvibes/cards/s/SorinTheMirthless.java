@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
@@ -41,7 +41,7 @@ public class SorinTheMirthless extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new DealDamageToAnyTargetEffect(13), new GainLifeEffect(13)),
+                List.of(DealDamageEffect.toAnyTarget(13), new GainLifeEffect(13)),
                 "-7: Sorin deals 13 damage to any target. You gain 13 life."
         ));
     }

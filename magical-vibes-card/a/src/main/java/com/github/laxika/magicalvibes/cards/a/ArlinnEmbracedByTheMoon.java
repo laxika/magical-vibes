@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +36,7 @@ public class ArlinnEmbracedByTheMoon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(
-                        new DealDamageToAnyTargetEffect(3),
+                        DealDamageEffect.toAnyTarget(3),
                         new TransformSelfEffect()
                 ),
                 "\u22121: Arlinn deals 3 damage to any target. Transform Arlinn."
@@ -53,7 +53,7 @@ public class ArlinnEmbracedByTheMoon extends Card {
                                 new GrantActivatedAbilityEffect(
                                         new ActivatedAbility(
                                                 true, null,
-                                                List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
+                                                List.of(DealDamageEffect.toAnyTarget(new SourcePower())),
                                                 "{T}: This creature deals damage equal to its power to any target."),
                                         Subjects.permanentsYouControl(),
                                         new PermanentIsCreaturePredicate())),

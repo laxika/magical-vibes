@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,6 +37,6 @@ public class IroassBlessing extends Card {
                 targetRestriction,
                 "Target must be a creature or planeswalker an opponent controls"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(4, targetRestriction));
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(4, targetRestriction));
     }
 }

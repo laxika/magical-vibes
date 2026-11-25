@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -36,7 +36,7 @@ public class BroadsideBombardiers extends Card {
                                 false,
                                 true,
                                 false),
-                        new DealDamageToAnyTargetEffect(new Sum(new Fixed(2), new XValue()))
+                        DealDamageEffect.toAnyTarget(new Sum(new Fixed(2), new XValue()))
                 ),
                 "Boast — Sacrifice another creature or artifact: This creature deals damage equal to 2 plus "
                         + "the sacrificed permanent's mana value to any target. Activate only if this creature "

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,8 +16,7 @@ public class GalvanicBombardment extends Card {
 
     public GalvanicBombardment() {
         // 2 damage plus one for every Galvanic Bombardment in your graveyard.
-        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(
-                new Sum(new Fixed(2), new CardsInGraveyard(
+        target(TargetFilters.creature()).addSpellEffect(DealDamageEffect.toTargetCreature(new Sum(new Fixed(2), new CardsInGraveyard(
                         new CardNamedPredicate("Galvanic Bombardment"), CountScope.CONTROLLER))));
     }
 }

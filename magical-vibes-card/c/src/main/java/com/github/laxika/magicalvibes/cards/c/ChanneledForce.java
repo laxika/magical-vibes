@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,6 +34,6 @@ public class ChanneledForce extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        ), 0, 1).addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
+        ), 0, 1).addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()));
     }
 }

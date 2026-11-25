@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class ScorchedRusalka extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new SacrificeCreatureCost(), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                List.of(new SacrificeCreatureCost(), DealDamageEffect.toTargetPlayerOrPlaneswalker(1)),
                 "{R}, Sacrifice a creature: This creature deals 1 damage to target player or planeswalker."
         ));
     }

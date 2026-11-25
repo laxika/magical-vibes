@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -95,9 +95,7 @@ public class QuestingCosplayer extends Card {
                                 Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                        new EventValue(),
-                                        new PermanentAllOfPredicate(List.of(
+                                DealDamageEffect.toTargetCreatureOrPlaneswalker(new EventValue(), new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsPlaneswalkerPredicate(),
                                                 new PermanentControlledByDefendingPlayerPredicate())))),
                                 Subjects.attachedCreature())))),

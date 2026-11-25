@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,14 +25,14 @@ public class ChandraRoaringFlame extends Card {
         // +1: Chandra, Roaring Flame deals 2 damage to target player or planeswalker.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2)),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(2)),
                 "+1: Chandra, Roaring Flame deals 2 damage to target player or planeswalker."
         ));
 
         // −2: Chandra, Roaring Flame deals 2 damage to target creature.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DealDamageToTargetCreatureEffect(2)),
+                List.of(DealDamageEffect.toTargetCreature(2)),
                 "−2: Chandra, Roaring Flame deals 2 damage to target creature."
         ));
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -72,7 +72,7 @@ public class MinscBooTimelessHeroes extends Card {
                 List.of(new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
                                 SequenceEffect.of(
-                                        new DealDamageToAnyTargetEffect(AmountThisWay.sacrificedPower()),
+                                        DealDamageEffect.toAnyTarget(AmountThisWay.sacrificedPower()),
                                         new ConditionalEffect(
                                                 HappenedThisWay.toA(StepKind.SACRIFICE,
                                                         new PermanentHasSubtypePredicate(CardSubtype.HAMSTER)),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -15,6 +15,6 @@ public class LavaCoil extends Card {
         // turn, exile it instead.
         target(TargetFilters.creature())
                 .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(4));
     }
 }

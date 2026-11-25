@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,8 +17,8 @@ public class LightningDart extends Card {
     public LightningDart() {
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE))),
-                new DealDamageToTargetCreatureEffect(1),
-                new DealDamageToTargetCreatureEffect(4)
+                DealDamageEffect.toTargetCreature(1),
+                DealDamageEffect.toTargetCreature(4)
         ));
     }
 }

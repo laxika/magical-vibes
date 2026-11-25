@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RegisterDrawCardsAtNextUpkeepEffectHandler;
@@ -53,9 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageToSourceFromCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
@@ -1327,17 +1326,12 @@ public class ActivatedAbilityExecutionService {
                                 : gameQueryService.findPermanentController(gameData, grantSourceId)));
             } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {
                 snapshotEffects.add(new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(gk.keyword(), permanent.getChosenPermanentId()));
-            } else if (effect instanceof DealDamageToAnyTargetEffect dd
-                    && dd.damage() instanceof CountersOnGrantingPermanent counters) {
+            } else if (effect instanceof DealDamageEffect damage
+                    && damage.damage() instanceof CountersOnGrantingPermanent counters) {
                 // Archery Training: the granted "{T}: … deals X damage … where X is the number of
                 // arrow counters on Archery Training" — the counters live on the granting Aura, not
                 // on the creature activating the ability, so bind the granting permanent at activation.
-                snapshotEffects.add(new DealDamageToAnyTargetEffect(
-                        new CountersOnGrantingPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
-                        dd.cantRegenerate(), dd.exileInsteadOfDie(), dd.targetGroup(), dd.unpreventableWhen()));
-            } else if (effect instanceof DealDamageToTargetCreatureEffect dc
-                    && dc.damage() instanceof CountersOnGrantingPermanent counters) {
-                snapshotEffects.add(dc.withDamage(
+                snapshotEffects.add(damage.withDamage(
                         new CountersOnGrantingPermanent(counters.counterType(), ability.getGrantSourcePermanentId())));
             } else {
                 snapshotEffects.add(effect);

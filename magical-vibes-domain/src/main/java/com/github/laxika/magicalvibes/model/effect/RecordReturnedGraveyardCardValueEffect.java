@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Graveyard-return glue effect. A preceding {@link ReturnCardFromGraveyardEffect} returns the
  * targeted graveyard card ({@code entry.targetId}, targetZone GRAVEYARD) to its owner's hand; this
  * effect records the requested characteristic of that card as the entry's event value so a
- * following {@code DealDamageToAnyTargetEffect(new EventValue())} deals it to the chosen any target.
+ * following {@code DealDamageEffect.toAnyTarget(new EventValue())} deals it to the chosen any target.
  *
  * <p>Left unbound to any target group so the resolver keeps {@code entry.targetId} pointing at the
  * graveyard card (a bound effect would be remapped to the any target). The gate confirms the card is

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALL", collectorNumber = "74a")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GuerrillaTactics extends Card {
 
     public GuerrillaTactics() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(2));
-        addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(DealDamageEffect.toAnyTarget(2));
+        addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), DealDamageEffect.toAnyTarget(4));
     }
 }

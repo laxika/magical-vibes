@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffect;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final DealDamageToAnyTargetEffectHandler dealDamageHandler;
+    private final DealDamageEffectHandler dealDamageHandler;
     private final PlayersCantGainLifeRestOfGameEffectHandler lifeGainLockHandler;
 
     @Override
@@ -29,7 +29,7 @@ public class DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffectHandler
         var damageEffect = (DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffect) effect;
         Map<UUID, Integer> damageBefore = new HashMap<>(gameData.damageDealtToPlayersThisTurn);
 
-        dealDamageHandler.resolve(gameData, entry, new DealDamageToAnyTargetEffect(damageEffect.damage()));
+        dealDamageHandler.resolve(gameData, entry, DealDamageEffect.toAnyTarget(damageEffect.damage()));
 
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null) {

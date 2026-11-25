@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.f.FaithsShield;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RageForger.class, ElvishWarrior.class, ChandraNalaar.class, FaithsShield.class})
+@CardUsed({RageForger.class, ElvishWarrior.class, ChandraNalaar.class, FaithsShield.class, WhipOfErebos.class})
 class RageForgerTest extends BaseCardTest {
 
     // "When this creature enters, put a +1/+1 counter on each other Shaman creature you control.
@@ -203,5 +204,23 @@ class RageForgerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("An attacker that left before the ability resolves still deals the damage, with the lifelink it had as it left")
+    void departedAttackerDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        addCreatureReady(player1, new RageForger());
+        Permanent attacker = addCreatureReady(player1, new ElvishWarrior());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
     }
 }

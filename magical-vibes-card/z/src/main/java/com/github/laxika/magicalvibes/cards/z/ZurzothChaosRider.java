@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActive;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ import java.util.Set;
 public class ZurzothChaosRider extends Card {
 
     public ZurzothChaosRider() {
-        List<Ability> devilTokenEffects = List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
+        List<Ability> devilTokenEffects = List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(1)));
         CreateTokenEffect devilToken = new CreateTokenEffect(
                 1, "Devil", 1, 1, CardColor.RED,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects);

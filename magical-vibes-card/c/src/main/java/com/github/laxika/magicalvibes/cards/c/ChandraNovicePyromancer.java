@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class ChandraNovicePyromancer extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DealDamageToAnyTargetEffect(2)),
+                List.of(DealDamageEffect.toAnyTarget(2)),
                 "\u22122: Chandra, Novice Pyromancer deals 2 damage to any target."
         ));
     }

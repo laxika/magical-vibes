@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndStepEffect;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class RocketLauncher extends Card {
                 false,
                 "{2}",
                 List.of(
-                        new DealDamageToAnyTargetEffect(1),
+                        DealDamageEffect.toAnyTarget(1),
                         new DestroySelfAtEndStepEffect()
                 ),
                 "{2}: This artifact deals 1 damage to any target. Destroy this artifact at the beginning "

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -22,7 +22,7 @@ public class ManticoreOfTheGauntlet extends Card {
         target(TargetFilters.creatureYouControl()).bindEffect(putCounterOnTargetPermanent);
 
         // "This creature deals 3 damage to target opponent or planeswalker."
-        var dealDamageToTargetPlayerOrPlaneswalker = new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT);
+        var dealDamageToTargetPlayerOrPlaneswalker = DealDamageEffect.toTargetOpponentOrPlaneswalker(3);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

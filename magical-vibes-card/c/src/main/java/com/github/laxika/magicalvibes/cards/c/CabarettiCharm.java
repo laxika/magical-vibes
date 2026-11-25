@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,7 +28,7 @@ public class CabarettiCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Cabaretti Charm deals damage equal to the number of creatures you control to target creature or planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new PermanentCount(
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new PermanentCount(
                                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAnyOfPredicate(List.of(

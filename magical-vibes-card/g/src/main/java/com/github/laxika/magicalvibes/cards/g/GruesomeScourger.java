@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -22,8 +22,6 @@ public class GruesomeScourger extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                        new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
-                        PlayerRelation.OPPONENT));
+                DealDamageEffect.toTargetOpponentOrPlaneswalker(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }
 }

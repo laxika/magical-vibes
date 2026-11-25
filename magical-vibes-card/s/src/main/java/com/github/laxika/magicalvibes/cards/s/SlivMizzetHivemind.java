@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -27,7 +27,7 @@ public class SlivMizzetHivemind extends Card {
                 Keyword.FLYING, Subjects.creaturesYouControl(), sliver));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.youDrawCard(),
-                new DealDamageToAnyTargetEffect(1)), Subjects.creaturesYouControl(), sliver));
+                DealDamageEffect.toAnyTarget(1)), Subjects.creaturesYouControl(), sliver));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new DrawCardEffect(1)), "{T}: Draw a card."),
                 Subjects.creaturesYouControl(), sliver));

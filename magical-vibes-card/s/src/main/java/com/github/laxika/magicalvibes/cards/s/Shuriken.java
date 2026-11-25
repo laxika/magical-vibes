@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class Shuriken extends Card {
                         null,
                         List.of(
                                 new UnattachSourceEquipmentCost(),
-                                new DealDamageToTargetCreatureEffect(2),
+                                DealDamageEffect.toTargetCreature(2),
                                 new TargetPermanentControllerGainsControlOfGrantingEquipmentEffect(
                                         Duration.PERMANENT, CardSubtype.NINJA)
                         ),

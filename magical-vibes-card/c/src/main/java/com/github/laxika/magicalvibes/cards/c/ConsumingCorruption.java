@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,7 +30,7 @@ public class ConsumingCorruption extends Card {
                 "Target must be a creature or planeswalker");
 
         target(creatureOrPlaneswalker).addSpellEffect(SequenceEffect.of(
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(swampsYouControl),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(swampsYouControl),
                 new GainLifeEffect(swampsYouControl)));
     }
 }

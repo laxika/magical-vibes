@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
@@ -18,8 +18,7 @@ public class CommandoRaid extends Card {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                        new MayEffect(new DealDamageToTargetCreatureEffect(new SourcePower(), false,
-                                new PermanentControlledByTriggeringPlayerPredicate()),
+                        new MayEffect(DealDamageEffect.toTargetCreature(new SourcePower(), new PermanentControlledByTriggeringPlayerPredicate()),
                                 "You may have it deal damage equal to its power to target creature that player controls."))));
     }
 }

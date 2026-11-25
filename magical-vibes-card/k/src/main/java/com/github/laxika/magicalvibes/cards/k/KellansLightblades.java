@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -45,7 +45,7 @@ public class KellansLightblades extends Card {
                 "Target must be an attacking or blocking creature"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
-                new DealDamageToTargetCreatureEffect(3, attackingOrBlockingCreature),
+                DealDamageEffect.toTargetCreature(3, attackingOrBlockingCreature),
                 new DestroyTargetPermanentEffect(attackingOrBlockingCreature)
         ));
     }

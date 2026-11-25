@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +27,7 @@ public class BorborygmosEnraged extends Card {
         // Discard a land card: Borborygmos Enraged deals 3 damage to any target.
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new DiscardCardTypeCost(new CardTypePredicate(CardType.LAND), "land"),
-                        new DealDamageToAnyTargetEffect(3)),
+                        DealDamageEffect.toAnyTarget(3)),
                 "Discard a land card: Borborygmos Enraged deals 3 damage to any target."));
     }
 }

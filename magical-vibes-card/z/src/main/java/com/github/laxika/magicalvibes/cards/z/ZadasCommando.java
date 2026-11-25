@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,7 +23,7 @@ public class ZadasCommando extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentHasSubtypePredicate(CardSubtype.ALLY), true, false),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(1, PlayerRelation.OPPONENT)
+                        DealDamageEffect.toTargetOpponentOrPlaneswalker(1)
                 ),
                 "{T}, Tap an untapped Ally you control: This creature deals 1 damage to target opponent or planeswalker.",
                 new AnyTargetPredicateTargetFilter(

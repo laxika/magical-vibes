@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "200")
 @CardRegistration(set = "7ED", collectorNumber = "200")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LightningBlast extends Card {
 
     public LightningBlast() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(DealDamageEffect.toAnyTarget(4));
     }
 }

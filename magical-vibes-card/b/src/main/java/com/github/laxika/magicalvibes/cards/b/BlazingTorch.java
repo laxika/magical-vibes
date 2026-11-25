@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,7 +39,7 @@ public class BlazingTorch extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new SacrificeSourceEquipmentCost(), new DealDamageToAnyTargetEffect(2)),
+                        List.of(new SacrificeSourceEquipmentCost(), DealDamageEffect.toAnyTarget(2)),
                         "{T}, Sacrifice Blazing Torch: Blazing Torch deals 2 damage to any target."
                 ),
                 Subjects.attachedCreature()

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class FlayerOfTheHatebound extends Card {
         // damage equal to its power to any target. Flayer is the ability's source, the entering creature the
         // damage's. A card in your graveyard is yours (CR 400.3), and the relation includes this creature.
         addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.YOU_OWN),
-                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()));
+                DealDamageEffect.toAnyTarget(new SourcePower()).byTriggeringPermanent());
     }
 }

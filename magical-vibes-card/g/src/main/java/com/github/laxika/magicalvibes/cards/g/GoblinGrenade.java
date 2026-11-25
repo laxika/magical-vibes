@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -24,6 +24,6 @@ public class GoblinGrenade extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                 "Sacrifice a Goblin"
         ));
-        addSpellEffect(new DealDamageToAnyTargetEffect(5, false));
+        addSpellEffect(DealDamageEffect.toAnyTarget(5));
     }
 }

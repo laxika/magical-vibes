@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ELD", collectorNumber = "128")
@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class IrencragPyromancer extends Card {
 
     public IrencragPyromancer() {
-        addTrigger(Triggers.youDrawSecondCardEachTurn(), new DealDamageToAnyTargetEffect(3));
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), DealDamageEffect.toAnyTarget(3));
     }
 }

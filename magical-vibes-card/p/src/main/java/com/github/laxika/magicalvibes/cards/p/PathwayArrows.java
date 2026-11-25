@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -24,7 +24,7 @@ public class PathwayArrows extends Card {
                 new ActivatedAbility(
                         true,
                         "{2}",
-                        List.of(new DealDamageToTargetCreatureEffect(1),
+                        List.of(DealDamageEffect.toTargetCreature(1),
                                 new TapPermanentsEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
                                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                                 new PermanentIsColorlessPredicate()))))),

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -25,7 +25,7 @@ public class DismissivePyromancer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(4)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(4)),
                 "{2}{R}, {T}, Sacrifice this creature: It deals 4 damage to target creature.",
                 TargetFilters.creature()
         ));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -19,7 +19,7 @@ import java.util.Set;
 public class RedcapMelee extends Card {
 
     public RedcapMelee() {
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(4));
         addSpellEffect(new ConditionalEffect(
                 HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.RED)))),

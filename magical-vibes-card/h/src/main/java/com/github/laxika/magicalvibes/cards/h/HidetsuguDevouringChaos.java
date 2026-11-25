@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 
 @CardRegistration(set = "NEO", collectorNumber = "99")
@@ -36,7 +36,7 @@ public class HidetsuguDevouringChaos extends Card {
                                 HappenedThisWay.toACard(StepKind.EXILE,
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
                                 new QueueReflexiveAbilityEffect(
-                                        new DealDamageToAnyTargetEffect(AmountThisWay.exiledManaValue())))),
+                                        DealDamageEffect.toAnyTarget(AmountThisWay.exiledManaValue())))),
                 "{2}{R}, {T}: Exile the top card of your library. You may play that card this turn. "
                         + "When you exile a nonland card this way, Hidetsugu deals damage equal to the "
                         + "exiled card's mana value to any target."

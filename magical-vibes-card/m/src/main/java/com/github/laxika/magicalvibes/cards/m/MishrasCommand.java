@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsUpToThenDrawsThatManyEffect;
@@ -35,11 +34,11 @@ public class MishrasCommand extends Card {
                                 "Target must be a player.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Mishra's Command deals X damage to target creature",
-                        new DealDamageToTargetCreatureEffect(new XValue()),
+                        DealDamageEffect.toTargetCreature(new XValue()),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Mishra's Command deals X damage to target planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsPlaneswalkerPredicate(),
                                 "Target must be a planeswalker.")),

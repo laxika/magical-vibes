@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -37,9 +37,9 @@ public class SearingBarb extends Card {
                 "Target must be any target."
         )).addSpellEffect(new ConditionalReplacementEffect(
                         new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
-                        new DealDamageToAnyTargetEffect(2),
+                        DealDamageEffect.toAnyTarget(2),
                         SequenceEffect.of(
-                                new DealDamageToAnyTargetEffect(2),
+                                DealDamageEffect.toAnyTarget(2),
                                 new CantBlockThisTurnEffect(Subjects.target()))
                 ));
 

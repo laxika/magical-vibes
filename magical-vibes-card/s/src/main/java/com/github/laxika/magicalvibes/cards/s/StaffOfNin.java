@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class StaffOfNin extends Card {
 
     public StaffOfNin() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1));
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(1)), "{T}: Staff of Nin deals 1 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(DealDamageEffect.toAnyTarget(1)), "{T}: Staff of Nin deals 1 damage to any target."));
     }
 }

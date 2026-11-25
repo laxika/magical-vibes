@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -29,7 +29,7 @@ public class MakeshiftMunitions extends Card {
                                 "Sacrifice an artifact or creature",
                                 false
                         ),
-                        new DealDamageToAnyTargetEffect(1)
+                        DealDamageEffect.toAnyTarget(1)
                 ),
                 "{1}, Sacrifice an artifact or creature: Makeshift Munitions deals 1 damage to any target."
         ));

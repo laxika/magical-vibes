@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -22,7 +22,7 @@ public class SnappingThragg extends Card {
                 "Target must be a creature the damaged player controls"))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(
-                        new DealDamageToTargetCreatureEffect(3),
+                        DealDamageEffect.toTargetCreature(3),
                         "You may have Snapping Thragg deal 3 damage to target creature that player controls."));
     }
 }

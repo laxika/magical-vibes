@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class PurphorossIntervention extends Card {
                         )),
                 new ChooseOneEffect.ChooseOneOption(
                         "Purphoros's Intervention deals twice X damage to target creature or planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new Scaled(new XValue(), 2)),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new Scaled(new XValue(), 2)),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

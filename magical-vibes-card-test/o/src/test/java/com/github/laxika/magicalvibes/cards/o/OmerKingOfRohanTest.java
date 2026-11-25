@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.e.EssenceWarden;
 import com.github.laxika.magicalvibes.cards.h.HumbleDefector;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -7,11 +8,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OmerKingOfRohan.class, HumbleDefector.class, EssenceWarden.class})
+@CardUsed({OmerKingOfRohan.class, HumbleDefector.class, EssenceWarden.class, WhipOfErebos.class})
 class OmerKingOfRohanTest extends BaseCardTest {
 
     @Test
@@ -90,5 +92,22 @@ class OmerKingOfRohanTest extends BaseCardTest {
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Éomer that left before the ability resolves deals its last-known power with the lifelink it had as it left")
+    void departedOmerDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        Permanent omer = harness.enterBattlefieldAndReturn(player1, new OmerKingOfRohan());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, omer));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
     }
 }

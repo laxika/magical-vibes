@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -35,7 +35,7 @@ public class BorosCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Boros Charm deals 4 damage to target player or planeswalker",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(4),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(4),
                         new AnyTargetPredicateTargetFilter(
                                 new PermanentIsPlaneswalkerPredicate(),
                                 new PlayerRelationPredicate(PlayerRelation.ANY),

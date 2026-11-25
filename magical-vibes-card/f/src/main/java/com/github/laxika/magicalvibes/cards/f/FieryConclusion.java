@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "ORI", collectorNumber = "144")
@@ -13,6 +13,6 @@ public class FieryConclusion extends Card {
 
     public FieryConclusion() {
         addCastingCost(new SacrificeCreatureCost());
-        addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+        addSpellEffect(DealDamageEffect.toTargetCreature(5));
     }
 }

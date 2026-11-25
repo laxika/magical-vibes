@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -2549,7 +2549,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     /** Player2 casts an instant that deals 1 damage to {@code targetId}; the spell stays on the stack. */
     private void opponentCastsABoltAt(UUID targetId) {
         Card bolt = card("Bolt", CardType.INSTANT);
-        bolt.addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        bolt.addSpellEffect(DealDamageEffect.toAnyTarget(1));
         mainPhaseOf(player2);
         harness.setHand(player2, List.of(bolt));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -2585,7 +2585,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     /** A creature of player1 has its "{T}: This creature deals 1 damage to any target" activated at a target. */
     private void youActivateAPingAt(UUID targetId) {
         Card pinger = card("Pinger", CardType.CREATURE);
-        pinger.addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(1)),
+        pinger.addActivatedAbility(new ActivatedAbility(true, null, List.of(DealDamageEffect.toAnyTarget(1)),
                 "{T}: This creature deals 1 damage to any target."));
         Permanent source = addCreatureReady(player1, pinger);
         mainPhaseOf(player1);

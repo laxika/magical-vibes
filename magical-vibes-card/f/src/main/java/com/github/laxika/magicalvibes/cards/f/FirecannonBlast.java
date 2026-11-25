@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "145")
 public class FirecannonBlast extends Card {
@@ -13,8 +13,8 @@ public class FirecannonBlast extends Card {
         // Firecannon Blast deals 3 damage to target creature.
         // Raid — Firecannon Blast deals 6 damage instead if you attacked this turn.
         addSpellEffect(new ConditionalReplacementEffect(new Raid(), 
-                new DealDamageToTargetCreatureEffect(3),
-                new DealDamageToTargetCreatureEffect(6)
+                DealDamageEffect.toTargetCreature(3),
+                DealDamageEffect.toTargetCreature(6)
         ));
     }
 }

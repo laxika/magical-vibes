@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,7 +15,7 @@ import java.util.List;
 public class OmenOfTheForge extends Card {
 
     public OmenOfTheForge() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

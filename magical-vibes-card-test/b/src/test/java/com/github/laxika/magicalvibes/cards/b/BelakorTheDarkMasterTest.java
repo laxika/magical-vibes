@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.p.PlagueDrone;
 import com.github.laxika.magicalvibes.cards.v.VanguardSuppressor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BelakorTheDarkMaster.class, PlagueDrone.class, VanguardSuppressor.class})
+@CardUsed({BelakorTheDarkMaster.class, PlagueDrone.class, VanguardSuppressor.class, WhipOfErebos.class})
 class BelakorTheDarkMasterTest extends BaseCardTest {
 
     @Test
@@ -157,5 +158,26 @@ class BelakorTheDarkMasterTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A Demon that left before the ability resolves deals the damage with the lifelink it had as it left")
+    void departedDemonDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new BelakorTheDarkMaster());
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new PlagueDrone()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        var demon = findPermanent(player1, "Plague Drone");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, demon));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 23);
     }
 }

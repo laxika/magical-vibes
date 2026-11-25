@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DivineRetribution extends Card {
 
     public DivineRetribution() {
-        target(TargetFilters.attackingCreature()).addSpellEffect(new DealDamageToTargetCreatureEffect(new PermanentCount(
+        target(TargetFilters.attackingCreature()).addSpellEffect(DealDamageEffect.toTargetCreature(new PermanentCount(
                         new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER)));
     }
 }

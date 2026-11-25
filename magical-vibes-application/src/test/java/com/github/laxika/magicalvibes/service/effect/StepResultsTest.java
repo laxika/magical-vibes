@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
@@ -38,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -1021,7 +1021,7 @@ class StepResultsTest extends BaseCardTest {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
             StackEntry entry = resolve(player1, giant.getId(), null,
-                    new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+                    DealDamageEffect.toAnyTarget(new Fixed(1)),
                     new BoostSelfEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE), 5, 0));
 
             assertThat(entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE).objectIds())
@@ -1034,7 +1034,7 @@ class StepResultsTest extends BaseCardTest {
         void playerDamageNamesNoCreature() {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-            resolve(player1, player2.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(3), false, false),
+            resolve(player1, player2.getId(), null, DealDamageEffect.toAnyTarget(new Fixed(3)),
                     new BoostSelfEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE), 5, 0));
 
             assertThat(gd.getLife(player2.getId())).isEqualTo(17);
@@ -1046,7 +1046,7 @@ class StepResultsTest extends BaseCardTest {
         void filteredSubjectNamesOnlyMatchingPermanents() {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-            resolve(player1, giant.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+            resolve(player1, giant.getId(), null, DealDamageEffect.toAnyTarget(new Fixed(1)),
                     new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
                             new PermanentHasSubtypePredicate(CardSubtype.DRAGON))));
 
@@ -1058,7 +1058,7 @@ class StepResultsTest extends BaseCardTest {
         void filteredSubjectNamesTheMatchingPermanent() {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-            resolve(player1, giant.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+            resolve(player1, giant.getId(), null, DealDamageEffect.toAnyTarget(new Fixed(1)),
                     new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
                             new PermanentHasSubtypePredicate(CardSubtype.GIANT))));
 
@@ -1070,7 +1070,7 @@ class StepResultsTest extends BaseCardTest {
         void happenedToAMatchingPermanent() {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-            resolve(player1, giant.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+            resolve(player1, giant.getId(), null, DealDamageEffect.toAnyTarget(new Fixed(1)),
                     new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
                             new PermanentHasSubtypePredicate(CardSubtype.GIANT)), new GainLifeEffect(2)),
                     new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
@@ -1080,9 +1080,24 @@ class StepResultsTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Damage to target permanent begins its own step: \"that much\" reads only its damage, not an earlier step's")
+        void targetPermanentDamageBeginsItsOwnStep() {
+            Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+            StackEntry entry = resolve(player1, giant.getId(), null,
+                    new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
+                    DealDamageEffect.toTargetPermanent(1),
+                    new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE)));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE).objectIds())
+                    .containsExactly(giant.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        }
+
+        @Test
         @DisplayName("Damage to a player is no permanent dealt damage this way: a filtered condition fails")
         void playerDamageFailsAFilteredCondition() {
-            resolve(player1, player2.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+            resolve(player1, player2.getId(), null, DealDamageEffect.toAnyTarget(new Fixed(1)),
                     new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
                             new PermanentIsCreaturePredicate()), new GainLifeEffect(2)));
 

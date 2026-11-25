@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
@@ -29,8 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -977,47 +976,67 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("DealDamageToTargetCreatureEffect damage bound to the granting permanent's counters")
+        @DisplayName("DealDamageEffect damage bound to the granting permanent's counters")
         void grantSourceCounterDamageBindsGrantingPermanent() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
             Permanent aura = addReadyPermanent(player1Id, createCard("Test Aura", CardType.ENCHANTMENT));
             Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
-            List<CardEffect> effects = List.of(new DealDamageToTargetCreatureEffect(
-                    new CountersOnGrantingPermanent(CounterType.ARROW)));
+            List<CardEffect> effects = List.of(DealDamageEffect.toTargetCreature(new CountersOnGrantingPermanent(CounterType.ARROW)));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Deal X")
                     .withGrantSource(aura.getId());
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            DealDamageToTargetCreatureEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
-                    .filter(e -> e instanceof DealDamageToTargetCreatureEffect)
-                    .map(e -> (DealDamageToTargetCreatureEffect) e)
+            DealDamageEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
+                    .filter(e -> e instanceof DealDamageEffect)
+                    .map(e -> (DealDamageEffect) e)
                     .findFirst().orElseThrow();
             assertThat(snapshot.damage()).isEqualTo(new CountersOnGrantingPermanent(CounterType.ARROW, aura.getId()));
         }
 
         @Test
-        @DisplayName("DealDamageToAnyTargetEffect damage bound to the granting permanent's counters")
+        @DisplayName("DealDamageEffect damage bound to the granting permanent's counters")
         void grantSourceAnyCounterDamageBindsGrantingPermanent() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
             Permanent aura = addReadyPermanent(player1Id, createCard("Test Aura", CardType.ENCHANTMENT));
             Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
-            List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(
-                    new CountersOnGrantingPermanent(CounterType.ARROW)));
+            List<CardEffect> effects = List.of(DealDamageEffect.toAnyTarget(new CountersOnGrantingPermanent(CounterType.ARROW)));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Deal X")
                     .withGrantSource(aura.getId());
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            DealDamageToAnyTargetEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
-                    .filter(e -> e instanceof DealDamageToAnyTargetEffect)
-                    .map(e -> (DealDamageToAnyTargetEffect) e)
+            DealDamageEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
+                    .filter(e -> e instanceof DealDamageEffect)
+                    .map(e -> (DealDamageEffect) e)
                     .findFirst().orElseThrow();
             assertThat(snapshot.damage()).isEqualTo(new CountersOnGrantingPermanent(CounterType.ARROW, aura.getId()));
+        }
+
+        @Test
+        @DisplayName("Binding the granting permanent's counters keeps the any-target damage's other components")
+        void grantSourceAnyCounterDamageKeepsItsOtherComponents() {
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent aura = addReadyPermanent(player1Id, createCard("Test Aura", CardType.ENCHANTMENT));
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            DealDamageEffect granted = DealDamageEffect.toAnyTarget(new CountersOnGrantingPermanent(CounterType.ARROW)).recordingDamageDealt();
+            List<CardEffect> effects = List.of(granted);
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Deal X")
+                    .withGrantSource(aura.getId());
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
+
+            DealDamageEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
+                    .filter(e -> e instanceof DealDamageEffect)
+                    .map(e -> (DealDamageEffect) e)
+                    .findFirst().orElseThrow();
+            assertThat(snapshot).isEqualTo(granted.withDamage(
+                    new CountersOnGrantingPermanent(CounterType.ARROW, aura.getId())));
         }
     }
 

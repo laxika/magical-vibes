@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,7 +33,7 @@ public class ResponseResurgence extends Card {
                                 new PermanentIsBlockingPredicate())))),
                 "Target must be an attacking or blocking creature.");
 
-        CardEffect response = new DealDamageToTargetCreatureEffect(5);
+        CardEffect response = DealDamageEffect.toTargetCreature(5);
         CardEffect firstStrikeAndVigilance = new GrantKeywordEffect(
                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), Subjects.otherCreaturesYouControl());
         CardEffect additionalCombatAndMainPhase = new AdditionalCombatMainPhaseEffect(1, null, true);

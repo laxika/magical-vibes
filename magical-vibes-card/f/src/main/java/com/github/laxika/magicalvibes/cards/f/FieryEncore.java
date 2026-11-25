@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -18,8 +18,7 @@ public class FieryEncore extends Card {
     public FieryEncore() {
         addSpellEffect(new DiscardCardThenEffect(
                 null,
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                        new LastDiscardedCardManaValue()),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new LastDiscardedCardManaValue()),
                 "a card",
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                 false,

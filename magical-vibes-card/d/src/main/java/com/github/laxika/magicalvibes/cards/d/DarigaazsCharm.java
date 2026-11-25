@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -27,7 +27,7 @@ public class DarigaazsCharm extends Card {
                                 .build()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Darigaaz's Charm deals 3 damage to any target",
-                        new DealDamageToAnyTargetEffect(3)),
+                        DealDamageEffect.toAnyTarget(3)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +3/+3 until end of turn",
                         new BoostTargetCreatureEffect(3, 3))

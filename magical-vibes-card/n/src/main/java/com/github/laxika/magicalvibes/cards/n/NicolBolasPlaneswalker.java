@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -51,7 +51,7 @@ public class NicolBolasPlaneswalker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(7),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(7),
                         new DiscardEffect(7, Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target()))),
                         new SacrificePermanentsEffect(
                                 7, new PermanentTruePredicate(),

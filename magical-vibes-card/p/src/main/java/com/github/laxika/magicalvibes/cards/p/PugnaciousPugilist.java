@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class PugnaciousPugilist extends Card {
         addCastingOption(AlternateHandCast.blitz("{3}{R}"));
 
         List<Ability> devilTokenEffects =
-                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
+                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(1)));
         addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Devil", 1, 1, CardColor.RED, null,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), true, false,

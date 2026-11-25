@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,7 +28,7 @@ public class PiercingLight extends Card {
                 )),
                 "Target must be an attacking or blocking creature."
         ))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(2))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(2))
                 .addSpellEffect(new ScryEffect(1));
     }
 }

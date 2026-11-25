@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentToHandEffect;
@@ -40,7 +40,7 @@ public class JeskaiRevelation extends Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any target")).addSpellEffect(new DealDamageToAnyTargetEffect(4));
+                "Target must be any target")).addSpellEffect(DealDamageEffect.toAnyTarget(4));
 
         List<Ability> monkTokenEffects = List.of(
                 new TriggeredAbility(Triggers.youCastSpell()

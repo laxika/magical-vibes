@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -44,15 +43,15 @@ public class ClanDefiance extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Clan Defiance deals X damage to target creature with flying",
-                        new DealDamageToTargetCreatureEffect(new XValue()),
+                        DealDamageEffect.toTargetCreature(new XValue()),
                         flyingCreatureFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Clan Defiance deals X damage to target creature without flying",
-                        new DealDamageToTargetCreatureEffect(new XValue()),
+                        DealDamageEffect.toTargetCreature(new XValue()),
                         nonFlyingCreatureFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Clan Defiance deals X damage to target player or planeswalker",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue()),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(new XValue()),
                         playerOrPlaneswalkerFilter)
         )));
     }

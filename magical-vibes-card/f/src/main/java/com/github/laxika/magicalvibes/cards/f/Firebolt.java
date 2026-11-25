@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "193")
 @CardRegistration(set = "DD2", collectorNumber = "49")
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 public class Firebolt extends Card {
 
     public Firebolt() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(DealDamageEffect.toAnyTarget(2));
         addCastingOption(new FlashbackCast("{4}{R}"));
     }
 }

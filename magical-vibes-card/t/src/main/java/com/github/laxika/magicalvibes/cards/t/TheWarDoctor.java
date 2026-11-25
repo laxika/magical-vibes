@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -46,6 +46,6 @@ public class TheWarDoctor extends Card {
                 "Target must be any target"
         );
         target(anyTarget).addTrigger(Triggers.attacks(),
-                new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.TIME), false, true));
+                DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.TIME)).exilingDamagedCreaturesThatWouldDie());
     }
 }

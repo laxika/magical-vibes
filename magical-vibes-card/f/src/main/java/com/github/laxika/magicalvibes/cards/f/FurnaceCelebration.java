@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -19,7 +19,7 @@ public class FurnaceCelebration extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayPayManaEffect(
-                                "{2}", new DealDamageToAnyTargetEffect(2, false),
+                                "{2}", DealDamageEffect.toAnyTarget(2),
                                 "Pay {2} to deal 2 damage to any target?"
                         ));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -28,7 +28,7 @@ public class ImmardTheStormcleaver extends Card {
         var removalMode = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Immard deals 4 damage to any target",
-                        new DealDamageToAnyTargetEffect(4)),
+                        DealDamageEffect.toAnyTarget(4)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Immard gains lifelink and indestructible until end of turn",
                         new GrantKeywordEffect(

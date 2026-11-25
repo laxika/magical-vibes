@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -25,7 +25,7 @@ public class RazormaneMasticore extends Card {
 
         // At the beginning of your draw step, you may have this creature deal 3 damage to target creature.
         addTrigger(Triggers.drawStep(ActivePlayer.YOU), new MayEffect(
-                new DealDamageToTargetCreatureEffect(3),
+                DealDamageEffect.toTargetCreature(3),
                 "Deal 3 damage to target creature?"
         ));
     }

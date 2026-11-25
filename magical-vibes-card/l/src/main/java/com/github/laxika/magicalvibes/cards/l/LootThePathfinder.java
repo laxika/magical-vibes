@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class LootThePathfinder extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new DealDamageToAnyTargetEffect(3)),
+                List.of(DealDamageEffect.toAnyTarget(3)),
                 "Exhaust — {R}, {T}: Loot deals 3 damage to any target. (Activate each exhaust ability only once.)"
         ).withMaxActivationsPerGame(1).withExhaust());
     }

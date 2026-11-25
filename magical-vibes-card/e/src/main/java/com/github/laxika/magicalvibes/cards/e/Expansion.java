@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -63,7 +63,7 @@ public class Expansion extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Explosion — Deal X damage to any target and target player draws X cards",
                         List.of(
-                                new DealDamageToAnyTargetEffect(new XValue(), false, false, 0),
+                                DealDamageEffect.toAnyTargetInGroup(new XValue(), 0),
                                 new DrawCardEffect(new XValue(), Subjects.targetPlayer())
                         ),
                         List.of(anyTarget, anyPlayer)

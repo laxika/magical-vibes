@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect;
@@ -29,7 +29,7 @@ public class SeasonOfTheBold extends Card {
                         "Until the end of your next turn, whenever you cast a spell, deal 2 damage to up to one target creature.",
                         new RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect(
                                 new TriggeredAbility(Triggers.youCastSpell(),
-                                SequenceEffect.upToOneTarget(new DealDamageToTargetCreatureEffect(2))),
+                                SequenceEffect.upToOneTarget(DealDamageEffect.toTargetCreature(2))),
                                 TargetFilters.creature()))
         ), List.of(1, 2, 3), 5));
     }

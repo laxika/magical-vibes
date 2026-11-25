@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
@@ -25,6 +25,6 @@ public class UnsparingBoltcaster extends Card {
                         new PermanentDealtDamageThisTurnPredicate()
                 )),
                 "Target must be a creature an opponent controls that was dealt damage this turn"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(5));
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toTargetCreature(5));
     }
 }

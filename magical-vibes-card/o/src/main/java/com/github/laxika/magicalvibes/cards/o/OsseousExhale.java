@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,7 +31,7 @@ public class OsseousExhale extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(5));
         addSpellEffect(new ConditionalEffect(new BeholdCostPaid(), new GainLifeEffect(2)));
     }
 }

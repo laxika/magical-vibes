@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -45,7 +45,7 @@ public class BreyaEtheriumShaper extends Card {
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Breya deals 3 damage to target player or planeswalker",
-                                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(3),
+                                        DealDamageEffect.toTargetPlayerOrPlaneswalker(3),
                                         new AnyTargetPredicateTargetFilter(
                                                 new PermanentIsPlaneswalkerPredicate(),
                                                 new PlayerRelationPredicate(PlayerRelation.ANY),

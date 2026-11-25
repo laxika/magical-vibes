@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,6 +22,6 @@ public class WiltInTheHeat extends Card {
         // turn, exile it instead.
         target(TargetFilters.creature())
                 .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(5));
     }
 }

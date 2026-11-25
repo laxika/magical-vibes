@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +20,7 @@ public class FodderCannon extends Card {
                 "{4}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new DealDamageToTargetCreatureEffect(4)
+                        DealDamageEffect.toTargetCreature(4)
                 ),
                 "{4}, {T}, Sacrifice a creature: Fodder Cannon deals 4 damage to target creature.",
                 TargetFilters.creature()

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -22,7 +22,7 @@ public class SoulShred extends Card {
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))),
                 "Target must be a nonblack creature."
         ))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(3));
         addSpellEffect(new GainLifeEffect(3));
     }
 }

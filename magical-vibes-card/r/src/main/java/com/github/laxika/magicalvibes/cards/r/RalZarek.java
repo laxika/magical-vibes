@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetThenUntapAnotherTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -33,7 +33,7 @@ public class RalZarek extends Card {
         // −2: Ral Zarek deals 3 damage to any target.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DealDamageToAnyTargetEffect(3)),
+                List.of(DealDamageEffect.toAnyTarget(3)),
                 "−2: Ral Zarek deals 3 damage to any target."
         ));
 

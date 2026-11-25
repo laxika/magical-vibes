@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,7 +32,7 @@ public class JeskaiCharm extends Card {
                                 "Target must be a creature.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Jeskai Charm deals 4 damage to target opponent or planeswalker",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(4, PlayerRelation.OPPONENT),
+                        DealDamageEffect.toTargetOpponentOrPlaneswalker(4),
                         new AnyTargetPredicateTargetFilter(
                                 new PermanentIsPlaneswalkerPredicate(),
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
@@ -33,7 +33,7 @@ public class ApocalypseHydra extends Card {
                 "{1}{R}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToAnyTargetEffect(1)
+                        DealDamageEffect.toAnyTarget(1)
                 ),
                 "{1}{R}, Remove a +1/+1 counter from Apocalypse Hydra: It deals 1 damage to any target."
         ));

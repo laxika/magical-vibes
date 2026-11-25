@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
@@ -31,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -175,7 +175,7 @@ class CopySpellEffectHandlerTest {
             @Test
             @DisplayName("Copy preserves effects from target spell")
             void copyPreservesEffects() {
-                DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+                DealDamageEffect damageEffect = DealDamageEffect.toAnyTarget(2);
                 Card shockCard = createSpellCard("Shock", List.of(damageEffect));
                 UUID bearsPermId = UUID.randomUUID();
                 StackEntry targetEntry = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
@@ -192,9 +192,9 @@ class CopySpellEffectHandlerTest {
                 assertThat(copyEntry.getEffectsToResolve())
                         .hasSize(1)
                         .first()
-                        .isInstanceOf(DealDamageToAnyTargetEffect.class);
+                        .isInstanceOf(DealDamageEffect.class);
 
-                DealDamageToAnyTargetEffect copiedEffect = (DealDamageToAnyTargetEffect) copyEntry.getEffectsToResolve().getFirst();
+                DealDamageEffect copiedEffect = (DealDamageEffect) copyEntry.getEffectsToResolve().getFirst();
                 assertThat(copiedEffect.damage()).isEqualTo(new Fixed(2));
             }
 

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,6 +20,6 @@ public class CombustionTechnique extends Card {
                 new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER));
         target(TargetFilters.creature())
                 .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(damage));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(damage));
     }
 }

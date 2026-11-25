@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -31,8 +31,7 @@ public class TigerTribeHunter extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
-                                new DealDamageToTargetCreatureEffect(AmountThisWay.sacrificedPower(), false,
-                                        new PermanentIsCreaturePredicate())))),
+                                DealDamageEffect.toTargetCreature(AmountThisWay.sacrificedPower(), new PermanentIsCreaturePredicate())))),
                         "Sacrifice another creature?"));
     }
 }

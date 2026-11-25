@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
@@ -334,7 +334,7 @@ class AutoPassServiceTest {
         void processesAttackTriggerTargets() {
             gd.queueInteraction(
                     new PermanentChoiceContext.AttackTriggerTarget(
-                            new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), UUID.randomUUID()));
+                            new Card(), player1Id, List.of(DealDamageEffect.toAnyTarget(1)), UUID.randomUUID()));
             org.mockito.Mockito.doAnswer(inv -> {
                 gd.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
@@ -351,7 +351,7 @@ class AutoPassServiceTest {
         void processesEntersTriggerTargets() {
             gd.queueInteraction(
                     new PermanentChoiceContext.EntersTriggerTarget(
-                            new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), UUID.randomUUID()));
+                            new Card(), player1Id, List.of(DealDamageEffect.toAnyTarget(1)), UUID.randomUUID()));
             org.mockito.Mockito.doAnswer(inv -> {
                 gd.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
@@ -543,7 +543,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns false for sorcery-speed activated ability")
         void returnsFalseForSorcerySpeedAbility() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(true, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(true, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Test ability", ActivationTimingRestriction.SORCERY_SPEED));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -554,7 +554,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns false for upkeep-only activated ability")
         void returnsFalseForUpkeepOnlyAbility() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(true, "{6}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(true, "{6}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Untap", ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -576,7 +576,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns false for loyalty ability")
         void returnsFalseForLoyaltyAbility() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(1, List.of(new DealDamageToAnyTargetEffect(3)), "Deal 3 damage"));
+                    new ActivatedAbility(1, List.of(DealDamageEffect.toAnyTarget(3)), "Deal 3 damage"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             assertThat(sut.hasInstantSpeedActivatedAbility(gd, player1Id)).isFalse();
@@ -586,7 +586,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns false when tapped permanent has tap ability")
         void returnsFalseWhenTappedWithTapAbility() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(true, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(true, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Deal 1 damage"));
             Permanent perm = new Permanent(card);
             perm.tap();
@@ -599,7 +599,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns true for untapped permanent with instant-speed tap ability")
         void returnsTrueForInstantSpeedAbility() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(true, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(true, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Deal 1 damage"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -610,7 +610,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns true for no-tap instant-speed ability")
         void returnsTrueForNoTapAbility() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(false, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(false, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Deal 1 damage"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -621,7 +621,7 @@ class AutoPassServiceTest {
         @DisplayName("Does not consider opponent's permanents")
         void doesNotConsiderOpponentPermanents() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(true, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(true, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Deal 1 damage"));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
@@ -632,7 +632,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns false for attack-only ability when not attacking")
         void returnsFalseForAttackOnlyWhenNotAttacking() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(false, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(false, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Attack ability", ActivationTimingRestriction.ONLY_WHILE_ATTACKING));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -643,7 +643,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns true for attack-only ability when permanent is attacking")
         void returnsTrueForAttackOnlyWhenAttacking() {
             Card card = createCardWithAbility(
-                    new ActivatedAbility(false, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(false, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Attack ability", ActivationTimingRestriction.ONLY_WHILE_ATTACKING));
             Permanent perm = new Permanent(card);
             perm.setAttacking(true);
@@ -735,7 +735,7 @@ class AutoPassServiceTest {
             ));
 
             Card card = createCardWithAbility(
-                    new ActivatedAbility(true, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                    new ActivatedAbility(true, "{1}", List.of(DealDamageEffect.toAnyTarget(1)),
                             "Deal 1 damage"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 

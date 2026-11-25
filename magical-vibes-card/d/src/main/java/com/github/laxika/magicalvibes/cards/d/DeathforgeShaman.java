@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -25,7 +25,6 @@ public class DeathforgeShaman extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                                new Scaled(new RepeatedAdditionalCostCount("{R}"), 2)));
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(new Scaled(new RepeatedAdditionalCostCount("{R}"), 2)));
     }
 }

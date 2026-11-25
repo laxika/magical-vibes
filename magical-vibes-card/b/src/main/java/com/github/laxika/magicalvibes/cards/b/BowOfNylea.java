@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -38,8 +38,7 @@ public class BowOfNylea extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 COST,
-                List.of(new DealDamageToTargetCreatureEffect(2,
-                        new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                List.of(DealDamageEffect.toTargetCreature(2, new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 "{1}{G}, {T}: Bow of Nylea deals 2 damage to target creature with flying."));
 
         addActivatedAbility(new ActivatedAbility(

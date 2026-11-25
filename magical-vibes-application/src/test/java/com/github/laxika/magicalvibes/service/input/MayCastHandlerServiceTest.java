@@ -13,12 +13,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -233,7 +233,7 @@ class MayCastHandlerServiceTest {
         @DisplayName("Returns only permanent IDs for permanent-only targeting effects")
         void returnsOnlyPermanentIdsForPermanentOnlyTargeting() {
             Card card = createInstant("Shock");
-            List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(2));
+            List<CardEffect> effects = List.of(DealDamageEffect.toAnyTarget(2));
 
             Permanent creature = new Permanent(createCreature("Bear"));
             gd.playerBattlefields.get(PLAYER1_ID).add(creature);
@@ -241,7 +241,7 @@ class MayCastHandlerServiceTest {
 
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);
 
-            // DealDamageToAnyTargetEffect can target both permanents and players
+            // DealDamageEffect can target both permanents and players
             assertThat(targets).contains(creature.getId(), PLAYER1_ID, PLAYER2_ID);
         }
 

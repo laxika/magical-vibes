@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -45,7 +45,7 @@ public class SplinteringWind extends Card {
                 List.of(CardSubtype.SPLINTER), Set.of(Keyword.FLYING), Set.of(), splinterEffects);
 
         addActivatedAbility(new ActivatedAbility(false, "{2}{G}",
-                List.of(new DealDamageToTargetCreatureEffect(1),
+                List.of(DealDamageEffect.toTargetCreature(1),
                         new CreateTokenAndLinkToSourceEffect(splinter, false, splinterLeaves)),
                 "{2}{G}: Splintering Wind deals 1 damage to target creature. Create a 1/1 green "
                         + "Splinter creature token. It has flying and \"Cumulative upkeep {G}.\" When it "

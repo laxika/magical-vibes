@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "86")
 @CardRegistration(set = "MM2", collectorNumber = "117")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 public class GutShot extends Card {
 
     public GutShot() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(DealDamageEffect.toAnyTarget(1));
     }
 }

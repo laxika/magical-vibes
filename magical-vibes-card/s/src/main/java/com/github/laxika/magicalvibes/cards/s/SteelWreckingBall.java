@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ import java.util.List;
 public class SteelWreckingBall extends Card {
 
     public SteelWreckingBall() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(5));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toTargetCreature(5));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

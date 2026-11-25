@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class Pyromatics extends Card {
 
     public Pyromatics() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{R}")));
-        addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(DealDamageEffect.toAnyTarget(1));
         addTrigger(Triggers.youCastThisSpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{1}{R}")),
                 new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount("{1}{R}")));

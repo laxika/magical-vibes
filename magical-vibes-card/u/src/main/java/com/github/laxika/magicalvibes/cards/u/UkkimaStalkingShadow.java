@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
@@ -35,7 +35,7 @@ public class UkkimaStalkingShadow extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(new SourcePower()),
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(new SourcePower()),
                 new GainLifeEffect(new SourcePower())));
     }
 }

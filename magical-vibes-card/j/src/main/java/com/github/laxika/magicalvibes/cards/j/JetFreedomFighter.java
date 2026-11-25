@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,8 +18,7 @@ public class JetFreedomFighter extends Card {
     public JetFreedomFighter() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DealDamageToTargetCreatureEffect(
-                                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
+                        DealDamageEffect.toTargetCreature(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
 
         target(TargetFilters.creature(), 0, 2)
                 .addTrigger(Triggers.dies(ObjectRelation.THIS),

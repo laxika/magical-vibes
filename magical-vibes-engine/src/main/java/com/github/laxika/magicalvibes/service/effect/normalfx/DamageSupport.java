@@ -421,17 +421,6 @@ public class DamageSupport {
         permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, counters, controllerId);
     }
 
-    /**
-     * Deals damage that can't be prevented to a creature (e.g. Combust): its replacement effects
-     * still apply in the order its controller chooses, its prevention effects don't. Returns the
-     * damage dealt.
-     */
-    public int dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
-        return processDamageEvent(gameData, DamageEvent.toPermanent(entry,
-                gameQueryService.findPermanentController(gameData, target.getId()), target.getId(), null,
-                Math.max(0, rawDamage), true, gameData.damageCantBePreventedOrRedirected(target.getId())));
-    }
-
     private void recordDamageToPermanent(GameData gameData, UUID targetId, int amount,
                                          StackEntry entry, Permanent damageSource) {
         UUID sourceId = damageSource == null
@@ -737,20 +726,34 @@ public class DamageSupport {
      * The entry {@code entry}'s damage is dealt through when the permanent its trigger event was about deals it
      * ({@code DamageSource.TRIGGERING_PERMANENT}, "then that land deals 1 damage to that player"): that permanent is its
      * source and its controller the source's controller, as for {@link #entryDealtByEventDamageSource}. A permanent
-     * that has left the battlefield deals it as it last existed there (CR 608.2h): the entry's triggering permanent
-     * snapshot, else the departure snapshot the game recorded as it left, with the keywords the entry recorded it had
-     * as it left.
+     * that has left the battlefield deals it as it most recently existed there (CR 608.2h): the departure snapshot the
+     * game recorded as it left (its keywords then, a static grant's included), else the entry's triggering permanent
+     * snapshot, with the keywords the entry recorded it had as it left.
      *
-     * @return the entry, or {@code null} when the entry names no triggering permanent it can find or remember
+     * An entry that names no triggering permanent is an ability its own source triggered ("whenever this creature
+     * or another Dragon you control enters, it deals"): the source deals it, as it is or last existed.
+     *
+     * @return the entry, or {@code null} when the entry names no triggering permanent or source it can find or
+     *         remember
      */
     public StackEntry entryDealtByTriggeringPermanent(GameData gameData, StackEntry entry) {
+        if (entry.getTriggeringPermanentId() == null && entry.getSourcePermanentId() != null) {
+            // A "this creature or another [creature] enters" ability triggered by its own source records no
+            // triggering permanent: the object its event was about is the source itself (Scourge of Valkas).
+            Permanent source = dealerAsItIsOrWas(gameData, entry, entry.getSourcePermanentId());
+            return source == null ? null
+                    : entryDealtByPermanent(gameData, entry, source, dealerControllerId(gameData, entry, source));
+        }
         UUID permanentId = entry.getTriggeringPermanentId();
         Permanent live = permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-        Permanent dealer = live != null ? live : entry.getTriggeringPermanentSnapshot();
+        Permanent dealer = live;
         if (dealer == null && permanentId != null) {
             dealer = gameData.departedPermanentSnapshots.values().stream()
                     .filter(departed -> departed.getId().equals(permanentId))
                     .findFirst().orElse(null);
+        }
+        if (dealer == null) {
+            dealer = entry.getTriggeringPermanentSnapshot();
         }
         if (dealer == null) {
             return null;
@@ -869,15 +872,6 @@ public class DamageSupport {
     }
 
     /**
-     * Deals {@code damage} to the entry's target creature (or planeswalker) through the same permanent-damage path as
-     * {@link #resolveAnyTargetDamage}. Returns the damage dealt.
-     */
-    public int resolveCreatureTargetDamage(GameData gameData, StackEntry entry, int damage) {
-        if (entry.getTargetId() == null || gameData.playerIds.contains(entry.getTargetId())) return 0;
-        return resolveAnyTargetDamage(gameData, entry, entry.getTargetId(), damage, false);
-    }
-
-    /**
      * Excess damage dealt to a creature: damage beyond what was needed for lethal damage,
      * accounting for damage already marked and deathtouch (CR 120.10).
      */
@@ -892,27 +886,6 @@ public class DamageSupport {
         int lethalDamageThreshold = gameQueryService.getLethalDamageThreshold(gameData, target);
         int lethalNeeded = Math.max(0, lethalDamageThreshold - markedDamageBefore);
         return Math.max(0, damageDealt - lethalNeeded);
-    }
-
-    /**
-     * Excess damage dealt to a permanent targeted as a creature. A creature planeswalker has both excess
-     * over its toughness and excess over its loyalty; the greater of the two is the excess dealt.
-     */
-    public int computeExcessDamageToTargetedPermanent(GameData gameData, Permanent target, int damageDealt,
-                                                      int markedDamageBefore, int loyaltyBefore,
-                                                      boolean sourceHasDeathtouch) {
-        int excess = gameQueryService.isCreature(gameData, target)
-                ? computeExcessDamageToCreature(gameData, target, damageDealt, markedDamageBefore,
-                sourceHasDeathtouch)
-                : 0;
-        if (gameQueryService.isPlaneswalker(gameData, target)) {
-            boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, target);
-            int loyaltyExcess = Math.max(0, damageDealt - (toughnessAsLoyalty
-                    ? gameQueryService.getEffectiveToughness(gameData, target)
-                    : loyaltyBefore));
-            excess = Math.max(excess, loyaltyExcess);
-        }
-        return excess;
     }
 
     private void recordExcessDamageToCreatureIfAny(GameData gameData, StackEntry entry,

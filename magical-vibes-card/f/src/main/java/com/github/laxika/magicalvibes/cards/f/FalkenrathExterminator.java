@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,8 +25,7 @@ public class FalkenrathExterminator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new DealDamageToTargetCreatureEffect(
-                        new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
+                List.of(DealDamageEffect.toTargetCreature(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
                 "{2}{R}: This creature deals damage to target creature equal to the number of +1/+1 counters on this creature.",
                 TargetFilters.creature()
         ));

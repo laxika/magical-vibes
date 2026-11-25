@@ -15,6 +15,6 @@ public record BoostSelfAndTriggerWhenPowerBecomesEffect(
     public BoostSelfAndTriggerWhenPowerBecomesEffect(int powerBoost, int toughnessBoost,
                                                      int powerThreshold, int damage) {
         this(new BoostSelfEffect(powerBoost, toughnessBoost), powerThreshold,
-                new DealDamageToAnyTargetEffect(damage));
+                DealDamageEffect.toAnyTarget(damage));
     }
 }

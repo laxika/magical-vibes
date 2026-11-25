@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -20,7 +20,7 @@ public class RavagingBlaze extends Card {
 
     public RavagingBlaze() {
         // Ravaging Blaze deals X damage to target creature.
-        addSpellEffect(new DealDamageToTargetCreatureEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toTargetCreature(new XValue()));
 
         // Spell mastery — If there are two or more instant and/or sorcery cards in your graveyard,
         // Ravaging Blaze also deals X damage to that creature's controller.

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseNumberAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +23,7 @@ public class VolcanoHellion extends Card {
 
     public VolcanoHellion() {
         var chooseAnyNumber = new ChooseNumberAtResolutionEffect(0, Integer.MAX_VALUE);
-        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(new XValue(), true);
+        var dealDamageToTargetCreature = DealDamageEffect.toTargetCreature(new XValue()).unpreventable();
         target(TargetFilters.creature())
                 .bindEffect(chooseAnyNumber)
                 .bindEffect(dealDamageToTargetCreature);

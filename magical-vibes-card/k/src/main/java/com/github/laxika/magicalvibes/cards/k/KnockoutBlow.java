@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,7 +36,7 @@ public class KnockoutBlow extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(4))
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(4))
                 .addSpellEffect(new GainLifeEffect(2));
     }
 }

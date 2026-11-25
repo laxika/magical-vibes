@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -14,6 +14,6 @@ public class Soulblast extends Card {
     public Soulblast() {
         // The sacrifice cost snapshots the creatures' total power into the entry's xValue.
         addCastingCost(new SacrificeAllMatchingPermanentsCost(new PermanentIsCreaturePredicate(), true));
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()));
     }
 }

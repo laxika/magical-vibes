@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -30,7 +29,7 @@ public class ChandraDressedToKill extends Card {
                 false, null,
                 List.of(
                         new AwardManaEffect(ManaColor.RED, 1),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(1)
                 ),
                 "+1: Add {R}. Chandra, Dressed to Kill deals 1 damage to up to one target player or planeswalker.",
                 new PermanentPredicateTargetFilter(
@@ -60,7 +59,7 @@ public class ChandraDressedToKill extends Card {
                         new CreateEmblemEffect(
                                 new TriggeredAbility(
                                         Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
-                                        new DealDamageToAnyTargetEffect(new ManaSpentToCast())),
+                                        DealDamageEffect.toAnyTarget(new ManaSpentToCast())),
                                 "Whenever you cast a red spell, this emblem deals X damage to any "
                                         + "target, where X is the amount of mana spent to cast that spell.")
                 ),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -26,7 +26,7 @@ public class TarPitcher extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         "Sacrifice a Goblin",
                         false
-                ), new DealDamageToAnyTargetEffect(2)),
+                ), DealDamageEffect.toAnyTarget(2)),
                 "{T}, Sacrifice a Goblin: Tar Pitcher deals 2 damage to any target."
         ));
     }

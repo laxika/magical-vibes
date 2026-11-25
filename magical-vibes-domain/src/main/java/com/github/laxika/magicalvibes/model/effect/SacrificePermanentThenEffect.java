@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * has no matching permanent, nothing happens. When {@code thenEffect} is {@code null}
  * this is a bare "sacrifice a permanent" with no follow-up (e.g. Tragedy Feaster's Infusion).
  *
- * <p>When {@code thenEffect} declares a target (e.g. {@code DealDamageToAnyTargetEffect}),
+ * <p>When {@code thenEffect} declares a target (e.g. {@code DealDamageEffect}),
  * the target is chosen as the reflexive trigger goes on the stack — matching "When you do,
  * … deals N damage to any target" wording (Sorin, Imperious Bloodlord). Wrap in
  * {@link MayEffect} for the optional "you may sacrifice" case.

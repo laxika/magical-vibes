@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -47,7 +47,7 @@ public class Triskelavus extends Card {
                                 List.of(new ActivatedAbility(
                                         false,
                                         null,
-                                        List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(1)),
+                                        List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(1)),
                                         "Sacrifice this token: This token deals 1 damage to any target."
                                 )),
                                 false,

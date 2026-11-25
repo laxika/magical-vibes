@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BalduvianBears.class, GazeOfPain.class, GiantGrowth.class,
-        DarkBanishing.class, PrismaticWard.class})
+        DarkBanishing.class, PrismaticWard.class, WhipOfErebos.class})
 class GazeOfPainTest extends BaseCardTest {
 
     private void castGaze() {
@@ -292,5 +293,25 @@ class GazeOfPainTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An attacker that left before the ability resolves deals the damage with the lifelink it had as it left")
+    
+    void departedAttackerDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        castGaze();
+        Permanent attacker = addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.handlePermanentChosen(player1, victim.getId());
+        destroyAttacker(attacker);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 22);
     }
 }

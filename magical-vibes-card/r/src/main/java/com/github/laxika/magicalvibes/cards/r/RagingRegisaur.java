@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "168")
@@ -11,6 +11,6 @@ public class RagingRegisaur extends Card {
 
     public RagingRegisaur() {
         // Whenever this creature attacks, it deals 1 damage to any target.
-        addTrigger(Triggers.attacks(), new DealDamageToAnyTargetEffect(1));
+        addTrigger(Triggers.attacks(), DealDamageEffect.toAnyTarget(1));
     }
 }

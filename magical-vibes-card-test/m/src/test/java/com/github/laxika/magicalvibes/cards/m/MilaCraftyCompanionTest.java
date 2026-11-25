@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,7 +25,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MilaCraftyCompanion.class, Forest.class, GrizzlyBears.class, LukkaWaywardBonder.class,
-        NicolBolasPlaneswalker.class, Shock.class})
+        NicolBolasPlaneswalker.class, Shock.class, WhipOfErebos.class})
 class MilaCraftyCompanionTest extends BaseCardTest {
 
     @Test
@@ -364,5 +366,30 @@ class MilaCraftyCompanionTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Lukka's emblem: a creature that left before the ability resolves deals the damage with the lifelink it had as it left")
+    void lukkaEmblemCreatureThatLeftDealsDamageWithItsLastKnownLifelink() {
+        addReadyLukka(7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        int controllerLifeBefore = gd.getLife(player1.getId());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Grizzly Bears").getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLifeBefore + 2);
     }
 }

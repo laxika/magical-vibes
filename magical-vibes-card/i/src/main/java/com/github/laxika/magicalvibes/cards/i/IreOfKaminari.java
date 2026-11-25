@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "109")
@@ -13,7 +13,6 @@ public class IreOfKaminari extends Card {
 
     public IreOfKaminari() {
         // Ire of Kaminari deals damage to any target equal to the number of Arcane cards in your graveyard.
-        addSpellEffect(new DealDamageToAnyTargetEffect(
-                new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ARCANE), CountScope.CONTROLLER)));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ARCANE), CountScope.CONTROLLER)));
     }
 }

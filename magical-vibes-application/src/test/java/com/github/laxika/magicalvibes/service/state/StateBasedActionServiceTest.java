@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.state;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -20,7 +21,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -205,10 +205,10 @@ class StateBasedActionServiceTest {
         card.setType(CardType.ENCHANTMENT);
         card.setSubtypes(List.of(CardSubtype.SAGA));
         // Add chapter effects up to finalChapter so getSagaFinalChapter() returns the right value
-        if (finalChapter >= 1) card.addTrigger(Triggers.chapter(1), new DealDamageToAnyTargetEffect(1));
-        if (finalChapter >= 2) card.addTrigger(Triggers.chapter(2), new DealDamageToAnyTargetEffect(1));
-        if (finalChapter >= 3) card.addTrigger(Triggers.chapter(3), new DealDamageToAnyTargetEffect(1));
-        if (finalChapter >= 4) card.addTrigger(Triggers.chapter(4), new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 1) card.addTrigger(Triggers.chapter(1), DealDamageEffect.toAnyTarget(1));
+        if (finalChapter >= 2) card.addTrigger(Triggers.chapter(2), DealDamageEffect.toAnyTarget(1));
+        if (finalChapter >= 3) card.addTrigger(Triggers.chapter(3), DealDamageEffect.toAnyTarget(1));
+        if (finalChapter >= 4) card.addTrigger(Triggers.chapter(4), DealDamageEffect.toAnyTarget(1));
         return card;
     }
 

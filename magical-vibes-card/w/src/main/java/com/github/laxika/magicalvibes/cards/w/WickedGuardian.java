@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -22,7 +22,7 @@ public class WickedGuardian extends Card {
                 new MayEffect(SequenceEffect.of(
                         ChoosePermanentsEffect.exactly(1, Subjects.otherCreaturesYouControl(),
                                 "another creature you control"),
-                        new DealDamageToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), 2),
+                        DealDamageEffect.to(Subjects.thisWay(StepKind.CHOOSE), 2),
                         new ConditionalEffect(new HappenedThisWay(StepKind.CHOOSE), new DrawCardEffect())),
                         "Have it deal 2 damage to another creature you control?"));
     }

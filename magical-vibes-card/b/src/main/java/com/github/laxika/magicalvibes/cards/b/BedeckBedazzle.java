@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -43,7 +43,7 @@ public class BedeckBedazzle extends Card {
 
         CardEffect bedeck = new BoostTargetCreatureEffect(3, -3);
         CardEffect destroyNonbasicLand = new DestroyTargetPermanentEffect();
-        CardEffect dealDamage = new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT);
+        CardEffect dealDamage = DealDamageEffect.toTargetOpponentOrPlaneswalker(2);
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

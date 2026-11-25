@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -28,7 +28,7 @@ public class BreechesTheBlastmaker extends Card {
                                         new FlipCoinWinEffect(
                                                 new QueueReflexiveAbilityEffect(new CopyTriggeringSpellEffect()),
                                                 new QueueReflexiveAbilityEffect(
-                                                        new DealDamageToAnyTargetEffect(new TargetSpellManaValue()))))),
+                                                        DealDamageEffect.toAnyTarget(new TargetSpellManaValue()))))),
                         "Sacrifice an artifact?"));
     }
 }

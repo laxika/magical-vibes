@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -16,7 +16,6 @@ public class PatriarsHumiliation extends Card {
     public PatriarsHumiliation() {
         addSpellEffect(new PerpetuallyGrantStaticEffectToTargetCreatureEffect(
                 new LosesAllAbilitiesEffect(Subjects.source())));
-        addSpellEffect(new DealDamageToTargetCreatureEffect(
-                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
+        addSpellEffect(DealDamageEffect.toTargetCreature(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }
 }

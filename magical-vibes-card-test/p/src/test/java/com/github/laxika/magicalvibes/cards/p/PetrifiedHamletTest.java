@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -94,7 +94,7 @@ class PetrifiedHamletTest extends BaseCardTest {
         landCard.setName("Forest");
         landCard.setType(CardType.LAND);
         landCard.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new DealDamageToAnyTargetEffect(1)),
+                true, null, List.of(DealDamageEffect.toAnyTarget(1)),
                 "{T}: Forest deals 1 damage to any target."));
         Permanent land = new Permanent(landCard);
         gd.playerBattlefields.get(player2.getId()).add(land);

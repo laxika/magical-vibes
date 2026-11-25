@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -33,7 +33,7 @@ public class Mortarpod extends Card {
                 new ActivatedAbility(
                         false,
                         null,
-                        List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(1)),
+                        List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(1)),
                         "Sacrifice this creature: This creature deals 1 damage to any target."
                 ),
                 Subjects.attachedCreature()

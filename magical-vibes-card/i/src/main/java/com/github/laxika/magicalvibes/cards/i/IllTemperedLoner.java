@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class IllTemperedLoner extends Card {
     public IllTemperedLoner() {
         setBackFaceCard(new HowlpackAvenger());
 
-        addTrigger(Triggers.dealtDamage(), new DealDamageToAnyTargetEffect(new EventValue()));
+        addTrigger(Triggers.dealtDamage(), DealDamageEffect.toAnyTarget(new EventValue()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",

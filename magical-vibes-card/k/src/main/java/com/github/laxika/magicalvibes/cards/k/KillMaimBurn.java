@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +37,7 @@ public class KillMaimBurn extends Card {
                         new DestroyTargetPermanentEffect(), creatureFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Kill! Maim! Burn! deals 3 damage to target player",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(3), playerFilter)
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(3), playerFilter)
         )));
     }
 }

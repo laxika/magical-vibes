@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +35,7 @@ public class BolgOfTheNorth extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
         CardEffect damageAndAmass = SequenceEffect.of(
-                new DealDamageToTargetCreatureEffect(AmountThisWay.sacrificedPower(), false, anotherCreature),
+                DealDamageEffect.toTargetCreature(AmountThisWay.sacrificedPower(), anotherCreature),
                 new ConditionalEffect(new EventValueAtLeast(1),
                         new AmassGoblinsEffect(new EventValue())));
 

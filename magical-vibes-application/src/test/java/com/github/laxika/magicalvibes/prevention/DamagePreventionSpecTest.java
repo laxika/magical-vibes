@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.prevention;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromColorlessSourcesEffect;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -263,7 +263,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
         card.setName("Colorless Bolt");
         card.setType(CardType.INSTANT);
         card.setManaCost("{1}");
-        card.addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        card.addSpellEffect(DealDamageEffect.toTargetCreature(4));
         return card;
     }
 }

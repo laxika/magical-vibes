@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.BatteringCraghorn;
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AetherCharge.class, AvenSoulgazer.class, BatteringCraghorn.class, ElspethKnightErrant.class, Shock.class})
+@CardUsed({AetherCharge.class, AvenSoulgazer.class, BatteringCraghorn.class, ElspethKnightErrant.class, Shock.class, WhipOfErebos.class})
 class AetherChargeTest extends BaseCardTest {
 
     @Test
@@ -127,6 +128,27 @@ class AetherChargeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("A Beast that left before the trigger resolves deals the damage with the lifelink it had as it left")
+    void departedBeastDealsDamageWithItsLastKnownLifelink() {
+        addCharge();
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        harness.castFromHand(player1, new BatteringCraghorn(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Battering Craghorn"));
+        harness.assertInGraveyard(player1, "Battering Craghorn");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
     }
 
     @Test

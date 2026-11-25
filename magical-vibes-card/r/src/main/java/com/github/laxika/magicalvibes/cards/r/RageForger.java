@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -44,7 +44,7 @@ public class RageForger extends Card {
                 .addTrigger(Triggers.creatureYouControlAttacks()
                                 .withFilter(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)),
                         new MayEffect(
-                                DealDamageToTargetPlayerOrPlaneswalkerEffect.byTriggeringCreature(new Fixed(1)),
+                                DealDamageEffect.toTargetPlayerOrPlaneswalker(new Fixed(1)).byTriggeringPermanent(),
                                 "Deal 1 damage to target player or planeswalker?"));
     }
 }

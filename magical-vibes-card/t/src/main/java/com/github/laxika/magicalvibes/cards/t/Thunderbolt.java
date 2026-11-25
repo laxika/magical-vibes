@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -38,11 +37,11 @@ public class Thunderbolt extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Thunderbolt deals 3 damage to target player or planeswalker",
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(3),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(3),
                         playerOrPlaneswalkerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Thunderbolt deals 4 damage to target creature with flying",
-                        new DealDamageToTargetCreatureEffect(4),
+                        DealDamageEffect.toTargetCreature(4),
                         creatureWithFlyingFilter)
         )));
     }

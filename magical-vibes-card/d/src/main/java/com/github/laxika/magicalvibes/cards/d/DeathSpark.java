@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DeathSpark extends Card {
 
     public DeathSpark() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(DealDamageEffect.toAnyTarget(1));
 
         // At the beginning of your upkeep, if this card is in your graveyard with a creature card
         // directly above it, you may pay {1}. If you do, return this card to your hand.

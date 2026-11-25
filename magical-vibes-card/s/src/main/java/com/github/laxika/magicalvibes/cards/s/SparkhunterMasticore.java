@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
@@ -26,8 +26,7 @@ public class SparkhunterMasticore extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                        1, new PermanentIsPlaneswalkerPredicate())),
+                List.of(DealDamageEffect.toTargetCreatureOrPlaneswalker(1, new PermanentIsPlaneswalkerPredicate())),
                 "{1}: This creature deals 1 damage to target planeswalker."
         ));
 

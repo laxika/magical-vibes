@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PyricSalamander;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheSeaDevils.class, GrizzlyBears.class, PyricSalamander.class})
+@CardUsed({TheSeaDevils.class, GrizzlyBears.class, PyricSalamander.class, WhipOfErebos.class})
 class TheSeaDevilsTest extends BaseCardTest {
 
     @Test
@@ -173,5 +174,29 @@ class TheSeaDevilsTest extends BaseCardTest {
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A Salamander that left before the ability resolves deals the damage with the lifelink it had as it left")
+    void departedSalamanderDealsDamageWithItsLastKnownLifelink() {
+        Permanent salamander = addCreatureReady(player1, new PyricSalamander());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        addSagaWithLore(2);
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(salamander)));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 21);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, salamander));
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 22);
     }
 }

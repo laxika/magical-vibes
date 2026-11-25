@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
@@ -22,7 +22,7 @@ public class RustHarvester extends Card {
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.ARTIFACT),
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToAnyTargetEffect(new SourcePower())
+                        DealDamageEffect.toAnyTarget(new SourcePower())
                 ),
                 "{2}, {T}, Exile an artifact card from your graveyard: Put a +1/+1 counter on this creature, then it deals damage equal to its power to any target."
         ));

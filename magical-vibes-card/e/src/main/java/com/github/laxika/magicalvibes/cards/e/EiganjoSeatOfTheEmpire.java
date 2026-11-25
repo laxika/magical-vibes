@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -38,7 +38,7 @@ public class EiganjoSeatOfTheEmpire extends Card {
                                 )),
                                 CountScope.CONTROLLER
                         )),
-                        new DealDamageToTargetCreatureEffect(4)
+                        DealDamageEffect.toTargetCreature(4)
                 ),
                 "Channel — {2}{W}, Discard this card: It deals 4 damage to target attacking or blocking creature.",
                 new PermanentPredicateTargetFilter(

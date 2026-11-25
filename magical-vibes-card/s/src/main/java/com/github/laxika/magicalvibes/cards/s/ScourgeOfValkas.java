@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -48,8 +48,7 @@ public class ScourgeOfValkas extends Card {
                 "{R}: Scourge of Valkas gets +1/+0 until end of turn."));
     }
 
-    private static DealDamageToAnyTargetEffect dragonDamage() {
-        return DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER));
+    private static DealDamageEffect dragonDamage() {
+        return DealDamageEffect.toAnyTarget(new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER)).byTriggeringPermanent();
     }
 }

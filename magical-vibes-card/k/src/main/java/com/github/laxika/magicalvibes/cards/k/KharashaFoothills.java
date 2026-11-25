@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,6 +29,6 @@ public class KharashaFoothills extends Card {
                 SacrificePermanentsEffect.anyNumber(new PermanentIsCreaturePredicate(), Subjects.you()),
                 new ConditionalEffect(
                         HappenedThisWay.sacrificed(),
-                        new DealDamageToTargetCreatureEffect(new AmountThisWay(StepKind.SACRIFICE)))));
+                        DealDamageEffect.toTargetCreature(new AmountThisWay(StepKind.SACRIFICE)))));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -35,7 +35,7 @@ public class RequiemMonolith extends Card {
                 List.of(
                         damageDraw,
                         new MayEffect(
-                                new DealDamageToTargetCreatureEffect(1),
+                                DealDamageEffect.toTargetCreature(1),
                                 "Have Requiem Monolith deal 1 damage to it?",
                                 null,
                                 MayChoicePlayer.TARGET_PERMANENT_CONTROLLER)),

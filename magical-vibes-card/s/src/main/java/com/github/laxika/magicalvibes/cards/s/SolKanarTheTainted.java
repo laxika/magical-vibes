@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnUnderOpponentControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -43,8 +43,7 @@ public class SolKanarTheTainted extends Card {
                         List.of(new LoseLifeEffect(2, Subjects.eachOpponent()), new GainLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sol'Kanar deals 3 damage to up to one other target creature or planeswalker",
-                        List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                3, anotherCreatureOrPlaneswalker)),
+                        List.of(DealDamageEffect.toTargetCreatureOrPlaneswalker(3, anotherCreatureOrPlaneswalker)),
                         damageTarget, null, 0, 1, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile Sol'Kanar, then return it to the battlefield under an opponent's control",

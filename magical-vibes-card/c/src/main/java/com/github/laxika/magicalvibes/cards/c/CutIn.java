@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
@@ -29,7 +29,7 @@ public class CutIn extends Card {
     public CutIn() {
         setAllowSharedTargets(true);
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(4));
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addSpellEffect(new CreateTokenAttachedToTargetEffect(youngHeroRoleToken()));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -27,7 +28,6 @@ import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -304,7 +304,7 @@ class EffectResolutionServiceTest {
 
     // =========================================================================
     // ConditionalReplacementEffect
-    // (GalvanicBlast: ConditionalReplacementEffect(DealDamageToAnyTargetEffect(2), DealDamageToAnyTargetEffect(4)))
+    // (GalvanicBlast: ConditionalReplacementEffect(DealDamageEffect(2), DealDamageEffect(4)))
     // =========================================================================
 
     @Nested
@@ -314,8 +314,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves base effect when metalcraft is not met")
         void resolvesBaseEffectWhenMetalcraftNotMet() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -330,8 +330,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves metalcraft effect when metalcraft is met")
         void resolvesMetalcraftEffectWhenMetalcraftMet() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -346,8 +346,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Re-checks metalcraft condition at resolution time")
         void rechecksConditionAtResolutionTime() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -373,8 +373,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Two artifacts do not meet metalcraft threshold")
         void twoArtifactsDoNotMeetThreshold() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -389,8 +389,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Exactly three artifacts meets metalcraft threshold")
         void exactlyThreeArtifactsMeetsThreshold() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -405,8 +405,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Artifact creatures count toward metalcraft")
         void artifactCreaturesCountForMetalcraft() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -423,8 +423,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("More than three artifacts still meets metalcraft threshold")
         void moreThanThreeArtifactsMeetsThreshold() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -441,8 +441,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Zero artifacts does not meet metalcraft threshold")
         void zeroArtifactsDoesNotMeetThreshold() {
-            CardEffect base = new DealDamageToAnyTargetEffect(2);
-            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect base = DealDamageEffect.toAnyTarget(2);
+            CardEffect upgraded = DealDamageEffect.toAnyTarget(4);
             CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
@@ -572,8 +572,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Clears pendingEffectResolutionEntry after all effects resolve")
         void clearsPendingEffectResolutionEntryAfterResolution() {
-            CardEffect effect = new DealDamageToAnyTargetEffect(2);
-            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), effect, new DealDamageToAnyTargetEffect(4));
+            CardEffect effect = DealDamageEffect.toAnyTarget(2);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), effect, DealDamageEffect.toAnyTarget(4));
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -587,8 +587,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Clears pendingEffectResolutionIndex after all effects resolve")
         void clearsPendingEffectResolutionIndexAfterResolution() {
-            CardEffect effect = new DealDamageToAnyTargetEffect(2);
-            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), effect, new DealDamageToAnyTargetEffect(4));
+            CardEffect effect = DealDamageEffect.toAnyTarget(2);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), effect, DealDamageEffect.toAnyTarget(4));
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -632,7 +632,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Suppresses checkWinCondition mid-resolution and fires it once at the end")
         void suppressesMidResolutionAndChecksOnce() {
-            CardEffect first = new DealDamageToAnyTargetEffect(3);
+            CardEffect first = DealDamageEffect.toAnyTarget(3);
             CardEffect second = new DrawCardEffect(1);
             StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
                     List.of(first, second));
@@ -658,7 +658,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Keeps suppression across an async pause and finalizes only on resume")
         void keepsSuppressionAcrossPauseAndFinalizesOnResume() {
-            CardEffect first = new DealDamageToAnyTargetEffect(3);
+            CardEffect first = DealDamageEffect.toAnyTarget(3);
             CardEffect second = new DrawCardEffect(1);
             StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
                     List.of(first, second));
@@ -694,7 +694,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("An async-resumed drain runs the full state-based check, not the bare loss check")
         void asyncResumedDrainRunsStateBasedActions() {
-            CardEffect first = new DealDamageToAnyTargetEffect(3);
+            CardEffect first = DealDamageEffect.toAnyTarget(3);
             CardEffect second = new DrawCardEffect(1);
             StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
                     List.of(first, second));
@@ -730,7 +730,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("A nested sub-resolution does not re-enable the loss check for the outer entry")
         void nestedResolutionDoesNotFinalizeOuter() {
-            CardEffect outerFirst = new DealDamageToAnyTargetEffect(3);
+            CardEffect outerFirst = DealDamageEffect.toAnyTarget(3);
             CardEffect outerSecond = new DrawCardEffect(1);
             StackEntry outer = createEntry(createCard("Outer spell"), player1Id,
                     List.of(outerFirst, outerSecond));

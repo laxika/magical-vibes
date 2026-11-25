@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -19,8 +19,7 @@ import java.util.List;
 public class FranticFirebolt extends Card {
 
     public FranticFirebolt() {
-        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(
-                new Sum(
+        target(TargetFilters.creature()).addSpellEffect(DealDamageEffect.toTargetCreature(new Sum(
                         new Fixed(2),
                         new CardsInGraveyard(
                                 new CardAnyOfPredicate(List.of(
@@ -30,7 +29,6 @@ public class FranticFirebolt extends Card {
                                 )),
                                 CountScope.CONTROLLER
                         )
-                )
-        ));
+                )));
     }
 }

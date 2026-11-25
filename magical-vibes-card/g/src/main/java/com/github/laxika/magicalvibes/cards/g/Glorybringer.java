@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,8 +23,7 @@ public class Glorybringer extends Card {
         // Flying and haste are Scryfall-loaded keywords — no wiring needed.
 
         addStaticEffect(new ExertAsItAttacksEffect());
-        addTrigger(Triggers.exertedAsItAttacks(), new DealDamageToTargetCreatureEffect(4,
-                                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.exertedAsItAttacks(), DealDamageEffect.toTargetCreature(4, new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON))

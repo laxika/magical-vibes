@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "178")
@@ -21,8 +21,8 @@ public class UrzasRage extends Card {
         addStaticEffect(new CantBeCounteredEffect());
         addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
-                new DealDamageToAnyTargetEffect(new Fixed(3)),
-                new DealDamageToAnyTargetEffect(new Fixed(10), new Kicked())
+                DealDamageEffect.toAnyTarget(new Fixed(3)),
+                DealDamageEffect.toAnyTarget(new Fixed(10)).unpreventableWhen(new Kicked())
         ));
     }
 }

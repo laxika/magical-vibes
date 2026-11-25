@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,7 +35,7 @@ public class RinAndSeriInseparable extends Card {
                 true,
                 "{R}{G}{W}",
                 List.of(
-                        new DealDamageToAnyTargetEffect(new PermanentCount(
+                        DealDamageEffect.toAnyTarget(new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.DOG), CountScope.CONTROLLER)),
                         new GainLifeEffect(new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.CAT), CountScope.CONTROLLER))

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -27,7 +27,7 @@ public class ShreddedSails extends Card {
                                 "Target must be an artifact.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Shredded Sails deals 4 damage to target creature with flying",
-                        new DealDamageToTargetCreatureEffect(4),
+                        DealDamageEffect.toTargetCreature(4),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

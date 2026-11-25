@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ public class BloomingBlast extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         TargetOpponentCreatesTokenEffect.gift(CreateTokenEffect.ofTreasureToken(1))))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(2))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(2))
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.target()))));
     }

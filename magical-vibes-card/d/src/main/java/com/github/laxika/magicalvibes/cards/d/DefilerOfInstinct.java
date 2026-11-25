@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -31,6 +31,6 @@ public class DefilerOfInstinct extends Card {
         CardAllOfPredicate redPermanentFilter = redPermanentSpell();
         addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 redPermanentFilter, "{R}", 2, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell().withFilter(redPermanentFilter), new DealDamageToAnyTargetEffect(1));
+        addTrigger(Triggers.youCastSpell().withFilter(redPermanentFilter), DealDamageEffect.toAnyTarget(1));
     }
 }

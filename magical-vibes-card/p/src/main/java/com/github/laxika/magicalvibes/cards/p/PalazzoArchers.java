@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,6 +15,6 @@ public class PalazzoArchers extends Card {
     public PalazzoArchers() {
         addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker()
                         .withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
-                new DealDamageToTargetCreatureEffect(Subjects.triggering(), new SourcePower()));
+                DealDamageEffect.to(Subjects.triggering(), new SourcePower()));
     }
 }

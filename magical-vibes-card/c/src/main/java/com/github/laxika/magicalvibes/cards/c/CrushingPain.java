@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +21,6 @@ public class CrushingPain extends Card {
                 )),
                 "Target must be a creature that was dealt damage this turn"
         ))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(6));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(6));
     }
 }

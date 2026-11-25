@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class ArcSlogger extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new ExileTopCardOfLibraryCost(10), new DealDamageToAnyTargetEffect(2)),
+                List.of(new ExileTopCardOfLibraryCost(10), DealDamageEffect.toAnyTarget(2)),
                 "{R}, Exile the top ten cards of your library: Arc-Slogger deals 2 damage to any target."
         ));
     }

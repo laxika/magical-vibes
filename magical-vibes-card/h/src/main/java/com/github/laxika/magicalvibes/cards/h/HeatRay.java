@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "148")
@@ -15,6 +15,6 @@ public class HeatRay extends Card {
 
     public HeatRay() {
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(new XValue()));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(new XValue()));
     }
 }

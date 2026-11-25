@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -33,7 +33,7 @@ public class ZiatoraTheIncinerator extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
                                 SequenceEffect.of(
-                                        new DealDamageToAnyTargetEffect(AmountThisWay.sacrificedPower()),
+                                        DealDamageEffect.toAnyTarget(AmountThisWay.sacrificedPower()),
                                         CreateTokenEffect.ofTreasureToken(3))))),
                         "Sacrifice another creature?"));
     }

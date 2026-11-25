@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -27,7 +27,7 @@ public class TendrilsOfCorruption extends Card {
         // the damage being dealt — both amounts count Swamps at resolution.
         PermanentCount swampCount = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER);
-        addSpellEffect(new DealDamageToTargetCreatureEffect(swampCount));
+        addSpellEffect(DealDamageEffect.toTargetCreature(swampCount));
         addSpellEffect(new GainLifeEffect(swampCount));
     }
 }

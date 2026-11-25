@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -16,6 +16,6 @@ public class BurnAtTheStake extends Card {
         addCastingCost(new TapAnyNumberOfPermanentsCost(new PermanentIsCreaturePredicate()));
         // Burn at the Stake deals damage to any target equal to three times the number of creatures
         // tapped this way — the tap cost snapshots that count into the spell's X value.
-        addSpellEffect(new DealDamageToAnyTargetEffect(new Scaled(new XValue(), 3)));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new Scaled(new XValue(), 3)));
     }
 }

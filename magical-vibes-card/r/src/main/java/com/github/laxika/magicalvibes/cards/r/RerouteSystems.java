@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +32,7 @@ public class RerouteSystems extends Card {
                                 "Target must be an artifact or creature")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Reroute Systems deals 2 damage to target tapped creature",
-                        new DealDamageToTargetCreatureEffect(2),
+                        DealDamageEffect.toTargetCreature(2),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

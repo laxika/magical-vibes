@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class FoodFight extends Card {
                         "{2}",
                         List.of(
                                 new SacrificeSelfCost(),
-                                new DealDamageToAnyTargetEffect(new Sum(new Fixed(1), foodFightsYouControl))
+                                DealDamageEffect.toAnyTarget(new Sum(new Fixed(1), foodFightsYouControl))
                         ),
                         "{2}, Sacrifice this artifact: It deals damage to any target equal to 1 plus the number "
                                 + "of permanents named Food Fight you control."

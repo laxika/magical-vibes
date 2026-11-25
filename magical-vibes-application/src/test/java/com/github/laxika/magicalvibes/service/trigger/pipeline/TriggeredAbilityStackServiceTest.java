@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
@@ -16,8 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToCombatDamageCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.Card;
@@ -834,7 +833,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Blocker", 1, 1);
         Permanent blocker = new Permanent(card);
         Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
-        var effect = new DealDamageToTargetCreatureEffect(1);
+        var effect = DealDamageEffect.toTargetCreature(1);
 
         stackService.put(gd, blockRequest(new TriggeredAbility(Triggers.blocks(), effect), card, blocker, attacker));
 
@@ -847,7 +846,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("A target the card declares is chosen as the ability goes on the stack, with the record parked")
     void declaredTargetParksTheAbilityForItsChoice() {
         Card card = createCreature("Javelineer", 2, 2);
-        var effect = new DealDamageToTargetCreatureEffect(1);
+        var effect = DealDamageEffect.toTargetCreature(1);
         card.target(1, 1).addTrigger(Triggers.blocks(), effect);
         Permanent blocker = new Permanent(card);
         Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
@@ -971,7 +970,7 @@ class TriggeredAbilityStackServiceTest {
         Permanent creature = new Permanent(card);
 
         stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                new DealDamageToAnyTargetEffect(1)), card, creature));
+                DealDamageEffect.toAnyTarget(1)), card, creature));
 
         assertThat(gd.stack).isEmpty();
         var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
@@ -1007,7 +1006,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Karplusan Minotaur", 3, 3);
         Permanent creature = new Permanent(card);
         var ability = new TriggeredAbility(Triggers.youLoseCoinFlip(),
-                DealDamageToAnyTargetEffect.toAnyTargetOfAnOpponentsChoice(1));
+                DealDamageEffect.toAnyTargetOfAnOpponentsChoice(1));
 
         boolean triggered = stackService.put(gd, new TriggeredAbilityRequest(ability, card, creature, PLAYER1_ID,
                 "coin flip", ConditionContext.forPermanent(creature, PLAYER1_ID), TriggerRecord.NONE));
@@ -1024,7 +1023,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("Targets in two groups are chosen group by group; one group of two targets in one choice")
     void groupsDecideHowTargetsAreChosen() {
         Card twoGroups = createCreature("Two groups", 2, 2);
-        CardEffect destroy = new DealDamageToTargetCreatureEffect(1);
+        CardEffect destroy = DealDamageEffect.toTargetCreature(1);
         CardEffect boost = new PutCountersEffect(
                 com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE);
         twoGroups.target(1, 1).bindEffect(destroy);
@@ -1034,7 +1033,7 @@ class TriggeredAbilityStackServiceTest {
                 ConditionContext.forCard(twoGroups, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
 
         Card oneGroup = createCreature("One group", 2, 2);
-        CardEffect damage = new DealDamageToTargetCreatureEffect(1);
+        CardEffect damage = DealDamageEffect.toTargetCreature(1);
         oneGroup.target(2, 2).bindEffect(damage);
         stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.attacks(), damage),
                 oneGroup, new Permanent(oneGroup), PLAYER1_ID, "attack",
@@ -1212,7 +1211,7 @@ class TriggeredAbilityStackServiceTest {
     void youMayPayBesideAnotherEffectChoosesItsTarget() {
         Card card = createCreature("Talisman", 0, 0);
         Permanent source = new Permanent(card);
-        var pay = new MayPayManaEffect("{1}", new DealDamageToTargetCreatureEffect(1), "Pay {1}?");
+        var pay = new MayPayManaEffect("{1}", DealDamageEffect.toTargetCreature(1), "Pay {1}?");
 
         stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.youCastSpell(), pay,
                 new GainLifeEffect(1)), card, source, PLAYER1_ID, "cast",
@@ -1303,7 +1302,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("An inherent ability of a rule targets nothing")
     void inherentAbilityRefusesATarget() {
         assertThatThrownBy(() -> stackService.putInherent(gd, PLAYER1_ID, "bad",
-                List.of(new DealDamageToAnyTargetEffect(1)), entry -> { }))
+                List.of(DealDamageEffect.toAnyTarget(1)), entry -> { }))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(gd.stack).isEmpty();
     }
@@ -1334,7 +1333,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createEnchantment("Fortification");
 
         stackService.holdForProducedMana(gd, new TriggeredAbilityRequest(new TriggeredAbility(
-                Triggers.tappedForMana(), new DealDamageToTargetCreatureEffect(1)), card, null, PLAYER1_ID, "held",
+                Triggers.tappedForMana(), DealDamageEffect.toTargetCreature(1)), card, null, PLAYER1_ID, "held",
                 ConditionContext.forCard(card, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
 
         assertThat(gd.stack).isEmpty();
@@ -1361,7 +1360,7 @@ class TriggeredAbilityStackServiceTest {
         UUID target = UUID.randomUUID();
 
         stackService.putWithAnnouncedTargets(gd, new TriggeredAbilityRequest(new TriggeredAbility(
-                Triggers.youCycleThisCard(), new DealDamageToTargetCreatureEffect(1)), card, null, PLAYER1_ID,
+                Triggers.youCycleThisCard(), DealDamageEffect.toTargetCreature(1)), card, null, PLAYER1_ID,
                 "cycle", ConditionContext.forCard(card, PLAYER1_ID), entry -> {
                     entry.chooseTargetIds(List.of(target));
                     entry.setTargetId(target);
@@ -1404,7 +1403,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Saga", 0, 0);
         Permanent saga = new Permanent(card);
         var chapter = new TriggeredAbility(Triggers.chapter(1),
-                new com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect(2));
+                com.github.laxika.magicalvibes.model.effect.DealDamageEffect.toAnyTarget(2));
 
         stackService.put(gd, new TriggeredAbilityRequest(chapter, card, saga, PLAYER1_ID, "chapter",
                 ConditionContext.forPermanent(saga, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));

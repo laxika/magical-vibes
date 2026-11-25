@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class TitaniumMan extends Card {
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Titanium Man deals 1 damage to any target",
-                        new DealDamageToAnyTargetEffect(1))
+                        DealDamageEffect.toAnyTarget(1))
         )));
     }
 }

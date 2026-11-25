@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifyCardsOfSubtypeEffect;
 
@@ -13,7 +13,7 @@ public class RibaldShanty extends Card {
 
     public RibaldShanty() {
         addSpellEffect(new InitializeSourceIntensityEffect(2));
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new SourceIntensity()));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new SourceIntensity()));
         addSpellEffect(new IntensifyCardsOfSubtypeEffect(CardSubtype.CHORUS));
     }
 }

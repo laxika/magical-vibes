@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,6 +22,6 @@ public class LysAlanaBowmaster extends Card {
         // Whenever you cast an Elf spell, you may have this creature deal 2 damage to target creature with flying.
         target(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentHasKeywordPredicate(Keyword.FLYING))), "Target must be a creature with flying")).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardSubtypePredicate(CardSubtype.ELF)),
-                new MayEffect(new DealDamageToTargetCreatureEffect(2), "Have Lys Alana Bowmaster deal 2 damage to target creature with flying?"));
+                new MayEffect(DealDamageEffect.toTargetCreature(2), "Have Lys Alana Bowmaster deal 2 damage to target creature with flying?"));
     }
 }

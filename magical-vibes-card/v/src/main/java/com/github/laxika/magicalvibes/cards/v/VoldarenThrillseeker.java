@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -33,7 +33,7 @@ public class VoldarenThrillseeker extends Card {
         ActivatedAbility damageAbility = new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(new SourcePower())),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(new SourcePower())),
                 "{1}, Sacrifice this creature: It deals damage equal to its power to any target."
         );
         addActivatedAbility(damageAbility);

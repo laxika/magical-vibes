@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class ShadowGuildmage extends Card {
 
         addActivatedAbility(new ActivatedAbility(true, "{R}",
                 List.of(SequenceEffect.simultaneous(
-                        new DealDamageToAnyTargetEffect(1),
+                        DealDamageEffect.toAnyTarget(1),
                         new DealDamageToPlayersEffect(1, Subjects.you())
                 )),
                 "{R}, {T}: Shadow Guildmage deals 1 damage to any target and 1 damage to you."));

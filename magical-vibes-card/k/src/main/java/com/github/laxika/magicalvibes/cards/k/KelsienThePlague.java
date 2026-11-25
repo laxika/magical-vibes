@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -31,7 +31,7 @@ public class KelsienThePlague extends Card {
                 true,
                 null,
                 List.of(
-                        new DealDamageToTargetCreatureEffect(1, creatureOpponentControls),
+                        DealDamageEffect.toTargetCreature(1, creatureOpponentControls),
                         new ResolveEffectOnTargetDeathThisTurnEffect(new ExperienceCountersEffect(1))
                 ),
                 "{T}: Kelsien, the Plague deals 1 damage to target creature an opponent controls. "

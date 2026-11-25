@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +24,7 @@ public class BarrelsOfBlastingJelly extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}",
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(5)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(5)),
                 "{5}, {T}, Sacrifice this artifact: It deals 5 damage to target creature.",
                 TargetFilters.creature()
         ));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -31,7 +31,7 @@ public class JolenePlunderingPugilist extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE),
                                 "Sacrifice a Treasure"
                         ),
-                        new DealDamageToAnyTargetEffect(1)
+                        DealDamageEffect.toAnyTarget(1)
                 ),
                 "{1}{R}, Sacrifice a Treasure: Jolene deals 1 damage to any target."
         ));

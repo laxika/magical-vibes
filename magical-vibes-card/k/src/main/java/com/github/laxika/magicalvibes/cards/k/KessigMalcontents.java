@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -26,8 +26,7 @@ public class KessigMalcontents extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                        new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                                 CountScope.CONTROLLER)));
     }
 }

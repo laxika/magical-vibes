@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class RakdosIckspitter extends Card {
                 true,
                 null,
                 List.of(
-                        new DealDamageToTargetCreatureEffect(1),
+                        DealDamageEffect.toTargetCreature(1),
                         new LoseLifeEffect(1, Subjects.controllerOf(Subjects.target()))
                 ),
                 "{T}: Rakdos Ickspitter deals 1 damage to target creature and that creature's controller loses 1 life.",

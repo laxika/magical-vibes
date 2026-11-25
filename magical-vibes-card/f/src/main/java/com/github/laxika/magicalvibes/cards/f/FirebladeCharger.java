@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +18,6 @@ public class FirebladeCharger extends Card {
     public FirebladeCharger() {
         addStaticEffect(new ConditionalEffect(
                 new Equipped(), new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(new EventValue()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(new EventValue()));
     }
 }

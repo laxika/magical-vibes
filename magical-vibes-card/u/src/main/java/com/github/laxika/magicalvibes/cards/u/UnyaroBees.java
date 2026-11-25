@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class UnyaroBees extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}",
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(2)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(2)),
                 "It deals 2 damage to any target."
         ));
     }

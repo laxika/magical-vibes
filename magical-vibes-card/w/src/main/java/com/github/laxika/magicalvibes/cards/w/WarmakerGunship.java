@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -34,7 +34,7 @@ public class WarmakerGunship extends Card {
 
     public WarmakerGunship() {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureEffect(new PermanentCount(
+                DealDamageEffect.toTargetCreature(new PermanentCount(
                         new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
 
         addActivatedAbility(new ActivatedAbility(

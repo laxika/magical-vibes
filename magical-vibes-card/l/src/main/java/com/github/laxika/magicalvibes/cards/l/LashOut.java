@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LRW", collectorNumber = "183")
@@ -18,7 +18,7 @@ public class LashOut extends Card {
         // creature's controller. The creature stays on the battlefield through resolution (lethal
         // damage is destroyed only after all effects finish), so TARGET_PERMANENT_CONTROLLER still
         // finds its controller even when the first 3 damage was lethal.
-        addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+        addSpellEffect(DealDamageEffect.toTargetCreature(3));
         addSpellEffect(new ClashEffect(null));
         addSpellEffect(new ConditionalEffect(new WonClash(),
                 new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.target()))));

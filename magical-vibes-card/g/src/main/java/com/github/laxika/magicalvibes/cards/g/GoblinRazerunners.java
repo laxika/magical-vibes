@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -36,8 +36,7 @@ public class GoblinRazerunners extends Card {
         // the number of +1/+1 counters on it to target player or planeswalker.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayEffect(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
                         "Deal damage equal to the number of +1/+1 counters to target player or planeswalker?"));
     }
 }

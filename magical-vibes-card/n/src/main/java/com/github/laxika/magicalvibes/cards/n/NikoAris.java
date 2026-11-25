@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -50,7 +50,7 @@ public class NikoAris extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new DealDamageToTargetCreatureEffect(new Scaled(new CardsDrawnThisTurn(), 2))),
+                List.of(DealDamageEffect.toTargetCreature(new Scaled(new CardsDrawnThisTurn(), 2))),
                 "−1: Niko Aris deals 2 damage to target tapped creature for each card you've drawn this turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsTappedPredicate(),

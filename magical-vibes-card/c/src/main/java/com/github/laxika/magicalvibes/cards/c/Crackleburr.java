@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
@@ -28,7 +28,7 @@ public class Crackleburr extends Card {
                         new TapMultiplePermanentsCost(2, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentColorInPredicate(Set.of(CardColor.RED)))), true),
-                        new DealDamageToAnyTargetEffect(3, false)),
+                        DealDamageEffect.toAnyTarget(3)),
                 "{U/R}{U/R}, {T}, Tap two untapped red creatures you control: This creature deals 3 damage to any target."));
 
         // {U/R}{U/R}, {Q}, Untap two tapped blue creatures you control: Return target creature to its owner's hand.

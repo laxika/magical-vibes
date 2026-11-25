@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +27,7 @@ public class KamisFlare extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"))
-                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(3))
+                .addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(3))
                 .addSpellEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

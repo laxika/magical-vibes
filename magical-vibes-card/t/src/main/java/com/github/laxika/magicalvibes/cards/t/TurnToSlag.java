@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "106")
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCre
 public class TurnToSlag extends Card {
 
     public TurnToSlag() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+        addSpellEffect(DealDamageEffect.toTargetCreature(5));
         addSpellEffect(new DestroyAttachmentsOnTargetCreatureEffect(false, true));
     }
 }

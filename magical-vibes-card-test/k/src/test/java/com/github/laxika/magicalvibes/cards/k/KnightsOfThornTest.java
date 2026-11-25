@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.cards.m.MarshGoblins;
 import com.github.laxika.magicalvibes.cards.s.Scarecrow;
@@ -196,7 +196,7 @@ class KnightsOfThornTest extends BaseCardTest {
         card.setType(CardType.INSTANT);
         card.setManaCost(manaCost);
         card.setColor(color);
-        card.addSpellEffect(new DealDamageToTargetCreatureEffect(1));
+        card.addSpellEffect(DealDamageEffect.toTargetCreature(1));
         return card;
     }
 }

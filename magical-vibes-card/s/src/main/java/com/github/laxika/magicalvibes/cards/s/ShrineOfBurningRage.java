@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -33,7 +33,7 @@ public class ShrineOfBurningRage extends Card {
                 "{3}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE))
+                        DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.CHARGE))
                 ),
                 "{3}, {T}, Sacrifice Shrine of Burning Rage: It deals damage equal to the number of charge counters on it to any target."
         ));

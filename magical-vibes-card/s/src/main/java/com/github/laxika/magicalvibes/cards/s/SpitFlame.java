@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -26,7 +26,7 @@ import java.util.List;
 public class SpitFlame extends Card {
 
     public SpitFlame() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreature(4));
 
         addTrigger(new TriggerCondition(Triggers.enters(
                                 new PermanentAllOfPredicate(List.of(

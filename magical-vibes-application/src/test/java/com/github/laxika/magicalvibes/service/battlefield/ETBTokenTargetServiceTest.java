@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -183,9 +183,9 @@ class ETBTokenTargetServiceTest {
         // group's target is still chosen — not treated as a mandatory group with no targets.
         Card card = new Card();
         card.setName("Noggle Hedge-Mage");
-        var group0Effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
+        var group0Effect = DealDamageEffect.toTargetPlayerOrPlaneswalker(1);
         card.target(null, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), group0Effect);
-        var group1Effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
+        var group1Effect = DealDamageEffect.toTargetPlayerOrPlaneswalker(2);
         card.target(null, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), group1Effect);
 
         gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -221,7 +221,7 @@ class ETBTokenTargetServiceTest {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
         PermanentPredicateTargetFilter creatureFilter = new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature that player controls");
-        var handEffect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
+        var handEffect = DealDamageEffect.toTargetPlayerOrPlaneswalker(1);
         var creatureEffect = new ExileTargetPermanentUntilSourceLeavesEffect();
         card.target(opponentFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), handEffect);
         card.target(creatureFilter, 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), creatureEffect);

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -28,7 +28,7 @@ public class AjaniVengeant extends Card {
         // gained whenever the ability resolves, independent of damage dealt/prevented.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DealDamageToAnyTargetEffect(3), new GainLifeEffect(3)),
+                List.of(DealDamageEffect.toAnyTarget(3), new GainLifeEffect(3)),
                 "−2: Ajani Vengeant deals 3 damage to any target and you gain 3 life."));
 
         // −7: Destroy all lands target player controls.

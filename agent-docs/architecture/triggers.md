@@ -265,7 +265,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   permanent of the event (`matchedAsItsEntryIsProcessed`, CR 603.2c), since it may be used up as it triggers.
 - Then `EtbTriggerService` runs what the pipeline doesn't match (Cosima's exiled voyage) and emits an `EntryCausedTriggerEvent` per ability the entry caused (Strict Proctor).
 - "Put counters on it", "it gets +X/+Y", "transform it", "attach this to it", "become a copy of that creature", "deals
-  N damage to it" (`DealDamageToTargetCreatureEffect(Subjects.triggering(), n)`), graft, Agent's Toolkit, soulbond, "it connives", endure,
+  N damage to it" (`DealDamageEffect.to(Subjects.triggering(), n)`), graft, Agent's Toolkit, soulbond, "it connives", endure,
   Madame Null, Mana
   Echoes, Eldrazi Mimic and the graveyard Auras and Equipment that return attached to "that creature" read the entry's
   triggering permanent (`onTriggeringPermanent`, `Subjects.triggering()`, `Subjects.triggering()`,
@@ -321,7 +321,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   and that ability as triggering spell.
 - Enchanted-creature unblocked readers have the Aura as source (CR 113.7) and the attacker as triggering permanent
   (Cloak of Confusion, Farrel's Mantle: `AssignNoCombatDamageEffect.ofTriggeringPermanent`,
-  `DealDamageToTargetCreatureEffect.byTriggeringPermanent`, CR 608.2h).
+  `DealDamageEffect.byTriggeringPermanent`, CR 608.2h).
 - `CharacteristicState.meleeInstances` keeps several melee abilities, each counting players (not planeswalkers or
   battles) attacked.
 
@@ -363,7 +363,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   `youAreDealtDamageBySourceYouControl()` triggers only for a source the damaged player controls.
 - `sourceDealsDamageToPermanentOrPlayer()` triggers once per source and recipient: the recipient is the non-targeting
   `targetId` (and triggering player or permanent), its damage the event value read by event conditions (Ghyrson Starn's
-  "exactly 1 damage"; its "that permanent or player" is dealt damage by `DealDamageToAnyTargetEffect.toEventObject`). A
+  "exactly 1 damage"; its "that permanent or player" is dealt damage by `DealDamageEffect.toEventObject`). A
   declared "any target other than that permanent" (Toralf) is `PermanentIsTriggeringPermanentPredicate`.
 - `playerDealtDamage()` (Sower of Discord) triggers once per player and damage event, sources summed:
   `CombatDamageService` per combat damage step before state-based actions, `DamageSupport.flushSourceDamageReflections`

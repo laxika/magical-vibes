@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "60")
 @CardRegistration(set = "DD2", collectorNumber = "57")
@@ -16,6 +16,6 @@ public class Demonfire extends Card {
 
     public Demonfire() {
         addStaticEffect(new CantBeCounteredEffect(new ControllerHandEmpty()));
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue(), false, true, -1, new ControllerHandEmpty()));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()).exilingDamagedCreaturesThatWouldDie().unpreventableWhen(new ControllerHandEmpty()));
     }
 }

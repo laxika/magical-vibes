@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,6 +18,6 @@ public class CircleOfFlame extends Card {
         // this enchantment deals 1 damage to that creature.
         addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker()
                         .withFilter(new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))),
-                new DealDamageToTargetCreatureEffect(Subjects.triggering(), 1));
+                DealDamageEffect.to(Subjects.triggering(), 1));
     }
 }

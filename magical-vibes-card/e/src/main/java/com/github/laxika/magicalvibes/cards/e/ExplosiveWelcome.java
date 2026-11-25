@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -32,8 +32,8 @@ public class ExplosiveWelcome extends Card {
 
         target(anyTarget);
         target(anyTarget);
-        addSpellEffect(DealDamageToAnyTargetEffect.forTargetGroup(5, 0));
-        addSpellEffect(DealDamageToAnyTargetEffect.forTargetGroup(3, 1));
+        addSpellEffect(DealDamageEffect.toAnyTargetInGroup(5, 0));
+        addSpellEffect(DealDamageEffect.toAnyTargetInGroup(3, 1));
         addSpellEffect(new AwardManaEffect(ManaColor.RED, 3));
     }
 }

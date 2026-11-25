@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -29,7 +29,7 @@ public class KabiraTakedown extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Kabira Takedown deals damage equal to the number of creatures you control to target creature or planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new PermanentCount(
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new PermanentCount(
                                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
                         creatureOrPlaneswalker).withManaCost("{1}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Kabira Plateau", List.of())

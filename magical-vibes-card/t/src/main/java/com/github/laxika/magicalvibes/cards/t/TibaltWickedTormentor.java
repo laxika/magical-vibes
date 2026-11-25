@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
@@ -67,7 +67,7 @@ public class TibaltWickedTormentor extends Card {
         ));
 
         List<Ability> devilTokenEffects =
-                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
+                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(1)));
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
                 List.of(new CreateTokenEffect(new XValue(), "Devil", 1, 1, CardColor.RED,
                         List.of(CardSubtype.DEVIL), Set.of(), Set.of()).withTokenEffects(devilTokenEffects)),

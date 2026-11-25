@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -20,8 +20,7 @@ public class HarpoonSniper extends Card {
 
     public HarpoonSniper() {
         addActivatedAbility(new ActivatedAbility(true, "{W}",
-                List.of(new DealDamageToTargetCreatureEffect(
-                        new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), CountScope.CONTROLLER))),
+                List.of(DealDamageEffect.toTargetCreature(new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), CountScope.CONTROLLER))),
                 "{W}, {T}: This creature deals X damage to target attacking or blocking creature, "
                         + "where X is the number of Merfolk you control.",
                 new PermanentPredicateTargetFilter(

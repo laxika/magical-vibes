@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,8 +32,7 @@ public class SinstrikersWill extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new DealDamageToTargetCreatureEffect(
-                                new SourcePower(), false, attackingOrBlockingCreature)),
+                        List.of(DealDamageEffect.toTargetCreature(new SourcePower(), attackingOrBlockingCreature)),
                         "{T}: This creature deals damage equal to its power to target attacking or blocking creature.",
                         new PermanentPredicateTargetFilter(
                                 attackingOrBlockingCreature,

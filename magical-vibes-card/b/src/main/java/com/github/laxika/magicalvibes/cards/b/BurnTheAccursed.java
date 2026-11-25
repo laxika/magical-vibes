@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,7 +15,7 @@ public class BurnTheAccursed extends Card {
     public BurnTheAccursed() {
         // Burn the Accursed deals 5 damage to target creature and 2 damage to that creature's
         // controller. If that creature would die this turn, exile it instead.
-        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(5);
+        DealDamageEffect creatureDamage = DealDamageEffect.toTargetCreature(5);
         DealDamageToPlayersEffect controllerDamage =
                 new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target()));
         target(TargetFilters.creature())

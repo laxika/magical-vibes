@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeShield;
@@ -91,7 +92,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1204,7 +1204,7 @@ public class DamagePreventionService {
         // target is chosen as it goes on the stack (CR 603.3d), "that much" is the damage prevented.
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(permanent.getCard(), controllerId,
                 FaceDownVisibility.publicName(gameData, permanent) + "'s ability",
-                List.of(new DealDamageToAnyTargetEffect(new EventValue())), (UUID) null, permanent.getId());
+                List.of(DealDamageEffect.toAnyTarget(new EventValue())), (UUID) null, permanent.getId());
         trigger.setEventValue(damageAmount);
         trigger.setSourcePermanentSnapshot(new Permanent(permanent));
         if (targetFilter != null) {
@@ -1833,7 +1833,7 @@ public class DamagePreventionService {
         // "That source's controller": the player the ability is about, which it doesn't target.
         StackEntry reflexive = TriggeredAbilityStackService.madeAbility(card, shield.playerId(),
                 card.getName() + "'s triggered ability",
-                List.of(new DealDamageToAnyTargetEffect(new EventValue(), false, false, -1, null, false, false),
+                List.of(DealDamageEffect.toAnyTarget(new EventValue()),
                         new DrawCardEffect(new EventValue())),
                 sourceControllerId, (UUID) null);
         // "That much" and "that many" are the event's value: the damage prevented.

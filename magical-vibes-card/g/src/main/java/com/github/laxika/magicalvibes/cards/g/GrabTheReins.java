@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -37,7 +37,7 @@ public class GrabTheReins extends Card {
                         "Sacrifice a creature. Grab the Reins deals damage equal to that creature's power to any target",
                         SequenceEffect.of(
                                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
-                                new DealDamageToAnyTargetEffect(AmountThisWay.sacrificedPower())),
+                                DealDamageEffect.toAnyTarget(AmountThisWay.sacrificedPower())),
                         null)
         )));
     }

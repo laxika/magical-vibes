@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -29,7 +29,7 @@ public class SunsetStrikemaster extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(6, flyingCreature)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(6, flyingCreature)),
                 "{2}{R}, {T}, Sacrifice Sunset Strikemaster: It deals 6 damage to target creature with flying.",
                 new PermanentPredicateTargetFilter(flyingCreature, "Target must be a creature with flying")
         ));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -18,6 +18,6 @@ public class TorchBreath extends Card {
         addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)), 2));
         addStaticEffect(new CantBeCounteredEffect());
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()));
     }
 }

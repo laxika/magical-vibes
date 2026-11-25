@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -102,7 +102,7 @@ class AbyssalSpecterTest extends BaseCardTest {
     private Permanent addPingingSpecter() {
         AbyssalSpecter card = new AbyssalSpecter();
         card.addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
+                List.of(DealDamageEffect.toAnyTarget(1)), "{T}: This creature deals 1 damage to any target."));
         return addCreatureReady(player1, card);
     }
 

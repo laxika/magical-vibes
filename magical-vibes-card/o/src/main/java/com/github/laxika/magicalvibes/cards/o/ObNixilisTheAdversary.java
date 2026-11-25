@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -59,7 +59,7 @@ public class ObNixilisTheAdversary extends Card {
                 -2,
                 List.of(new CreateTokenEffect(
                         1, "Devil", 1, 1, CardColor.RED, List.of(CardSubtype.DEVIL),
-                        Set.of(), Set.of(), List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1))))),
+                        Set.of(), Set.of(), List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(1))))),
                 "−2: Create a 1/1 red Devil creature token with \"When this token dies, it deals 1 damage to any target.\""
         ));
 

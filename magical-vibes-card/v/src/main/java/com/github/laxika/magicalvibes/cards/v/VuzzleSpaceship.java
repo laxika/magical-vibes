@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
@@ -33,6 +33,6 @@ public class VuzzleSpaceship extends Card {
         // Lasers [3] → Whenever Vuzzle Spaceship attacks, it deals 1 damage to any target.
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE)),
-                new DealDamageToAnyTargetEffect(1));
+                DealDamageEffect.toAnyTarget(1));
     }
 }

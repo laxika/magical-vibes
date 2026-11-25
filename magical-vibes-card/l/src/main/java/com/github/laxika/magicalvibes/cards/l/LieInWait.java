@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnedGraveyardCardValue;
@@ -23,6 +23,6 @@ public class LieInWait extends Card {
                 .build());
         addSpellEffect(new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.POWER));
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(new EventValue()));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(new EventValue()));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -26,7 +26,7 @@ public class SkarrganSkybreaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(new SourcePower())),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(new SourcePower())),
                 "{1}, Sacrifice this creature: It deals damage equal to its power to any target."
         ));
     }

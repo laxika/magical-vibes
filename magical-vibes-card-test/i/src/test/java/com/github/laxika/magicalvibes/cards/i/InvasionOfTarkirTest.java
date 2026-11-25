@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.d.DefiantThundermaw;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RavenousSailback;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DefiantThundermaw.class, ZurgoAndOjutai.class, Forest.class, RavenousSailback.class,
-        InvasionOfTarkir.class})
+        InvasionOfTarkir.class, WhipOfErebos.class})
 class InvasionOfTarkirTest extends BaseCardTest {
 
     @Test
@@ -183,4 +185,19 @@ class InvasionOfTarkirTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("An attacking Dragon that left before the ability resolves deals the damage with the lifelink it had as it left")
+    void departedAttackingDragonDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new DefiantThundermaw());
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(dragon)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dragon));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+    }
 }

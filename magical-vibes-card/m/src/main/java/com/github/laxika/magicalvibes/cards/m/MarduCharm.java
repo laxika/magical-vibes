@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -33,7 +33,7 @@ public class MarduCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Mardu Charm deals 4 damage to target creature",
-                        new DealDamageToTargetCreatureEffect(4), creatureFilter),
+                        DealDamageEffect.toTargetCreature(4), creatureFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create two 1/1 white Warrior creature tokens. They gain first strike until end of turn",
                         new CreateTokenEffect(CardType.CREATURE, 2, "Warrior", 1, 1, CardColor.WHITE,

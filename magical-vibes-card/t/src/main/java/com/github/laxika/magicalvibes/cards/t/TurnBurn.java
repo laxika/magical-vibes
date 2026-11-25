@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -63,7 +63,7 @@ public class TurnBurn extends Card {
                 new GrantColorUntilEndOfTurnEffect(CardColor.RED),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WEIRD),
                 new SetBasePowerToughnessEffect(0, 1));
-        CardEffect burn = new DealDamageToAnyTargetEffect(2);
+        CardEffect burn = DealDamageEffect.toAnyTarget(2);
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

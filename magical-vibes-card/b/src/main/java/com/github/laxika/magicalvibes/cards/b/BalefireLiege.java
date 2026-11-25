@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class BalefireLiege extends Card {
 
         // Whenever you cast a red spell, this creature deals 3 damage to target player or planeswalker.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(3));
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(3));
 
         // Whenever you cast a white spell, you gain 3 life.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)), new GainLifeEffect(3));

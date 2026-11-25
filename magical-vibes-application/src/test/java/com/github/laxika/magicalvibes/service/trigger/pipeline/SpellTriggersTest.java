@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -60,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
@@ -455,7 +455,7 @@ class SpellTriggersTest {
         gd.recordSpellCast(player1Id, spell);
         gd.recordSpellCast(player1Id, spell);
         everySpellMatches();
-        var effect = castAbility(Triggers.youCastSpell().nthThisTurn(2), new DealDamageToAnyTargetEffect(2));
+        var effect = castAbility(Triggers.youCastSpell().nthThisTurn(2), DealDamageEffect.toAnyTarget(2));
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
                 effect, new SpellEvent.Cast(spell, player1Id, Zone.HAND, null), true);
@@ -998,7 +998,7 @@ class SpellTriggersTest {
         @DisplayName("queues targeting triggered ability for its target choice")
         void putsTargetingTriggeredAbilityIntoPendingQueue() {
             Permanent perm = createPermanent("Guttersnipe");
-            var innerEffect = new DealDamageToAnyTargetEffect(2);
+            var innerEffect = DealDamageEffect.toAnyTarget(2);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -1144,7 +1144,7 @@ class SpellTriggersTest {
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Guttersnipe");
             CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var innerEffect = new DealDamageToAnyTargetEffect(2);
+            var innerEffect = DealDamageEffect.toAnyTarget(2);
             var effect = authored(SpellFilter.ANY.withSpell(filter), List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -1436,7 +1436,7 @@ class SpellTriggersTest {
         @DisplayName("adds to pending target triggers when effect needs targeting")
         void addsToPendingTargetTriggersWhenTargeting() {
             Permanent perm = createPermanent("Some Card");
-            var innerEffect = new DealDamageToAnyTargetEffect(3);
+            var innerEffect = DealDamageEffect.toAnyTarget(3);
             var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.GRAVEYARD, null);
@@ -1464,7 +1464,7 @@ class SpellTriggersTest {
             gd.stack.add(new StackEntry(
                     StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 0));
             everySpellMatches();
-            var damage = new DealDamageToAnyTargetEffect(new TargetSpellManaValue());
+            var damage = DealDamageEffect.toAnyTarget(new TargetSpellManaValue());
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, damage),
                     castAbility(Triggers.opponentCastsSpell().anySpell(), damage),

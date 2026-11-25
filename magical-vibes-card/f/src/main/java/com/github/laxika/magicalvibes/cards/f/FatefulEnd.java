@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
@@ -11,7 +11,7 @@ public class FatefulEnd extends Card {
 
     public FatefulEnd() {
         addSpellEffect(SequenceEffect.of(
-                        new DealDamageToAnyTargetEffect(3),
+                        DealDamageEffect.toAnyTarget(3),
                         new ScryEffect(1)));
     }
 }

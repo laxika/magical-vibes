@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,6 +33,6 @@ public class SandStrangler extends Card {
                                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
                         ))),
-                new MayEffect(new DealDamageToTargetCreatureEffect(3), "Deal 3 damage to target creature?"));
+                new MayEffect(DealDamageEffect.toTargetCreature(3), "Deal 3 damage to target creature?"));
     }
 }

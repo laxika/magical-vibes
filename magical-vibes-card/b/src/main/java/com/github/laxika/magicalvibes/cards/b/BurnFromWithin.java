@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class BurnFromWithin extends Card {
 
     public BurnFromWithin() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue(), false, true));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()).exilingDamagedCreaturesThatWouldDie());
         addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE,
                 Subjects.thisWay(StepKind.DEAL_DAMAGE, new PermanentIsCreaturePredicate())));
     }

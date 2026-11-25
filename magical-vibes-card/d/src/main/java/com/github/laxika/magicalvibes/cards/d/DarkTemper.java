@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class DarkTemper extends Card {
         // If you control a black permanent, destroy the creature instead.
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLACK))),
-                new DealDamageToTargetCreatureEffect(2),
+                DealDamageEffect.toTargetCreature(2),
                 new DestroyTargetPermanentEffect()
         ));
     }

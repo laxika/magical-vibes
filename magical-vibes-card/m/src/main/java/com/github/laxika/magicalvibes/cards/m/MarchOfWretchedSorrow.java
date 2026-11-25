@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -26,7 +26,7 @@ public class MarchOfWretchedSorrow extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
                 "Target must be a creature or planeswalker"))
-                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
+                .addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()));
         addSpellEffect(new GainLifeEffect(new XValue()));
     }
 }

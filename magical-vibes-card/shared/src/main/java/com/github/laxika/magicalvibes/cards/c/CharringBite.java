@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -22,7 +22,7 @@ public class CharringBite extends Card {
                         withoutFlying
                 )),
                 "Target must be a creature without flying."
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(5, withoutFlying));
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(5, withoutFlying));
         addSpellEffect(new ShuffleIntoLibraryEffect());
     }
 }

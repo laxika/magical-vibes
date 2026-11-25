@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -24,7 +24,7 @@ public class BetrayersBargain extends Card {
                 )),
                 "a creature or enchantment"));
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToAnyTargetEffect(5))
+                .addSpellEffect(DealDamageEffect.toAnyTarget(5))
                 .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect());
     }
 }

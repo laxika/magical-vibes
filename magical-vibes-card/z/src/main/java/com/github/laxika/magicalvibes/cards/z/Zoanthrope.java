@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,6 +25,6 @@ public class Zoanthrope extends Card {
 
         // Warp Blast — When this creature enters, it deals X damage to any target.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToAnyTargetEffect(new XValue()));
+                DealDamageEffect.toAnyTarget(new XValue()));
     }
 }

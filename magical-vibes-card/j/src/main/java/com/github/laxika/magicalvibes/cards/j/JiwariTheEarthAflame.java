@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -29,7 +29,7 @@ public class JiwariTheEarthAflame extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}{R}",
-                List.of(new DealDamageToTargetCreatureEffect(new XValue())),
+                List.of(DealDamageEffect.toTargetCreature(new XValue())),
                 "{X}{R}, {T}: Jiwari, the Earth Aflame deals X damage to target creature without flying.",
                 new PermanentPredicateTargetFilter(withoutFlying, "Target must be a creature without flying")
         ));

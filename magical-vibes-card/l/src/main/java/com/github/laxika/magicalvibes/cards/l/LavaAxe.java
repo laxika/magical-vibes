@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "215")
 @CardRegistration(set = "M10", collectorNumber = "145")
@@ -22,6 +22,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LavaAxe extends Card {
 
     public LavaAxe() {
-        addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(5));
+        addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(5));
     }
 }

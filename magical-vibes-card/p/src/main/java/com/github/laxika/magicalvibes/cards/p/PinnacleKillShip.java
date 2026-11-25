@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -31,7 +31,7 @@ public class PinnacleKillShip extends Card {
 
     public PinnacleKillShip() {
         target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureEffect(10));
+                DealDamageEffect.toTargetCreature(10));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

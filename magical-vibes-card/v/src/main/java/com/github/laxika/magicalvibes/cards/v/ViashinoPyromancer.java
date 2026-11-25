@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ViashinoPyromancer extends Card {
 
     public ViashinoPyromancer() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetPlayerOrPlaneswalkerEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toTargetPlayerOrPlaneswalker(2));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,8 +29,8 @@ public class LithomanticBarrage extends Card {
                 "Target must be a creature or planeswalker"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE))),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(1),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(5)
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(1),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(5)
         ));
     }
 }

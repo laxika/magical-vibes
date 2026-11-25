@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class BlightedGorge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(2)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(2)),
                 "{4}{R}, {T}, Sacrifice this land: It deals 2 damage to any target."
         ));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 
@@ -38,7 +38,7 @@ public class Hankyu extends Card {
                         true,
                         null,
                         List.of(new RemoveAllCountersAsCostEffect(CounterType.AIM, true),
-                                new DealDamageToAnyTargetEffect(new XValue())),
+                                DealDamageEffect.toAnyTarget(new XValue())),
                         "{T}, Remove all aim counters from Hankyu: This creature deals damage to any target "
                                 + "equal to the number of aim counters removed this way."
                 ),

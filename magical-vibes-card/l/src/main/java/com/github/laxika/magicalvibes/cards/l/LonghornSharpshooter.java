@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -14,6 +14,6 @@ public class LonghornSharpshooter extends Card {
 
     public LonghornSharpshooter() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{R}"))));
-        addTrigger(Triggers.becomesPlotted(), new DealDamageToAnyTargetEffect(2));
+        addTrigger(Triggers.becomesPlotted(), DealDamageEffect.toAnyTarget(2));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrWarpedCardCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EOE", collectorNumber = "176")
@@ -14,6 +14,6 @@ public class CloseEncounter extends Card {
     public CloseEncounter() {
         addCastingCost(new ChooseCreatureOrWarpedCardCost());
         SpellTarget target = target(TargetFilters.creature());
-        target.addSpellEffect(new DealDamageToTargetCreatureEffect(new ChosenCreatureOrWarpedCardPower()));
+        target.addSpellEffect(DealDamageEffect.toTargetCreature(new ChosenCreatureOrWarpedCardPower()));
     }
 }

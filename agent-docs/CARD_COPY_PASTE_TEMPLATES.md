@@ -153,14 +153,13 @@ Reference: `s/Shock.java` (instant, 2 dmg), `l/LightningBolt.java` (instant, 3 d
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SET", collectorNumber = "NUM")
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(DAMAGE, false));
+        addSpellEffect(DealDamageEffect.toAnyTarget(DAMAGE));
     }
 }
 ```

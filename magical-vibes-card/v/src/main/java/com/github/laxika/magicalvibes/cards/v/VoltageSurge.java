@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -19,8 +19,8 @@ public class VoltageSurge extends Card {
         SacrificedCardMatches artifactSacrificed = new SacrificedCardMatches(
                 new CardTypePredicate(CardType.ARTIFACT), "an artifact");
         addSpellEffect(new ConditionalEffect(
-                artifactSacrificed, new DealDamageToTargetCreatureOrPlaneswalkerEffect(4)));
+                artifactSacrificed, DealDamageEffect.toTargetCreatureOrPlaneswalker(4)));
         addSpellEffect(new ConditionalEffect(
-                new NotCondition(artifactSacrificed), new DealDamageToTargetCreatureOrPlaneswalkerEffect(2)));
+                new NotCondition(artifactSacrificed), DealDamageEffect.toTargetCreatureOrPlaneswalker(2)));
     }
 }

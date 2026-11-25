@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -52,7 +52,7 @@ public class UniteTheCoalition extends Card {
                         anyPlayer),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Unite the Coalition deals 2 damage to any target",
-                        () -> new DealDamageToAnyTargetEffect(2),
+                        () -> DealDamageEffect.toAnyTarget(2),
                         null),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Destroy target artifact or enchantment",

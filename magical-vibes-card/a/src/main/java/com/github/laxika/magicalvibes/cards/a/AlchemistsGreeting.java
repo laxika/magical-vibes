@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "140")
@@ -15,7 +15,7 @@ public class AlchemistsGreeting extends Card {
 
     public AlchemistsGreeting() {
         // Alchemist's Greeting deals 4 damage to target creature.
-        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        target(TargetFilters.creature()).addSpellEffect(DealDamageEffect.toTargetCreature(4));
 
         // Madness {1}{R}
         addCastingOption(new MadnessCast("{1}{R}"));

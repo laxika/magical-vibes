@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -50,7 +50,7 @@ public class UmaroRagingYeti extends Card {
                 SequenceEffect.of(new DiscardHandEffect(), new DrawCardEffect(4)));
         ChooseOneEffect.ChooseOneOption damage = new ChooseOneEffect.ChooseOneOption(
                 "Umaro deals 5 damage to any target",
-                new DealDamageToAnyTargetEffect(5), ANY_TARGET);
+                DealDamageEffect.toAnyTarget(5), ANY_TARGET);
 
         target(ANY_TARGET).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ChooseOneAtRandomEffect(List.of(pump, discardAndDraw, damage)));

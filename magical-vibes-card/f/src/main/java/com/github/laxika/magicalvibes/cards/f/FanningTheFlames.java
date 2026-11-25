@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "STH", collectorNumber = "80")
@@ -15,7 +15,7 @@ public class FanningTheFlames extends Card {
 
     public FanningTheFlames() {
         addStaticEffect(new BuybackEffect("{3}"));
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

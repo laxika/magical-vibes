@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -15,6 +15,6 @@ public class Roast extends Card {
     public Roast() {
         PermanentPredicate withoutFlying = new PermanentNotPredicate(
                 new PermanentHasKeywordPredicate(Keyword.FLYING));
-        addSpellEffect(new DealDamageToTargetCreatureEffect(5, withoutFlying));
+        addSpellEffect(DealDamageEffect.toTargetCreature(5, withoutFlying));
     }
 }

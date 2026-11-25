@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerWithoutMaxSpeedPredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class OutpaceOblivion extends Card {
                 )),
                 "Target must be a creature or planeswalker"
         ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(5));
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(5));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

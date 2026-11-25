@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -34,7 +34,7 @@ public class SerumCoreChimera extends Card {
                         new MayEffect(
                                 new DiscardCardThenEffect(
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(3),
+                                        DealDamageEffect.toTargetCreatureOrPlaneswalker(3),
                                         "a nonland card"),
                                 "Discard a nonland card to deal 3 damage to target creature or planeswalker?")
                 ),

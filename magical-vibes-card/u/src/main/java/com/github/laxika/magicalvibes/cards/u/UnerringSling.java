@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +27,7 @@ public class UnerringSling extends Card {
                 true, "{3}",
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate(), false, true),
-                        new DealDamageToTargetCreatureEffect(new ChosenPermanentPower())),
+                        DealDamageEffect.toTargetCreature(new ChosenPermanentPower())),
                 "{3}, {T}, Tap an untapped creature you control: This artifact deals damage equal to "
                         + "the tapped creature's power to target attacking or blocking creature with flying.",
                 new PermanentPredicateTargetFilter(

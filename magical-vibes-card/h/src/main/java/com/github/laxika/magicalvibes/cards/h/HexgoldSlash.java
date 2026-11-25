@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "ONE", collectorNumber = "137")
@@ -14,8 +14,8 @@ public class HexgoldSlash extends Card {
     public HexgoldSlash() {
         addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentHasKeywordPredicate(Keyword.TOXIC)),
-                new DealDamageToTargetCreatureEffect(2),
-                new DealDamageToTargetCreatureEffect(4)
+                DealDamageEffect.toTargetCreature(2),
+                DealDamageEffect.toTargetCreature(4)
         ));
     }
 }

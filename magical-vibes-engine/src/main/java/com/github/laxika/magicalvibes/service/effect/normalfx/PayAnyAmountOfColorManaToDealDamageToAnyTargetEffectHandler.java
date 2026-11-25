@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfColorManaToDealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -62,7 +62,7 @@ public class PayAnyAmountOfColorManaToDealDamageToAnyTargetEffectHandler impleme
                             + " for " + cardName + "."));
             entry.setEventValue(amount);
             queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
-                    new QueueReflexiveAbilityEffect(new DealDamageToAnyTargetEffect(new EventValue())));
+                    new QueueReflexiveAbilityEffect(DealDamageEffect.toAnyTarget(new EventValue())));
             return;
         }
 

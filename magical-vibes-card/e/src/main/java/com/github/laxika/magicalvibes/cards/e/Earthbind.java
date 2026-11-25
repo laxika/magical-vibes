@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -31,7 +31,7 @@ public class Earthbind extends Card {
                                         new PermanentHasKeywordPredicate(Keyword.FLYING),
                                         "enchanted creature has flying")),
                         SequenceEffect.of(
-                                new DealDamageToTargetCreatureEffect(2),
+                                DealDamageEffect.toTargetCreature(2),
                                 new GrantStaticEffectToSourceEffect(
                                         new RemoveKeywordEffect(
                                                 Keyword.FLYING,

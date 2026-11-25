@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -16,7 +16,7 @@ public class PlayWithFire extends Card {
 
     public PlayWithFire() {
         addSpellEffect(SequenceEffect.of(
-                        new DealDamageToAnyTargetEffect(2),
+                        DealDamageEffect.toAnyTarget(2),
                         new ConditionalEffect(HappenedThisWay.toAPlayer(StepKind.DEAL_DAMAGE, PlayerRelation.ANY),
                                 new ScryEffect(1))));
     }

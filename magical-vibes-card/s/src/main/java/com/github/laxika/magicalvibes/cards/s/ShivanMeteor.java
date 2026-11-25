@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class ShivanMeteor extends Card {
 
     public ShivanMeteor() {
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(13));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(13));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{R}{R}",

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,8 +35,7 @@ public class RoaringFurnaceSteamingSauna extends Card {
         )));
 
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(0),
-                new DealDamageToTargetCreatureEffect(new CardsInHand(CountScope.CONTROLLER), false,
-                        new PermanentAllOfPredicate(List.of(
+                DealDamageEffect.toTargetCreature(new CardsInHand(CountScope.CONTROLLER), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(
                                         new PermanentControlledBySourceControllerPredicate())))));

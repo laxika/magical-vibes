@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BeheldPower;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -29,8 +29,8 @@ public class DragonsFire extends Card {
                 "Target must be a creature or planeswalker"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new BeholdCostPaid(),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(3),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(new BeheldPower())
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(3),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new BeheldPower())
         ));
     }
 }

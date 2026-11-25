@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -21,7 +21,7 @@ public class SpikefieldHazard extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Spikefield Hazard",
-                        List.of(new DealDamageToAnyTargetEffect(new Fixed(1)),
+                        List.of(DealDamageEffect.toAnyTarget(new Fixed(1)),
                                 new MarkTargetCreatureExileInsteadOfDieThisTurnEffect(
                                         Subjects.thisWay(StepKind.DEAL_DAMAGE)))),
                 new ChooseOneEffect.ChooseOneOption("Spikefield Cave", List.of())

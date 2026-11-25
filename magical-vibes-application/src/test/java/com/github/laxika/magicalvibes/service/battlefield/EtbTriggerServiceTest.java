@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -157,7 +157,7 @@ class EtbTriggerServiceTest {
         land.setName("Targeted Land");
         land.setType(CardType.LAND);
         land.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(1));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(land));
 
         service.processCreatureETBEffects(gameData, controllerId, land, null, false);

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -23,7 +23,6 @@ public class ArtilleryBlast extends Card {
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(
-                new Sum(new Fixed(1), new BasicLandTypesAmongControlledLands())));
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(new Sum(new Fixed(1), new BasicLandTypesAmongControlledLands())));
     }
 }

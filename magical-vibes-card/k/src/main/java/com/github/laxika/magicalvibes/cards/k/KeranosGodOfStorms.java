@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -35,6 +35,6 @@ public class KeranosGodOfStorms extends Card {
                 new DrawCardEffect(1));
         addTrigger(Triggers.youRevealCardThisWay().withFilter(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                new DealDamageToAnyTargetEffect(3));
+                DealDamageEffect.toAnyTarget(3));
     }
 }

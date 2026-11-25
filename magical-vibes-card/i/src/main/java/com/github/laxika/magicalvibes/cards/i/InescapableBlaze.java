@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "107")
 @CardRegistration(set = "ANB", collectorNumber = "76")
@@ -11,6 +11,6 @@ public class InescapableBlaze extends Card {
 
     public InescapableBlaze() {
         addStaticEffect(new CantBeCounteredEffect());
-        addSpellEffect(new DealDamageToAnyTargetEffect(6));
+        addSpellEffect(DealDamageEffect.toAnyTarget(6));
     }
 }

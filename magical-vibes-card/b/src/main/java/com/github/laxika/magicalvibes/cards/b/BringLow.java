@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "103")
 public class BringLow extends Card {
 
     public BringLow() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(new FixedIfTargetMatches(
+        addSpellEffect(DealDamageEffect.toTargetCreature(new FixedIfTargetMatches(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 5,
                 3

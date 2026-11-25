@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +24,7 @@ public class MurasaPyromancer extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new MayEffect(new DealDamageToTargetCreatureEffect(new PermanentCount(
+                new MayEffect(DealDamageEffect.toTargetCreature(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER)),
                         "Have Murasa Pyromancer deal damage equal to the number of Allies you control?"));
     }

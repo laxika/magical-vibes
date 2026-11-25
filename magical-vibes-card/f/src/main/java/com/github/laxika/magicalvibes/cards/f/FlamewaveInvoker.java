@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "202")
 @CardRegistration(set = "LGN", collectorNumber = "92")
@@ -16,6 +16,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class FlamewaveInvoker extends Card {
 
     public FlamewaveInvoker() {
-        addActivatedAbility(new ActivatedAbility(false, "{7}{R}", List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(5)), "{7}{R}: Flamewave Invoker deals 5 damage to target player or planeswalker."));
+        addActivatedAbility(new ActivatedAbility(false, "{7}{R}", List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(5)), "{7}{R}: Flamewave Invoker deals 5 damage to target player or planeswalker."));
     }
 }

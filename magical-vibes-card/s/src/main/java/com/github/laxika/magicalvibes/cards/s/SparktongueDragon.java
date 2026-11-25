@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,7 +15,7 @@ public class SparktongueDragon extends Card {
     public SparktongueDragon() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayManaEffect(
                 "{2}{R}",
-                new QueueReflexiveAbilityEffect(new DealDamageToAnyTargetEffect(3)),
+                new QueueReflexiveAbilityEffect(DealDamageEffect.toAnyTarget(3)),
                 "Pay {2}{R} to deal 3 damage to any target?"
         ));
     }

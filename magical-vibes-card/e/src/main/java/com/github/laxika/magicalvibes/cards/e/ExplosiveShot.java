@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TLE", collectorNumber = "236")
@@ -11,6 +11,6 @@ public class ExplosiveShot extends Card {
 
     public ExplosiveShot() {
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(4));
     }
 }

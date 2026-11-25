@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -41,7 +41,7 @@ public class MishraLostToPhyrexia extends Card {
 
     private ChooseOneEffect chooseThreeModes() {
         DiscardEffect discard = new DiscardEffect(2, Subjects.targetPlayer());
-        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(3);
+        DealDamageEffect damage = DealDamageEffect.toAnyTarget(3);
         DestroyTargetPermanentEffect destroy = new DestroyTargetPermanentEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -13,7 +13,7 @@ public class SynchronizedSpellcraft extends Card {
 
     public SynchronizedSpellcraft() {
         target(TargetFilters.creature());
-        addSimultaneousSpellEffects(new DealDamageToTargetCreatureEffect(4),
+        addSimultaneousSpellEffects(DealDamageEffect.toTargetCreature(4),
                 new DealDamageToPlayersEffect(new PartySize(), Subjects.controllerOf(Subjects.target())));
     }
 }

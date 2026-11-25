@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -34,7 +33,7 @@ public class GoblinBarrage extends Card {
 
         // Goblin Barrage deals 4 damage to target creature.
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(4));
 
         // If this spell was kicked, it also deals 4 damage to target player or planeswalker.
         targetWhenKicked(new AnyTargetPredicateTargetFilter(
@@ -42,6 +41,6 @@ public class GoblinBarrage extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"), 0, 0, 1, 1)
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        DealDamageToAnyTargetEffect.forTargetGroup(4, 1)));
+                        DealDamageEffect.toAnyTargetInGroup(4, 1)));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
@@ -57,7 +57,7 @@ public class NicolBolasGodPharaoh extends Card {
         // an opponent controls. ANY_TARGET + filters restrict to opponents / their permanents.
         addActivatedAbility(new ActivatedAbility(
                 -4,
-                List.of(new DealDamageToAnyTargetEffect(7)),
+                List.of(DealDamageEffect.toAnyTarget(7)),
                 "−4: Nicol Bolas, God-Pharaoh deals 7 damage to target opponent, creature an "
                         + "opponent controls, or planeswalker an opponent controls.",
                 new AnyTargetPredicateTargetFilter(

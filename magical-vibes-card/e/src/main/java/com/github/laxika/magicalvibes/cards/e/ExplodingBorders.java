@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
@@ -18,7 +18,6 @@ public class ExplodingBorders extends Card {
                 CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
         // Deals X damage to target player or planeswalker, where X is the number of basic land
         // types among lands you control.
-        addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                new BasicLandTypesAmongControlledLands()));
+        addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(new BasicLandTypesAmongControlledLands()));
     }
 }

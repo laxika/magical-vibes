@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,8 +20,7 @@ public class WolfOfDevilsBreach extends Card {
                 "{1}{R}",
                 new DiscardCardThenEffect(
                         null,
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                new LastDiscardedCardManaValue()),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new LastDiscardedCardManaValue()),
                         "a card", null, true, null, null, Subjects.you(), true),
                 "Pay {1}{R} and discard a card to deal damage to target creature or planeswalker?"));
     }

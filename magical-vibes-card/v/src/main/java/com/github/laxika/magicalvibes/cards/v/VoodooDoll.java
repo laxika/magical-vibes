@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceThenDealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -29,7 +29,7 @@ public class VoodooDoll extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}{X}",
-                List.of(new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.PIN))),
+                List.of(DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.PIN))),
                 "{X}{X}, {T}: This artifact deals damage equal to the number of pin counters on it to any target."
         ).withXEqualToSourceCounters(CounterType.PIN));
     }

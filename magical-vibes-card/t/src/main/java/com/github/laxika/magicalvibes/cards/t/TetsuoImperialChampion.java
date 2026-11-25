@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongAttachedEquipment;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -30,7 +30,7 @@ public class TetsuoImperialChampion extends Card {
                 new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Tetsuo deals damage equal to the greatest mana value among Equipment attached to it to any target",
-                                        new DealDamageToAnyTargetEffect(greatestEquipmentManaValue)),
+                                        DealDamageEffect.toAnyTarget(greatestEquipmentManaValue)),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "You may cast an instant or sorcery spell from your hand with mana value less than or equal to the greatest mana value among Equipment attached to Tetsuo without paying its mana cost",
                                         new MayCastAnySpellFromHandWithoutPayingManaCostEffect(

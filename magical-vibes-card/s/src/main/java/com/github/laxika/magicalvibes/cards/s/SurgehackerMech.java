@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -37,7 +37,7 @@ public class SurgehackerMech extends Card {
                 opponentCreatureOrPlaneswalker,
                 "Target must be a creature or planeswalker an opponent controls"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(new Scaled(
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new Scaled(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE), CountScope.CONTROLLER),
                         2), opponentCreatureOrPlaneswalker));
 

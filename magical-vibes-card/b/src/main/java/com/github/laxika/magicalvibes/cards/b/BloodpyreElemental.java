@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class BloodpyreElemental extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(4)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(4)),
                 "Sacrifice Bloodpyre Elemental: It deals 4 damage to target creature. Activate only as a sorcery.",
                 null,
                 null,

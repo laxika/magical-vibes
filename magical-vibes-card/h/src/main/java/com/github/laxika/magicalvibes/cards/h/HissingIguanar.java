@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class HissingIguanar extends Card {
         // Whenever another creature dies, you may have this creature deal 1 damage to
         // target player or planeswalker.
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new MayEffect(
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1),
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(1),
                 "Deal 1 damage to target player or planeswalker?"));
     }
 }

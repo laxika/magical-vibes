@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -33,7 +33,7 @@ public class SarkhanTheMad extends Card {
                 0,
                 List.of(new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new PutCardsIntoHandEffect(Subjects.revealedThisWay()),
-                        new DealDamageToTargetCreatureEffect(Subjects.source(), AmountThisWay.revealedManaValue())),
+                        DealDamageEffect.to(Subjects.source(), AmountThisWay.revealedManaValue())),
                 "0: Reveal the top card of your library and put it into your hand. Sarkhan deals damage to himself equal to that card's mana value."));
 
         addActivatedAbility(new ActivatedAbility(

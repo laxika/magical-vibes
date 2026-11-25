@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
@@ -37,7 +37,7 @@ public class ArcboundJavelineer extends Card {
                 null,
                 List.of(
                         new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToTargetCreatureEffect(new XValue())
+                        DealDamageEffect.toTargetCreature(new XValue())
                 ),
                 "{T}, Remove X +1/+1 counters from this creature: It deals X damage to target attacking or blocking creature.",
                 new PermanentPredicateTargetFilter(

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -26,7 +26,7 @@ public class SpareDagger extends Card {
                 new MayEffect(
                         SequenceEffect.of(new SacrificeSelfEffect(Subjects.granter()),
                                 new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                        new QueueReflexiveAbilityEffect(new DealDamageToAnyTargetEffect(1)))),
+                                        new QueueReflexiveAbilityEffect(DealDamageEffect.toAnyTarget(1)))),
                         "You may sacrifice Spare Dagger. If you do, this creature deals 1 damage to any target.")),
                 Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

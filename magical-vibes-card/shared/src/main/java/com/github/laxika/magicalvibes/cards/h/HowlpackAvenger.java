@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public class HowlpackAvenger extends Card {
 
     public HowlpackAvenger() {
         addTrigger(Triggers.permanentYouControlDealtDamage(),
-                new DealDamageToAnyTargetEffect(new EventValue()));
+                DealDamageEffect.toAnyTarget(new EventValue()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",

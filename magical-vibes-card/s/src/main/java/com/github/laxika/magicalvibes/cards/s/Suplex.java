@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,7 +21,7 @@ public class Suplex extends Card {
                         "Suplex deals 3 damage to target creature",
                         List.of((CardEffect) SequenceEffect.of(
                                 new MarkTargetCreatureExileInsteadOfDieThisTurnEffect(),
-                                new DealDamageToTargetCreatureEffect(3))),
+                                DealDamageEffect.toTargetCreature(3))),
                         List.of(TargetFilters.creature())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile target artifact",

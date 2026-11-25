@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,6 +26,6 @@ public class ChargeOfTheForeverBeast extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        )).addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new ChosenCreatureOrRevealedCardPower()));
+        )).addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new ChosenCreatureOrRevealedCardPower()));
     }
 }

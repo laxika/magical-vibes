@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -24,7 +24,7 @@ public class Heliophial extends Card {
                 "{2}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE))
+                        DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.CHARGE))
                 ),
                 "{2}, Sacrifice this artifact: It deals damage equal to the number of charge counters on it to any target."
         ));

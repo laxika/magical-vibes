@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class VolcanicSpite extends Card {
                         new PermanentIsBattlePredicate()
                 )),
                 "Target must be a creature, planeswalker, or battle."
-        )).addSpellEffect(new DealDamageToTargetPermanentEffect(3));
+        )).addSpellEffect(DealDamageEffect.toTargetPermanent(3));
         addSpellEffect(ChooseCardEffect.upTo(Subjects.cardsInYourHand(null), 1,
                 "a card from your hand to put on the bottom of your library"));
         addSpellEffect(PutCardsIntoLibraryEffect.onBottom(Subjects.cardsThisWay(StepKind.CHOOSE)));

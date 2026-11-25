@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +27,7 @@ public class ProvokeTheTrolls extends Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any target")).addSpellEffect(new DealDamageToAnyTargetEffect(3));
+                "Target must be any target")).addSpellEffect(DealDamageEffect.toAnyTarget(3));
         addSpellEffect(new BoostSelfEffect(
                 Subjects.thisWay(StepKind.DEAL_DAMAGE, new PermanentIsCreaturePredicate()), 5, 0));
     }

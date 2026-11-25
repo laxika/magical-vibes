@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
@@ -28,7 +28,7 @@ public class DoomCannon extends Card {
                                         new PermanentHasSourceChosenSubtypePredicate())),
                                 "a creature of the chosen type",
                                 false),
-                        new DealDamageToAnyTargetEffect(3)),
+                        DealDamageEffect.toAnyTarget(3)),
                 "{3}, {T}, Sacrifice a creature of the chosen type: This artifact deals 3 damage to any target."
         ));
     }

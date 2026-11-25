@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -32,7 +32,7 @@ public class RampagingRaptor extends Card {
                                 new PermanentProtectedByDefendingPlayerPredicate())))),
                 "Target must be a planeswalker defending player controls or a battle defending player protects"))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        new DealDamageToTargetPermanentEffect(new EventValue()));
+                        DealDamageEffect.toTargetPermanent(new EventValue()));
         addActivatedAbility(new ActivatedAbility(false, "{2}{R}",
                 List.of(new BoostSelfEffect(2, 0)),
                 "{2}{R}: This creature gets +2/+0 until end of turn."));

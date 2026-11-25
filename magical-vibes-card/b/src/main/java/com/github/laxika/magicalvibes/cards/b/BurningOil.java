@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -21,7 +21,7 @@ public class BurningOil extends Card {
                         new PermanentIsBlockingPredicate()
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(3));
         addCastingOption(new FlashbackCast("{3}{W}"));
     }
 }

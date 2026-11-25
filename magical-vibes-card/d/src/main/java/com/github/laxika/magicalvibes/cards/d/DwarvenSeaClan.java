@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class DwarvenSeaClan extends Card {
                 true,
                 null,
                 List.of(RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endOfCombat(), Subjects.target(),
-                        new DealDamageToTargetCreatureEffect(Subjects.triggering(), 2))),
+                        DealDamageEffect.to(Subjects.triggering(), 2))),
                 "{T}: Choose target attacking or blocking creature whose controller controls an Island. "
                         + "This creature deals 2 damage to that creature at end of combat. "
                         + "Activate only before the end of combat step.",

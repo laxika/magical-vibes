@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -22,7 +22,7 @@ public class KeldonChampion extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetPlayerOrPlaneswalkerEffect(3));
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toTargetPlayerOrPlaneswalker(3));
         addStaticEffect(new EchoEffect("{2}{R}{R}"));
     }
 }

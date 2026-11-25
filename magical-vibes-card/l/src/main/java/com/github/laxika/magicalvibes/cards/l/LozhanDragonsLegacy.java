@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +38,7 @@ public class LozhanDragonsLegacy extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must not be a commander"
         );
-        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(new TargetSpellManaValue());
+        DealDamageEffect damage = DealDamageEffect.toAnyTarget(new TargetSpellManaValue());
 
         // "Whenever you cast an Adventure spell or a Dragon spell": two trigger conditions of the one ability's
         // target, each its own ability of the same text.

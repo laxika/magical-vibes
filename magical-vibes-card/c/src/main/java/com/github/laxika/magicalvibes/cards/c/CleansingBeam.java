@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CleansingBeam extends Card {
 
     public CleansingBeam() {
-        DealDamageToTargetCreatureEffect targetDamage = new DealDamageToTargetCreatureEffect(2);
+        DealDamageEffect targetDamage = DealDamageEffect.toTargetCreature(2);
         target(TargetFilters.creature()).bindEffect(targetDamage);
         addSimultaneousSpellEffects(targetDamage, new DealDamageToPermanentsTargetControlsEffect(2,
                 Subjects.otherCreaturesSharing(Subjects.target(), SharedQuality.COLOR)));

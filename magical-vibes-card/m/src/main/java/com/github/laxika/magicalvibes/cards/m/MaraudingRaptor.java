@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ public class MaraudingRaptor extends Card {
                 new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.SELF));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new DealDamageToTargetCreatureEffect(Subjects.triggering(), 2),
+                        DealDamageEffect.to(Subjects.triggering(), 2),
                         new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
                                 new BoostSelfEffect(2, 0))));

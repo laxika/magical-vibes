@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,7 +19,7 @@ public class RiteOfConsumption extends Card {
 
         // Deals damage equal to the sacrificed creature's power to target player or planeswalker, and you
         // gain life equal to the damage actually dealt this way.
-        addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(new XValue()));
         addSpellEffect(new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE), Subjects.you()));
     }
 }

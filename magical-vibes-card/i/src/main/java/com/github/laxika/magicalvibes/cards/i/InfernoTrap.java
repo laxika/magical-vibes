@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -19,6 +19,6 @@ public class InfernoTrap extends Card {
                 List.of(new ManaCastingCost("{R}")),
                 new ControllerDealtDamageByAtLeastCreaturesThisTurn(2),
                 false));
-        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreature(4));
     }
 }

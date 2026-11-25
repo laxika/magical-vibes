@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlayerEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DealDamageToTargetCreatureOrPlayerEffectHandler implements NormalEffectHandlerBean {
 
-    private final DealDamageToAnyTargetEffectHandler delegate;
+    private final DealDamageEffectHandler delegate;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
@@ -54,7 +54,7 @@ public class DealDamageToTargetCreatureOrPlayerEffectHandler implements NormalEf
         UUID previousTargetId = entry.getTargetId();
         entry.setTargetId(entry.getChosenPermanentId());
         try {
-            delegate.resolve(gameData, entry, new DealDamageToAnyTargetEffect(damageEffect.damage()));
+            delegate.resolve(gameData, entry, DealDamageEffect.toAnyTarget(damageEffect.damage()));
         } finally {
             entry.setTargetId(previousTargetId);
         }

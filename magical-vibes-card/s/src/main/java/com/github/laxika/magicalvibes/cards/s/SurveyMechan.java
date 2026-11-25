@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -34,7 +34,7 @@ public class SurveyMechan extends Card {
                         new ReduceActivationCostEffect(new DistinctPermanentNamesCount(
                                 new PermanentIsLandPredicate(), CountScope.CONTROLLER)),
                         new SacrificeSelfCost(),
-                        DealDamageToAnyTargetEffect.forTargetGroup(3, 0),
+                        DealDamageEffect.toAnyTargetInGroup(3, 0),
                         new DrawCardEffect(3, Subjects.targetPlayer(1)),
                         new GainLifeEffect(3, Subjects.targetPlayer(1))
                 ),

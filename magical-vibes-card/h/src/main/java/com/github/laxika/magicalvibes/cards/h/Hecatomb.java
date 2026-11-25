@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -34,7 +34,7 @@ public class Hecatomb extends Card {
                 false,
                 null,
                 List.of(new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
-                        new DealDamageToAnyTargetEffect(1)),
+                        DealDamageEffect.toAnyTarget(1)),
                 "Tap an untapped Swamp you control: Hecatomb deals 1 damage to any target."
         ));
     }

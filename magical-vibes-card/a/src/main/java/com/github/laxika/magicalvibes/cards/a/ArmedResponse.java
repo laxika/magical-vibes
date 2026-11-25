@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,8 +14,7 @@ public class ArmedResponse extends Card {
 
     public ArmedResponse() {
         target(TargetFilters.attackingCreature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(
-                        new PermanentCount(
+                .addSpellEffect(DealDamageEffect.toTargetCreature(new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                                 CountScope.CONTROLLER)));
     }

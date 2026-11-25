@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,7 +38,7 @@ public class AnnieJoinsUp extends Card {
                 opponentCreatureOrPlaneswalker,
                 "Target must be a creature or planeswalker an opponent controls"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(5, opponentCreatureOrPlaneswalker));
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(5, opponentCreatureOrPlaneswalker));
 
         addStaticEffect(new AdditionalTriggeredAbilityEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

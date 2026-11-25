@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -25,7 +25,7 @@ public class LyzoldaTheBloodWitch extends Card {
                         new SacrificeCreatureCost(),
                         new ConditionalEffect(
                                 new SacrificedCardMatches(new CardColorPredicate(CardColor.RED), "red"),
-                                new DealDamageToAnyTargetEffect(2)),
+                                DealDamageEffect.toAnyTarget(2)),
                         new ConditionalEffect(
                                 new SacrificedCardMatches(new CardColorPredicate(CardColor.BLACK), "black"),
                                 new DrawCardEffect())

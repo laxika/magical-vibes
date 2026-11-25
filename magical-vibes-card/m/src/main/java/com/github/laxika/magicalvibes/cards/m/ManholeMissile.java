@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class ManholeMissile extends Card {
 
     public ManholeMissile() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+        addSpellEffect(DealDamageEffect.toTargetCreature(3));
         addSpellEffect(ChooseCardEffect.upTo(Subjects.cardsInYourHand(null), 1,
                 "a card from your hand to put on the bottom of your library"));
         addSpellEffect(PutCardsIntoLibraryEffect.onBottom(Subjects.cardsThisWay(StepKind.CHOOSE)));

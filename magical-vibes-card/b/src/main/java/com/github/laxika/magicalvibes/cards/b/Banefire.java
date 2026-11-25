@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "58")
 @CardRegistration(set = "M19", collectorNumber = "130")
@@ -19,6 +19,6 @@ public class Banefire extends Card {
         addStaticEffect(new CantBeCounteredEffect(new SpellXAtLeast(5)));
 
         // Banefire deals X damage to any target; if X is 5 or more, that damage can't be prevented.
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue(), new SpellXAtLeast(5)));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()).unpreventableWhen(new SpellXAtLeast(5)));
     }
 }

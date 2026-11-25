@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -33,7 +34,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -1128,7 +1128,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             gd.activePlayerId = player2Id;
             Card card = createCardWithName("Each Upkeep Damage Card");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY), new DealDamageToAnyTargetEffect(3));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY), DealDamageEffect.toAnyTarget(3));
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -18,7 +18,7 @@ public class LightningCrafter extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChampionCreatureEffect(CardSubtype.GOBLIN, CardSubtype.SHAMAN));
         // {T}: This creature deals 3 damage to any target.
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(3)),
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(DealDamageEffect.toAnyTarget(3)),
                 "{T}: Lightning Crafter deals 3 damage to any target."));
     }
 }

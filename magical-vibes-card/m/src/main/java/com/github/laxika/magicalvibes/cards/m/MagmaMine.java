@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -30,7 +30,7 @@ public class MagmaMine extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.PRESSURE))
+                        DealDamageEffect.toAnyTarget(new CountersOnSource(CounterType.PRESSURE))
                 ),
                 "{T}, Sacrifice this artifact: It deals damage equal to the number of pressure counters on it to any target."
         ));

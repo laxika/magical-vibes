@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "S99", collectorNumber = "93")
 @CardRegistration(set = "ME3", collectorNumber = "91")
@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 public class CinderStorm extends Card {
 
     public CinderStorm() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(7));
+        addSpellEffect(DealDamageEffect.toAnyTarget(7));
     }
 }

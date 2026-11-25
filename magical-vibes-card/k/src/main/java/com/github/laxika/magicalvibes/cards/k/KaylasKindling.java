@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -32,7 +32,7 @@ public class KaylasKindling extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("SCG", "103"));
 
     public KaylasKindling() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(2));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new DraftCardFromSpellbookEffect(SPELLBOOK, true));
     }

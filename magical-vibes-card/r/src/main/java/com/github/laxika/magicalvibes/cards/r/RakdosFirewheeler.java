@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class RakdosFirewheeler extends Card {
                 "Target must be an opponent"
         )).bindEffect(dealDamageToPlayers);
 
-        var dealDamageToTargetCreatureOrPlaneswalker = new DealDamageToTargetCreatureOrPlaneswalkerEffect(2);
+        var dealDamageToTargetCreatureOrPlaneswalker = DealDamageEffect.toTargetCreatureOrPlaneswalker(2);
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

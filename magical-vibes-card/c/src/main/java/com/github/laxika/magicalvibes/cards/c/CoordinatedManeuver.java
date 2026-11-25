@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,8 +27,7 @@ public class CoordinatedManeuver extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Coordinated Maneuver deals damage equal to the number of creatures you control to target creature or planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
                         new PermanentPredicateTargetFilter(
                                 creatureOrPlaneswalker,
                                 "Target must be a creature or planeswalker.")),

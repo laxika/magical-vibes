@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +22,7 @@ public class ArcSpitter extends Card {
                 new ActivatedAbility(
                         false,
                         "{1}",
-                        List.of(new DealDamageToTargetCreatureEffect(1)),
+                        List.of(DealDamageEffect.toTargetCreature(1)),
                         "{1}: This creature deals 1 damage to target creature that's blocking it.",
                         new PermanentPredicateTargetFilter(
                                 new PermanentAllOfPredicate(List.of(

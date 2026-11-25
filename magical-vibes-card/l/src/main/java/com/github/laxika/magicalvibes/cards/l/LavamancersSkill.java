@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,7 +21,7 @@ public class LavamancersSkill extends Card {
                         new ActivatedAbility(
                                 true,
                                 null,
-                                List.of(new DealDamageToTargetCreatureEffect(1)),
+                                List.of(DealDamageEffect.toTargetCreature(1)),
                                 "{T}: This creature deals 1 damage to target creature."
                         ),
                         Subjects.attachedCreature()
@@ -30,7 +30,7 @@ public class LavamancersSkill extends Card {
                         new ActivatedAbility(
                                 true,
                                 null,
-                                List.of(new DealDamageToTargetCreatureEffect(2)),
+                                List.of(DealDamageEffect.toTargetCreature(2)),
                                 "{T}: This creature deals 2 damage to target creature."
                         ),
                         Subjects.attachedCreature(),

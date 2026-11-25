@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,11 +26,11 @@ public class PinkHorror extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public PinkHorror() {
-        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), new DealDamageToAnyTargetEffect(2));
+        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), DealDamageEffect.toAnyTarget(2));
 
         List<Ability> blueHorrorEffects = List.of(
                 new TriggeredAbility(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY),
-                        new DealDamageToAnyTargetEffect(1)));
+                        DealDamageEffect.toAnyTarget(1)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.CREATURE, 2, "Blue Horror", 2, 2,
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.RED),

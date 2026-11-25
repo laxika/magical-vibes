@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
  * Deals damage to a creature or player chosen as the effect resolves, without targeting (Comet, Stellar Pup). A
- * targeted "target creature or player" is {@link DealDamageToAnyTargetEffect} under a creature-or-player target
+ * targeted "target creature or player" is {@link DealDamageEffect} under a creature-or-player target
  * filter.
  */
 public record DealDamageToTargetCreatureOrPlayerEffect(DynamicAmount damage) implements DamageDealingEffect {

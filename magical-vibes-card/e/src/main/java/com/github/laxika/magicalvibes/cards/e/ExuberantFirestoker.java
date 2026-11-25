@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class ExuberantFirestoker extends Card {
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtLeastPredicate(5))))),
-                new MayEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),
+                new MayEffect(DealDamageEffect.toTargetPlayerOrPlaneswalker(2),
                         "Deal 2 damage to target player or planeswalker?"));
 
         // {T}: Add {C}.

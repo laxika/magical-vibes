@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class RazorBoomerang extends Card {
                         null,
                         List.of(
                                 new UnattachSourceEquipmentCost(),
-                                new DealDamageToAnyTargetEffect(1),
+                                DealDamageEffect.toAnyTarget(1),
                                 ReturnToHandEffect.grantingEquipment()
                         ),
                         "{T}, Unattach Razor Boomerang: It deals 1 damage to any target. "

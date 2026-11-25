@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -21,7 +21,6 @@ public class RoadRage extends Card {
         PermanentPredicate mountOrVehicle = new PermanentAnyOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNT),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                new Sum(new Fixed(2), new PermanentCount(mountOrVehicle, CountScope.CONTROLLER))));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(new Sum(new Fixed(2), new PermanentCount(mountOrVehicle, CountScope.CONTROLLER))));
     }
 }

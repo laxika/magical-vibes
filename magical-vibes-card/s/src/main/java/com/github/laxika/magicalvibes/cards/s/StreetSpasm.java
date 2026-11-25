@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -36,7 +36,7 @@ public class StreetSpasm extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{X}{X}{R}{R}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new DealDamageToTargetCreatureEffect(new XValue()),
+                DealDamageEffect.toTargetCreature(new XValue()),
                 new MassDamageEffect(new XValue(), false, false, notYoursAndWithoutFlying())));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

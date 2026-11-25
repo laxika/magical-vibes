@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class OverlordOfTheBoilerbilges extends Card {
     public OverlordOfTheBoilerbilges() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}{R}"))));
 
-        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(4);
+        DealDamageEffect damage = DealDamageEffect.toAnyTarget(4);
         addTrigger(Triggers.enters(ObjectRelation.THIS), damage);
         addTrigger(Triggers.attacks(), damage);
 

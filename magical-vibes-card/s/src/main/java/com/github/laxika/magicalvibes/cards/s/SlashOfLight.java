@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class SlashOfLight extends Card {
 
     public SlashOfLight() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(new Sum(
+        addSpellEffect(DealDamageEffect.toTargetCreature(new Sum(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER)
         )));

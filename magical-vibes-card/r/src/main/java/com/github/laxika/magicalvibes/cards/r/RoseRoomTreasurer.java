@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -41,7 +41,7 @@ public class RoseRoomTreasurer extends Card {
                                 new MayEffect(SequenceEffect.of(
                                         EachPlayerPaysAnyManaEffect.byYou(Resource.X_MANA),
                                         QueueReflexiveAbilityEffect.withEventValue(
-                                                new DealDamageToAnyTargetEffect(new EventValue()),
+                                                DealDamageEffect.toAnyTarget(new EventValue()),
                                                 AmountThisWay.manaPaid())),
                                         "Pay {X} to have Rose Room Treasurer deal X damage to any target?"))));
     }

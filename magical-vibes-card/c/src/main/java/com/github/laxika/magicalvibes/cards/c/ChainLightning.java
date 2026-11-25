@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -41,7 +41,7 @@ public class ChainLightning extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addSpellEffect(new DealDamageToAnyTargetEffect(3))
+        )).addSpellEffect(DealDamageEffect.toAnyTarget(3))
                 .addSpellEffect(new MayPayManaEffect(
                         "{R}{R}",
                         new MayEffect(new CopyThisSpellForTargetControllerEffect(),

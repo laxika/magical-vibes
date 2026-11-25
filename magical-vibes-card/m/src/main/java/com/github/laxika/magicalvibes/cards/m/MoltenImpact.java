@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ import java.util.List;
 public class MoltenImpact extends Card {
 
     public MoltenImpact() {
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(4));
         var opponentCreatureOrPlaneswalker = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate())),
@@ -37,8 +37,7 @@ public class MoltenImpact extends Card {
                 RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY))),
-                        List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(AmountThisWay.noted(),
-                                opponentCreatureOrPlaneswalker)))
+                        List.of(DealDamageEffect.toTargetCreatureOrPlaneswalker(AmountThisWay.noted(), opponentCreatureOrPlaneswalker)))
                         .withTargetFilter(new PermanentPredicateTargetFilter(opponentCreatureOrPlaneswalker,
                                 "Target must be a creature or planeswalker an opponent controls")))));
     }

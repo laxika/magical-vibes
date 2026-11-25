@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,7 +26,7 @@ public class EmbroseDeanOfShadow extends Card {
                 null,
                 List.of(
                         new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToTargetCreatureEffect(2)),
+                        DealDamageEffect.toTargetCreature(2)),
                 "{T}: Put a +1/+1 counter on another target creature, then Embrose deals 2 damage to that creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

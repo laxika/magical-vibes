@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAndAttachEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -45,7 +45,7 @@ public class NahiriHeirOfTheAncients extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER);
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new Scaled(equipment, 2))),
+                List.of(DealDamageEffect.toTargetCreatureOrPlaneswalker(new Scaled(equipment, 2))),
                 "−3: Nahiri deals damage to target creature or planeswalker equal to twice the number of Equipment you control."
         ));
     }

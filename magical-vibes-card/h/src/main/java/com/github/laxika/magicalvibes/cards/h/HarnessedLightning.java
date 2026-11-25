@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
@@ -17,6 +17,6 @@ public class HarnessedLightning extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new EnergyCountersEffect(3))
                 .addSpellEffect(EachPlayerPaysAnyManaEffect.byYou(Resource.ENERGY))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(AmountThisWay.energyPaid()));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(AmountThisWay.energyPaid()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "146")
@@ -15,7 +15,7 @@ public class TorchTheWitness extends Card {
 
     public TorchTheWitness() {
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(new Scaled(new XValue(), 2)))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(new Scaled(new XValue(), 2)))
                 .addSpellEffect(new ConditionalEffect(new EventValueAtLeast(1), CreateTokenEffect.ofClueToken(1)));
     }
 }

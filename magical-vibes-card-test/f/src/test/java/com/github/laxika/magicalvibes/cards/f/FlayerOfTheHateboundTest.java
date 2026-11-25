@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.ReassemblingSkeleton;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
-@CardUsed({FlayerOfTheHatebound.class, LightningBolt.class, ReassemblingSkeleton.class, WhiteKnight.class})
+@CardUsed({FlayerOfTheHatebound.class, LightningBolt.class, ReassemblingSkeleton.class, WhiteKnight.class, WhipOfErebos.class})
 class FlayerOfTheHateboundTest extends BaseCardTest {
 
     private Permanent flayerOnBattlefield(GameData gd) {
@@ -210,5 +211,33 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Reassembling Skeleton");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A returning creature that died before the trigger resolves deals the damage with the lifelink it had as it left")
+    
+    void departedReturningCreatureDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        harness.addToBattlefield(player1, new FlayerOfTheHatebound());
+        harness.setGraveyard(player1, List.of(new ReassemblingSkeleton()));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent skeleton = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Reassembling Skeleton"))
+                .findFirst().orElseThrow();
+        skeleton.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.castInstant(player1, 0, skeleton.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Reassembling Skeleton");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
     }
 }

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "190")
 @CardRegistration(set = "DPA", collectorNumber = "39")
@@ -19,6 +19,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Blaze extends Card {
 
     public Blaze() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()));
     }
 }

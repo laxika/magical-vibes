@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DrakusethMawOfFlames extends Card {
 
     public DrakusethMawOfFlames() {
-        var dealDamageToAnyTarget = DealDamageToAnyTargetEffect.forTargetGroup(4, 0);
+        var dealDamageToAnyTarget = DealDamageEffect.toAnyTargetInGroup(4, 0);
         target(1, 1).bindEffect(dealDamageToAnyTarget);
         var dealDamageToEachTarget = new DealDamageToEachTargetEffect(new Fixed(3));
         target(0, 2).bindEffect(dealDamageToEachTarget);

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovePerpetualTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,7 +28,7 @@ public class PassTheTorch extends Card {
                 new RemovePerpetualTriggeredAbilityEffect(
                         Triggers.dealsCombatDamageToPlayer(),
                         CastTargetInstantOrSorceryFromGraveyardEffect.class));
-        addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(DealDamageEffect.toAnyTarget(2));
         addSpellEffect(ChooseCardEffect.announced(
                 Subjects.cardsInYourHand(new CardTypePredicate(CardType.CREATURE)), "a creature card in your hand"));
         addSpellEffect(new PerpetuallyGrantAbilitiesEffect(Subjects.cardsThisWay(StepKind.CHOOSE),

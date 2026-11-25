@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.state;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -23,7 +24,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -267,7 +267,7 @@ class StateTriggerServiceTest {
         @Test
         @DisplayName("Checks both players in APNAP order")
         void checksPlayersInApnapOrder() {
-            List<CardEffect> effects1 = List.of(new DealDamageToAnyTargetEffect(1));
+            List<CardEffect> effects1 = List.of(DealDamageEffect.toAnyTarget(1));
             StateTrigger trigger1 = Triggers.state((gameData, perm, controllerId) -> true);
             Card card1 = createCardWithStateTrigger("P1 Card", trigger1, effects1.toArray(CardEffect[]::new));
             Permanent perm1 = new Permanent(card1);

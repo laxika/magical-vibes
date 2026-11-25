@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -29,7 +29,7 @@ public class DynavoltTower extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PayEnergyCost(5), new DealDamageToAnyTargetEffect(3)),
+                List.of(new PayEnergyCost(5), DealDamageEffect.toAnyTarget(3)),
                 "{T}, Pay five {E}: This artifact deals 3 damage to any target."
         ).withActivationCondition(new ControllerEnergyAtLeast(5),
                 "You need at least five energy counters to activate this ability."));

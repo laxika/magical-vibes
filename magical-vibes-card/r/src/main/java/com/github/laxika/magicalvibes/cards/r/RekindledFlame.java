@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RekindledFlame extends Card {
 
     public RekindledFlame() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(DealDamageEffect.toAnyTarget(4));
 
         // At the beginning of your upkeep, if an opponent has no cards in hand, you may return
         // this card from your graveyard to your hand. The intervening-"if" is checked at trigger

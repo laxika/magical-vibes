@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,7 +28,7 @@ public class SarkhansUnsealing extends Card {
                                 new CardPowerAtLeastPredicate(4),
                                 new CardPowerAtMostPredicate(6)
                         ))),
-                new DealDamageToAnyTargetEffect(4));
+                DealDamageEffect.toAnyTarget(4));
 
         addSimultaneousTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAllOfPredicate(List.of(

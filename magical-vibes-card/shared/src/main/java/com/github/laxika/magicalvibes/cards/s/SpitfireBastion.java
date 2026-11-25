@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class SpitfireBastion extends Card {
         // {2}{R}, {T}: Spitfire Bastion deals 3 damage to any target.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{R}",
-                List.of(new DealDamageToAnyTargetEffect(3)),
+                List.of(DealDamageEffect.toAnyTarget(3)),
                 "{2}{R}, {T}: Spitfire Bastion deals 3 damage to any target."
         ));
     }

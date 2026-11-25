@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -22,7 +22,7 @@ public class ArmsDealer extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         "Sacrifice a Goblin",
                         false
-                ), new DealDamageToTargetCreatureEffect(4)),
+                ), DealDamageEffect.toTargetCreature(4)),
                 "{1}{R}, Sacrifice a Goblin: Arms Dealer deals 4 damage to target creature."
         ));
     }

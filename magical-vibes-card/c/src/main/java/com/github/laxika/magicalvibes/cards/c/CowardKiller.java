@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
@@ -39,7 +39,7 @@ public class CowardKiller extends Card {
                 ).withManaCost("{1}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Killer — Deals 3 damage to target creature and each other creature that shares a creature type with it",
-                        SequenceEffect.simultaneous(new DealDamageToTargetCreatureEffect(3),
+                        SequenceEffect.simultaneous(DealDamageEffect.toTargetCreature(3),
                                 new DealDamageToPermanentsTargetControlsEffect(3,
                                         Subjects.otherCreaturesSharing(Subjects.target(), SharedQuality.CREATURE_TYPE))),
                         creature

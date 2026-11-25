@@ -1322,9 +1322,11 @@ and `RevealTopCardPutLandsIntoGraveyardRepeatEffect` (each moves cards or repeat
 
 ### Step 16 — Damage target-category batch — **DONE**
 
+(Effect-cleanup step 10, run Damage: the player-or-planeswalker damage record below is now `DealDamageEffect.toTargetPlayerOrPlaneswalker` / `toTargetOpponentOrPlaneswalker`; the block is history.)
+
 **Shipped**
 ```java
-public record DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount amount,
+public record /* player-or-planeswalker damage, now DealDamageEffect */ (DynamicAmount amount,
                                                            PlayerRelation playerRelation) implements CardEffect
 // sugar: (DynamicAmount), (int) -> ANY; (int, PlayerRelation)
 // PlayerRelation is the EXISTING model/filter enum; SELF is rejected in the compact constructor
@@ -1897,7 +1899,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 
 | Target | Absorbs | Note |
 |---|---|---|
-| `DealDamageToTargetCreatureEffect(+ includePlaneswalkers, targetRestriction)` | `DealDamageToTargetCreatureOrPlaneswalkerEffect` (4) | Migrated cards gain group-binding + excess-damage tracking they lack today |
+| target-creature damage (+ includePlaneswalkers, targetRestriction) | the creature-or-planeswalker damage record (4) | **Done another way** (effect-cleanup step 10, run Damage): both, with the any-target, player-or-planeswalker and target-permanent records, are `DealDamageEffect` (`toTargetCreatureOrPlaneswalker(...)`), one handler with one target loop and one excess tracker |
 | `DiscardOwnHandThenDrawEffect(new EventValue())` | `DiscardOwnHandThenDrawThatManyEffect` (4) | Handler must `entry.setEventValue(discardCount)` before evaluating; reconcile the empty-hand log |
 | `DealDamageToEachMatchingPermanentEffect(+ OPPONENTS scope)` | `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` (1) | Done another way (effect-cleanup step 8, run 5): absorbed by `DealDamageToPermanentsTargetControlsEffect` with `controlledBy(eachOpponent(), creature or planeswalker)` |
 | `EachPlayerDiscardsHandThenDrawsEffect(mode)` | 2 classes | **Surfaces a bug**: one handler sets `discardCausedByOpponent = false` unconditionally, the other `!playerId.equals(controllerId)`. The `false` looks wrong |

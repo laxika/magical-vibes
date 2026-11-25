@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -29,7 +29,7 @@ public class PropheticTitan extends Card {
                 ChooseOneEffect.allWhen(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "This creature deals 4 damage to any target.",
-                                new DealDamageToAnyTargetEffect(4),
+                                DealDamageEffect.toAnyTarget(4),
                                 new AnyTargetPredicateTargetFilter(
                                         new PermanentAnyOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),

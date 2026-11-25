@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 
@@ -38,7 +38,7 @@ public class HellholeFlailer extends Card {
                 "{2}{B}{R}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(new SourcePower())
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(new SourcePower())
                 ),
                 "{2}{B}{R}, Sacrifice this creature: It deals damage equal to its power to "
                         + "target player or planeswalker."

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,7 +34,7 @@ public class FlameOfAnor extends Card {
                         new DestroyTargetPermanentEffect(), TargetFilters.artifact()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Flame of Anor deals 5 damage to target creature",
-                        new DealDamageToTargetCreatureEffect(5), TargetFilters.creature())
+                        DealDamageEffect.toTargetCreature(5), TargetFilters.creature())
         );
 
         addSpellEffect(new ChooseOneEffect(options, false, 1, 2, false,

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "140")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class WeldingSparks extends Card {
 
     public WeldingSparks() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(new Sum(
+        addSpellEffect(DealDamageEffect.toTargetCreature(new Sum(
                 new Fixed(3),
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER))));
     }

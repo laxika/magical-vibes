@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -63,7 +63,7 @@ class ActivationCollectorRecordTest extends BaseCardTest {
     private Permanent pinger(CardEffect... costs) {
         Card pinger = card("Pinger", CardType.CREATURE);
         List<CardEffect> effects = new java.util.ArrayList<>(List.of(costs));
-        effects.add(new DealDamageToAnyTargetEffect(1));
+        effects.add(DealDamageEffect.toAnyTarget(1));
         pinger.addActivatedAbility(new ActivatedAbility(true, null, effects,
                 "{T}: This creature deals 1 damage to any target."));
         return addCreatureReady(player1, pinger);

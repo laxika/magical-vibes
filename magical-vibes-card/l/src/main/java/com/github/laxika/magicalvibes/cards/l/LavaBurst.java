@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "198")
@@ -16,7 +16,6 @@ public class LavaBurst extends Card {
         // Lava Burst deals X damage to any target. If the target is a creature, that damage
         // can't be prevented — the unpreventable gate is the target-dependent
         // TargetPermanentMatches(creature), so damage to a player stays preventable.
-        addSpellEffect(new DealDamageToAnyTargetEffect(
-                new XValue(), new TargetPermanentMatches(new PermanentIsCreaturePredicate()), true));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()).unpreventableAndUnredirectableWhen(new TargetPermanentMatches(new PermanentIsCreaturePredicate())));
     }
 }

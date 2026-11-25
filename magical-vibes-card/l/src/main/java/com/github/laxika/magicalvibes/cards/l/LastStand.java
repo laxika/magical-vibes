@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -38,7 +38,7 @@ public class LastStand extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER), 2),
                 Subjects.targetPlayer()));
 
-        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(new PermanentCount(
+        target(TargetFilters.creature()).addSpellEffect(DealDamageEffect.toTargetCreature(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER)));
 
         addSpellEffect(new CreateTokenEffect(new PermanentCount(

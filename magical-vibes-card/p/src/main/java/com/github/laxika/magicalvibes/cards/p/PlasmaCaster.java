@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -40,7 +40,7 @@ public class PlasmaCaster extends Card {
                         new PayEnergyCost(2),
                         new FlipCoinWinEffect(
                                 new ExileTargetPermanentEffect(),
-                                new DealDamageToTargetCreatureEffect(1))
+                                DealDamageEffect.toTargetCreature(1))
                 ),
                 "Pay {E}{E}: Choose target creature that's blocking equipped creature. Flip a coin. "
                         + "If you win the flip, exile the chosen creature. Otherwise, this Equipment deals 1 damage to it.",

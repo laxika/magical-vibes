@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastToughnessAmongOpponentCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -27,6 +27,6 @@ public class PurgingScythe extends Card {
                                         new PermanentHasLeastToughnessAmongOpponentCreaturesPredicate(
                                                 CountScope.ANY_PLAYER)))),
                         "Choose a creature with the least toughness to deal 2 damage to."),
-                new DealDamageToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), 2)));
+                DealDamageEffect.to(Subjects.thisWay(StepKind.CHOOSE), 2)));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggeringPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class ValakutTheMoltenPinnacle extends Card {
                         ObjectRelation.YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControlsOtherThanTriggeringPermanentCount(
                         5, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
-                new MayEffect(new DealDamageToAnyTargetEffect(3), "Deal 3 damage to any target?"));
+                new MayEffect(DealDamageEffect.toAnyTarget(3), "Deal 3 damage to any target?"));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
     }
 }

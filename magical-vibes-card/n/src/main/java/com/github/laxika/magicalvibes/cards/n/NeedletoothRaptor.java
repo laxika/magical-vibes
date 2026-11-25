@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +12,6 @@ public class NeedletoothRaptor extends Card {
     public NeedletoothRaptor() {
         // Enrage — Whenever this creature is dealt damage, it deals 5 damage to target creature an opponent controls.
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.dealtDamage(), new DealDamageToTargetCreatureEffect(5));
+                .addTrigger(Triggers.dealtDamage(), DealDamageEffect.toTargetCreature(5));
     }
 }

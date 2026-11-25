@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,6 +31,6 @@ public class AtarkaEfreet extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1));
+        )).addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), DealDamageEffect.toAnyTarget(1));
     }
 }

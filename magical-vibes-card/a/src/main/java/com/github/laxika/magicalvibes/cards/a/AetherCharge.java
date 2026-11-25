@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,8 +31,7 @@ public class AetherCharge extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.BEAST))),
                                 ObjectRelation.ANOTHER_YOU_CONTROL),
                         new MayEffect(
-                                new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                                        new Fixed(4), PlayerRelation.OPPONENT, false, true),
+                                DealDamageEffect.toTargetOpponentOrPlaneswalker(new Fixed(4)).byTriggeringPermanent(),
                                 "Have it deal 4 damage to target opponent or planeswalker?"));
     }
 }

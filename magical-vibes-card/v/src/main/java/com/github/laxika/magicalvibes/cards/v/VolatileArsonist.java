@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.DireStrainAnarchist;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -20,15 +19,15 @@ public class VolatileArsonist extends Card {
     public VolatileArsonist() {
         setBackFaceCard(new DireStrainAnarchist());
 
-        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(1);
+        var dealDamageToTargetCreature = DealDamageEffect.toTargetCreature(1);
         target(TargetFilters.creature(), 0, 1)
                 .bindEffect(dealDamageToTargetCreature);
-        var dealDamageToTargetPlayerOrPlaneswalker = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
+        var dealDamageToTargetPlayerOrPlaneswalker = DealDamageEffect.toTargetPlayerOrPlaneswalker(1);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ), 0, 1).bindEffect(dealDamageToTargetPlayerOrPlaneswalker);
-        var dealDamageToTargetPlayerOrPlaneswalker2 = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
+        var dealDamageToTargetPlayerOrPlaneswalker2 = DealDamageEffect.toTargetPlayerOrPlaneswalker(1);
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be a planeswalker"

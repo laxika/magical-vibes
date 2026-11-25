@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "143")
 @CardRegistration(set = "ELD", collectorNumber = "394")
@@ -14,7 +14,7 @@ public class SlayingFire extends Card {
     public SlayingFire() {
         addSpellEffect(new ConditionalReplacementEffect(
                 new ColorSpentToCast(ManaColor.RED, 3),
-                new DealDamageToAnyTargetEffect(3),
-                new DealDamageToAnyTargetEffect(4)));
+                DealDamageEffect.toAnyTarget(3),
+                DealDamageEffect.toAnyTarget(4)));
     }
 }

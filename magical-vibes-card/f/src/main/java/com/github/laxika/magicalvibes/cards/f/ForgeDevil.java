@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -16,7 +16,7 @@ public class ForgeDevil extends Card {
 
     public ForgeDevil() {
         // When this creature enters, it deals 1 damage to target creature...
-        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(1);
+        DealDamageEffect creatureDamage = DealDamageEffect.toTargetCreature(1);
         target(TargetFilters.creature()).bindEffect(creatureDamage);
 
         // ...and 1 damage to you.

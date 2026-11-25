@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NaturesRevolt;
@@ -15,11 +16,12 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Immersturm.class, GrizzlyBears.class, NaturesRevolt.class, Forest.class})
+@CardUsed({Immersturm.class, GrizzlyBears.class, NaturesRevolt.class, Forest.class, WhipOfErebos.class})
 class ImmersturmTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -176,4 +178,21 @@ class ImmersturmTest extends BaseCardTest {
         harness.assertLife(player2, 18);
     }
 
+    @Test
+    @DisplayName("A creature that left before the ability resolves deals the damage with the lifelink it had as it left")
+    void departedCreatureDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player2, new WhipOfErebos());
+        Permanent entering = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.beginTriggerChoices();
+        harness.handlePermanentChosen(player2, player1.getId());
+        entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, entering));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 15);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 25);
+    }
 }

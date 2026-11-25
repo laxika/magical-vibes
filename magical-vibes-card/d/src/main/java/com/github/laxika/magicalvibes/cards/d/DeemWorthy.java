@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,12 +15,12 @@ import java.util.List;
 public class DeemWorthy extends Card {
 
     public DeemWorthy() {
-        // Deem Worthy deals 7 damage to target creature. (DealDamageToTargetCreatureEffect's
+        // Deem Worthy deals 7 damage to target creature. (DealDamageEffect's
         // TargetSpec narrows the legal target to a creature — no explicit filter needed.)
-        addSpellEffect(new DealDamageToTargetCreatureEffect(7));
+        addSpellEffect(DealDamageEffect.toTargetCreature(7));
 
         addTrigger(Triggers.youCycleThisCard(), new MayEffect(
-                new DealDamageToTargetCreatureEffect(2), "Have Deem Worthy deal 2 damage to target creature?"));
+                DealDamageEffect.toTargetCreature(2), "Have Deem Worthy deal 2 damage to target creature?"));
         addCycling("{3}{R}");
     }
 }

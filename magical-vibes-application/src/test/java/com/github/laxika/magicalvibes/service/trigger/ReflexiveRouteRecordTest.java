@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
@@ -26,7 +27,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.StepKind;
@@ -429,7 +429,7 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         fixture.setType(CardType.ENCHANTMENT);
         fixture.setManaCost("{1}");
         fixture.addTrigger(Triggers.youCastSpell(), new QueueReflexiveAbilityEffect(
-                new DealDamageToAnyTargetEffect(new TargetSpellManaValue())));
+                DealDamageEffect.toAnyTarget(new TargetSpellManaValue())));
         harness.addToBattlefield(player1, fixture);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -497,7 +497,7 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         fixture.setPower(2);
         fixture.setToughness(2);
         fixture.addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardCardThenEffect(
-                null, new DealDamageToAnyTargetEffect(new LastDiscardedCardManaValue()), "a card"));
+                null, DealDamageEffect.toAnyTarget(new LastDiscardedCardManaValue()), "a card"));
         harness.setHand(player1, List.of(new GrizzlyBears()));
         Permanent source = addCreatureReady(player1, fixture);
         source.setAttacking(true);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KokushoTheEveningStar;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScourgeOfValkas.class, FurnaceWhelp.class, GrizzlyBears.class, KokushoTheEveningStar.class, WhiteKnight.class})
+@CardUsed({ScourgeOfValkas.class, FurnaceWhelp.class, GrizzlyBears.class, KokushoTheEveningStar.class, WhiteKnight.class, WhipOfErebos.class})
 class ScourgeOfValkasTest extends BaseCardTest {
 
     @Test
@@ -168,5 +169,35 @@ class ScourgeOfValkasTest extends BaseCardTest {
         harness.setHand(player, List.of(new FurnaceWhelp()));
         harness.addMana(player, ManaColor.RED, 5);
         harness.castCreature(player, 0);
+    }
+
+    @Test
+    @DisplayName("Its own enter trigger is dealt by Scourge of Valkas itself, with its lifelink")
+    void ownEnterTriggerDamageHasItsLifelink() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        castScourge(player1);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("An entering Dragon that left before the ability resolves deals the damage with the lifelink it had as it left")
+    void departedDragonDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new ScourgeOfValkas());
+        harness.addToBattlefield(player1, new WhipOfErebos());
+
+        castFurnaceWhelp(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent whelp = findPermanent(player1, "Furnace Whelp");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, whelp));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
     }
 }

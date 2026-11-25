@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code damage} to that same player or planeswalker unless that player (or that planeswalker's
  * controller) pays {@code manaCost} before that step.
  *
- * <p>Piggybacks on the accompanying {@link DealDamageToTargetPlayerOrPlaneswalkerEffect}'s target and
+ * <p>Piggybacks on the accompanying {@link DealDamageEffect}'s target and
  * declares no target of its own ({@link TargetSpec#NONE}); the handler adds a
  * delayed triggered ability for the controller's next upkeep.
  *

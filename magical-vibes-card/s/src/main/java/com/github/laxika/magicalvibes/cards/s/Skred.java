@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "97")
 public class Skred extends Card {
 
     public Skred() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(new PermanentCount(
+        addSpellEffect(DealDamageEffect.toTargetCreature(new PermanentCount(
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW), CountScope.CONTROLLER)));
     }
 }

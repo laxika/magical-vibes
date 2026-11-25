@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,7 +26,7 @@ public class FreewindEquenaut extends Card {
                         new ActivatedAbility(
                                 true,
                                 null,
-                                List.of(new DealDamageToTargetCreatureEffect(2)),
+                                List.of(DealDamageEffect.toTargetCreature(2)),
                                 "{T}: This creature deals 2 damage to target attacking or blocking creature.",
                                 new PermanentPredicateTargetFilter(
                                         new PermanentAnyOfPredicate(List.of(

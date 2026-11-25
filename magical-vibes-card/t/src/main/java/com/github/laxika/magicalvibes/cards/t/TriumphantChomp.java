@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.Max;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TriumphantChomp extends Card {
 
     public TriumphantChomp() {
-        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(new Max(
+        target(TargetFilters.creature()).addSpellEffect(DealDamageEffect.toTargetCreature(new Max(
                         new Fixed(2),
                         new GreatestPowerAmongControlled(
                                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)))));

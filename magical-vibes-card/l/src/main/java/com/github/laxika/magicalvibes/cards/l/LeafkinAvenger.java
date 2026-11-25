@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -37,7 +37,7 @@ public class LeafkinAvenger extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{7}{R}",
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(new SourcePower())),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(new SourcePower())),
                 "{7}{R}: This creature deals damage equal to its power to target player or planeswalker."
         ));
     }

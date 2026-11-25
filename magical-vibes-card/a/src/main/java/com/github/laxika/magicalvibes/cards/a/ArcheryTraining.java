@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -44,8 +44,7 @@ public class ArcheryTraining extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new DealDamageToTargetCreatureEffect(
-                                new CountersOnGrantingPermanent(CounterType.ARROW))),
+                        List.of(DealDamageEffect.toTargetCreature(new CountersOnGrantingPermanent(CounterType.ARROW))),
                         "{T}: This creature deals X damage to target attacking or blocking creature, "
                                 + "where X is the number of arrow counters on Archery Training.",
                         new PermanentPredicateTargetFilter(

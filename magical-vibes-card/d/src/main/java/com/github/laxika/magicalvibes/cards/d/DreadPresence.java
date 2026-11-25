@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -31,6 +31,6 @@ public class DreadPresence extends Card {
                                 List.of(new DrawCardEffect(1), new LoseLifeEffect(1))),
                         new ChooseOneEffect.ChooseOneOption(
                                 "This creature deals 2 damage to any target and you gain 2 life.",
-                                List.of(new DealDamageToAnyTargetEffect(2), new GainLifeEffect(2)))))));
+                                List.of(DealDamageEffect.toAnyTarget(2), new GainLifeEffect(2)))))));
     }
 }

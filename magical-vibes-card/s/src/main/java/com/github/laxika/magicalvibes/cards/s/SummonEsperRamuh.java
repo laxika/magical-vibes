@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -38,11 +38,7 @@ public class SummonEsperRamuh extends Card {
     ));
 
     public SummonEsperRamuh() {
-        addTrigger(Triggers.chapter(1), new DealDamageToTargetCreatureEffect(
-                new CardsInGraveyard(NONCREATURE_NONLAND_CARD, CountScope.CONTROLLER),
-                false,
-                OPPONENT_CREATURE
-        ));
+        addTrigger(Triggers.chapter(1), DealDamageEffect.toTargetCreature(new CardsInGraveyard(NONCREATURE_NONLAND_CARD, CountScope.CONTROLLER), OPPONENT_CREATURE));
         setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(OPPONENT_CREATURE,
                         "Must target a creature an opponent controls")

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -26,7 +26,7 @@ public class SunscorchedDesert extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toTargetPlayerOrPlaneswalker(1));
 
         // "{T}: Add {C}."
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

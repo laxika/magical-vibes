@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -17,7 +17,7 @@ public class MoltenVortex extends Card {
         // {R}, Discard a land card: This enchantment deals 2 damage to any target.
         addActivatedAbility(new ActivatedAbility(false, "{R}",
                 List.of(new DiscardCardTypeCost(new CardTypePredicate(CardType.LAND), "land"),
-                        new DealDamageToAnyTargetEffect(2)),
+                        DealDamageEffect.toAnyTarget(2)),
                 "{R}, Discard a land card: Molten Vortex deals 2 damage to any target."));
     }
 }

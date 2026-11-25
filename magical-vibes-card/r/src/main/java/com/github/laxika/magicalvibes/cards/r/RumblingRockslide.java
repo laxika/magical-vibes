@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RumblingRockslide extends Card {
 
     public RumblingRockslide() {
-        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(new PermanentCount(
+        target(TargetFilters.creature()).addSpellEffect(DealDamageEffect.toTargetCreature(new PermanentCount(
                         new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
     }
 }

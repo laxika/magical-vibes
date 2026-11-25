@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
 public class ElectrosBolt extends Card {
 
     public ElectrosBolt() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(DealDamageEffect.toTargetCreature(4));
         addCastingOption(new GraveyardCast(null, "{1}{R}", List.of(), new CardDiscardedThisTurn()));
     }
 }

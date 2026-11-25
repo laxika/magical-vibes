@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardTypeCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -18,7 +18,7 @@ public class MountVelusManticore extends Card {
         // card has.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 new DiscardCardThenEffect(null,
-                        new DealDamageToAnyTargetEffect(new LastDiscardedCardTypeCount()),
+                        DealDamageEffect.toAnyTarget(new LastDiscardedCardTypeCount()),
                         "a card"),
                 "Discard a card to deal damage to any target?"));
     }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -19,6 +19,6 @@ import java.util.List;
 public class AladdinsRing extends Card {
 
     public AladdinsRing() {
-        addActivatedAbility(new ActivatedAbility(true, "{8}", List.of(new DealDamageToAnyTargetEffect(4)), "{8}, {T}: Aladdin's Ring deals 4 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(true, "{8}", List.of(DealDamageEffect.toAnyTarget(4)), "{8}, {T}: Aladdin's Ring deals 4 damage to any target."));
     }
 }

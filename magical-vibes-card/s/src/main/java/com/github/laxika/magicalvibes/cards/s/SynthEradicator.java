@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -31,7 +31,7 @@ public class SynthEradicator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PayEnergyCost(3), new DealDamageToAnyTargetEffect(3)),
+                List.of(new PayEnergyCost(3), DealDamageEffect.toAnyTarget(3)),
                 "{T}, Pay {E}{E}{E}: Synth Eradicator deals 3 damage to any target."
         ).withActivationCondition(new ControllerEnergyAtLeast(3),
                 "You need at least three energy counters to activate this ability."));

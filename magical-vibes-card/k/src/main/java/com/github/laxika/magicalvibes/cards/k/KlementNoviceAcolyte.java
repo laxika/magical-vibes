@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostMatchingHandCardsEffect;
@@ -118,7 +118,7 @@ public class KlementNoviceAcolyte extends Card {
                 face.setPower(2);
                 face.setToughness(3);
                 face.addTrigger(Triggers.dealtDamage(),
-                        new DealDamageToAnyTargetEffect(new EventValue()));
+                        DealDamageEffect.toAnyTarget(new EventValue()));
             }
             case GREEN -> {
                 face.setName("Klement, Nature Acolyte");

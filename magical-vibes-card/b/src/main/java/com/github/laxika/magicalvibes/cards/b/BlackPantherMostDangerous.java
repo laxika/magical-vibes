@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -20,7 +20,7 @@ public class BlackPantherMostDangerous extends Card {
     public BlackPantherMostDangerous() {
         // Whenever Black Panther is dealt damage, he deals that much damage to any other target.
         addTrigger(Triggers.dealtDamage(),
-                DealDamageToAnyTargetEffect.toAnyOtherTarget(new EventValue()));
+                DealDamageEffect.toAnyOtherTarget(new EventValue()));
 
         // Other creatures you control get +2/+2 until end of turn.
         addActivatedAbility(new ActivatedAbility(

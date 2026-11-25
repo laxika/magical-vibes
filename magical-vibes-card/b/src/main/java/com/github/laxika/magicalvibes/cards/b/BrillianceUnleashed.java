@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentIfNotCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class BrillianceUnleashed extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Brilliance Unleashed deals 5 damage to target creature",
-                        new DealDamageToTargetCreatureEffect(5), TargetFilters.creature()),
+                        DealDamageEffect.toTargetCreature(5), TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target artifact card from your graveyard to the battlefield; if it isn't an artifact creature card, it becomes a 3/3 Robot artifact creature with flying",
                         List.of(

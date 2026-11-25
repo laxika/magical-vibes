@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,7 @@ public class SorinMarkov extends Card {
         // +2: Sorin Markov deals 2 damage to any target and you gain 2 life.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new DealDamageToAnyTargetEffect(2), new GainLifeEffect(2)),
+                List.of(DealDamageEffect.toAnyTarget(2), new GainLifeEffect(2)),
                 "+2: Sorin Markov deals 2 damage to any target and you gain 2 life."
         ));
 

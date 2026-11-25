@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -35,7 +35,7 @@ public class OrbitalPlunge extends Card {
     );
 
     public OrbitalPlunge() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(6));
+        addSpellEffect(DealDamageEffect.toTargetCreature(6));
         addSpellEffect(new ConditionalEffect(new EventValueAtLeast(1), LANDER));
     }
 }

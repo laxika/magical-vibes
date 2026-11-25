@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,6 +23,6 @@ public class FinalFlare extends Card {
                 "Sacrifice a creature or enchantment"
         ));
         target(TargetFilters.creature())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(5));
     }
 }

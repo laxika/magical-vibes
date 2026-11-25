@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -32,7 +32,7 @@ public class KerblamWarehouse extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new FlipCoinWinEffect(new DealDamageToAnyTargetEffect(3))),
+                        new FlipCoinWinEffect(DealDamageEffect.toAnyTarget(3))),
                 "{T}, Sacrifice this artifact: Flip a coin. If you win the flip, this artifact deals 3 damage to any target.");
         addTrigger(Triggers.chaosEnsues(), new GrantActivatedAbilityEffect(
                 artifactAbility,

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "185")
@@ -15,6 +15,6 @@ public class KaerveksTorch extends Card {
         addStaticEffect(new IncreaseCostOfSpellsTargetingThisSpellEffect(2));
 
         // Kaervek's Torch deals X damage to any target.
-        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(DealDamageEffect.toAnyTarget(new XValue()));
     }
 }

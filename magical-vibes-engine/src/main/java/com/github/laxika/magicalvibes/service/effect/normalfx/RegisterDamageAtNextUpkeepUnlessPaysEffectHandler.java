@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -47,7 +47,7 @@ public class RegisterDamageAtNextUpkeepUnlessPaysEffectHandler implements Normal
         boolean targetsPlayer = gameData.playerIds.contains(targetId);
         CardEffect damage = targetsPlayer
                 ? new DealDamageToPlayersEffect(e.damage(), Subjects.triggeringPlayer())
-                : new DealDamageToTargetCreatureEffect(Subjects.triggering(), e.damage());
+                : DealDamageEffect.to(Subjects.triggering(), e.damage());
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
                 spellControllerId, entry.getCard(), new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), damage),
                 entry.getSourcePermanentId(), targetsPlayer ? null : targetId, targetsPlayer ? targetId : null,

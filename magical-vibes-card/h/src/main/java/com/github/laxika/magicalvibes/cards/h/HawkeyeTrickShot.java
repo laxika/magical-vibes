@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,8 +32,8 @@ public class HawkeyeTrickShot extends Card {
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(heroDamage()))));
     }
 
-    private static DealDamageToAnyTargetEffect heroDamage() {
-        return DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new PermanentCount(
-                new PermanentHasSubtypePredicate(CardSubtype.HERO), CountScope.CONTROLLER));
+    private static DealDamageEffect heroDamage() {
+        return DealDamageEffect.toAnyTarget(new PermanentCount(
+                new PermanentHasSubtypePredicate(CardSubtype.HERO), CountScope.CONTROLLER)).byTriggeringPermanent();
     }
 }

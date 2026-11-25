@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public class ScaldingDevil extends Card {
     public ScaldingDevil() {
         // {2}{R}: This creature deals 1 damage to target player or planeswalker.
         addActivatedAbility(new ActivatedAbility(false, "{2}{R}",
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(1)),
                 "{2}{R}: This creature deals 1 damage to target player or planeswalker."));
     }
 }

@@ -4,15 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,7 +27,7 @@ public class RalStormConduit extends Card {
 
     public RalStormConduit() {
         List<CardEffect> damageAbility = List.of(
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1, PlayerRelation.OPPONENT));
+                DealDamageEffect.toTargetOpponentOrPlaneswalker(1));
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), damageAbility.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell().withFilter(INSTANT_OR_SORCERY), damageAbility.toArray(CardEffect[]::new));
 

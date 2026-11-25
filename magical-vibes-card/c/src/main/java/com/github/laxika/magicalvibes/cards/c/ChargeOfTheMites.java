@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -29,8 +29,7 @@ public class ChargeOfTheMites extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Charge of the Mites deals damage equal to the number of creatures you control to target creature or planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

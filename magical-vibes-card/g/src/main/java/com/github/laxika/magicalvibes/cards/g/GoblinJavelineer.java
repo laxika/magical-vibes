@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +21,6 @@ public class GoblinJavelineer extends Card {
                         new PermanentBlockingSourcePredicate()
                 )),
                 "Target must be a creature blocking this creature"
-        )).addTrigger(Triggers.becomesBlocked(), new DealDamageToTargetCreatureEffect(1));
+        )).addTrigger(Triggers.becomesBlocked(), DealDamageEffect.toTargetCreature(1));
     }
 }

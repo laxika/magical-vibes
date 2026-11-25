@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -18,7 +18,7 @@ public class FlameWave extends Card {
     public FlameWave() {
         // Flame Wave deals 4 damage to target player or planeswalker and each creature
         // that player or that planeswalker's controller controls.
-        DealDamageToTargetPlayerOrPlaneswalkerEffect targetDamage = new DealDamageToTargetPlayerOrPlaneswalkerEffect(new Fixed(4));
+        DealDamageEffect targetDamage = DealDamageEffect.toTargetPlayerOrPlaneswalker(new Fixed(4));
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsAnyNumberThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -43,8 +43,7 @@ public class StealTheShow extends Card {
                         playerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Steal the Show deals damage equal to the number of instant and sorcery cards in your graveyard to target creature or planeswalker",
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                                new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER)),
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER)),
                         creatureOrPlaneswalkerFilter)
         )));
     }

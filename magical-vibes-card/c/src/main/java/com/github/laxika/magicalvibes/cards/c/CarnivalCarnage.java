@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -35,7 +35,7 @@ public class CarnivalCarnage extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent.");
 
-        CardEffect carnivalDamage = new DealDamageToTargetCreatureOrPlaneswalkerEffect(1);
+        CardEffect carnivalDamage = DealDamageEffect.toTargetCreatureOrPlaneswalker(1);
         CardEffect carnivalControllerDamage = new DealDamageToPlayersEffect(
                 1, Subjects.controllerOf(Subjects.target()));
         CardEffect carnageDamage = new DealDamageToPlayersEffect(3, Subjects.targetPlayer());

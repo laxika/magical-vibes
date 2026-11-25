@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -44,8 +44,7 @@ public class BumiBash extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Bumi Bash deals damage equal to the number of lands you control to target creature",
-                        new DealDamageToTargetCreatureEffect(
-                                new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)),
+                        DealDamageEffect.toTargetCreature(new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)),
                         creature
                 ),
                 new ChooseOneEffect.ChooseOneOption(

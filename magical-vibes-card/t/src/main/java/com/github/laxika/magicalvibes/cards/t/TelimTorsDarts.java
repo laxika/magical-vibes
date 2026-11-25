@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public class TelimTorsDarts extends Card {
     public TelimTorsDarts() {
         // {2}, {T}: This artifact deals 1 damage to target player or planeswalker.
         addActivatedAbility(new ActivatedAbility(true, "{2}",
-                List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(1)),
                 "{2}, {T}: This artifact deals 1 damage to target player or planeswalker."));
     }
 }

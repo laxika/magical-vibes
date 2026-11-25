@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -34,7 +34,7 @@ public class AjaniOutlandChaperone extends Card {
         // −2: Ajani deals 4 damage to target tapped creature.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DealDamageToTargetCreatureEffect(4)),
+                List.of(DealDamageEffect.toTargetCreature(4)),
                 "\u22122: Ajani deals 4 damage to target tapped creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsTappedPredicate(),

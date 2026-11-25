@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -17,9 +16,9 @@ public class CunningStrike extends Card {
     public CunningStrike() {
         setAllowSharedTargets(true);
 
-        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(2);
-        DealDamageToTargetPlayerOrPlaneswalkerEffect playerDamage =
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
+        DealDamageEffect creatureDamage = DealDamageEffect.toTargetCreature(2);
+        DealDamageEffect playerDamage =
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(2);
         target(TargetFilters.creature()).bindEffect(creatureDamage);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),

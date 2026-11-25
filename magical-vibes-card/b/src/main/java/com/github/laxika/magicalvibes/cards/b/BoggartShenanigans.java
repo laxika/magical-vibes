@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class BoggartShenanigans extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayEffect(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(1),
+                        DealDamageEffect.toTargetPlayerOrPlaneswalker(1),
                         "Deal 1 damage to target player or planeswalker?"));
     }
 }

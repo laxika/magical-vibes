@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +37,7 @@ public class DragonbroodsRelic extends Card {
         ));
 
         List<Ability> dragonTokenEffects =
-                List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(3)));
+                List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(3)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}{U}{B}{R}{G}",

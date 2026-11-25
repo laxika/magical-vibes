@@ -5,15 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "EOE", collectorNumber = "137")
 public class InvasiveManeuvers extends Card {
 
     public InvasiveManeuvers() {
-        addSpellEffect(new DealDamageToTargetCreatureEffect(
-                new FixedIfCondition(
+        addSpellEffect(DealDamageEffect.toTargetCreature(new FixedIfCondition(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SPACECRAFT)),
                         5,
                         3)));

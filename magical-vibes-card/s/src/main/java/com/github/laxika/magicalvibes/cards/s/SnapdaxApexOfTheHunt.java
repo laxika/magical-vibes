@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -40,7 +40,7 @@ public class SnapdaxApexOfTheHunt extends Card {
                 creatureOrPlaneswalkerAnOpponentControls,
                 "Target must be a creature or planeswalker an opponent controls"
         )).addTrigger(Triggers.mutates(),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(4, creatureOrPlaneswalkerAnOpponentControls),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(4, creatureOrPlaneswalkerAnOpponentControls),
                 new GainLifeEffect(4));
     }
 }

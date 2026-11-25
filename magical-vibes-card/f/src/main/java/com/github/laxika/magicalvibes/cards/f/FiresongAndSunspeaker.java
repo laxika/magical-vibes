@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -35,6 +35,6 @@ public class FiresongAndSunspeaker extends Card {
                         new CardColorPredicate(CardColor.WHITE),
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)))))),
-                        new DealDamageToAnyTargetEffect(3));
+                        DealDamageEffect.toAnyTarget(3));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.ai.interaction.ReplacementOrderChoice;
@@ -41,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
@@ -708,7 +708,7 @@ public class GameSimulator {
      */
     private static boolean isAimedDamage(CardEffect effect) {
         return effect instanceof DamageDealingEffect
-                && !(effect instanceof DealDamageToTargetCreatureEffect damage
+                && !(effect instanceof DealDamageEffect damage
                 && damage.subject() instanceof PermanentSubject.Source)
                 && !(effect instanceof TargetDealsPowerDamageToTargetEffect powerDamage
                 && !powerDamage.canDamageCreatures());

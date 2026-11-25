@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
@@ -29,9 +29,7 @@ public class FarrelsMantle extends Card {
         // attacking creature assigns no combat damage this turn.
         addTrigger(Triggers.enchantedCreatureAttacksUnblocked(),
                 new MayEffect(SequenceEffect.of(
-                        DealDamageToTargetCreatureEffect.byTriggeringPermanent(
-                                new Sum(new TriggeringPermanentPower(true), new Fixed(2)),
-                                new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate())),
+                        DealDamageEffect.toTargetCreature(new Sum(new TriggeringPermanentPower(true), new Fixed(2)), new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate())).byTriggeringPermanent(),
                         AssignNoCombatDamageEffect.ofTriggeringPermanent()),
                         "have it deal damage equal to its power plus 2 to another target creature?",
                         null,

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,6 +29,6 @@ public class JudgeUnworthy extends Card {
                 "Target must be an attacking or blocking creature"))
                 .addSpellEffect(new ScryEffect(3))
                 .addSpellEffect(new RevealTopCardOfLibraryEffect(Subjects.you()))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(AmountThisWay.revealedManaValue()));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(AmountThisWay.revealedManaValue()));
     }
 }

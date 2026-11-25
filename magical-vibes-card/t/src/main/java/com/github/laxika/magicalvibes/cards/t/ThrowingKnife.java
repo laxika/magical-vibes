@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class ThrowingKnife extends Card {
         // If you do, this Equipment deals 2 damage to any target.
         addTrigger(Triggers.attacks(),
                 new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
-                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DealDamageToAnyTargetEffect(2))),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), DealDamageEffect.toAnyTarget(2))),
                         "You may sacrifice Throwing Knife. If you do, it deals 2 damage to any target."));
 
         // Equip {2}

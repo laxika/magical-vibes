@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -15,6 +15,6 @@ import java.util.List;
 public class AnabaShaman extends Card {
 
     public AnabaShaman() {
-        addActivatedAbility(new ActivatedAbility(true, "{R}", List.of(new DealDamageToAnyTargetEffect(1)), "{R}, {T}: Anaba Shaman deals 1 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(true, "{R}", List.of(DealDamageEffect.toAnyTarget(1)), "{R}, {T}: Anaba Shaman deals 1 damage to any target."));
     }
 }

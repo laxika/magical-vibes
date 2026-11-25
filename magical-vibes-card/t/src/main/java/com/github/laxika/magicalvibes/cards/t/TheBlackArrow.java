@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -38,7 +38,7 @@ public class TheBlackArrow extends Card {
                 "Target must be any target"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         SequenceEffect.of(
-                                new DealDamageToAnyTargetEffect(1),
+                                DealDamageEffect.toAnyTarget(1),
                                 new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
                                         new PermanentHasSubtypePredicate(CardSubtype.DRAGON)))));
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));

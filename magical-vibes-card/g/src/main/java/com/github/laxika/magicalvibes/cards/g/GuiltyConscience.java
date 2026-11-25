@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,6 +14,6 @@ public class GuiltyConscience extends Card {
     public GuiltyConscience() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enchantedCreatureDealsDamage(),
-                        new DealDamageToTargetCreatureEffect(Subjects.attachedAtTrigger(), new EventValue()));
+                        DealDamageEffect.to(Subjects.attachedAtTrigger(), new EventValue()));
     }
 }

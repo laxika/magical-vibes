@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -21,6 +21,6 @@ public class Combust extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE)),
                 "Target must be a white or blue creature."
         ))
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(5, true));
+                .addSpellEffect(DealDamageEffect.toTargetCreature(5).unpreventable());
     }
 }

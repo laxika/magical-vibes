@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMatchingCardsFromGraveyardAndLibraryMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -38,7 +38,7 @@ public class ChandraHeartOfFire extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DealDamageToAnyTargetEffect(2)),
+                List.of(DealDamageEffect.toAnyTarget(2)),
                 "+1: Chandra deals 2 damage to any target."
         ));
 

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -19,7 +19,7 @@ public class KissOfDeath extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
-        )).addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(4, PlayerRelation.OPPONENT));
+        )).addSpellEffect(DealDamageEffect.toTargetOpponentOrPlaneswalker(4));
 
         addSpellEffect(new GainLifeEffect(4));
     }

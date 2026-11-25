@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,6 +14,6 @@ public class RakingCanopy extends Card {
     public RakingCanopy() {
         // Whenever a creature with flying attacks you, this enchantment deals 4 damage to it.
         addTrigger(Triggers.creatureAttacksYou().withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
-                new DealDamageToTargetCreatureEffect(Subjects.triggering(), 4));
+                DealDamageEffect.to(Subjects.triggering(), 4));
     }
 }

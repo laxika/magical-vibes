@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -31,7 +32,6 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -2051,7 +2051,7 @@ class AbilityActivationServiceTest {
             // Ability produces mana BUT also targets — targeting disqualifies it as a mana ability
             card.addActivatedAbility(new ActivatedAbility(
                     true, null,
-                    List.of(new DealDamageToAnyTargetEffect(1), new AwardManaEffect(ManaColor.RED, 1)),
+                    List.of(DealDamageEffect.toAnyTarget(1), new AwardManaEffect(ManaColor.RED, 1)),
                     "{T}: Deal 1 damage to any target and add {R}."
             ));
             Permanent perm = addReadyPermanent(player1Id, card);

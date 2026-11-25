@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class BorosReckoner extends Card {
     public BorosReckoner() {
         // Whenever this creature is dealt damage, it deals that much damage to any target.
         // The damage is the entry's event value; the target is chosen as the ability goes on the stack.
-        addTrigger(Triggers.dealtDamage(), new DealDamageToAnyTargetEffect(new EventValue()));
+        addTrigger(Triggers.dealtDamage(), DealDamageEffect.toAnyTarget(new EventValue()));
 
         // {R/W}: This creature gains first strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R/W}",

@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -36,6 +36,6 @@ public class QuestingBeast extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a planeswalker defending player controls"))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new EventValue()));
+                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new EventValue()));
     }
 }

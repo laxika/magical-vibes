@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -28,7 +28,7 @@ public class DemonicPact extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), ChooseOneEffect.notYetChosen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Demonic Pact deals 4 damage to any target and you gain 4 life",
-                        List.of(new DealDamageToAnyTargetEffect(4), new GainLifeEffect(4))),
+                        List.of(DealDamageEffect.toAnyTarget(4), new GainLifeEffect(4))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent discards two cards",
                         List.of(new DiscardEffect(2, Subjects.targetPlayer())),

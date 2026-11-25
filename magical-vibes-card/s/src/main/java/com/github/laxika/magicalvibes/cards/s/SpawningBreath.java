@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -44,7 +44,7 @@ public class SpawningBreath extends Card {
             Set.of());
 
     public SpawningBreath() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(DealDamageEffect.toAnyTarget(1));
         addSpellEffect(SPAWN_TOKEN);
     }
 }

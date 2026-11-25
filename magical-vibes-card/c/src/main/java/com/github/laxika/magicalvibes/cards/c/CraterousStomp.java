@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
@@ -32,7 +32,7 @@ public class CraterousStomp extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTargetCardPredicate()))));
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(3, creatureAnOpponentControls))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(3, creatureAnOpponentControls))
                 .addSpellEffect(new GrantSubtypeUntilEndOfTurnEffect(
                         CardSubtype.COWARD, otherCreaturesThatPlayerControls, null, Duration.PERMANENT))
                 .addSpellEffect(new GrantEffectToTargetEffect(

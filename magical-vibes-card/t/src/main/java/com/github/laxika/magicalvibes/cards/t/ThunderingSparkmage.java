@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -24,6 +24,6 @@ public class ThunderingSparkmage extends Card {
                 )),
                 "Target must be a creature or planeswalker"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(new PartySize()));
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new PartySize()));
     }
 }

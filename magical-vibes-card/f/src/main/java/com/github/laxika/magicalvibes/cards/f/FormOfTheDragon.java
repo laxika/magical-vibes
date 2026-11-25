@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -17,7 +17,7 @@ public class FormOfTheDragon extends Card {
 
     public FormOfTheDragon() {
         // At the beginning of your upkeep, this enchantment deals 5 damage to any target.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DealDamageToAnyTargetEffect(5));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), DealDamageEffect.toAnyTarget(5));
 
         // At the beginning of each end step, your life total becomes 5.
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new SetLifeTotalEffect(5));

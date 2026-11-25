@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -59,7 +59,7 @@ public class KothOfTheHammer extends Card {
                         List.of(new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         true, null,
-                                        List.of(new DealDamageToAnyTargetEffect(1)),
+                                        List.of(DealDamageEffect.toAnyTarget(1)),
                                         "{T}: This land deals 1 damage to any target."),
                                 Subjects.permanentsYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),

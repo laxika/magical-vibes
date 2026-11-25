@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -27,7 +27,7 @@ public class HumanTorchJohnnyStorm extends Card {
         )).addTrigger(Triggers.youDrawCard(),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HERO))),
-                new DealDamageToAnyTargetEffect(1));
+                DealDamageEffect.toAnyTarget(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 
@@ -19,7 +19,7 @@ public class Brawl extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new DealDamageToTargetCreatureEffect(new SourcePower())),
+                        List.of(DealDamageEffect.toTargetCreature(new SourcePower())),
                         "{T}: This creature deals damage equal to its power to target creature."
                 ),
                 Subjects.allCreatures(),

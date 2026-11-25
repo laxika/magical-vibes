@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -21,7 +21,7 @@ public class BeaconBolt extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addSpellEffect(new DealDamageToTargetCreatureEffect(new Sum(
+        addSpellEffect(DealDamageEffect.toTargetCreature(new Sum(
                 new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER),
                 new CardsInExile(instantOrSorcery, CountScope.CONTROLLER))));
         addCastingOption(new JumpStartCast());

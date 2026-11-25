@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class IanTheReckless extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new DealDamageToPlayersEffect(new SourcePower(), Subjects.you()),
-                                new DealDamageToAnyTargetEffect(new SourcePower())),
+                                DealDamageEffect.toAnyTarget(new SourcePower())),
                         "Have Ian the Reckless deal damage equal to its power to you and any target?"));
     }
 }

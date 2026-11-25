@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -50,7 +50,7 @@ public class ChandraAwakenedInferno extends Card {
         ));
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(DealDamageToTargetCreatureOrPlaneswalkerEffect.exilingIfDealtDamage(new XValue())),
+                List.of(DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()).exilingPermanentsDealtDamage()),
                 "\u2212X: Chandra, Awakened Inferno deals X damage to target creature or planeswalker. "
                         + "If a permanent dealt damage this way would die this turn, exile it instead.",
                 null

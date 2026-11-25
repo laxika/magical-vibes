@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnedGraveyardCardValue;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -47,6 +47,6 @@ public class MorgueBurst extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addSpellEffect(new DealDamageToAnyTargetEffect(new EventValue(), false, false, 0));
+        )).addSpellEffect(DealDamageEffect.toAnyTargetInGroup(new EventValue(), 0));
     }
 }

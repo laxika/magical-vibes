@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -48,7 +48,7 @@ public class FireNationTurret extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(50, CounterType.CHARGE),
-                        new DealDamageToAnyTargetEffect(50)
+                        DealDamageEffect.toAnyTarget(50)
                 ),
                 "Remove fifty charge counters from this artifact: It deals 50 damage to any target."
         ));

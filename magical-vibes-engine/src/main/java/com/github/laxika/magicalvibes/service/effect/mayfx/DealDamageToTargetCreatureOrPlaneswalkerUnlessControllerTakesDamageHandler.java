@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetCreatureOrPlaneswalkerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,8 +27,8 @@ public class DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamage
         implements MayEffectHandlerBean {
 
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
-    private final DealDamageToTargetCreatureOrPlaneswalkerEffectHandler
-            dealDamageToTargetCreatureOrPlaneswalkerEffectHandler;
+    private final DealDamageEffectHandler
+            dealDamageEffectHandler;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -62,14 +62,14 @@ public class DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamage
                         sourceControllerId, ability.sourcePermanentSnapshot());
             }
         } else {
-            DealDamageToTargetCreatureOrPlaneswalkerEffect damage =
-                    new DealDamageToTargetCreatureOrPlaneswalkerEffect(effect.targetDamage());
+            DealDamageEffect damage =
+                    DealDamageEffect.toTargetCreatureOrPlaneswalker(effect.targetDamage());
             StackEntry damageEntry = new StackEntry(
                     StackEntryType.ACTIVATED_ABILITY, ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
                     ability.targetCardId(), ability.sourcePermanentId());
             damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-            dealDamageToTargetCreatureOrPlaneswalkerEffectHandler.resolve(gameData, damageEntry, damage);
+            dealDamageEffectHandler.resolve(gameData, damageEntry, damage);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +18,7 @@ public class Immersturm extends Card {
     public Immersturm() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 MayEffect.byTriggeringPermanentControllerOfTheirChoice(
-                        DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()),
+                        DealDamageEffect.toAnyTarget(new SourcePower()).byTriggeringPermanent(),
                         "Have it deal damage to any target?"));
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 FlickerEffect.flickerTarget(new PermanentIsCreaturePredicate()));

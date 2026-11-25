@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
@@ -18,7 +18,7 @@ public class SoulSpike extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.BLACK), "black", 2))));
 
-        addSpellEffect(new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(DealDamageEffect.toAnyTarget(4));
         addSpellEffect(new GainLifeEffect(4));
     }
 }

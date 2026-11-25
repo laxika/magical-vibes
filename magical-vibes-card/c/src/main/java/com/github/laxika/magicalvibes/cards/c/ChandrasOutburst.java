@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -18,7 +18,7 @@ public class ChandrasOutburst extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
-        )).addSpellEffect(new DealDamageToAnyTargetEffect(4));
+        )).addSpellEffect(DealDamageEffect.toAnyTarget(4));
         addSpellEffect(new SearchLibraryAndOrGraveyardForCardToHandEffect(
                 new CardNamedPredicate("Chandra, Bold Pyromancer")));
     }

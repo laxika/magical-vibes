@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.c.CoastWatcher;
 import com.github.laxika.magicalvibes.cards.f.FierceEmpath;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ExtraArms.class, GoblinBrigand.class, ChandraNalaar.class, FierceEmpath.class, CoastWatcher.class})
+@CardUsed({ExtraArms.class, GoblinBrigand.class, ChandraNalaar.class, FierceEmpath.class, CoastWatcher.class, WhipOfErebos.class})
 class ExtraArmsTest extends BaseCardTest {
 
     @Test
@@ -138,5 +139,37 @@ class ExtraArmsTest extends BaseCardTest {
     private void attachExtraArms(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ExtraArms());
         aura.setAttachedTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("An enchanted attacker that left before the trigger resolves deals the damage with the lifelink it had as it left")
+    void departedAttackerDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        Permanent attacker = addCreatureReady(player1, new GoblinBrigand());
+        attachExtraArms(attacker);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's lifelink applies to the triggered damage as to its combat damage")
+    void enchantedCreatureLifelinkAppliesToTheDamage() {
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        Permanent attacker = addCreatureReady(player1, new GoblinBrigand());
+        attachExtraArms(attacker);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        // The trigger's 2 damage and the attacker's 2 combat damage, each with its lifelink.
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
     }
 }

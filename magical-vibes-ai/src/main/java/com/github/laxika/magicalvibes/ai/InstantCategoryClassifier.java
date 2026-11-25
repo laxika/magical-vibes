@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
@@ -83,9 +82,6 @@ public final class InstantCategoryClassifier {
         // Damage-based removal (anything that can damage creatures — target-creature or any-target).
         // Player-only damage (canDamageCreatures() == false) drops through to the burn check below.
         if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) return InstantCategory.REMOVAL;
-        // Creature-or-planeswalker fixed damage does not implement DamageDealingEffect (that would
-        // newly score it in SpellEvaluator); handled explicitly here.
-        if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect) return InstantCategory.REMOVAL;
 
         // Combat tricks (targeted pump spells)
         if (effect instanceof CreatureBoostEffect) return InstantCategory.COMBAT_TRICK;

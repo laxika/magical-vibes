@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 @CardRegistration(set = "CMM", collectorNumber = "341")
 public class JudithTheScourgeDiva extends Card {
 
-    private static final DealDamageToAnyTargetEffect DEATH_DAMAGE = new DealDamageToAnyTargetEffect(1);
+    private static final DealDamageEffect DEATH_DAMAGE = DealDamageEffect.toAnyTarget(1);
     private static final CardEffect NON_TOKEN_DEATH_DAMAGE =
             DEATH_DAMAGE;
 

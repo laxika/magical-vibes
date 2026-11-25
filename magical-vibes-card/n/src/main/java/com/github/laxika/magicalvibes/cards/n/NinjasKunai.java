@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 
@@ -19,7 +19,7 @@ public class NinjasKunai extends Card {
                 new ActivatedAbility(
                         true,
                         "{1}",
-                        List.of(new SacrificeSourceEquipmentCost(), new DealDamageToAnyTargetEffect(3)),
+                        List.of(new SacrificeSourceEquipmentCost(), DealDamageEffect.toAnyTarget(3)),
                         "{1}, {T}, Sacrifice Ninja's Kunai: Ninja's Kunai deals 3 damage to any target."
                 ),
                 Subjects.attachedCreature()

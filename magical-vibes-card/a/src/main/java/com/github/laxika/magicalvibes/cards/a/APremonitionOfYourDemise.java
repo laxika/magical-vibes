@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -23,6 +23,6 @@ public class APremonitionOfYourDemise extends Card {
         addSpellEffect(RevealTopCardOfLibraryEffect.topCards(Subjects.you(), new Fixed(2)));
         addSpellEffect(new PutCardsIntoHandEffect(Subjects.revealedThisWay()));
         addSpellEffect(new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                        new QueueReflexiveAbilityEffect(new DealDamageToAnyTargetEffect(AmountThisWay.revealedManaValue()))));
+                        new QueueReflexiveAbilityEffect(DealDamageEffect.toAnyTarget(AmountThisWay.revealedManaValue()))));
     }
 }

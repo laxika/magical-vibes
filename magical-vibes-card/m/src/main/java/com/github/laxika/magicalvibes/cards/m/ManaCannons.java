@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +14,6 @@ public class ManaCannons extends Card {
     public ManaCannons() {
         // Whenever you cast a multicolored spell, this enchantment deals damage equal to that spell's colors to any target.
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
-                new DealDamageToAnyTargetEffect(new TriggeringSpellColorCount()));
+                DealDamageEffect.toAnyTarget(new TriggeringSpellColorCount()));
     }
 }

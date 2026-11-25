@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -112,7 +112,7 @@ class EntropicSpecterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new RagingGoblin()));
         EntropicSpecter card = new EntropicSpecter();
         card.addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
+                List.of(DealDamageEffect.toAnyTarget(1)),
                 "{T}: This creature deals 1 damage to any target."));
         Permanent specter = addCreatureReady(player1, card);
         specter.setRememberedTargetPlayerId(player2.getId());

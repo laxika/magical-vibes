@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -29,9 +29,7 @@ public class GoblinLyre extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new FlipCoinWinEffect(
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
-                                PlayerRelation.OPPONENT),
+                        DealDamageEffect.toTargetOpponentOrPlaneswalker(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
                         new DealDamageToPlayersEffect(
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER),
                                 Subjects.you()))),

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.c.Conspiracy;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pyrogoyf.class, Lhurgoyf.class, Forest.class, Shock.class, GrizzlyBears.class, Conspiracy.class, DoomBlade.class})
+@CardUsed({Pyrogoyf.class, Lhurgoyf.class, Forest.class, Shock.class, GrizzlyBears.class, Conspiracy.class, DoomBlade.class, WhipOfErebos.class})
 class PyrogoyfTest extends BaseCardTest {
 
     @Test
@@ -167,5 +168,23 @@ class PyrogoyfTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("An entering Lhurgoyf that left before the ability resolves deals its last-known power with the lifelink it had as it left")
+    void departedLhurgoyfDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player1, new Pyrogoyf());
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        setThreeCardTypesInGraveyards();
+        harness.castFromHand(player1, new Lhurgoyf(), "{2}{G}{G}");
+        resolveAllTriggers();
+        Permanent lhurgoyf = findPermanent(player1, "Lhurgoyf");
+        assertThat(gqs.getEffectivePower(gd, lhurgoyf)).isEqualTo(1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, lhurgoyf));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
     }
 }

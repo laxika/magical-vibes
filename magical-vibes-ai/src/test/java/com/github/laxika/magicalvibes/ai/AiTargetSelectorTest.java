@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -70,8 +71,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
@@ -235,7 +234,7 @@ class AiTargetSelectorTest {
         Card damageSpell = new Card();
         damageSpell.setName("Test Shock");
         damageSpell.setType(CardType.INSTANT);
-        damageSpell.addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        damageSpell.addSpellEffect(DealDamageEffect.toAnyTarget(2));
 
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
@@ -250,7 +249,7 @@ class AiTargetSelectorTest {
         Card damageSpell = new Card();
         damageSpell.setName("Test Shock");
         damageSpell.setType(CardType.INSTANT);
-        damageSpell.addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        damageSpell.addSpellEffect(DealDamageEffect.toAnyTarget(2));
 
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
@@ -268,7 +267,7 @@ class AiTargetSelectorTest {
         Card damageSpell = new Card();
         damageSpell.setName("Test Creature Burn");
         damageSpell.setType(CardType.INSTANT);
-        damageSpell.addSpellEffect(new DealDamageToTargetCreatureEffect(2));
+        damageSpell.addSpellEffect(DealDamageEffect.toTargetCreature(2));
 
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
@@ -916,7 +915,7 @@ class AiTargetSelectorTest {
         @DisplayName("Returns null for spell with no divided damage effect")
         void returnsNullForNonDividedDamageSpell() {
             Card bolt = new Card();
-            bolt.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            bolt.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             assertThat(unitSelector.buildDamageAssignments(unitGd, bolt, aiId)).isNull();
         }
@@ -954,7 +953,7 @@ class AiTargetSelectorTest {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
             spell.addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
-                    new DealDamageToTargetCreatureEffect(5),
+                    DealDamageEffect.toTargetCreature(5),
                     DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
@@ -1106,7 +1105,7 @@ class AiTargetSelectorTest {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
             spell.addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
-                    new DealDamageToTargetCreatureEffect(5),
+                    DealDamageEffect.toTargetCreature(5),
                     DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
@@ -1128,7 +1127,7 @@ class AiTargetSelectorTest {
         void nonWrappedAnyTargetIncludesBoth() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
 
@@ -1141,7 +1140,7 @@ class AiTargetSelectorTest {
         void creatureOnlyIncludesPermanent() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toTargetCreature(3));
 
             Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
 
@@ -1178,7 +1177,7 @@ class AiTargetSelectorTest {
         @DisplayName("Returns false for regular damage spell")
         void falseForRegularDamageSpell() {
             Card spell = new Card();
-            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
         }
@@ -1190,7 +1189,7 @@ class AiTargetSelectorTest {
             // so needsDamageDistribution should return false (the wrapper type doesn't match)
             Card spell = new Card();
             spell.addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
-                    new DealDamageToTargetCreatureEffect(5),
+                    DealDamageEffect.toTargetCreature(5),
                     DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
@@ -1761,7 +1760,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
 
             ActivatedAbility ability = new ActivatedAbility(true, null,
-                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    List.of(DealDamageEffect.toAnyTarget(1)),
                     "{T}: Deal 1 damage to any target.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
@@ -1779,7 +1778,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
 
             ActivatedAbility ability = new ActivatedAbility(true, null,
-                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    List.of(DealDamageEffect.toAnyTarget(1)),
                     "{T}: Deal 1 damage to any target.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
@@ -1794,7 +1793,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
 
             ActivatedAbility ability = new ActivatedAbility(true, null,
-                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    List.of(DealDamageEffect.toAnyTarget(1)),
                     "{T}: Deal 1 damage to any target.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
@@ -1893,7 +1892,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
 
             ActivatedAbility ability = new ActivatedAbility(true, null,
-                    List.of(new DealDamageToTargetCreatureEffect(1)),
+                    List.of(DealDamageEffect.toTargetCreature(1)),
                     "{T}: Deal 1 damage to target creature.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
@@ -1912,7 +1911,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
 
             ActivatedAbility ability = new ActivatedAbility(true, null,
-                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    List.of(DealDamageEffect.toAnyTarget(1)),
                     "{T}: Deal 1 damage to any target.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
@@ -1948,7 +1947,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
 
             ActivatedAbility ability = new ActivatedAbility(false, null,
-                    List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(1)),
+                    List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(1)),
                     "Sacrifice: deal 1 damage to any target.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
@@ -2085,7 +2084,7 @@ class AiTargetSelectorTest {
             Card damageSpell = new Card();
             damageSpell.setName("Test Bolt");
             damageSpell.setType(CardType.INSTANT);
-            damageSpell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
+            damageSpell.addSpellEffect(DealDamageEffect.toAnyTarget(3));
 
             UUID target = threatAwareSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 

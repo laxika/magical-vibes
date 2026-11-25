@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class GhituFireEater extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(new SourcePower())),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(new SourcePower())),
                 "{T}, Sacrifice Ghitu Fire-Eater: It deals damage equal to its power to any target."
         ));
     }

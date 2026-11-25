@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,8 +21,7 @@ public class GazeOfPain extends Card {
         addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                 Triggers.creatureYouControlAttacksUnblocked(),
                 new MayEffect(SequenceEffect.of(
-                        DealDamageToTargetCreatureEffect.byTriggeringPermanent(new TriggeringPermanentPower(true),
-                                null),
+                        DealDamageEffect.toTargetCreature(new TriggeringPermanentPower(true)).byTriggeringPermanent(),
                         AssignNoCombatDamageEffect.ofTriggeringPermanent()),
                         "have it deal damage equal to its power to a target creature?"))));
     }

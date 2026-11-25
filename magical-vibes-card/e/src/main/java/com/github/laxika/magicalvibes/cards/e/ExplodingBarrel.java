@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -35,7 +35,7 @@ public class ExplodingBarrel extends Card {
                 List.of(
                         new ReduceActivationCostEffect(new CountersOnSource(CounterType.PRESSURE)),
                         new SacrificeSelfCost(),
-                        new DealDamageToTargetCreatureEffect(20)
+                        DealDamageEffect.toTargetCreature(20)
                 ),
                 "{8}, {T}, Sacrifice this artifact: It deals 20 damage to target creature. "
                         + "This ability costs {1} less to activate for each pressure counter on this artifact. "

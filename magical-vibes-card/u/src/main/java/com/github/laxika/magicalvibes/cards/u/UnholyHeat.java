@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "SPG", collectorNumber = "71")
 @CardRegistration(set = "MH2", collectorNumber = "145")
@@ -18,8 +18,8 @@ public class UnholyHeat extends Card {
         // cards in your graveyard.
         addSpellEffect(new ConditionalReplacementEffect(
                 new Delirium(),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(2),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(6)
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(2),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(6)
         ));
     }
 }

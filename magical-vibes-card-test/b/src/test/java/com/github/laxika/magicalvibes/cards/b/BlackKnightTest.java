@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
 import com.github.laxika.magicalvibes.cards.d.DrainLife;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -47,7 +47,7 @@ class BlackKnightTest extends BaseCardTest {
         card.setType(CardType.INSTANT);
         card.setManaCost(manaCost);
         card.setColor(color);
-        card.addSpellEffect(new DealDamageToTargetCreatureEffect(1));
+        card.addSpellEffect(DealDamageEffect.toTargetCreature(1));
         return card;
     }
     @Test

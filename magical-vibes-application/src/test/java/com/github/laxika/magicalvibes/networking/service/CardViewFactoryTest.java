@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
@@ -72,10 +72,10 @@ class CardViewFactoryTest {
     void randomTargetAbilityAsksForNoTarget() {
         Card card = card("Goblin Test Pilot", CardType.CREATURE);
         card.addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(DealDamageToAnyTargetEffect.toAnyTargetChosenAtRandom(new Fixed(2))),
+                List.of(DealDamageEffect.toAnyTargetChosenAtRandom(new Fixed(2))),
                 "{T}: This creature deals 2 damage to any target chosen at random."));
         card.addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
+                List.of(DealDamageEffect.toAnyTarget(1)), "{T}: This creature deals 1 damage to any target."));
 
         CardView view = factory.create(card);
 

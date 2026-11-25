@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -25,7 +25,7 @@ public class KjeldoranJavelineer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToTargetCreatureEffect(new CountersOnSource(CounterType.AGE))),
+                List.of(DealDamageEffect.toTargetCreature(new CountersOnSource(CounterType.AGE))),
                 "{T}: This creature deals damage equal to the number of age counters on it to target attacking or blocking creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

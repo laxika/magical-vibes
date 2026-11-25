@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedDuringCleanupEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
@@ -35,7 +35,7 @@ public class CaseOfTheMarketMelee extends Card {
                 TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(1));
 
         addStaticEffect(new GrantEffectEffect(
                 new DamageNotRemovedDuringCleanupEffect(), Subjects.allCreatures()));

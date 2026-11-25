@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class CrimsonHellkite extends Card {
 
     public CrimsonHellkite() {
         addActivatedAbility(new ActivatedAbility(true, "{X}",
-                List.of(new DealDamageToTargetCreatureEffect(new XValue())),
+                List.of(DealDamageEffect.toTargetCreature(new XValue())),
                 "{X}, {T}: This creature deals X damage to target creature. Spend only red mana on X.")
                 .withXColorRestriction(ManaColor.RED));
     }

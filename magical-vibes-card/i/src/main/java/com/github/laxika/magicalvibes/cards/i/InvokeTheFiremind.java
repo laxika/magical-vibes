@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class InvokeTheFiremind extends Card {
                         new DrawCardEffect(new XValue())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Invoke the Firemind deals X damage to any target",
-                        new DealDamageToAnyTargetEffect(new XValue()))
+                        DealDamageEffect.toAnyTarget(new XValue()))
         )));
     }
 }

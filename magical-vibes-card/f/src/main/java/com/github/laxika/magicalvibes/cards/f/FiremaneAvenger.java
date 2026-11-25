@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -18,6 +18,6 @@ public class FiremaneAvenger extends Card {
         // this creature deals 3 damage to any target and you gain 3 life.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
-                SequenceEffect.of(new DealDamageToAnyTargetEffect(3, false), new GainLifeEffect(3)));
+                SequenceEffect.of(DealDamageEffect.toAnyTarget(3), new GainLifeEffect(3)));
     }
 }

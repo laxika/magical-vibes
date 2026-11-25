@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -40,7 +40,7 @@ public class DugganPrivateDetective extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{G}",
-                List.of(new DealDamageToTargetCreatureEffect(new Scaled(new SourcePower(), 2))),
+                List.of(DealDamageEffect.toTargetCreature(new Scaled(new SourcePower(), 2))),
                 "The Most Important Punch in History — {1}{G}, {T}: Duggan deals damage equal to twice its power to another target creature. Activate only once.",
                 new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature")
         ).withMaxActivationsPerGame(1));

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class OriginOfTheHiddenOnes extends Card {
 
     public OriginOfTheHiddenOnes() {
-        addTrigger(Triggers.chapter(1), new DealDamageToAnyTargetEffect(4));
+        addTrigger(Triggers.chapter(1), DealDamageEffect.toAnyTarget(4));
         addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 2, "Assassin", 1, 1, CardColor.BLACK, List.of(CardSubtype.ASSASSIN),
                 Set.of(Keyword.MENACE), Set.of()));

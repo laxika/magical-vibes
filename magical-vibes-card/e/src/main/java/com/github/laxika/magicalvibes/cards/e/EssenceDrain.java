@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -14,7 +14,7 @@ public class EssenceDrain extends Card {
     public EssenceDrain() {
         // "Essence Drain deals 3 damage to any target and you gain 3 life." The fixed 3 life is
         // gained whenever the spell resolves, independent of damage dealt/prevented.
-        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(DealDamageEffect.toAnyTarget(3));
         addSpellEffect(new GainLifeEffect(3));
     }
 }

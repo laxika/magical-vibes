@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "91")
 @CardRegistration(set = "DDU", collectorNumber = "45")
@@ -18,8 +18,8 @@ public class GalvanicBlast extends Card {
         // Galvanic Blast deals 2 damage to any target.
         // Metalcraft — Galvanic Blast deals 4 damage instead if you control three or more artifacts.
         addSpellEffect(new ConditionalReplacementEffect(new Metalcraft(), 
-                new DealDamageToAnyTargetEffect(2),
-                new DealDamageToAnyTargetEffect(4)
+                DealDamageEffect.toAnyTarget(2),
+                DealDamageEffect.toAnyTarget(4)
         ));
     }
 }

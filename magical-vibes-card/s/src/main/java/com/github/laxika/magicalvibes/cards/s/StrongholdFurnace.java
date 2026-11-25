@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +13,6 @@ public class StrongholdFurnace extends Card {
 
     public StrongholdFurnace() {
         addStaticEffect(new DoubleDamageEffect());
-        addTrigger(Triggers.chaosEnsues(), new DealDamageToAnyTargetEffect(1));
+        addTrigger(Triggers.chaosEnsues(), DealDamageEffect.toAnyTarget(1));
     }
 }

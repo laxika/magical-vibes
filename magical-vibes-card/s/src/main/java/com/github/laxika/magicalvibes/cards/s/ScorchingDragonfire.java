@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "158")
 @CardRegistration(set = "ELD", collectorNumber = "139")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 public class ScorchingDragonfire extends Card {
 
     public ScorchingDragonfire() {
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(3, null, true));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(3).exilingIfItWouldDie());
     }
 }

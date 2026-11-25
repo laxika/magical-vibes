@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class SarkhansRage extends Card {
 
     public SarkhansRage() {
-        addSpellEffect(new DealDamageToAnyTargetEffect(5));
+        addSpellEffect(DealDamageEffect.toAnyTarget(5));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                 new DealDamageToPlayersEffect(2, Subjects.you())));

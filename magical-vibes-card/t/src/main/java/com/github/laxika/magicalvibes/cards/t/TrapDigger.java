@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -50,7 +50,7 @@ public class TrapDigger extends Card {
                 List.of(
                         new SacrificePermanentCost(landWithTrapCounter,
                                 "Sacrifice a land with a trap counter on it", false),
-                        new DealDamageToTargetCreatureEffect(3, attackingCreatureWithoutFlying)
+                        DealDamageEffect.toTargetCreature(3, attackingCreatureWithoutFlying)
                 ),
                 "Sacrifice a land with a trap counter on it: This creature deals 3 damage to target attacking creature without flying.",
                 new PermanentPredicateTargetFilter(

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -20,7 +21,6 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -120,8 +120,7 @@ public class VhalEagerScholar extends Card {
                     null, 0, new EventValue(), null, null, null, 0,
                     com.github.laxika.magicalvibes.model.GraveyardSearchScope.ALL_GRAVEYARDS,
                     false, false, false, 1);
-            case RED -> new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                    new EventValue(), creatureOrPlaneswalkerAnOpponentControls());
+            case RED -> DealDamageEffect.toTargetCreatureOrPlaneswalker(new EventValue(), creatureOrPlaneswalkerAnOpponentControls());
             // "Seek two creature cards with mana value less than or equal to the number of study counters removed this
             // way. Put one of them onto the battlefield and shuffle the other into your library."
             case GREEN -> SequenceEffect.of(

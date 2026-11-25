@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -39,8 +39,8 @@ public class StonesplitterBolt extends Card {
                 "Target must be a creature or planeswalker"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(new Scaled(new XValue(), 2))
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new XValue()),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new Scaled(new XValue(), 2))
         ));
     }
 }

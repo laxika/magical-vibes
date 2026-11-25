@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -45,10 +45,10 @@ public class TheBrothersWar extends Card {
                 "Target must be a creature, planeswalker, battle, or player.");
         var artifactCount = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        DealDamageToAnyTargetEffect firstDamage =
-                new DealDamageToAnyTargetEffect(artifactCount, false, false, 1, null);
-        DealDamageToAnyTargetEffect secondDamage =
-                new DealDamageToAnyTargetEffect(artifactCount, false, false, 2, null);
+        DealDamageEffect firstDamage =
+                DealDamageEffect.toAnyTargetInGroup(artifactCount, 1);
+        DealDamageEffect secondDamage =
+                DealDamageEffect.toAnyTargetInGroup(artifactCount, 2);
         target(anyTarget).bindEffect(firstDamage);
         target(anyTarget).bindEffect(secondDamage);
         addSimultaneousTrigger(Triggers.chapter(3), firstDamage, secondDamage);

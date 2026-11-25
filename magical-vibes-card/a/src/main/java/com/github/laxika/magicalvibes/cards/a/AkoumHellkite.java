@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class AkoumHellkite extends Card {
 
     public AkoumHellkite() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new DealDamageToAnyTargetEffect(new FixedIfCondition(
+                DealDamageEffect.toAnyTarget(new FixedIfCondition(
                         new TriggeringPermanentHasSubtype(CardSubtype.MOUNTAIN), 2, 1)));
     }
 }

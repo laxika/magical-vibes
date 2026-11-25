@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 /**
@@ -22,8 +22,7 @@ public class StruggleSurvive extends Card {
         setBackFaceCard(new Survive());
 
         // Struggle deals damage to target creature equal to the number of lands you control.
-        addSpellEffect(new DealDamageToTargetCreatureEffect(
-                new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
+        addSpellEffect(DealDamageEffect.toTargetCreature(new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
     }
 
     @Override

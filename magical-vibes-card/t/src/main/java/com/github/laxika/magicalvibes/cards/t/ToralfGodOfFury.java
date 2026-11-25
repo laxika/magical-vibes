@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -28,7 +28,7 @@ public class ToralfGodOfFury extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be other than the permanent dealt excess damage."))
                 .addTrigger(Triggers.creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage(),
-                        new DealDamageToAnyTargetEffect(new EventValue()));
+                        DealDamageEffect.toAnyTarget(new EventValue()));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Toralf, God of Fury", List.of())
                         .withManaCost("{2}{R}{R}"),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class MouserFoundry extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(3)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toTargetCreature(3)),
                 "{4}{R}, Sacrifice this artifact: It deals 3 damage to target creature.",
                 TargetFilters.creature()));
     }

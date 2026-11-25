@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -22,7 +22,7 @@ public class LightningSpear extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(3)),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.toAnyTarget(3)),
                 "{2}{R}, Sacrifice this Equipment: It deals 3 damage to any target."
         ));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

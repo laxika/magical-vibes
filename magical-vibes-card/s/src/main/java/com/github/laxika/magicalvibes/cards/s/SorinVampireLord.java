@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -31,7 +31,7 @@ public class SorinVampireLord extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DealDamageToAnyTargetEffect(4), new GainLifeEffect(4)),
+                List.of(DealDamageEffect.toAnyTarget(4), new GainLifeEffect(4)),
                 "\u22122: Sorin deals 4 damage to any target. You gain 4 life."
         ));
 

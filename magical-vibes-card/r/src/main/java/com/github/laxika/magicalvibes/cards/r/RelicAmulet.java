@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -35,7 +35,7 @@ public class RelicAmulet extends Card {
                 "{2}",
                 List.of(
                         new RemoveAllCountersAsCostEffect(CounterType.CHARGE),
-                        new DealDamageToTargetCreatureEffect(new XValue())
+                        DealDamageEffect.toTargetCreature(new XValue())
                 ),
                 "{2}, {T}, Remove all charge counters from Relic Amulet: It deals that much damage to target creature.",
                 TargetFilters.creature()

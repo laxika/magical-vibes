@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class StalkingVengeance extends Card {
 
     public StalkingVengeance() {
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                DealDamageToTargetPlayerOrPlaneswalkerEffect.byTriggeringCreature(new EventValue()));
+                DealDamageEffect.toTargetPlayerOrPlaneswalker(new EventValue()).byTriggeringPermanent());
     }
 }

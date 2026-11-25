@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "96")
 public class LightningSurge extends Card {
@@ -15,8 +15,8 @@ public class LightningSurge extends Card {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addSpellEffect(new ConditionalReplacementEffect(
                 threshold,
-                new DealDamageToAnyTargetEffect(4),
-                new DealDamageToAnyTargetEffect(new Fixed(6), threshold)
+                DealDamageEffect.toAnyTarget(4),
+                DealDamageEffect.toAnyTarget(new Fixed(6)).unpreventableWhen(threshold)
         ));
         addCastingOption(new FlashbackCast("{5}{R}{R}"));
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -41,7 +41,7 @@ public class FiremindsResearch extends Card {
                 "{1}{R}",
                 List.of(
                         new RemoveCounterFromSourceCost(5, CounterType.CHARGE),
-                        new DealDamageToAnyTargetEffect(5)
+                        DealDamageEffect.toAnyTarget(5)
                 ),
                 "{1}{R}, Remove five charge counters from Firemind's Research: It deals 5 damage to any target."
         ));

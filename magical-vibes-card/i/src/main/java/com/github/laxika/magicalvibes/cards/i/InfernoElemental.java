@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class InfernoElemental extends Card {
 
     public InfernoElemental() {
-        addTrigger(Triggers.blocks(), new DealDamageToTargetCreatureEffect(3));
-        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, new DealDamageToTargetCreatureEffect(3));
+        addTrigger(Triggers.blocks(), DealDamageEffect.toTargetCreature(3));
+        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, DealDamageEffect.toTargetCreature(3));
     }
 }

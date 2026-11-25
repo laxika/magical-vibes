@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CasualtyCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class LightEmUp extends Card {
         addTrigger(Triggers.youCastThisSpell(), TriggerOptions.DEFAULT.withInterveningIf(new CasualtyCostPaid()),
                 new CopyTriggeringSpellEffect());
         addCastingCost(new CasualtyCost(2));
-        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(2));
+        addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(2));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +25,7 @@ public class SparkOfCreativity extends Card {
         )).addSpellEffect(SequenceEffect.of(
                 ExileTopCardOfOwnLibraryEffect.of(Subjects.you()),
                 new ConditionalEffect(HappenedThisWay.exiled(), new MayEffect(
-                        new DealDamageToTargetCreatureEffect(AmountThisWay.exiledManaValue()),
+                        DealDamageEffect.toTargetCreature(AmountThisWay.exiledManaValue()),
                         "Have it deal damage to the target creature equal to the exiled card's mana value?",
                         AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE))))));
     }

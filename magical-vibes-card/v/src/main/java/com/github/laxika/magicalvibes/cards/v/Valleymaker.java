@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class Valleymaker extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                                 "Sacrifice a Mountain", false),
-                        new DealDamageToTargetCreatureEffect(3)),
+                        DealDamageEffect.toTargetCreature(3)),
                 "{T}, Sacrifice a Mountain: Valleymaker deals 3 damage to target creature.",
                 TargetFilters.creature()));
 

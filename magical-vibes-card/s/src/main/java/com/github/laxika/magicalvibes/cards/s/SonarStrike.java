@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -32,7 +32,7 @@ public class SonarStrike extends Card {
                         ))
                 )),
                 "Target must be an attacking, blocking, or tapped creature"
-        )).addSpellEffect(new DealDamageToTargetCreatureEffect(4))
+        )).addSpellEffect(DealDamageEffect.toTargetCreature(4))
                 .addSpellEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.BAT)),
                         new GainLifeEffect(3)));

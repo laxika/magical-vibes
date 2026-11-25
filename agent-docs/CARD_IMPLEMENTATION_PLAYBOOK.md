@@ -31,7 +31,7 @@ public class ExampleCard extends Card {
 ## Canonical patterns
 
 - Targeted burn spell:
-  - `addSpellEffect(new DealDamageToAnyTargetEffect(N))`
+  - `addSpellEffect(DealDamageEffect.toAnyTarget(N))`
   - Targeting is computed from effects — no `setNeedsTarget` call needed.
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/Shock.java`
 
@@ -91,7 +91,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Controller draw step may-trigger with targeting:
-  - `addTrigger(Triggers.drawStep(ActivePlayer.YOU), new MayEffect(new DealDamageToTargetCreatureEffect(N), "prompt"))`
+  - `addTrigger(Triggers.drawStep(ActivePlayer.YOU), new MayEffect(DealDamageEffect.toTargetCreature(N), "prompt"))`
   - `Triggers.drawStep(ActivePlayer.YOU)` fires only on the controller's draw step; use `Triggers.drawStep(ActivePlayer.ANY)` for all draw steps
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -30,7 +30,7 @@ public class Electrickery extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new DealDamageToTargetCreatureEffect(1),
+                DealDamageEffect.toTargetCreature(1),
                 new MassDamageEffect(new Fixed(1), false, false,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
         target(TargetFilters.creatureAnOpponentControls());

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class BomberCorps extends Card {
         // this creature deals 1 damage to any target.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
-                new DealDamageToAnyTargetEffect(1, false));
+                DealDamageEffect.toAnyTarget(1));
     }
 }

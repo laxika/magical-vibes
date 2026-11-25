@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
@@ -32,9 +32,9 @@ public class ScepterOfEmpires extends Card {
                 null,
                 List.of(
                         new ConditionalEffect(new NotCondition(hasBothPartners),
-                                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                                DealDamageEffect.toTargetPlayerOrPlaneswalker(1)),
                         new ConditionalEffect(hasBothPartners,
-                                new DealDamageToTargetPlayerOrPlaneswalkerEffect(3))
+                                DealDamageEffect.toTargetPlayerOrPlaneswalker(3))
                 ),
                 "{T}: Scepter of Empires deals 1 damage to target player or planeswalker. It deals "
                         + "3 damage instead if you control artifacts named Crown of Empires and Throne of Empires."
