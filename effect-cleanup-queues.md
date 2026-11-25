@@ -853,7 +853,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `ManaSourceColorSupport` non-land branch: an `AwardAnyColorManaEffect` whose amount is 0 still counts every colour (CR 106.7). Defect run D20. Sure of the code, low.
 - SILVER is treated as a wildcard like ANY in `PermanentCounterSupport.removableCounterKinds`, `DoubleCountersOnTargetPermanentEffectHandler`, `AdjustEachCounterKindOnTargetEffectHandler` and others, but silver counters are real (Karn). Defect run D20. Unverified reachability.
 - Coastal Piracy (and other "a creature you control deals combat damage to an opponent" cards): the to-player trigger has no `AttackedTargetIsOpponent` condition, so damage redirected to its controller triggers. Defect run D21. Fairly sure.
-- `RasaadMonkOfSelNeTest`, `TranscantationTest`, `ProtectiveSphereTest` and `TargetPolarityGuardTest` have test methods without `@DisplayName`. Defect run D21. Sure.
+- ~~`RasaadMonkOfSelNeTest`, `TranscantationTest`, `ProtectiveSphereTest` and `TargetPolarityGuardTest` have test methods without `@DisplayName`. Defect run D21. Sure.~~ Fixed after defect run D21 (33 methods named).
 
 Not a defect after all: `SuspectedEffect` (P08 "nothing reads it") is read by `LayerSystemService`, `UnsuspectEffectHandler` and
 `GameQueryService` (checked 2026-11-23; P14 is right). Betrayal of Flesh and Solar Tide on `EscalateSacrificeCost` pay the same as

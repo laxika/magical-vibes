@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TranscantationTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Declining new target leaves the original target on the transformed spell")
     void decliningNewTargetLeavesTheOriginalTargetOnTheTransformedSpell() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Unsummon unsummon = new Unsummon();
@@ -50,6 +52,7 @@ class TranscantationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can retarget the transformed spell")
     void canRetargetTheTransformedSpell() {
         Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent newTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -74,6 +77,7 @@ class TranscantationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target creature spell")
     void cannotTargetCreatureSpell() {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.setHand(player2, List.of(new Transcantation()));
@@ -87,6 +91,7 @@ class TranscantationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can choose the original creature as the new target")
     void canChooseTheOriginalCreatureAsTheNewTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Unsummon unsummon = new Unsummon();
@@ -109,6 +114,7 @@ class TranscantationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Untargeted sorcery can gain a target and deals damage instead of drawing")
     void untargetedSorceryCanGainATargetAndDealsDamageInsteadOfDrawing() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Divination divination = new Divination();
@@ -130,6 +136,7 @@ class TranscantationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Transformed flashback spell goes to graveyard instead of exile")
     void transformedFlashbackSpellGoesToGraveyardInsteadOfExile() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Geistflame geistflame = new Geistflame();

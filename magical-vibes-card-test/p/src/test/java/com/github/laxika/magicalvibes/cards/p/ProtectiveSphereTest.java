@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ProtectiveSphereTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Colored mana restricts source choice")
     void coloredManaRestrictsSourceChoice() {
         addSphere();
         Permanent redSource = addCreatureReady(player2, new RagingKavu());
@@ -41,6 +43,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Colorless mana does not allow a choice")
     void colorlessManaDoesNotAllowAChoice() {
         addSphere();
         addCreatureReady(player2, new RagingKavu());
@@ -56,6 +59,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multicolored source matches any activation color")
     void multicoloredSourceMatchesAnyActivationColor() {
         addSphere();
         Permanent redGreenSource = addCreatureReady(player2, new RagingKavu());
@@ -72,6 +76,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents chosen source combat damage only")
     void preventsChosenSourceCombatDamageOnly() {
         harness.setLife(player1, 20);
         addSphere();
@@ -91,6 +96,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevention expires at end of turn")
     void preventionExpiresAtEndOfTurn() {
         addSphere();
         Permanent redSource = addCreatureReady(player2, new RagingKavu());
@@ -111,6 +117,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can choose matching spell on stack")
     void canChooseMatchingSpellOnStack() {
         harness.setLife(player1, 20);
         addSphere();
@@ -140,6 +147,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not prevent damage after source loses matching color")
     void doesNotPreventDamageAfterSourceLosesMatchingColor() {
         harness.setLife(player1, 20);
         addSphere();
@@ -164,6 +172,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing creature spell also prevents damage from permanent it becomes")
     void choosingCreatureSpellAlsoPreventsDamageFromPermanentItBecomes() {
         harness.setLife(player1, 20);
         addSphere();
@@ -185,6 +194,7 @@ class ProtectiveSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not prevent chosen spell damage to your creature")
     void doesNotPreventChosenSpellDamageToYourCreature() {
         harness.setLife(player1, 20);
         addSphere();

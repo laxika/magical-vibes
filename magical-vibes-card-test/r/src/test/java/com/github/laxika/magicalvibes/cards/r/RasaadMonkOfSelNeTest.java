@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RasaadMonkOfSelNeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Exiles an opponent's creature and returns it when Rasaad leaves")
     void exilesAnOpponentsCreatureAndReturnsItWhenRasaadLeaves() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
         harness.setHand(player1, List.of(new RasaadMonkOfSelNe()));
@@ -59,6 +60,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Radiant face makes the exiled creature an abilityless 1/1")
     void radiantFaceMakesTheExiledCreatureAnAbilitylessOneOne() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
         harness.setHand(player1, List.of(new RasaadMonkOfSelNe(), new Plains()));
@@ -86,6 +88,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Warrior face creates three soldiers")
     void warriorFaceCreatesThreeSoldiers() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
         harness.setHand(player1, List.of(new RasaadMonkOfSelNe(), new Mountain()));
@@ -116,6 +119,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns the captured creature immediately when the base face leaves")
     void returnsTheCapturedCreatureImmediatelyWhenTheBaseFaceLeaves() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
         harness.setHand(player1, List.of(new RasaadMonkOfSelNe()));
@@ -136,6 +140,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not exile the target if Rasaad leaves before its entry trigger resolves")
     void doesNotExileTheTargetIfRasaadLeavesBeforeItsEntryTriggerResolves() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
         harness.setHand(player1, List.of(new RasaadMonkOfSelNe()));
@@ -238,6 +243,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can specialize by discarding a colored nonland card")
     void canSpecializeByDiscardingAColoredNonlandCard() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
         harness.setHand(player1, List.of(new RasaadMonkOfSelNe(), new SteadfastPaladin()));

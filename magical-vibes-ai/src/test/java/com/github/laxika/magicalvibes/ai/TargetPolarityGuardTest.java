@@ -89,6 +89,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TargetPolarityGuardTest {
 
     @Test
+    @DisplayName("Reflexive counter placement classifies only its initial target")
     void reflexiveCounterPlacementClassifiesOnlyItsInitialTarget() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);
@@ -122,6 +123,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Damage then token creation targets opposing creatures")
     void damageThenTokenCreationTargetsOpposingCreatures() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);
@@ -132,6 +134,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Classifies equipment attachments and counter removal")
     void classifiesEquipmentAttachmentsAndCounterRemoval() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
@@ -151,6 +154,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Classifies representative permanent targeting shapes by direction")
     void classifiesRepresentativePermanentTargetingShapesByDirection() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
@@ -227,6 +231,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Monarch duration exile classifies as harmful removal")
     void monarchDurationExileClassifiesAsHarmfulRemoval() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
@@ -241,6 +246,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Optional goad targets opposing creatures")
     void optionalGoadTargetsOpposingCreatures() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);
@@ -251,6 +257,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Recent permanent targeting cards choose the intended board")
     void recentPermanentTargetingCardsChooseTheIntendedBoard() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
@@ -297,6 +304,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Perpetual abilities use their granted effect to choose targets")
     void perpetualAbilitiesUseTheirGrantedEffectToChooseTargets() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
@@ -319,6 +327,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Classifies cloaking and combat reassignment")
     void classifiesCloakingAndCombatReassignment() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);
@@ -347,6 +356,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Every permanent targeting spell or enter-the-battlefield effect classifies")
     void everyPermanentTargetingSpellOrEtbEffectClassifies() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
@@ -403,6 +413,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Classifies positional boosts and blocking restrictions")
     void classifiesPositionalBoostsAndBlockingRestrictions() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
@@ -423,6 +434,7 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Classifies every die roll branch and prioritizes harm over benefits")
     void classifiesEveryDieRollBranchAndPrioritizesHarmOverBenefits() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
