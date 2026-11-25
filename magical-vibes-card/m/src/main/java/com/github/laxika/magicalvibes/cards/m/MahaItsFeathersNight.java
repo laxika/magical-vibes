@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -13,7 +13,7 @@ public class MahaItsFeathersNight extends Card {
     public MahaItsFeathersNight() {
         // Ward—Discard a card. (Whenever this creature becomes the target of a spell or ability
         // an opponent controls, counter it unless that player discards a card.)
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessDiscardsEffect());
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessDiscards());
 
         addStaticEffect(new SetBasePowerToughnessEffect(null, 1, Subjects.creaturesYourOpponentsControl()));
     }

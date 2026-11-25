@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -31,7 +31,7 @@ public class SarumanOfManyColors extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessDiscardsEffect(noncreatureSpell));
+                UnlessPaysEffect.counterUnlessDiscards(noncreatureSpell, "enchantment, instant, or sorcery"));
         addTrigger(Triggers.youCastSpell().nthThisTurn(2),
                 new MillEachOpponentThenIfMilledEffect(
                         2,

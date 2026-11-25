@@ -7,12 +7,26 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,17 +42,22 @@ import org.springframework.stereotype.Component;
 
 /**
  * "[Do something] unless [a player pays a cost]" (CR 118.12a). The payer is asked as the effect resolves, the
- * resolution waiting on this effect; the answer ({@code MayAbilityHandlerService}) pays the cost and the resolution
- * runs this effect again, which {@code EffectResolutionService} then resolves as the branch the answer chose
- * ({@code ifPaid} or {@code ifNotPaid}, CR 118.12: the choice to pay, not what happened). A payer who couldn't pay the
- * cost in full isn't asked and {@code ifNotPaid} resolves at once ({@link #cannotBePaid}, CR 118.3, 608.2d).
+ * resolution waiting on this effect; the answer ({@code MayAbilityHandlerService}) pays the cost and records the
+ * payer's choice on the resolving entry ({@link StackEntry#answerUnless}), and the resolution runs this effect again,
+ * which {@code EffectResolutionService} then resolves as the branch the choice made ({@code ifPaid} or
+ * {@code ifNotPaid}, CR 118.12: the choice to pay, not what happened). The choice is the entry's, not the game's, so a
+ * question another ability asks while a payment's own choice is made (which card to discard, which creature to blight)
+ * can't take it. A payer who couldn't pay the cost in full isn't asked and {@code ifNotPaid} resolves at once
+ * ({@link #cannotBePaid}, CR 118.3, 608.2d).
+ *
+ * <p>An any-of ransom ("discard a card or pay {2}") is asked one alternative at a time, in its order, skipping those
+ * the payer couldn't pay; declining one asks the next, and declining every one is not paying.
  *
  * <p>What can pay: the payer's mana pool and the mana they could still make (they may activate mana abilities while
  * asked, CR 605.3a); mana that can be spent only on {X} for an announced-X ransom; 2 life for each {B} under K'rrik,
- * Son of Yawgmoth; life only while the payer can lose life (CR 119.4, 119.8); all of it judged and paid by
- * {@link ResolutionCostPaymentService}, which also raises the tax-paid event for mana paid for another player's spell
- * or permanent. An amount read from the source reads the source on the battlefield, else as it last existed
- * (CR 608.2h).
+ * Son of Yawgmoth; life only while the payer can lose life (CR 119.4, 119.8); the other costs as
+ * {@link ResolutionCostPaymentService} judges and pays them, through the shared actions. An amount read from the source
+ * reads the source on the battlefield, else as it last existed (CR 608.2h).
  */
 @Slf4j
 @Component
@@ -75,28 +94,51 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * The ransom as it is paid now: the mana cost ({@code null} for none), whether it is the announced X, and the life.
+     * One way to pay the ransom as it is paid now (every amount read), with its words.
      *
-     * @param manaCost the mana to pay, or {@code null} when the ransom is life only
-     * @param xCost    whether mana spendable only on {X} may pay it
-     * @param life     the life to pay with the mana
+     * @param cost     the cost {@link ResolutionCostPaymentService} pays
+     * @param action   the imperative the prompt asks ("Pay {2}", "Discard a card", "Blight 2")
+     * @param done     what the log says the payer does ("pays {2}", "discards a card")
+     * @param declined what the log says the payer chooses or declines to do ("pay {2}", "discard a card")
      */
-    public record Ransom(String manaCost, boolean xCost, int life) {
+    public record Ransom(CostEffect cost, String action, String done, String declined) {
 
-        /** The cost as the prompt and the log read it: "{2}", "3 life", "{2} and 2 life". */
-        public String text() {
-            if (manaCost == null) {
-                return life + " life";
-            }
-            return life > 0 ? manaCost + " and " + life + " life" : manaCost;
+        /** A mana and / or life ransom: {@code manaCost} ({@code null} for none), X-only mana, and the life. */
+        static Ransom ofManaAndLife(String manaCost, boolean xCost, int life) {
+            String text = manaCost == null ? life + " life" : life > 0 ? manaCost + " and " + life + " life" : manaCost;
+            CostEffect cost = manaCost == null ? new PayLifeCost(life)
+                    : new PayManaCost(manaCost, null, null, false, life, false, xCost);
+            return new Ransom(cost, "Pay " + text, "pays " + text, "pay " + text);
         }
 
-        /** The ransom as the cost {@link ResolutionCostPaymentService} pays. */
-        public CostEffect cost() {
-            if (manaCost == null) {
-                return new PayLifeCost(life);
-            }
-            return new PayManaCost(manaCost, null, null, false, life, false, xCost);
+        /** The mana to pay, or {@code null} when the ransom isn't (or has no) mana. */
+        public String manaCost() {
+            return cost instanceof PayManaCost mana && mana.manaCost() != null && !mana.manaCost().isEmpty()
+                    ? mana.manaCost() : null;
+        }
+
+        /** Whether mana spendable only on {X} may pay it. */
+        public boolean xCost() {
+            return cost instanceof PayManaCost mana && mana.announcedX();
+        }
+
+        /** The life paid with or instead of mana. */
+        public int life() {
+            return switch (cost) {
+                case PayManaCost mana -> mana.lifeAmount();
+                case PayLifeCost life -> ((Fixed) life.amount()).value();
+                default -> 0;
+            };
+        }
+
+        /** Whether this is a mana or life payment, whose answer is read from the question as asked. */
+        public boolean manaOrLife() {
+            return cost instanceof PayManaCost || cost instanceof PayLifeCost;
+        }
+
+        /** The cost as the mana and life prompts and log lines read it: "{2}", "3 life", "{2} and 2 life". */
+        public String text() {
+            return manaOrLife() ? action.substring("Pay ".length()) : action;
         }
     }
 
@@ -112,13 +154,18 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         if (payerId == null) {
             return;
         }
-        Ransom ransom = ransom(gameData, entry, unless);
-        StackEntry spell = unless.counters()
-                ? subjectResolutionService.spellOnStack(gameData, entry, Subjects.targetSpell()) : null;
-        String prompt = spell == null
-                ? "Pay " + ransom.text() + "?"
-                : "Pay " + ransom.text() + " to prevent " + FaceDownVisibility.nameShownTo(gameData, spell, payerId)
-                        + " from being countered?";
+        int index = entry.getResolvingEffectIndex();
+        List<Ransom> alternatives = alternatives(gameData, entry, unless);
+        int asked = firstPayable(gameData, payerId, alternatives, entry.unlessAlternative(index));
+        if (asked < 0) {
+            return;
+        }
+        if (alternatives.size() > 1) {
+            entry.askUnlessAlternative(index, asked);
+        }
+        Ransom ransom = alternatives.get(asked);
+        StackEntry spell = spellAskedAbout(gameData, entry, unless);
+        String prompt = ransom.action() + suffix(gameData, unless, spell, payerId) + "?";
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), payerId, List.of(unless), prompt,
@@ -129,33 +176,122 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
     /**
      * Whether {@code unless}'s payer could not pay its ransom in full now, so is not asked and its {@code ifNotPaid}
-     * happens (CR 118.3, 608.2d). A payer the subject no longer names (the spell left the stack) is asked nothing and
-     * nothing happens, which {@link #resolve} decides.
+     * happens (CR 118.3, 608.2d): for an any-of ransom, none of the alternatives not yet declined. A payer the subject
+     * no longer names (the spell left the stack) is asked nothing and nothing happens, which {@link #resolve} decides.
      */
-    public boolean cannotBePaid(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
+    public boolean cannotBePaid(GameData gameData, StackEntry entry, UnlessPaysEffect unless, int index) {
         UUID payerId = payer(gameData, entry, unless);
-        return payerId != null && !canPay(gameData, payerId, ransom(gameData, entry, unless));
+        return payerId != null && firstPayable(gameData, payerId, alternatives(gameData, entry, unless),
+                entry.unlessAlternative(index)) < 0;
+    }
+
+    /** {@link #cannotBePaid(GameData, StackEntry, UnlessPaysEffect, int)} for the effect the entry is resolving. */
+    public boolean cannotBePaid(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
+        return cannotBePaid(gameData, entry, unless, entry.getResolvingEffectIndex());
     }
 
     /**
-     * The player who may pay, or {@code null}: none for a counter whose spell or ability is no longer on the stack (an
-     * earlier instruction countered it "instead", Bring the Ending), as there is nothing left to pay for.
+     * The player who may pay, or {@code null}: none when the spell or ability the branch is about is no longer on the
+     * stack (an earlier instruction countered it "instead", Bring the Ending), as there is nothing left to pay for.
      */
     private UUID payer(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
-        if (unless.counters() && subjectResolutionService.spellOnStack(gameData, entry, Subjects.targetSpell()) == null) {
+        if ((unless.counters() || unless.retargets()) && spellAskedAbout(gameData, entry, unless) == null) {
             return null;
         }
         return subjectResolutionService.player(gameData, entry, unless, unless.payer());
     }
 
-    /** {@code unless}'s ransom with its amounts read as it resolves. */
+    /** The spell or ability the counter or the retarget of {@code unless} acts on, while it is on the stack. */
+    private StackEntry spellAskedAbout(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
+        PermanentSubject spell = unless.counters() ? unless.counteredSpell()
+                : unless.retargets() ? Subjects.targetSpell() : null;
+        return spell == null ? null : subjectResolutionService.spellOnStack(gameData, entry, spell);
+    }
+
+    private static String suffix(GameData gameData, UnlessPaysEffect unless, StackEntry spell, UUID viewerId) {
+        if (spell == null) {
+            return "";
+        }
+        String name = FaceDownVisibility.nameShownTo(gameData, spell, viewerId);
+        return unless.counters() ? " to prevent " + name + " from being countered"
+                : " to keep " + name + " from being retargeted";
+    }
+
+    private int firstPayable(GameData gameData, UUID payerId, List<Ransom> alternatives, int from) {
+        for (int i = Math.max(0, from); i < alternatives.size(); i++) {
+            if (costPayment.canPay(gameData, payerId, alternatives.get(i).cost(), null)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** {@code unless}'s ransom with its amounts read as it resolves; an any-of ransom's alternatives in order. */
+    public List<Ransom> alternatives(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
+        if (unless.ransom() instanceof AnyOfCost anyOf) {
+            return anyOf.alternatives().stream().map(cost -> ransom(gameData, entry, cost)).toList();
+        }
+        return List.of(ransom(gameData, entry, unless.ransom()));
+    }
+
+    /** {@code unless}'s ransom with its amounts read as it resolves (the first alternative of an any-of ransom). */
     public Ransom ransom(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
-        return switch (unless.ransom()) {
-            case PayManaCost mana -> new Ransom(manaCost(gameData, entry, mana), mana.announcedX(), mana.lifeAmount());
-            case PayLifeCost life -> new Ransom(null, false,
+        return alternatives(gameData, entry, unless).getFirst();
+    }
+
+    private Ransom ransom(GameData gameData, StackEntry entry, CostEffect cost) {
+        return switch (cost) {
+            case PayManaCost mana -> Ransom.ofManaAndLife(manaCost(gameData, entry, mana), mana.announcedX(),
+                    mana.lifeAmount());
+            case PayLifeCost life -> Ransom.ofManaAndLife(null, false,
                     amountEvaluationService.evaluate(gameData, life.amount(), amountContext(gameData, entry)));
-            default -> throw new IllegalStateException("Not a mana or life ransom: " + unless.ransom());
+            case DiscardCardTypeCost discard -> {
+                String card = discard.label() == null ? "a card" : article(discard.label()) + " card";
+                yield new Ransom(cost, "Discard " + card, "discards " + card, "discard " + card);
+            }
+            case DiscardRandomCardCost ignored ->
+                    new Ransom(cost, "Discard a card at random", "discards a card at random",
+                            "discard a card at random");
+            case DiscardHandCost ignored ->
+                    new Ransom(cost, "Discard your hand", "discards their hand", "discard their hand");
+            case SacrificePermanentCost sacrifice -> {
+                String what = article(sacrifice.description() == null ? "permanent" : sacrifice.description());
+                yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
+            }
+            case SacrificeMultiplePermanentsCost sacrifice -> {
+                String what = sacrifice.count() + " "
+                        + (sacrifice.description() == null ? "permanents" : sacrifice.description());
+                yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
+            }
+            case PutCounterOnControlledCreatureCost blight -> new Ransom(cost, "Blight " + blight.count(),
+                    "blights " + blight.count(), "blight " + blight.count());
+            case CollectEvidenceCost evidence -> new Ransom(cost, "Collect evidence " + evidence.minimumManaValue(),
+                    "collects evidence " + evidence.minimumManaValue(),
+                    "collect evidence " + evidence.minimumManaValue());
+            case ExileGraveyardCost ignored -> new Ransom(cost, "Exile all cards from your graveyard",
+                    "exiles all cards from their graveyard", "exile all cards from their graveyard");
+            case GetPoisonCountersCost poison -> {
+                String counters = poison.count() + " poison counter" + (poison.count() == 1 ? "" : "s");
+                yield new Ransom(cost, "Get " + counters, "gets " + counters, "get " + counters);
+            }
+            case DamageFromSourceCost damage -> {
+                int amount = amountEvaluationService.evaluate(gameData, damage.amount(), amountContext(gameData, entry));
+                String dealer = FaceDownVisibility.sourceName(gameData, entry);
+                yield new Ransom(new DamageFromSourceCost(new Fixed(amount)),
+                        "Have " + dealer + " deal " + amount + " damage to you",
+                        "has " + dealer + " deal " + amount + " damage to them",
+                        "have " + dealer + " deal " + amount + " damage to them");
+            }
+            case WaterbendCost waterbend -> {
+                String text = "{" + waterbend.amount() + "} using waterbend";
+                yield new Ransom(cost, "Pay " + text, "pays " + text, "pay " + text);
+            }
+            default -> throw new IllegalStateException("No resolution-time payment for the ransom " + cost);
         };
+    }
+
+    private static String article(String noun) {
+        return ("aeiou".indexOf(Character.toLowerCase(noun.charAt(0))) >= 0 ? "an " : "a ") + noun;
     }
 
     private String manaCost(GameData gameData, StackEntry entry, PayManaCost mana) {
@@ -188,61 +324,83 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         return AmountContext.forStackEntry(entry, source != null ? source : entry.getSourcePermanentSnapshot());
     }
 
-    /**
-     * Whether {@code payerId} could pay {@code ransom} in full (CR 118.3): the mana from their pool or the mana they
-     * could make, {B} paid with 2 life under K'rrik included, and the life while they can lose life (CR 119.8).
-     */
-    private boolean canPay(GameData gameData, UUID payerId, Ransom ransom) {
-        return costPayment.canPay(gameData, payerId, ransom.cost(), null);
-    }
-
     /** Whether {@code playerId} could pay {@code amount} life (CR 119.4, 119.8): {@link ResolutionCostPaymentService#canPayLife}. */
     public boolean canPayLife(GameData gameData, UUID playerId, int amount) {
         return costPayment.canPayLife(gameData, playerId, amount);
     }
 
     /**
-     * {@code player}'s answer to {@code ability}, the question {@link #resolve} asked: accepted and payable, the ransom
-     * is paid (the mana from their pool, {B} with 2 life under K'rrik when the mana falls short, then the life) and
-     * {@code true} returned; declined, or accepted without the resources, {@code false} (CR 118.3). Paying life is
-     * losing it (CR 119.4): a Lich's Duel Mastery sacrifice it would cause has its death replacements chosen first
-     * (CR 616.1), and {@code null} is returned while they are asked; the answer is then completed again.
+     * {@code player}'s answer to {@code ability}, the question {@link #resolve} asked for the resolution waiting in
+     * {@code gameData.pendingEffectResolutionEntry}. Accepted, the choice to pay is recorded on that entry and the
+     * ransom paid: at once (the mana from their pool, {B} with 2 life under K'rrik when the mana falls short, then the
+     * life; a random discard; poison counters; the damage), or by a prompt whose completion resumes the resolution
+     * (the card to discard, the permanents to sacrifice, the creature to blight, the evidence, the waterbend taps).
+     * Declined, or accepted without the resources (CR 118.3), the next alternative of an any-of ransom is asked, else
+     * the choice not to pay is recorded. Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it would
+     * cause has its death replacements chosen first (CR 616.1), and the answer is then completed again.
+     *
+     * @return {@code true} when the resolution goes on now, {@code false} while a prompt finishes the payment
      */
-    public Boolean answer(GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
+    public boolean answer(GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
                           UnlessPaysEffect unless) {
-        UUID payerId = player.getId();
-        Ransom ransom = new Ransom(ability.manaCost(), unless.ransom() instanceof PayManaCost mana && mana.announcedX(),
-                ability.additionalLifeCost());
-        StackEntry spell = unless.counters() ? spellOnStack(gameData, ability.targetCardId()) : null;
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No resolution waits for the answer to " + ability.description());
+        }
+        int index = gameData.pendingEffectResolutionIndex;
+        List<Ransom> alternatives = alternatives(gameData, entry, unless);
+        int asked = alternatives.size() > 1 ? entry.unlessAlternative(index) : 0;
+        Ransom ransom = alternatives.get(Math.min(asked, alternatives.size() - 1));
+        if (ransom.manaOrLife()) {
+            // The mana and life as the question carried them: the payer may have tapped for it while asked.
+            ransom = Ransom.ofManaAndLife(ability.manaCost(), ransom.xCost(), ability.additionalLifeCost());
+        }
+        StackEntry spell = unless.counters() || unless.retargets()
+                ? spellOnStack(gameData, ability.targetCardId()) : null;
         if (accepted) {
+            entry.answerUnless(index, true);
             ResolutionCostPaymentService.Outcome outcome = costPayment.pay(gameData, player, ransom.cost(),
-                    new ResolutionCostPaymentService.Payment(ability.sourceCard(), ability.sourceControllerId(), ability));
+                    new ResolutionCostPaymentService.Payment(ability.sourceCard(), ability.sourceControllerId(),
+                            ability, entry));
             if (outcome == ResolutionCostPaymentService.Outcome.ASKING) {
-                return null;
+                if (!ransom.manaOrLife()) {
+                    // Paid by the prompt's answer: the choice to pay is made now, the payment comes with the answer.
+                    logPaid(gameData, player, "chooses to " + ransom.declined(), unless, spell, ability);
+                }
+                return false;
             }
             if (outcome == ResolutionCostPaymentService.Outcome.PAID) {
-                if (spell != null) {
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " pays " + ransom.text() + ". ", spell.getCard(), " is not countered."));
-                } else {
-                    gameLogService.append(gameData, GameLog.text(player.getUsername() + " pays " + ransom.text() + "."));
-                }
-                log.info("Game {} - {} pays {} ({})", gameData.id, player.getUsername(), ransom.text(),
-                        ability.sourceCard().getName());
+                logPaid(gameData, player, ransom.done(), unless, spell, ability);
                 return true;
             }
         }
-        if (spell != null && !counterable(gameData, spell, ability)) {
+        if (spell != null && unless.counters() && !counterable(gameData, spell, ability)) {
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to pay " + ransom.text() + ". ", spell.getCard(),
+                    player.getUsername() + " declines to " + ransom.declined() + ". ", spell.getCard(),
                     " cannot be countered."));
         } else {
             gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " declines to pay " + ransom.text() + "."));
+                    player.getUsername() + " declines to " + ransom.declined() + "."));
         }
-        log.info("Game {} - {} declines to pay {} ({})", gameData.id, player.getUsername(), ransom.text(),
+        log.info("Game {} - {} declines to {} ({})", gameData.id, player.getUsername(), ransom.declined(),
                 ability.sourceCard().getName());
-        return false;
+        if (asked + 1 < alternatives.size()) {
+            entry.askUnlessAlternative(index, asked + 1);
+        } else {
+            entry.answerUnless(index, false);
+        }
+        return true;
+    }
+
+    private void logPaid(GameData gameData, Player player, String done, UnlessPaysEffect unless, StackEntry spell,
+                         PendingMayAbility ability) {
+        if (spell != null) {
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " " + done + ". ",
+                    spell.getCard(), unless.counters() ? " is not countered." : " keeps its target."));
+        } else {
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " " + done + "."));
+        }
+        log.info("Game {} - {} {} ({})", gameData.id, player.getUsername(), done, ability.sourceCard().getName());
     }
 
     private static StackEntry spellOnStack(GameData gameData, UUID targetableId) {

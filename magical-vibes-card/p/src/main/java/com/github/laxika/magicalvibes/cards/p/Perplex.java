@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 public class Perplex extends Card {
 
     public Perplex() {
-        addSpellEffect(new CounterUnlessDiscardsHandEffect());
+        addSpellEffect(UnlessPaysEffect.counterUnlessDiscardsHand());
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

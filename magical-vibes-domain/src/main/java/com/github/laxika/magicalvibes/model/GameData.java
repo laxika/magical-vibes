@@ -10766,6 +10766,8 @@ public class GameData {
         copy.graveyardTargetOperation.kicked = this.graveyardTargetOperation.kicked;
         copy.graveyardTargetOperation.resolutionTimeCollectEvidenceResume =
                 this.graveyardTargetOperation.resolutionTimeCollectEvidenceResume;
+        copy.graveyardTargetOperation.collectEvidenceAsResolutionCost =
+                this.graveyardTargetOperation.collectEvidenceAsResolutionCost;
         copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume = this.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume;
         copy.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume =
                 this.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume;

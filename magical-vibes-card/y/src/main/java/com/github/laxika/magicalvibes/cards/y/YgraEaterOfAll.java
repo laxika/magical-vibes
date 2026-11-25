@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -38,6 +38,6 @@ public class YgraEaterOfAll extends Card {
         addTrigger(Triggers.dies(new PermanentHasSubtypePredicate(CardSubtype.FOOD), ObjectRelation.ANY),
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessSacrificesEffect(new PermanentHasSubtypePredicate(CardSubtype.FOOD), "Food"));
+                UnlessPaysEffect.counterUnlessSacrifices(new PermanentHasSubtypePredicate(CardSubtype.FOOD), "Food"));
     }
 }

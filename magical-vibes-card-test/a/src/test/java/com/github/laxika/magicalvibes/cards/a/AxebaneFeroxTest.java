@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.s.SphinxOfTheFinalWord;
+import com.github.laxika.magicalvibes.cards.e.EvidenceExaminer;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -19,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AxebaneFerox.class, GiantGrowth.class, GrizzlyBears.class, ProdigalPyromancer.class, Shock.class})
+@CardUsed({AxebaneFerox.class, GiantGrowth.class, GrizzlyBears.class, ProdigalPyromancer.class, Shock.class, EvidenceExaminer.class, SphinxOfTheFinalWord.class})
 class AxebaneFeroxTest extends BaseCardTest {
 
     @Test
@@ -205,5 +208,52 @@ class AxebaneFeroxTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Axebane Ferox");
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Evidence collected to pay the ward exiles the chosen cards and triggers the payer's \"whenever you collect evidence\"")
+    void paidEvidenceTriggersCollectEvidenceAbilities() {
+        Permanent ferox = harness.addToBattlefieldAndReturn(player1, new AxebaneFerox());
+        harness.addToBattlefield(player2, new EvidenceExaminer());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, ferox.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMultipleCardsChosen(player2, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Clue"));
+        assertThat(gqs.getEffectivePower(gd, ferox)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Ward asks for evidence even when the spell can't be countered, and paying it exiles the cards (owner's decision, CR 118.12a)")
+    void wardAsksWhenTheSpellCantBeCountered() {
+        Permanent ferox = harness.addToBattlefieldAndReturn(player1, new AxebaneFerox());
+        harness.addToBattlefield(player2, new SphinxOfTheFinalWord());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, ferox.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMultipleCardsChosen(player2, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gqs.getEffectivePower(gd, ferox)).isEqualTo(7);
     }
 }

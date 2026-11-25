@@ -13,8 +13,7 @@ import java.util.Map;
  * in list order and dispatches to the first one with a registered handler.
  *
  * <p>The lookup is by {@code effect.getClass()}, so a may-effect typed by an interface is keyed per concrete
- * implementor: each {@code CounterUnlessEffect} record ({@code CounterUnlessWaterbendsEffect},
- * {@code CounterUnlessDiscardsEffect}, ...) has a bean of its own.
+ * implementor: each record of the interface has a bean of its own.
  */
 public class MayEffectHandlerRegistry {
 

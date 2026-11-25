@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AutumnsVeil;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.cards.r.RootSliver;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BorderPatrol.class, GripOfAmnesia.class, RootSliver.class})
+@CardUsed({BorderPatrol.class, GripOfAmnesia.class, RootSliver.class, AutumnsVeil.class})
 class GripOfAmnesiaTest extends BaseCardTest {
 
     @Test
@@ -149,6 +151,47 @@ class GripOfAmnesiaTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(graveyardCard);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == spell);
+    }
+
+    @Test
+    @DisplayName("Its controller may exile an empty graveyard to pay, and Grip of Amnesia still draws a card (ruling, CR 608.2c)")
+    void emptyGraveyardCanBeExiledToPay() {
+        Card drawCard = new BorderPatrol();
+        BorderPatrol spell = castAgainstOpponent(List.of(), drawCard);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == spell);
+    }
+
+    @Test
+    @DisplayName("A spell protected from blue counters still pays the exile its controller chose (CR 118.12)")
+    void protectedSpellStillPaysTheExile() {
+        Card graveyardCard = new BorderPatrol();
+        BorderPatrol spell = new BorderPatrol();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.castFromHand(player2, new AutumnsVeil(), "{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player2, spell, "{4}{W}");
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new GripOfAmnesia()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, spell.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(graveyardCard);
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() == spell);

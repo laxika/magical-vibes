@@ -14,6 +14,11 @@ public class GraveyardTargetOperationState {
     public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
     /** Whether a resolution-time collect-evidence choice is awaiting completion. */
     public boolean resolutionTimeCollectEvidenceResume;
+    /**
+     * Whether that collect-evidence choice pays a cost a resolving effect asked for (an "unless" ransom), so its
+     * completion goes on with the asking effect itself rather than with the next one.
+     */
+    public boolean collectEvidenceAsResolutionCost;
     /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
     public boolean resolutionTimeReturnCardsToBattlefieldResume;
     /** Resolution-time choice of one targeted card to put onto the battlefield for a bargained spell. */

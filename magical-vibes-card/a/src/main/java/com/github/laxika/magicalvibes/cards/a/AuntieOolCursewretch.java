@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,7 +17,7 @@ public class AuntieOolCursewretch extends Card {
 
     public AuntieOolCursewretch() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessBlightsEffect(2));
+                UnlessPaysEffect.counterUnlessBlights(2));
 
         TargetPermanentMatches controlsAffectedCreature = new TargetPermanentMatches(
                 new PermanentControlledBySourceControllerPredicate());

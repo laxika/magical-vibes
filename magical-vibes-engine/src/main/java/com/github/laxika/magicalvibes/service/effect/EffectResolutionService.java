@@ -549,14 +549,15 @@ public class EffectResolutionService {
                 }
             }
 
-            // CR 118.12a — "[do X] unless [a player pays]": the payer's answer, or a payment they couldn't make
-            // (CR 118.3, 608.2d), chooses the branch that resolves as this effect.
+            // CR 118.12a — "[do X] unless [a player pays]": the payer's answer, kept on this entry so no other
+            // question answered meanwhile can take it, or a payment they couldn't make (CR 118.3, 608.2d), chooses the
+            // branch that resolves as this effect.
             if (!skipEffect && effectToResolve instanceof UnlessPaysEffect unless) {
-                Boolean paid = gameData.resolvedMayAccepted;
-                gameData.resolvedMayAccepted = null;
+                Boolean paid = entry.takeUnlessAnswer(i);
                 if (paid == null && unlessPaysEffectHandler != null
-                        && unlessPaysEffectHandler.cannotBePaid(gameData, entry, unless)) {
+                        && unlessPaysEffectHandler.cannotBePaid(gameData, entry, unless, i)) {
                     paid = false;
+                    entry.clearUnlessAnswer(i);
                 }
                 if (paid != null) {
                     CardEffect branch = paid ? unless.ifPaid() : unless.ifNotPaid();

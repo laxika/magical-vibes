@@ -252,4 +252,20 @@ class SarumanOfManyColorsTest extends BaseCardTest {
         assertThat(targetChoice).isNotNull();
         assertThat(targetChoice.validCardIds()).containsExactly(cheapEnough.getId());
     }
+
+    @Test
+    @DisplayName("A payer with no enchantment, instant, or sorcery card can't pay the ward, so isn't asked and the spell is countered (CR 118.3, 608.2d)")
+    void payerWithoutAMatchingCardIsNotAsked() {
+        var sarumanPermanent = harness.addToBattlefieldAndReturn(player1, new SarumanOfManyColors());
+        Forest land = new Forest();
+        harness.setHand(player2, List.of(new LightningBolt(), land));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, sarumanPermanent.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(sarumanPermanent.getMarkedDamage()).isZero();
+    }
 }

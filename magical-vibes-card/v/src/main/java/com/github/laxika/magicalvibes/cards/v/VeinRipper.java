@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +21,7 @@ public class VeinRipper extends Card {
 
     public VeinRipper() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessSacrificesEffect(new PermanentIsCreaturePredicate(), "creature"));
+                UnlessPaysEffect.counterUnlessSacrifices(new PermanentIsCreaturePredicate(), "creature"));
 
         // Whenever a creature dies (including this one), target opponent loses 2 life and you gain 2 life.
         target(new PlayerPredicateTargetFilter(

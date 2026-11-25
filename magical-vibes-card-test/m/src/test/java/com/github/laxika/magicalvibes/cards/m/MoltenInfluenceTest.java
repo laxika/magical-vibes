@@ -176,4 +176,26 @@ class MoltenInfluenceTest extends BaseCardTest {
         harness.castInstant(player2, 0, firebolt.getId());
         return firebolt;
     }
+
+    @Test
+    @DisplayName("The accepted damage is dealt by Molten Influence itself, and the instant is not countered")
+    void acceptedDamageIsDealtByMoltenInfluence() {
+        MoltenInfluence influence = new MoltenInfluence();
+        CeaseFire ceaseFire = new CeaseFire();
+        harness.setHand(player1, List.of(ceaseFire));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.setHand(player2, List.of(influence));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, ceaseFire.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(influence.getId(), 0)).isEqualTo(4);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(ceaseFire.getId()));
+    }
 }

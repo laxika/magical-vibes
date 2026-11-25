@@ -34,6 +34,8 @@ public class WhirlwindDenialSupport {
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final PotentialManaService potentialManaService;
+    private final com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService
+            resolutionCostPaymentService;
 
     public void begin(GameData gameData, StackEntry source,
                       CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect effect) {
@@ -70,10 +72,9 @@ public class WhirlwindDenialSupport {
                 : counterSupport.findCounterTarget(gameData, target.getCard().getId(), source);
         boolean paid = false;
         if (legalTarget != null && accepted) {
-            ManaCost cost = new ManaCost(manaCost(state.amount));
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (pool != null && cost.canPayResolutionCost(pool)) {
-                cost.payResolutionCost(pool);
+            // Mana paid for a spell or permanent of the Denial's controller is a tax paid to them (Tax Taker).
+            if (resolutionCostPaymentService.payManaFromPool(gameData, player.getId(),
+                    new ManaCost(manaCost(state.amount)), state.sourceControllerId)) {
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + manaCost(state.amount) + ". ",

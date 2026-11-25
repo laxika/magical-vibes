@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsaoEnlightenedBushi;
 import com.github.laxika.magicalvibes.cards.l.LoreBroker;
@@ -295,5 +296,28 @@ class PerplexTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
         harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("Its controller may discard an empty hand to keep the spell from being countered (Perplex ruling)")
+    void emptyHandCanBeDiscardedToPay() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new Perplex()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

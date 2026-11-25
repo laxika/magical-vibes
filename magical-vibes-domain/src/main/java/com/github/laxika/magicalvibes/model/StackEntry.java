@@ -657,6 +657,46 @@ public class StackEntry {
     }
     /** The resolution scratchpad: results an earlier step left for later steps to read. */
     private ResolutionResults resolutionResults = ResolutionResults.EMPTY;
+    /** The payer's answer to the "unless" effect this entry is resolving, or {@code null} (CR 118.12a). */
+    private UnlessAnswer unlessAnswer;
+
+    /** The payer of the "unless" effect at {@code effectIndex} chose to pay ({@code true}) or not (CR 118.12). */
+    public void answerUnless(int effectIndex, boolean paid) {
+        unlessAnswer = new UnlessAnswer(effectIndex, paid, unlessAlternative(effectIndex));
+    }
+
+    /** The payer of the "unless" effect at {@code effectIndex} is asked its ransom's {@code alternative} (in order). */
+    public void askUnlessAlternative(int effectIndex, int alternative) {
+        unlessAnswer = new UnlessAnswer(effectIndex, null, alternative);
+    }
+
+    /**
+     * The alternative of the "unless" effect at {@code effectIndex} its payer is asked, every earlier one declined or
+     * unpayable; 0 before any was asked.
+     */
+    public int unlessAlternative(int effectIndex) {
+        return unlessAnswer != null && unlessAnswer.effectIndex() == effectIndex ? unlessAnswer.alternative() : 0;
+    }
+
+    /**
+     * The payer's answer to the "unless" effect at {@code effectIndex}, or {@code null} while none was given; an
+     * answer is read once, which ends that effect's state on this entry.
+     */
+    public Boolean takeUnlessAnswer(int effectIndex) {
+        if (unlessAnswer == null || unlessAnswer.effectIndex() != effectIndex || unlessAnswer.paid() == null) {
+            return null;
+        }
+        Boolean paid = unlessAnswer.paid();
+        unlessAnswer = null;
+        return paid;
+    }
+
+    /** Ends the state of the "unless" effect at {@code effectIndex} (its branch was chosen without an answer). */
+    public void clearUnlessAnswer(int effectIndex) {
+        if (unlessAnswer != null && unlessAnswer.effectIndex() == effectIndex) {
+            unlessAnswer = null;
+        }
+    }
 
     /**
      * Records the departures of the step being resolved, replacing those of earlier steps. A removal
@@ -1504,6 +1544,7 @@ public class StackEntry {
         this.counteredAbilitySourceId = source.counteredAbilitySourceId;
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;
         this.resolutionResults = source.resolutionResults;
+        this.unlessAnswer = source.unlessAnswer;
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.sourceAttachmentIds = source.sourceAttachmentIds;
         this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()

@@ -26,9 +26,14 @@ Owner: `MayAbilityHandlerService.handleResolutionTimeMayChoice`.
 Why: targets are fixed on the stack; an ability with none resolves without one.
 
 ### A cost an effect asks for as it resolves is paid through one service (CR 118.12, 118.3)
-"[Do X] unless [P pays]" / "P may pay; if they don't": ask `ResolutionCostPaymentService.canPay` (pool and makeable mana, K'rrik's life, `canPayLife`) and pay with `pay` (mana with the tax-paid event, life, the shared discard and sacrifice prompts), any player as payer; a hand-rolled pool payment uses `payManaFromPool`. A new ransom kind is a case there.
+"[Do X] unless [P pays]" / "P may pay; if they don't": ask `ResolutionCostPaymentService.canPay` (makeable mana, K'rrik's life, `canPayLife`, each cost kind's resources) and pay with `pay` through the shared actions (tax-paid event, discard, sacrifice, counters, poison, damage, exile, waterbend taps), any player as payer; a hand-rolled pool payment uses `payManaFromPool`. A new ransom kind is a case there.
 Owner: `ResolutionCostPaymentService`.
-Why: hand-rolled payments forgot the tax-paid event (Tax Taker) and judged life by "can the life total change" (CR 119.8).
+Why: hand-rolled payments forgot the tax-paid event (Tax Taker), judged life by "can the life total change" (CR 119.8) and countered on a paid cost's shortfall (CR 118.12).
+
+### An "unless" payer's choice is kept on the resolving entry (CR 118.12)
+`UnlessPaysEffectHandler.answer` records the choice to pay on the waiting entry (`StackEntry.answerUnless`); `EffectResolutionService` takes it when it resumes the effect, after any payment prompt's completion.
+Owner: `UnlessPaysEffectHandler`, `StackEntry.unlessAnswer`.
+Why: a global flag could be taken by another question answered during the payment's own choice.
 
 ## Coin flips (Krark's Thumb)
 

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -19,6 +19,6 @@ public class BloodFunnel extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 noncreatureSpell, 2, CostModificationScope.SELF));
         addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
-                new CounterUnlessSacrificesEffect(new PermanentIsCreaturePredicate(), "creature"));
+                UnlessPaysEffect.counterThatSpellUnlessYouSacrifice(new PermanentIsCreaturePredicate(), "creature"));
     }
 }

@@ -280,7 +280,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport counterSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService resolutionCostPaymentService;
 
     private final PutCounterOnEitherTargetPermanentEffectHandler putCounterOnEitherTargetEffectHandler;
 
@@ -838,31 +840,13 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleCounterUnlessBlightsCreatureChoice(GameData gameData, UUID permanentId,
-                                                          PermanentChoiceContext.CounterUnlessBlightsCreatureChoice context) {
-        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
-        boolean valid = creature != null
-                && context.payingPlayerId().equals(gameQueryService.findPermanentController(gameData, permanentId))
-                && gameQueryService.isCreature(gameData, creature)
-                && !gameQueryService.cantHaveCounters(gameData, creature)
-                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, creature);
-
-        int placed = 0;
-        if (valid) {
-            placed = permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, new StackEntry(context.sourceCard(), context.payingPlayerId()), creature,
-                    com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE, context.count());
-        }
-
-        if (placed < context.count()) {
-            StackEntry counterSource = new StackEntry(context.sourceCard(), context.sourceControllerId());
-            StackEntry target = counterSupport.findCounterTarget(
-                    gameData, context.targetCardId(), counterSource);
-            if (target != null) {
-                counterSupport.counterSpell(gameData, counterSource, target);
-            }
-        }
-
+    /**
+     * The payer chose the permanent that pays a resolution-time cost (an "unless" ransom's blight); the asking
+     * resolution then resumes with the choice to pay made (CR 118.12).
+     */
+    public void handleResolutionCostPayment(GameData gameData, UUID permanentId,
+                                            PermanentChoiceContext.ResolutionCostPayment context) {
+        resolutionCostPaymentService.completePermanentChoice(gameData, context.payerId(), permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

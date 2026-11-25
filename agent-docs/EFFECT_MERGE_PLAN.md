@@ -1964,7 +1964,7 @@ Checked and found to differ semantically. Do not re-propose without new evidence
 - `ChooseNumberEffect` vs `ChooseNumberOnEnterEffect` — marker read via interface at `StackResolutionService:659` vs a registered handler. Merging without an ETB exclusion would double-prompt.
 - Gone: `IfWonClashEffect` / `IfLostClashEffect`; "if you won" is a `ConditionalEffect` on the clash trigger's event value.
 - `GainLifeEqualToDamageDealt/ControlledCreatureCombatDamage` — marker records with **no handlers**, matched by `instanceof` at trigger-collection time. Reworking that is out of scope for an effect merge.
-- Capability interfaces (`AttackCostEffect`, `BlockCostEffect`, `BoardWipeEffect`, `CounterUnlessEffect`, the `ProtectionGrantingEffect` family, …) — these *are* the consolidation mechanism, not duplication.
+- Capability interfaces (`AttackCostEffect`, `BlockCostEffect`, `BoardWipeEffect`, the `ProtectionGrantingEffect` family, …) — these *are* the consolidation mechanism, not duplication.
 - Already-consolidated survivors: `ExileGraveyardCardsEffect`, `ReturnCardFromGraveyardEffect`, `ReturnToHandEffect`, `PreventDamageEffect`, `TapPermanentsEffect`, `UntapPermanentsEffect`.
 
 ---

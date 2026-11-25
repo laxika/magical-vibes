@@ -2560,10 +2560,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                 com.github.laxika.magicalvibes.model.effect.BlightEffect effect)
             implements PermanentChoiceContext {}
 
-    /** Ward—Blight N: choose a creature to blight to prevent the targeted spell from being countered. */
-    record CounterUnlessBlightsCreatureChoice(UUID payingPlayerId, UUID sourceControllerId,
-                                              Card sourceCard, UUID targetCardId, int count)
-            implements PermanentChoiceContext {}
+    /**
+     * The payer of a cost a resolving effect asked for (an "unless" ransom, CR 118.12a) chooses the permanent that pays
+     * it (the creature that gets a blight's counters); the asking effect then resumes with the choice to pay made.
+     */
+    record ResolutionCostPayment(com.github.laxika.magicalvibes.model.effect.CostEffect cost, UUID payerId,
+                                 Card sourceCard, UUID sourceControllerId) implements PermanentChoiceContext {}
 
     /** Each opponent chooses a creature they control for a mandatory blight action. */
     record EachOpponentBlightsCreature(

@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
+import com.github.laxika.magicalvibes.cards.s.SphinxOfTheFinalWord;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Skinrender;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AuntieOolCursewretch.class, AirElemental.class, Skinrender.class, Shock.class})
+@CardUsed({AuntieOolCursewretch.class, AirElemental.class, Skinrender.class, Shock.class, SphinxOfTheFinalWord.class, VorinclexMonstrousRaider.class})
 class AuntieOolCursewretchTest extends BaseCardTest {
 
     @Test
@@ -132,5 +136,72 @@ class AuntieOolCursewretchTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Shock");
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The counters blighted to pay the ward trigger Auntie Ool: the payer controls the creature, so loses 1 life")
+    void blightedCountersTriggerAuntieOol() {
+        Permanent auntie = harness.addToBattlefieldAndReturn(player1, new AuntieOolCursewretch());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, auntie.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(auntie.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ward asks for the blight even when the spell can't be countered, and paying it puts the counters (owner's decision, CR 118.12a)")
+    void wardAsksWhenTheSpellCantBeCountered() {
+        Permanent auntie = harness.addToBattlefieldAndReturn(player1, new AuntieOolCursewretch());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addToBattlefield(player2, new SphinxOfTheFinalWord());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, auntie.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(auntie.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A paid blight keeps the spell from being countered even when fewer counters were put (Vorinclex halves them, CR 118.12)")
+    void paidBlightIsPaidThoughFewerCountersArePut() {
+        Permanent auntie = harness.addToBattlefieldAndReturn(player1, new AuntieOolCursewretch());
+        harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, auntie.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(auntie.getMarkedDamage()).isEqualTo(2);
     }
 }

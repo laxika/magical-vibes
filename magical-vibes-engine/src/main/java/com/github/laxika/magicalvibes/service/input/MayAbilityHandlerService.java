@@ -305,13 +305,18 @@ public class MayAbilityHandlerService {
                 .filter(UnlessPaysEffect.class::isInstance)
                 .map(UnlessPaysEffect.class::cast)
                 .findFirst().orElse(null);
-        if (unless != null) {
-            // "[Do X] unless [P pays]" (CR 118.12a): the ransom is paid, or not, and the resolution resumes with the branch.
-            Boolean paid = unlessPaysEffectHandler.answer(gameData, player, accepted, ability, unless);
-            if (paid == null) {
+        if (unless != null && asksForTheRansom(gameData)) {
+            // "[Do X] unless [P pays]" (CR 118.12a): the choice is recorded on the waiting entry and the ransom paid,
+            // or not; the resolution resumes with the branch (a payment's own prompt resumes it once answered).
+            if (!unlessPaysEffectHandler.answer(gameData, player, accepted, ability, unless)
+                    || gameData.interaction.isAwaitingInput()) {
                 return;
             }
-            gameData.resolvedMayAccepted = paid;
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                // A payment's action asked a question of its own first (a replacement's "you may").
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             resumeAfterResolutionTimeMayChoice(gameData);
             return;
         }
@@ -530,6 +535,19 @@ public class MayAbilityHandlerService {
             return;
         }
         resumeAfterResolutionTimeMayChoice(gameData);
+    }
+
+    /**
+     * Whether the question answered is an "unless" effect's ransom question rather than the "you may" of a
+     * {@code MayEffect} around one (Complicate's cycling trigger: "you may counter target spell unless its controller
+     * pays {1}"), whose pending ability also lists the wrapped effect: the waiting entry resolves the
+     * {@link UnlessPaysEffect} itself, not the {@code MayEffect}.
+     */
+    private static boolean asksForTheRansom(GameData gameData) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        int index = gameData.pendingEffectResolutionIndex;
+        return entry != null && index >= 0 && index < entry.getEffectsToResolve().size()
+                && entry.getEffectsToResolve().get(index) instanceof UnlessPaysEffect;
     }
 
     private void resumeAfterResolutionTimeMayChoice(GameData gameData) {

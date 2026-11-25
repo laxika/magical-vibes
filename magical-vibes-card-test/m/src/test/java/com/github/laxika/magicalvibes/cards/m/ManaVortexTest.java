@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.DestinySpinner;
 import com.github.laxika.magicalvibes.cards.c.CityOfShadows;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.s.ScavengerFolk;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ManaVortex.class, ScavengerFolk.class, CityOfShadows.class, ImprisonedInTheMoon.class})
+@CardUsed({ManaVortex.class, ScavengerFolk.class, CityOfShadows.class, ImprisonedInTheMoon.class, DestinySpinner.class})
 class ManaVortexTest extends BaseCardTest {
 
     @Test
@@ -194,5 +195,22 @@ class ManaVortexTest extends BaseCardTest {
 
     private void castManaVortex(Player player) {
         harness.castFromHand(player, new ManaVortex(), "{1}{U}{U}");
+    }
+
+    @Test
+    @DisplayName("A Mana Vortex that can't be countered still offers the land sacrifice, and paying it sacrifices the land")
+    void uncounterableVortexStillSacrificesTheLand() {
+        harness.addToBattlefield(player1, new DestinySpinner());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CityOfShadows());
+        castManaVortex(player1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mana Vortex");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(land.getId()));
     }
 }

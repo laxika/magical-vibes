@@ -27,7 +27,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C as a generic "unless" record in step 10, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs D11 to D22 (one per group) and D23 (the owner's perpetual "it" decision) done 2026-11-25, D25 (resolution-time cost payment, for step 10's "unless" runs) too; the defect queue keeps the lines left, each with what it needs. Next: step 10 (needs the owner's sign-off per verb). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source.  |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Run Remove counters done 2026-11-25 (`RemoveCountersEffect`, the source record renamed, absorbs the target, plural-target and two mass records). Defect run D24 (2026-11-25) cleared the Damage run's prevention-path difference (plan section 2 (a)): one permanent-damage path. Run Damage done 2026-11-25 (`DealDamageEffect`, the any-target record renamed, absorbs the creature, creature-or-planeswalker, player-or-planeswalker and permanent records; 1,614 card files). Run U1 done 2026-11-25 (`UnlessPaysEffect`, new, absorbs `CounterUnlessPaysEffect` and `CounterUnlessPaysLifeEffect`; 322 card files). Next: "unless" run U2 (the other counter ransoms; needs a resolution-time `CostEffect` payment first) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Run Remove counters done 2026-11-25 (`RemoveCountersEffect`, the source record renamed, absorbs the target, plural-target and two mass records). Defect run D24 (2026-11-25) cleared the Damage run's prevention-path difference (plan section 2 (a)): one permanent-damage path. Run Damage done 2026-11-25 (`DealDamageEffect`, the any-target record renamed, absorbs the creature, creature-or-planeswalker, player-or-planeswalker and permanent records; 1,614 card files). Run U1 done 2026-11-25 (`UnlessPaysEffect`, new, absorbs `CounterUnlessPaysEffect` and `CounterUnlessPaysLifeEffect`; 322 card files). Run U2 done 2026-11-25 (`UnlessPaysEffect` absorbs the other eleven counter / retarget ransoms, new `AnyOfCost`, `ExileGraveyardCost`, `GetPoisonCountersCost`, `DamageFromSourceCost`; the payer's choice kept on the entry; 32 card files). Next: "unless" run U3 (`MayPayManaEffect` & co., the any-player loop, Ice Cave) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,991 / 2,416 (after step 10 run U1) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,984 / 2,394 (after step 10 run U2) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,775 rows over 4,581 classes (after fold run D23). Latest verdict per class: unique 1,195, absorbed 1,362, split 691, blocked-other 560, survivor 460, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 2 rows on the owner's deferred gift opponent and about 18 "counter unless" rows on step 10's "unless" runs U2 to U5 (after run U1).
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,775 rows over 4,581 classes (after fold run D23). Latest verdict per class: unique 1,195, absorbed 1,362, split 691, blocked-other 560, survivor 460, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 2 rows on the owner's deferred gift opponent and about 18 "counter unless" rows on step 10's "unless" runs U2 to U5 (after run U1; U2 added 18 rows: 11 absorbed, 1 dead interface, 4 new costs, Whirlwind Denial kept, Ice Cave to U3).
 
 ## Design
 
@@ -1242,8 +1242,15 @@ The scratch files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a
   any-target kind can't (Magma Burst kicked: its unbound part would hit the kicked target too).
 - `UnlessPaysEffect` (step 10 run U1): "[X] unless [P] pays [cost]" (CR 118.12a), `(PlayerSubject payer, CostEffect ransom, CardEffect
   ifNotPaid, CardEffect ifPaid)`; factories `counterUnlessPays(int | String | DynamicAmount)`, `counterUnlessPays(mana, life)`,
-  `counterUnlessPaysX()`, `counterUnlessPaysLife(int | DynamicAmount)`, `.exilingIfCountered()`, `.ifPaid(effect)`. Ransoms `PayManaCost`
-  (`PayManaCost.x()`: the announced X, X-only mana pays it) and `PayLifeCost`. `UnlessPaysEffectHandler` asks while its entry resolves
+  `counterUnlessPaysX()`, `counterUnlessPaysLife(int | DynamicAmount)`, `.exilingIfCountered()`, `.ifPaid(effect)`; run U2: `counterUnlessDiscards()`
+  / `(filter, label)`, `counterUnlessDiscardsAtRandom()`, `counterUnlessDiscardsHand()`, `counterUnlessDiscardsOrPays(n)`, `counterUnlessSacrifices(filter,
+  description)` / `(count, filter, description)`, `counterThatSpellUnlessYouSacrifice(filter, description)` (payer `you()`, the triggering spell),
+  `counterUnlessBlights(n)`, `counterUnlessCollectsEvidence(n)`, `counterUnlessExilesGraveyard()`, `counterUnlessGetsPoisonCounters(n)`,
+  `counterUnlessTakesDamage(n)`, `counterUnlessWaterbends(n)`, `changeTargetUnlessPays(n)` (Divert); `counteredSpell()` (the counter's own spell
+  subject, read by the handler) and `retargets()`. Ransoms `PayManaCost` (`PayManaCost.x()`: the announced X, X-only mana pays it), `PayLifeCost`
+  and every kind `ResolutionCostPaymentService` pays, `AnyOfCost` over them (the constructor checks). The payer's choice is kept on the entry
+  (`StackEntry.answerUnless` / `takeUnlessAnswer`, `UnlessAnswer`), not in `resolvedMayAccepted` (owner's decision, U2); an any-of ransom asks each
+  payable alternative in Oracle order (`askUnlessAlternative`); a paid ransom never takes `ifNotPaid` (CR 118.12). `UnlessPaysEffectHandler` asks while its entry resolves
   (`resolvingMayEffectFromStack`); `answer` (called by `MayAbilityHandlerService.handleResolutionTimeMayChoice`) pays (pool mana, {B} as
   2 life under K'rrik, life through `answerAskingDeathReplacementsFirst`); `cannotBePaid` (read by `EffectResolutionService`) sends an
   unpayable ransom straight to `ifNotPaid` (CR 118.3, 608.2d; life only while the payer can lose life, CR 119.8); `EffectResolutionService`
@@ -1256,12 +1263,23 @@ The scratch files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a
   (nothing paid) or `ASKING` (a discard / sacrifice prompt, or Lich's Duel Mastery's death replacements, finishes it). Cases:
   `PayManaCost` (a cost already read: no reduction, increase or source cost; `announcedX`, `lifeAmount`), fixed `PayLifeCost`,
   `DiscardCardTypeCost`, `DiscardRandomCardCost`, `SacrificePermanentCost` (the shared discard prompt / random discard / sacrifice
-  choice; opponent-caused when the payer isn't the source's controller). Mana raises `ActionEvents.taxPaid` for the mana actually spent
+  choice; opponent-caused when the payer isn't the source's controller); run U2: `SacrificeMultiplePermanentsCost` (exactly N, death replacements
+  first, CR 616.1; new optional `description`), `DiscardHandCost`, blight (`PutCounterOnControlledCreatureCost.blight`, the payer puts the counters on
+  the resolving entry, CR 701.68), plain `CollectEvidenceCost` (CR 701.59; `collectEvidenceAsResolutionCost` keys its resume), `ExileGraveyardCost`,
+  `GetPoisonCountersCost`, `DamageFromSourceCost` (dealt by `Payment.entry`, CR 608.2h), fixed `WaterbendCost` (tap choice, CR 701.67a; its mana is
+  a tax), `AnyOfCost` (`canPay` only: any alternative). `Payment` carries the resolving `entry`; one context pair,
+  `PermanentChoiceContext.ResolutionCostPayment` / `MultiPermanentChoiceContext.ResolutionCostPayment`, is completed by `completePermanentChoice` /
+  `completeMultiPermanentChoice` (validated by `validateMultiPermanentChoice`), the evidence by `completeCollectEvidence`. Mana raises `ActionEvents.taxPaid` for the mana actually spent
   when the payer isn't `sourceControllerId`. `payManaFromPool` for a hand-rolled pool payment; static
   `canPayLife(GameQueryService, gd, player, amount)` is the one resolution-time life check (0 always; else can lose life and has it,
-  CR 119.4, 119.8; Karn's Sylex doesn't apply). Callers: `UnlessPaysEffectHandler` (its ransoms), the counter-unless discard and
-  one-permanent sacrifice ransoms, the "unless pays" penalty answers (`payManaFromPool`), every resolution-time life check. A new ransom
+  CR 119.4, 119.8; Karn's Sylex doesn't apply). Callers: `UnlessPaysEffectHandler` (every ransom), Whirlwind Denial
+  (`payManaFromPool`, U2), the "unless pays" penalty answers (`payManaFromPool`), every resolution-time life check. A new ransom
   kind is a case here.
+- Ransom cost types (step 10 run U2, `model/effect`): `AnyOfCost(List<CostEffect>)` / `AnyOfCost.of(a, b)` ("discard a card or pay {2}";
+  at least two alternatives, none nested; payable while any is, CR 118.3; the `XOrY…Cost` records can fold into it in U3b),
+  `ExileGraveyardCost()` (exile all cards from your graveyard, always payable), `GetPoisonCountersCost(int)` (payable while the payer can get
+  poison counters), `DamageFromSourceCost(DynamicAmount)` ("have [this] deal N damage to you": the asking entry deals it, CR 608.2h; paid even if
+  prevented, CR 118.12; U5's ransom).
 - `DamageSupport.entryDealtByTriggeringPermanent` is the one "it deals" carrier (run Damage): a departed dealer is its departure snapshot
   first (its keywords as it left, a static grant's included), then the trigger-time snapshot; an entry that names no triggering
   permanent is dealt by its source (a self-triggered "this or another X enters, it deals"). Its damage result is added to the resolving
@@ -1336,6 +1354,11 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
   Rhystic Shield's and Nakaya Shade's rulings: "each player gets the option to pay"); Icy Prison's ruling doesn't say
   otherwise, so `ForcedCostOrElseEffect` stopping at the first payer is a defect for run U4.
 
+  **U2** (the owner's answers to the U2 plan, 2026-11-25): (1) `AnyOfCost(List<CostEffect>)`, one yes/no question per alternative the
+  payer can pay, in Oracle order, an unpayable one not offered (CR 118.3, 608.2d); only Titania uses it now, U3b may absorb the `XOrY…Cost`
+  records; (2) Whirlwind Denial keeps its record (APNAP choices, then one counter, CR 101.4), only its payment moves onto the service; Ice Cave
+  goes to U3; (3) the paid answer lives on the stack entry, not in `resolvedMayAccepted`, for U1's path too.
+
 - **2026-11-25, step 10 run Damage** (the owner's go-ahead, with these answers): (1) one run, all five one-recipient records (any
   target, creature, creature or planeswalker, player or planeswalker, permanent) with one permanent-damage path (D24 answered the plan's
   question 5); the target loop is one rule only if every kind's own targets give the same result, else per kind with the reason. (2) The
@@ -1371,17 +1394,16 @@ there and updates them when it lands.
 
 ### Step-10 hand-offs
 
-- **"Unless"** (owner's decisions 2026-11-25; plan in the U1 Findings): `UnlessPaysEffect` exists (run U1: mana and life ransoms,
-  `CounterUnlessPaysEffect` and `CounterUnlessPaysLifeEffect` gone). Left: U2, the other counter ransoms (`CounterUnlessDiscardsEffect`
-  14, `CounterUnlessSacrificesEffect` 9, the eight single-card ransoms, Whirlwind Denial, Ice Cave, Divert) and `AnyOfCost` (Lim-Dûl's Hex,
-  Titania, Emberwilde Djinn), unblocked by defect run D25: `ResolutionCostPaymentService` pays mana, life, discard, random discard and
-  one-permanent sacrifice for any payer (U2 adds a case per further kind: several permanents (Valgavoth), blight, evidence, poison,
-  exile graveyard, hand, waterbend, damage; and `AnyOfCost`); the tax events and life checks are fixed; U3, `MayPayManaEffect` & co. as factories with `MayPayPayer` → `PlayerSubject` and the
+- **"Unless"** (owner's decisions 2026-11-25; plan in the U1 Findings): `UnlessPaysEffect` exists (run U1: mana and life ransoms; run U2:
+  every other counter ransom and Divert, `AnyOfCost`, the service's further kinds, the choice kept on the entry). Left: U3, `MayPayManaEffect` & co. as factories with `MayPayPayer` → `PlayerSubject` and the
   "any player" loop (needs the owner's D17 L34 rule, now decided: ask unless no payment is possible at all, and (b4)'s payments moved into
-  the ransom; its any-player mana path still raises no tax event); U3b, the single-verb "X unless pays" records and May's 11 (their
-  hand-rolled pool payments without the tax event, listed in D25's Findings, move onto the service); U4, `ForcedCostOrElseEffect` (its else / paid effects as entry
+  the ransom; its any-player mana path still raises no tax event), with Ice Cave (`CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect`: any
+  other player, ifNotPaid of nothing, the triggering spell's mana cost; owner's decision U2); U3b, the single-verb "X unless pays" records and May's 11 (their
+  hand-rolled pool payments without the tax event, listed in D25's Findings, move onto the service), and the `XOrY…Cost` records and Lim-Dûl's
+  Hex / Emberwilde Djinn into `AnyOfCost`; U4, `ForcedCostOrElseEffect` (its else / paid effects as entry
   steps first, Koya; its per-cost payments onto the service, whose mana tax and life check it already has; ask every player in "any
-  player may pay"); U5, "unless takes damage" (U2's damage ransom, a case in the service).
+  player may pay"); U5, "unless takes damage" (U2's `DamageFromSourceCost`, a case in the service, dealt by the resolving entry). Whirlwind Denial stays
+  its own record (owner's decision U2; its payment is on the service).
   `DestroyTargetPermanentUnlessControllerTakesDamageEffect` belongs to U5.
 - **Cost combinators beside `MayEffect`** (CR 118.12: their "if you do" is the choice to pay): `ForcedCostOrElseEffect` (158 cards; its
   fallback runs through a per-class list in `DestructionSupport.resolveForcedCostElseEffects` on a carrier entry, so a fallback not on
@@ -6219,6 +6241,65 @@ class, Tax Taker, Sylvan Library, Lim-Dûl's Vault, Zur's Weirding, `MayAbilityH
 **For the next run.** U2: the other counter ransoms and `AnyOfCost`, each kind a case in `ResolutionCostPaymentService` (several
 permanents, blight, evidence, poison, exile graveyard, hand, waterbend, damage) and in `UnlessPaysEffectHandler.ransom` and the record's
 constructor check; the discard and sacrifice ransom handlers already pay through the service.
+
+### Step 10, run U2 ("unless": the other counter ransoms) (2026-11-25)
+
+The signed-off U2 plan (`scratchpad/s10-unless/u2-plan.md`) with the owner's three answers (Standing knowledge, "the unless runs"). Absorbed
+into `UnlessPaysEffect` factories (Shared pieces): the 11 records `CounterUnlessDiscardsEffect`, `CounterUnlessSacrificesEffect`,
+`CounterUnlessBlightsEffect`, `CounterUnlessCollectsEvidenceEffect`, `CounterUnlessDiscardsHandEffect`, `CounterUnlessDiscardsOrPaysEffect`,
+`CounterUnlessExilesGraveyardEffect`, `CounterUnlessGetsPoisonCountersEffect`, `CounterUnlessTakesDamageEffect`, `CounterUnlessWaterbendsEffect`,
+`ChangeTargetOfTargetSpellUnlessControllerPaysEffect`, their 11 normalfx and 11 mayfx handlers, the `CounterUnlessEffect` interface, eight
+`MayPenaltyChoiceHandlerService` answers and its two counter helpers, the contexts `CounterUnlessBlightsCreatureChoice`, `WardWaterbendPayment`
+and `SacrificePermanentsOrElse`. New: `AnyOfCost`, `ExileGraveyardCost`, `GetPoisonCountersCost`, `DamageFromSourceCost`, `UnlessAnswer`, one
+`ResolutionCostPayment` context pair. Whirlwind Denial kept (its payment is `payManaFromPool`); Ice Cave to U3. Ledger: 11 absorbed, 1 dead,
+4 survivors, 1 unique, 1 blocked. Ratchet 2,991 / 2,416 → 2,984 / 2,394. No `CONVERSION_VERSION` bump (no mapper or enum change).
+
+**Engine.** A payment with a choice (discard, sacrifice, N-sacrifice, blight, evidence, waterbend taps) records the choice to pay on the
+waiting entry and ends with the prompt; its completion pays through the shared action and resumes the entry through the epilogue, where
+`EffectResolutionService` takes the entry's answer (U1's mana / life path too; `resolvedMayAccepted` is no longer read for it). The handler
+reads the counter's own spell subject (Blood Funnel, Mana Vortex: payer `you()`, the triggering spell). `SacrificeMultiplePermanentsCost`
+gained an optional `description`. Logs: "P pays …" / "P discards a card at random …" when paid at once, "P chooses to <cost>. X is not
+countered." when a prompt pays it, "P declines to <cost>." otherwise. A `MayEffect` around an `UnlessPaysEffect` (Complicate's cycling
+trigger) lists the wrapped effect on its "you may" question: `MayAbilityHandlerService` answers a ransom only when the waiting slot is the
+`UnlessPaysEffect` itself (found by the orchestrator's sweep; U1 paid a phantom "0 life" there). `CostEffectClassificationTest` got a
+`RESOLUTION_ONLY_COST_TYPES` list for the four new ransom-only costs.
+
+**Behaviour changes** (failing-first, each seen failing on the old code, unless marked):
+- (u1) An uncounterable target still asks for the ransom and paying spends it (owner's decision): Titania, Auntie Ool, Axebane Ferox,
+  The Serpent Society, The Unagi of Kyoshi Island (`wardAsksWhenTheSpellCantBeCountered` in each test class, Sphinx of the Final Word).
+- (u2) Saruman's ward isn't asked of a payer with no enchantment, instant or sorcery card; the spell is countered (CR 118.3, 608.2d).
+- (u3) A paid blight keeps the spell (CR 118.12): Auntie Ool under an opposing Vorinclex puts one counter and Shock still resolves.
+- (u4) Valgavoth: yes / no, then exactly three; "choose none to decline" is gone (two was refused before too: a pin).
+- (u5) Divert offers its {2} when the payer's lands could make it (CR 118.3, 605.3a) and its payment raises the tax-paid event (Tax Taker).
+- Whirlwind Denial's {4} and ward waterbend's mana part raise the tax-paid event (Tax Taker's Oracle: "the amount of mana they paid").
+- (u6) Grip of Amnesia against a spell protected from it (Autumn's Veil) exiles the graveyard its controller chose to exile (CR 118.12).
+- Titania asks in Oracle order, the discard first, then {2} (owner's decision 1; was mana first; the tests that changed, below).
+- Molten Influence's 4 damage is dealt by the spell entry itself (CR 608.2h; as before, pinned); no longer a `DamageDealingEffect` (AI).
+
+**Pins** (passed before and after): Perplex paid with an empty hand; Grip with an empty graveyard, then its draw; Axebane's evidence
+exiles and triggers Evidence Examiner; Auntie Ool's blight triggers her own life loss; Molten Influence's damage counted to its source;
+an uncounterable Mana Vortex still sacrifices; a Library of Leng question during a ward discard keeps the paid branch.
+
+**Tests changed.** `TitaniaRuggedRumblerTest` (4 tests) and `TaxTakerTest.titaniaWardPayment` answered the mana prompt first; they now
+decline the discard first (owner's decision 1, Oracle order). Added: the tests above, `ValgavothTerrorEaterTest`'s exact-three pin,
+`ResolutionCostPaymentServiceTest` (any-of, empty-zone and poison payability), `GameDataDeepCopyTest` (the entry's answer, the evidence flag).
+
+**Tests run** (XML of this run): every rewritten card's class (Glutton under Trespasser), the 46 classes referencing a rewritten card, every
+`Ward|Unless|Counter|Guile|Madness|Discard|Sacrifice|Blight|Evidence|Poison|Waterbend|TaxTaker|Mastery|DeathReplacement` class, the
+`CollectEvidenceEffect` cards, Ice Cave, Guile, Vorinclex, Carnage Tyrant, Gaea's Herald, Hindering Touch, Terra Stomper, Library of Leng,
+the application tests the plan names, both ratchets, the whole AI module (counts in the run's report). Compiled every module's main and
+test sources. Oracle text checked with `get_card` for all 32 card files (Glutton through Trespasser); rulings for Valgavoth, Grip, Auntie
+Ool, Divert, Perplex, Molten Influence, Titania, Library of Leng.
+
+**Seen, not changed** (defect queue, "step 10 run U2"):
+- Library of Leng's replacement is offered for a discard paid as a cost; its ruling says costs aren't effects. Sure of the ruling.
+- Ward—Waterbend's payability counts the pool, not mana the payer could still make (CR 605.3a). Sure of the code.
+- Who "puts" Serpent Society's poison counters (the ward's controller) and who causes Perplex's discard (the payer) kept as they were. Unsure.
+
+**For the next run.** U3: `MayPayManaEffect` & co. as `UnlessPaysEffect` factories, `MayPayPayer` → `PlayerSubject`, the any-player loop
+(every player asked, CR 101.4) and Ice Cave; ask a payer unless no payment is possible at all (owner's D17 L34 rule). A new ransom is a case
+in `ResolutionCostPaymentService` (`canPay`, `pay`, a completion if it prompts) and in `UnlessPaysEffect`'s constructor check and the
+handler's `ransom` words; the choice lives on the entry, so a new prompt path must resume the entry through the epilogue.
 
 ## Prompt
 

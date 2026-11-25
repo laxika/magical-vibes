@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.w.WhirlwindDenial;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.d.Divert;
 import com.github.laxika.magicalvibes.cards.a.AegisSculptor;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.a.ArcumsWhistle;
@@ -42,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         AegisSculptor.class, GiantGrowth.class, SoulBarrier.class, GrizzlyBears.class, IsolationCell.class,
         LimDLsHex.class, Erosion.class, Oasis.class, CutTheTethers.class, LanternKami.class, CrystalShard.class,
         AlphaMyr.class, ArcumsWhistle.class, BalduvianBears.class, TitaniaRuggedRumbler.class, Shock.class,
-        MindWhip.class})
+        MindWhip.class, Divert.class, Firebolt.class, LightningBolt.class, WhirlwindDenial.class, TheUnagiOfKyoshiIsland.class})
 class TaxTakerTest extends BaseCardTest {
 
     @Test
@@ -343,6 +347,8 @@ class TaxTakerTest extends BaseCardTest {
             harness.castInstant(player2, 0, titania.getId());
             harness.passBothPriorities();
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            // Oracle order: the discard is offered first, then the {2}.
+            harness.handleMayAbilityChosen(player2, false);
             harness.handleMayAbilityChosen(player2, true);
             resolveAllTriggers();
 
@@ -370,5 +376,67 @@ class TaxTakerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    @DisplayName("Paying {2} to keep a spell's target against Divert makes two Treasures")
+    void divertPayment() {
+        harness.addToBattlefield(player2, new TaxTaker());
+        Firebolt firebolt = new Firebolt();
+        harness.setHand(player1, List.of(firebolt));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new Divert()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, firebolt.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Paying Whirlwind Denial's {4} for a spell makes four Treasures")
+    void whirlwindDenialPayment() {
+        harness.addToBattlefield(player1, new TaxTaker());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        prepareOpponentTurn();
+        harness.castInstant(player2, 0, player1.getId());
+
+        harness.castFromHand(player1, new WhirlwindDenial(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Paying ward waterbend {4} with two creatures and {2} makes two Treasures, the mana paid")
+    void waterbendWardPayment() {
+        harness.addToBattlefield(player1, new TaxTaker());
+        Permanent unagi = harness.addToBattlefieldAndReturn(player1, new TheUnagiOfKyoshiIsland());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, unagi.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        if (gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) != null) {
+            harness.handleMultiplePermanentsChosen(player2, List.of(first.getId(), second.getId()));
+        }
+        resolveAllTriggers();
+
+        assertThat(first.isTapped() && second.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
     }
 }

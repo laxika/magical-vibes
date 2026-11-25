@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.s.SphinxOfTheFinalWord;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheSerpentSociety.class, Shock.class, TyphoidRats.class, GrizzlyBears.class, ProdigalPyromancer.class})
+@CardUsed({TheSerpentSociety.class, Shock.class, TyphoidRats.class, GrizzlyBears.class, ProdigalPyromancer.class, SphinxOfTheFinalWord.class})
 class TheSerpentSocietyTest extends BaseCardTest {
 
     @Test
@@ -186,5 +188,26 @@ class TheSerpentSocietyTest extends BaseCardTest {
                 .extracting(Permanent::getId).contains(first.getId(), token.getId())
                 .doesNotContain(second.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Ward asks for the poison counters even when the spell can't be countered, and paying gives them (owner's decision, CR 118.12a)")
+    void wardAsksWhenTheSpellCantBeCountered() {
+        Permanent society = addCreatureReady(player1, new TheSerpentSociety());
+        harness.addToBattlefield(player2, new SphinxOfTheFinalWord());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, society.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(5);
+        assertThat(society.getMarkedDamage()).isEqualTo(2);
     }
 }

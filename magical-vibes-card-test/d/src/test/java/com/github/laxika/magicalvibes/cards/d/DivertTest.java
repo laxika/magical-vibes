@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.c.Concentrate;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.cards.g.GhastlyDemise;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Divert.class, Concentrate.class, Firebolt.class, ShowerOfCoals.class,
-        GhastlyDemise.class, NomadDecoy.class})
+        GhastlyDemise.class, NomadDecoy.class, Mountain.class})
 class DivertTest extends BaseCardTest {
 
     @Test
@@ -219,5 +220,32 @@ class DivertTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, decoy.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("spell");
+    }
+
+    @Test
+    @DisplayName("The payment is offered when the spell's controller can still make the mana, though their pool is empty (CR 118.3, 605.3a)")
+    void paymentOfferedWhenTheManaCanStillBeMade() {
+        Firebolt firebolt = new Firebolt();
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(firebolt));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Divert()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, firebolt.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 }

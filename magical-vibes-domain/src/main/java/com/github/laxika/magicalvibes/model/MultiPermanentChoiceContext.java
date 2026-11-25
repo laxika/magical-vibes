@@ -274,11 +274,12 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * The payer of a ward-waterbend cost (CR 701.67a) chooses which untapped artifacts and creatures to
-     * tap for generic mana of {@code amount}; the rest is paid with mana. At least {@code minimumTaps}
-     * permanents must be chosen because the mana pool cannot cover the remainder.
+     * The payer of a cost a resolving effect asked for (an "unless" ransom, CR 118.12a) chooses the permanents that pay
+     * it: exactly {@code minimum} to sacrifice, or between {@code minimum} and the cost's amount to tap for a
+     * waterbend (CR 701.67a), the rest paid with mana. The asking effect then resumes with the choice to pay made.
      */
-    record WardWaterbendPayment(Card sourceCard, UUID targetedObjectId, int amount, int minimumTaps)
+    record ResolutionCostPayment(com.github.laxika.magicalvibes.model.effect.CostEffect cost, UUID payerId,
+                                 Card sourceCard, UUID sourceControllerId, int minimum)
             implements MultiPermanentChoiceContext {
     }
 
@@ -790,11 +791,6 @@ public sealed interface MultiPermanentChoiceContext {
       record NihiloorTapChoice(StackEntry resolvingEntry, UUID opponentId)
               implements MultiPermanentChoiceContext {
       }
-
-    /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */
-    record SacrificePermanentsOrElse(int requiredCount, CardEffect sacrificedEffect,
-                                     CardEffect elseEffect) implements MultiPermanentChoiceContext {
-    }
 
     /**
      * Sacrifice the chosen permanents, none included ("sacrifice any number of …"), as the resolving entry's

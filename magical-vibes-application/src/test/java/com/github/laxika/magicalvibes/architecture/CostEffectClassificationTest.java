@@ -35,6 +35,17 @@ class CostEffectClassificationTest {
             "PayLifeEqualToSpellManaValueCost");
 
     /**
+     * Cost types only ever paid as an effect resolves, as the ransom of an {@code UnlessPaysEffect} ("counter target
+     * spell unless its controller …", ward), by {@code ResolutionCostPaymentService}; never in a SPELL slot or an
+     * activation cost. Using one as a casting or activation cost needs that flow's support first.
+     */
+    private static final Set<String> RESOLUTION_ONLY_COST_TYPES = Set.of(
+            "AnyOfCost",
+            "DamageFromSourceCost",
+            "ExileGraveyardCost",
+            "GetPoisonCountersCost");
+
+    /**
      * Cost types only ever used as activation costs (activated/triggered abilities, crew, etc.).
      * If one of these starts appearing in a SPELL slot, move it to
      * {@code HANDLED_SPELL_COST_TYPES} and implement its cast-time support instead. TapMultiplePermanentsCost
@@ -163,11 +174,12 @@ class CostEffectClassificationTest {
             boolean isHandled = handled.contains(typeName);
             boolean isAbilityOnly = ABILITY_ONLY_COST_TYPES.contains(typeName);
             boolean isAlternativeOnly = ALTERNATIVE_ONLY_COST_TYPES.contains(typeName);
-            if (!isHandled && !isAbilityOnly && !isAlternativeOnly) {
+            boolean isResolutionOnly = RESOLUTION_ONLY_COST_TYPES.contains(typeName);
+            if (!isHandled && !isAbilityOnly && !isAlternativeOnly && !isResolutionOnly) {
                 unclassified.add(typeName);
             }
             if ((isHandled ? 1 : 0) + (isAbilityOnly ? 1 : 0)
-                    + (isAlternativeOnly ? 1 : 0) > 1) {
+                    + (isAlternativeOnly ? 1 : 0) + (isResolutionOnly ? 1 : 0) > 1) {
                 doublyClassified.add(typeName);
             }
         }
@@ -226,12 +238,13 @@ class CostEffectClassificationTest {
     @DisplayName("Ability-only list contains no stale entries")
     void abilityOnlyListHasNoStaleEntries() throws IOException {
         List<String> existing = costEffectTypeNames();
-        List<String> stale = ABILITY_ONLY_COST_TYPES.stream()
+        List<String> stale = java.util.stream.Stream.concat(ABILITY_ONLY_COST_TYPES.stream(),
+                        RESOLUTION_ONLY_COST_TYPES.stream())
                 .filter(name -> !existing.contains(name))
                 .sorted()
                 .toList();
         assertThat(stale)
-                .withFailMessage(() -> "ABILITY_ONLY_COST_TYPES lists CostEffect type(s) that no longer exist "
+                .withFailMessage(() -> "ABILITY_ONLY_COST_TYPES or RESOLUTION_ONLY_COST_TYPES lists CostEffect type(s) that no longer exist "
                         + "(or no longer implement CostEffect): " + stale)
                 .isEmpty();
     }

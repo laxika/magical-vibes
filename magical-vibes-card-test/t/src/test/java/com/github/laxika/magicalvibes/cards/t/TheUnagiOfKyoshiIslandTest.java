@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.s.SphinxOfTheFinalWord;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheUnagiOfKyoshiIsland.class, GrizzlyBears.class, Shock.class, ProdigalPyromancer.class})
+@CardUsed({TheUnagiOfKyoshiIsland.class, GrizzlyBears.class, Shock.class, ProdigalPyromancer.class, SphinxOfTheFinalWord.class})
 class TheUnagiOfKyoshiIslandTest extends BaseCardTest {
 
     @Test
@@ -263,5 +264,27 @@ class TheUnagiOfKyoshiIslandTest extends BaseCardTest {
 
         assertThat(unagi.getMarkedDamage()).isEqualTo(2);
         harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("Ward asks for the waterbend even when the spell can't be countered, and paying it spends the mana (owner's decision, CR 118.12a)")
+    void wardAsksWhenTheSpellCantBeCountered() {
+        Permanent unagi = harness.addToBattlefieldAndReturn(player1, new TheUnagiOfKyoshiIsland());
+        harness.addToBattlefield(player2, new SphinxOfTheFinalWord());
+        beginOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player2, 0, unagi.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+        // The Sphinx could be tapped for {1}; the payer taps nothing and pays all four with mana.
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(unagi.getMarkedDamage()).isEqualTo(2);
     }
 }

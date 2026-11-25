@@ -1218,4 +1218,27 @@ class GameDataDeepCopyTest {
         assertThat(copy.unattachedAuraGraveyardStays).containsEntry(aura, 4L);
         assertThat(gd.unattachedAuraGraveyardStays).containsOnlyKeys(aura);
     }
+
+    @Test
+    @DisplayName("Deep copy keeps a stack entry's answer to an \"unless\" payment, and taking it on the copy leaves the original's")
+    void deepCopyKeepsTheUnlessAnswerIndependently() {
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Ward trigger", List.of());
+        entry.answerUnless(0, true);
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+        StackEntry copied = copy.stack.getFirst();
+
+        assertThat(copied.takeUnlessAnswer(0)).isTrue();
+        assertThat(copied.takeUnlessAnswer(0)).isNull();
+        assertThat(entry.takeUnlessAnswer(0)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps whether a collect-evidence choice pays an \"unless\" ransom")
+    void deepCopyKeepsCollectEvidenceAsResolutionCost() {
+        gd.graveyardTargetOperation.collectEvidenceAsResolutionCost = true;
+
+        assertThat(gd.simulationCopy().graveyardTargetOperation.collectEvidenceAsResolutionCost).isTrue();
+    }
 }

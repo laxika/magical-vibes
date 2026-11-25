@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -94,6 +93,9 @@ public class MultiPermanentChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService resolutionCostPaymentService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
@@ -602,17 +604,8 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("A selected permanent is no longer eligible to sacrifice");
             }
         }
-        if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse sacrificeCtx) {
-            if (!permanentIds.isEmpty() && permanentIds.size() != sacrificeCtx.requiredCount()) {
-                throw new IllegalStateException("Must select exactly " + sacrificeCtx.requiredCount()
-                        + " permanents or none to decline");
-            }
-            if (permanentIds.stream().anyMatch(id -> {
-                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                return permanent == null || !playerId.equals(gameQueryService.findPermanentController(gameData, id));
-            })) {
-                throw new IllegalStateException("A selected permanent is no longer controlled by the chooser");
-            }
+        if (context instanceof MultiPermanentChoiceContext.ResolutionCostPayment payment) {
+            resolutionCostPaymentService.validateMultiPermanentChoice(gameData, playerId, permanentIds, payment);
         }
         if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost
                 && permanentIds.size() != tapCost.requiredCount()) {
@@ -796,8 +789,12 @@ public class MultiPermanentChoiceHandlerService {
             handleTapPermanentsForAmount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanents ctx) {
             handleUntapChosenPermanents(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.WardWaterbendPayment ctx) {
-            handleWardWaterbendPayment(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ResolutionCostPayment ctx
+                && !killsBeforeChangingAnything(ctx)) {
+            // The payer chose the permanents to tap for the cost; the asking resolution resumes with the choice to
+            // pay made. A sacrifice is completed after its death replacements are asked (below).
+            resolutionCostPaymentService.completeMultiPermanentChoice(gameData, playerId, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedCostWaterbendPayment ctx) {
             handleForcedCostWaterbendPayment(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapPermanentsForAmount ctx) {
@@ -1401,20 +1398,6 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleWardWaterbendPayment(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                            MultiPermanentChoiceContext.WardWaterbendPayment ctx) {
-        if (permanentIds.size() < ctx.minimumTaps()) {
-            throw new IllegalStateException("Must tap at least " + ctx.minimumTaps()
-                    + " permanents (the rest of the cost is paid with mana)");
-        }
-        waterbendPaymentService.pay(gameData, playerId, ctx.amount(), ctx.sourceCard(), permanentIds);
-        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
-                + " pays {" + ctx.amount() + "} using waterbend. The spell or ability is not countered."));
-        log.info("Game {} - {} pays ward waterbend {}", gameData.id, playerId, ctx.amount());
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleForcedCostWaterbendPayment(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                                   MultiPermanentChoiceContext.ForcedCostWaterbendPayment ctx) {
         if (permanentIds.size() < ctx.minimumTaps()) {
@@ -1564,9 +1547,8 @@ public class MultiPermanentChoiceHandlerService {
      * {@link DestructionSupport#destroyBatch} batch, and
      * {@link MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice} likewise keeps its picks
      * and only prompts for the next player's land before its batch; its basic land searches come after.
-     * {@link MultiPermanentChoiceContext.SacrificePermanentsOrElse} (the multi-sacrifice form of "counter unless
-     * its controller sacrifices") asks its whole selection before the first sacrifice, and its "if you do" or
-     * "otherwise" branch is only queued after the sacrifices.
+     * {@link MultiPermanentChoiceContext.ResolutionCostPayment} of a sacrifice (a ransom of several permanents) asks
+     * its whole selection before the first sacrifice, and its asking effect resumes only after the sacrifices.
      * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} sacrifices both chosen lands as one
      * batch, asking both before either leaves; Worms of the Earth itself is destroyed after, as a step of its own.
      * The "choose, then remove the chosen" contexts only read their picks before one batch:
@@ -1608,7 +1590,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice
-                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse
+                || context instanceof MultiPermanentChoiceContext.ResolutionCostPayment payment
+                        && payment.cost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost
                 || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
@@ -1765,8 +1748,9 @@ public class MultiPermanentChoiceHandlerService {
                 handleDestroyUpToOneNonbasicLandPerPlayerChoice(gameData, permanentIds, ctx);
                 return;
             }
-            case MultiPermanentChoiceContext.SacrificePermanentsOrElse ctx -> {
-                handleSacrificePermanentsOrElse(gameData, playerId, permanentIds, ctx);
+            case MultiPermanentChoiceContext.ResolutionCostPayment ctx -> {
+                resolutionCostPaymentService.completeMultiPermanentChoice(gameData, playerId, permanentIds, ctx);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
                 return;
             }
             case MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx -> {
@@ -1943,36 +1927,6 @@ public class MultiPermanentChoiceHandlerService {
                     GameLog.text(gameData.playerIdToName.get(playerId) + " sacrifices no permanents."));
         }
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleSacrificePermanentsOrElse(
-            GameData gameData, UUID playerId, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.SacrificePermanentsOrElse context) {
-        List<Permanent> chosen = permanentIds.stream()
-                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
-                .filter(permanent -> permanent != null
-                        && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
-                .toList();
-        // CR 616.1: every chosen creature's death replacement is chosen before any of them is sacrificed.
-        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, chosen);
-        int sacrificed = 0;
-        for (Permanent permanent : chosen) {
-            destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
-            sacrificed++;
-        }
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (entry == null) {
-            throw new IllegalStateException("No pending effect resolution for optional sacrifice");
-        }
-        CardEffect branch = sacrificed == context.requiredCount()
-                ? context.sacrificedEffect()
-                : context.elseEffect();
-        if (branch != null) {
-            entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
-        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

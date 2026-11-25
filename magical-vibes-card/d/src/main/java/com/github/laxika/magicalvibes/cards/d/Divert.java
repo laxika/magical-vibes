@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -29,6 +29,6 @@ public class Divert extends Card {
                                 StackEntryType.BATTLE_SPELL)),
                         new StackEntryIsSingleTargetPredicate())),
                 "Target spell must have a single target."
-        )).addSpellEffect(new ChangeTargetOfTargetSpellUnlessControllerPaysEffect(2));
+        )).addSpellEffect(UnlessPaysEffect.changeTargetUnlessPays(2));
     }
 }

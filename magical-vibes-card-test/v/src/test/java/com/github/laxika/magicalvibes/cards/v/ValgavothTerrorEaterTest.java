@@ -382,4 +382,24 @@ class ValgavothTerrorEaterTest extends BaseCardTest {
         assertThat(gd.findExiledCard(bears.getCard().getId()).sourcePermanentId()).isEqualTo(valgavoth.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
     }
+
+    @Test
+    @DisplayName("Once the payer chose to pay the ward, they must sacrifice exactly three: two is not a payment")
+    void wardPaymentNeedsExactlyThreePermanents() {
+        Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothTerrorEater());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        prepareMainPhase(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, valgavoth.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2,
+                List.of(first.getId(), second.getId()))).isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(3);
+    }
 }

@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.cost;
 
+import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -81,5 +86,31 @@ class ResolutionCostPaymentServiceTest {
         assertThat(service.canPay(gd, payerId, new PayManaCost("{2}"), null)).isTrue();
         assertThat(service.payManaFromPool(gd, payerId, new ManaCost("{2}"), UUID.randomUUID())).isTrue();
         assertThat(gd.playerManaPools.get(payerId).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("An any-of cost can be paid while any one of its alternatives can (CR 118.3)")
+    void anyOfCostIsPayableWhileOneAlternativeIs() {
+        gd.playerManaPools.get(payerId).add(ManaColor.GREEN, 2);
+        AnyOfCost discardOrPay = AnyOfCost.of(new DiscardRandomCardCost(1), new PayManaCost("{2}"));
+
+        assertThat(service.canPay(gd, payerId, discardOrPay, null)).isTrue();
+        assertThat(service.canPay(gd, payerId, AnyOfCost.of(new DiscardRandomCardCost(1), new PayManaCost("{3}")),
+                null)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exiling a graveyard and discarding a hand can be paid with nothing in them")
+    void emptyZoneCostsArePayable() {
+        assertThat(service.canPay(gd, payerId, new ExileGraveyardCost(), null)).isTrue();
+        assertThat(service.canPay(gd, payerId, new DiscardHandCost(), null)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A player who can't get poison counters can't pay poison counters (CR 118.3)")
+    void poisonNeedsAPlayerWhoCanGetPoisonCounters() {
+        when(gameQueryService.canPlayerGetPoisonCounters(gd, payerId)).thenReturn(false);
+
+        assertThat(service.canPay(gd, payerId, new GetPoisonCountersCost(5), null)).isFalse();
     }
 }

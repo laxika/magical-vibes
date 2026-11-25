@@ -934,8 +934,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseEquipmentToAttachAsEnter(gameData, permanentId, equipmentChoice);
         } else if (context instanceof PermanentChoiceContext.BlightCreatureChoice blight) {
             battlefieldHandler.handleBlightCreatureChoice(gameData, permanentId, blight);
-        } else if (context instanceof PermanentChoiceContext.CounterUnlessBlightsCreatureChoice blight) {
-            battlefieldHandler.handleCounterUnlessBlightsCreatureChoice(gameData, permanentId, blight);
+        } else if (context instanceof PermanentChoiceContext.ResolutionCostPayment payment) {
+            battlefieldHandler.handleResolutionCostPayment(gameData, permanentId, payment);
         } else if (context instanceof PermanentChoiceContext.EachOpponentBlightsCreature blight) {
             battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy) {

@@ -1,24 +1,47 @@
 package com.github.laxika.magicalvibes.service.effect.cost;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -51,10 +74,29 @@ import org.springframework.stereotype.Component;
  *   another player (CR 701.9).</li>
  *   <li>{@link SacrificePermanentCost}: the shared sacrifice choice, through the sacrifice action (sacrifice triggers,
  *   death replacements).</li>
+ *   <li>{@link SacrificeMultiplePermanentsCost}: exactly that many chosen permanents, sacrificed together with their
+ *   death replacements asked first (CR 616.1).</li>
+ *   <li>{@link DiscardHandCost}: the discard-hand action; payable with an empty hand.</li>
+ *   <li>{@link PutCounterOnControlledCreatureCost#blight} with a fixed count: the payer puts the -1/-1 counters on one
+ *   creature they control that can get them (CR 701.68a, 701.68b), through the counter action and its replacements,
+ *   on the resolving entry.</li>
+ *   <li>{@link CollectEvidenceCost} (plain "collect evidence N"): the graveyard choice with its minimum mana value and
+ *   the evidence-collected event (CR 701.59a, 701.59b).</li>
+ *   <li>{@link ExileGraveyardCost}: every card of the payer's graveyard exiled, its exile events included; payable with
+ *   an empty graveyard.</li>
+ *   <li>{@link GetPoisonCountersCost}: the poison-counter action, payable only while the payer can get poison
+ *   counters.</li>
+ *   <li>{@link DamageFromSourceCost} with a fixed amount: the resolving entry deals the damage (CR 608.2h), through the
+ *   damage event and its preventions; paid whether or not it is prevented (CR 118.12).</li>
+ *   <li>{@link WaterbendCost} with a fixed amount: the waterbend payment, the payer choosing which artifacts and
+ *   creatures to tap (CR 701.67a); the mana part is a tax like any other mana.</li>
+ *   <li>{@link AnyOfCost}: payable while any alternative is ({@link #canPay}); its caller asks and pays one
+ *   alternative at a time.</li>
  * </ul>
  * A payment with a choice ({@link Outcome#ASKING}) is finished by that prompt's completion, which ends through its own
- * epilogue; a life payment that a Lich's Duel Mastery sacrifice would follow asks that sacrifice's death replacements
- * first (CR 616.1) and completes the answer again once chosen.
+ * epilogue and resumes the asking resolution ({@link #completePermanentChoice}, {@link #completeMultiPermanentChoice},
+ * the evidence and discard completions); a life payment that a Lich's Duel Mastery sacrifice would follow asks that
+ * sacrifice's death replacements first (CR 616.1) and completes the answer again once chosen.
  */
 @Component
 public class ResolutionCostPaymentService {
@@ -77,8 +119,14 @@ public class ResolutionCostPaymentService {
      *                        discard they make another player make is caused by an opponent
      * @param answering       the answer this payment completes, asked again after a death replacement question, or
      *                        {@code null} when the payment isn't an answer to a "may" prompt
+     * @param entry           the resolving entry that asks for the payment: the dealer of a damage cost (CR 608.2h)
+     *                        and the entry a blight's counters are put through, or {@code null}
      */
-    public record Payment(Card sourceCard, UUID sourceControllerId, PendingMayAbility answering) {
+    public record Payment(Card sourceCard, UUID sourceControllerId, PendingMayAbility answering, StackEntry entry) {
+
+        public Payment(Card sourceCard, UUID sourceControllerId, PendingMayAbility answering) {
+            this(sourceCard, sourceControllerId, answering, null);
+        }
     }
 
     private final GameQueryService gameQueryService;
@@ -98,6 +146,36 @@ public class ResolutionCostPaymentService {
     @Autowired
     @Lazy
     private PlayerInteractionSupport playerInteractionSupport;
+    @Autowired
+    @Lazy
+    private WaterbendPaymentService waterbendPaymentService;
+    @Autowired
+    @Lazy
+    private PermanentCounterSupport permanentCounterSupport;
+    @Autowired
+    @Lazy
+    private DestructionSupport destructionSupport;
+    @Autowired
+    @Lazy
+    private PermanentRemovalService permanentRemovalService;
+    @Autowired
+    @Lazy
+    private GraveyardService graveyardService;
+    @Autowired
+    @Lazy
+    private ExileService exileService;
+    @Autowired
+    @Lazy
+    private DiscardHandUnlessPaysLifeEffectHandler discardHandHandler;
+    @Autowired
+    @Lazy
+    private DamageSupport damageSupport;
+    @Autowired
+    @Lazy
+    private GameOutcomeService gameOutcomeService;
+    @Autowired
+    @Lazy
+    private GameLogService gameLogService;
 
     public ResolutionCostPaymentService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
@@ -116,7 +194,18 @@ public class ResolutionCostPaymentService {
             case DiscardCardTypeCost discard ->
                     discardableIndices(gameData, payerId, discard, sourceCard).size() >= discard.count();
             case DiscardRandomCardCost discard -> handSize(gameData, payerId) >= discard.count();
-            case SacrificePermanentCost sacrifice -> !sacrificeCandidates(gameData, payerId, sacrifice).isEmpty();
+            case SacrificePermanentCost sacrifice -> !sacrificeCandidates(gameData, payerId, sacrifice.filter()).isEmpty();
+            case SacrificeMultiplePermanentsCost sacrifice ->
+                    sacrificeCandidates(gameData, payerId, sacrifice.filter()).size() >= sacrifice.count();
+            case DiscardHandCost ignored -> true;
+            case PutCounterOnControlledCreatureCost ignored -> !blightCandidates(gameData, payerId).isEmpty();
+            case CollectEvidenceCost evidence -> graveyardManaValue(gameData, payerId) >= evidence.minimumManaValue();
+            case ExileGraveyardCost ignored -> true;
+            case GetPoisonCountersCost ignored -> gameQueryService.canPlayerGetPoisonCounters(gameData, payerId);
+            case DamageFromSourceCost ignored -> true;
+            case WaterbendCost waterbend -> waterbendPaymentService.canPay(gameData, payerId, waterbend.amount());
+            case AnyOfCost anyOf -> anyOf.alternatives().stream()
+                    .anyMatch(alternative -> canPay(gameData, payerId, alternative, sourceCard));
             default -> throw new IllegalArgumentException("No resolution-time payment for " + cost);
         };
     }
@@ -151,7 +240,7 @@ public class ResolutionCostPaymentService {
                 yield Outcome.PAID;
             }
             case SacrificePermanentCost sacrifice -> {
-                List<UUID> candidates = sacrificeCandidates(gameData, payerId, sacrifice);
+                List<UUID> candidates = sacrificeCandidates(gameData, payerId, sacrifice.filter());
                 if (candidates.isEmpty()) {
                     yield Outcome.NOT_PAID;
                 }
@@ -162,8 +251,238 @@ public class ResolutionCostPaymentService {
                                 + " to sacrifice.");
                 yield Outcome.ASKING;
             }
+            case SacrificeMultiplePermanentsCost sacrifice -> {
+                List<UUID> candidates = sacrificeCandidates(gameData, payerId, sacrifice.filter());
+                if (candidates.size() < sacrifice.count()) {
+                    yield Outcome.NOT_PAID;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, sacrifice.count(),
+                        new MultiPermanentChoiceContext.ResolutionCostPayment(sacrifice, payerId, payment.sourceCard(),
+                                payment.sourceControllerId(), sacrifice.count()),
+                        "Choose " + sacrifice.count() + " "
+                                + (sacrifice.description() == null ? "permanents" : sacrifice.description())
+                                + " to sacrifice.");
+                yield Outcome.ASKING;
+            }
+            case DiscardHandCost ignored -> {
+                discardHandHandler.discardTargetHand(gameData, payerId, payerId, payment.sourceCard());
+                yield afterImmediatePayment(gameData);
+            }
+            case PutCounterOnControlledCreatureCost blight -> {
+                List<UUID> candidates = blightCandidates(gameData, payerId);
+                if (candidates.isEmpty()) {
+                    yield Outcome.NOT_PAID;
+                }
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ResolutionCostPayment(
+                        blight, payerId, payment.sourceCard(), payment.sourceControllerId()));
+                playerInputService.beginPermanentChoice(gameData, payerId, candidates, "Choose a creature to blight.");
+                yield Outcome.ASKING;
+            }
+            case CollectEvidenceCost evidence -> {
+                List<Card> graveyard = gameData.playerGraveyards.get(payerId);
+                if (graveyardManaValue(gameData, payerId) < evidence.minimumManaValue()) {
+                    yield Outcome.NOT_PAID;
+                }
+                gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume = true;
+                gameData.graveyardTargetOperation.collectEvidenceAsResolutionCost = true;
+                playerInputService.beginMultiGraveyardChoiceWithMinimumManaValue(gameData, payerId,
+                        new ArrayList<>(graveyard), graveyard.size(), evidence.minimumManaValue(),
+                        "Choose cards from your graveyard to collect evidence " + evidence.minimumManaValue() + ".");
+                yield Outcome.ASKING;
+            }
+            case ExileGraveyardCost ignored -> {
+                List<Card> graveyard = gameData.playerGraveyards.get(payerId);
+                if (graveyard != null && !graveyard.isEmpty()) {
+                    List<Card> exiled = new ArrayList<>(graveyard);
+                    graveyard.clear();
+                    graveyardService.notifyCardsExiledFromGraveyard(gameData, payerId, exiled);
+                    for (Card card : exiled) {
+                        exileService.exileCard(gameData, payerId, card);
+                    }
+                }
+                yield afterImmediatePayment(gameData);
+            }
+            case GetPoisonCountersCost poison -> {
+                if (!gameQueryService.canPlayerGetPoisonCounters(gameData, payerId)) {
+                    yield Outcome.NOT_PAID;
+                }
+                lifeSupport.applyPoisonCounters(gameData, payerId, poison.count(), payment.sourceCard().getName(),
+                        payment.sourceControllerId());
+                yield afterImmediatePayment(gameData);
+            }
+            case DamageFromSourceCost damage -> {
+                int amount = damage.amount() instanceof Fixed fixed ? fixed.value() : -1;
+                if (amount < 0 || payment.entry() == null) {
+                    throw new IllegalArgumentException("Read the damage and name its dealer before paying: " + damage);
+                }
+                // The object whose effect asks deals it, as it exists or last existed (CR 608.2h).
+                if (!damageSupport.isDamageSourcePreventedWithLog(gameData, payment.entry())) {
+                    damageSupport.dealDamageToPlayer(gameData, payment.entry(), payerId, amount);
+                }
+                gameOutcomeService.checkWinCondition(gameData);
+                yield afterImmediatePayment(gameData);
+            }
+            case WaterbendCost waterbend -> {
+                int amount = waterbend.amount();
+                if (!waterbendPaymentService.canPay(gameData, payerId, amount)) {
+                    yield Outcome.NOT_PAID;
+                }
+                List<UUID> choosable = waterbendPaymentService.untappedArtifactsAndCreatures(gameData, payerId);
+                int minimumTaps = waterbendPaymentService.minimumTaps(gameData, payerId, amount);
+                if (choosable.size() > minimumTaps) {
+                    // The payer decides which permanents to tap (CR 701.67a); the cost is paid once they choose.
+                    playerInputService.beginMultiPermanentChoice(gameData, payerId, choosable,
+                            Math.min(amount, choosable.size()),
+                            new MultiPermanentChoiceContext.ResolutionCostPayment(waterbend, payerId,
+                                    payment.sourceCard(), payment.sourceControllerId(), minimumTaps),
+                            payment.sourceCard().getName() + " — Choose artifacts and creatures to tap for waterbend {"
+                                    + amount + "}; the rest is paid with mana.");
+                    yield Outcome.ASKING;
+                }
+                payWaterbend(gameData, payerId, waterbend, payment.sourceCard(), payment.sourceControllerId(), List.of());
+                yield afterImmediatePayment(gameData);
+            }
             default -> throw new IllegalArgumentException("No resolution-time payment for " + cost);
         };
+    }
+
+    /**
+     * Completes a {@link PermanentChoiceContext.ResolutionCostPayment}: {@code payerId} chose {@code permanentId} to
+     * pay the cost (a blight's creature). The counters are put by the payer through the counter action on the resolving
+     * entry; how many it ends up with doesn't matter, the cost is paid (CR 118.12). The caller ends through the
+     * epilogue, which resumes the asking resolution.
+     */
+    public void completePermanentChoice(GameData gameData, UUID payerId, UUID permanentId,
+                                        PermanentChoiceContext.ResolutionCostPayment context) {
+        if (!(context.cost() instanceof PutCounterOnControlledCreatureCost blight)) {
+            throw new IllegalStateException("No permanent choice pays " + context.cost());
+        }
+        if (!blightCandidates(gameData, payerId).contains(permanentId)) {
+            throw new IllegalStateException("That creature can't be blighted");
+        }
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        StackEntry entry = gameData.pendingEffectResolutionEntry != null
+                ? gameData.pendingEffectResolutionEntry : new StackEntry(context.sourceCard(), payerId);
+        permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData, entry, creature,
+                CounterType.MINUS_ONE_MINUS_ONE, blight.count(), payerId);
+    }
+
+    /**
+     * Whether {@code permanentIds} answer {@code context}: exactly the cost's number of the payer's matching permanents
+     * to sacrifice, or between its minimum and the waterbend amount of untapped artifacts and creatures to tap.
+     *
+     * @throws IllegalStateException when they don't
+     */
+    public void validateMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                             MultiPermanentChoiceContext.ResolutionCostPayment context) {
+        if (!playerId.equals(context.payerId())) {
+            throw new IllegalStateException("Not the payer's choice");
+        }
+        if (permanentIds.stream().distinct().count() != permanentIds.size()) {
+            throw new IllegalStateException("A permanent was chosen twice");
+        }
+        switch (context.cost()) {
+            case SacrificeMultiplePermanentsCost sacrifice -> {
+                if (permanentIds.size() != sacrifice.count()) {
+                    throw new IllegalStateException("Must select exactly " + sacrifice.count() + " permanents");
+                }
+                List<UUID> candidates = sacrificeCandidates(gameData, playerId, sacrifice.filter());
+                if (!candidates.containsAll(permanentIds)) {
+                    throw new IllegalStateException("A selected permanent can't be sacrificed for this cost");
+                }
+            }
+            case WaterbendCost waterbend -> {
+                if (permanentIds.size() < context.minimum() || permanentIds.size() > waterbend.amount()) {
+                    throw new IllegalStateException("Must tap at least " + context.minimum()
+                            + " permanents (the rest of the cost is paid with mana)");
+                }
+            }
+            default -> throw new IllegalStateException("No multi-permanent choice pays " + context.cost());
+        }
+    }
+
+    /**
+     * Completes a {@link MultiPermanentChoiceContext.ResolutionCostPayment} with the chosen {@code permanentIds}
+     * (validated by {@link #validateMultiPermanentChoice}): sacrifices them together, their death replacements asked
+     * first (CR 616.1), or taps them for the waterbend and pays the rest with mana. The caller ends through the
+     * epilogue, which resumes the asking resolution.
+     */
+    public void completeMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                             MultiPermanentChoiceContext.ResolutionCostPayment context) {
+        switch (context.cost()) {
+            case SacrificeMultiplePermanentsCost ignored -> {
+                List<Permanent> chosen = permanentIds.stream()
+                        .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                        .filter(permanent -> permanent != null && playerId.equals(
+                                gameQueryService.findPermanentController(gameData, permanent.getId())))
+                        .toList();
+                destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, chosen);
+                for (Permanent permanent : chosen) {
+                    destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+                }
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+            case WaterbendCost waterbend -> payWaterbend(gameData, playerId, waterbend, context.sourceCard(),
+                    context.sourceControllerId(), permanentIds);
+            default -> throw new IllegalStateException("No multi-permanent choice pays " + context.cost());
+        }
+    }
+
+    /**
+     * Completes the evidence collected for a {@link CollectEvidenceCost} ransom: the chosen cards are exiled and the
+     * evidence-collected event raised (CR 701.59a); the asking effect resumes where it waits.
+     */
+    public void completeCollectEvidence(GameData gameData, Player payer, List<Card> exiledCards) {
+        UUID payerId = payer.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(payerId);
+        if (graveyard != null) {
+            graveyard.removeAll(exiledCards);
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, payerId, exiledCards);
+            for (Card card : exiledCards) {
+                exileService.exileCard(gameData, payerId, card);
+            }
+            gameLogService.append(gameData, GameLog.text(payer.getUsername() + " exiles " + exiledCards.size()
+                    + " cards from their graveyard to collect evidence."));
+        }
+        com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents.evidenceCollected(gameData, payerId);
+    }
+
+    /**
+     * Pays a waterbend: the chosen (or, with none chosen, the fewest needed) artifacts and creatures are tapped and
+     * the rest is paid with mana, which is a tax when the payment is for another player's spell or permanent.
+     */
+    private void payWaterbend(GameData gameData, UUID payerId, WaterbendCost waterbend, Card sourceCard,
+                              UUID sourceControllerId, List<UUID> tapped) {
+        ManaPool pool = gameData.playerManaPools.get(payerId);
+        int before = pool == null ? 0 : pool.getTotalAllMana();
+        waterbendPaymentService.pay(gameData, payerId, waterbend.amount(), sourceCard, tapped);
+        int after = pool == null ? 0 : pool.getTotalAllMana();
+        ActionEvents.taxPaid(gameData, payerId, sourceControllerId, before - after);
+    }
+
+    /** A payment made at once is paid, unless one of its actions stopped to ask (a replacement's choice). */
+    private static Outcome afterImmediatePayment(GameData gameData) {
+        return gameData.interaction.isAwaitingInput() ? Outcome.ASKING : Outcome.PAID;
+    }
+
+    /** The creatures {@code payerId} controls that can get -1/-1 counters and be chosen (CR 701.68b). */
+    private List<UUID> blightCandidates(GameData gameData, UUID payerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(payerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+        return battlefield.stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+    }
+
+    private static int graveyardManaValue(GameData gameData, UUID playerId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        return graveyard == null ? 0 : graveyard.stream().mapToInt(Card::getManaValue).sum();
     }
 
     /**
@@ -327,14 +646,15 @@ public class ResolutionCostPaymentService {
         return indices;
     }
 
-    private List<UUID> sacrificeCandidates(GameData gameData, UUID payerId, SacrificePermanentCost sacrifice) {
+    private List<UUID> sacrificeCandidates(GameData gameData, UUID payerId,
+                                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(payerId);
         if (battlefield == null) {
             return List.of();
         }
         return battlefield.stream()
-                .filter(permanent -> sacrifice.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, sacrifice.filter()))
+                .filter(permanent -> filter == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter))
                 .map(Permanent::getId)
                 .toList();
     }

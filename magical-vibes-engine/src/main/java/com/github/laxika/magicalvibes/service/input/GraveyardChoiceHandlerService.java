@@ -95,6 +95,9 @@ public class GraveyardChoiceHandlerService {
 
 
     private final GameQueryService gameQueryService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService resolutionCostPaymentService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
@@ -926,6 +929,21 @@ public class GraveyardChoiceHandlerService {
                 && selectedManaValue > multiGraveyardChoice.maxTotalManaValue()) {
             throw new IllegalStateException("Selected cards exceed the total mana value "
                     + multiGraveyardChoice.maxTotalManaValue() + " limit");
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume
+                && gameData.graveyardTargetOperation.collectEvidenceAsResolutionCost) {
+            // Evidence collected to pay a cost a resolving effect asked for (an "unless" ransom): the asking effect
+            // resumes with the choice to pay made (CR 118.12).
+            gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume = false;
+            gameData.graveyardTargetOperation.collectEvidenceAsResolutionCost = false;
+            gameData.interaction.clearAwaitingInput();
+            resolutionCostPaymentService.completeCollectEvidence(gameData, player, cardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .filter(java.util.Objects::nonNull)
+                    .toList());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         if (gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume) {

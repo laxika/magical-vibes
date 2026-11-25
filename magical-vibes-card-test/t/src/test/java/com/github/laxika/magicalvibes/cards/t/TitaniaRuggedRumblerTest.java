@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.s.SphinxOfTheFinalWord;
 import com.github.laxika.magicalvibes.cards.b.BullseyeDeathDealer;
 import com.github.laxika.magicalvibes.cards.c.CaptainAmericasShield;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TitaniaRuggedRumbler.class, Forest.class, Shock.class,
-        BullseyeDeathDealer.class, CaptainAmericasShield.class})
+        BullseyeDeathDealer.class, CaptainAmericasShield.class, SphinxOfTheFinalWord.class})
 class TitaniaRuggedRumblerTest extends BaseCardTest {
 
     @Test
@@ -75,6 +76,8 @@ class TitaniaRuggedRumblerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
+        // Oracle order: the discard is offered first, then the {2}.
+        harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -129,6 +132,7 @@ class TitaniaRuggedRumblerTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, titania.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).manaCost())
                 .isEqualTo("{2}");
@@ -173,7 +177,6 @@ class TitaniaRuggedRumblerTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, titania.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
@@ -233,11 +236,32 @@ class TitaniaRuggedRumblerTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, 0, null, titania.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
         harness.passBothPriorities();
         assertThat(titania.getMarkedDamage()).isEqualTo(2);
         harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Ward asks for its ransom even when the spell can't be countered, and paying it discards the card (owner's decision, CR 118.12a)")
+    void wardAsksWhenTheSpellCantBeCountered() {
+        Permanent titania = addReadyTitania();
+        beginOpponentTurn();
+        harness.addToBattlefield(player2, new SphinxOfTheFinalWord());
+        harness.setHand(player2, List.of(new Shock(), new Forest()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, titania.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(titania.getMarkedDamage()).isEqualTo(2);
     }
 }

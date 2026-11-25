@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -22,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ForumNecroscribe.class, GrizzlyBears.class, HillGiant.class, Shock.class,
-        VolcanicHammer.class, ProdigalSorcerer.class, FieryTemper.class})
+        VolcanicHammer.class, ProdigalSorcerer.class, FieryTemper.class, LibraryOfLeng.class})
 class ForumNecroscribeTest extends BaseCardTest {
 
     @Test
@@ -302,5 +303,28 @@ class ForumNecroscribeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    @DisplayName("A question asked while the ward's discard is paid (Library of Leng) doesn't change the paid branch")
+    void questionDuringTheDiscardPaymentKeepsThePaidBranch() {
+        Permanent necroscribe = addReadyNecroscribe();
+        beginOpponentTurn();
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        harness.setHand(player2, List.of(new Shock(), new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, necroscribe.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, false);
+        }
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(necroscribe.getMarkedDamage()).isEqualTo(2);
     }
 }

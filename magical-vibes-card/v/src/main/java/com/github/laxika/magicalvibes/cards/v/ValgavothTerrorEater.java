@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -19,7 +19,7 @@ public class ValgavothTerrorEater extends Card {
         PermanentAllOfPredicate nonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessSacrificesEffect(nonland, "nonland permanent", 3));
+                UnlessPaysEffect.counterUnlessSacrifices(3, nonland, "nonland permanents"));
         addStaticEffect(ExileOpponentCardsInsteadOfGraveyardEffect.forCardsYouDidntControl(true));
         addStaticEffect(AllowCastFromCardsExiledWithSourceEffect
                 .payingLifeEqualToManaValue());
