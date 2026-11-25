@@ -247,6 +247,22 @@ class PurgatoryTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player1, new Purgatory()).getId();
     }
 
+    @Test
+    @DisplayName("An exiled instant card (a manifested instant that died) stays in exile (CR 400.4a)")
+    void exiledInstantCardStaysInExile() {
+        UUID permId = addPurgatory();
+        Card instant = new RayOfCommand();
+        gd.addToExile(player1.getId(), instant, permId);
+
+        advanceToSecondTurnUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Ray of Command");
+        assertThat(gd.getCardsExiledByPermanent(permId)).containsExactly(instant);
+    }
+
     private UUID setupWithExiledShadows(int count) {
         UUID permId = addPurgatory();
         for (int i = 0; i < count; i++) {

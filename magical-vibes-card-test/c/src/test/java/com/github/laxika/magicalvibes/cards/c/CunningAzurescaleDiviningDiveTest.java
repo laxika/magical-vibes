@@ -35,7 +35,8 @@ class CunningAzurescaleDiviningDiveTest extends BaseCardTest {
     }
 
     @Test
-    void adventureSeeksOneCardOfChosenKindAndExilesTheCard() {
+    @DisplayName("Divining Dive is an Omen: it seeks one card of the chosen kind and is shuffled into its owner's library (CR 721.3d)")
+    void omenSeeksOneCardOfChosenKindAndShufflesTheCard() {
         Card forest = new Forest();
         Card nonland = new GrizzlyBears();
         CunningAzurescaleDiviningDive card = new CunningAzurescaleDiviningDive();
@@ -44,13 +45,15 @@ class CunningAzurescaleDiviningDiveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castAdventure(player1, 0, List.of());
+        harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Nonland");
 
         assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
-        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(card);
     }
 
     @Test

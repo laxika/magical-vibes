@@ -215,4 +215,29 @@ class RuinGrinderTest extends BaseCardTest {
         }
         harness.setLibrary(player, cards);
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales.class})
+    @DisplayName("A player whose opponents' abilities can't cause them to discard isn't offered the discard (Tamiyo ruling)")
+    void playerProtectedFromDiscardIsNotOffered() {
+        Card player1HandCard = new GrizzlyBears();
+        Card player2HandCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(player1HandCard));
+        harness.setHand(player2, List.of(player2HandCard));
+        harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales())
+                .setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
+        fillLibrary(player1, 7);
+        fillLibrary(player2, 7);
+
+        Permanent ruinGrinder = harness.addToBattlefieldAndReturn(player1, new RuinGrinder());
+        ruinGrinder.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2HandCard);
+    }
 }

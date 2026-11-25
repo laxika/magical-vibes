@@ -132,4 +132,23 @@ class SliceAndDiceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInHand(player1, "Gluttonous Zombie");
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.p.PestilentSpirit.class})
+    @DisplayName("The cycling trigger is an ability, not a spell, so Pestilent Spirit gives it no deathtouch")
+    void cyclingTriggerGetsNoDeathtouchFromPestilentSpirit() {
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.p.PestilentSpirit());
+        Permanent orgg = harness.addToBattlefieldAndReturn(player2, new ButcherOrgg());
+        harness.setHand(player1, List.of(new SliceAndDice()));
+        harness.setLibrary(player1, List.of(new GluttonousZombie()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(orgg.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Butcher Orgg");
+    }
 }

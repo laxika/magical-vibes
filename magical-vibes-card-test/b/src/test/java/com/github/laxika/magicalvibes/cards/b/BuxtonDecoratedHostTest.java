@@ -186,6 +186,21 @@ class BuxtonDecoratedHostTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.i.IchorWellspring.class})
+    @DisplayName("A sought noncreature permanent's enter ability triggers")
+    void soughtArtifactEnterAbilityTriggers() {
+        harness.addToBattlefield(player1, new BuxtonDecoratedHost());
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).tap();
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).tap();
+        harness.setLibrary(player1, List.of(new com.github.laxika.magicalvibes.cards.i.IchorWellspring(), new Forest()));
+
+        resolveEndStep(player1);
+
+        harness.assertOnBattlefield(player1, "Ichor Wellspring");
+        assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Ichor Wellspring"));
+    }
+
     private void resolveEndStep(Player activePlayer) {
         advanceToEndStep(activePlayer);
         harness.passBothPriorities();

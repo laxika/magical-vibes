@@ -148,4 +148,19 @@ class MadcapExperimentTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.p.PaintersServant.class})
+    @DisplayName("A revealed artifact with an as-enters choice asks for it as it enters (CR 614.12)")
+    void revealedArtifactAsksItsAsEntersChoice() {
+        harness.setLibrary(player1, List.of(new Forest(), new com.github.laxika.magicalvibes.cards.p.PaintersServant()));
+        harness.setHand(player1, List.of(new MadcapExperiment()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertOnBattlefield(player1, "Painter's Servant");
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+    }
 }

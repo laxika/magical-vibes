@@ -56,7 +56,7 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
      * ability that returns them looks only at that link, so neither touches cards exiled by the
      * gaining permanent's own abilities.
      */
-    private static CardEffect linkGainedEffect(CardEffect effect, String link) {
+    static CardEffect linkGainedEffect(CardEffect effect, String link) {
         if (effect instanceof ExileTargetPermanentAndTrackWithSourceEffect) {
             return new ExileTargetPermanentAndTrackWithSourceEffect(link);
         }

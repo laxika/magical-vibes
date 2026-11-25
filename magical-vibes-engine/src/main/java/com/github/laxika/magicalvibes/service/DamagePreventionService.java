@@ -1135,41 +1135,6 @@ public class DamagePreventionService {
         return (int) (damage - totalReduction);
     }
 
-    public int applyPerSourceCreatureDamagePreventionShield(GameData gameData, Permanent permanent,
-                                                             Permanent damageSource, int damage,
-                                                             boolean isCombatDamage) {
-        if (damage <= 0 || damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) {
-            return damage;
-        }
-
-        if (isCombatDamage && hasActiveCombatDamageToSelfAndAddPlusOneCounterEffect(
-                gameData, permanent, damageSource)) {
-            return applyCombatDamageToSelfAndAddPlusOneCounter(gameData, permanent, damageSource, damage);
-        }
-
-        if (!gameQueryService.isDamagePreventable(gameData, isCombatDamage)) {
-            return damage;
-        }
-
-        if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
-                gameData, permanent, null, damageSource, isCombatDamage)) {
-            return 0;
-        }
-
-        if (gameQueryService.isDamageFromMatchingSourcePreventedForControlledCreature(
-                gameData, permanent, damageSource)) {
-            return 0;
-        }
-
-        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-        int prevented = 0;
-        if (controllerId != null) {
-            prevented = evaluatePerSourceControllerAndCreaturesDamagePrevention(
-                    gameData, controllerId, damage, isCombatDamage, damageSource, permanent);
-        }
-        return damage - Math.min(damage, prevented);
-    }
-
     /** Applies Ironscale Hydra's one-counter-per-creature combat damage replacement. */
     public int applyCombatDamageToSelfAndAddPlusOneCounter(GameData gameData, Permanent permanent,
                                                             Permanent damageSource, int damage) {
@@ -1482,86 +1447,6 @@ public class DamagePreventionService {
                     shield.targetCreatureId()));
             return 0;
         }
-        return damage;
-    }
-
-    public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
-        return applyPlayerPreventionShield(gameData, playerId, damage, false, null);
-    }
-
-    public int applyCombatPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
-        return applyPlayerPreventionShield(gameData, playerId, damage, true, null);
-    }
-
-    public int applyCombatPlayerPreventionShield(GameData gameData, UUID playerId, int damage,
-                                                   Permanent damageSource) {
-        return applyPlayerPreventionShield(gameData, playerId, damage, true, damageSource);
-    }
-
-    private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage,
-                                            boolean combatDamage, Permanent damageSource) {
-        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
-        if (combatDamage && damageSource != null) {
-            UUID sourceControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
-            damage = applyJudgmentOfAlexanderPrevention(gameData, playerId, damage,
-                    damageSource.getCard(), damageSource, sourceControllerId, true);
-            if (damage <= 0) return 0;
-        }
-        if (combatDamage) {
-            CombatDamagePreventionTokenShield tokenShield = gameData.combatDamagePreventionTokenShield(playerId);
-            if (tokenShield != null) {
-                notifyControllerDamagePrevented(gameData, playerId, damage);
-                permanentControlSupportProvider.getObject().applyCreateToken(
-                        gameData, playerId, tokenShield.token(), damage, tokenShield.sourceSetCode());
-                return 0;
-            }
-        }
-        if (combatDamage && gameData.hasPrevention(PreventionScope.ALL_COMBAT_TO_PLAYERS)) {
-            notifyControllerDamagePrevented(gameData, playerId, damage);
-            return 0;
-        }
-        if (combatDamage
-                && gameData.hasPreventionOnPlayer(playerId,
-                PreventionScope.ALL_COMBAT_TO_CONTROLLER_AND_PLANESWALKERS)) {
-            notifyControllerDamagePrevented(gameData, playerId, damage);
-            return 0;
-        }
-        if (gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER_AND_PERMANENTS,
-                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES)) {
-            notifyControllerDamagePrevented(gameData, playerId, damage);
-            return 0;
-        }
-        // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)
-        if (gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER)) {
-            notifyControllerDamagePrevented(gameData, playerId, damage);
-            return 0;
-        }
-        // Morningtide's Light: prevent all damage that would be dealt to the caster until their next turn.
-        if (gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER_UNTIL_NEXT_TURN)) {
-            notifyControllerDamagePrevented(gameData, playerId, damage);
-            return 0;
-        }
-        // Gisela, Blade of Goldnight: prevent half the damage dealt to her controller, rounded up.
-        damage = applyHalfDamagePrevention(gameData, playerId, damage);
-        if (damage <= 0) return 0;
-        damage -= applyControllerAndCreaturesFixedPerSourceDamagePrevention(
-                gameData, playerId, damage, combatDamage, damageSource, null);
-        if (damage <= 0) return 0;
-        // Process redirect shields first (e.g. Vengeful Archon)
-        damage = applyRedirectShields(gameData, playerId, null, damage, false, combatDamage);
-        damage = applyGlobalPreventionShield(gameData, damage, combatDamage);
-        damage = applyDamagePreventionLifeGainShield(gameData, playerId, damage, combatDamage);
-        if (damage <= 0) return 0;
-        if (combatDamage) {
-            int prevented = gameData.usePlayerDamagePreventionShields(playerId, true, damage);
-            if (prevented > 0) {
-                damage -= prevented;
-                notifyControllerDamagePrevented(gameData, playerId, prevented);
-            }
-        }
-        if (damage <= 0) return 0;
-        damage = applyPlayerDamagePreventionShield(gameData, playerId, damage);
-        if (damage <= 0) return 0;
         return damage;
     }
 

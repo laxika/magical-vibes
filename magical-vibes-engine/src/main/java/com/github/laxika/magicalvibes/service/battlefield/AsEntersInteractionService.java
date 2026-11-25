@@ -195,7 +195,7 @@ public class AsEntersInteractionService {
         boolean turnsOtherCreaturesFaceDown = card.getStaticEffects().stream()
                 .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
         if (turnsOtherCreaturesFaceDown && !gameQueryService.hasLostAllAbilities(gameData, enteringPermanent)) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 for (Permanent permanent : battlefield) {
                     if (permanent == justEntered || permanent.isFaceDown() || permanent.getCard().isToken()
@@ -215,8 +215,7 @@ public class AsEntersInteractionService {
 
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEnteredPerm = bf.get(bf.size() - 1);
+            Permanent justEnteredPerm = enteringPermanent;
             justEnteredPerm.setKicked(true);
         }
 
@@ -228,7 +227,7 @@ public class AsEntersInteractionService {
                 .map(TributeEffect.class::cast)
                 .findFirst().orElse(null);
         if (tribute != null) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
             if (opponentId != null) {
                 gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -253,7 +252,7 @@ public class AsEntersInteractionService {
         }
 
         if (upgradeSupport != null && upgradeSupport.isUpgrade(card)) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             List<UUID> validIds = upgradeSupport.validArtifactIds(gameData, controllerId, justEntered);
             if (validIds.isEmpty()) {
                 if (permanentRemovalService == null
@@ -283,7 +282,7 @@ public class AsEntersInteractionService {
         boolean needsPhylacteryChoice = card.getStaticEffects().stream()
                 .anyMatch(PutPhylacteryCounterOnTargetPermanentEffect.class::isInstance);
         if (needsPhylacteryChoice) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             List<UUID> validIds = gameData.playerBattlefields.get(controllerId).stream()
                     .filter(permanent -> permanent != justEntered)
                     .filter(permanent -> gameQueryService.isArtifact(gameData, permanent))
@@ -312,7 +311,7 @@ public class AsEntersInteractionService {
                 .map(ChooseEquipmentAttachmentOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
         if (equipmentAttachment != null && equipSupport != null) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             List<UUID> validIds = gameData.playerBattlefields.get(controllerId).stream()
                     .filter(permanent -> permanent != justEntered)
                     .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
@@ -339,7 +338,7 @@ public class AsEntersInteractionService {
                 .map(ChoosePermanentOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
         if (permanentChoice != null) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             List<UUID> validIds = subjectResolutionService
                     .permanents(gameData, justEntered, controllerId, permanentChoice.candidates()).stream()
                     .filter(permanent -> permanent != justEntered)
@@ -361,7 +360,7 @@ public class AsEntersInteractionService {
         boolean needsNonlandPermanentChoice = card.getStaticEffects().stream()
                 .anyMatch(ChooseNonlandPermanentOnEnterEffect.class::isInstance);
         if (needsNonlandPermanentChoice) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             List<UUID> validIds = gameData.playerBattlefields.values().stream()
                     .flatMap(List::stream)
                     .filter(permanent -> permanent != justEntered)
@@ -384,7 +383,7 @@ public class AsEntersInteractionService {
         boolean needsOpponentChoice = card.getStaticEffects().stream()
                 .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance);
         if (needsOpponentChoice) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             UUID choiceControllerId = controllerId;
             List<UUID> validOpponentIds = gameData.orderedPlayerIds.stream()
                     .filter(playerId -> !playerId.equals(choiceControllerId))
@@ -410,7 +409,7 @@ public class AsEntersInteractionService {
                 .map(ChoosePlayerOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
         if (playerChoice != null) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             List<UUID> validPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
             if (!validPlayerIds.isEmpty()) {
                 PermanentChoiceContext.ChoosePlayerAsEnter pending = new PermanentChoiceContext.ChoosePlayerAsEnter(
@@ -436,7 +435,7 @@ public class AsEntersInteractionService {
         boolean needsTwoPlayerChoice = card.getStaticEffects().stream()
                 .anyMatch(TwoPlayerChoiceOnEnterEffect.class::isInstance);
         if (needsTwoPlayerChoice) {
-            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent justEntered = enteringPermanent;
             List<UUID> validPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
             if (validPlayerIds.size() >= 2) {
                 gameData.interaction.setPermanentChoiceContext(
@@ -453,8 +452,7 @@ public class AsEntersInteractionService {
         boolean needsPrimalClayFormChoice = card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ChoosePrimalClayFormOnEnterEffect);
         if (needsPrimalClayFormChoice) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             playerInputService.beginPrimalClayFormChoice(gameData, controllerId, justEntered.getId());
             return;
         }
@@ -464,8 +462,7 @@ public class AsEntersInteractionService {
                 .map(PowerToughnessFormChoiceEffect.class::cast)
                 .findFirst().orElse(null);
         if (powerToughnessChoice != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             playerInputService.beginPowerToughnessFormChoice(gameData, controllerId, justEntered.getId(),
                     powerToughnessChoice.forms(), false);
             return;
@@ -476,8 +473,7 @@ public class AsEntersInteractionService {
                 .map(e -> (ChooseColorEffect) e)
                 .findFirst().orElse(null);
         if (colorChoice != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             if (!colorChoice.choiceComplete(justEntered)) {
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId,
                         colorChoice);
@@ -490,8 +486,7 @@ public class AsEntersInteractionService {
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
         if (independentModeChoice != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             int nextGroup = justEntered.getChosenModeLabels().size();
             if (nextGroup < independentModeChoice.modeGroups().size()) {
                 playerInputService.beginChooseIndependentModesOnEnterChoice(gameData, controllerId, card,
@@ -505,8 +500,7 @@ public class AsEntersInteractionService {
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
         if (modeChoice != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             if (modeChoice.eachPlayer()) {
                 if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
                         gameData, card, justEntered.getId(), modeChoice.modes())) {
@@ -531,8 +525,7 @@ public class AsEntersInteractionService {
                 .map(e -> (ChooseBasicLandTypeOnEnterEffect) e)
                 .findFirst().orElse(null);
         if (landTypeChoice != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             playerInputService.beginBasicLandTypeChoice(gameData, controllerId, justEntered.getId(),
                     false, landTypeChoice.choicesRequired() > 1, landTypeChoice.allowedTypes());
             return;
@@ -546,8 +539,7 @@ public class AsEntersInteractionService {
                 .findFirst()
                 .orElse(null);
         if (subtypeChoice != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             if (subtypeChoice.writesToBuddyList()
                     ? !justEntered.isBuddyListChoiceMade()
                     : justEntered.getChosenSubtype() == null) {
@@ -558,7 +550,7 @@ public class AsEntersInteractionService {
 
         if (card.getStaticEffects().stream()
                 .anyMatch(ChooseManaValueParityOnEnterEffect.class::isInstance)) {
-            Permanent entering = gameData.playerBattlefields.get(controllerId).getLast();
+            Permanent entering = enteringPermanent;
             playerInputService.beginManaValueParityChoice(gameData, controllerId,
                     new ChoiceContext.ManaValueParityChoice(entering.getId(), card, targetId,
                             wasCastFromHand, etbMode, xValue, kicked, targetIds,
@@ -569,7 +561,7 @@ public class AsEntersInteractionService {
         // "Escapes with your choice of ..." (CR 702.138a): the choice is offered only when the entering
         // permanent was cast with escape, so the counter choice is unwrapped from its escape gate here.
         boolean enteredWithEscape = !gameData.playerBattlefields.get(controllerId).isEmpty()
-                && gameData.playerBattlefields.get(controllerId).getLast().isEscaped();
+                && enteringPermanent.isEscaped();
         ChooseCounterTypeOnEnterEffect counterTypeChoice = card.getStaticEffects().stream()
                 .map(effect -> effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof SourceWasCastWithEscape
@@ -579,8 +571,7 @@ public class AsEntersInteractionService {
                 .findFirst()
                 .orElse(null);
         if (counterTypeChoice != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             playerInputService.beginAsEntersCounterTypeChoice(gameData,
                     new ChoiceContext.AsEntersCounterTypeChoice(
                             justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
@@ -663,12 +654,11 @@ public class AsEntersInteractionService {
                         .map(e -> (SacrificePermanentsAsEntersForCountersEffect) e)
                         .findFirst().orElse(null);
         if (sacForCounters != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(card.getId())
                     .withSourceControllerId(controllerId);
-            List<UUID> sacrificeable = bf.stream()
+            List<UUID> sacrificeable = gameData.playerBattlefields.get(controllerId).stream()
                     .filter(p -> p != justEntered)
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                             p, sacForCounters.filter(), filterContext))
@@ -694,8 +684,7 @@ public class AsEntersInteractionService {
                 .map(PayAnyAmountOfLifeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
         if (lifePayment != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             int life = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
             int maxLife = gameQueryService.canPlayerLoseLife(gameData, controllerId) ? life : 0;
             if (lifePayment.maxAmount() != null) {
@@ -744,8 +733,7 @@ public class AsEntersInteractionService {
                         .toList();
             }
             if (eligibleCards.size() >= 2) {
-                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                Permanent justEntered = bf.get(bf.size() - 1);
+                Permanent justEntered = enteringPermanent;
                 gameData.graveyardTargetOperation.asEntersOpponentExileToGraveyard =
                         new GraveyardTargetOperationState.AsEntersOpponentExileToGraveyardContext(
                                 justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode,
@@ -763,8 +751,7 @@ public class AsEntersInteractionService {
                         .map(RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
         if (removeCountersForCounters != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
+            Permanent justEntered = enteringPermanent;
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(card.getId())
                     .withSourceControllerId(controllerId);
@@ -833,8 +820,7 @@ public class AsEntersInteractionService {
                 minExiledCards = requiredGraveyardExile == null ? 0 : maxExiledCards;
             }
             if (!graveyardCards.isEmpty() && maxExiledCards > 0) {
-                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                Permanent justEntered = bf.get(bf.size() - 1);
+                Permanent justEntered = enteringPermanent;
                 gameData.graveyardTargetOperation.asEntersExile =
                         new GraveyardTargetOperationState.AsEntersGraveyardExileContext(
                                 justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode,

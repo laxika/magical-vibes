@@ -183,4 +183,27 @@ class OathOfDruidsTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Elven Palisade", "Crashing Boars");
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.g.GrafdiggersCage.class})
+    @DisplayName("A revealed creature card that can't enter from a library stays there; the other revealed cards go to the graveyard")
+    void revealedCreatureThatCantEnterStaysInLibrary() {
+        harness.addToBattlefield(player1, new OathOfDruids());
+        harness.addToBattlefield(player2, new CrashingBoars());
+        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.g.GrafdiggersCage());
+        harness.setLibrary(player1, List.of(new ElvenPalisade(), new CrashingBoars(), new ElvenPalisade()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Crashing Boars");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Crashing Boars", "Elven Palisade");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Elven Palisade");
+    }
 }

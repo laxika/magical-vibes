@@ -146,4 +146,23 @@ class HamletbackGoliathTest extends BaseCardTest {
 
         assertThat(goliath().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("A creature that left before the ability resolves counts its power as it last existed (CR 608.2h)")
+    void departedCreatureUsesItsLastKnownPower() {
+        harness.addToBattlefield(player1, new HamletbackGoliath());
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
+        harness.passBothPriorities();
+
+        Permanent giant = gd.playerBattlefields.get(player1.getId()).get(1);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, giant));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(goliath().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
 }

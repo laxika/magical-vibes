@@ -9399,8 +9399,10 @@ public class GameQueryService {
         if (entryHasKeyword) {
             return true;
         }
+        // "Instant and sorcery spells you control have deathtouch": spells only, not an ability of such a card.
         return keyword == Keyword.DEATHTOUCH
                 && entry.getSourcePermanentId() == null
+                && !entry.getEntryType().isAbility()
                 && entry.getCard() != null
                 && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
                 && countPlayerControlledStaticEffects(gameData, entry.getControllerId(),

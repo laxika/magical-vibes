@@ -4,14 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +21,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * The active player reveals cards from the top of their library until a creature card, puts that card onto the
+ * battlefield and the other revealed cards into their graveyard (Oath of Druids). The creature enters through the
+ * entry batch, so its as-enters choices and replacements apply, and one that can't enter stays in the library
+ * (CR 614.1c, 614.12).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,9 +34,8 @@ public class ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffectH
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final BattlefieldEntryService battlefieldEntryService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final GraveyardService graveyardService;
-    private final LegendRuleService legendRuleService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,8 +57,7 @@ public class ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffectH
 
         List<Card> revealedCards = new ArrayList<>();
         Card foundCreature = null;
-        while (!deck.isEmpty()) {
-            Card card = deck.removeFirst();
+        for (Card card : deck) {
             revealedCards.add(card);
             if (card.hasType(CardType.CREATURE)) {
                 foundCreature = card;
@@ -67,26 +70,20 @@ public class ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffectH
                 .collect(Collectors.joining(", "));
         gameLogService.append(gameData, GameLog.text(
                 playerName + " reveals " + revealedNames + " from the top of their library."));
-
-        Permanent permanent = null;
-        if (foundCreature != null) {
-            revealedCards.remove(foundCreature);
-            permanent = new Permanent(foundCreature);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
-            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundCreature, playerName));
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, playerId, foundCreature, null, false);
-        } else {
+        if (foundCreature == null) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library — no creature card was found."));
+        } else {
+            revealedCards.remove(foundCreature);
         }
 
         for (Card card : revealedCards) {
+            deck.removeIf(c -> c.getId().equals(card.getId()));
             graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.LIBRARY);
         }
-
-        if (permanent != null && !gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, playerId);
+        if (foundCreature != null) {
+            battlefieldEntryBatchSupport.begin(gameData, List.of(
+                    new BattlefieldEntryCard(playerId, playerId, foundCreature, Zone.LIBRARY, null)));
         }
 
         log.info("Game {} - {} reveals {} cards, creature found={}",

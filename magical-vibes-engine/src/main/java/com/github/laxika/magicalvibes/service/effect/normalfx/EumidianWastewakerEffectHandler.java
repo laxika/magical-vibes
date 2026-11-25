@@ -58,13 +58,7 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
             state.pendingDiscard = false;
             state.currentPlayerId = null;
         } else if (state.pendingSacrificeChoice) {
-            boolean landSacrificed = state.pendingSacrificeLandIds.stream()
-                    .anyMatch(id -> gameQueryService.findPermanentById(gameData, id) == null);
-            if (landSacrificed) {
-                state.landCardsPutIntoGraveyard++;
-            }
-            state.pendingSacrificeChoice = false;
-            state.pendingSacrificeLandIds.clear();
+            countSacrificedLandCard(gameData, state);
             state.currentPlayerId = null;
         }
 
@@ -131,15 +125,16 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
                 Permanent permanent = gameQueryService.findPermanentById(gameData, ids.getFirst());
                 state.currentPlayerId = null;
                 if (permanent != null) {
-                    if (permanent.getCard().hasType(CardType.LAND)) {
-                        state.landCardsPutIntoGraveyard++;
-                    }
+                    state.pendingSacrificeChoice = true;
+                    state.pendingSacrificeLandIds.clear();
+                    state.pendingSacrificeLandIds.add(permanent.getCard().getId());
                     // A step departure: a CR 616.1 question ends the step before the permanent leaves, and the
                     // effect is resolved again to go on with the next player once the sacrifice is done.
                     if (!stepDepartureSupport.departOrResolveAgain(gameData, entry, effect,
                             DepartureBatch.of(StepDepartureSupport.sacrifices(List.of(permanent.getId()))))) {
                         return;
                     }
+                    countSacrificedLandCard(gameData, state);
                 }
                 advance(gameData, entry, effect, sourceName, state);
                 return;
@@ -149,8 +144,8 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
             state.pendingSacrificeLandIds.clear();
             for (UUID id : ids) {
                 Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                if (permanent != null && permanent.getCard().hasType(CardType.LAND)) {
-                    state.pendingSacrificeLandIds.add(id);
+                if (permanent != null) {
+                    state.pendingSacrificeLandIds.add(permanent.getCard().getId());
                 }
             }
             gameData.rerunCurrentEffectAfterInteraction = true;
@@ -184,6 +179,22 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
 
         state.currentPlayerId = null;
         advance(gameData, entry, effect, sourceName, state);
+    }
+
+    /**
+     * Counts the sacrificed permanent if its card is now a land card in a graveyard: a land token, a card exiled instead
+     * and a card that is a land only on the battlefield (Ashaya) put no land card into a graveyard (the card's ruling).
+     * {@code pendingSacrificeLandIds} holds the cards of the permanents that could have been sacrificed.
+     */
+    private void countSacrificedLandCard(GameData gameData, EumidianWastewakerState state) {
+        boolean landCardPutIntoGraveyard = state.pendingSacrificeLandIds.stream()
+                .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                .anyMatch(card -> card != null && card.hasType(CardType.LAND));
+        if (landCardPutIntoGraveyard) {
+            state.landCardsPutIntoGraveyard++;
+        }
+        state.pendingSacrificeChoice = false;
+        state.pendingSacrificeLandIds.clear();
     }
 
     private void finish(GameData gameData, StackEntry entry, EumidianWastewakerState state) {

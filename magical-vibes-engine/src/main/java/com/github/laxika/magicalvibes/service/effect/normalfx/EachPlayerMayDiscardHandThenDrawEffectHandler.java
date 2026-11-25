@@ -37,12 +37,16 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerMayDiscardHandThenDrawEffect discardEffect =
                 (EachPlayerMayDiscardHandThenDrawEffect) effect;
+        UUID sourceControllerId = discardEffect.sourceControllerId() != null
+                ? discardEffect.sourceControllerId() : entry.getControllerId();
+        // A player the controller's effects can't cause to discard can't take the option (Tamiyo, Collector of
+        // Tales' ruling), so they aren't asked.
         List<UUID> players = discardEffect.remainingPlayerIds().isEmpty()
-                ? apnapPlayers(gameData)
+                ? apnapPlayers(gameData).stream()
+                        .filter(playerId -> gameQueryService.canEffectCauseDiscard(gameData, playerId, sourceControllerId))
+                        .toList()
                 : discardEffect.remainingPlayerIds();
         if (!players.isEmpty()) {
-            UUID sourceControllerId = discardEffect.sourceControllerId() != null
-                    ? discardEffect.sourceControllerId() : entry.getControllerId();
             promptNext(gameData, entry.getCard(), new EachPlayerMayDiscardHandThenDrawEffect(
                     discardEffect.cardsToDraw(), sourceControllerId,
                     players, discardEffect.acceptedPlayerIds(), discardEffect.acceptedPlayersFollowUp()));

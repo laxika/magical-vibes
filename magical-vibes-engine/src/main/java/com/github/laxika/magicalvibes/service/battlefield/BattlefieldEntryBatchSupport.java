@@ -366,10 +366,10 @@ public class BattlefieldEntryBatchSupport {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
                 if (controllerId != null && permanent.isFaceDown()) {
                     battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, permanent.getCard());
-                } else if (controllerId != null && !gameData.interaction.isAwaitingInput()
-                        && entersWithPlayerChoice(permanent)) {
-                    // "As this enters, pay any amount of life" / "choose a number": asked of the controller now,
-                    // and the permanent's own enter abilities follow once the choice is answered.
+                } else if (controllerId != null && !gameData.interaction.isAwaitingInput()) {
+                    // Its as-enters choices ("choose a color", "pay any amount of life", "choose a number", ...) are
+                    // asked of the controller now, and its own enter abilities follow once they are answered
+                    // (CR 614.1c, 614.12).
                     battlefieldEntryService.handleCreatureEnteredBattlefield(
                             gameData, controllerId, permanent.getCard(), null, false);
                 } else if (controllerId != null) {
@@ -425,13 +425,6 @@ public class BattlefieldEntryBatchSupport {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), null, null,
                 candidate.controllerId(), new GainControlOfTargetEffect(Duration.PERMANENT),
                 permanent.getId(), null, null, Duration.PERMANENT, 0));
-    }
-
-    private boolean entersWithPlayerChoice(Permanent permanent) {
-        return permanent.getCard().getStaticEffects().stream()
-                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect
-                        || effect instanceof com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect number
-                        && !number.chooseRandomly());
     }
 
     private boolean removeFromOrigin(GameData gameData, BattlefieldEntryCard candidate) {

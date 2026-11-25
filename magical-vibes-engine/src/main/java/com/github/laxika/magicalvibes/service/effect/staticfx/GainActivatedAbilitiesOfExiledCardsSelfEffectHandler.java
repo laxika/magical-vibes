@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -65,12 +64,13 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
                         && imprinted.requiresImprintedXCost())) {
                     continue;
                 }
-                List<CardEffect> gainedEffects = ability.getEffects().stream().map(gainedEffect ->
-                        gainedEffect instanceof ExileTargetPermanentAndTrackWithSourceEffect exile
-                                && exile.abilityLink() != null
-                                ? (CardEffect) new ExileTargetPermanentAndTrackWithSourceEffect(
-                                        "gained:" + card.getId() + ":" + exile.abilityLink())
-                                : gainedEffect).toList();
+                // A pair of linked abilities gained together stays linked on the gainer, to each other only
+                // (CR 607.5): the gained exile and return abilities use a link of their own.
+                String link = "gained:" + card.getId();
+                List<CardEffect> gainedEffects = ability.getEffects().stream()
+                        .map(gainedEffect -> GainAbilitiesOfLastChosenExiledCardSelfEffectHandler
+                                .linkGainedEffect(gainedEffect, link))
+                        .toList();
                 ActivatedAbility gainedAbility = ability.withEffects(gainedEffects);
                 accumulator.addActivatedAbility(gainEffect.oncePerTurn()
                         ? gainedAbility.withMaxActivationsPerTurn(1)

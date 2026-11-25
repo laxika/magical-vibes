@@ -95,4 +95,24 @@ class DarkDealTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales.class})
+    @DisplayName("A player whose opponents' spells can't cause them to discard keeps their hand and draws nothing")
+    void playerProtectedFromDiscardKeepsHand() {
+        harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales())
+                .setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
+        harness.setHand(player1, List.of(new DarkDeal(), new GrizzlyBears(), new HillGiant(), new Island()));
+        harness.setHand(player2, List.of(new Plains(), new Forest()));
+        harness.setLibrary(player1, List.of(new Mountain(), new Mountain()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(card -> card.getName())
+                .containsExactly("Plains", "Forest");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
 }

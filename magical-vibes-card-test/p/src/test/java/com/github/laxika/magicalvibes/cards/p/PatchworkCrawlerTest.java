@@ -240,4 +240,29 @@ class PatchworkCrawlerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.s.SistersOfStoneDeath.class})
+    @DisplayName("A gained return ability returns only cards its gained exile ability exiled, not cards Crawler exiled (CR 607.5)")
+    void gainedReturnAbilityIgnoresCardsCrawlerExiled() {
+        Permanent crawler = addCrawlerReady(player1);
+        Card sisters = new com.github.laxika.magicalvibes.cards.s.SistersOfStoneDeath();
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(sisters, bears));
+        addManaForAbility(player1);
+        harness.activateAbility(player1, 0, 0, null, sisters.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        addManaForAbility(player1);
+        harness.activateAbility(player1, 0, 0, null, bears.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 3, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getCardsExiledByPermanent(crawler.getId())).contains(sisters, bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(crawler);
+    }
 }

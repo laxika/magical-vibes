@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDrawsGreatestDiscardedEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +28,7 @@ public class EachPlayerDiscardsHandThenDrawsGreatestDiscardedEffectHandler imple
 
     private final DrawService drawService;
     private final GameLogService gameLogService;
-    private final GraveyardService graveyardService;
+    private final DiscardHandEffectHandler discardHandEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +42,7 @@ public class EachPlayerDiscardsHandThenDrawsGreatestDiscardedEffectHandler imple
 
         int greatest = 0;
         for (UUID playerId : order) {
-            greatest = Math.max(greatest, discardHand(gameData, playerId, entry.getControllerId(), cardName));
+            greatest = Math.max(greatest, discardHandEffectHandler.discardHand(gameData, playerId, entry.getControllerId(), cardName));
         }
 
         if (greatest == 0) {
@@ -72,31 +70,5 @@ public class EachPlayerDiscardsHandThenDrawsGreatestDiscardedEffectHandler imple
             }
         }
         return order;
-    }
-
-    private int discardHand(GameData gameData, UUID playerId, UUID controllerId, String cardName) {
-        String playerName = gameData.playerIdToName.get(playerId);
-        List<Card> hand = gameData.playerHands.get(playerId);
-
-        int discardCount = hand == null ? 0 : hand.size();
-        if (discardCount == 0) {
-            gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard (" + cardName + ")."));
-            return 0;
-        }
-
-        List<Card> discarded = new ArrayList<>(hand);
-        hand.clear();
-        gameData.discardCausedByOpponent = !playerId.equals(controllerId);
-
-        gameData.beginDiscardEvent(playerId);
-        for (Card card : discarded) {
-            graveyardService.discardCard(gameData, playerId, card);
-            gameData.discarded(playerId, card);
-        }
-        gameData.finishDiscardEvent();
-
-        gameLogService.append(gameData, GameLog.text(playerName + " discards their hand (" + discardCount
-                + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ")."));
-        return discardCount;
     }
 }

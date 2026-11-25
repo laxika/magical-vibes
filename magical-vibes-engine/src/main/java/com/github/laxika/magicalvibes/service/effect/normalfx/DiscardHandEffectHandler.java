@@ -50,19 +50,21 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.player())) {
-            // "Spells and abilities your opponents control can't cause you to discard cards."
-            if (!gameQueryService.canEffectCauseDiscard(gameData, playerId, controllerId)) {
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
-                        + " can't be caused to discard (" + cardName + ")."));
-                continue;
-            }
             discardHand(gameData, playerId, controllerId, cardName);
         }
     }
 
-    /** Discards one player's entire hand and returns the number of cards discarded. */
+    /**
+     * Discards one player's entire hand for a spell or ability {@code controllerId} controls and returns the number
+     * of cards discarded. A player an opponent's effects can't cause to discard ("spells and abilities your opponents
+     * control can't cause you to discard cards") discards nothing (Tamiyo, Collector of Tales' ruling).
+     */
     public int discardHand(GameData gameData, UUID playerId, UUID controllerId, String cardName) {
         String playerName = gameData.playerIdToName.get(playerId);
+        if (!playerId.equals(controllerId) && !gameQueryService.canEffectCauseDiscard(gameData, playerId, controllerId)) {
+            gameLogService.append(gameData, GameLog.text(playerName + " can't be caused to discard (" + cardName + ")."));
+            return 0;
+        }
         List<Card> hand = gameData.playerHands.get(playerId);
 
         if (hand == null || hand.isEmpty()) {

@@ -197,4 +197,29 @@ class ChampionOfThePathTest extends BaseCardTest {
 
         harness.assertLife(player2, 14);
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.g.GiantGrowth.class})
+    @DisplayName("An Elemental that left before the ability resolves deals its power as it last existed (CR 608.2h)")
+    void departedElementalUsesItsLastKnownPower() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new ChampionOfThePath());
+        harness.setHand(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent elemental = findPermanent(player1, "Air Elemental");
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.g.GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, elemental.getId());
+        harness.passBothPriorities();
+        int pumpedPower = gqs.getEffectivePower(gd, elemental);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, elemental));
+        harness.passBothPriorities();
+
+        assertThat(pumpedPower).isEqualTo(7);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20 - pumpedPower);
+    }
 }

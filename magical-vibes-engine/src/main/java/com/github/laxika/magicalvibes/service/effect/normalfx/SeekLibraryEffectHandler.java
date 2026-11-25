@@ -175,7 +175,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 } else if (chosen.hasType(CardType.LAND)) {
                     // A land's as-enters choices and enter abilities (Dryad Arbor's included).
                     battlefieldEntryService.processLandETBEffects(gameData, controllerId, chosen);
-                } else if (gameQueryService.isCreature(gameData, permanent)) {
+                } else {
+                    // Every other permanent's as-enters choices and enter abilities, a noncreature one's too.
                     simultaneousCreatureEntries.add(chosen);
                 }
                 if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {

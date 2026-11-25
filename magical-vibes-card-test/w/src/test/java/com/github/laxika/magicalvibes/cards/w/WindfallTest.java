@@ -107,4 +107,23 @@ class WindfallTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales.class})
+    @DisplayName("A player whose opponents' spells can't cause them to discard keeps their hand and still draws")
+    void playerProtectedFromDiscardKeepsHand() {
+        harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales())
+                .setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Plains()));
+        harness.setHand(player1, List.of(new Windfall(), new Island()));
+        harness.setHand(player2, List.of(new Plains(), new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 }

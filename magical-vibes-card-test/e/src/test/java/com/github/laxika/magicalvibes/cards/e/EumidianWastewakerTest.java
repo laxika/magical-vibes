@@ -80,4 +80,25 @@ class EumidianWastewakerTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Eumidian Wastewaker")).isEmpty();
     }
+
+    @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.r.RestInPeace.class})
+    @DisplayName("A sacrificed land that is exiled instead of going to a graveyard draws no card (ruling)")
+    void sacrificedLandExiledInsteadDrawsNothing() {
+        addCreatureReady(player1, new EumidianWastewaker());
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.r.RestInPeace());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
 }

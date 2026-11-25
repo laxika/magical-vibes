@@ -326,9 +326,6 @@ class CombatDamageServiceTest {
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(
                 eq(gameData), any(UUID.class), org.mockito.ArgumentMatchers.nullable(UUID.class), any(UUID.class)))
                 .thenReturn(1);
-        lenient().when(damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
-                eq(gameData), any(Permanent.class), any(Permanent.class), anyInt(), eq(true)))
-                .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applySelfDamagePreventionShield(
                         eq(gameData), any(Permanent.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
@@ -406,9 +403,6 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
-        lenient().when(damagePreventionService.applyCombatPlayerPreventionShield(
-                eq(gameData), any(UUID.class), anyInt()))
-                .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameOutcomeService.checkWinCondition(gameData)).thenReturn(false);
     }
 

@@ -122,4 +122,22 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         verify(graveyardService).discardCard(gd, player1Id, player1Card);
         verify(graveyardService).discardCard(gd, player2Id, player2Card);
     }
+
+    @Test
+    @DisplayName("Discards nothing for a player whom the controller's effects can't cause to discard")
+    void discardsNothingWhenOpponentEffectsCantCauseDiscard() {
+        Card handCard = createCard("Forest");
+        gd.playerHands.get(player2Id).add(handCard);
+        when(gameQueryService.canEffectCauseDiscard(gd, player2Id, player1Id)).thenReturn(false);
+
+        int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)),
+                gameQueryService)
+                .discardHand(gd, player2Id, player1Id, "Windfall");
+
+        assertThat(discardCount).isZero();
+        assertThat(gd.playerHands.get(player2Id)).containsExactly(handCard);
+        verify(graveyardService, never()).discardCard(any(), any(), any());
+    }
 }
