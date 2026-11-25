@@ -39,24 +39,21 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
         Card sourceCard = entry.getCard();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        // Find the source permanent on the battlefield
-        Permanent sourcePermanent = null;
+        // "Sacrifice it" names the permanent the ability came from: one that left and came back is a new object
+        // (CR 400.7), so it is found by its permanent id on its controller's battlefield, not by its card.
+        UUID sourcePermanentId = entry.getSourcePermanentId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (p.getCard().getId().equals(sourceCard.getId())) {
-                    sourcePermanent = p;
-                    break;
-                }
-            }
-        }
+        Permanent sourcePermanent = battlefield == null || sourcePermanentId == null ? null : battlefield.stream()
+                .filter(p -> p.getId().equals(sourcePermanentId))
+                .findFirst()
+                .orElse(null);
 
         // Check if the controller has any permanents of the required type on the battlefield
         boolean hasValidPermanent = false;
         if (battlefield != null) {
             for (Permanent p : battlefield) {
                 if (gameQueryService.getEffectiveCardTypes(gameData, p).contains(e.permanentType())
-                        && !(e.excludeSource() && p.getCard().getId().equals(sourceCard.getId()))) {
+                        && !(e.excludeSource() && p.getId().equals(sourcePermanentId))) {
                     hasValidPermanent = true;
                     break;
                 }
@@ -82,7 +79,8 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
             prompt = sourceCard.getName() + " is no longer on the battlefield. Return an " + typeName + " you control to hand anyway?";
         }
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                sourceCard, controllerId, List.of(e), prompt
+                sourceCard, controllerId, List.of(e), prompt, (UUID) null, (String) null,
+                sourcePermanent == null ? null : sourcePermanentId
         ));
     
     }

@@ -26,12 +26,28 @@ class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandlerTest extends Abstr
         Permanent source = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(source);
         SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = new SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType.LAND);
-        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), source.getId());
         when(gameQueryService.getEffectiveCardTypes(gd, source)).thenReturn(Set.of(CardType.CREATURE));
 
         resolveEffect(gd, entry, effect);
 
         verify(stepDepartureSupport).sacrifice(gd, entry, effect, source.getId());
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A permanent of the same card that isn't the ability's source is not sacrificed")
+    void doesNotSacrificeANewObjectOfTheSourceCard() {
+        Card card = createCard("Cloud Spirit");
+        Permanent returned = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(returned);
+        SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = new SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType.LAND);
+        StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), java.util.UUID.randomUUID());
+        when(gameQueryService.getEffectiveCardTypes(gd, returned)).thenReturn(Set.of(CardType.CREATURE));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(stepDepartureSupport, never()).sacrifice(any(), any(), any(), any());
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
@@ -45,7 +61,7 @@ class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandlerTest extends Abstr
         Permanent landPerm = new Permanent(landCard);
         gd.playerBattlefields.get(player1Id).addAll(List.of(source, landPerm));
         SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = new SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType.LAND);
-        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), source.getId());
         when(gameQueryService.getEffectiveCardTypes(gd, source)).thenReturn(Set.of(CardType.CREATURE));
         when(gameQueryService.getEffectiveCardTypes(gd, landPerm)).thenReturn(Set.of(CardType.LAND));
 

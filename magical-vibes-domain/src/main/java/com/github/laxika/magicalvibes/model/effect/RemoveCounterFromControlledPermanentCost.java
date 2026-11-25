@@ -13,7 +13,8 @@ import java.util.Objects;
  * <p>Unlike {@link RemoveCounterFromControlledCreatureCost} this is not restricted to creatures
  * and can be restricted to one or more counter types. With the no-argument constructor, any
  * permanent carrying at least one allowed counter is a legal choice. When the chosen permanent
- * carries several allowed kinds of counters, the first kind present is removed.
+ * carries several allowed kinds of counters, the payer chooses the kind of each counter removed for an activated
+ * ability's cost.
  *
  * <p>Used both as the payable side of a {@link ForcedCostOrElseEffect} and as an activated-ability
  * cost. When used for an activated ability, the controller chooses one of their counter-bearing

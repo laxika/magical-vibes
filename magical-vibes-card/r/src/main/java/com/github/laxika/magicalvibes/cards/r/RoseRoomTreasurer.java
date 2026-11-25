@@ -18,6 +18,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "51")
 @CardRegistration(set = "NCC", collectorNumber = "151")
@@ -37,10 +38,11 @@ public class RoseRoomTreasurer extends Card {
                                 new NotCondition(new AnyOf(List.of(
                                         new NthAbilityResolutionThisTurn(1),
                                         new NthAbilityResolutionThisTurn(2)))),
-                                SequenceEffect.of(
+                                new MayEffect(SequenceEffect.of(
                                         EachPlayerPaysAnyManaEffect.byYou(Resource.X_MANA),
                                         QueueReflexiveAbilityEffect.withEventValue(
                                                 new DealDamageToAnyTargetEffect(new EventValue()),
-                                                AmountThisWay.manaPaid())))));
+                                                AmountThisWay.manaPaid())),
+                                        "Pay {X} to have Rose Room Treasurer deal X damage to any target?"))));
     }
 }

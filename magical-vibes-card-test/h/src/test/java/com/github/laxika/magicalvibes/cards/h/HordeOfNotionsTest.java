@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.cards.p.ProtectiveBubble;
@@ -23,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HordeOfNotions.class, Smokebraider.class, GrizzlyBears.class,
-        AvianChangeling.class, NamelessInversion.class, ProtectiveBubble.class, ThornOfAmethyst.class})
+        AvianChangeling.class, NamelessInversion.class, ProtectiveBubble.class, ThornOfAmethyst.class,
+        Forest.class})
 class HordeOfNotionsTest extends BaseCardTest {
 
     private Permanent addReadyHorde() {
@@ -59,6 +62,62 @@ class HordeOfNotionsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() == elemental);
+    }
+
+    @Test
+    @DisplayName("An Elemental land card is played from the graveyard with the turn's land play")
+    void playsElementalLandWithTheLandPlay() {
+        addReadyHorde();
+        Forest land = elementalLand();
+        harness.setGraveyard(player1, List.of(land));
+        addWubrg(1);
+
+        harness.activateAbility(player1, 0, 0, null, land.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getCard() == land);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An Elemental land card stays in the graveyard when no land play is left")
+    void elementalLandNeedsALandPlay() {
+        addReadyHorde();
+        Forest land = elementalLand();
+        harness.setGraveyard(player1, List.of(land));
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+        addWubrg(1);
+
+        harness.activateAbility(player1, 0, 0, null, land.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard() == land);
+    }
+
+    @Test
+    @DisplayName("An Elemental land card can't be played from the graveyard during an opponent's turn")
+    void elementalLandCantBePlayedOnAnOpponentsTurn() {
+        addReadyHorde();
+        Forest land = elementalLand();
+        harness.setGraveyard(player1, List.of(land));
+        addWubrg(1);
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player1, 0, 0, null, land.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard() == land);
+    }
+
+    private static Forest elementalLand() {
+        Forest land = new Forest();
+        land.setSubtypes(List.of(CardSubtype.FOREST, CardSubtype.ELEMENTAL));
+        return land;
     }
 
     @Test

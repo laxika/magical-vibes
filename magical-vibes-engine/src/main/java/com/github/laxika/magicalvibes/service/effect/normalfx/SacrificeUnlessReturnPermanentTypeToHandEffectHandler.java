@@ -38,7 +38,7 @@ public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements No
         var e = (SacrificeUnlessReturnPermanentTypeToHandEffect) effect;
         UUID controllerId = entry.getControllerId();
         Card sourceCard = entry.getCard();
-        Permanent sourcePermanent = findSourcePermanent(gameData, controllerId, sourceCard);
+        Permanent sourcePermanent = findSourcePermanent(gameData, controllerId, entry.getSourcePermanentId());
         List<Permanent> validPermanents = findValidPermanents(gameData, gameQueryService, e);
 
         if (validPermanents.isEmpty()) {
@@ -58,16 +58,21 @@ public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements No
                 + " will be sacrificed."
                 : sourceCard.getName() + " is no longer on the battlefield. Return an " + typeName
                 + " to its owner's hand anyway?";
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(sourceCard, controllerId, List.of(e), prompt));
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(sourceCard, controllerId, List.of(e), prompt,
+                (UUID) null, (String) null, sourcePermanent == null ? null : sourcePermanent.getId()));
     }
 
-    private static Permanent findSourcePermanent(GameData gameData, UUID controllerId, Card sourceCard) {
+    /**
+     * The permanent the ability came from, on its controller's battlefield: "sacrifice it" names that object, and one
+     * that left and came back is a new object (CR 400.7). {@code null} when it is gone.
+     */
+    public static Permanent findSourcePermanent(GameData gameData, UUID controllerId, UUID sourcePermanentId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
+        if (battlefield == null || sourcePermanentId == null) {
             return null;
         }
         return battlefield.stream()
-                .filter(permanent -> permanent.getCard().getId().equals(sourceCard.getId()))
+                .filter(permanent -> permanent.getId().equals(sourcePermanentId))
                 .findFirst()
                 .orElse(null);
     }

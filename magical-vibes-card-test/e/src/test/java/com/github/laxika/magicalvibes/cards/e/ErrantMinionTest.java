@@ -52,6 +52,24 @@ class ErrantMinionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mana that can't be spent to cast nonartifact spells pays it, as it is no spell")
+    void powerstoneManaPays() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        attachErrantMinion(creature);
+
+        advanceToUpkeep(player2);
+        gd.playerManaPools.get(player2.getId()).addPowerstoneOnlyColorless(2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
+
+    @Test
     @DisplayName("Paying 2 mana prevents all 2 damage")
     void paysTwoTakesNone() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());

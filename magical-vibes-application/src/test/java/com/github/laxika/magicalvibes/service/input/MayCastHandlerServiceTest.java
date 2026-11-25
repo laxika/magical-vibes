@@ -198,7 +198,7 @@ class MayCastHandlerServiceTest {
         gd.playerLifeTotals.put(PLAYER1_ID, 10);
         when(gameQueryService.findCardInGraveyardById(gd, artifact.getId())).thenReturn(artifact);
         when(gameQueryService.findGraveyardOwnerById(gd, artifact.getId())).thenReturn(PLAYER1_ID);
-        when(gameQueryService.canPlayerLifeChange(gd, PLAYER1_ID)).thenReturn(true);
+        when(gameQueryService.canPlayerLoseLife(gd, PLAYER1_ID)).thenReturn(true);
         when(gameQueryService.canPayLifeForCosts(gd)).thenReturn(true);
         when(gameQueryService.cardHasType(artifact, CardType.ARTIFACT, gd, PLAYER1_ID)).thenReturn(true);
         when(gameQueryService.canCastSpellFromZone(gd, artifact, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(true);

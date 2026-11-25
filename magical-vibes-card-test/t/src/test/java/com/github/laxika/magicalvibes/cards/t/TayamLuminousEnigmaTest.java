@@ -208,4 +208,27 @@ class TayamLuminousEnigmaTest extends BaseCardTest {
         assertThat(tayam.getCounterCount(CounterType.VIGILANCE)).isEqualTo(3);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
+
+    @Test
+    @DisplayName("The controller chooses the kind of each counter removed, not only the last one")
+    void controllerChoosesTheKindOfEveryCounterRemoved() {
+        Permanent tayam = harness.addToBattlefieldAndReturn(player1, new TayamLuminousEnigma());
+        tayam.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        tayam.setCounterCount(CounterType.VIGILANCE, 3);
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        for (int i = 0; i < 3; i++) {
+            harness.handlePermanentChosen(player1, tayam.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+            harness.handleListChoice(player1, "vigilance counters");
+        }
+
+        assertThat(tayam.getCounterCount(CounterType.VIGILANCE)).isZero();
+        assertThat(tayam.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IntoTheVoid;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BattlefieldThaumaturge.class, BountyOfMight.class, GiantGrowth.class, GrizzlyBears.class,
+@CardUsed({AjanisResponse.class, BattlefieldThaumaturge.class, BountyOfMight.class, GiantGrowth.class, GrizzlyBears.class,
         IntoTheVoid.class, MindRot.class, PinToTheEarth.class, Shock.class})
 class BattlefieldThaumaturgeTest extends BaseCardTest {
 
@@ -41,6 +42,22 @@ class BattlefieldThaumaturgeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Grizzly Bears"))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Its per-target reduction and the spell's own targeting reduction both apply")
+    void stacksWithTheSpellsOwnTargetingReduction() {
+        harness.addToBattlefield(player1, new BattlefieldThaumaturge());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bear.tap();
+        harness.setHand(player1, List.of(new AjanisResponse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,10 +24,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ChorusOfTheConclaveTest extends BaseCardTest {
 
     @Test
-    void givesAnyPlayersCreatureSpellAdditionalCountersForManaPaid() {
-        harness.addToBattlefield(player1, new ChorusOfTheConclave());
-        ChorusOfTheConclave creatureSpell = new ChorusOfTheConclave();
-        castCreatureWithChorusPayment(player2, creatureSpell, 2);
+    @DisplayName("Its controller's creature spell enters with a +1/+1 counter for each mana paid")
+    void givesItsControllersCreatureSpellAdditionalCountersForManaPaid() {
+        harness.addToBattlefield(player2, new ChorusOfTheConclave());
+        SiegeWurm creatureSpell = new SiegeWurm();
+        castWurmWithChorusPayment(player2, creatureSpell, 2);
 
         harness.passBothPriorities();
 
@@ -36,10 +38,22 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
     }
 
     @Test
-    void payingZeroIsAllowed() {
+    @DisplayName("An opponent's Chorus offers no additional mana payment for your creature spell")
+    void opponentsChorusOffersNoPayment() {
         harness.addToBattlefield(player1, new ChorusOfTheConclave());
         ChorusOfTheConclave creatureSpell = new ChorusOfTheConclave();
-        castCreatureWithChorusPayment(player2, creatureSpell, 0);
+
+        assertThatThrownBy(() -> castCreatureWithChorusPayment(player2, creatureSpell, 2))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId).contains(creatureSpell.getId());
+    }
+
+    @Test
+    @DisplayName("Paying zero additional mana is allowed and adds no counters")
+    void payingZeroIsAllowed() {
+        harness.addToBattlefield(player2, new ChorusOfTheConclave());
+        SiegeWurm creatureSpell = new SiegeWurm();
+        castWurmWithChorusPayment(player2, creatureSpell, 0);
         harness.passBothPriorities();
 
         Permanent entered = gd.playerBattlefields.get(player2.getId()).stream()
@@ -49,12 +63,13 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paid counters still arrive if Chorus leaves before the creature spell resolves")
     void paidCountersRemainIfChorusLeavesBeforeCreatureResolves() {
-        Permanent chorus = harness.addToBattlefieldAndReturn(player1, new ChorusOfTheConclave());
-        ChorusOfTheConclave creatureSpell = new ChorusOfTheConclave();
-        castCreatureWithChorusPayment(player2, creatureSpell, 2);
+        Permanent chorus = harness.addToBattlefieldAndReturn(player2, new ChorusOfTheConclave());
+        SiegeWurm creatureSpell = new SiegeWurm();
+        castWurmWithChorusPayment(player2, creatureSpell, 2);
 
-        gd.playerBattlefields.get(player1.getId()).remove(chorus);
+        gd.playerBattlefields.get(player2.getId()).remove(chorus);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -63,6 +78,7 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be blocked when the defending player controls no Forest")
     void forestwalkAllowsBlockingWhenDefenderControlsNoForest() {
         Permanent attacker = addCreatureReady(player1, new ChorusOfTheConclave());
         Permanent blocker = addCreatureReady(player2, new ChorusOfTheConclave());
@@ -76,6 +92,7 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't be blocked when the defending player controls a Forest")
     void forestwalkPreventsBlockingWhenDefenderControlsAForest() {
         Permanent attacker = addCreatureReady(player1, new ChorusOfTheConclave());
         Permanent blocker = addCreatureReady(player2, new ChorusOfTheConclave());
@@ -90,6 +107,7 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its controller can pay for their own creature spell")
     void controllerCanPayForItsOwnCreatureSpell() {
         harness.addToBattlefield(player1, new ChorusOfTheConclave());
         SiegeWurm wurm = new SiegeWurm();
@@ -107,6 +125,7 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Convoke can pay the additional mana")
     void convokeCanPayTheAdditionalCost() {
         Permanent chorus = harness.addToBattlefieldAndReturn(player1, new ChorusOfTheConclave());
         SiegeWurm wurm = new SiegeWurm();
@@ -127,6 +146,7 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A copy of the creature spell enters with the paid counters too")
     void copiedCreatureSpellRetainsCountersFromPaidAdditionalCost() {
         harness.addToBattlefield(player1, new ChorusOfTheConclave());
         SiegeWurm wurm = new SiegeWurm();
@@ -160,6 +180,17 @@ class ChorusOfTheConclaveTest extends BaseCardTest {
 
         List<String> repeatedAdditionalCosts = java.util.Collections.nCopies(additionalGenericMana, "{1}");
         harness.castCreatureWithRepeatedCosts(player, 0, repeatedAdditionalCosts);
+    }
+
+    private void castWurmWithChorusPayment(Player player, Card card, int additionalGenericMana) {
+        harness.setHand(player, List.of(card));
+        harness.addMana(player, ManaColor.GREEN, 2);
+        harness.addMana(player, ManaColor.COLORLESS, 5 + additionalGenericMana);
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreatureWithRepeatedCosts(player, 0,
+                java.util.Collections.nCopies(additionalGenericMana, "{1}"));
     }
 
     private void addManaForChorus(Player player, int additionalGenericMana) {

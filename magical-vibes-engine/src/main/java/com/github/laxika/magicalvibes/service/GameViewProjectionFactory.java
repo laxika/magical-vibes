@@ -878,7 +878,7 @@ public class GameViewProjectionFactory {
                     castingPermissionService.hasExilePlayForLifeEqualToManaValuePermission(
                             gameData, playerId, card.getId())
                             && gameData.getLife(playerId) >= card.getManaValue()
-                            && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                            && gameQueryService.canPlayerLoseLife(gameData, playerId)
                             && gameQueryService.canPayLifeForCosts(gameData);
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
@@ -886,7 +886,7 @@ public class GameViewProjectionFactory {
                         && castingPermissionService.hasManaValueLifeAlternativeFromExiledWithSource(
                         gameData, playerId, card.getId())
                         && gameData.getLife(playerId) >= card.getManaValue()
-                        && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                        && gameQueryService.canPlayerLoseLife(gameData, playerId)
                         && gameQueryService.canPayLifeForCosts(gameData);
                 if (canPayManaValueLifeAlternative) {
                     playable.add(exileCardView(gameData, playerId, card));
@@ -1140,7 +1140,7 @@ public class GameViewProjectionFactory {
         boolean canPayLifeAlternative = !castFaceDown && castingPermissionService
                 .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, topCard)
                 && gameData.getLife(playerId) >= topCard.getManaValue()
-                && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameQueryService.canPayLifeForCosts(gameData);
         boolean alternativeZeroCost = !castFaceDown && castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY);

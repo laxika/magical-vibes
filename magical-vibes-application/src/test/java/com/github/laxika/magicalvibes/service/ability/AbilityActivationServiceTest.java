@@ -528,7 +528,7 @@ class AbilityActivationServiceTest {
             gameData.playerLifeTotals.put(player1Id, 1);
             when(amountEvaluationService.evaluateCost(eq(gameData), eq(new XValue()), eq(player1Id), eq(perm), eq(2)))
                     .thenReturn(2);
-            when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -562,7 +562,7 @@ class AbilityActivationServiceTest {
             gameData.playerLifeTotals.put(player1Id, 2);
             when(amountEvaluationService.evaluateCost(eq(gameData), eq(new CardsInHand(CountScope.CONTROLLER)),
                     eq(player1Id), eq(perm), anyInt())).thenReturn(3);
-            when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))

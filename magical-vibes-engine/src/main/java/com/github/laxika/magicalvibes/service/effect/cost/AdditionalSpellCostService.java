@@ -654,13 +654,15 @@ public class AdditionalSpellCostService {
         };
     }
 
-    /** Returns whether an active Chorus of the Conclave-style effect applies to this spell. */
+    /**
+     * Returns whether an active Chorus of the Conclave-style effect applies to this spell: "creature spells you cast"
+     * names the effect's controller (CR 109.5), so only a permanent {@code playerId} controls offers it.
+     */
     public boolean hasCreatureSpellAdditionalCountersCost(GameData gameData, UUID playerId, Card card) {
         if (!gameQueryService.cardHasType(card, CardType.CREATURE, gameData, playerId)) {
             return false;
         }
-        return gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
                         gameData, permanent, CreatureSpellAdditionalCountersCostEffect.class));
     }
@@ -731,7 +733,7 @@ public class AdditionalSpellCostService {
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
         List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
         // Battlefield static effects may prohibit life payments or particular permanent sacrifices.
-        boolean lifePaymentAllowed = gameQueryService.canPayLifeForCosts(gameData);
+        boolean lifePaymentAllowed = gameQueryService.canPayLifeForCosts(gameData, playerId);
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             switch (effect) {
                 case LandDropCost ignored -> {
@@ -1173,7 +1175,7 @@ public class AdditionalSpellCostService {
                     validateCanSacrificeCreatureForCost(gameData, card);
                 }
             } else {
-                validateCanPayLifeForCost(gameData, card);
+                validateCanPayLifeForCost(gameData, player.getId(), card);
                 int life = gameData.getLife(player.getId());
                 if (life < cost.lifeAmount()) {
                     throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
@@ -1184,7 +1186,7 @@ public class AdditionalSpellCostService {
         if (costs.payLifeOrPayManaCost() != null) {
             PayLifeOrPayManaCost cost = costs.payLifeOrPayManaCost();
             if (Boolean.TRUE.equals(selection.payLifeForAdditionalCost())) {
-                validateCanPayLifeForCost(gameData, card);
+                validateCanPayLifeForCost(gameData, player.getId(), card);
             }
             chooseLifeOrManaPayment(gameData, player.getId(), card, cost,
                     Boolean.TRUE.equals(selection.payLifeForAdditionalCost()),
@@ -1262,7 +1264,7 @@ public class AdditionalSpellCostService {
                 validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
                         selection.discardHandCardIndex(), selection.spellCardIndex());
             } else {
-                validateCanPayLifeForCost(gameData, card);
+                validateCanPayLifeForCost(gameData, player.getId(), card);
                 int life = gameData.getLife(player.getId());
                 if (life < costs.discardCardOrPayLifeCost().lifeAmount()) {
                     throw new IllegalStateException("Not enough life to pay "
@@ -1664,7 +1666,7 @@ public class AdditionalSpellCostService {
      * while their life total is at least the amount paid (CR 119.4).
      */
     public void validatePayLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
-        validateCanPayLifeForCost(gameData, card);
+        validateCanPayLifeForCost(gameData, player.getId(), card);
         int life = gameData.getLife(player.getId());
         int amount = cost.fixedAmount();
         if (life < amount) {
@@ -1673,10 +1675,11 @@ public class AdditionalSpellCostService {
     }
 
     /**
-     * Angel of Jubilation: a life payment can't be used as a cost of casting a spell.
+     * Angel of Jubilation: a life payment can't be used as a cost of casting a spell; nor can a caster who can't lose
+     * life pay one (CR 119.8).
      */
-    private void validateCanPayLifeForCost(GameData gameData, Card card) {
-        if (!gameQueryService.canPayLifeForCosts(gameData)) {
+    private void validateCanPayLifeForCost(GameData gameData, UUID playerId, Card card) {
+        if (!gameQueryService.canPayLifeForCosts(gameData, playerId)) {
             throw new IllegalStateException("Players can't pay life to cast " + card.getName());
         }
     }
@@ -1710,7 +1713,7 @@ public class AdditionalSpellCostService {
                     selection.discardHandCardIndex(), selection.spellCardIndex());
             return;
         }
-        validateCanPayLifeForCost(gameData, card);
+        validateCanPayLifeForCost(gameData, player.getId(), card);
         int life = gameData.getLife(player.getId());
         if (life < cost.lifeAmount()) {
             throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
@@ -1757,7 +1760,7 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("X cannot be negative for " + card.getName());
         }
         if (amount > 0) {
-            validateCanPayLifeForCost(gameData, card);
+            validateCanPayLifeForCost(gameData, player.getId(), card);
         }
         if (gameData.getLife(player.getId()) < amount) {
             throw new IllegalStateException("Not enough life to pay " + amount + " life for " + card.getName());

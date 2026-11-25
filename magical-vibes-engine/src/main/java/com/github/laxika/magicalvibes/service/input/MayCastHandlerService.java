@@ -1439,6 +1439,15 @@ public class MayCastHandlerService {
             return;
         }
 
+        // Playing a land needs the player's own turn and a land play left (CR 305.2b, 305.3).
+        if (allowLand && cardToPlay.hasType(CardType.LAND)
+                && !spellCastingService.canPlayLandForMadness(gameData, player.getId(), cardToPlay)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
+                    " can't be played right now and remains in the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (SplitCardCastSupport.isSplitCard(cardToPlay)) {
             if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToPlay,
                     Zone.GRAVEYARD, setAsideFromGraveyard(gameData, graveyardOwnerId, graveyardCard),
@@ -1958,7 +1967,7 @@ public class MayCastHandlerService {
         int madnessLifeCost = ability.additionalLifeCost();
         boolean madnessLifePayable = madnessLifeCost <= 0
                 || (gameQueryService.canPayLifeForCosts(gameData)
-                && gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                && gameQueryService.canPlayerLoseLife(gameData, player.getId())
                 && gameData.getLife(player.getId()) >= madnessLifeCost);
         boolean poolPaysMadness = cost.canPay(pool);
         List<UUID> convokeCandidates = poolPaysMadness || !madnessLifePayable
@@ -2523,7 +2532,7 @@ public class MayCastHandlerService {
 
     private boolean canPayManaValueLife(GameData gameData, Player player, Card card) {
         return gameData.getLife(player.getId()) >= card.getManaValue()
-                && gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                && gameQueryService.canPlayerLoseLife(gameData, player.getId())
                 && gameQueryService.canPayLifeForCosts(gameData);
     }
 

@@ -1387,17 +1387,11 @@ public class MayPenaltyChoiceHandlerService {
         Card sourceCard = ability.sourceCard();
         UUID controllerId = ability.controllerId();
 
-        // Find the source permanent on the battlefield
-        Permanent sourcePermanent = null;
+        // The source as an object (CR 400.7): the permanent the ability came from, not a later one of its card.
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (p.getCard().getId().equals(sourceCard.getId())) {
-                    sourcePermanent = p;
-                    break;
-                }
-            }
-        }
+        Permanent sourcePermanent = com.github.laxika.magicalvibes.service.effect.normalfx
+                .SacrificeUnlessReturnPermanentTypeToHandEffectHandler.findSourcePermanent(
+                        gameData, controllerId, ability.sourcePermanentId());
 
         if (accepted) {
             // Collect valid permanent IDs of the required type
@@ -1405,7 +1399,7 @@ public class MayPenaltyChoiceHandlerService {
             if (battlefield != null) {
                 for (Permanent p : battlefield) {
                     if (gameQueryService.getEffectiveCardTypes(gameData, p).contains(effect.permanentType())
-                            && !(effect.excludeSource() && p.getCard().getId().equals(sourceCard.getId()))) {
+                            && !(effect.excludeSource() && p.getId().equals(ability.sourcePermanentId()))) {
                         validIds.add(p.getId());
                     }
                 }
@@ -1450,14 +1444,9 @@ public class MayPenaltyChoiceHandlerService {
 
         Card sourceCard = ability.sourceCard();
         UUID controllerId = ability.controllerId();
-        Permanent sourcePermanent = null;
-        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
-        if (controllerBattlefield != null) {
-            sourcePermanent = controllerBattlefield.stream()
-                    .filter(permanent -> permanent.getCard().getId().equals(sourceCard.getId()))
-                    .findFirst()
-                    .orElse(null);
-        }
+        Permanent sourcePermanent = com.github.laxika.magicalvibes.service.effect.normalfx
+                .SacrificeUnlessReturnPermanentTypeToHandEffectHandler.findSourcePermanent(
+                        gameData, controllerId, ability.sourcePermanentId());
 
         if (accepted) {
             List<Permanent> validPermanents = com.github.laxika.magicalvibes.service.effect.normalfx

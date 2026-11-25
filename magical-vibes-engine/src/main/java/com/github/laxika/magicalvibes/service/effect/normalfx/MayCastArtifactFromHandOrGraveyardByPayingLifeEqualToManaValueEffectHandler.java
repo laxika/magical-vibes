@@ -69,7 +69,7 @@ public class MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffec
 
     private boolean canPayLife(GameData gameData, UUID playerId, Card card) {
         return gameData.getLife(playerId) >= card.getManaValue()
-                && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameQueryService.canPayLifeForCosts(gameData);
     }
 }

@@ -148,6 +148,7 @@ class CastingCostServiceTest {
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
         lenient().when(gameQueryService.canPayLifeForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(any(), any(java.util.UUID.class))).thenReturn(true);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
         lenient().when(gameQueryService.canChooseToSacrificeForCosts(any(), any()))

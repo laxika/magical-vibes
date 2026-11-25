@@ -611,7 +611,7 @@ public class AbilityActivationService {
         }
 
         if (!gameQueryService.canPayLifeForCosts(gameData, true)
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             throw new IllegalStateException("Players can't pay life to activate abilities");
         }
 
@@ -1072,7 +1072,7 @@ public class AbilityActivationService {
         if (!gameData.hasFloatingEffectOnPlayer(playerId, MayPayLifeForColorlessManaUntilEndOfTurnEffect.class)) {
             throw new IllegalStateException("You may not pay life for mana");
         }
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             throw new IllegalStateException("You can't pay life while your life total can't change");
         }
 
@@ -1574,7 +1574,6 @@ public class AbilityActivationService {
                 if (amountEvaluationService.isUnpayableCost(gameData, lifeCost.amount(), playerId)
                         || !gameQueryService.canPayLifeForCosts(gameData)
                         || !gameQueryService.canPlayerLoseLife(gameData, playerId)
-                        || !gameQueryService.canPlayerLifeChange(gameData, playerId)
                         || gameData.getLife(playerId) < needed) {
                     throw new IllegalStateException("Cannot pay life for the graveyard ability");
                 }
@@ -2402,7 +2401,7 @@ public class AbilityActivationService {
                 .orElse(null);
         if (payLifeCost != null) {
             if (!gameQueryService.canPayLifeForCosts(gameData, isManaAbility(ability, abilityEffects))
-                    || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                     || amountEvaluationService.isUnpayableCost(gameData, payLifeCost.amount(), playerId)) {
                 throw new IllegalStateException("Players can't pay life to activate abilities");
             }
@@ -6226,8 +6225,9 @@ public class AbilityActivationService {
             }
         }
 
+        // Each counter a pick removes is of the kind its payer chooses, not only the last one.
         if (handler instanceof RemoveCounterFromPermanentCostHandler counterHandler
-                && context.remaining() == 1 && gameData.chosenCostCounterType == null
+                && gameData.chosenCostCounterType == null
                 && handler.getValidChoiceIds(gameData, playerId).contains(chosenPermanentId)) {
             List<CounterType> kinds = counterHandler.removableKinds(chosen);
             if (kinds.size() > 1) {
@@ -6978,7 +6978,7 @@ public class AbilityActivationService {
                     }
                     int needed = lifePaymentAmount(gameData, playerId, permanent, lifeCost, xValue);
                     int life = gameData.getLife(playerId);
-                    if (needed > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                    if (needed > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                         throw new IllegalStateException("Players can't pay life to activate abilities");
                     }
                     if (needed > 0 && life < needed) {
@@ -7259,7 +7259,7 @@ public class AbilityActivationService {
             }
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get(), xValue);
-            if (needed > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            if (needed > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 throw new IllegalStateException("Players can't pay life to activate abilities");
             }
             if (needed > 0 && life < needed) {
@@ -7332,7 +7332,7 @@ public class AbilityActivationService {
                         ? xValue + effectiveAdditionalGenericCost : effectiveAdditionalGenericCost;
                 int lifeCost = preCheck.payPhyrexianManaAuto(copyManaPool(affordabilityPool), restDemand);
                 if (lifeCost > 0 && (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
-                        || !gameQueryService.canPlayerLifeChange(gameData, playerId))) {
+                        || !gameQueryService.canPlayerLoseLife(gameData, playerId))) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
                 }
                 if (gameData.getLife(playerId) < lifeCost) {

@@ -31,6 +31,8 @@ class RoseRoomTreasurerTest extends BaseCardTest {
 
         castCreatureAndResolveTrigger();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
@@ -55,6 +57,23 @@ class RoseRoomTreasurerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining to pay makes no reflexive damage ability")
+    void decliningToPayMakesNoReflexiveAbility() {
+        addCreatureReady(player1, new RoseRoomTreasurer());
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        castCreatureAndResolveTrigger();
+        castCreatureAndResolveTrigger();
+        castCreatureAndResolveTrigger();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Paying {0} is paying, so the reflexive ability still triggers")
     void payingZeroStillQueuesReflexiveAbility() {
         addCreatureReady(player1, new RoseRoomTreasurer());
         harness.addMana(player1, ManaColor.GREEN, 7);
@@ -62,6 +81,7 @@ class RoseRoomTreasurerTest extends BaseCardTest {
         castCreatureAndResolveTrigger();
         castCreatureAndResolveTrigger();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -124,6 +144,7 @@ class RoseRoomTreasurerTest extends BaseCardTest {
         for (int payment : List.of(2, 3)) {
             harness.enterBattlefieldAndReturn(player1, new SakuraTribeElder());
             harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
             harness.handleXValueChosen(player1, payment);
             harness.handlePermanentChosen(player1, player2.getId());
             harness.passBothPriorities();

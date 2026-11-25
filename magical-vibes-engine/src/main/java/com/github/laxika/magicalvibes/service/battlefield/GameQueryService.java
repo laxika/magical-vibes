@@ -2190,6 +2190,14 @@ public class GameQueryService {
         return canPayLifeForCosts(gameData, false);
     }
 
+    /**
+     * Whether {@code payerId} may pay life as a spell or ability cost: no prohibition applies and they can lose life, as a
+     * player who can't lose life, or whose life total can't change, can't pay life (CR 119.8).
+     */
+    public boolean canPayLifeForCosts(GameData gameData, UUID payerId) {
+        return canPayLifeForCosts(gameData) && canPlayerLoseLife(gameData, payerId);
+    }
+
     public boolean canPayLifeForCosts(GameData gameData, boolean manaAbility) {
         return !gameData.hasFloatingEffectOnPlayer(null, PlayersCantLoseLifeThisTurnEffect.class)
                 && costProhibitions(gameData).stream()

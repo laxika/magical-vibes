@@ -33,6 +33,25 @@ class DrakeFamiliarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Drake Familiar that left and came back before its trigger resolved is not sacrificed")
+    void returnedDrakeFamiliarIsANewObject() {
+        DrakeFamiliar drakeCard = new DrakeFamiliar();
+        harness.setHand(player1, List.of(drakeCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent original = findPermanent(player1, "Drake Familiar");
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        harness.addToBattlefield(player1, drakeCard);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Drake Familiar");
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getName().equals("Drake Familiar"));
+    }
+
+    @Test
     @DisplayName("A face-down permanent is not an enchantment, so it can't be returned")
     void faceDownEnchantmentCardIsNotAnEnchantment() {
         Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new DoublingSeason());

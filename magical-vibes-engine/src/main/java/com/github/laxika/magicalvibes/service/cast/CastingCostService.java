@@ -2079,7 +2079,7 @@ public class CastingCostService {
         if (sourceZone == null) sourceZone = Zone.HAND;
         if (gameData.hasNextSpellPayLifeEqualToManaValue(playerId)
                 && gameData.getLife(playerId) >= card.getManaValue()
-                && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
                 && canPayAdditionalManaCost(pool, additionalCost)) {
             return new AlternativeCostSelection(null, false,
@@ -2099,7 +2099,7 @@ public class CastingCostService {
                         && alternativeSpellCost.kind()
                         == AlternativeSpellCost.Kind.PAY_LIFE_EQUAL_TO_SPELL_MANA_VALUE
                         && gameData.getLife(playerId) >= card.getManaValue()
-                        && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                        && gameQueryService.canPlayerLoseLife(gameData, playerId)
                         && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
                         && canPayAdditionalManaCost(pool, additionalCost)) {
                     return new AlternativeCostSelection(null, altCost.castsWithWarp(),
@@ -2314,7 +2314,7 @@ public class CastingCostService {
         var lifeCost = altCast.getCost(LifeCastingCost.class);
         if (lifeCost.isPresent()
                 && (!gameQueryService.canPayLifeForCosts(gameData)
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                 || gameData.getLife(playerId) < lifeCost.get().amount())) {
             return false;
         }
@@ -2531,9 +2531,6 @@ public class CastingCostService {
                         .mapToInt(BattlefieldTargetCastCostReducingEffect::amount)
                         .sum())
                 .sum();
-        if (attachedPermanentReduction != 0) {
-            return attachedPermanentReduction + targetCountReduction;
-        }
 
         int enchantedPlayerReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .mapToInt(permanent -> {
@@ -2548,17 +2545,10 @@ public class CastingCostService {
                             .sum();
                 })
                 .sum();
-        if (enchantedPlayerReduction != 0) {
-            return enchantedPlayerReduction + targetCountReduction;
-        }
 
         int perTargetReduction = perTargetCastCostReductions(gameData, playerId, false)
                 .mapToInt(perTarget -> -perTarget.amount() * countedTargets(gameData, playerId, card, perTarget, targetIds))
                 .sum();
-        perTargetReduction += targetCountReduction;
-        if (perTargetReduction != 0) {
-            return perTargetReduction;
-        }
 
         int battlefieldReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .mapToInt(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent, playerId).stream()
@@ -2590,13 +2580,18 @@ public class CastingCostService {
                                         .withSourceCardId(card.getId())
                                         .withSourceControllerId(playerId))) ? effect.amount() : 0)
                 .sum();
-        // CR 601.2f: every cost reduction that applies is subtracted, so a battlefield source and the
-        // spell's own targeting reduction stack.
-        if (battlefieldReduction + ownPermanentReduction != 0) {
-            return battlefieldReduction + ownPermanentReduction;
-        }
+        // CR 601.2f: every cost reduction that applies is subtracted, so the per-target, attached, enchanted-player,
+        // battlefield and the spell's own targeting reductions all stack.
+        return targetCountReduction + attachedPermanentReduction + enchantedPlayerReduction + perTargetReduction
+                + battlefieldReduction + ownPermanentReduction
+                + firstTargetCardOrSpellReduction(gameData, playerId, card, targetIds.getFirst());
+    }
 
-        UUID firstTargetId = targetIds.getFirst();
+    /**
+     * The spell's own reduction for a first target that is a graveyard card or a spell ("costs {N} less if it targets
+     * a [card] in a graveyard / a [spell]").
+     */
+    private int firstTargetCardOrSpellReduction(GameData gameData, UUID playerId, Card card, UUID firstTargetId) {
         Card firstTargetCard = gameQueryService.findCardInGraveyardById(gameData, firstTargetId);
         if (firstTargetCard != null) {
             GraveyardCardTargetCostReductionEffect graveyardEffect = card.getStaticEffects().stream()
@@ -2944,7 +2939,7 @@ public class CastingCostService {
     public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
         var lifeCost = flashback.getCost(LifeCastingCost.class);
         return lifeCost.isEmpty()
-                || (gameQueryService.canPayLifeForCosts(gameData)
+                || (gameQueryService.canPayLifeForCosts(gameData, playerId)
                 && gameData.getLife(playerId) >= lifeCost.get().amount());
     }
 
@@ -3158,7 +3153,7 @@ public class CastingCostService {
                 continue;
             } else if (cost instanceof LifeCastingCost lifeCost) {
                 if (gameData.getLife(playerId) < lifeCost.amount()
-                        || !gameQueryService.canPayLifeForCosts(gameData)) {
+                        || !gameQueryService.canPayLifeForCosts(gameData, playerId)) {
                     return false;
                 }
             } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {

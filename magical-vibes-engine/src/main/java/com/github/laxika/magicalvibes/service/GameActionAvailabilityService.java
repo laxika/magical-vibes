@@ -876,7 +876,7 @@ public class GameActionAvailabilityService {
             return false;
         }
         if (kicker.hasLifeCost()
-                && (!gameQueryService.canPayLifeForCosts(gameData)
+                && (!gameQueryService.canPayLifeForCosts(gameData, playerId)
                 || gameData.getLife(playerId) < kicker.lifeCost().fixedAmount())) {
             return false;
         }
@@ -1464,11 +1464,11 @@ public class GameActionAvailabilityService {
             }
         }
 
-        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                && castingCostService.hasEnchantedPlayerCastCostReduction(gameData, playerId)) {
+        // "Spells you cast that target enchanted player": any spell, a Curse Aura aimed at that player included.
+        if (castingCostService.hasEnchantedPlayerCastCostReduction(gameData, playerId)) {
             ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
                     gameData, card, playerId, List.of());
-            for (UUID targetPlayerId : validTargets.validPlayerIds()) {
+            for (UUID targetPlayerId : validTargets == null ? List.<UUID>of() : validTargets.validPlayerIds()) {
                 int reduction = castingCostService.computeTargetBasedCostReduction(
                         gameData, playerId, card, List.of(targetPlayerId));
                 if (reduction > 0 && cost.canPayWithAdditionalGenericCost(
@@ -1984,7 +1984,7 @@ public class GameActionAvailabilityService {
             ManaPool finalPaymentPool = paymentPool;
             boolean canPayMana = paysLifeEqualToManaValue
                     ? gameData.getLife(playerId) >= card.getManaValue()
-                    && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    && gameQueryService.canPlayerLoseLife(gameData, playerId)
                     && gameQueryService.canPayLifeForCosts(gameData)
                     && new ManaCost("{0}").canPayWithAdditionalGenericCost(
                     finalPaymentPool, 0, additionalCost)
@@ -2078,7 +2078,7 @@ public class GameActionAvailabilityService {
                                                             List<CastingCost> costs) {
         for (CastingCost cost : costs) {
             if (cost instanceof LifeCastingCost lifeCost) {
-                if (!gameQueryService.canPayLifeForCosts(gameData)
+                if (!gameQueryService.canPayLifeForCosts(gameData, playerId)
                         || gameData.getLife(playerId) < lifeCost.amount()) {
                     return false;
                 }

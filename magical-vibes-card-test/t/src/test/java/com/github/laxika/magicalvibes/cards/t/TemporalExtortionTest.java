@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TemporalExtortion.class)
+@CardUsed({TemporalExtortion.class, PlatinumAngel.class})
 class TemporalExtortionTest extends BaseCardTest {
 
     @Test
@@ -24,6 +25,24 @@ class TemporalExtortionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
+        harness.assertInGraveyard(player1, "Temporal Extortion");
+    }
+
+    @Test
+    @DisplayName("A player at 0 life may pay half their life, which is 0 life, to counter it")
+    void playerAtZeroLifeMayPayZeroLife() {
+        harness.addToBattlefield(player2, new PlatinumAngel());
+        harness.setLife(player2, 0);
+        castTemporalExtortion();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).isEmpty();
+        harness.assertLife(player2, 0);
         harness.assertInGraveyard(player1, "Temporal Extortion");
     }
 

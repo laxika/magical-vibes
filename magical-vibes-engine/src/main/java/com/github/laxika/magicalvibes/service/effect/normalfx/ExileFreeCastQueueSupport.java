@@ -744,7 +744,7 @@ public class ExileFreeCastQueueSupport {
             List<Integer> discardCandidates = additionalSpellCostService.validDiscardCostIndices(
                     gameData, entry.getControllerId(), entry.getCard());
             boolean canDiscard = discardCandidates != null && !discardCandidates.isEmpty();
-            boolean canPayLife = gameQueryService.canPayLifeForCosts(gameData)
+            boolean canPayLife = gameQueryService.canPayLifeForCosts(gameData, entry.getControllerId())
                     && gameData.getLife(entry.getControllerId()) >= discardOrPayLife.lifeAmount();
             if (canDiscard && canPayLife) {
                 interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(

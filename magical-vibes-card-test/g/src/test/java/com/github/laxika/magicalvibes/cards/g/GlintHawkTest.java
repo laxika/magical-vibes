@@ -22,6 +22,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({GlintHawk.class, Memnite.class, AccordersShield.class, LiquimetalCoating.class})
 class GlintHawkTest extends BaseCardTest {
 
+    @Test
+    @DisplayName("A Glint Hawk that left and came back before its trigger resolved is not sacrificed")
+    void returnedGlintHawkIsANewObject() {
+        GlintHawk hawkCard = new GlintHawk();
+        harness.setHand(player1, List.of(hawkCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent original = findPermanent(player1, "Glint Hawk");
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        harness.addToBattlefield(player1, hawkCard);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glint Hawk");
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getName().equals("Glint Hawk"));
+    }
+
     // ===== No artifacts — auto-sacrifice =====
 
     @Test

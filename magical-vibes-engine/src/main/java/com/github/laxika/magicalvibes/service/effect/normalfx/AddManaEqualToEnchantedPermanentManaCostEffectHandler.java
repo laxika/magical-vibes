@@ -53,10 +53,16 @@ public class AddManaEqualToEnchantedPermanentManaCostEffectHandler implements No
                 .coloredSymbolsOfMilledCostCards();
         List<List<ManaCost.ManaProductionOption>> choices;
         if (fromMilledCost) {
+            // "For each colored mana symbol ..., add one mana of that color": a monocolored hybrid symbol ({2/W}) is a
+            // white symbol, so its generic half adds nothing (CR 107.4e).
             choices = entry.getCardsMilledAsActivationCost().stream()
                     .filter(card -> card.getParsedManaCost() != null)
                     .flatMap(card -> card.getParsedManaCost().getManaProductionChoices().stream())
                     .filter(choice -> !isSingleGenericMana(choice))
+                    .map(choice -> choice.size() > 1
+                            ? choice.stream().filter(option -> option.color() != ManaColor.COLORLESS).toList()
+                            : choice)
+                    .filter(choice -> !choice.isEmpty())
                     .toList();
         } else {
             if (enchanted == null || enchanted.isFaceDown()

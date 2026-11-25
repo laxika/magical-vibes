@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.CurseOfTheBloodyTome;
 import com.github.laxika.magicalvibes.cards.i.InfectiousCurse;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.SearingSpear;
@@ -8,13 +9,15 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AccursedWitch.class, InfectiousCurse.class, MindRot.class, SearingSpear.class})
+@CardUsed({AccursedWitch.class, InfectiousCurse.class, MindRot.class, SearingSpear.class,
+        CurseOfTheBloodyTome.class})
 class AccursedWitchTest extends BaseCardTest {
 
     @Test
@@ -63,6 +66,25 @@ class AccursedWitchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A Curse aimed at the enchanted player shows as playable at the reduced cost and casts for it")
+    void curseTargetingEnchantedPlayerIsPlayableAtReducedCost() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new AccursedWitch());
+        curse.setCard(curse.getOriginalCard().getBackFaceCard());
+        curse.setTransformed(true);
+        curse.setAttachedTo(player2.getId());
+        harness.setHand(player1, List.of(new CurseOfTheBloodyTome()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player1.getId())).contains(0);
+
+        harness.castEnchantment(player1, 0, player2.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }

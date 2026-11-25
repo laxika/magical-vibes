@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs (one per group, D11 to D22; the defect queue table): D11 to D16 done. Running in parallel worktrees: D18, D19, D20, D21; merge queue D17. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs (one per group, D11 to D22; the defect queue table): D11 to D17 done. Running in parallel worktrees: D18, D19, D20, D21. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,005 / 2,431 (after fold run D16) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,005 / 2,431 (after fold run D17) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,752 rows over 4,579 classes (after fold run D16). Latest verdict per class: unique 1,195, absorbed 1,359, split 691, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,752 rows over 4,579 classes (after fold run D17). Latest verdict per class: unique 1,195, absorbed 1,359, split 691, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1179,6 +1179,11 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `LibraryChoiceHandlerService.canCastFromLibraryWithoutPaying(gd, player, card, limit)`: the cast-now check for a library card offered to cast for free.
 - `ChoosePermanentsEffect.toSacrifice()` with a required choice falls back to all of the chooser's candidates when none can be sacrificed.
 - `ReturnTargetCardsFromGraveyardToBattlefieldEffect` with `OPPONENT_GRAVEYARD`: "from that player's graveyard", narrowed by the stack door's triggering player.
+
+- `GameQueryService.canPayLifeForCosts(gameData, payerId)`: may this player pay life as a spell or ability cost (no prohibition applies, and they can lose life; CR 119.8).
+- `SacrificeUnlessReturnPermanentTypeToHandEffectHandler.findSourcePermanent(gd, controllerId, sourcePermanentId)`: the source permanent as an object (CR 400.7).
+
+No Gradle process of mine is running. The result is left uncommitted in `/tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/wt/d17`.
 
 ### Blocked causes still open
 
@@ -5568,6 +5573,36 @@ Seen, not changed:
 - `IntiSeneschalOfTheSunTest` has 5 tests with no `@DisplayName`.
 
 For the next run: L6/L7 (an Adventure face prompt in the free-cast queue), L19 (move the masked turn-face-up into the engine), L13 as a fold run, and the owner's answer on L12.
+
+### Step 9, defect run D17 (2026-11-25, parallel worktree)
+Group 6. 12 fixed, 2 already fixed, 6 not a defect, 16 left (two of those partly fixed or partly already fixed). Ratchet unchanged (3,009 records).
+
+**Life payments (CR 119.8).**
+- `GameQueryService.canPayLifeForCosts(gd, payerId)` is the "may pay life as a cost" check: no prohibition applies and the payer can lose life.
+- The activation, spell, flashback, kicker and graveyard-permission life checks now ask `canPlayerLoseLife` instead of `canPlayerLifeChange`, or use the overload. Courageous Resolve's "you can't lose life" now blocks Greed and Toxic Deluge.
+- `AdditionalSpellCostService.validateCanPayLifeForCost` now takes the payer.
+
+**Other fixes.**
+- `hasCreatureSpellAdditionalCountersCost` reads only the caster's battlefield (CR 109.5).
+- The return-or-sacrifice handlers and their may completions find the source by `entry.getSourcePermanentId()`. `SacrificeUnlessReturnPermanentTypeToHandEffectHandler.findSourcePermanent` is now shared, and the pending ability carries the source id.
+- The graveyard play path refuses a land without the player's turn or a land play left (`canPlayLandForMadness`).
+- `computeTargetBasedCostReduction` sums all its categories. The graveyard and spell first-target reduction is now `firstTargetCardOrSpellReduction`.
+- The availability preview of the enchanted-player reduction covers every spell type, not only instants and sorceries.
+- The controlled counter-cost kind prompt is asked at every pick, not only the last.
+- Charmed Pendant drops the generic half of a monocoloured hybrid symbol.
+- The Errant Minion handler pays as a resolution cost: payable amounts come from `canPayResolutionCost`, and the maximum from the special-action virtual pool.
+- Rose Room Treasurer: `MayEffect` around its pay and reflexive steps.
+- `MayPayManaEffectHandler.canPay`: a payment of 0 life is always payable.
+
+**Seen, not changed:**
+- Resolution-time "pay N life" options (`MayAbilityHandlerService`, `MayPenaltyChoiceHandlerService`, about 15 handlers) still ask only `canPlayerLifeChange`, so Courageous Resolve doesn't stop them (CR 119.8). Sure of the code.
+- `ForcedCostOrElseEffect` with `RemoveCounterFromControlledPermanentCost` (Chisei) may still remove the first kind of counter. Unverified.
+- The graveyard cast path pays no tap escalate (L35, confirmed from the code).
+
+**For the next run:**
+- The free-cast flow defects (L11 to L13, L17 to L19).
+- The any-colour mode (L15, L30).
+- L34 waits for your decision.
 
 ## Prompt
 

@@ -331,9 +331,10 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             case DiscardEffect discard -> gameData.playerHands.getOrDefault(playerId, List.of()).size()
                     >= amountFor(gameData, entry, discard.amount(), playerId);
             case EachPlayerPaysAnyManaEffect pay when pay.exactly() != null -> {
+                // Paying 0 life is always possible; more needs that much life (CR 119.4).
                 int amount = amountFor(gameData, entry, pay.exactly(), playerId);
-                yield amount > 0 && gameQueryService.canPlayerLoseLife(gameData, playerId)
-                        && gameQueryService.canPayLifeForCosts(gameData) && gameData.getLife(playerId) >= amount;
+                yield amount <= 0 || gameQueryService.canPayLifeForCosts(gameData, playerId)
+                        && gameData.getLife(playerId) >= amount;
             }
             case SequenceEffect sequence -> sequence.steps().stream()
                     .allMatch(step -> canPay(gameData, entry, step, playerId));

@@ -74,7 +74,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
                     beginPayPrompt(gameData, playerId, e.amount(), cardName);
                     return;
                 }
-                new ManaCost("{0}").pay(pool, paid);
+                new ManaCost("{" + paid + "}").payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.text(preventable
                         ? playerName + " pays {" + paid + "} to prevent " + paid + " damage from " + cardName + "."
                         : playerName + " pays {" + paid + "}, but the damage from " + cardName + " can't be prevented."));
@@ -105,16 +105,27 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
                 new PendingInteraction.XValueChoice(playerId, maxX, prompt, cardName, true));
     }
 
+    /** The pool and what the player's untapped sources could add (CR 605.3a), as this resolution payment spends it. */
     private int maxPayable(GameData gameData, UUID playerId) {
-        int untappedSources = potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal()
-                - gameData.playerManaPools.get(playerId).getTotal();
-        int available = payableFromPool(gameData.playerManaPools.get(playerId)) + untappedSources;
-        return available;
+        return payableFromPool(potentialManaService.buildVirtualManaPoolForSpecialAction(gameData, playerId));
     }
 
-    /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
+    /**
+     * The most generic mana {@code pool} pays as a resolution-time cost: it isn't a spell, so mana that can't be spent
+     * to cast spells pays it, and mana that can be spent only on spells doesn't ({@link ManaCost#canPayResolutionCost}).
+     */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal();
+        int low = 0;
+        int high = Math.max(0, pool.getTotalAllMana());
+        while (low < high) {
+            int candidate = low + (high - low + 1) / 2;
+            if (new ManaCost("{" + candidate + "}").canPayResolutionCost(pool)) {
+                low = candidate;
+            } else {
+                high = candidate - 1;
+            }
+        }
+        return low;
     }
 
     private void dealRemainingDamage(GameData gameData, StackEntry entry, UUID playerId, int remaining) {

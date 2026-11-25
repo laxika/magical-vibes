@@ -377,7 +377,7 @@ public class SplitCardCastSupport {
         SplitCardCast.ExileCast exileCast = cast.exileCast();
         if (exileCast != null && exileCast.payLifeEqualToManaValue()) {
             return gameData.getLife(controllerId) >= half.getManaValue()
-                    && gameQueryService.canPlayerLifeChange(gameData, controllerId)
+                    && gameQueryService.canPlayerLoseLife(gameData, controllerId)
                     && gameQueryService.canPayLifeForCosts(gameData);
         }
         String cost = costToPay(gameData, cast, half);

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.a.Atogatog;
 import com.github.laxika.magicalvibes.cards.d.Dismember;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.s.SelesnyaGuildmage;
+import com.github.laxika.magicalvibes.cards.s.SpectralProcession;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -20,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 @CardUsed({
         AbandonedOutpost.class, Atogatog.class, CharmedPendant.class,
-        Dismember.class, LeylineOfTheVoid.class, SelesnyaGuildmage.class
+        Dismember.class, LeylineOfTheVoid.class, SelesnyaGuildmage.class, SpectralProcession.class
 })
 class CharmedPendantTest extends BaseCardTest {
 
@@ -45,6 +47,24 @@ class CharmedPendantTest extends BaseCardTest {
         assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A monocolored hybrid symbol adds mana of its color, not its generic amount")
+    void monocoloredHybridSymbolAddsItsColor() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefieldAndReturn(player1, new CharmedPendant());
+        Card milled = new SpectralProcession();
+        harness.setLibrary(player1, List.of(milled));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(pool.get(ManaColor.WHITE)).isEqualTo(3);
+        assertThat(pool.get(ManaColor.COLORLESS)).isZero();
+        assertThat(pool.getTotal()).isEqualTo(3);
     }
 
     @Test

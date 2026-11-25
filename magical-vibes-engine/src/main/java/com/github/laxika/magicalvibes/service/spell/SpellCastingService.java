@@ -8507,7 +8507,7 @@ public class SpellCastingService {
     private void validateCommanderTaxLifePayment(GameData gameData, UUID playerId, Card card) {
         int life = commanderTaxLife(gameData, card);
         if (life > 0 && (gameData.getLife(playerId) < life
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                 || !gameQueryService.canPayLifeForCosts(gameData))) {
             throw new IllegalStateException("Not enough life to pay for " + card.getName());
         }
@@ -12605,7 +12605,7 @@ public class SpellCastingService {
                 ? 0 : sourceCounterCost.orElse(0);
         if (sourceManaValueLifeAlternative
                 && (gameData.getLife(playerId) < card.getManaValue()
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                 || !gameQueryService.canPayLifeForCosts(gameData))) {
             throw new IllegalStateException("Not enough life to cast the exiled card");
         }
@@ -12749,7 +12749,7 @@ public class SpellCastingService {
         }
 
         if (manaValueLifeAlternative && (!gameQueryService.canPayLifeForCosts(gameData)
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                 || gameData.getLife(playerId) < card.getManaValue())) {
             throw new IllegalStateException("Not enough life to cast the exiled card");
         }
@@ -12822,7 +12822,7 @@ public class SpellCastingService {
 
         if (useManaValueLifeAlternative
                 && (gameData.getLife(playerId) < card.getManaValue()
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                 || !gameQueryService.canPayLifeForCosts(gameData))) {
             throw new IllegalStateException("Not enough life to cast the exiled card");
         }
@@ -13322,7 +13322,7 @@ public class SpellCastingService {
                                            boolean anyManaType, boolean payLifeEqualToManaValue) {
         if (payLifeEqualToManaValue) {
             int amount = spell.getManaValue();
-            if (gameData.getLife(playerId) < amount || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+            if (gameData.getLife(playerId) < amount || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                     || !gameQueryService.canPayLifeForCosts(gameData)) {
                 throw new IllegalStateException("Not enough life to cast the exiled card");
             }
@@ -13839,7 +13839,7 @@ public class SpellCastingService {
                 && (!canCastNormallyFromLibraryTop || gameData.getLife(playerId) >= card.getManaValue());
         if (useManaValueLifeAlternative
                 && (gameData.getLife(playerId) < card.getManaValue()
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                 || !gameQueryService.canPayLifeForCosts(gameData))) {
             throw new IllegalStateException("Not enough life to cast the top card from the library");
         }
@@ -17017,7 +17017,7 @@ public class SpellCastingService {
         int selectedIndex = 0;
         for (CastingCost cost : additionalCosts) {
             if (cost instanceof LifeCastingCost lifeCost) {
-                if (!gameQueryService.canPayLifeForCosts(gameData)) {
+                if (!gameQueryService.canPayLifeForCosts(gameData, playerId)) {
                     throw new IllegalStateException("Cannot pay life as a cost");
                 }
                 if (gameData.getLife(playerId) < lifeCost.amount()) {
@@ -17361,7 +17361,7 @@ public class SpellCastingService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             ManaCost additionalMana = new ManaCost("{0}");
             if (gameData.getLife(playerId) < card.getManaValue()
-                    || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                     || !gameQueryService.canPayLifeForCosts(gameData)
                     || !additionalMana.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                 throw new IllegalStateException("Cannot pay life alternative cost");
@@ -17669,7 +17669,7 @@ public class SpellCastingService {
         if (new HashSet<>(selectedIds).size() != selectedIds.size()) {
             throw new IllegalStateException("Duplicate permanents cannot be sacrificed");
         }
-        if (!gameQueryService.canPayLifeForCosts(gameData)
+        if (!gameQueryService.canPayLifeForCosts(gameData, player.getId())
                 && graveyardCast.additionalCosts().stream().anyMatch(LifeCastingCost.class::isInstance)) {
             throw new IllegalStateException("Cannot pay life or sacrifice creatures as a cost");
         }
@@ -18023,7 +18023,7 @@ public class SpellCastingService {
         LifeCastingCost alternateLifeCost = altCast.getCost(LifeCastingCost.class).orElse(null);
         if (alternateLifeCost != null
                 && (!gameQueryService.canPayLifeForCosts(gameData)
-                || !gameQueryService.canPlayerLifeChange(gameData, playerId))) {
+                || !gameQueryService.canPlayerLoseLife(gameData, playerId))) {
             throw new IllegalStateException("Cannot pay life as a casting cost");
         }
         if (alternateLifeCost != null && gameData.getLife(playerId) < alternateLifeCost.amount()) {
