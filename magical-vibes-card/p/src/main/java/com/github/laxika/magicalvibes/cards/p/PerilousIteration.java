@@ -18,13 +18,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PerilousIteration extends Card {
 
     public PerilousIteration() {
+        // "Seek a card with mana value 2 or less and a card with mana value 3 or greater. Discard those cards ...": one
+        // seek instruction, and one delayed ability discarding both.
         addSpellEffect(SequenceEffect.of(
-                        new SeekCardsToHandEffect(new Fixed(1), new CardMaxManaValuePredicate(2)),
-                        RegisterDelayedStepTriggerEffect.aboutSought(Triggers.endStep(ActivePlayer.YOU),
-                                DiscardSpecificCardEffect.of(Subjects.cardsThisWay(StepKind.SEEK))).waitingForALaterTurn()));
-        addSpellEffect(SequenceEffect.of(
-                        new SeekCardsToHandEffect(new Fixed(1), new CardMinManaValuePredicate(3)),
-                        RegisterDelayedStepTriggerEffect.aboutSought(Triggers.endStep(ActivePlayer.YOU),
-                                DiscardSpecificCardEffect.of(Subjects.cardsThisWay(StepKind.SEEK))).waitingForALaterTurn()));
+                new SeekCardsToHandEffect(new Fixed(1), new CardMaxManaValuePredicate(2)),
+                SeekCardsToHandEffect.alsoSought(new Fixed(1), new CardMinManaValuePredicate(3)),
+                RegisterDelayedStepTriggerEffect.aboutSought(Triggers.endStep(ActivePlayer.YOU),
+                        DiscardSpecificCardEffect.of(Subjects.cardsThisWay(StepKind.SEEK))).waitingForALaterTurn()));
     }
 }

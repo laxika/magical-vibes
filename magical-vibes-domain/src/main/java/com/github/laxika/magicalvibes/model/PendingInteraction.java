@@ -2503,39 +2503,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * exact begin-time text.
      */
     record MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
-                                String prompt, int minCount, boolean reorderToLibraryTop,
+                                String prompt, int minCount,
                                 Integer minimumTotalManaValue, Integer maxTotalManaValue,
                                 Integer maxTotalPower) implements PendingInteraction {
 
         /** Optional choice ({@code minCount} 0) — the shape used by every graveyard-targeting flow. */
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount, String prompt) {
-            this(playerId, cards, maxCount, prompt, 0, false, null, null, null);
+            this(playerId, cards, maxCount, prompt, 0, null, null, null);
         }
 
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
                                     String prompt, int minCount) {
-            this(playerId, cards, maxCount, prompt, minCount, false, null, null, null);
-        }
-
-        public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
-                                    String prompt, int minCount, boolean reorderToLibraryTop) {
-            this(playerId, cards, maxCount, prompt, minCount, reorderToLibraryTop, null, null, null);
+            this(playerId, cards, maxCount, prompt, minCount, null, null, null);
         }
 
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
                                     String prompt, int minCount, Integer maxTotalManaValue) {
-            this(playerId, cards, maxCount, prompt, minCount, false, null, maxTotalManaValue, null);
+            this(playerId, cards, maxCount, prompt, minCount, null, maxTotalManaValue, null);
         }
 
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
-                                    String prompt, int minCount, boolean reorderToLibraryTop,
-                                    Integer minimumTotalManaValue, Integer maxTotalManaValue) {
-            this(playerId, cards, maxCount, prompt, minCount, reorderToLibraryTop,
-                    minimumTotalManaValue, maxTotalManaValue, null);
-        }
-
-        public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
-                                    String prompt, int minCount, boolean reorderToLibraryTop,
+                                    String prompt, int minCount,
                                     Integer minimumTotalManaValue, Integer maxTotalManaValue,
                                     Integer maxTotalPower) {
             this.playerId = playerId;
@@ -2543,7 +2531,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this.maxCount = maxCount;
             this.prompt = prompt;
             this.minCount = minCount;
-            this.reorderToLibraryTop = reorderToLibraryTop;
             this.minimumTotalManaValue = minimumTotalManaValue;
             this.maxTotalManaValue = maxTotalManaValue;
             this.maxTotalPower = maxTotalPower;
@@ -4406,7 +4393,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                int remainingCount, String prompt,
                                java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
                                boolean faceDown, boolean returnOnSourceLeave,
-                               UUID untapPermanentId, boolean playPermissionToChooser,
+                               boolean playPermissionToChooser,
                                UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
                                boolean landsEnterTapped, CardEffect chosenCardThenEffect,
                                int exiledCount)
@@ -4416,7 +4403,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    UUID sourcePermanentId, UUID playPermissionControllerId,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, java.util.List.of(), 0, false, false, null,
+                    remainingCount, prompt, java.util.List.of(), 0, false, false,
                     false, null, 0, false, null, 0);
         }
 
@@ -4425,7 +4412,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false, null,
+                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false,
                     false, null, 0, false, null, 0);
         }
 
@@ -4436,7 +4423,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    boolean faceDown, boolean returnOnSourceLeave) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer,
-                    faceDown, returnOnSourceLeave, null, false, null, 0, false, null, 0);
+                    faceDown, returnOnSourceLeave, false, null, 0, false, null, 0);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -4444,12 +4431,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
                                    boolean faceDown, boolean returnOnSourceLeave,
-                                   UUID untapPermanentId, boolean playPermissionToChooser,
+                                   boolean playPermissionToChooser,
                                    UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
                                    boolean landsEnterTapped, CardEffect chosenCardThenEffect) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
                     prompt, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
-                    untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                    playPermissionToChooser, playPermissionTaxSourceControllerId,
                     exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, 0);
         }
 

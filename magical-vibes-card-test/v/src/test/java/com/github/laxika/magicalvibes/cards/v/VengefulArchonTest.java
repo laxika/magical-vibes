@@ -226,6 +226,7 @@ class VengefulArchonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The prevented damage can be dealt to a target planeswalker instead")
     void preventedDamageCanBeDealtToPlaneswalker() {
         addReadyArchon(player1);
         Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
@@ -242,6 +243,7 @@ class VengefulArchonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The shield prevents damage from successive noncombat damage events until used up")
     void shieldPreventsSuccessiveNoncombatDamageEvents() {
         addReadyArchon(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -257,6 +259,7 @@ class VengefulArchonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A resolved shield still prevents and redirects after the Archon leaves the battlefield")
     void resolvedShieldStillWorksAfterArchonLeavesBattlefield() {
         Permanent archon = addReadyArchon(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -272,6 +275,7 @@ class VengefulArchonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Targeting yourself prevents the damage but deals that much new damage to you")
     void targetingYourselfPreventsOriginalDamageButDealsNewDamageToYou() {
         addReadyArchon(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

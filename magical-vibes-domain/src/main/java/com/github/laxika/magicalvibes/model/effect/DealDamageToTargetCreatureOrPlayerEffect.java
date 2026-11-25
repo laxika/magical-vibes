@@ -1,28 +1,17 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
-/** Deals damage to target creature or player. */
-public record DealDamageToTargetCreatureOrPlayerEffect(DynamicAmount damage, boolean chooseOnResolution)
-        implements DamageDealingEffect {
-
-    public DealDamageToTargetCreatureOrPlayerEffect(DynamicAmount damage) {
-        this(damage, false);
-    }
+/**
+ * Deals damage to a creature or player chosen as the effect resolves, without targeting (Comet, Stellar Pup). A
+ * targeted "target creature or player" is {@link DealDamageToAnyTargetEffect} under a creature-or-player target
+ * filter.
+ */
+public record DealDamageToTargetCreatureOrPlayerEffect(DynamicAmount damage) implements DamageDealingEffect {
 
     /** Chooses a creature or player during resolution without targeting. */
     public static DealDamageToTargetCreatureOrPlayerEffect chooseDuringResolution(DynamicAmount damage) {
-        return new DealDamageToTargetCreatureOrPlayerEffect(damage, true);
-    }
-
-    public DealDamageToTargetCreatureOrPlayerEffect(int damage) {
-        this(new Fixed(damage));
-    }
-
-    @Override
-    public TargetSpec targetSpec() {
-        return chooseOnResolution ? TargetSpec.NONE : TargetSpec.harmful(TargetPredicates.creatureOrPlayer());
+        return new DealDamageToTargetCreatureOrPlayerEffect(damage);
     }
 
     @Override

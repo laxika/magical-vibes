@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MeliraSylvokOutcast;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -11,16 +12,18 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheOzolith.class, GrizzlyBears.class, Unsummon.class, Solemnity.class})
+@CardUsed({TheOzolith.class, GrizzlyBears.class, Unsummon.class, Solemnity.class, MeliraSylvokOutcast.class})
 class TheOzolithTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Gets the counters of a creature you control that leaves the battlefield")
     void storesAllCountersFromAControlledCreatureThatLeaves() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -34,6 +37,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't get the counters of an opponent's creature that leaves")
     void doesNotStoreCountersFromAnOpponentsCreature() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -45,6 +49,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At the beginning of combat moves all its counters onto the target creature")
     void movesAllCountersOntoTheChosenCreatureAtBeginningOfCombat() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -67,6 +72,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the move leaves the counters on The Ozolith")
     void decliningTheMoveLeavesTheCountersOnTheOzolith() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -82,6 +88,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger at the beginning of combat without counters")
     void doesNotTriggerAtBeginningOfCombatWithoutCounters() {
         harness.addToBattlefield(player1, new TheOzolith());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -93,6 +100,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Moves nothing when the target can't have counters (CR 122.5)")
     void cannotMoveCountersWhenTheTargetCannotReceiveThem() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -111,6 +119,27 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Keeps the -1/-1 counters a target that can't have them would get, and moves the rest (CR 122.5)")
+    void keepsTheKindOfCounterTheTargetCantHave() {
+        Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        ozolith.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        ozolith.setCounterCount(CounterType.CHARGE, 3);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ozolith.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(ozolith.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can move its counters onto an opponent's creature")
     void canMoveCountersOntoAnOpponentsCreature() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -132,6 +161,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Keeps its counters when the target leaves before resolution")
     void keepsCountersWhenTheTargetLeavesBeforeResolution() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -147,6 +177,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger at the beginning of an opponent's combat")
     void doesNotTriggerDuringAnOpponentsCombat() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -160,6 +191,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Adds a leaving creature's keyword counters to those it has")
     void addsLeavingCreaturesKeywordCountersToExistingCounters() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -175,6 +207,7 @@ class TheOzolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger when a creature without counters leaves")
     void doesNotTriggerWhenACounterlessCreatureLeaves() {
         Permanent ozolith = harness.addToBattlefieldAndReturn(player1, new TheOzolith());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

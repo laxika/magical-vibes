@@ -181,14 +181,6 @@ public class TargetPolarityClassifier {
         }
         // "Conjure a duplicate of target nontoken creature you control into your hand" helps its own board; a duplicate
         // of any permanent stays the name entry's NEUTRAL.
-        if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect conjure
-                && conjure.cards() instanceof com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect.DuplicatesOf of
-                && of.targetFilter() instanceof PermanentAllOfPredicate all
-                && all.predicates().stream().anyMatch(PermanentControlledBySourceControllerPredicate.class::isInstance)) {
-            return TargetPolarity.BENEFICIAL;
-        }
-        // "Conjure a duplicate of target nontoken creature you control into your hand" helps its own board; a duplicate
-        // of any permanent stays the name entry's NEUTRAL.
         if (effect instanceof ConjureCardsEffect conjure
                 && conjure.cards() instanceof ConjureCardsEffect.DuplicatesOf of
                 && of.targetFilter() instanceof PermanentAllOfPredicate all

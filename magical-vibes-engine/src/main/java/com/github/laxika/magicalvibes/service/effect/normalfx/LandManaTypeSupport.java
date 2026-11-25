@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
@@ -131,7 +133,7 @@ public class LandManaTypeSupport {
                                          Permanent source, Set<ManaColor> types, Set<UUID> visited) {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect mana) {
-                if (producesAnyMana(gameData, source, mana)) {
+                if (producesAnyMana(gameData, source, mana.amount())) {
                     addIfNonNull(types, mana.color());
                 }
             } else if (effect instanceof AwardManaOfTypeLandsCouldProduceEffect mana && !mana.scope().paidInCost()) {
@@ -163,6 +165,10 @@ public class LandManaTypeSupport {
                     }
                 }
             } else if (effect instanceof AwardAnyColorManaEffect mana) {
+                if (!producesAnyMana(gameData, source, mana.amount())) {
+                    // Three Tree City with no creature of the chosen type would add no mana: no type (CR 106.7).
+                    continue;
+                }
                 if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY) {
                     types.addAll(ManaProductionSupport.commanderColorIdentity(gameData,
                             gameQueryService.findPermanentController(gameData, source.getId())));
@@ -211,13 +217,17 @@ public class LandManaTypeSupport {
      * Whether one resolution of {@code mana} would add any mana right now. A dynamic amount that
      * evaluates to zero (Gaea's Cradle with no creatures) contributes no type (CR 106.7).
      */
-    private boolean producesAnyMana(GameData gameData, Permanent source, AwardManaEffect mana) {
-        if (mana.amount() instanceof Fixed) {
+    /**
+     * Whether an ability adding {@code amount} mana would add any now (CR 106.7). A fixed amount always does, and so
+     * does an X its cost chooses, since whether the cost could be paid is ignored.
+     */
+    private boolean producesAnyMana(GameData gameData, Permanent source, DynamicAmount amount) {
+        if (amount == null || amount instanceof Fixed || amount instanceof XValue) {
             return true;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
         AmountContext context = new AmountContext(controllerId, source, null, 0, 0);
-        return amountEvaluationService.evaluate(gameData, mana.amount(), context) > 0;
+        return amountEvaluationService.evaluate(gameData, amount, context) > 0;
     }
 
     private static void addIfNonNull(Set<ManaColor> types, ManaColor color) {

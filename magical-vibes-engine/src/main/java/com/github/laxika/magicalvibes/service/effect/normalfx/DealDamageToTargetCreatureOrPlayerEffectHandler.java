@@ -15,7 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves creature-or-player damage through the shared any-target damage pipeline. */
+/**
+ * Resolves creature-or-player damage chosen as the effect resolves: asks for the recipient, then deals the damage
+ * through the shared any-target damage pipeline.
+ */
 @Component
 @RequiredArgsConstructor
 public class DealDamageToTargetCreatureOrPlayerEffectHandler implements NormalEffectHandlerBean {
@@ -32,7 +35,7 @@ public class DealDamageToTargetCreatureOrPlayerEffectHandler implements NormalEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var damageEffect = (DealDamageToTargetCreatureOrPlayerEffect) effect;
-        if (damageEffect.chooseOnResolution() && entry.getChosenPermanentId() == null) {
+        if (entry.getChosenPermanentId() == null) {
             List<UUID> creatures = new ArrayList<>();
             for (UUID playerId : gameData.orderedPlayerIds) {
                 for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
@@ -49,11 +52,11 @@ public class DealDamageToTargetCreatureOrPlayerEffectHandler implements NormalEf
             return;
         }
         UUID previousTargetId = entry.getTargetId();
-        if (damageEffect.chooseOnResolution()) entry.setTargetId(entry.getChosenPermanentId());
+        entry.setTargetId(entry.getChosenPermanentId());
         try {
             delegate.resolve(gameData, entry, new DealDamageToAnyTargetEffect(damageEffect.damage()));
         } finally {
-            if (damageEffect.chooseOnResolution()) entry.setTargetId(previousTargetId);
+            entry.setTargetId(previousTargetId);
         }
     }
 }

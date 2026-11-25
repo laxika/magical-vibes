@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DeadlyInsect;
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
+import com.github.laxika.magicalvibes.cards.e.EnlistedWurm;
 import com.github.laxika.magicalvibes.cards.g.GorillaChieftain;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,6 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -23,7 +26,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FatalLore.class, ElvishRanger.class, GorillaChieftain.class, DeadlyInsect.class, WhiteKnight.class})
+@CardUsed({FatalLore.class, ElvishRanger.class, GorillaChieftain.class, DeadlyInsect.class, WhiteKnight.class,
+        EnlistedWurm.class})
 class FatalLoreTest extends BaseCardTest {
 
     private static final String FIRST_MODE = "You draw three cards";
@@ -246,6 +250,22 @@ class FatalLoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(second);
         PendingInteraction.XValueChoice draw = gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
         assertThat(draw.playerId()).isEqualTo(player3.getId());
+    }
+
+    @Test
+    @DisplayName("Cast for free from exile by cascade, the opponent still chooses its mode before priority")
+    void freeCastFromCascadeStillAsksTheOpponentForTheMode() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.setLibrary(player1, List.of(new FatalLore(), new ElvishRanger()));
+
+        harness.castFromHand(player1, new EnlistedWurm(), "{4}{G}{W}");
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Fatal Lore"));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
     }
 
     private void setupAndCast() {

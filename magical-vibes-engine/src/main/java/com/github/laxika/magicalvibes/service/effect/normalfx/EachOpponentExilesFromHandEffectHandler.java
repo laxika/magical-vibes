@@ -71,7 +71,7 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
         List<UUID> remaining = choosers.size() > 1 ? List.copyOf(choosers.subList(1, choosers.size())) : List.of();
         if (e.grantPlayPermissionToChooser()) {
             playerInputService.beginExileFromHandChoice(gameData, first, null, null, e.amount(),
-                    remaining, e.amount(), false, false, null, true, controllerId,
+                    remaining, e.amount(), false, false, true, controllerId,
                     e.exilePlayOpponentTax(), e.landsEnterTapped());
         } else {
             playerInputService.beginExileFromHandChoice(gameData, first, entry.getSourcePermanentId(),

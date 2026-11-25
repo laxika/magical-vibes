@@ -59,11 +59,11 @@ public class ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffectHandl
                 .upTo(true)
                 .build();
 
-        // The returned permanent is the reflexive ability's source permanent (CR 603.12); its graveyard target is
-        // chosen as it goes on the stack.
+        // "When that permanent enters" is a triggered ability the spell made: its source is the spell, controlled by
+        // the spell's controller, not the returned permanent (CR 603.7d). Its graveyard target is chosen as it goes on
+        // the stack.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(returnEffect),
-                entry.getCard().getName() + "'s reflexive ability", returnedPermanent.getId());
-        record.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                entry.getCard().getName() + "'s reflexive ability", null);
         triggeredAbilityStackService.putMade(gameData, record);
     }
 

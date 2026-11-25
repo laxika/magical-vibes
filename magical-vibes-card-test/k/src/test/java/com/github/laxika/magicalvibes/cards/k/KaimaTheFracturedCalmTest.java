@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KaimaTheFracturedCalmTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Goads each opponent's creature enchanted by your Aura and gets a counter for each")
     void goadsOpponentCreaturesEnchantedByYourAurasAndAddsCountersForEach() {
         Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent enchantedOpponent = addCreatureReady(player2, new GrizzlyBears());
@@ -34,6 +36,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The goad ends as Kaima's controller's next turn begins")
     void goadExpiresAtKaimaControllersNextTurn() {
         addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent enchantedOpponent = addCreatureReady(player2, new GrizzlyBears());
@@ -46,6 +49,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts each goaded creature once however many of your Auras enchant it")
     void countsEachCreatureOnceRegardlessOfNumberOfAuras() {
         Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent first = addCreatureReady(player2, new GrizzlyBears());
@@ -64,6 +68,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing the Aura after the ability resolves doesn't end the goad (ruling)")
     void removingAuraAfterResolutionDoesNotEndGoad() {
         addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
@@ -78,6 +83,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Auras are checked on resolution, and the goad still happens if Kaima left")
     void checksAuraPresenceAtResolutionAndStillGoadsIfKaimaLeaves() {
         Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
@@ -96,6 +102,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature whose Aura left before resolution isn't goaded")
     void auraRemovedBeforeResolutionDoesNotQualify() {
         Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
@@ -114,6 +121,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger at an opponent's end step")
     void doesNotTriggerDuringOpponentsEndStep() {
         Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
@@ -129,6 +137,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Goading an already goaded creature again adds no second attack requirement")
     void additionalEndStepDoesNotAddAnotherGoadRequirementForSamePlayer() {
         addCreatureReady(player1, new KaimaTheFracturedCalm());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
@@ -138,6 +147,19 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
         resolveControllerEndStep();
 
         assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature you already goaded is not goaded again this way and adds no counter (CR 701.15d)")
+    void creatureAlreadyGoadedByYouIsNotCountedAsGoadedThisWay() {
+        Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addAura(player1, creature);
+
+        resolveControllerEndStep();
+        resolveControllerEndStep();
+
+        assertThat(kaima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent addAura(com.github.laxika.magicalvibes.model.Player controller, Permanent host) {

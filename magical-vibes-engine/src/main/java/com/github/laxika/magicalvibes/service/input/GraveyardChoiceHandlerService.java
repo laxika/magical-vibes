@@ -1257,30 +1257,6 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        if (multiGraveyardChoice.reorderToLibraryTop()) {
-            gameData.interaction.clearAwaitingInput();
-            List<Card> selectedCards = new ArrayList<>();
-            for (UUID cardId : cardIds) {
-                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                if (card != null) {
-                    permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-                    selectedCards.add(card);
-                }
-            }
-
-            if (selectedCards.size() > 1) {
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
-                        player.getId(), selectedCards, false, player.getId(),
-                        "Put these cards on top of your library in any order (top to bottom)."));
-            } else {
-                if (selectedCards.size() == 1) {
-                    gameData.playerDecks.get(player.getId()).addFirst(selectedCards.getFirst());
-                }
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-
         List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
         BattlefieldAndGraveyardCardChoosingEffect mixedZoneEffect = pendingEffects == null ? null
                 : pendingEffects.stream()

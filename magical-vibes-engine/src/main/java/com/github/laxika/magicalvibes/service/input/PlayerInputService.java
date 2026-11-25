@@ -695,8 +695,8 @@ public class PlayerInputService {
                                                                List<Card> cards, int maxCount,
                                                                int minimumTotalManaValue, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
-                playerId, new ArrayList<>(cards), maxCount, prompt, 0, false,
-                minimumTotalManaValue, null));
+                playerId, new ArrayList<>(cards), maxCount, prompt, 0,
+                minimumTotalManaValue, null, null));
     }
 
     public void beginMultiGraveyardChoiceWithMaximumManaValue(GameData gameData, UUID playerId,
@@ -712,7 +712,7 @@ public class PlayerInputService {
                                                            int minCount, int maximumTotalPower,
                                                            String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
-                playerId, new ArrayList<>(cards), maxCount, prompt, minCount, false,
+                playerId, new ArrayList<>(cards), maxCount, prompt, minCount,
                 null, null, maximumTotalPower));
     }
 
@@ -2675,7 +2675,7 @@ public class PlayerInputService {
     public void beginExileFromHandChoice(GameData gameData, UUID playerId,
                                          CardEffect chosenCardThenEffect) {
         beginExileFromHandChoice(gameData, playerId, null, null, 1,
-                List.of(), 0, false, false, null, false, null, 0, false,
+                List.of(), 0, false, false, false, null, 0, false,
                 chosenCardThenEffect);
     }
 
@@ -2705,29 +2705,20 @@ public class PlayerInputService {
                                          List<UUID> remainingChoosers, int cardsPerPlayer,
                                          boolean faceDown, boolean returnOnSourceLeave) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
-                remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave, null);
-    }
-
-    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
-                                         UUID playPermissionControllerId, int remainingCount,
-                                         List<UUID> remainingChoosers, int cardsPerPlayer,
-                                         boolean faceDown, boolean returnOnSourceLeave,
-                                         UUID untapPermanentId) {
-        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
                 remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
-                untapPermanentId, false, null, 0, false);
+                false, null, 0, false);
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                          UUID playPermissionControllerId, int remainingCount,
                                          List<UUID> remainingChoosers, int cardsPerPlayer,
                                          boolean faceDown, boolean returnOnSourceLeave,
-                                         UUID untapPermanentId, boolean playPermissionToChooser,
+                                         boolean playPermissionToChooser,
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
                 remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
-                untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                playPermissionToChooser, playPermissionTaxSourceControllerId,
                 exilePlayOpponentTax, landsEnterTapped, null);
     }
 
@@ -2735,13 +2726,13 @@ public class PlayerInputService {
                                          UUID playPermissionControllerId, int remainingCount,
                                          List<UUID> remainingChoosers, int cardsPerPlayer,
                                          boolean faceDown, boolean returnOnSourceLeave,
-                                         UUID untapPermanentId, boolean playPermissionToChooser,
+                                         boolean playPermissionToChooser,
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped,
                                          CardEffect chosenCardThenEffect) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
                 remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
-                untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                playPermissionToChooser, playPermissionTaxSourceControllerId,
                 exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, 0);
     }
 
@@ -2749,7 +2740,7 @@ public class PlayerInputService {
                                          UUID playPermissionControllerId, int remainingCount,
                                          List<UUID> remainingChoosers, int cardsPerPlayer,
                                          boolean faceDown, boolean returnOnSourceLeave,
-                                         UUID untapPermanentId, boolean playPermissionToChooser,
+                                         boolean playPermissionToChooser,
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped,
                                          CardEffect chosenCardThenEffect, int exiledCount) {
@@ -2759,7 +2750,7 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
                 playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
                 "Choose a card to exile.", remainingChoosers != null ? remainingChoosers : List.of(),
-                cardsPerPlayer, faceDown, returnOnSourceLeave, untapPermanentId,
+                cardsPerPlayer, faceDown, returnOnSourceLeave,
                 playPermissionToChooser, playPermissionTaxSourceControllerId,
                 exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, exiledCount));
     }
@@ -2769,7 +2760,7 @@ public class PlayerInputService {
                                                 boolean faceDown) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
                 playerId, List.copyOf(validIndices), null, null, 1, "Choose a card to exile.", List.of(), 0,
-                faceDown, false, null, false, null, 0, false, null, 0));
+                faceDown, false, false, null, 0, false, null, 0));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JailbreakTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Returns the opponent's permanent, then one of yours with equal or lesser mana value")
     void returnsOpponentPermanentAndThenOwnPermanentWithEqualOrLesserManaValue() {
         Card opponentPermanent = new GrizzlyBears();
         Card lowerManaValue = new LlanowarElves();
@@ -50,6 +52,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The follow-up return is up to one: choosing none returns nothing of yours")
     void canDeclineOptionalFollowUpTarget() {
         Card opponentPermanent = new GrizzlyBears();
         Card ownPermanent = new LlanowarElves();
@@ -67,6 +70,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't target a nonpermanent card in an opponent's graveyard")
     void cannotTargetNonPermanentOpponentCard() {
         Card opponentInstant = new Jailbreak();
         prepare(opponentInstant);
@@ -76,6 +80,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Offers your permanent cards of lesser mana value, never sorceries")
     void returnsLowerManaValuePermanentButDoesNotOfferSorceries() {
         Card opponentPermanent = new GrizzlyBears();
         Card ownPermanent = new LlanowarElves();
@@ -95,6 +100,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The first target must be in an opponent's graveyard, not yours")
     void cannotTargetOwnGraveyardForInitialReturn() {
         Card opponentPermanent = new GrizzlyBears();
         Card ownPermanent = new LlanowarElves();
@@ -105,6 +111,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("If the first target leaves the graveyard, neither card returns")
     void initialTargetLeavingGraveyardPreventsBothReturns() {
         Card opponentPermanent = new GrizzlyBears();
         Card ownPermanent = new LlanowarElves();
@@ -121,6 +128,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A follow-up target that leaves the graveyard doesn't undo the opponent's return")
     void followUpTargetLeavingGraveyardDoesNotUndoOpponentReturn() {
         Card opponentPermanent = new GrizzlyBears();
         Card ownPermanent = new LlanowarElves();
@@ -138,6 +146,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns the opponent's permanent when your graveyard has nothing eligible")
     void returnsOpponentPermanentWhenOwnGraveyardHasNoEligibleCards() {
         Card opponentPermanent = new GrizzlyBears();
         Card ownPermanent = new AirElemental();
@@ -159,6 +168,7 @@ class JailbreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Torpor Orb stops the follow-up when the returned permanent is a creature")
     void torporOrbSuppressesFollowUpWhenOpponentCreatureEnters() {
         Card opponentPermanent = new GrizzlyBears();
         Card ownPermanent = new LlanowarElves();
@@ -172,6 +182,22 @@ class JailbreakTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The \"when that permanent enters\" ability's source is Jailbreak, not the returned permanent (CR 603.7d)")
+    void delayedAbilitySourceIsTheSpellNotTheReturnedPermanent() {
+        Card opponentPermanent = new GrizzlyBears();
+        Card ownPermanent = new LlanowarElves();
+        prepare(opponentPermanent, ownPermanent);
+
+        harness.castAndResolveSorcery(player1, 0, opponentPermanent.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownPermanent.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Jailbreak");
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isNull();
     }
 
     private void prepare(Card opponentPermanent, Card... ownGraveyardCards) {

@@ -1646,7 +1646,7 @@ public class CardChoiceHandlerService {
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
+                    exileChoice.returnOnSourceLeave(),
                     exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
                     exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
@@ -1662,7 +1662,7 @@ public class CardChoiceHandlerService {
                     exileChoice.playPermissionToChooser() ? null : exileChoice.playPermissionControllerId(),
                     exileChoice.cardsPerPlayer(), rest,
                     exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
-                    exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
                     exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
                     exileChoice.chosenCardThenEffect(), 0);
@@ -1675,13 +1675,6 @@ public class CardChoiceHandlerService {
             if (gameData.pendingGemstoneCavernsChoice != null) {
                 mulliganService.completeGemstoneCavernsExile(gameData, playerId);
                 return;
-            }
-
-            if (exileChoice.untapPermanentId() != null) {
-                Permanent source = gameQueryService.findPermanentById(gameData, exileChoice.untapPermanentId());
-                if (source != null && tapUntapSupport.untapPermanent(gameData, source)) {
-                    gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-                }
             }
 
             // Resume resolving remaining effects

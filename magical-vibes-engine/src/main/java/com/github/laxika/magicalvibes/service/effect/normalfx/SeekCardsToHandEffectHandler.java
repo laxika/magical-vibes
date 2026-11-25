@@ -43,11 +43,17 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<Card> sought = seek(gameData, entry, (SeekCardsToHandEffect) effect);
+        var seekEffect = (SeekCardsToHandEffect) effect;
+        List<Card> sought = seek(gameData, entry, seekEffect);
         UUID playerId = entry.getControllerId();
-        entry.recordStep(StepKind.SEEK, StepOutcome.ofObjects(
+        StepOutcome outcome = StepOutcome.ofObjects(
                 sought.stream().map(Card::getId).toList(), List.of(playerId),
-                sought.stream().map(card -> new MovedCard(card.getId(), card.getId(), Zone.HAND, playerId)).toList()));
+                sought.stream().map(card -> new MovedCard(card.getId(), card.getId(), Zone.HAND, playerId)).toList());
+        if (seekEffect.addsToEarlierSeek()) {
+            entry.addToStep(StepKind.SEEK, outcome);
+        } else {
+            entry.recordStep(StepKind.SEEK, outcome);
+        }
     }
 
     /** Resolves a Seek and returns the exact cards moved into the controller's hand. */

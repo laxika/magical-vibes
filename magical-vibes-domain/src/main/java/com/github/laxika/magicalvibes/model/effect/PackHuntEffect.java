@@ -5,11 +5,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 /**
  * Pack hunt effect: tap all untapped creatures of the given subtype the controller controls.
  * Each creature tapped this way deals damage equal to its power to target creature. That creature
- * deals damage equal to its power divided evenly among those tapped creatures.
- *
- * <p>Note: the original rules text says "divided as its controller chooses" for the target
- * creature's damage back. This implementation divides evenly (with remainder distributed
- * one-by-one starting from the first creature).
+ * deals damage equal to its power divided as its controller chooses among those tapped creatures
+ * (one at a time through a permanent choice when more than one was tapped).
  *
  * <p>Used by Master of the Wild Hunt (Wolf subtype).
  */

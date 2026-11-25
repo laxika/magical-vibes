@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GaeasCradle;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.cards.s.SunkenRuins;
+import com.github.laxika.magicalvibes.cards.t.ThreeTreeCity;
 import com.github.laxika.magicalvibes.cards.w.WiltLeafCavaliers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.w.Wasteland;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ReflectingPool.class, Forest.class, Island.class, Wasteland.class,
-        GaeasCradle.class, SongOfTheDryads.class, SunkenRuins.class, WiltLeafCavaliers.class})
+        GaeasCradle.class, SongOfTheDryads.class, SunkenRuins.class, WiltLeafCavaliers.class, ThreeTreeCity.class,
+        LlanowarElves.class})
 class ReflectingPoolTest extends BaseCardTest {
 
     @Test
@@ -85,6 +89,33 @@ class ReflectingPoolTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A land whose any-color ability would add no mana now adds no colors to choose from (CR 106.7)")
+    void anyColorAbilityThatWouldAddNoManaAddsNoColors() {
+        harness.addToBattlefield(player1, new ReflectingPool());
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new ThreeTreeCity());
+        city.setChosenSubtype(CardSubtype.ELF);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A land whose any-color ability would add mana now offers every color")
+    void anyColorAbilityThatWouldAddManaOffersEveryColor() {
+        harness.addToBattlefield(player1, new ReflectingPool());
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new ThreeTreeCity());
+        city.setChosenSubtype(CardSubtype.ELF);
+        harness.addToBattlefield(player1, new LlanowarElves());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .contains("WHITE", "BLUE", "BLACK", "RED", "GREEN", "COLORLESS");
     }
 
     @Test

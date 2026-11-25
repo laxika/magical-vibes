@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ErietteTheBeguilerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An Aura attached to an opponent's permanent of lesser mana value steals it until the Aura leaves")
     void eligibleAuraStealsOpponentPermanentUntilAuraDetaches() {
         addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -43,6 +44,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't steal an opponent's permanent with greater mana value than the Aura")
     void auraDoesNotTriggerForHigherManaValueOpponentPermanent() {
         addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player2, new AirElemental());
@@ -56,6 +58,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Steals an opponent's permanent with mana value equal to the Aura's")
     void auraStealsPermanentWithEqualManaValue() {
         Permanent eriette = addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player2, new ErietteTheBeguiler());
@@ -71,6 +74,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura that leaves before the trigger resolves steals nothing")
     void auraLeavingBeforeTriggerResolvesPreventsControlGain() {
         addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -87,6 +91,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The trigger still resolves after Eriette leaves the battlefield")
     void triggerStillResolvesAfterErietteLeaves() {
         Permanent eriette = addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -102,6 +107,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The control lasts after Eriette leaves while the Aura stays attached")
     void controlPersistsAfterErietteLeaves() {
         Permanent eriette = addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -117,6 +123,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura put on your own permanent doesn't trigger")
     void auraAttachedToOwnPermanentDoesNotTrigger() {
         addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
@@ -129,6 +136,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger while Eriette has lost all abilities")
     void erietteDoesNotTriggerWhileItHasLostAllAbilities() {
         addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -146,6 +154,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Aura doesn't trigger Eriette")
     void opponentsAuraDoesNotTriggerEriette() {
         addCreatureReady(player1, new ErietteTheBeguiler());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
@@ -161,6 +170,7 @@ class ErietteTheBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lifelink gains you life equal to the combat damage Eriette deals")
     void combatDamageGainsLife() {
         addCreatureReady(player1, new ErietteTheBeguiler());
 

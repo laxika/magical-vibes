@@ -241,7 +241,7 @@ class MayCastHandlerServiceTest {
 
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);
 
-            // DealDamageToTargetCreatureOrPlayerEffect has both canTargetPermanent and canTargetPlayer true
+            // DealDamageToAnyTargetEffect can target both permanents and players
             assertThat(targets).contains(creature.getId(), PLAYER1_ID, PLAYER2_ID);
         }
 

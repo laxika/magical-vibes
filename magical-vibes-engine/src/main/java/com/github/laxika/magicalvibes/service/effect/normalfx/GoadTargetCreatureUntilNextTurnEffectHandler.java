@@ -21,7 +21,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link GoadTargetCreatureUntilNextTurnEffect}: one floating combat requirement for each creature its target or
  * subject names, for the effect's duration, the source permanent kept for a "while this remains" duration; records
- * {@link StepKind#GOAD}.
+ * {@link StepKind#GOAD}. A creature its controller already goaded for that duration is left alone and not recorded
+ * (CR 701.15d).
  */
 @Component
 @RequiredArgsConstructor
@@ -61,9 +62,13 @@ public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffec
             if (target == null || !gameQueryService.isCreature(gameData, target)) {
                 continue;
             }
+            UUID sourceId = whileSource ? entry.getSourcePermanentId() : null;
+            if (alreadyGoadedThisWay(gameData, targetId, entry.getControllerId(), sourceId, goad)) {
+                continue;
+            }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry),
-                    whileSource ? entry.getSourcePermanentId() : null, entry.getControllerId(),
+                    sourceId, entry.getControllerId(),
                     effect, targetId, null, null, goad.duration(), 0));
             goadedIds.add(targetId);
             UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
@@ -72,5 +77,21 @@ public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffec
             }
         }
         entry.recordStep(StepKind.GOAD, StepOutcome.ofObjects(goadedIds, controllers));
+    }
+
+    /**
+     * Whether {@code controllerId} already goaded the creature for as long as this goad would last: goading it again
+     * has no effect (CR 701.15d), so it isn't goaded this way.
+     */
+    private static boolean alreadyGoadedThisWay(GameData gameData, UUID creatureId, UUID controllerId, UUID sourceId,
+                                                GoadTargetCreatureUntilNextTurnEffect goad) {
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream().anyMatch(floating ->
+                    floating.effect() instanceof GoadTargetCreatureUntilNextTurnEffect earlier
+                            && creatureId.equals(floating.affectedPermanentId())
+                            && controllerId.equals(floating.controllerId())
+                            && earlier.duration().equals(goad.duration())
+                            && java.util.Objects.equals(sourceId, floating.sourcePermanentId()));
+        }
     }
 }

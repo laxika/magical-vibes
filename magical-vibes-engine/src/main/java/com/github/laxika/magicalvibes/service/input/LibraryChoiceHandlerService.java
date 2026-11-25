@@ -277,9 +277,6 @@ public class LibraryChoiceHandlerService {
         com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters =
                 librarySearch.enterWithCounters();
         CardSubtype battlefieldIfChosenBeholdType = librarySearch.battlefieldIfChosenBeholdType();
-        Integer battlefieldIfManaValueAtMost = librarySearch.battlefieldIfManaValueAtMost();
-        com.github.laxika.magicalvibes.model.filter.CardPredicate battlefieldIfChosenPredicate =
-                librarySearch.battlefieldIfChosenPredicate();
         boolean battlefieldIfChosenTapped = librarySearch.battlefieldIfChosenTapped();
         boolean battlefieldIfOpponentControlsMoreLands = librarySearch.battlefieldIfOpponentControlsMoreLands();
         boolean placeBattlefieldCardsSimultaneously = librarySearch.placeBattlefieldCardsSimultaneously();
@@ -1141,26 +1138,15 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        if (battlefieldIfManaValueAtMost != null) {
-            destination = chosenCard.getManaValue() <= battlefieldIfManaValueAtMost
-                    ? LibrarySearchDestination.BATTLEFIELD
-                    : LibrarySearchDestination.HAND;
-            toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD;
-            toBattlefieldTapped = false;
-        }
-
         boolean putChosenCardOnBattlefield = destination == LibrarySearchDestination.HAND
-                && ((battlefieldIfChosenBeholdType != null
+                && battlefieldIfChosenBeholdType != null
                 && chosenCard.hasType(CardType.CREATURE)
                 && predicateEvaluationService.matchesCardPredicate(chosenCard,
                 new CardSubtypePredicate(battlefieldIfChosenBeholdType), chosenCard.getId(),
-                gameData, playerId))
-                || (battlefieldIfChosenPredicate != null
-                && predicateEvaluationService.matchesCardPredicate(chosenCard, battlefieldIfChosenPredicate,
-                chosenCard.getId(), gameData, playerId)));
+                gameData, playerId);
         if (putChosenCardOnBattlefield) {
             toBattlefield = true;
-            toBattlefieldTapped = battlefieldIfChosenPredicate != null && battlefieldIfChosenTapped;
+            toBattlefieldTapped = false;
         }
 
         if (toBattlefield && !chosenCard.getType().isPermanentType()) {
@@ -2011,7 +1997,6 @@ public class LibraryChoiceHandlerService {
                     .battlefieldCounter(battlefieldCounter)
                     .enterWithCounters(enterWithCounters)
                     .battlefieldIfChosenBeholdType(battlefieldIfChosenBeholdType)
-                    .battlefieldIfChosenPredicate(battlefieldIfChosenPredicate)
                     .battlefieldIfChosenTapped(battlefieldIfChosenTapped)
                     .finalCardToHand(librarySearch.finalCardToHand())
                     .build(),

@@ -123,22 +123,6 @@ public class GraveyardReturnSupport {
     private final com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
     private final MakeChosenPermanentAttackingEffectHandler makeChosenPermanentAttackingEffectHandler;
 
-    /**
-     * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
-     * to the controller's hand or battlefield. Handles three resolution paths:
-     * <ol>
-     *   <li>Pre-targeted: the card was already targeted during casting (includes aura attachment).</li>
-     *   <li>Return all: returns every matching card without player choice.</li>
-     *   <li>Search and choose: prompts the controller to pick a card from their own or all graveyards.</li>
-     * </ol>
-     * Fizzles if targeted cards are no longer valid. May also grant life equal to the returned card's
-     * mana value when the effect specifies it.
-     *
-     * @param gameData the current game state
-     * @param entry    the stack entry being resolved
-     * @param effect   the graveyard return effect configuration
-     */
-
     /** Appends {@code cards} to {@code builder} as comma-separated card segments. */
     private static void appendCardList(GameLog.Builder builder, List<Card> cards) {
         for (int i = 0; i < cards.size(); i++) {

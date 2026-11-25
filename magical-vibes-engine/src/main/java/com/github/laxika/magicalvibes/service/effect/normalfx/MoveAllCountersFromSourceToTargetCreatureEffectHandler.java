@@ -32,18 +32,11 @@ public class MoveAllCountersFromSourceToTargetCreatureEffectHandler implements N
         if (source == null || target == null) {
             return;
         }
-        // A move that cannot put its counters onto the target removes none from the source (CR 122.5).
-        if (gameQueryService.cantHaveCounters(gameData, target)) {
-            return;
-        }
-
+        // Each kind moves on its own: a kind the target can't have stays on the source, and nothing moves onto the
+        // source itself (CR 122.5).
         for (CounterType counterType : source.getCounters().keySet().stream().toList()) {
-            int count = source.getCounterCount(counterType);
-            source.setCounterCount(counterType, 0);
-            if (counterType == CounterType.OIL) {
-                gameData.recordOilCounterRemoved(source, count);
-            }
-            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, counterType, count);
+            permanentCounterSupport.moveCounters(gameData, entry, source, target, counterType,
+                    source.getCounterCount(counterType));
         }
     }
 }

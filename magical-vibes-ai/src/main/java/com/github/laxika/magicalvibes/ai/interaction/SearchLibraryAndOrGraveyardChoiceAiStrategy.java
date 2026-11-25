@@ -22,7 +22,8 @@ class SearchLibraryAndOrGraveyardChoiceAiStrategy
     @Override
     public void answer(PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
                        AiInteractionContext ctx) throws Exception {
-        if (!ctx.aiPlayerId().equals(interaction.playerId())) {
+        // The player who chooses: the searcher, or the controller of an Opposition Agent controlling the search.
+        if (!ctx.aiPlayerId().equals(interaction.decidingPlayerId())) {
             return;
         }
 

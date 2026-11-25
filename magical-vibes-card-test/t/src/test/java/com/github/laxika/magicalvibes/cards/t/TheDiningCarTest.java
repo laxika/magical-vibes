@@ -38,6 +38,7 @@ class TheDiningCarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Planeswalking to The Dining Car makes each player create a Food")
     void planeswalkMakesEachPlayerCreateFood() {
         gd.planechase.deck.add(new TheDiningCar());
 
@@ -49,6 +50,7 @@ class TheDiningCarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At upkeep its controller sacrifices the creature with the least toughness, then investigates")
     void upkeepSacrificesLeastToughnessCreatureThenInvestigates() {
         gd.planechase.deck.add(new TheDiningCar());
         harness.inMutationScope(() -> planar.reveal(gd, true));
@@ -69,6 +71,7 @@ class TheDiningCarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At upkeep the controller chooses among creatures tied for the least toughness")
     void upkeepLetsControllerChooseAmongTiedLeastToughnessCreatures() {
         gd.planechase.faceUp.add(new com.github.laxika.magicalvibes.model.planar.PlanarObject(
                 new TheDiningCar(), gd.nextTimestamp()));
@@ -109,6 +112,7 @@ class TheDiningCarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos makes artifact token abilities cheaper to activate until end of turn")
     void chaosReducesArtifactTokenActivatedAbilitiesUntilEndOfTurn() {
         gd.planechase.deck.add(new TheDiningCar());
         harness.inMutationScope(() -> planar.reveal(gd, true));

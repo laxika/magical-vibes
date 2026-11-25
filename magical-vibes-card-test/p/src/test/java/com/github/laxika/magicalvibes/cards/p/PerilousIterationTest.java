@@ -86,6 +86,28 @@ class PerilousIterationTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(low, high);
     }
 
+    @Test
+    @DisplayName("One delayed ability discards both sought cards: \"discard those cards\" is one instruction")
+    void oneDelayedAbilityDiscardsBothCards() {
+        Card low = new GrizzlyBears();
+        Card high = new HillGiant();
+        harness.setHand(player1, List.of(new PerilousIteration()));
+        harness.setLibrary(player1, List.of(low, high));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        gd.turnNumber++;
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     /** Moves to the end step of a later turn of player 1's, resolving what triggers there. */
     private void endStepOfYourNextTurn() {
         gd.turnNumber++;
