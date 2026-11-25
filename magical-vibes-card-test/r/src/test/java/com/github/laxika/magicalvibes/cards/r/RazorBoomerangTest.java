@@ -2,18 +2,21 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.Curiosity;
+import com.github.laxika.magicalvibes.cards.t.TelJiladChosen;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.Prevention;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RazorBoomerang.class, GrizzlyBears.class, Curiosity.class})
+@CardUsed({RazorBoomerang.class, GrizzlyBears.class, Curiosity.class, TelJiladChosen.class})
 class RazorBoomerangTest extends BaseCardTest {
 
     @Test
@@ -153,5 +156,35 @@ class RazorBoomerangTest extends BaseCardTest {
         harness.assertInHand(player1, "Razor Boomerang");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+    @Test
+    @DisplayName("Razor Boomerang, not the equipped creature, deals the damage: creature damage prevention doesn't stop it")
+    void creatureDamagePreventionDoesNotStopEquipmentDamage() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent boomerang = harness.addToBattlefieldAndReturn(player1, new RazorBoomerang());
+        boomerang.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Prevention.add(gd, PreventDamageEffect.allByCreatures());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Razor Boomerang's damage to a creature with protection from artifacts is prevented")
+    void protectionFromArtifactsPreventsTheDamage() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent boomerang = harness.addToBattlefieldAndReturn(player1, new RazorBoomerang());
+        boomerang.setAttachedTo(creature.getId());
+        Permanent chosen = addCreatureReady(player2, new TelJiladChosen());
+
+        harness.activateAbility(player1, 0, null, chosen.getId());
+        harness.passBothPriorities();
+
+        assertThat(chosen.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Tel-Jilad Chosen");
+        harness.assertInHand(player1, "Razor Boomerang");
     }
 }

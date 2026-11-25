@@ -868,11 +868,13 @@ public class DamageSupport {
         }
     }
 
+    /**
+     * Deals {@code damage} to the entry's target creature (or planeswalker) through the same permanent-damage path as
+     * {@link #resolveAnyTargetDamage}. Returns the damage dealt.
+     */
     public int resolveCreatureTargetDamage(GameData gameData, StackEntry entry, int damage) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) return 0;
-        if (isDamagePreventedForCreature(gameData, entry, target)) return 0;
-        return dealCreatureDamage(gameData, entry, target, damage);
+        if (entry.getTargetId() == null || gameData.playerIds.contains(entry.getTargetId())) return 0;
+        return resolveAnyTargetDamage(gameData, entry, entry.getTargetId(), damage, false);
     }
 
     /**
@@ -1019,18 +1021,10 @@ public class DamageSupport {
 
     public int resolveAnyTargetDamage(GameData gameData, StackEntry entry, UUID targetId, int rawDamage,
                                        boolean cantRegenerate, boolean cantBeRedirected) {
-        Card source = entry.getEffectiveDamageSourceCard();
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
 
         if (!targetIsPlayer && targetPermanent == null) return 0;
-
-        // Planeswalkerificate is both a creature and a planeswalker, but its damage resource is
-        // toughness rather than loyalty counters. Use the creature pipeline so prevention and
-        // damage triggers remain consistent while the special resource is reduced by the helper.
-        if (!targetIsPlayer && gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPermanent)) {
-            return dealCreatureDamage(gameData, entry, targetPermanent, rawDamage, cantBeRedirected);
-        }
 
         if (targetIsPlayer) {
             // Damage redirected from the player to a creature (Saving Grace) is still dealt by this
@@ -1045,30 +1039,17 @@ public class DamageSupport {
                 dealDamageToPlayer(gameData, entry, redirectedPlayerId, rawDamage);
                 return 0;
             }
-            if (isDamageSourcePreventedWithLog(gameData, entry)) return 0;
-            // dealDamageToPlayer handles per-permanent prevention (floating prevention effects on the source)
+            // Every prevention of the damage is an option of the player's damage pool (CR 616.1).
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             if (cantRegenerate) {
                 markCreaturesDamagedSinceAsUnregenerable(gameData, entry, damageBefore);
             }
             return 0;
         } else {
-            if (!gameData.damageCantBePreventedOrRedirected(targetPermanent.getId())
-                    && isDamageSourcePreventedWithLog(gameData, entry)) return 0;
-            if (!gameData.damageCantBePreventedOrRedirected(targetPermanent.getId())
-                    && gameQueryService.isDamagePreventable(gameData)
-                    && (isGlobalCreaturePreventionForEntry(gameData, entry)
-                        || isSourcePermanentPreventedFromDealingDamage(gameData, entry)
-                        || gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, source,
-                            entry.getControllerId()))) {
-                applyGlobalCreaturePreventionLifeGain(gameData, entry, rawDamage,
-                        gameQueryService.findPermanentController(gameData, targetPermanent.getId()));
-                gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
-                return 0;
-            }
-            // Planeswalkers and battles share the permanent pipeline: its result stage removes
-            // loyalty (CR 120.3c) or defense counters (CR 120.3h) once every replacement and
-            // prevention effect has been applied in the order the controller chose.
+            // Creatures, planeswalkers (a toughness-as-loyalty one too) and battles share the permanent pipeline:
+            // every prevention (the source's, the spell shield's, Chant of Vitu-Ghazi's, protection) is an option of
+            // the permanent's damage pool, ordered by its controller (CR 616.1); its result stage removes loyalty
+            // (CR 120.3c) or defense counters (CR 120.3h) or marks the damage.
             Map<UUID, Integer> damageBefore = cantRegenerate
                     ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn)
                     : Map.of();

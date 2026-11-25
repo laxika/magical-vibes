@@ -70,7 +70,8 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         List<Rule<PermanentDamageContext>> all = new ArrayList<>();
         all.add(pure("SourcePreventedFromDealing", PREVENTION,
                 ctx -> !ctx.combat() && preventionSource(ctx) != null
-                        && gameQueryService.isPreventedFromDealingDamage(ctx.gameData(), preventionSource(ctx)),
+                        && gameQueryService.isPreventedFromDealingDamage(
+                        ctx.gameData(), preventionSource(ctx), false, false),
                 ctx -> "Prevent all damage " + ctx.nameShownToChooser(preventionSource(ctx)) + " would deal",
                 PermanentDamageCandidateSource::prevented,
                 (ctx, result) -> logSourcePrevented(ctx)));
@@ -82,7 +83,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                 PermanentDamageCandidateSource::prevented,
                 (ctx, result) -> logSourcePrevented(ctx)));
         all.add(effect("DamageByCreaturePrevented", PREVENTION,
-                ctx -> gameQueryService.isDamageByCreaturePrevented(ctx.gameData(), preventionSource(ctx)),
+                this::damageByCreaturePrevented,
                 ctx -> "Prevent damage dealt by creatures",
                 ctx -> {
                     prevention.applyAllByCreaturesPreventionLifeGain(ctx.gameData(), ctx.amount(), ctx.targetControllerId());
@@ -94,7 +95,8 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                 ctx -> !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
                         && gameQueryService.isDamageFromTargetSpellPrevented(ctx.gameData(), ctx.entry())
                         && !(!ctx.combat() && preventionSource(ctx) != null
-                        && gameQueryService.isPreventedFromDealingDamage(ctx.gameData(), preventionSource(ctx))
+                        && gameQueryService.isPreventedFromDealingDamage(
+                        ctx.gameData(), preventionSource(ctx), false, false)
                         && gameQueryService.isTargetSpellShieldPlainPermanentSourcePrevention(
                         ctx.gameData(), ctx.entry())),
                 ctx -> "Prevent the targeted spell's damage",
@@ -108,6 +110,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         all.add(preventAll("TargetingSpellOrAbilityPrevented", "Prevent damage from spells and abilities that target it",
                 ctx -> !ctx.combat() && gameQueryService.isDamageFromTargetingSpellOrAbilityPrevented(
                         ctx.gameData(), ctx.entry(), ctx.target())));
+        all.add(preventAll("Protection", "Prevent the damage (protection)", this::protectionPrevents).whole());
         all.add(effect("Dralnu", ReplacementOption.Kind.REPLACEMENT,
                 ctx -> damageSupport.getObject().hasDralnuDamageReplacement(ctx.gameData(), ctx.target()),
                 ctx -> "Dralnu: sacrifice that many permanents instead",
@@ -320,6 +323,43 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                                                     Predicate<PermanentDamageContext> applies) {
         return pure(family, PREVENTION, ctx -> !ctx.targetProtectedFromPrevention() && applies.test(ctx),
                 ctx -> label, PermanentDamageCandidateSource::prevented, this::logPrevented);
+    }
+
+    /**
+     * "Prevent all damage that would be dealt by creatures" (Chant of Vitu-Ghazi, Ethereal Haze, Thwart the Enemy)
+     * applies to this damage. A spell or ability whose creature source has left reads the source's last known
+     * information, its controller included (CR 608.2h).
+     */
+    private boolean damageByCreaturePrevented(PermanentDamageContext ctx) {
+        Permanent source = preventionSource(ctx);
+        if (source == null) {
+            return false;
+        }
+        if (ctx.damageSource() != null) {
+            return gameQueryService.isDamageByCreaturePrevented(ctx.gameData(), source);
+        }
+        return damageSupport.getObject().isGlobalCreaturePreventionForEntry(ctx.gameData(), ctx.entry());
+    }
+
+    /**
+     * Protection (CR 702.16e): damage from a source with the stated quality is prevented. A spell or ability's own
+     * damage is judged by its card and controller; a permanent dealing damage itself (combat, fight) only when the
+     * damaged permanent also has its own +1/+1-counter prevention to order it against (Phantom Centaur), as combat
+     * damage protection doesn't otherwise reach the pool.
+     */
+    private boolean protectionPrevents(PermanentDamageContext ctx) {
+        if (!gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())) {
+            return false;
+        }
+        Permanent source = ctx.damageSource();
+        if (source != null && prevention.hasPreventRemovePlusOneCountersEffect(ctx.gameData(), ctx.target())
+                && !gameQueryService.damageCantBePreventedFromSource(ctx.gameData(), source, ctx.combat())
+                && gameQueryService.hasProtectionFromDamageSource(ctx.gameData(), ctx.target(), source)) {
+            return true;
+        }
+        return !ctx.combat() && ctx.dealtByStackEntry()
+                && gameQueryService.hasProtectionFromDamageSource(ctx.gameData(), ctx.target(),
+                ctx.entry().getEffectiveDamageSourceCard(), ctx.entry().getControllerId());
     }
 
     /** The source the "can't deal damage" checks read: the dealing permanent, or its last known state. */

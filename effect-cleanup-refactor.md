@@ -27,7 +27,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C as a generic "unless" record in step 10, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs D11 to D22 (one per group) and D23 (the owner's perpetual "it" decision) done 2026-11-25; the defect queue keeps the lines left, each with what it needs. Next: step 10 (needs the owner's sign-off per verb). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source.  |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Run Remove counters done 2026-11-25 (`RemoveCountersEffect`, the source record renamed, absorbs the target, plural-target and two mass records). Next: Damage, then "unless" (owner's order) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Run Remove counters done 2026-11-25 (`RemoveCountersEffect`, the source record renamed, absorbs the target, plural-target and two mass records). Defect run D24 (2026-11-25) cleared the Damage run's prevention-path difference (plan section 2 (a)): one permanent-damage path. Next: Damage, then "unless" (owner's order) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -5946,6 +5946,47 @@ defense off a battle an opponent protects); the Distribute delayed removals decl
 `CombatDamageService` subtract defense counters inline and call `BattleDefeatSupport.checkAfterDefenseRemoved` themselves, as the
 removal path now does; the hand-off pairs are `DealDamageToTargetPermanentEffect` with the creature-or-planeswalker damage records (5g).
 The remove-all records (`RemoveAllCountersEffect` 31 and its forms) wait for a "remove all" run.
+
+### Step 9, defect run D24 (2026-11-25): one permanent-damage path
+
+The prerequisite of step 10's Damage run (its plan, section 2 (a)); no record merged or renamed. `DamageSupport.resolveAnyTargetDamage`
+(any-target, player-or-planeswalker, permanent records) and `resolveCreatureTargetDamage` (creature, creature-or-planeswalker; now a call
+of the first) send damage to a permanent straight to its pool; the two target-creature multi-target loops do too. Ratchet unchanged.
+
+**Pre-check differences found, and what became of them** (every one now a rule of `PermanentDamagePreventions`, so it is ordered (CR 616.1)
+and logged by the pool's line):
+- Source / stack-entry prevention (both paths pre-checked it): pool `SourceDamagePrevented` / `SourcePreventedFromDealing`.
+- "Prevent damage from target spell" without life gain (any-target only): pool `TargetSpellPrevented`.
+- "Prevent all damage by creatures" (any-target only, Chant's life gain from the raw amount): pool `DamageByCreaturePrevented`, which now reads
+  a departed source's last-known controller (CR 608.2h; plan edge case (iii): the creature path let Thwart the Enemy's damage through), and
+  gains life for the damage actually prevented. `SourcePreventedFromDealing` no longer also offers it (`isPreventedFromDealingDamage(…, false)`):
+  the creature path asked Ethereal Haze's prevention twice.
+- Source prevented from dealing damage (any-target only): pool `SourcePreventedFromDealing`.
+- Protection (both pre-checked; the pool had only Phantom Centaur's step): one pool rule `Protection` replaces the step
+  `ProtectionCompetingWithCounterRemoval` (CR 702.16e). A targeted spell never reaches it (the target is illegal, CR 702.16b, 608.2b);
+  non-target recipients (Ghyrson Starn's event object) and other dealers (Razor Boomerang) do.
+- Unpreventable damage: both paths now feed only `DamageEvent.unpreventable` (the handler flag and `dealCreatureDamageUnpreventable` set it);
+  each rule asks `isDamagePreventable`, so a prevention prevents nothing and its life gain is 0 (CR 615.12); shields aren't reduced.
+- The toughness-as-loyalty branch skipped every pre-check (no protection for a planeswalkerified creature): gone. The player branch's
+  `isDamageSourcePreventedWithLog` pre-check went too; `PlayerDamagePreventions` already had both rules.
+
+**Behaviour changes** (failing-first, each seen failing on the old code): the any-target path asks the CR 616.1 order for a red-source
+prevention, a spell shield, Chant of Vitu-Ghazi, a prevented source and protection beside a creature shield; the creature path asks it for
+a source prevention; the player branch asks it for both pre-checked kinds; Ethereal Haze isn't asked twice on the creature path; Thwart the
+Enemy prevents a departed source's creature-path damage; protection applies to a toughness-as-loyalty recipient; Ethereal Haze no longer
+prevents Razor Boomerang's damage (its ruling: the Equipment is the source). Logs: "Damage dealt by X is prevented." (creature
+prevention), "X's damage to P is prevented." (player).
+
+**Tests.** New `PermanentDamagePathTest` (application, 37: pins per prevention on both paths, unpreventable, ordering, player branch); 2 in
+`RazorBoomerangTest`. Changed: `AbstractDamageHandlerTest.stubDamageFromSourceNotPrevented` lenient and two protection stubs dropped in
+`DealDamageToTargetCreatureEffectHandlerTest` (the paths no longer ask). Run: 2,337 classes (the cards of the five records and of every
+handler calling the changed methods, every `Prevent|Prevention|Protection|Unpreventable|DamageReplacement|Redirect|ChantOfVitu` class, 24
+application classes incl. `EffectCountRatchetTest`), 0 failures.
+
+**Seen, not changed** (defect queue, group 9): ~38 other handlers still pre-check; the `triggering()` subject's double log; fight / bite protection.
+
+**For the next run.** The Damage merge (plan `s10-damage`): the merged handler needs no second permanent path now; question 5 is answered
+by this run, questions 1 to 4 wait on the owner.
 
 ## Prompt
 

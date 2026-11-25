@@ -75,9 +75,7 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
             for (UUID targetId : effectTargets) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
-                if (!damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
-                    damageSupport.dealCreatureDamage(gameData, entry, target, damage);
-                }
+                damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, damage, false);
             }
             markDamagedPermanentsForExile(gameData, entry, e, damageBefore);
             return;

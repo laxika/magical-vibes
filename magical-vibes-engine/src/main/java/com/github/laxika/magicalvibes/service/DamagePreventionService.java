@@ -762,10 +762,6 @@ public class DamagePreventionService {
                         .applyDamageToPermanentByRemovingCountersOrSacrificing(gd, c.permanent(), damage) ? 0 : damage,
                 (gd, c, damage) -> damagePreventionReplacementSupport.sacrificesForDamage(
                         gd, c.permanent(), damage) ? DepartureIntent.sacrifice(c.permanent().getId()) : null));
-        steps.add(preventAll("ProtectionCompetingWithCounterRemoval", "Prevent the damage (protection)",
-                (gd, c, damage) -> damage > 0 && c.damageSource() != null && preventable(gd, c)
-                        && preventRemovePlusOneCountersEffect(gd, c.permanent()) != null
-                        && gameQueryService.hasProtectionFromDamageSource(gd, c.permanent(), c.damageSource())));
         steps.add(new CreatureDamageStep("RemovePlusOneCounters", "Remove +1/+1 counters from it instead",
                 replacement, false,
                 (gd, c, damage) -> {
@@ -927,6 +923,14 @@ public class DamagePreventionService {
                 (gd, c, damage) -> preventable(gd, c) && gd.permanentDamagePreventionShield(c.permanent().getId()) > 0,
                 (gd, c, damage) -> applyPermanentDamagePreventionShield(gd, c.permanent(), damage, c.combatDamage())));
         return List.copyOf(steps);
+    }
+
+    /**
+     * Whether {@code permanent} has its own "prevent that damage and remove +1/+1 counters" effect (Phantom Centaur),
+     * which its controller orders against protection (CR 616.1).
+     */
+    public boolean hasPreventRemovePlusOneCountersEffect(GameData gameData, Permanent permanent) {
+        return preventRemovePlusOneCountersEffect(gameData, permanent) != null;
     }
 
     private PreventDamageAndRemovePlusOnePlusOneCountersEffect preventRemovePlusOneCountersEffect(

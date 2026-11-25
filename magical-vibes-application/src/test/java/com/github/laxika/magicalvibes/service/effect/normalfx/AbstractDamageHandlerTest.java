@@ -210,8 +210,12 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
     }
 
+    /**
+     * The spell's source isn't prevented from dealing damage. Lenient: the damage paths that leave this prevention to
+     * the damage pool (the any-target and target-creature records) don't ask it.
+     */
     protected void stubDamageFromSourceNotPrevented() {
-        when(gameQueryService.isDamageFromStackEntryPrevented(eq(gd), any())).thenReturn(false);
+        lenient().when(gameQueryService.isDamageFromStackEntryPrevented(eq(gd), any())).thenReturn(false);
     }
 
     protected void stubNoDamageMultiplier() {

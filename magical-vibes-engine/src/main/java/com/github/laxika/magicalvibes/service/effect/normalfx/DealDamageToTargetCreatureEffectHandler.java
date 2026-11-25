@@ -32,8 +32,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DealDamageToTargetCreatureEffect}. A target is dealt the damage through the targeted-creature path
- * (its multi-target loop, unpreventable damage, excess-damage tracking). Any other subject names one permanent through
+ * Resolves {@link DealDamageToTargetCreatureEffect}. A target is dealt the damage through the permanent-damage path the
+ * any-target record uses ({@link DamageSupport#resolveAnyTargetDamage}: every prevention is an option of the target's
+ * damage pool), with this record's multi-target loop, unpreventable damage and excess-damage tracking. Any other subject names one permanent through
  * {@link SubjectResolutionService}, and each keeps the prevention it always had: {@code source()} through the
  * any-target path, {@code triggering()} with the targeted-creature prevention check and its log line, the Aura
  * subjects with the Aura, as it is or last existed, as the damage's source and only the damage pipeline's prevention;
@@ -131,8 +132,8 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
                 if (target == null) continue;
                 if (e.unpreventable()) {
                     damageSupport.dealCreatureDamageUnpreventable(gameData, entry, target, damage);
-                } else if (!damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
-                    damageSupport.dealCreatureDamage(gameData, entry, target, damage);
+                } else {
+                    damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, damage, false);
                 }
             }
             return;

@@ -115,8 +115,6 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
                 stubNoKeywordsOnSource(entry);
                 when(gameQueryService.findPermanentById(gd, bear1.getId())).thenReturn(bear1);
                 when(gameQueryService.findPermanentById(gd, bear2.getId())).thenReturn(bear2);
-                when(gameQueryService.hasProtectionFromDamageSource(
-                        eq(gd), any(Permanent.class), any(Card.class), any())).thenReturn(false);
 
                 dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 
@@ -142,8 +140,6 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
                 // bear1 was removed from battlefield before resolution
                 when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
                 when(gameQueryService.findPermanentById(gd, bear2.getId())).thenReturn(bear2);
-                when(gameQueryService.hasProtectionFromDamageSource(
-                        eq(gd), any(Permanent.class), any(Card.class), any())).thenReturn(false);
 
                 dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 

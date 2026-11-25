@@ -13363,6 +13363,16 @@ public class GameQueryService {
      * prevention effects (e.g. {@link PreventAllCombatDamageToAndByEnchantedCreatureEffect}).
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
+        return isPreventedFromDealingDamage(gameData, creature, isCombatDamage, true);
+    }
+
+    /**
+     * As {@link #isPreventedFromDealingDamage(GameData, Permanent, boolean)}; {@code includeCreaturePrevention}
+     * {@code false} leaves out the "prevent all damage that would be dealt by creatures" effects, which a damage pool
+     * offers as their own option (with Chant of Vitu-Ghazi's life gain), so the same effect isn't offered twice.
+     */
+    public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage,
+                                                boolean includeCreaturePrevention) {
         // Assigning no combat damage isn't prevention, so unpreventable damage doesn't override it
         if (isCombatDamage && gameData.assignsNoCombatDamage(creature.getId())) return true;
         if (!isDamagePreventable(gameData, isCombatDamage)) return false;
@@ -13374,7 +13384,8 @@ public class GameQueryService {
                 && !damageCantBePreventedFromSource(gameData, creature)) {
             return true;
         }
-        boolean globalCreaturePrevention = isDamageByCreaturePrevented(gameData, creature)
+        boolean globalCreaturePrevention = includeCreaturePrevention
+                && isDamageByCreaturePrevented(gameData, creature)
                 && !hasCreaturePreventionLifeGain(gameData);
         if (globalCreaturePrevention
                 || hasAuraWithEffect(gameData, creature,
