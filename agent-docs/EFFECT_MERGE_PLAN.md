@@ -7,6 +7,10 @@ parameterized effects. Derived from a full audit of all 1,658 effect records in
 
 Roughly **150 effect classes** and a matching number of handlers are collapsible.
 
+Notes below that cite an `effect-cleanup-refactor.md` step or run ("step 9, run 22", "fold run 9") point at that run's Findings,
+which the plan no longer carries: grep `git show ef0278a44e:effect-cleanup-refactor.md` (runs from 2026-11-23 on) or
+`git show 6728593a9a:effect-cleanup-refactor.md` (older runs) for the run's heading.
+
 ---
 
 ## How to run this plan

@@ -5,6 +5,11 @@ runs and parallel triage chunks. They live here so the plan stays short: a run r
 (grep for its run number, batch or class). Update the rows a run takes when it lands (fold runs: the batches folded; defect runs:
 the defects fixed, with the commit).
 
+A row's "plan in 23c Findings", "see 28's Findings" and the like name a run's Findings section in the plan. Since the plan's cut of
+2026-11-25 those sections are in git history: `git show ef0278a44e:effect-cleanup-refactor.md` (runs from 2026-11-23 on; grep for
+the heading, e.g. `### Step 9, fold run 23c`) and `git show 6728593a9a:effect-cleanup-refactor.md` (older runs). The plan keeps one
+line per run under its Findings.
+
 ### Fold queue
 
 Merged on 2026-11-23 from triage runs 1 to 7 and parallel triage chunks 01 to 16, whose Findings sections are in git history

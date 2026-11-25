@@ -52,7 +52,7 @@ import org.springframework.stereotype.Component;
 /**
  * "[Do something] unless [a player pays a cost]" (CR 118.12a). The payer is asked as the effect resolves, the
  * resolution waiting on this effect; the answer ({@code MayAbilityHandlerService}) pays the cost and records the
- * payer's choice on the resolving entry ({@link StackEntry#answerUnless}), and the resolution runs this effect again,
+ * payer's choice on the resolving entry ({@link StackEntry#setUnlessAnswer}), and the resolution runs this effect again,
  * which {@code EffectResolutionService} then resolves as the branch the choice made ({@code ifPaid} or
  * {@code ifNotPaid}, CR 118.12: the choice to pay, not what happened). The choice is the entry's, not the game's, so a
  * question another ability asks while a payment's own choice is made (which card to discard, which creature to blight)
