@@ -52,6 +52,7 @@ class WildMightTest extends BaseCardTest {
         castWildMight(creature);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);

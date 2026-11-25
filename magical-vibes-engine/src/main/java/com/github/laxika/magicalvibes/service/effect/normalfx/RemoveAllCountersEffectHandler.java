@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link RemoveAllCountersEffect}: removes every counter of the given type from the
  * effect's subject and snapshots the removed count onto the stack entry as its event value, so a
- * later effect on the same entry can reference "that much" via an {@code EventValue} amount.
+ * later effect on the same entry can reference "that much" via an {@code EventValue} amount. The removal raises the
+ * last-counter event and vanishing's sacrifice trigger like every other removal.
  */
 @Component
 @RequiredArgsConstructor
@@ -43,6 +44,12 @@ public class RemoveAllCountersEffectHandler implements NormalEffectHandlerBean {
         subject.setCounterCount(e.counterType(), 0);
         if (e.counterType() == CounterType.OIL) {
             gameData.recordOilCounterRemoved(subject, removed);
+        }
+        if (removed > 0) {
+            // The removal path's events: the last counter of the kind, and vanishing's last time counter (CR 702.63a).
+            permanentCounterSupport.notifyLastCounterRemoved(gameData, subject, e.counterType(), removed,
+                    entry.getControllerId());
+            permanentCounterSupport.checkLastTimeCounterRemoved(gameData, subject, e.counterType(), removed);
         }
         entry.setEventValue(removed);
 

@@ -462,7 +462,23 @@ public abstract class AiDecisionEngine {
         choiceHandler.handleCardChoice(gameData);
     }
 
+    /**
+     * Whether the "any player may pay" mana payment this AI is asked about was already made by an earlier player:
+     * paying it again changes nothing.
+     */
+    protected boolean anyPlayerManaPaymentAlreadyMade(GameData gameData) {
+        PendingInteraction.MayAbilityChoice mayChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        return gameData.anyPlayerMayPayManaPaid && mayChoice != null && aiPlayer.getId().equals(mayChoice.playerId());
+    }
+
     protected void handleMayAbilityChoice(GameData gameData) {
+        if (anyPlayerManaPaymentAlreadyMade(gameData)) {
+            log.info("AI: Declining a payment another player already made in game {}", gameId);
+            send(() -> gameActions.answerInteraction(
+                    new InteractionAnswer.MayAbilityChosen(false)));
+            return;
+        }
         if (!floatManaForMayCost(gameData)) {
             // Accepting would fizzle on the payment — decline outright.
             log.info("AI: Declining may ability (cannot float its mana cost) in game {}", gameId);

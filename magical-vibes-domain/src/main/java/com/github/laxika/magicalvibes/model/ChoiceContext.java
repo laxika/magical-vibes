@@ -2030,9 +2030,12 @@ public sealed interface ChoiceContext {
         public static final List<String> OPTIONS = List.of(ADD, REMOVE);
     }
 
-    /** Clockspinning's choice of a counter on a permanent or suspended card. */
+    /**
+     * Clockspinning's and Jhoira's Timebug's choice of a counter on a permanent or suspended card; {@code optional}
+     * ("you may", Timebug) lets the following add-or-remove choice skip.
+     */
     record AdjustChosenCounterTypeChoice(UUID targetId, Zone targetZone, UUID controllerId,
-                                         String sourceCardName, List<CounterType> counterTypes)
+                                         String sourceCardName, List<CounterType> counterTypes, boolean optional)
             implements ChoiceContext {
 
         public AdjustChosenCounterTypeChoice {
@@ -2052,15 +2055,21 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Clockspinning's choice to add or remove the selected counter. */
+    /**
+     * The choice to add or remove the selected counter; {@link #SKIP} is offered only when the text says "may"
+     * ({@code optional}, Jhoira's Timebug), never for Clockspinning.
+     */
     record AdjustChosenCounterActionChoice(UUID targetId, Zone targetZone, UUID controllerId,
-                                           String sourceCardName, CounterType counterType)
+                                           String sourceCardName, CounterType counterType, boolean optional)
             implements ChoiceContext {
 
         public static final String ADD = "ADD";
         public static final String REMOVE = "REMOVE";
         public static final String SKIP = "SKIP";
-        public static final List<String> OPTIONS = List.of(ADD, REMOVE, SKIP);
+
+        public List<String> options() {
+            return optional ? List.of(ADD, REMOVE, SKIP) : List.of(ADD, REMOVE);
+        }
     }
 
     /** Choice of a counter kind to add to the target. */

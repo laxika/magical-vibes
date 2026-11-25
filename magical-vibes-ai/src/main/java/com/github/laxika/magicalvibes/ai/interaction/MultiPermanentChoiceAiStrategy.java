@@ -15,8 +15,8 @@ import java.util.UUID;
 
 /**
  * Answers multi-permanent-or-player selections: the AI prefers the opponent's strongest
- * permanents (by effective power), falling back to the first valid targets when none are the
- * opponent's permanents. Exact-count untap choices fill any remaining mandatory slots from the
+ * permanents (by effective power), falling back to the first valid targets (permanents, players, then cards, as
+ * in a vote over graveyard cards) when none are the opponent's permanents. Exact-count untap choices fill any remaining mandatory slots from the
  * valid permanents. Power-limited keep choices use the permanents' effective power and never
  * submit a selection above the limit.
  */
@@ -36,8 +36,10 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
 
         List<UUID> validPermanentIds = interaction.validIds();
         List<UUID> validPlayerIds = interaction.validPlayerIds();
+        List<UUID> validCardIds = interaction.validCardIds();
         if ((validPermanentIds == null || validPermanentIds.isEmpty())
-                && (validPlayerIds == null || validPlayerIds.isEmpty())) {
+                && (validPlayerIds == null || validPlayerIds.isEmpty())
+                && (validCardIds == null || validCardIds.isEmpty())) {
             return;
         }
 
@@ -98,6 +100,9 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                 }
                 if (validPlayerIds != null) {
                     validTargets.addAll(validPlayerIds);
+                }
+                if (validCardIds != null) {
+                    validTargets.addAll(validCardIds);
                 }
                 chosen = validTargets.stream().limit(interaction.maxCount()).toList();
             }

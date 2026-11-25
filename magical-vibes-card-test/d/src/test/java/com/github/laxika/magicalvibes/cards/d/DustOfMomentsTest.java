@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DustOfMomentsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Removes two time counters from every permanent and suspended card")
     void removesTwoTimeCountersFromEveryPermanentAndSuspendedCard() {
         Permanent ownPermanent = permanentWithTimeCounters(player1, 3);
         Permanent opposingPermanent = permanentWithTimeCounters(player2, 1);
@@ -38,6 +40,7 @@ class DustOfMomentsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Puts two time counters on permanents with time counters and suspended cards")
     void putsTwoTimeCountersOnPermanentsWithTimeCountersAndSuspendedCards() {
         Permanent withTimeCounters = permanentWithTimeCounters(player1, 1);
         Permanent withoutTimeCounters = harness.addToBattlefieldAndReturn(player2, new FomoriNomad());
@@ -54,6 +57,7 @@ class DustOfMomentsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing last time counter from suspended card offers its suspend cast")
     void removingLastTimeCounterFromSuspendedCardOffersItsSuspendCast() {
         Permanent permanent = permanentWithTimeCounters(player1, 3);
         RealityStrobe suspended = suspendedCard(player2, 1);
@@ -68,6 +72,7 @@ class DustOfMomentsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ignores exiled cards with non suspend time counters")
     void ignoresExiledCardsWithNonSuspendTimeCounters() {
         RealityStrobe suspended = suspendedCard(player1, 3);
         FomoriNomad exiledCardWithNonSuspendCounters = new FomoriNomad();
@@ -83,6 +88,7 @@ class DustOfMomentsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing last time counters triggers vanishing sacrifice")
     void removingLastTimeCountersTriggersVanishingSacrifice() {
         Permanent auramancers = harness.addToBattlefieldAndReturn(player2, new LostAuramancers());
         auramancers.setCounterCount(CounterType.TIME, 2);
@@ -96,6 +102,7 @@ class DustOfMomentsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Adding counters affects opposing permanents and preserves other counter types")
     void addingCountersAffectsOpposingPermanentsAndPreservesOtherCounterTypes() {
         Permanent opposingPermanent = permanentWithTimeCounters(player2, 2);
         opposingPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
@@ -111,6 +118,7 @@ class DustOfMomentsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Adding counters ignores non suspend counters and exiled suspend cards without time counters")
     void addingCountersIgnoresNonSuspendCountersAndExiledSuspendCardsWithoutTimeCounters() {
         RealityStrobe withoutTimeCounters = suspendedCard(player1, 0);
         FomoriNomad nonSuspended = new FomoriNomad();

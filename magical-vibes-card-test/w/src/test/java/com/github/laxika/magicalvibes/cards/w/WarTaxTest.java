@@ -30,10 +30,10 @@ class WarTaxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
 
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
-        declareAttackers(player2, List.of(0, 1));
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player2, List.of(0, 1)));
 
-        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test
@@ -163,14 +163,39 @@ class WarTaxTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player2, List.of(1), Map.of(1, battle.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player2, List.of(1), Map.of(1, battle.getId())));
 
-        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(InvasionOfZendikar.class)
+    @DisplayName("Rejects an attack on a battle without the War Tax payment (\"creatures can't attack unless\")")
+    void rejectsUnpaidAttackOnBattle() {
+        harness.addToBattlefield(player1, new WarTax());
+        var battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player1.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        addCreatureReady(player2, new FreshVolunteers());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(1), Map.of(1, battle.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
     }
 }

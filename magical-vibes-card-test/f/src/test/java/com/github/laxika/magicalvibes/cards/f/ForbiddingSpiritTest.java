@@ -33,12 +33,12 @@ class ForbiddingSpiritTest extends BaseCardTest {
         Permanent bear2 = addCreatureReady(player2, new GrizzlyBears());
         castSpirit();
 
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
-        declareAttackers(player2, List.of(
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player2, List.of(
                 gd.playerBattlefields.get(player2.getId()).indexOf(bear1),
-                gd.playerBattlefields.get(player2.getId()).indexOf(bear2)));
+                gd.playerBattlefields.get(player2.getId()).indexOf(bear2))));
 
-        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test

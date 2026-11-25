@@ -492,11 +492,6 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
-            if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND) {
-                handleCastOrPutIntoHandChoice(gameData, player, cardIndex, canFailToFind, searchCards);
-                return;
-            }
-
             if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY) {
                 handleCastWithoutPayingAndShuffleLibraryChoice(gameData, player, cardIndex,
                         canFailToFind, searchCards, sourceCards, deck, deckOwnerId);
@@ -2050,8 +2045,6 @@ public class LibraryChoiceHandlerService {
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
                 case CAST_WITHOUT_PAYING -> throw new IllegalStateException("CAST_WITHOUT_PAYING should be handled earlier");
-                case CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND -> throw new IllegalStateException(
-                        "CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND should be handled earlier");
                 case CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY -> throw new IllegalStateException(
                         "CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY should be handled earlier");
                 case DISCOVER -> throw new IllegalStateException("DISCOVER should be handled earlier");
@@ -4749,39 +4742,6 @@ public class LibraryChoiceHandlerService {
         // triggers then go on the stack above the spell.
         gameData.libraryToShuffleAfterFreeCast = deckOwnerId;
         castCardWithoutPaying(gameData, player, chosenCard);
-    }
-
-    private void handleCastOrPutIntoHandChoice(GameData gameData, Player player, int cardIndex,
-                                                boolean canFailToFind, List<Card> searchCards) {
-        if (cardIndex == -1) {
-            if (!canFailToFind) {
-                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
-            }
-            Card chosenCard = searchCards.getFirst();
-            gameData.removeFromExile(chosenCard.getId());
-            gameData.addCardToHand(player.getId(), chosenCard);
-            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
-                    " is put into " + player.getUsername() + "'s hand."));
-            finishSearchAndResume(gameData);
-            return;
-        }
-
-        if (cardIndex < 0 || cardIndex >= searchCards.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        Card chosenCard = searchCards.get(cardIndex);
-        if (!canCastWithoutPaying(gameData, player.getId(), chosenCard)) {
-            gameData.removeFromExile(chosenCard.getId());
-            gameData.addCardToHand(player.getId(), chosenCard);
-            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
-                    " can't be cast and is put into " + player.getUsername() + "'s hand."));
-            finishSearchAndResume(gameData);
-            return;
-        }
-
-        gameData.removeFromExile(chosenCard.getId());
-        castCardWithoutPaying(gameData, player, chosenCard, null, false, false, Zone.EXILE);
     }
 
     private void handleExileAndMayCastWithoutPayingChoice(GameData gameData, Player player,

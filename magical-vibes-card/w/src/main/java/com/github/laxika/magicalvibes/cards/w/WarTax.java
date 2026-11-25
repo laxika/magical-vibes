@@ -19,7 +19,7 @@ public class WarTax extends Card {
                 false,
                 "{X}{U}",
                 List.of(new GrantStaticEffectToPlayerEffect(
-                        new RequirePaymentToAttackEffect(new XValue()), Subjects.eachPlayer(), Duration.UNTIL_END_OF_TURN)),
+                        new RequirePaymentToAttackEffect(new XValue()).includingAttacksOnBattles(), Subjects.eachPlayer(), Duration.UNTIL_END_OF_TURN)),
                 "{X}{U}: This turn, creatures can't attack unless their controller pays {X} for each attacking creature they control."));
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.c.Colossapede;
+import com.github.laxika.magicalvibes.cards.l.LostAuramancers;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({QuarryHauler.class, Colossapede.class, Mountain.class})
+@CardUsed({QuarryHauler.class, Colossapede.class, Mountain.class, LostAuramancers.class})
 class QuarryHaulerTest extends BaseCardTest {
 
     private void setup() {
@@ -157,5 +158,25 @@ class QuarryHaulerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Colossapede");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB removing the last time counter from a vanishing permanent makes it sacrifice itself (CR 702.63a)")
+    void removingLastTimeCounterTriggersVanishing() {
+        setup();
+        Permanent auramancers = harness.addToBattlefieldAndReturn(player2, new LostAuramancers());
+        auramancers.setCounterCount(CounterType.TIME, 1);
+
+        harness.castCreature(player1, 0, 0, auramancers.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "REMOVE");
+
+        assertThat(auramancers.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Lost Auramancers");
+        harness.assertInGraveyard(player2, "Lost Auramancers");
     }
 }

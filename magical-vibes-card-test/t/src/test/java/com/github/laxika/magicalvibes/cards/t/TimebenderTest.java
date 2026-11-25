@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TimebenderTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Turning face up removes two time counters from target permanent")
     void turningFaceUpRemovesTwoTimeCountersFromTargetPermanent() {
         turnFaceUp();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Timebender());
@@ -31,6 +33,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Turning face up adds two time counters to target permanent with time counter")
     void turningFaceUpAddsTwoTimeCountersToTargetPermanentWithTimeCounter() {
         Permanent timebender = prepareFaceDownTimebender();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Timebender());
@@ -43,6 +46,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Turning face up can remove two time counters from suspended card")
     void turningFaceUpCanRemoveTwoTimeCountersFromSuspendedCard() {
         turnFaceUp();
         AncestralVision target = suspendedAncestralVision(3);
@@ -53,6 +57,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Turning face up adds two time counters to suspended card")
     void turningFaceUpAddsTwoTimeCountersToSuspendedCard() {
         Permanent timebender = prepareFaceDownTimebender();
         AncestralVision target = suspendedAncestralVision(1);
@@ -64,6 +69,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing last time counter from suspended card offers its suspend cast")
     void removingLastTimeCounterFromSuspendedCardOffersItsSuspendCast() {
         turnFaceUp();
         AncestralVision target = suspendedAncestralVision(1);
@@ -76,6 +82,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target exiled card with non suspend time counters")
     void cannotTargetExiledCardWithNonSuspendTimeCounters() {
         turnFaceUp();
         Timebender target = new Timebender();
@@ -97,6 +104,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Remove mode can target permanent without time counters")
     void removeModeCanTargetPermanentWithoutTimeCounters() {
         Permanent timebender = prepareFaceDownTimebender();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Timebender());
@@ -109,6 +117,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Remove mode removes only available time counter")
     void removeModeRemovesOnlyAvailableTimeCounter() {
         Permanent timebender = prepareFaceDownTimebender();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Timebender());
@@ -121,6 +130,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Add mode cannot target permanent without time counter")
     void addModeCannotTargetPermanentWithoutTimeCounter() {
         Permanent timebender = prepareFaceDownTimebender();
         timebender.setCounterCount(CounterType.TIME, 1);
@@ -134,6 +144,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Add mode does not restore counters if target loses last counter before resolution")
     void addModeDoesNotRestoreCountersIfTargetLosesLastCounterBeforeResolution() {
         Permanent timebender = prepareFaceDownTimebender();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Timebender());
@@ -149,6 +160,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Remove mode can target card granted suspend by delay")
     void removeModeCanTargetCardGrantedSuspendByDelay() {
         Permanent timebender = prepareFaceDownTimebender();
         Timebender target = suspendTimebenderWithDelay();
@@ -161,6 +173,7 @@ class TimebenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Add mode can target card granted suspend by delay")
     void addModeCanTargetCardGrantedSuspendByDelay() {
         Permanent timebender = prepareFaceDownTimebender();
         Timebender target = suspendTimebenderWithDelay();

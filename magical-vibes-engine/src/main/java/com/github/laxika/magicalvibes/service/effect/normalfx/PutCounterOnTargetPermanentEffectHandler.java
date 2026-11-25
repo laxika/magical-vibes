@@ -147,7 +147,12 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
      * permanent ("equal to its power"), wherever it is now, even if control changed before resolution.
      */
     private void resolveNamedPermanents(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e) {
-        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, e, e.subject());
+        placeOnNamed(gameData, entry, e, subjectResolutionService.permanents(gameData, entry, e, e.subject()));
+    }
+
+    /** Places on each of {@code named} still on the battlefield, the count evaluated against that permanent. */
+    private void placeOnNamed(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e,
+                              List<Permanent> named) {
         for (int i = 0; i < named.size(); i++) {
             Permanent permanent = named.get(i);
             int count = amountEvaluationService.evaluate(gameData, e.amount(),
@@ -293,7 +298,15 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         rest.addAll(order.subsequentTargets());
         Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData, rest, type);
         placeOnTarget(gameData, order.entry(), order.targetId(), order.effect(), count, List.of(), true);
-        resolveTargets(gameData, order.entry(), order.subsequentTargets(), order.effect(), order.originalCount());
+        if (order.effect().subject() instanceof PermanentSubject.Target) {
+            resolveTargets(gameData, order.entry(), order.subsequentTargets(), order.effect(), order.originalCount());
+        } else {
+            // A named permanent's count is its own ("equal to its power"), as if the placement had not waited.
+            placeOnNamed(gameData, order.entry(), order.effect(), order.subsequentTargets().stream()
+                    .map(id -> gameQueryService.findPermanentById(gameData, id))
+                    .filter(java.util.Objects::nonNull)
+                    .toList());
+        }
         // The placement waited for this order, so its step recorded only what came before; the rest is added now.
         order.entry().addToStep(StepKind.PUT_COUNTERS, permanentCounterSupport.counterChange(gameData, before, type,
                 true));

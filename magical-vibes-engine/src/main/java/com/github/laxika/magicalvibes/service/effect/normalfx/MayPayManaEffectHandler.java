@@ -81,6 +81,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             UUID first = order.getFirst();
             gameData.anyPlayerMayPayManaRemainingPlayers.clear();
             gameData.anyPlayerMayPayManaRemainingPlayers.addAll(order.subList(1, order.size()));
+            gameData.anyPlayerMayPayManaPaid = false;
             gameData.resolvingMayEffectFromStack = true;
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), first, List.of(e), entry.getCard().getName() + " - " + e.prompt(),

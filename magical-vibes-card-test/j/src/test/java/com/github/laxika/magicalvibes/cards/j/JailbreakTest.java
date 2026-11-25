@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.t.TorporOrb;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Jailbreak.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class, TorporOrb.class})
+@CardUsed({Jailbreak.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class, TorporOrb.class,
+        MarchOfTheMachines.class, MindStone.class})
 class JailbreakTest extends BaseCardTest {
 
     @Test
@@ -198,6 +201,23 @@ class JailbreakTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Jailbreak");
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Torpor Orb stops the follow-up when the returned noncreature artifact enters as a creature (March of the Machines)")
+    void torporOrbJudgesTheReturnedPermanentAsItExists() {
+        Card opponentPermanent = new MindStone();
+        Card ownPermanent = new LlanowarElves();
+        prepare(opponentPermanent, ownPermanent);
+        harness.addToBattlefield(player1, new TorporOrb());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        harness.castAndResolveSorcery(player1, 0, opponentPermanent.getId());
+
+        harness.assertOnBattlefield(player2, "Mind Stone");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void prepare(Card opponentPermanent, Card... ownGraveyardCards) {

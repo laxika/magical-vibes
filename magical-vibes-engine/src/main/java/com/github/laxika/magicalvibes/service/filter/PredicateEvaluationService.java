@@ -1748,9 +1748,10 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isArtifact(gameData, permanent);
             }
+            // A meld card isn't a double-faced card (CR 712.1), melded or not.
             case PermanentIsDoubleFacedPredicate ignored ->
-                    permanent.getOriginalCard().isMeldCard()
-                            || permanent.getOriginalCard().getBackFaceCard() != null
+                    !permanent.getOriginalCard().isMeldCard()
+                            && permanent.getOriginalCard().getBackFaceCard() != null
                             && (permanent.getOriginalCard().isModalDoubleFaced()
                             || permanent.getOriginalCard().hasType(CardType.BATTLE)
                             || permanent.getOriginalCard().getKeywords().contains(Keyword.TRANSFORM)

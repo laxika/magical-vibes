@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -55,6 +56,7 @@ class RhysticTutorTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -110,6 +112,44 @@ class RhysticTutorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Rhystic Tutor");
     }
+    @Test
+    @DisplayName("After the controller pays, the other player is still offered the payment (PCY ruling)")
+    void otherPlayersStillGetTheOptionAfterAPayment() {
+        harness.setLibrary(player1, List.of(new RebelInformer()));
+        castTutor();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull()
+                .extracting(PendingInteraction.MayAbilityChoice::playerId)
+                .isEqualTo(player2.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card instanceof RebelInformer);
+    }
+
+    @Test
+    @DisplayName("A payment by the controller still prevents the search when the other player declines")
+    void earlierPaymentCountsWhenLaterPlayerDeclines() {
+        harness.setLibrary(player1, List.of(new RebelInformer()));
+        castTutor();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card instanceof RebelInformer);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void castTutor() {
         harness.castFromHand(player1, new RhysticTutor(), "{2}{B}");
         harness.passBothPriorities();

@@ -2711,12 +2711,15 @@ public class CastingCostService {
      * Generic mana {@code attackingPlayerId} must pay for {@code attackingCreature} (nullable) to attack
      * {@code attackTargetId} under the defender's {@link RequirePaymentToAttackEffect}s, printed on its permanents
      * or floated on that player. The defender is the attacked player or the attacked planeswalker's controller
-     * (CR 506.2a, 508.5); an attack on a battle is not taxed.
+     * (CR 506.2a, 508.5); an attack on a battle is taxed only by a tax that names no player ({@code includesBattles},
+     * War Tax), judged for the battle's protector (CR 506.2).
      */
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId, UUID attackTargetId,
                                            Permanent attackingCreature) {
         Permanent attackTarget = gameQueryService.findPermanentById(gameData, attackTargetId);
-        if (attackTarget != null && gameQueryService.isBattle(gameData, attackTarget)) return 0;
+        if (attackTarget != null && gameQueryService.isBattle(gameData, attackTarget)) {
+            return battleAttackPayment(gameData, attackTarget.getProtectorPlayerId(), attackingCreature);
+        }
         UUID defenderId = attackedPlayerId(gameData, attackingPlayerId, attackTargetId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defenderBattlefield == null) return 0;
@@ -2745,6 +2748,31 @@ public class CastingCostService {
             if (tax.activeCondition() == null && taxesAttackOn(tax, attackingPlaneswalker)) {
                 totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
                         againstAttacker(AmountContext.forEstimation(defenderId), attackingCreature));
+            }
+        }
+        return totalTax;
+    }
+
+    /** The taxes on attacking a battle ({@code includesBattles}), read from its protector's permanents and floats. */
+    private int battleAttackPayment(GameData gameData, UUID protectorId, Permanent attackingCreature) {
+        if (protectorId == null) return 0;
+        int totalTax = 0;
+        for (GameQueryService.ActiveStaticEffect<RequirePaymentToAttackEffect> active
+                : gameQueryService.activeStaticEffects(gameData, protectorId, RequirePaymentToAttackEffect.class)) {
+            Permanent perm = active.source();
+            RequirePaymentToAttackEffect tax = active.effect();
+            if (tax.includesBattles() && !perm.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, perm)
+                    && (tax.activeCondition() == null || conditionEvaluationService.isMet(
+                            gameData, tax.activeCondition(), ConditionContext.forPermanent(perm, protectorId)))) {
+                totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
+                        againstAttacker(AmountContext.forStaticEffect(perm, protectorId), attackingCreature));
+            }
+        }
+        for (CardEffect floated : gameData.floatingPlayerEffects(protectorId, RequirePaymentToAttackEffect.class)) {
+            RequirePaymentToAttackEffect tax = (RequirePaymentToAttackEffect) floated;
+            if (tax.includesBattles() && tax.activeCondition() == null) {
+                totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
+                        againstAttacker(AmountContext.forEstimation(protectorId), attackingCreature));
             }
         }
         return totalTax;

@@ -361,12 +361,13 @@ public class SubjectResolutionService {
      * subjects ({@link #bindCardSubjects}: "a different name than that spell" over {@code targetSpell()}) and the
      * triggering spell's card types, name and mana value ({@code AmountEvaluationService.bindTriggeringSpellCardTypes},
      * {@code bindTriggeringSpellName}, {@code bindTriggeringSpellManaValue}: "a card that shares a card type with it"),
-     * the spell as it is on the stack, else as it last existed there. A filter without them is returned as it is.
+     * the spell as it is on the stack, else as it last existed there, with the card types effects give it (Encroaching
+     * Mycosynth, perpetual types). A filter without them is returned as it is.
      */
     public CardPredicate bindResolutionFilter(GameData gameData, StackEntry entry, CardEffect effect,
                                               CardPredicate filter) {
         CardPredicate bound = bindCardSubjects(gameData, entry, effect, filter);
-        bound = AmountEvaluationService.bindTriggeringSpellCardTypes(gameData, bound, entry);
+        bound = AmountEvaluationService.bindTriggeringSpellCardTypes(gameData, bound, entry, gameQueryService);
         bound = AmountEvaluationService.bindTriggeringSpellName(gameData, bound, entry);
         return AmountEvaluationService.bindTriggeringSpellManaValue(gameData, bound, entry);
     }

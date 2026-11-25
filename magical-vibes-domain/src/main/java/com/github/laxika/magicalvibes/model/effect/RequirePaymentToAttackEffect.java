@@ -27,11 +27,20 @@ import java.util.function.UnaryOperator;
  * (Forbidding Spirit, Summon: Yojimbo), "this turn, creatures can't attack" on {@code eachPlayer()}
  * (War Tax). Its amount is fixed as the float begins (CR 608.2h); a floated copy has no source, so it
  * carries no {@code activeCondition}.
+ *
+ * <p>{@code includesBattles} ({@link #includingAttacksOnBattles()}) is "creatures can't attack unless …" with no
+ * player named (War Tax): an attack on a battle is taxed too, judged for the battle's protector (CR 506.2).
  */
 public record RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker,
                                            boolean protectsPlaneswalkers,
                                            boolean planeswalkersOnly,
-                                           Condition activeCondition) implements AmountsFixedWhenFloatedEffect {
+                                           Condition activeCondition,
+                                           boolean includesBattles) implements AmountsFixedWhenFloatedEffect {
+
+    public RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker, boolean protectsPlaneswalkers,
+                                        boolean planeswalkersOnly, Condition activeCondition) {
+        this(amountPerAttacker, protectsPlaneswalkers, planeswalkersOnly, activeCondition, false);
+    }
 
     public RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker) {
         this(amountPerAttacker, true, false, null);
@@ -63,9 +72,15 @@ public record RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker,
         return new RequirePaymentToAttackEffect(new Fixed(amountPerAttacker), true, true, null);
     }
 
+    /** This tax also on attacks on battles: "creatures can't attack unless their controller pays" (War Tax). */
+    public RequirePaymentToAttackEffect includingAttacksOnBattles() {
+        return new RequirePaymentToAttackEffect(amountPerAttacker, protectsPlaneswalkers, planeswalkersOnly,
+                activeCondition, true);
+    }
+
     @Override
     public RequirePaymentToAttackEffect withAmountsFixed(UnaryOperator<DynamicAmount> fix) {
         return new RequirePaymentToAttackEffect(fix.apply(amountPerAttacker), protectsPlaneswalkers,
-                planeswalkersOnly, activeCondition);
+                planeswalkersOnly, activeCondition, includesBattles);
     }
 }

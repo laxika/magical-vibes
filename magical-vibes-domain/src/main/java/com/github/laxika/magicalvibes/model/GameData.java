@@ -986,6 +986,8 @@ public class GameData {
     public UUID forcedCostOrElseSourceControllerId;
     /** MayPayManaEffect ({@code ANY_PLAYER}): players still to be offered the payment in APNAP order. */
     public final List<UUID> anyPlayerMayPayManaRemainingPlayers = new ArrayList<>();
+    /** MayPayManaEffect ({@code ANY_PLAYER}): whether a player asked so far paid; the later players are still asked. */
+    public boolean anyPlayerMayPayManaPaid;
     /**
      * EachPlayerTakesDamageUnlessPays: players still to be offered the pay-or-take-damage prompt
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
@@ -9567,25 +9569,6 @@ public class GameData {
         return null;
     }
 
-    /** Removes all exile entries tracked with the given source permanent. */
-    public void clearExiledByPermanent(UUID sourcePermanentId) {
-        List<UUID> removedIds;
-        synchronized (exiledCards) {
-            removedIds = exiledCards.stream()
-                    .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
-                    .map(e -> e.card().getId())
-                    .toList();
-            exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
-        }
-        removedIds.forEach(exiledCardCounters::remove);
-        removedIds.forEach(antedCardIds::remove);
-        removedIds.forEach(cardId -> {
-            endExilePlayPermission(cardId);
-            endExileLookPermissions(cardId);
-            endFloatingEffectsOnCard(cardId, LukkaExileCastPermissionEffect.class);
-        });
-    }
-
     /** Removes source tracking from exile entries (sets sourcePermanentId to null). Used by Karn restart. */
     public void clearAllSourceTracking() {
         expireFloatingEffects(fe -> fe.effect() instanceof ExilePlayPermissionEffect
@@ -10709,6 +10692,7 @@ public class GameData {
         copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
+        copy.anyPlayerMayPayManaPaid = this.anyPlayerMayPayManaPaid;
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.eachPlayerDamageUnlessPaysDeclined.addAll(this.eachPlayerDamageUnlessPaysDeclined);
         copy.eachPlayerDamageUnlessPaysBatched = this.eachPlayerDamageUnlessPaysBatched;

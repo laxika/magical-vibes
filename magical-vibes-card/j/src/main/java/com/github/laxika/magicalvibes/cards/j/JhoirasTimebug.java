@@ -16,7 +16,7 @@ public class JhoirasTimebug extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AdjustChosenCounterOnTargetEffect(true, CounterType.TIME)),
+                List.of(new AdjustChosenCounterOnTargetEffect(true, CounterType.TIME, true)),
                 "{T}: Choose target permanent you control or suspended card you own. If that permanent or card has a time counter on it, you may remove a time counter from it or put another time counter on it."));
     }
 }

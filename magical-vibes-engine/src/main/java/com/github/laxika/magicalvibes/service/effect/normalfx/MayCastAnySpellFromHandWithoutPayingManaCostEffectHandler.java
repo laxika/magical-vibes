@@ -77,7 +77,8 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                 : amountEvaluationService.evaluate(gameData, e.maxManaValue(), amountContext);
         // The filter's amounts and its "that spell" are read once, as the ability resolves (CR 608.2h).
         CardPredicate spellFilter = amountEvaluationService.bindAmounts(gameData,
-                AmountEvaluationService.bindTriggeringSpellCardTypes(gameData, e.spellFilter(), entry), amountContext);
+                AmountEvaluationService.bindTriggeringSpellCardTypes(gameData, e.spellFilter(), entry, gameQueryService),
+                amountContext);
 
         // "A spell with [characteristics]" considers only the half of a split card being cast
         // (CR 709.3a), so a split card is offered as the halves that qualify.

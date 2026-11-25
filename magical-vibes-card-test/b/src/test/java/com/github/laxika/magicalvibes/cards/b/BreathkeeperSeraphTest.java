@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.Resurrection;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -29,7 +30,6 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -51,7 +51,6 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         seraph.setMarkedDamage(4);
         harness.runStateBasedActions();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         runUpkeepOf(player1);
 
@@ -60,16 +59,15 @@ class BreathkeeperSeraphTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining the death trigger leaves the creature in the graveyard")
+    @DisplayName("Declining the return at the upkeep leaves the creature in the graveyard")
     void decliningReturnLeavesCreatureInGraveyard() {
         Permanent bears = castAndPairWithBears();
 
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
 
-        runUpkeepOf(player1);
+        runUpkeepOf(player1, false);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -93,7 +91,6 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         runUpkeepOf(player1);
 
@@ -109,7 +106,6 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         runUpkeepOf(player2);
 
@@ -129,9 +125,12 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Breathkeeper Seraph");
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+
+        runUpkeepOf(player1);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Breathkeeper Seraph");
     }
 
     @Test
@@ -140,7 +139,6 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, java.util.List.of(new Resurrection()));
@@ -175,8 +173,30 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         runUpkeepOf(player1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The return is chosen as the upkeep ability resolves, not as the creature dies (CR 603.7)")
+    void returnIsChosenAtTheUpkeep() {
+        Permanent bears = castAndPairWithBears();
+
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+
+        advanceToUpkeep(player1);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -201,9 +221,21 @@ class BreathkeeperSeraphTest extends BaseCardTest {
     }
 
     private void runUpkeepOf(Player player) {
+        runUpkeepOf(player, true);
+    }
+
+    /** Runs {@code player}'s upkeep, answering each delayed return's "you may" with {@code accept}. */
+    private void runUpkeepOf(Player player, boolean accept) {
         advanceToUpkeep(player);
-        if (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
+        for (int step = 0; step < 10 && (!gd.stack.isEmpty()
+                || gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null); step++) {
+            PendingInteraction.MayAbilityChoice may =
+                    gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+            if (may != null) {
+                harness.handleMayAbilityChosen(may.playerId().equals(player1.getId()) ? player1 : player2, accept);
+            } else {
+                harness.passBothPriorities();
+            }
         }
     }
 }

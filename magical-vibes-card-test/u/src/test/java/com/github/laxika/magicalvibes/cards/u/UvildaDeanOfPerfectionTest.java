@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class UvildaDeanOfPerfectionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Exiles an instant from hand with three refine counters")
     void exilesAnInstantFromHandWithThreeRefineCounters() {
         addReadyUvilda();
         DarkRitual ritual = new DarkRitual();
@@ -47,6 +49,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Last refine counter offers the spell for four less and casts it")
     void lastRefineCounterOffersTheSpellForFourLessAndCastsIt() {
         addReadyUvilda();
         DarkRitual ritual = new DarkRitual();
@@ -69,6 +72,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nassari exiles each opponents top spell and counts the cast")
     void nassariExilesEachOpponentsTopSpellAndCountsTheCast() {
         UvildaDeanOfPerfection card = new UvildaDeanOfPerfection();
         Permanent nassari = harness.addToBattlefieldAndReturn(player1, card);
@@ -96,6 +100,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining to exile still pays the tap cost")
     void decliningToExileStillPaysTheTapCost() {
         Permanent uvilda = addReadyUvilda();
         DarkRitual ritual = new DarkRitual();
@@ -111,6 +116,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot choose a creature instead of an instant or sorcery")
     void cannotChooseACreatureInsteadOfAnInstantOrSorcery() {
         addReadyUvilda();
         GrizzlyBears bears = new GrizzlyBears();
@@ -133,6 +139,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Countdown continues without Uvilda and only on the owners upkeep")
     void countdownContinuesWithoutUvildaAndOnlyOnTheOwnersUpkeep() {
         addReadyUvilda();
         SerpentineCurve curve = new SerpentineCurve();
@@ -153,6 +160,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Last counter removal creates a separate respondable cast trigger")
     void lastCounterRemovalCreatesASeparateRespondableCastTrigger() {
         SerpentineCurve curve = new SerpentineCurve();
         harness.setExile(player1, List.of(curve));
@@ -177,6 +185,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casts a sorcery during upkeep paying only its colored cost")
     void castsASorceryDuringUpkeepPayingOnlyItsColoredCost() {
         SerpentineCurve curve = new SerpentineCurve();
         prepareLastCounterCast(curve);
@@ -193,6 +202,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the last counter cast does not grant a later cast permission")
     void decliningTheLastCounterCastDoesNotGrantALaterCastPermission() {
         SerpentineCurve curve = new SerpentineCurve();
         prepareLastCounterCast(curve);
@@ -209,6 +219,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reduced cost cast allows choosing a nonzero X")
     void reducedCostCastAllowsChoosingANonzeroX() {
         MultipleChoice choice = new MultipleChoice();
         prepareLastCounterCast(choice);
@@ -227,6 +238,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nassari sorcery permission uses normal timing and any color of mana")
     void nassariSorceryPermissionUsesNormalTimingAndAnyColorOfMana() {
         Permanent nassari = harness.addToBattlefieldAndReturn(player1, new NassariDeanOfExpression());
         SerpentineCurve curve = new SerpentineCurve();
@@ -249,6 +261,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nassari counts a spell exiled by Uvilda")
     void nassariCountsASpellExiledByUvilda() {
         Permanent nassari = harness.addToBattlefieldAndReturn(player1, new NassariDeanOfExpression());
         SerpentineCurve curve = new SerpentineCurve();
@@ -267,6 +280,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reduced cost does not eliminate colored mana requirements")
     void reducedCostDoesNotEliminateColoredManaRequirements() {
         SerpentineCurve curve = new SerpentineCurve();
         prepareLastCounterCast(curve);
@@ -281,6 +295,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nassari cannot use colored mana to pay an explicit colorless requirement")
     void nassariCannotUseColoredManaToPayAnExplicitColorlessRequirement() {
         harness.addToBattlefield(player1, new NassariDeanOfExpression());
         MatterReshaper reshaper = new MatterReshaper();
@@ -303,6 +318,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nassari does not count a spell cast from hand")
     void nassariDoesNotCountASpellCastFromHand() {
         Permanent nassari = harness.addToBattlefieldAndReturn(player1, new NassariDeanOfExpression());
         SerpentineCurve curve = new SerpentineCurve();
@@ -319,6 +335,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nassari permission expires after the turn even though the card remains exiled")
     void nassariPermissionExpiresAfterTheTurnEvenThoughTheCardRemainsExiled() {
         harness.addToBattlefield(player1, new NassariDeanOfExpression());
         SerpentineCurve curve = new SerpentineCurve();

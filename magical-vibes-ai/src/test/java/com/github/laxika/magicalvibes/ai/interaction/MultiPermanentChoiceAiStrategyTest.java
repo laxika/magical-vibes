@@ -343,6 +343,22 @@ class MultiPermanentChoiceAiStrategyTest {
         assertChosen(List.of(negative.getId(), fivePower.getId()));
     }
 
+    @Test
+    @DisplayName("A vote over cards only (Custodi Squire) is answered with a card")
+    void answersCardOnlyVote() throws Exception {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        var interaction = new PendingInteraction.MultiPermanentChoice(
+                aiPlayerId, List.of(), List.of(), List.of(first, second), 1,
+                new MultiPermanentChoiceContext.ObjectVoteChoice(aiPlayerId, List.of(), List.of(), com.github.laxika.magicalvibes.model.StepOutcome.Vote.CARD,
+                        List.of(first, second), false, false, false, "Custodi Squire"),
+                "Vote for a card.");
+
+        strategy.answer(interaction, context());
+
+        assertChosen(List.of(first));
+    }
+
     private void assertChosen(List<UUID> expectedIds) throws Exception {
         ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
         verify(gameActions).answerInteraction(captor.capture());

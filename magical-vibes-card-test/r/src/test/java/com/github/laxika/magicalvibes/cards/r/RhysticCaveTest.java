@@ -70,14 +70,18 @@ class RhysticCaveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The first player to accept the payment prevents mana without asking the other player")
-    void firstPlayerPaymentEndsTheChoiceSequence() {
+    @DisplayName("After the first player pays, the other player still gets the option, and no mana is added (PCY ruling)")
+    void otherPlayerStillGetsTheOptionAfterAPayment() {
         Permanent cave = addReadyCave();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activate(cave);
         harness.handleListChoice(player1, "GREEN");
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();

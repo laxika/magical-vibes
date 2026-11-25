@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -236,6 +237,20 @@ class ClockspinningTest extends BaseCardTest {
         harness.setExile(player2, List.of(target));
         gd.setExiledCardCounters(target.getId(), CounterType.TIME, timeCounters);
         return target;
+    }
+
+    @Test
+    @DisplayName("Offers only adding or removing the chosen counter, never skipping (its text has no \"may\")")
+    void offersNoSkip() {
+        Permanent target = permanentWithCounter();
+        cast(target.getId());
+
+        harness.handleListChoice(player1, "+1/+1 counters");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("ADD", "REMOVE");
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "SKIP"));
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void cast(java.util.UUID targetId) {

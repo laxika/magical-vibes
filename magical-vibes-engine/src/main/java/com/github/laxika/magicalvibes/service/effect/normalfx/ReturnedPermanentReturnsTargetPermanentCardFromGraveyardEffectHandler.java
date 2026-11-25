@@ -48,7 +48,7 @@ public class ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffectHandl
             return;
         }
 
-        int maximumManaValue = returnedPermanent.getCard().getManaValue();
+        int maximumManaValue = gameQueryService.getPermanentManaValue(returnedPermanent);
         CardAllOfPredicate permanentWithinManaValue = new CardAllOfPredicate(List.of(
                 new CardIsPermanentPredicate(),
                 new CardMaxManaValuePredicate(maximumManaValue)));
@@ -59,11 +59,11 @@ public class ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffectHandl
                 .upTo(true)
                 .build();
 
-        // "When that permanent enters" is a triggered ability the spell made: its source is the spell, controlled by
-        // the spell's controller, not the returned permanent (CR 603.7d). Its graveyard target is chosen as it goes on
+        // "When that permanent enters" is a delayed ability the spell made: the spell is its source (CR 603.7d), not
+        // the returned permanent, and the spell's controller controls it. Its graveyard target is chosen as it goes on
         // the stack.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(returnEffect),
-                entry.getCard().getName() + "'s reflexive ability", null);
+                entry.getCard().getName() + "'s delayed ability", null);
         triggeredAbilityStackService.putMade(gameData, record);
     }
 

@@ -15,7 +15,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Clockspinning's choice of a counter on a permanent or suspended card. */
+/**
+ * Resolves Clockspinning's and Jhoira's Timebug's choice of a counter on a permanent or suspended card; only an
+ * optional adjustment ("you may", Timebug) can be skipped.
+ */
 @Component
 @RequiredArgsConstructor
 public class AdjustChosenCounterOnTargetEffectHandler implements NormalEffectHandlerBean {
@@ -41,7 +44,7 @@ public class AdjustChosenCounterOnTargetEffectHandler implements NormalEffectHan
                     && gameData.exiledCardHasCounter(targetId, CounterType.TIME)) {
                 playerInputService.beginAdjustChosenCounterTypeChoice(
                         gameData, entry.getControllerId(), targetId, Zone.EXILE,
-                        entry.getCard().getName(), List.of(CounterType.TIME));
+                        entry.getCard().getName(), List.of(CounterType.TIME), optional(effect));
             }
             return;
         }
@@ -68,7 +71,11 @@ public class AdjustChosenCounterOnTargetEffectHandler implements NormalEffectHan
         if (!counterTypes.isEmpty()) {
             playerInputService.beginAdjustChosenCounterTypeChoice(
                     gameData, entry.getControllerId(), targetId, null,
-                    entry.getCard().getName(), counterTypes);
+                    entry.getCard().getName(), counterTypes, optional(effect));
         }
+    }
+
+    private static boolean optional(CardEffect effect) {
+        return effect instanceof AdjustChosenCounterOnTargetEffect adjust && adjust.optional();
     }
 }

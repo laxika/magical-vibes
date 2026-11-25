@@ -3361,8 +3361,8 @@ public class ChoiceHandlerService {
      * Quarry Hauler: apply the controller's add/remove decision to the first remaining counter kind
      * on the target, then re-prompt for the next kind (if any) or resume the paused ETB resolution.
      * ADD routes through {@link PermanentCounterSupport#placeCounterOnPermanent} so counter-specific
-     * behaviour (+1/+1 triggers, -1/-1 prevention/watchers, saga chapters) is preserved; REMOVE simply
-     * decrements. State-based actions are checked once all kinds are done (a lethal -1/-1 or a
+     * behaviour (+1/+1 triggers, -1/-1 prevention/watchers, saga chapters) is preserved; REMOVE decrements and
+     * raises the removal's events (vanishing, the last counter of a kind). State-based actions are checked once all kinds are done (a lethal -1/-1 or a
      * planeswalker at 0 loyalty resolves only after the whole ability finishes).
      */
     private void handleAdjustCounterKindChoice(GameData gameData, String choice,
@@ -3386,6 +3386,10 @@ public class ChoiceHandlerService {
                 int current = target.getCounterCount(kind);
                 if (current > 0) {
                     target.setCounterCount(kind, current - 1);
+                    // The last time counter's removal triggers vanishing's sacrifice (CR 702.63a), and the
+                    // removal is seen by "when you remove the last [kind] counter" abilities.
+                    permanentCounterSupport.checkLastTimeCounterRemoved(gameData, target, kind, current);
+                    permanentCounterSupport.notifyLastCounterRemoved(gameData, target, kind, 1, ctx.controllerId());
                     if (kind == CounterType.OIL) {
                         gameData.recordOilCounterRemoved(target, 1);
                     }
@@ -3424,13 +3428,13 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         playerInputService.beginAdjustChosenCounterActionChoice(
                 gameData, ctx.controllerId(), ctx.targetId(), ctx.targetZone(),
-                ctx.sourceCardName(), counterType);
+                ctx.sourceCardName(), counterType, ctx.optional());
         inputCompletionService.publishStateAfterInput(gameData);
     }
 
     private void handleAdjustChosenCounterActionChoice(GameData gameData, String choice,
             ChoiceContext.AdjustChosenCounterActionChoice ctx) {
-        if (!ChoiceContext.AdjustChosenCounterActionChoice.OPTIONS.contains(choice)) {
+        if (!ctx.options().contains(choice)) {
             throw new IllegalArgumentException("Invalid counter adjustment: " + choice);
         }
 

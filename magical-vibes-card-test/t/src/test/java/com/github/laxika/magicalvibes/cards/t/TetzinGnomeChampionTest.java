@@ -142,7 +142,8 @@ class TetzinGnomeChampionTest extends BaseCardTest {
     }
 
     @Test
-    void meldArtifactEntryAlsoTriggersMill() {
+    @DisplayName("A meld artifact entering doesn't trigger Tetzin: a meld card isn't a double-faced card (CR 712.1)")
+    void meldArtifactEntryDoesNotTriggerMill() {
         addReady(player1, new TetzinGnomeChampion());
         harness.setLibrary(player1, List.of(new Forest(), new Plains(), new Forest(),
                 new Plains(), new Forest(), new Plains(), new Forest(), new Plains()));
@@ -153,9 +154,9 @@ class TetzinGnomeChampionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Draw two cards.");
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
@@ -316,16 +317,17 @@ class TetzinGnomeChampionTest extends BaseCardTest {
     }
 
     @Test
-    void meldArtifactIsLegalTargetButCannotTransform() {
+    @DisplayName("A meld artifact isn't a double-faced artifact, so it can't be the attack trigger's target (CR 712.1)")
+    void meldArtifactIsNotALegalTarget() {
         addTransformedColossus();
         Permanent meldArtifact = addReady(player1, new TheMightstoneAndWeakstone());
-        addReady(player1, new DireFlail());
+        Permanent flail = addReady(player1, new DireFlail());
 
         declareAttackers(player1, List.of(0));
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(meldArtifact.getId());
-        harness.handlePermanentChosen(player1, meldArtifact.getId());
+        assertThat(choice.validIds()).contains(flail.getId()).doesNotContain(meldArtifact.getId());
+        harness.handlePermanentChosen(player1, flail.getId());
         harness.passBothPriorities();
 
         assertThat(meldArtifact.isTransformed()).isFalse();

@@ -50,11 +50,10 @@ public class BreathkeeperSeraph extends Card {
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                        new MayEffect(
                                 RegisterDelayedStepTriggerEffect.aboutCardAtNext(
                                         Triggers.upkeep(ActivePlayer.YOU), Subjects.sourceCard(),
-                                        new ReturnTriggeringCardFromGraveyardToBattlefieldEffect()),
-                                "Return this creature to the battlefield at the beginning of your next upkeep?")),
+                                        new MayEffect(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(),
+                                                "Return this creature to the battlefield?"))),
                         Subjects.sourceAndPaired())));
     }
 }

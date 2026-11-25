@@ -1777,12 +1777,12 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerName, current);
     }
 
-    /** Clockspinning: choose which counter on the target to add or remove. */
+    /** Clockspinning: choose which counter on the target to add or remove ({@code optional}: or neither). */
     public void beginAdjustChosenCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
                                                    Zone targetZone, String sourceCardName,
-                                                   List<CounterType> counterTypes) {
+                                                   List<CounterType> counterTypes, boolean optional) {
         ChoiceContext.AdjustChosenCounterTypeChoice context = new ChoiceContext.AdjustChosenCounterTypeChoice(
-                targetId, targetZone, playerId, sourceCardName, counterTypes);
+                targetId, targetZone, playerId, sourceCardName, counterTypes, optional);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, context.options(),
                 sourceCardName + " — Choose a counter to add or remove."));
@@ -1792,12 +1792,12 @@ public class PlayerInputService {
     /** Clockspinning: choose whether to add or remove the selected counter. */
     public void beginAdjustChosenCounterActionChoice(GameData gameData, UUID playerId, UUID targetId,
                                                      Zone targetZone, String sourceCardName,
-                                                     CounterType counterType) {
+                                                     CounterType counterType, boolean optional) {
         ChoiceContext.AdjustChosenCounterActionChoice context =
                 new ChoiceContext.AdjustChosenCounterActionChoice(
-                        targetId, targetZone, playerId, sourceCardName, counterType);
+                        targetId, targetZone, playerId, sourceCardName, counterType, optional);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, context, ChoiceContext.AdjustChosenCounterActionChoice.OPTIONS,
+                playerId, null, null, context, context.options(),
                 sourceCardName + " — Add or remove a "
                         + ChoiceContext.AdjustChosenCounterTypeChoice.counterLabel(counterType) + "?"));
         log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerId, counterType);

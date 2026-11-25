@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.l.LumithreadField;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Demolish;
+import com.github.laxika.magicalvibes.cards.e.EncroachingMycosynth;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
@@ -23,7 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LumithreadField.class, Pacifism.class, PossibilityStorm.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class, Demolish.class,
-        Memnite.class, SeatOfTheSynod.class})
+        Memnite.class, SeatOfTheSynod.class, EncroachingMycosynth.class, MindStone.class})
 class PossibilityStormTest extends BaseCardTest {
 
     private UUID setUpStorm(List<Card> player1Library) {
@@ -203,5 +205,22 @@ class PossibilityStormTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
                 .containsExactlyInAnyOrder("Grizzly Bears", "Seat of the Synod", "Memnite");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A card type the spell has from another effect counts for the shared type (Encroaching Mycosynth, CR 608.2h)")
+    void grantedSpellTypeCountsForTheSharedType() {
+        setUpStorm(List.of(new Forest(), new MindStone(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new EncroachingMycosynth());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Mind Stone");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
     }
 }

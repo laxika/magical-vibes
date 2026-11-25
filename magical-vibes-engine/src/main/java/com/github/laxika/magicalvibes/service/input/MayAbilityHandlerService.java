@@ -453,6 +453,11 @@ public class MayAbilityHandlerService {
         }
     }
 
+    /**
+     * One player's answer to "unless any player pays [mana]" (or "any player may pay"): each player, in turn order from
+     * the active player, gets the option to pay as the ability resolves, even after another player paid (PCY rulings);
+     * the payment counts once every player has answered.
+     */
     private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,
                                              PendingMayAbility ability, MayPayManaEffect mayPay) {
         if (mayPay.payment() != null) {
@@ -466,10 +471,8 @@ public class MayAbilityHandlerService {
                 cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
-                gameData.anyPlayerMayPayManaRemainingPlayers.clear();
-                gameData.resolvedMayAccepted = true;
-                resumeAfterResolutionTimeMayChoice(gameData);
-                return;
+                // Each player still gets the option to pay as the ability resolves, in turn order (PCY rulings).
+                gameData.anyPlayerMayPayManaPaid = true;
             }
         }
 
@@ -486,8 +489,10 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        boolean anyPaid = gameData.anyPlayerMayPayManaPaid;
         gameData.anyPlayerMayPayManaRemainingPlayers.clear();
-        gameData.resolvedMayAccepted = false;
+        gameData.anyPlayerMayPayManaPaid = false;
+        gameData.resolvedMayAccepted = anyPaid;
         resumeAfterResolutionTimeMayChoice(gameData);
     }
 

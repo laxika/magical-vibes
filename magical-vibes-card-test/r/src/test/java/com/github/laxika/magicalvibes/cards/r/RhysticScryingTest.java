@@ -52,6 +52,7 @@ class RhysticScryingTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);

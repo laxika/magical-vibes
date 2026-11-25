@@ -52,11 +52,11 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new NilsDisciplineEnforcer());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setCounterCount(CounterType.CHARGE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test

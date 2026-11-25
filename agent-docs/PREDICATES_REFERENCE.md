@@ -136,7 +136,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate` | `(CardSubtype)` | creatures that blocked or were blocked by a creature of the subtype at any point this turn (turn-scoped, recorded at declare-blockers time in `GameData.combatBlockOpponentSubtypesThisTurn`; Changeling opponents count as every subtype). Subtype-ness is judged at block time, so the target stays legal after combat ends or the other creature leaves/changes types. Needs `gameData`. AND with `PermanentIsCreaturePredicate` for "target creature that ..." (Time to Reflect) |
 | `PermanentIsTokenPredicate` | `()` | token permanents |
 | `PermanentIsHauntedPredicate` | `()` | haunted permanents (a card in exile haunts it, `GameData.hauntingCardToPermanentId`; Kaya, Ghost Haunter) |
-| `PermanentIsDoubleFacedPredicate` | `()` | permanents represented by a physical double-faced card, whether showing the front or back face |
+| `PermanentIsDoubleFacedPredicate` | `()` | permanents represented by a physical double-faced card, whether showing the front or back face; a meld card or melded permanent isn't one (CR 712.1) |
 | `PermanentIsTransformedPredicate` | `()` | permanents currently showing their transformed face |
 | `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
 | `PermanentIsCommanderPredicate` | `()` | permanents whose original card is designated as a commander in `GameData`; requires game data |

@@ -3284,6 +3284,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
+        if (anyPlayerManaPaymentAlreadyMade(gameData)) {
+            log.info("AI (Hard): Declining a payment another player already made in game {}", gameId);
+            send(() -> gameActions.answerInteraction(
+                    new InteractionAnswer.MayAbilityChosen(false)));
+            return;
+        }
+
         // Access the pending ability to evaluate its effects
         if (gameData.pendingMayAbilities.isEmpty()) {
             // No pending ability data — fall back to accepting
