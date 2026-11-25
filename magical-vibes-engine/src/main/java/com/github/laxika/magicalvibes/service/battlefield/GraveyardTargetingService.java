@@ -613,7 +613,8 @@ public class GraveyardTargetingService {
                 : maxTargetsCap == Integer.MAX_VALUE
                 ? "Choose any number of target " + filterLabel + "s from " + zoneLabel(source) + "."
                 : "Choose up to " + maxTargetsCap + " target " + filterLabel + "s"
-                + (singleGraveyard ? " from a single graveyard" : " from " + zoneLabel(source)) + ".";
+                + (singleGraveyard ? " from a single graveyard" : " from "
+                + (source == GraveyardSearchScope.ALL_GRAVEYARDS ? "graveyards" : zoneLabel(source))) + ".";
         if (maxTotalManaValue != null) {
             prompt = prompt.substring(0, prompt.length() - 1)
                     + " with total mana value " + maxTotalManaValue + " or less.";

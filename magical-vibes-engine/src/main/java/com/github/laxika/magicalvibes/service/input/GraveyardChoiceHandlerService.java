@@ -1561,16 +1561,6 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            } else if (pileSeparation.disposition() == CardPileDisposition.DELIVER_UNTO_EVIL) {
-                graveyardReturnSupport.completeDeliverUntoEvilChoice(gameData, cardIds);
-                if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
-                    effectResolutionService.resolveEffectsFrom(gameData,
-                            gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
-                    if (gameData.interaction.isAwaitingInput()) {
-                        return;
-                    }
-                }
-                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             } else {
                 // BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both share step 1; step 2 branches.
                 graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);

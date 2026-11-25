@@ -587,6 +587,16 @@ public final class Subjects {
         return new CardSubject.TargetCard(filter, scope);
     }
 
+    /**
+     * "Up to N target cards in graveyards / in your graveyard", read by every step of the spell without declaring a
+     * target (see {@link CardSubject.TargetGraveyardCards}); {@code .fromASingleGraveyard()} for "from a single
+     * graveyard".
+     */
+    public static CardSubject.TargetGraveyardCards targetGraveyardCards(CardPredicate filter, GraveyardSearchScope scope,
+                                                                        int upTo) {
+        return new CardSubject.TargetGraveyardCards(filter, scope, upTo, false);
+    }
+
     /** "Each other creature banded with it": the other attacking creatures in {@code permanent}'s band. */
     public static PermanentSubject bandmatesOf(PermanentSubject permanent) {
         return new PermanentSubject.BandmatesOf(permanent);

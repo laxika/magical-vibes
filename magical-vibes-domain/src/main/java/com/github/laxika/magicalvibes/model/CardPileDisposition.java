@@ -44,8 +44,6 @@ public enum CardPileDisposition {
     THREATS_UNDETECTED,
     /** Elemental Teachings: selected cards go to the graveyard and the rest enter tapped. */
     GIFTS_UNGIVEN_BATTLEFIELD_TAPPED,
-    /** Deliver Unto Evil: the opponent chooses cards to leave in the controller's graveyard. */
-    DELIVER_UNTO_EVIL,
     /** Make an Example: the spell controller chooses the pile each opponent sacrifices. */
     MAKE_AN_EXAMPLE,
     /** Abstract Performance: the chosen pile goes to the controller's graveyard; the other is offered for one free spell cast and then the rest go to hand. */

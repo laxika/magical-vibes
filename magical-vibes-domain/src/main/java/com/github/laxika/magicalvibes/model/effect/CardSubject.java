@@ -31,7 +31,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
         CardSubject.TopmostInLibrary, CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted,
-        CardSubject.Owned, CardSubject.OutsideTheGame {
+        CardSubject.Owned, CardSubject.OutsideTheGame, CardSubject.TargetGraveyardCards {
 
     /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -302,6 +302,38 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         public TargetSpec targetSpec() {
             return TargetSpec.benign(filter == null ? TargetPredicates.graveyardCard(scope)
                     : TargetPredicates.graveyardCards(filter, scope));
+        }
+    }
+
+    /**
+     * "Up to three target cards from a single graveyard", "up to four target cards in your graveyard": every card the
+     * spell targets in a graveyard of {@code scope}, while it is still there and matches {@code filter}; an illegal
+     * target is not named (CR 608.2b). It declares no target: the card declares the targets
+     * ({@code target(new GraveyardCardPredicateTargetFilter(filter, scope), 0, maxTargets)}), and as the spell is cast
+     * it is how the cast path knows to ask for up to {@code maxTargets} of them, from one graveyard where
+     * {@code singleGraveyard} says so. So several steps of the spell can read the same targets: a put, a choice among
+     * them, and "the rest" ({@link Except}). The steps that can name it are {@code PutCardsIntoLibraryEffect},
+     * {@code PutCardsIntoHandEffect} and {@code ChooseCardEffect} (found by
+     * {@code EffectResolution.targetGraveyardCards}).
+     *
+     * @param filter          which cards; {@code null} for every card
+     * @param scope           whose graveyards
+     * @param maxTargets      how many may be chosen at most
+     * @param singleGraveyard whether all of them come from one graveyard
+     */
+    record TargetGraveyardCards(CardPredicate filter, GraveyardSearchScope scope, int maxTargets,
+                                boolean singleGraveyard) implements CardSubject {
+
+        public TargetGraveyardCards {
+            Objects.requireNonNull(scope, "scope");
+            if (maxTargets < 1) {
+                throw new IllegalArgumentException("Up to how many target cards: " + maxTargets);
+            }
+        }
+
+        /** "From a single graveyard". */
+        public TargetGraveyardCards fromASingleGraveyard() {
+            return new TargetGraveyardCards(filter, scope, maxTargets, true);
         }
     }
 

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SereneRemembrance.class, Slaughterhorn.class, ClingingAnemones.class,
         LeylineOfSanctity.class, CosisTrickster.class})
@@ -184,6 +185,41 @@ class SereneRemembranceTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Serene Remembrance"));
+    }
+
+    @Test
+    @DisplayName("Shuffles a targeted opponent's library once")
+    void shufflesTargetedOpponentLibraryOnce() {
+        Card first = new Slaughterhorn();
+        Card second = new ClingingAnemones();
+        harness.addToBattlefield(player1, new CosisTrickster());
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new SereneRemembrance()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).contains(first, second);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(CosisTrickster.class);
+    }
+
+    @Test
+    @DisplayName("Rejects targets from two graveyards")
+    void rejectsTargetsFromTwoGraveyards() {
+        Card own = new Slaughterhorn();
+        Card theirs = new ClingingAnemones();
+        harness.setGraveyard(player1, List.of(own));
+        harness.setGraveyard(player2, List.of(theirs));
+        harness.setHand(player1, List.of(new SereneRemembrance()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(own.getId(), theirs.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

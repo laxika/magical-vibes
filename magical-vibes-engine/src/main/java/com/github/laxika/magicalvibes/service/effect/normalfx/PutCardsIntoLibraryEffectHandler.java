@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.OutsideGameCards;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -142,17 +143,24 @@ public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean
 
     /**
      * Puts each owner's cards into their library and shuffles it, then the libraries of the players the effect always
-     * shuffles that got none (CR 701.24c, 701.24d), each once; records how many each owner shuffled in.
+     * shuffles that got none (CR 701.24c, 701.24d), each once; records how many each owner shuffled in. When the next
+     * effect shuffles the spell itself into its owner's library ("shuffle Serene Remembrance and up to three target
+     * cards ... into their owners' libraries", one instruction), that library is left for it, so it is shuffled once.
      */
     private void shuffleIn(GameData gameData, StackEntry entry, PutCardsIntoLibraryEffect put,
                            Map<UUID, List<Card>> byOwner, Map<UUID, Boolean> publiclyKnown) {
         Map<UUID, Integer> shuffledIn = new LinkedHashMap<>();
+        UUID leftForTheSpell = nextEffectShufflesTheSpellIn(entry) ? entry.getOwnerId() : null;
         for (Map.Entry<UUID, List<Card>> group : byOwner.entrySet()) {
             UUID ownerId = group.getKey();
             List<Card> cards = group.getValue();
             gameData.playerDecks.get(ownerId).addAll(cards);
             shuffledIn.put(ownerId, cards.size());
-            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+            if (ownerId.equals(leftForTheSpell)) {
+                entry.getDeferredLibraryShuffleOwnerIds().add(ownerId);
+            } else {
+                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+            }
             String ownerName = gameData.playerIdToName.get(ownerId);
             gameLogService.append(gameData, cards.size() == 1 && publiclyKnown.get(ownerId)
                     ? GameLog.textCardText(ownerName + " shuffles ", cards.getFirst(), " into their library.")
@@ -170,5 +178,12 @@ public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean
         if (!shuffledIn.isEmpty()) {
             entry.recordStep(StepKind.SHUFFLE_INTO_LIBRARY, StepOutcome.ofAmounts(shuffledIn));
         }
+    }
+
+    private static boolean nextEffectShufflesTheSpellIn(StackEntry entry) {
+        int next = entry.getResolvingEffectIndex() + 1;
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        return entry.getResolvingEffectIndex() >= 0 && next < effects.size()
+                && effects.get(next) instanceof ShuffleIntoLibraryEffect;
     }
 }

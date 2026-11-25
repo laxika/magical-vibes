@@ -104,4 +104,19 @@ player1Id = UUID.randomUUID();
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("shuffled into its owner's library")));
             }
+
+            @Test
+            @DisplayName("Takes over the shuffle an earlier step of the instruction left for the spell's owner's library")
+            void takesOverDeferredShuffleOfOwnersLibrary() {
+                Card serene = createCard("Serene Remembrance");
+                ShuffleIntoLibraryEffect effect = new ShuffleIntoLibraryEffect();
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, serene,
+                        player1Id, "Serene Remembrance", List.of(effect));
+                entry.getDeferredLibraryShuffleOwnerIds().add(player1Id);
+
+                shuffleIntoLibraryEffectHandler.resolve(gd, entry, effect);
+
+                assertThat(entry.getDeferredLibraryShuffleOwnerIds()).isEmpty();
+                assertThat(gd.playerDecks.get(player1Id)).contains(serene);
+            }
 }

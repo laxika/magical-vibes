@@ -29,7 +29,10 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        // The library is shuffled even when the spell cannot be put into it. Flashback's
+        // An earlier step of the same instruction may have put cards into this library and left its shuffle to this
+        // one; every path below shuffles it (or a disposition already did), once.
+        entry.getDeferredLibraryShuffleOwnerIds().remove(entry.getOwnerId());
+        // The library is shuffled even when the spell cannot be put into it (CR 701.24c). Flashback's
         // exile replacement is applied by normal spell disposition after resolution.
         if (entry.isCopy() || entry.isCastWithFlashback()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, entry.getOwnerId());

@@ -3821,41 +3821,6 @@ public class GraveyardReturnSupport {
         }
     }
 
-    /**
-     * Completes Deliver Unto Evil: the chosen cards stay in the controller's graveyard and every
-     * other card in the held target set returns to that player's hand.
-     */
-    public void completeDeliverUntoEvilChoice(GameData gameData, List<UUID> chosenCardIds) {
-        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
-        UUID controllerId = state.controllerId();
-        List<Card> returnedCards = new ArrayList<>();
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-
-        graveyardService.beginGraveyardLeaveBatch(gameData);
-        try {
-            if (graveyard != null) {
-                for (Card card : state.cards()) {
-                    if (!chosenCardIds.contains(card.getId())
-                            && graveyard.removeIf(graveyardCard -> graveyardCard.getId().equals(card.getId()))) {
-                        addCardToHandFromGraveyard(gameData, controllerId, controllerId, card);
-                        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-                        returnedCards.add(card);
-                    }
-                }
-            }
-        } finally {
-            graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-
-        if (!returnedCards.isEmpty()) {
-            String playerName = gameData.playerIdToName.get(controllerId);
-            GameLog.Builder builder = GameLog.builder().text(playerName + " returns ");
-            appendCardList(builder, returnedCards);
-            builder.text(" from graveyard to hand.");
-            gameLogService.append(gameData, builder.build());
-        }
-    }
-
     public Permanent putCardOntoBattlefieldFromExile(GameData gameData, UUID controllerId, Card card) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);

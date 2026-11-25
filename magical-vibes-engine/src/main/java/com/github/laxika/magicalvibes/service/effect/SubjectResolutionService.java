@@ -229,6 +229,7 @@ public class SubjectResolutionService {
                             thisWay.filter()))
                     .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
+            case CardSubject.TargetGraveyardCards targets -> targetGraveyardCards(gameData, entry, effect, targets);
             case CardSubject.TriggeringCards triggering -> triggering.asLastKnown()
                     ? triggeringCardsAsLastKnown(gameData, entry, triggering)
                     : triggeringCards(gameData, entry, triggering);
@@ -1156,6 +1157,28 @@ public class SubjectResolutionService {
             return List.of();
         }
         return List.of(found);
+    }
+
+    /**
+     * {@link CardSubject.TargetGraveyardCards}: each card the spell targets for {@code effect} that is still in a graveyard
+     * of the subject's scope and matches its filter (CR 608.2b), in the order they were chosen.
+     */
+    private List<LocatedCard> targetGraveyardCards(GameData gameData, StackEntry entry, CardEffect effect,
+                                                   CardSubject.TargetGraveyardCards targets) {
+        List<UUID> owners = targets.scope().graveyardOwners(gameData.orderedPlayerIds, entry.getControllerId());
+        List<LocatedCard> named = new ArrayList<>();
+        for (UUID cardId : new LinkedHashSet<>(entry.getTargetCardIdsForEffect(effect))) {
+            LocatedCard found = locate(gameData, cardId, Zone.GRAVEYARD);
+            if (found == null || !owners.contains(found.ownerId())) {
+                continue;
+            }
+            if (targets.filter() == null || predicateEvaluationService.matchesCardPredicate(found.card(),
+                    targets.filter(), entry.getCard().getId(), gameData, found.ownerId(), null, null,
+                    entry.getXValue(), entry.getSourcePermanentSnapshot())) {
+                named.add(found);
+            }
+        }
+        return named;
     }
 
     private LocatedCard locate(GameData gameData, UUID cardId, Zone zone) {

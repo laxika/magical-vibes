@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -98,6 +103,36 @@ public final class EffectResolution {
             collectConditionalTargetingEffects(effect, expanded);
         }
         return List.copyOf(expanded);
+    }
+
+    /**
+     * The "up to N target cards in graveyards" a spell's steps name ({@link CardSubject.TargetGraveyardCards}), which the
+     * cast path asks for as the spell is cast; {@code null} when no step names one. The steps looked into are those
+     * that can name it ({@link PutCardsIntoLibraryEffect}, {@link PutCardsIntoHandEffect}, {@link ChooseCardEffect}),
+     * also as "the rest" ({@link CardSubject.Except}), inside a {@link SequenceEffect} or either branch of a condition.
+     */
+    public static CardSubject.TargetGraveyardCards targetGraveyardCards(List<CardEffect> rawEffects) {
+        for (CardEffect effect : expandConditionalTargetingEffects(rawEffects)) {
+            CardSubject.TargetGraveyardCards found = switch (effect) {
+                case SequenceEffect sequence -> targetGraveyardCards(sequence.steps());
+                case PutCardsIntoLibraryEffect put -> targetGraveyardCards(put.cards());
+                case PutCardsIntoHandEffect put -> targetGraveyardCards(put.cards());
+                case ChooseCardEffect choose -> targetGraveyardCards(choose.cards());
+                default -> null;
+            };
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private static CardSubject.TargetGraveyardCards targetGraveyardCards(CardSubject cards) {
+        return switch (cards) {
+            case CardSubject.TargetGraveyardCards targets -> targets;
+            case CardSubject.Except except -> targetGraveyardCards(except.cards());
+            default -> null;
+        };
     }
 
     /**

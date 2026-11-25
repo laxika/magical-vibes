@@ -2101,6 +2101,33 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Target graveyard cards are every target still in a graveyard of the scope and matching, declaring no target")
+        void targetGraveyardCards() {
+            Card bears = new GrizzlyBears();
+            Card forest = new Forest();
+            Card giant = new HillGiant();
+            Card left = new GrizzlyBears();
+            harness.setGraveyard(player1, List.of(bears, forest));
+            harness.setGraveyard(player2, List.of(giant));
+            gd.addToExile(player1.getId(), left);
+            StackEntry entry = entry(player1, null, null);
+            entry.setTargetCardIds(List.of(bears.getId(), forest.getId(), giant.getId(), left.getId()));
+            CardPredicate creature = new CardTypePredicate(CardType.CREATURE);
+
+            assertThat(subjects.cards(gd, entry, EFFECT,
+                    Subjects.targetGraveyardCards(null, GraveyardSearchScope.ALL_GRAVEYARDS, 4)))
+                    .containsExactly(bears, forest, giant);
+            assertThat(subjects.cards(gd, entry, EFFECT,
+                    Subjects.targetGraveyardCards(creature, GraveyardSearchScope.ALL_GRAVEYARDS, 4)))
+                    .containsExactly(bears, giant);
+            assertThat(subjects.cards(gd, entry, EFFECT,
+                    Subjects.targetGraveyardCards(null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, 4)))
+                    .containsExactly(bears, forest);
+            assertThat(Subjects.targetGraveyardCards(null, GraveyardSearchScope.ALL_GRAVEYARDS, 4).declaresTarget())
+                    .isFalse();
+        }
+
+        @Test
         @DisplayName("The cards an activated ability's cost exiled are named while they are in exile")
         void exiledAsCostNamesEveryCostExiledCard() {
             Card bears = new GrizzlyBears();

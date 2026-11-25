@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
@@ -94,7 +95,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DeliverUntoEvilEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
@@ -162,7 +162,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCo
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
@@ -1007,6 +1006,31 @@ public class SpellCastingService {
 
     private static boolean isModalSpell(Card card) {
         return card.getSpellEffects().stream().anyMatch(ChooseOneEffect::isCastersModal);
+    }
+
+    /**
+     * Asks the caster for the spell's "up to N target cards in graveyards" ({@code targets}), from one graveyard where
+     * it says so; the answer finishes the cast. Returns {@code false}, asking nothing, when no card can be targeted:
+     * the spell is cast with no target, as "up to" allows (CR 601.2c).
+     */
+    private boolean beginTargetGraveyardCardsChoice(GameData gameData, UUID playerId, Card card,
+                                                    StackEntryType entryType, CardSubject.TargetGraveyardCards targets,
+                                                    List<CardEffect> spellEffects) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return false;
+        }
+        boolean anyTargetable = targets.scope().graveyardOwners(gameData.orderedPlayerIds, playerId).stream()
+                .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                        .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(gameData, candidate, playerId))
+                        .filter(candidate -> predicateEvaluationService.matchesCardPredicate(
+                                candidate, targets.filter(), card.getId(), gameData, ownerId)))
+                .findAny().isPresent();
+        if (!anyTargetable) {
+            return false;
+        }
+        graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card, entryType,
+                targets.filter(), targets.maxTargets(), spellEffects, targets.scope(), targets.singleGraveyard());
+        return true;
     }
 
     private ReturnTargetCardsFromGraveyardToHandEffect restrictBargainedReturnCandidates(
@@ -6614,10 +6638,9 @@ public class SpellCastingService {
                             .filter(ExileTargetGraveyardCardsAndSeparateIntoPilesEffect.class::isInstance)
                             .findFirst().orElse(null);
 
-            ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect shuffleCardsIntoOwnersLibrariesEffect =
-                    (ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect) filteredSpellEffects.stream()
-                            .filter(ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect.class::isInstance)
-                            .findFirst().orElse(null);
+            // "Up to N target cards in graveyards" named by the spell's steps (Turn the Earth, Deliver Unto Evil)
+            CardSubject.TargetGraveyardCards targetGraveyardCards =
+                    EffectResolution.targetGraveyardCards(filteredSpellEffects);
 
             // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
             ReturnTargetCardsFromGraveyardToHandEffect graveyardToHandEffect =
@@ -6715,39 +6738,9 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, null,
                         null, Map.of(), null, List.of(), List.of()
                 ));
-            } else if (shuffleCardsIntoOwnersLibrariesEffect != null) {
-                long matchingCount = gameQueryService.canGraveyardCardsBeTargeted(gameData)
-                        ? gameData.orderedPlayerIds.stream()
-                        .flatMap(pid -> gameData.playerGraveyards.getOrDefault(pid, List.of()).stream())
-                        .filter(graveyardCard -> predicateEvaluationService.matchesCardPredicate(
-                                graveyardCard, shuffleCardsIntoOwnersLibrariesEffect.filter(), card.getId()))
-                        .count()
-                        : 0;
-                if (matchingCount > 0) {
-                    if (shuffleCardsIntoOwnersLibrariesEffect.singleGraveyard()) {
-                        graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
-                                entryType, shuffleCardsIntoOwnersLibrariesEffect.filter(),
-                                shuffleCardsIntoOwnersLibrariesEffect.maxTargets(), filteredSpellEffects,
-                                GraveyardSearchScope.ALL_GRAVEYARDS, true);
-                    } else {
-                        graveyardTargetingService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
-                                entryType, shuffleCardsIntoOwnersLibrariesEffect.filter(),
-                                shuffleCardsIntoOwnersLibrariesEffect.maxTargets(), filteredSpellEffects);
-                    }
-                    return;
-                }
-                gameData.stack.add(new StackEntry(
-                        entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, 0, null,
-                        null, Map.of(), null, List.of(), List.of()
-                ));
-            } else if (filteredSpellEffects.stream().anyMatch(DeliverUntoEvilEffect.class::isInstance)) {
-                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                        .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
-                        .count();
-                if (matchingCount > 0) {
-                    graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
-                            entryType, (CardPredicate) null, 4, filteredSpellEffects);
+            } else if (targetGraveyardCards != null) {
+                if (beginTargetGraveyardCardsChoice(gameData, playerId, card, entryType, targetGraveyardCards,
+                        filteredSpellEffects)) {
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 gameData.stack.add(new StackEntry(
@@ -11822,22 +11815,10 @@ public class SpellCastingService {
             return;
         }
 
-        ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect shuffleCardsIntoOwnersLibrariesEffect =
-                (ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect) spellEffects.stream()
-                        .filter(ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect.class::isInstance)
-                        .findFirst().orElse(null);
-        if (shuffleCardsIntoOwnersLibrariesEffect != null) {
-            long matchingCount = gameQueryService.canGraveyardCardsBeTargeted(gameData)
-                    ? gameData.orderedPlayerIds.stream()
-                    .flatMap(pid -> gameData.playerGraveyards.getOrDefault(pid, List.of()).stream())
-                    .filter(graveyardCard -> predicateEvaluationService.matchesCardPredicate(
-                            graveyardCard, shuffleCardsIntoOwnersLibrariesEffect.filter(), card.getId()))
-                    .count()
-                    : 0;
-            if (matchingCount > 0) {
-                graveyardTargetingService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
-                        entryType, shuffleCardsIntoOwnersLibrariesEffect.filter(),
-                        shuffleCardsIntoOwnersLibrariesEffect.maxTargets(), spellEffects);
+        CardSubject.TargetGraveyardCards targetGraveyardCards = EffectResolution.targetGraveyardCards(spellEffects);
+        if (targetGraveyardCards != null) {
+            if (beginTargetGraveyardCardsChoice(gameData, playerId, card, entryType, targetGraveyardCards,
+                    spellEffects)) {
                 gameData.graveyardTargetOperation.flashback = true;
                 return;
             }
