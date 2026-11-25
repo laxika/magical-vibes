@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.cards.n.NewBenalia;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +14,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -146,4 +151,49 @@ class SpinIntoMythTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Spin into Myth");
         harness.assertInGraveyard(player2, "Nessian Courser");
     }
+
+    @Test
+    @DisplayName("In a three-player game the controller chooses whose library to fateseal")
+    void controllerChoosesTheOpponentToFateseal() {
+        Player player3 = addThirdPlayer();
+        Permanent target = harness.addToBattlefieldAndReturn(player3, new NessianCourser());
+        NewBenalia firstCard = new NewBenalia();
+        harness.setLibrary(player2, List.of(new NessianCourser()));
+        harness.setLibrary(player3, List.of(firstCard));
+        harness.setHand(player1, List.of(new SpinIntoMyth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice).isNotNull();
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        PendingInteraction.Scry fateseal = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(fateseal.cards()).containsExactly(target.getCard(), firstCard);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
 }

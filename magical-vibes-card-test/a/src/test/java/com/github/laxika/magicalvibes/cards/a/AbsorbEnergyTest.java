@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -183,5 +189,27 @@ class AbsorbEnergyTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player2, 0, originalSpell.getId());
         harness.assertInGraveyard(player1, "Divination");
+    }
+
+    @Test
+    @CardUsed({ZoeticCavern.class, Forest.class})
+    @DisplayName("A face-down spell is only a creature spell: creature cards in hand get cheaper, not cards of its hidden types")
+    void faceDownSpellSharesOnlyTheCreatureType() {
+        Card hidden = new ZoeticCavern();
+        StackEntry faceDown = new StackEntry(StackEntryType.CREATURE_SPELL, hidden, player1.getId(),
+                "Face-down spell", List.of());
+        faceDown.setCastFaceDown(true);
+        gd.stack.add(faceDown);
+        AirElemental creatureCard = new AirElemental();
+        Forest landCard = new Forest();
+        harness.setHand(player2, List.of(new AbsorbEnergy(), creatureCard, landCard));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, hidden.getId());
+
+        assertThat(gd.perpetualGenericCastCostIncreases.get(creatureCard.getId())).isEqualTo(-1);
+        assertThat(gd.perpetualGenericCastCostIncreases).doesNotContainKey(landCard.getId());
     }
 }

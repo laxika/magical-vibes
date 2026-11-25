@@ -6745,3 +6745,4 @@ DisorientingChoiceEffect,blocked-player-loop,9,"defect run D13: controllers now 
 EachOpponentChoosesCreatureToExileWithSourceEffect,blocked-player-loop,9,"defect run D13: chosen creatures accumulate in the choice context and are exiled together in one leave batch after the last opponent chooses (CR 101.4)"
 EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffect,blocked-player-loop,9,"defect run D13: choices accumulate by opponent and the creatures are exiled together, powers read just before (ruling, CR 101.4)"
 MakeAnExampleEffect,blocked-player-loop,9,"defect run D13: all opponents separate (APNAP), then the controller chooses every pile, then one sacrifice batch (CR 608.2e); PendingMakeAnExample carries the separations and chosen creatures"
+AlmsCollectorDrawReplacement,dead,9,"defect run D12: capability interface nothing implemented; its only reader was DrawService's unused findAlmsCollectorSource, deleted with it"

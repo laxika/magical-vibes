@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FatesealEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +33,7 @@ public class FatesealEffectHandler implements NormalEffectHandlerBean {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +44,15 @@ public class FatesealEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         FatesealEffect fateseal = (FatesealEffect) effect;
         UUID controllerId = entry.getControllerId();
-        UUID libraryOwnerId = gameQueryService.getOpponentId(gameData, controllerId);
+        // "An opponent's library" (CR 701.29a): the fatesealing player chooses which opponent.
+        UUID libraryOwnerId = fateseal.opponent() != null
+                ? subjectResolutionService.player(gameData, entry, effect, fateseal.opponent())
+                : ChoosePlayerEffectHandler.opponentToBeChosenFirst(gameData, entry,
+                        new FatesealEffect(fateseal.count(), Subjects.playersThisWay(StepKind.CHOOSE))) ? null
+                : ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId);
+        if (libraryOwnerId == null) {
+            return;
+        }
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
 
         Permanent source = entry.getSourcePermanentId() != null

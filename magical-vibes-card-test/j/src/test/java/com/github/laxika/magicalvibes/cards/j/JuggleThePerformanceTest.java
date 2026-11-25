@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,8 +24,8 @@ class JuggleThePerformanceTest extends BaseCardTest {
     void discardsEachHandAndConjuresSevenDuplicatesFromThePlayerToTheRight() {
         harness.setHand(player1, List.of(new JuggleThePerformance(), new GrizzlyBears()));
         harness.setHand(player2, List.of(new Forest()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setLibrary(player1, sevenOf(GrizzlyBears::new));
+        harness.setLibrary(player2, sevenOf(Forest::new));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -70,8 +73,8 @@ class JuggleThePerformanceTest extends BaseCardTest {
     void logNamesNoRandomLibraryCard() {
         harness.setHand(player1, List.of(new JuggleThePerformance()));
         harness.setHand(player2, List.of(new Forest()));
-        harness.setLibrary(player1, List.of(new ThayanEvokers()));
-        harness.setLibrary(player2, List.of(new ThayanEvokers()));
+        harness.setLibrary(player1, sevenOf(ThayanEvokers::new));
+        harness.setLibrary(player2, sevenOf(ThayanEvokers::new));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -83,5 +86,30 @@ class JuggleThePerformanceTest extends BaseCardTest {
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Thayan Evokers"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
                 player1.getUsername() + " conjures 7 cards into their hand."));
+    }
+
+    @Test
+    @DisplayName("Seven random cards are seven different cards: a smaller library gives one duplicate of each of its cards")
+    void conjuresOneDuplicateOfEachCardOfASmallerLibrary() {
+        harness.setHand(player1, List.of(new JuggleThePerformance()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new GrizzlyBears(), new ThayanEvokers()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Forest", "Grizzly Bears", "Thayan Evokers");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName).containsExactly("Forest");
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " conjures 3 cards into their hand."));
+    }
+
+    private static List<Card> sevenOf(Supplier<Card> card) {
+        return Stream.generate(card).limit(7).toList();
     }
 }

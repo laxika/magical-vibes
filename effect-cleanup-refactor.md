@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b (each in Findings; the fold queue marks its rows). Defect runs (one per group, D11 to D22; the defect queue table): D11, D13 done. Running in parallel worktrees: D14, D15, D16, 50c (the last step-9 leftovers); merge queue D12. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                 |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b (each in Findings; the fold queue marks its rows). Defect runs (one per group, D11 to D22; the defect queue table): D11, D12, D13 done. Running in parallel worktrees: D14, D15, D16, 50c (the last step-9 leftovers). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                  |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,009 / 2,435 (after fold run D13) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,009 / 2,435 (after fold run D12) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,746 rows over 4,578 classes (after fold run D13). Latest verdict per class: `step-9` 2, unique 1,196, absorbed 1,356, split 690, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 2 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,747 rows over 4,579 classes (after fold run D12). Latest verdict per class: `step-9` 2, unique 1,196, absorbed 1,356, split 690, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 78. Waiting: 2 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1154,6 +1154,14 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 
 - `SpellCastingService.paySacrificeCostTogether`: a cost sacrificing several permanents leaves as one departure batch.
 - Choose-then-act for "each opponent chooses, then [verb]": collect the choices in the choice context, then act once (leave batch or departure batch). Reference handlers: Sothera, Ol Rin's Searing Light.
+
+- `ChoosePlayerEffectHandler.opponentToBeChosenFirst(gd, entry, rerun)` / `onlyOpponent(gd, controllerId)`: "an opponent" the controller chooses, asked only with two or more; the rerun reads `playersThisWay(CHOOSE)`.
+- `ClashSupport.performClash(gd, player, opponent)`: clash with a chosen opponent.
+- `AttackLegalityService.canAttackAPlayer(gd, creature, controllerId)`: "attacks a player if able" against any player.
+
+Files are in `/tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/d12/`:
+- `ledger-rows.csv`
+- `verdicts.txt` (fuller verdict notes)
 
 ### Blocked causes still open
 
@@ -5413,6 +5421,48 @@ Group 3. 6 fixed, 4 not a defect, 9 left, 5 not reached. Ratchet unchanged.
 - SotheraTheSupervoidTest and OlRinsSearingLightTest have methods without `@DisplayName`.
 - Cut the Tethers (`ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler`) bounces at each answer, the same shape as Albatross was.
 - **For the next run:** Gilded Ambusher and Dispersal (Sothera pattern), Eumidian Wastewaker, Cut the Tethers, L23, then L17–L21.
+
+### Step 9, defect run D12 (2026-11-25, parallel worktree)
+Groups 2 and 8, 34 lines: fixed 15, not a defect 7, already fixed 4, left 8. Ratchet 3,029 / 2,455 unchanged. Ledger: 1 row (`AlmsCollectorDrawReplacement` dead, deleted with `DrawService`'s unused `findAlmsCollectorSource`).
+
+Oracle text checked for 30 cards; rulings for Distant Memories, Abstract Performance, Brilliant Ultimatum, Deliver Unto Evil, Ecological Appreciation, Infernal Denizen, Moonring Mirror, Duplicity, Galactus and Malik. CR checked: 101.4, 104.4a, 303.4f, 400.2, 406.3, 508.1d, 508.4, 508.5, 509.1, 608.2d, 609.3, 614.5, 616.1, 701.20a/d/e, 701.29a, 701.30a/b/d, 702.174a, 707.2, 708.2, 800.4a.
+
+**"An opponent" the controller picks.** `ChoosePlayerEffectHandler.opponentToBeChosenFirst(gd, entry, rerun)`: with two or more opponents it inserts `ChoosePlayerEffect.opponent()` and a rerun that reads `playersThisWay(CHOOSE)`, and the handler returns before it changes anything. With one opponent nothing is asked (`onlyOpponent`). Used by:
+- `ClashEffectHandler` (`.against`), `ClashForControlOfEnchantedCreatureEffectHandler`;
+- `FatesealEffectHandler`, `DeliverUntoEvilEffectHandler`.
+
+`ClashSupport.performClash` takes the opponent; the two-argument overload stays for tests.
+
+It doesn't fit when the choice must follow an exile, search or reveal inside the same handler or interaction: Abstract Performance, Brilliant Ultimatum, Hostile Negotiations, Ecological Appreciation, Threats Undetected, Turtles Forever, Verdant Mastery. Seven cards wait for a choose-opponent prompt mid-flow.
+
+**DrawService.** `OpponentSource` holds a source and its controller.
+- The extra-draw and two-or-more-draw sources are searched on every opponent's battlefield.
+- Notion Thief loops: each Thief controlled by an opponent of the current drawer applies once (CR 614.5).
+- With several sources, the first found in the service's APNAP-order helper applies; the affected player's choice (CR 616.1) is a new line.
+
+**Other fixes**
+- Distant Memories: `OpponentMayReturnExiledCardOrDrawEffect(drawCount, controllerId)` chains the may over each opponent in APNAP order; the controller draws only when all decline.
+- Retribution: `CONTROLLED_BY_FIRST_TARGET`.
+- `AttackLegalityService.canAttackAPlayer` covers the "a player" requirement count and its check in `CombatAttackService`.
+- `TargetOpponentCreatesTokenEffect` reads a declared player target; a gift falls back to the first other seat.
+- `MayCopyHandlerService` copies `cardToCopy`.
+- Moonring Mirror (`faceDownWithoutLookPermission(1)`) and Duplicity (`mayLook` false) show no card to their owner.
+- Juggle: shuffle, take at most count, log the real count.
+- Absorb Energy: `spellAsEffectsSeeIt`.
+- Logs: seek into hand ("X seeks N card(s)."); Malik ("X chose A and Y chose B."); Valki ("V becomes a copy of C.").
+
+**Tests edited**
+- `JuggleThePerformanceTest`: seven-card libraries in two cases (they asserted seven duplicates of one card).
+- `DrawServiceTest`: Alms Collector case seats both players; unused stub removed.
+
+**Seen, not changed (new defect lines below)**
+- Ingenious Mastery's "they scry 2" scries every opponent.
+- Several replacement sources from different opponents are not offered to the affected player.
+- `ReturnCardExiledWithSourceToBattlefieldEffectHandler` sets a creature attacking with no target.
+- Clash log lines say "opponent", not the player's name.
+- `exilesHandsFaceDown` doesn't unwrap `MayEffect`.
+
+**For the next run:** a choose-opponent prompt mid-flow for the seven cards above, then Zur's Weirding's turn-order offers.
 
 ## Prompt
 

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,6 +24,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -326,4 +331,63 @@ class DistantMemoriesTest extends BaseCardTest {
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new MyrSire(), new MyrSire()));
     }
+
+    @Test
+    @DisplayName("In a three-player game the opponents decide in turn order: the second opponent may give the card")
+    void laterOpponentMayGiveTheCardAfterTheFirstDeclines() {
+        Player player3 = addThirdPlayer();
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst().getName();
+        harness.handleCardChosen(player1, 0);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1)
+                .anyMatch(card -> card.getName().equals(chosenName));
+    }
+
+    @Test
+    @DisplayName("In a three-player game the controller draws three only when every opponent declines")
+    void drawsThreeWhenEveryOpponentDeclines() {
+        Player player3 = addThirdPlayer();
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player3, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
 }

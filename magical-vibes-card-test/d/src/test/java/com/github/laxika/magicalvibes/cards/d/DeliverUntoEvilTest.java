@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.j.JayasGreeting;
 import com.github.laxika.magicalvibes.cards.l.LazotepReaver;
@@ -12,6 +16,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -218,4 +224,52 @@ class DeliverUntoEvilTest extends BaseCardTest {
             harness.handleMultipleCardsChosen(player1, targets.stream().map(Card::getId).toList());
         }
     }
+
+    @Test
+    @DisplayName("In a three-player game the controller chooses which opponent chooses the cards left behind")
+    void controllerChoosesTheOpponentWhoChooses() {
+        Player player3 = addThirdPlayer();
+        Card island = new Island();
+        Card greeting = new JayasGreeting();
+        Card reaver = new LazotepReaver();
+        List<Card> targets = List.of(island, greeting, reaver);
+        harness.setGraveyard(player1, targets);
+        cast(targets);
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice).isNotNull();
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player3.getId());
+        harness.handleMultipleCardsChosen(player3, List.of(greeting.getId(), reaver.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(greeting, reaver);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card instanceof DeliverUntoEvil);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
 }

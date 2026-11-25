@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -27,6 +31,7 @@ public class ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,6 +74,7 @@ public class ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
             return;
         }
 
+        logRevealedChoices(gameData, context.resolvingEntry(), allChoices);
         completeAfterChoices(gameData, allChoices);
     }
 
@@ -80,6 +86,24 @@ public class ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
                 new MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice(
                         remaining, accumulatedChoices, resolvingEntry),
                 "Secretly choose a creature the target player controls to be sacrificed.");
+    }
+
+    /**
+     * "Then those choices are revealed": the controller's choice and the target player's, in the order they were made.
+     */
+    private void logRevealedChoices(GameData gameData, StackEntry entry, List<UUID> choices) {
+        if (entry == null || choices.size() != 2) {
+            return;
+        }
+        Permanent controllerChoice = gameQueryService.findPermanentById(gameData, choices.get(0));
+        Permanent targetChoice = gameQueryService.findPermanentById(gameData, choices.get(1));
+        if (controllerChoice == null || targetChoice == null) {
+            return;
+        }
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
+                + " chose " + FaceDownVisibility.publicName(gameData, controllerChoice) + " and "
+                + gameData.playerIdToName.get(entry.getTargetId()) + " chose "
+                + FaceDownVisibility.publicName(gameData, targetChoice) + "."));
     }
 
     private void completeAfterChoices(GameData gameData, List<UUID> permanentIds) {

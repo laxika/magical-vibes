@@ -246,6 +246,11 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 simultaneouslyEntered.forEach(permanent -> gameData.permanentsEnteringSimultaneously.remove(permanent.getId()));
             }
         }
+        if (seek.destination() == LibrarySearchDestination.HAND && !soughtCards.isEmpty()) {
+            // A sought card goes into a hand unrevealed (CR 400.2): the line counts, it doesn't name.
+            gameLogService.append(gameData, GameLog.text(playerName + " seeks " + soughtCards.size() + " card"
+                    + (soughtCards.size() == 1 ? "" : "s") + "."));
+        }
         if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
             registerOneShotPermissionGroup(gameData, soughtCards, persistentPermissions);
         }

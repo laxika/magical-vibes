@@ -619,8 +619,9 @@ public class MayCopyHandlerService {
                 .orElse(null);
         // Apply the copy
         String originalName = FaceDownVisibility.publicName(gameData, sourcePermanent);
-        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm.getCard(), null, null, Set.of(),
-                List.of(), copyEffect.copyColor());
+        // A face-down target is copied by its face-down copiable values: a nameless 2/2 (CR 707.2, 708.2).
+        permanentCopierService.applyCloneCopy(sourcePermanent, PermanentCopierService.cardToCopy(targetPerm), null,
+                null, Set.of(), List.of(), copyEffect.copyColor());
 
         Card copiedCard = sourcePermanent.getCard();
         if (retainedTrigger != null) {

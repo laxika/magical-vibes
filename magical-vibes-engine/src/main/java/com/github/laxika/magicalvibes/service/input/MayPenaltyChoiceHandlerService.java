@@ -1311,26 +1311,42 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Asks {@code opponentId} whether to let {@code effect}'s controller put {@code exiledCard} into their hand ("any
+     * opponent may", Distant Memories).
+     */
+    public static void offerOpponentExileChoice(GameData gameData, Card exiledCard, UUID opponentId,
+                                                OpponentMayReturnExiledCardOrDrawEffect effect) {
+        String controllerName = gameData.playerIdToName.get(effect.controllerId());
+        String prompt = "Let " + controllerName + " put the exiled card into their hand? If no opponent does, they draw "
+                + effect.drawCount() + " cards.";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                exiledCard, opponentId, List.of(effect), prompt, exiledCard.getId()));
+    }
+
     public void handleOpponentExileChoice(GameData gameData, Player player, boolean accepted,
                                            PendingMayAbility ability, OpponentMayReturnExiledCardOrDrawEffect effect) {
         UUID opponentId = ability.controllerId(); // opponent is the decision maker
         UUID exiledCardId = ability.targetCardId();
-
-        // Find the spell controller (the other player)
-        UUID controllerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (!pid.equals(opponentId)) {
-                controllerId = pid;
-                break;
-            }
-        }
-
-        if (controllerId == null) {
-            throw new IllegalStateException("Cannot find exiled card owner");
-        }
+        UUID controllerId = effect.controllerId();
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         String opponentName = gameData.playerIdToName.get(opponentId);
+
+        if (!accepted) {
+            // "Any opponent may": the next opponent in turn order decides; the controller draws only if none does
+            // (Distant Memories ruling 2011-06-01).
+            List<UUID> opponents = com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler
+                    .apnapOpponents(gameData, controllerId);
+            int next = opponents.indexOf(opponentId) + 1;
+            ExiledCardEntry stillExiled = gameData.findExiledCard(exiledCardId);
+            if (next > 0 && next < opponents.size() && stillExiled != null) {
+                gameLogService.append(gameData, GameLog.text(opponentName + " declines."));
+                offerOpponentExileChoice(gameData, stillExiled.card(), opponents.get(next), effect);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+        }
 
         if (accepted) {
             // Opponent lets the controller have the exiled card — move from exile to hand

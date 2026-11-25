@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
@@ -17,8 +18,6 @@ public class Retribution extends Card {
     public Retribution() {
         // "Choose two target creatures controlled by the same opponent. That player chooses and
         // sacrifices one of those creatures. Put a -1/-1 counter on the other."
-        // This engine is strictly 2-player, so "an opponent controls" on both target groups already
-        // means the same opponent controls both.
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(ChoosePermanentsEffect.exactly(1, Subjects.allTargets(),
                                 "a creature to sacrifice; the other gets a -1/-1 counter")
@@ -29,5 +28,6 @@ public class Retribution extends Card {
                         Subjects.except(Subjects.allTargets(), Subjects.thisWay(StepKind.CHOOSE)),
                         CounterType.MINUS_ONE_MINUS_ONE));
         target(TargetFilters.creatureAnOpponentControls());
+        setMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET);
     }
 }

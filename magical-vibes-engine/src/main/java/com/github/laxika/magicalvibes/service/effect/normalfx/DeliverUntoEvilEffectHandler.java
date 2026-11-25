@@ -6,13 +6,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DeliverUntoEvilEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
@@ -32,6 +35,7 @@ public class DeliverUntoEvilEffectHandler implements NormalEffectHandlerBean {
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,7 +63,16 @@ public class DeliverUntoEvilEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        // "An opponent chooses two of them": the controller chooses which opponent (ruling 2019-05-03).
+        DeliverUntoEvilEffect deliver = (DeliverUntoEvilEffect) effect;
+        UUID opponentId = deliver.opponent() != null
+                ? subjectResolutionService.player(gameData, entry, effect, deliver.opponent())
+                : ChoosePlayerEffectHandler.opponentToBeChosenFirst(gameData, entry,
+                        new DeliverUntoEvilEffect(Subjects.playersThisWay(StepKind.CHOOSE))) ? null
+                : ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId);
+        if (opponentId == null) {
+            return;
+        }
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
                 List.of(), legalCards, java.util.Map.of(), List.of(), List.of(),
                 CardPileDisposition.DELIVER_UNTO_EVIL));

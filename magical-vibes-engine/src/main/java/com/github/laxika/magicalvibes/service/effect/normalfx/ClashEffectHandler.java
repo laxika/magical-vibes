@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaceClashCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class ClashEffectHandler implements NormalEffectHandlerBean {
 
     private final ClashSupport clashSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,11 +45,17 @@ public class ClashEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         UUID controllerId = entry.getControllerId();
-        boolean won = clashSupport.performClash(gameData, controllerId);
+        UUID opponentId;
+        if (e.opponent() != null) {
+            opponentId = subjectResolutionService.player(gameData, entry, effect, e.opponent());
+        } else if (ChoosePlayerEffectHandler.opponentToBeChosenFirst(gameData, entry,
+                e.against(Subjects.playersThisWay(StepKind.CHOOSE)))) {
+            return;
+        } else {
+            opponentId = ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId);
+        }
+        boolean won = clashSupport.performClash(gameData, controllerId, opponentId);
         gameData.lastClashWonByController.put(controllerId, won);
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst().orElse(null);
         List<CardEffect> followUps = new ArrayList<>();
         followUps.add(new PlaceClashCardsEffect(
                 PlaceClashCardsEffectHandler.apnapOrder(gameData, controllerId, opponentId)));

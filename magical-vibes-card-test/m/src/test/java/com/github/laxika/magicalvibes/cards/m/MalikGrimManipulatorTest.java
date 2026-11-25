@@ -187,4 +187,21 @@ class MalikGrimManipulatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
     }
+
+    @Test
+    @DisplayName("The two secret choices are revealed in the log before the sacrifice")
+    void choicesAreRevealed() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent controllerChosen = addCreatureReady(player2, new HillGiant());
+        Permanent opponentChosen = addCreatureReady(player2, new GrizzlyBears());
+
+        castMalik(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(controllerChosen.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentChosen.getId()));
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(player1.getUsername()
+                + " chose Hill Giant and " + player2.getUsername() + " chose Grizzly Bears."));
+    }
 }

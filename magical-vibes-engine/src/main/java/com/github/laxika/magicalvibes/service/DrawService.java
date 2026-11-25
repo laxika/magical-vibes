@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.AlmsCollectorDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -263,12 +262,12 @@ public class DrawService {
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
 
-        Card almsCollector = !skipOpponentDrawTwoOrMoreReplacement && drawAmount >= 2
-                ? findOpponentDrawTwoOrMoreReplacementSourceCard(gameData, playerId) : null;
+        OpponentSource almsCollector = !skipOpponentDrawTwoOrMoreReplacement && drawAmount >= 2
+                ? findOpponentDrawTwoOrMoreReplacementSource(gameData, playerId) : null;
         if (drawChoicePending(gameData)) {
             if (almsCollector != null) {
                 gameData.pendingCardDraws.addLast(playerId);
-                gameData.pendingCardDraws.addLast(gameQueryService.getOpponentId(gameData, playerId));
+                gameData.pendingCardDraws.addLast(almsCollector.controllerId());
             } else {
                 for (int i = 0; i < drawAmount; i++) {
                     gameData.pendingCardDraws.addLast(playerId);
@@ -786,30 +785,29 @@ public class DrawService {
 
         // Notion Thief — if an opponent of the source's controller would draw a card except the first
         // one they draw in each of their draw steps, that player skips the draw and the controller
-        // draws a card instead. The replacement draw is itself such a draw, so an opposing Notion Thief
-        // may redirect it back once; each Thief applies only once to the original draw (CR 614.5).
+        // draws a card instead. The replacement draw is itself such a draw, so a Thief controlled by an
+        // opponent of the new drawer may redirect it again; each Thief applies only once to the original
+        // draw (CR 614.5).
         if (!firstDrawStepDraw) {
-            Card notionThief = findOpponentExtraDrawsRedirectedSourceCard(gameData, playerId,
-                    OpponentExtraDrawsRedirectedEffect.Payload.DRAW_A_CARD);
+            OpponentSource notionThief = findOpponentExtraDrawsRedirectedSource(gameData, playerId,
+                    OpponentExtraDrawsRedirectedEffect.Payload.DRAW_A_CARD, Set.of());
             if (notionThief != null) {
-                UUID thiefController = gameQueryService.getOpponentId(gameData, playerId);
-                UUID extraDrawer = thiefController;
-                Card returningThief = findOpponentExtraDrawsRedirectedSourceCard(gameData, thiefController,
-                        OpponentExtraDrawsRedirectedEffect.Payload.DRAW_A_CARD);
-                if (returningThief != null) {
-                    extraDrawer = playerId;
-                }
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(gameData.playerIdToName.get(playerId) + " skips a draw — ")
-                        .card(notionThief)
-                        .text(" makes " + gameData.playerIdToName.get(thiefController) + " draw a card instead.")
-                        .build());
-                if (returningThief != null) {
+                Set<UUID> appliedThieves = new java.util.HashSet<>();
+                UUID extraDrawer = playerId;
+                OpponentSource thief = notionThief;
+                while (thief != null) {
+                    appliedThieves.add(thief.card().getId());
                     gameLogService.append(gameData, GameLog.builder()
-                            .text(gameData.playerIdToName.get(thiefController) + " skips the extra draw — ")
-                            .card(returningThief)
-                            .text(" makes " + gameData.playerIdToName.get(playerId) + " draw a card instead.")
+                            .text(gameData.playerIdToName.get(extraDrawer)
+                                    + (extraDrawer.equals(playerId) && appliedThieves.size() == 1
+                                    ? " skips a draw — " : " skips the extra draw — "))
+                            .card(thief.card())
+                            .text(" makes " + gameData.playerIdToName.get(thief.controllerId())
+                                    + " draw a card instead.")
                             .build());
+                    extraDrawer = thief.controllerId();
+                    thief = findOpponentExtraDrawsRedirectedSource(gameData, extraDrawer,
+                            OpponentExtraDrawsRedirectedEffect.Payload.DRAW_A_CARD, appliedThieves);
                 }
                 if (!performEmptyHandReplacementDraw(gameData, extraDrawer, playerId)) {
                     performDrawCard(gameData, extraDrawer);
@@ -817,19 +815,19 @@ public class DrawService {
                 return;
             }
 
-            Card hullbreacher = findOpponentExtraDrawsRedirectedSourceCard(gameData, playerId,
-                    OpponentExtraDrawsRedirectedEffect.Payload.CREATE_A_TREASURE);
+            OpponentSource hullbreacher = findOpponentExtraDrawsRedirectedSource(gameData, playerId,
+                    OpponentExtraDrawsRedirectedEffect.Payload.CREATE_A_TREASURE, Set.of());
             if (hullbreacher != null) {
-                UUID hullbreacherController = gameQueryService.getOpponentId(gameData, playerId);
+                UUID hullbreacherController = hullbreacher.controllerId();
                 gameLogService.append(gameData, GameLog.builder()
                         .text(gameData.playerIdToName.get(playerId) + " skips a draw — ")
-                        .card(hullbreacher)
+                        .card(hullbreacher.card())
                         .text(" makes " + gameData.playerIdToName.get(hullbreacherController)
                                 + " create a Treasure token instead.")
                         .build());
                 permanentControlSupport.applyCreateToken(
                         gameData, hullbreacherController, HULLBREACHER_TREASURE, 1,
-                        hullbreacher.getSetCode());
+                        hullbreacher.card().getSetCode());
                 return;
             }
         }
@@ -1233,29 +1231,6 @@ public class DrawService {
         return sources;
     }
 
-    private AlmsCollectorSource findAlmsCollectorSource(GameData gameData, UUID drawingPlayerId) {
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (controllerId.equals(drawingPlayerId)) {
-                continue;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(AlmsCollectorDrawReplacement.class::isInstance);
-                if (hasEffect) {
-                    return new AlmsCollectorSource(permanent, controllerId);
-                }
-            }
-        }
-        return null;
-    }
-
-    private record AlmsCollectorSource(Permanent permanent, UUID controllerId) {
-    }
-
     private Permanent findExileTopCardFaceDownInsteadOfDrawSource(GameData gameData, UUID playerId) {
         List<GameQueryService.ActiveStaticEffect<ExileTopCardFaceDownInsteadOfDrawReplacement>> sources =
                 gameQueryService.activeStaticEffects(gameData, playerId, ExileTopCardFaceDownInsteadOfDrawReplacement.class);
@@ -1572,60 +1547,58 @@ public class DrawService {
         return !gameData.drawStepFirstDrawTaken.contains(playerId);
     }
 
-    /**
-     * The opponent-controlled source whose {@link OpponentExtraDrawsRedirectedEffect} with {@code payload} replaces
-     * {@code playerId}'s extra draws (Notion Thief's draw, Hullbreacher's Treasure). A face-down permanent has none of
-     * its card's abilities (CR 708.2a).
-     */
-    private Card findOpponentExtraDrawsRedirectedSourceCard(GameData gameData, UUID playerId,
-                                                            OpponentExtraDrawsRedirectedEffect.Payload payload) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
-        if (opponentId == null) {
-            return null;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
-        if (battlefield == null) {
-            return null;
-        }
+    /** A replacement's source on the battlefield of one of the drawing player's opponents, with its controller. */
+    private record OpponentSource(Card card, UUID controllerId) {
+    }
 
-        for (Permanent permanent : battlefield) {
-            if (permanent.isFaceDown()) {
-                continue;
-            }
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(effect -> effect instanceof OpponentExtraDrawsRedirectedEffect redirected
-                            && redirected.payload() == payload);
-            if (hasEffect && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
-                return permanent.getCard();
+    /**
+     * The source controlled by an opponent of {@code playerId} whose {@link OpponentExtraDrawsRedirectedEffect} with
+     * {@code payload} replaces {@code playerId}'s extra draws (Notion Thief's draw, Hullbreacher's Treasure), its card
+     * not among {@code appliedCardIds} (CR 614.5); every opponent's battlefield is looked at, in APNAP order. A
+     * face-down permanent has none of its card's abilities (CR 708.2a).
+     */
+    private OpponentSource findOpponentExtraDrawsRedirectedSource(GameData gameData, UUID playerId,
+                                                                  OpponentExtraDrawsRedirectedEffect.Payload payload,
+                                                                  Set<UUID> appliedCardIds) {
+        for (UUID opponentId : opponentsInApnapOrder(gameData, playerId)) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+                if (permanent.isFaceDown() || appliedCardIds.contains(permanent.getCard().getId())) {
+                    continue;
+                }
+                boolean hasEffect = permanent.getCard().getStaticEffects().stream()
+                        .anyMatch(effect -> effect instanceof OpponentExtraDrawsRedirectedEffect redirected
+                                && redirected.payload() == payload);
+                if (hasEffect && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                    return new OpponentSource(permanent.getCard(), opponentId);
+                }
             }
         }
         return null;
     }
 
-    private Card findOpponentDrawTwoOrMoreReplacementSourceCard(GameData gameData, UUID playerId) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
-        if (opponentId == null) {
-            return null;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
-        if (battlefield == null) {
-            return null;
-        }
-
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(effect -> effect instanceof OpponentDrawTwoOrMoreReplacedEffect);
-            if (hasEffect) {
-                return permanent.getCard();
+    /**
+     * The source controlled by an opponent of {@code playerId} whose {@link OpponentDrawTwoOrMoreReplacedEffect}
+     * replaces {@code playerId}'s draw of two or more cards (Alms Collector); every opponent's battlefield is looked
+     * at, in APNAP order.
+     */
+    private OpponentSource findOpponentDrawTwoOrMoreReplacementSource(GameData gameData, UUID playerId) {
+        for (UUID opponentId : opponentsInApnapOrder(gameData, playerId)) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+                boolean hasEffect = permanent.getCard().getStaticEffects().stream()
+                        .anyMatch(effect -> effect instanceof OpponentDrawTwoOrMoreReplacedEffect);
+                if (hasEffect) {
+                    return new OpponentSource(permanent.getCard(), opponentId);
+                }
             }
         }
         return null;
     }
 
     private void resolveOpponentDrawTwoOrMoreReplacement(GameData gameData, UUID playerId,
-                                                          Card source) {
-        UUID sourceControllerId = gameQueryService.getOpponentId(gameData, playerId);
+                                                          OpponentSource almsCollector) {
+        Card source = almsCollector.card();
+        UUID sourceControllerId = almsCollector.controllerId();
         String playerName = gameData.playerIdToName.get(playerId);
         String controllerName = gameData.playerIdToName.get(sourceControllerId);
         gameLogService.append(gameData, GameLog.builder()

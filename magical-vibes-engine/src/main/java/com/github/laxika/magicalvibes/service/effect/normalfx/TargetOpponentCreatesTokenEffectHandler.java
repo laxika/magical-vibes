@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
@@ -15,8 +17,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link TargetOpponentCreatesTokenEffect}: the resolving controller's opponent creates the
- * tokens under their own control.
+ * Resolves {@link TargetOpponentCreatesTokenEffect}: the targeted opponent (a gift: the controller's opponent)
+ * creates the tokens under their own control.
  */
 @Component
 public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHandlerBean {
@@ -24,14 +26,17 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     public TargetOpponentCreatesTokenEffectHandler(
             PermanentControlSupport permanentControlSupport,
             GameQueryService gameQueryService,
-            AmountEvaluationService amountEvaluationService) {
+            AmountEvaluationService amountEvaluationService,
+            SubjectResolutionService subjectResolutionService) {
         this.permanentControlSupport = permanentControlSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
+        this.subjectResolutionService = subjectResolutionService;
     }
 
     @Override
@@ -47,7 +52,17 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
         if (controllerId == null) {
             return;
         }
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        UUID opponentId;
+        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
+            // "Target opponent creates": the opponent the ability targets (Phelddagrif), none once that target is
+            // illegal (CR 608.2b).
+            List<UUID> targeted = subjectResolutionService.players(gameData, entry, effect,
+                    Subjects.targetPlayerDeclaredElsewhere());
+            opponentId = targeted.isEmpty() ? null : targeted.getFirst();
+        } else {
+            // A gift's opponent is not recorded (the owner's open question): the first other seat.
+            opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        }
         if (opponentId == null) {
             return;
         }

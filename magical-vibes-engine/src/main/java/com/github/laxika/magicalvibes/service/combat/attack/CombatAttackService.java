@@ -637,7 +637,7 @@ public class CombatAttackService {
             }
             if (gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects().stream()
                     .anyMatch(MustAttackPlayerEffect.class::isInstance)
-                    && attackLegalityService.canAttackDefender(gameData, attacker, defenderId)
+                    && attackLegalityService.canAttackAPlayer(gameData, attacker, playerId)
                     && !gameData.playerIds.contains(targetId)) {
                 throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " must attack a player");
             }

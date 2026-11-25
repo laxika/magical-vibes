@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -135,5 +136,26 @@ class HeraldsReveilleTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(merfolk);
+    }
+
+    @Test
+    @DisplayName("Seeking into the hand logs that the player seeks a card, without naming it")
+    void seekIntoHandIsLoggedWithoutTheCardName() {
+        Forest exploredLand = new Forest();
+        Card sought = new MerfolkOfThePearlTrident();
+        harness.setLibrary(player1, List.of(exploredLand, sought));
+        harness.setHand(player1, List.of(new IxallisDiviner(), new HeraldsReveille()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(player1.getUsername() + " seeks 1 card."));
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Merfolk of the Pearl Trident"));
     }
 }

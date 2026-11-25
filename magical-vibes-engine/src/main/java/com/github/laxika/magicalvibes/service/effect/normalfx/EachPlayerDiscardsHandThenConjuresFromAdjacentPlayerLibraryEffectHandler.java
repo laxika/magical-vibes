@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenCon
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -54,17 +55,20 @@ public class EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHa
                 continue;
             }
 
-            for (int i = 0; i < conjure.count(); i++) {
-                Card duplicate = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()))
-                        .createConjuredCopy();
+            // "Each of seven random cards": seven different cards, as many as the library has (CR 609.3).
+            List<Card> picked = new ArrayList<>(candidates);
+            Collections.shuffle(picked, ThreadLocalRandom.current());
+            picked = picked.subList(0, Math.min(conjure.count(), picked.size()));
+            for (Card randomCard : picked) {
+                Card duplicate = randomCard.createConjuredCopy();
                 duplicate.setOwnerId(playerId);
                 duplicate.freeze();
                 gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
                 gameData.addCardToHand(playerId, duplicate);
             }
             gameLogService.append(gameData, GameLog.conjuresIntoHand(
-                    gameData.playerIdToName.get(playerId), conjure.count()));
-            ActionEvents.conjured(gameData, playerId, conjure.count());
+                    gameData.playerIdToName.get(playerId), picked.size()));
+            ActionEvents.conjured(gameData, playerId, picked.size());
         }
     }
 }

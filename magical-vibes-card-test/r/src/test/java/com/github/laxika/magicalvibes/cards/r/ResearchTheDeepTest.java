@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
 import com.github.laxika.magicalvibes.cards.m.Mutavault;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -123,4 +128,50 @@ class ResearchTheDeepTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Research the Deep");
         harness.assertNotInHand(player1, "Research the Deep");
     }
+
+    @Test
+    @DisplayName("In a three-player game the controller chooses the opponent to clash with")
+    void controllerChoosesTheOpponentToClashWith() {
+        Player player3 = addThirdPlayer();
+        // Draw Mutavault, then clash with Mothdust Changeling (MV 1): a tie against the second player's
+        // Mothdust Changeling, a win against the third player's Mutavault (MV 0).
+        harness.setLibrary(player1, List.of(new Mutavault(), new MothdustChangeling()));
+        harness.setLibrary(player2, List.of(new MothdustChangeling()));
+        harness.setLibrary(player3, List.of(new Mutavault()));
+
+        castResearch();
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice).isNotNull();
+        assertThat(opponentChoice.validIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.Scry scry) {
+            var player = scry.playerId().equals(player1.getId()) ? player1
+                    : scry.playerId().equals(player2.getId()) ? player2 : player3;
+            gs.handleInteractionAnswer(gd, player, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        }
+
+        harness.assertInHand(player1, "Research the Deep");
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
 }

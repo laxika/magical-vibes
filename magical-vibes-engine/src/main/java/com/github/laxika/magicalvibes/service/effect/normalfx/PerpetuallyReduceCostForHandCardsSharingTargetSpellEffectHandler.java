@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyReduceCostForHandCardsSharingTargetSpellEffect;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -43,7 +44,8 @@ public class PerpetuallyReduceCostForHandCardsSharingTargetSpellEffectHandler
         }
 
         Set<CardType> targetCardTypes = EnumSet.noneOf(CardType.class);
-        Card targetCard = targetEntry.getCard();
+        // A face-down spell has only its face-down characteristics: a creature spell (CR 708.2).
+        Card targetCard = CastingPermissionService.spellAsEffectsSeeIt(targetEntry).getCard();
         if (targetCard.getType() != null) {
             targetCardTypes.add(targetCard.getType());
         }

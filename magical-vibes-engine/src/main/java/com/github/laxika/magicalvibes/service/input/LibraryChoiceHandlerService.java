@@ -1533,24 +1533,13 @@ public class LibraryChoiceHandlerService {
 
             if (followUp.opponentExileChoice() != null) {
                 PendingOpponentExileChoice pending = followUp.opponentExileChoice();
-
-                UUID opponentId = null;
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    if (!pid.equals(pending.controllerId())) {
-                        opponentId = pid;
-                        break;
-                    }
-                }
-
-                if (opponentId != null) {
-                    String controllerName = gameData.playerIdToName.get(pending.controllerId());
-                    String prompt = "Let " + controllerName + " put the exiled card into their hand? If you decline, they draw "
-                            + pending.drawCountOnDecline() + " cards.";
-                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                            chosenCard, opponentId,
-                            List.of(new OpponentMayReturnExiledCardOrDrawEffect(pending.drawCountOnDecline())),
-                            prompt, chosenCard.getId()
-                    ));
+                // "Any opponent may": the opponents decide in turn order (Distant Memories ruling 2011-06-01).
+                List<UUID> opponents = com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler
+                        .apnapOpponents(gameData, pending.controllerId());
+                if (!opponents.isEmpty()) {
+                    MayPenaltyChoiceHandlerService.offerOpponentExileChoice(gameData, chosenCard,
+                            opponents.getFirst(), new OpponentMayReturnExiledCardOrDrawEffect(
+                                    pending.drawCountOnDecline(), pending.controllerId()));
                     playerInputService.processNextMayAbility(gameData);
                 }
             } else {

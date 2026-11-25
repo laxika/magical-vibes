@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.List;
 
 /**
- * The clash-source effect (MTG rule 701.29): resolves the {@code beforeClash} effects in order,
- * then the controller clashes against their (2-player) opponent — both reveal the top card of
+ * The clash-source effect (CR 701.30): resolves the {@code beforeClash} effects in order,
+ * then the controller chooses an opponent and clashes with them (CR 701.30b) — both reveal the top card of
  * their library, the controller wins if their revealed card's mana value is strictly greater.
  * On a win the {@code onWin} effect (if any) is dispatched, and if {@code repeatWhileWinning}
  * the whole sequence (beforeClash, then clash) repeats until the controller loses a clash.
@@ -26,10 +26,22 @@ import java.util.List;
  * @param repeatWhileWinning whether the whole sequence repeats while the controller keeps winning
  * @param beforeClashResolved true once the {@code beforeClash} effects have been queued ahead of this
  *                           record, so that only the clash itself remains to be performed
+ * @param opponent           the opponent clashed with, or {@code null} until the controller has chosen one (the
+ *                           one opponent, unasked)
  */
 public record ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolean repeatWhileWinning,
-                          boolean beforeClashResolved)
+                          boolean beforeClashResolved, PlayerSubject opponent)
         implements CardEffect {
+
+    public ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolean repeatWhileWinning,
+                       boolean beforeClashResolved) {
+        this(beforeClash, onWin, repeatWhileWinning, beforeClashResolved, null);
+    }
+
+    /** This clash with the given opponent. */
+    public ClashEffect against(PlayerSubject chosenOpponent) {
+        return new ClashEffect(beforeClash, onWin, repeatWhileWinning, beforeClashResolved, chosenOpponent);
+    }
 
     /** "Clash with an opponent. If you win, [onWin]." — the plain clash-then-reward template. */
     public ClashEffect(CardEffect onWin) {

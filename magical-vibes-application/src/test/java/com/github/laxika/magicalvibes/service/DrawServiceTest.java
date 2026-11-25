@@ -169,7 +169,9 @@ class DrawServiceTest {
 
     @Test
     void opponentMultiCardDrawIsReplacedWithOneCardForEachPlayer() {
-        when(gameQueryService.getOpponentId(gd, player2Id)).thenReturn(player1Id);
+        // The replacement's source is found on the battlefield of each opponent in the game.
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
         Card almsCollector = createCard("Alms Collector", CardType.CREATURE);
         almsCollector.addStaticEffect(new OpponentDrawTwoOrMoreReplacedEffect());
         gd.playerBattlefields.get(player1Id).add(new Permanent(almsCollector));

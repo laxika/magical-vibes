@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.service.JacksonConfig;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.StealEnchantment;
@@ -267,5 +269,22 @@ class DuplicityTest extends BaseCardTest {
 
         assertThat(gameLogContains("Forest")).isFalse();
         assertThat(gameLogContains("Island")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Nobody may look at the cards exiled face down with Duplicity, its controller included")
+    void controllerMayNotLookAtTheFaceDownCards() throws Exception {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest()));
+        UUID permId = castDuplicity();
+
+        harness.publishState();
+
+        String message = harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"").getLast();
+        GameStateMessage state = new JacksonConfig().objectMapper().readValue(message, GameStateMessage.class);
+        var view = state.battlefields().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.id().equals(permId)).findFirst().orElseThrow();
+        assertThat(view.faceDownExiledCount()).isEqualTo(5);
+        assertThat(view.faceDownExiledCards()).isEmpty();
     }
 }

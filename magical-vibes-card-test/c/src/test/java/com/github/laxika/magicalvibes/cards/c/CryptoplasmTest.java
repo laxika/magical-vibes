@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -271,5 +273,24 @@ class CryptoplasmTest extends BaseCardTest {
 
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("is no longer on the battlefield"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Cryptoplasm becomes a copy of Grizzly Bears."));
+    }
+
+    @Test
+    @DisplayName("Copying a face-down creature copies its face-down values: a nameless 2/2 with no abilities")
+    void copiesFaceDownCreatureByItsFaceDownValues() {
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
+        Permanent faceDown = addCreatureReady(player2, new ProdigalPyromancer());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, faceDown.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cryptoplasm.getCard().getName()).isNotEqualTo("Prodigal Pyromancer");
+        assertThat(cryptoplasm.getCard().getPower()).isEqualTo(2);
+        assertThat(cryptoplasm.getCard().getToughness()).isEqualTo(2);
+        assertThat(cryptoplasm.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Prodigal Pyromancer"));
     }
 }

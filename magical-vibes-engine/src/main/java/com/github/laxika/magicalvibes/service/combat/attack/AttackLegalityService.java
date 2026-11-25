@@ -739,6 +739,16 @@ public class AttackLegalityService {
     }
 
     /**
+     * Whether {@code creature} can attack one of the players other than its controller ("attacks a player each combat
+     * if able", CR 508.1d): any of them, not only the first other seat.
+     */
+    public boolean canAttackAPlayer(GameData gameData, Permanent creature, UUID creatureControllerId) {
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(creatureControllerId) && gameData.playerIds.contains(playerId))
+                .anyMatch(playerId -> canAttackDefender(gameData, creature, playerId));
+    }
+
+    /**
      * Counts the "attacks each combat if able" requirements the given creature carries (CR 508.1d):
      * its own static and transient ones (including a {@link ConditionalEffect}-wrapped self
      * requirement, e.g. Marauding Maulhorn's "unless you control …"), those granted by Auras attached
@@ -768,11 +778,9 @@ public class AttackLegalityService {
         UUID creatureControllerId = gameData.findControllerOf(creature);
 
         List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, creature).grantedEffects();
-        if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)) {
-            UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, creatureControllerId);
-            if (defendingPlayerId != null && canAttackDefender(gameData, creature, defendingPlayerId)) {
-                count[0]++;
-            }
+        if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)
+                && canAttackAPlayer(gameData, creature, creatureControllerId)) {
+            count[0]++;
         }
         count[0] += (int) grantedEffects.stream()
                 .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.subject() == null)

@@ -52,6 +52,35 @@ public class ChoosePlayerEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    /**
+     * Whether the opponent an instruction about "an opponent" acts on is still to be chosen by the controller
+     * ("clash with an opponent", "fateseal N", "an opponent chooses"; CR 701.30b): with two or more opponents the
+     * choice ({@link ChoosePlayerEffect#opponent()}) and {@code rerun} are put next in {@code entry}'s resolution,
+     * {@code rerun} reading the chosen player as {@code playersThisWay(CHOOSE)}, and the caller returns before it
+     * changes anything, so the instruction resolves once, after the choice. With one opponent nothing is asked
+     * (CR 608.2d): {@link #onlyOpponent(GameData, UUID)} is that player.
+     */
+    public static boolean opponentToBeChosenFirst(GameData gameData, StackEntry entry, CardEffect rerun) {
+        if (opponents(gameData, entry.getControllerId()).size() <= 1) {
+            return false;
+        }
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                List.of(ChoosePlayerEffect.opponent(), rerun));
+        return true;
+    }
+
+    /** {@code controllerId}'s one opponent still in the game, or {@code null} when there is none. */
+    public static UUID onlyOpponent(GameData gameData, UUID controllerId) {
+        List<UUID> opponents = opponents(gameData, controllerId);
+        return opponents.isEmpty() ? null : opponents.getFirst();
+    }
+
+    private static List<UUID> opponents(GameData gameData, UUID controllerId) {
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId) && gameData.playerIds.contains(playerId))
+                .toList();
+    }
+
     /** The answer to the choice. */
     public void completeChoice(GameData gameData, UUID playerId, PermanentChoiceContext.RecordChosenPlayer context) {
         if (!context.playerIds().contains(playerId)) {

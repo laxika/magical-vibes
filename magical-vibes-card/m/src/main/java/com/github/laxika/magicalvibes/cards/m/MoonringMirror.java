@@ -17,7 +17,8 @@ public class MoonringMirror extends Card {
 
     public MoonringMirror() {
         // Whenever you draw a card, exile the top card of your library face down.
-        addTrigger(Triggers.youDrawCard(), new ExileTopCardsToSourceEffect(1, true));
+        // Nobody may look at the face-down cards (CR 406.3).
+        addTrigger(Triggers.youDrawCard(), ExileTopCardsToSourceEffect.faceDownWithoutLookPermission(1));
 
         // At the beginning of your upkeep, you may exile all cards from your hand face down. If you
         // do, put all other cards you own exiled with this artifact into your hand. An empty hand

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.JacksonConfig;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTheHunt;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
@@ -247,5 +249,23 @@ class MoonringMirrorTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalHand);
         assertThat(gd.getCardsExiledByPermanent(mirrorId)).containsExactly(replacementHand);
+    }
+
+    @Test
+    @DisplayName("Nobody may look at the card exiled face down with the mirror, its controller included")
+    void controllerMayNotLookAtTheFaceDownCard() throws Exception {
+        UUID permId = addMirror();
+        harness.setHand(player1, new ArrayList<>());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        drawAndResolveTrigger(player1);
+
+        harness.publishState();
+
+        String message = harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"").getLast();
+        GameStateMessage state = new JacksonConfig().objectMapper().readValue(message, GameStateMessage.class);
+        var view = state.battlefields().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.id().equals(permId)).findFirst().orElseThrow();
+        assertThat(view.faceDownExiledCount()).isEqualTo(1);
+        assertThat(view.faceDownExiledCards()).isEmpty();
     }
 }

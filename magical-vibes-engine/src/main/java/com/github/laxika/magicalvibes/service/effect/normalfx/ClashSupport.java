@@ -35,10 +35,16 @@ public class ClashSupport {
      *         greater mana value), so callers can apply an "if you won" reward.
      */
     public boolean performClash(GameData gameData, UUID clashingPlayerId) {
-        UUID opponentId = gameData.orderedPlayerIds.stream()
+        return performClash(gameData, clashingPlayerId, gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(clashingPlayerId))
-                .findFirst().orElse(null);
+                .findFirst().orElse(null));
+    }
 
+    /**
+     * {@link #performClash(GameData, UUID)} with the opponent {@code clashingPlayerId} chose to clash with ("clash with
+     * an opponent" means "choose an opponent; you and that opponent each clash", CR 701.30b), or {@code null} for none.
+     */
+    public boolean performClash(GameData gameData, UUID clashingPlayerId, UUID opponentId) {
         Card clashingCard = topCard(gameData, clashingPlayerId);
         Card opponentCard = opponentId != null ? topCard(gameData, opponentId) : null;
 
