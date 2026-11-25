@@ -65,7 +65,7 @@ public class EachPlayerChoosesCreatureToDestroyEffectHandler implements NormalEf
                             List.copyOf(remaining), List.copyOf(chosen));
             gameData.interaction.setPermanentChoiceContext(context);
             playerInputService.beginPermanentChoice(gameData, choosingPlayerId, creatureIds, context,
-                    sourceCard.getName() + " — choose a creature you control to destroy.");
+                    sourceCard.getName() + " — choose a creature to destroy.");
             return;
         }
 

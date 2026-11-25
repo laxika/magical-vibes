@@ -761,9 +761,12 @@ public class LibrarySearchSupport {
             params = params.withCards(restricted);
         }
 
+        // A card the search would let its searcher cast is not offered while an Opposition Agent's player makes the
+        // search's choices: that player can't have the searcher find a card the search doesn't ask for (its ruling).
         boolean ownLibrarySearch = (params.targetPlayerId() == null || params.targetPlayerId().equals(playerId))
                 && !params.sourceSideboard()
-                && params.sourceCards() == null;
+                && params.sourceCards() == null
+                && applyOppositionAgentControl(gameData, params).decisionPlayerId() == null;
         if (ownLibrarySearch) {
             params = params.withAllowCastFromLibraryWhileSearching(true);
             List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
@@ -792,7 +795,11 @@ public class LibrarySearchSupport {
 
         params = applyOppositionAgentControl(gameData, params);
 
-        if (reverseMiracleSupport != null && reverseMiracleSupport.offerBeforeSearch(gameData, playerId, params,
+        // The bottom card is offered only when the search reaches it: Aven Mindcensor's top cards may leave it out.
+        boolean bottomCardSearched = topLimit == Integer.MAX_VALUE
+                || gameData.playerDecks.getOrDefault(playerId, List.of()).size() <= topLimit;
+        if (reverseMiracleSupport != null && bottomCardSearched
+                && reverseMiracleSupport.offerBeforeSearch(gameData, playerId, params,
                 prompt, canFailToFind, logMessage)) {
             return;
         }

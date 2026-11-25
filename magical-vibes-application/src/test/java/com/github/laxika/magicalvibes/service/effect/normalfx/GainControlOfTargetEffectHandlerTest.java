@@ -185,6 +185,39 @@ class GainControlOfTargetEffectHandlerTest {
                     .filter(s -> s == CardSubtype.VAMPIRE).count()).isEqualTo(1);
         }
 
+        @Test
+        @DisplayName("Takes only the targets of its own target group, not another group's permanent")
+        void takesOnlyItsOwnGroupsTargets() {
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT);
+            var marker = new com.github.laxika.magicalvibes.model.effect.TargetGroupMarkerEffect();
+            Card card = new Card() {
+                {
+                    setName("Two Group Spell");
+                    target(com.github.laxika.magicalvibes.model.filter.TargetFilters.permanent())
+                            .addSpellEffect(marker);
+                    target(com.github.laxika.magicalvibes.model.filter.TargetFilters.permanent())
+                            .addSpellEffect(effect);
+                }
+            };
+            Permanent otherGroupTarget = createCreature("Hill Giant");
+            Permanent stolen = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(otherGroupTarget);
+            gd.playerBattlefields.get(player2Id).add(stolen);
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card, player1Id, card.getName(),
+                    List.of(marker, effect), (UUID) null, List.of(otherGroupTarget.getId(), stolen.getId()));
+
+            org.mockito.Mockito.lenient().when(gameQueryService.findPermanentById(gd, otherGroupTarget.getId()))
+                    .thenReturn(otherGroupTarget);
+            when(gameQueryService.findPermanentById(gd, stolen.getId())).thenReturn(stolen);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(creatureControlService).applyControlEffect(gd, player1Id, stolen,
+                    effect, Duration.PERMANENT, null, "Two Group Spell");
+            verify(creatureControlService, never()).applyControlEffect(eq(gd), eq(player1Id), eq(otherGroupTarget),
+                    any(), any(), any(), any());
+        }
+
         // ----- Multi-target (via getTargetIds()) -----
 
         @Test

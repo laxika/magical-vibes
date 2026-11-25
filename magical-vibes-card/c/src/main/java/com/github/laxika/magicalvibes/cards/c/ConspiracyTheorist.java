@@ -23,10 +23,11 @@ public class ConspiracyTheorist extends Card {
     public ConspiracyTheorist() {
         addTrigger(Triggers.attacks(), new MayPayManaEffect(
                 "{1}", new DiscardAndDrawCardEffect(), "Pay {1} and discard a card to draw a card?"));
-        addTrigger(Triggers.youDiscardOneOrMoreCards(), new MayEffect(
+        CardNotPredicate nonland = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
+        addTrigger(Triggers.youDiscardOneOrMoreCards().withFilter(nonland), new MayEffect(
                 SequenceEffect.of(
                         ChooseCardEffect.oneOf(
-                                Subjects.triggeringCards(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
+                                Subjects.triggeringCards(nonland),
                                 "one of the discarded nonland cards to exile"),
                         ExileGraveyardCardsEffect.cardsWithSource(Subjects.cardsThisWay(StepKind.CHOOSE)),
                         AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE))),

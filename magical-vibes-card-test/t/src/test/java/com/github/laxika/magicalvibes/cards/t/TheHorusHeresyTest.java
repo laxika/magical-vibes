@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -189,6 +190,21 @@ class TheHorusHeresyTest extends BaseCardTest {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheHorusHeresy());
         saga.setCounterCount(CounterType.LORE, loreCounters);
         return saga;
+    }
+
+    @Test
+    @DisplayName("Chapter III asks each player for a creature, not for a creature they control")
+    void chapterIIIPromptDoesNotSayYouControl() {
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(2);
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.prompt()).doesNotContain("you control").contains("choose a creature to destroy");
     }
 
     private void triggerChapter() {

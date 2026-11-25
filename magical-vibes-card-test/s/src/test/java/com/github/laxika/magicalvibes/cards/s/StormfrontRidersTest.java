@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.d.DuneriderOutlaw;
 import com.github.laxika.magicalvibes.cards.f.FrozenAether;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StormfrontRiders.class, DuneriderOutlaw.class, FrozenAether.class, Boomerang.class})
+@CardUsed({StormfrontRiders.class, DuneriderOutlaw.class, FrozenAether.class, Boomerang.class,
+        GlimpseTheUnthinkablePlaytest.class})
 class StormfrontRidersTest extends BaseCardTest {
 
     @Test
@@ -161,6 +163,24 @@ class StormfrontRidersTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.isToken());
     }
+    @Test
+    @DisplayName("A creature that can't be chosen is neither offered nor returned")
+    void leavesOutACreatureThatCantBeChosen() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        harness.addToBattlefield(player1, new DuneriderOutlaw());
+        harness.setHand(player1, List.of(new StormfrontRiders()));
+        addStormfrontMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.MultiPermanentChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+        harness.assertInHand(player1, "Dunerider Outlaw");
+        harness.assertInHand(player1, "Stormfront Riders");
+    }
+
     private void addStormfrontMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 1);

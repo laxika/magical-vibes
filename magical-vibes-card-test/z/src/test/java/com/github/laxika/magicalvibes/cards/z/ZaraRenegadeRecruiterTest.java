@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZaraRenegadeRecruiter.class, GrizzlyBears.class, Forest.class})
+@CardUsed({ZaraRenegadeRecruiter.class, GrizzlyBears.class, Forest.class, JaceBeleren.class})
 class ZaraRenegadeRecruiterTest extends BaseCardTest {
 
     @Test
@@ -179,6 +181,33 @@ class ZaraRenegadeRecruiterTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The creature's controller chooses whether it attacks that player or a planeswalker they control (CR 508.4)")
+    void chooseThePlayerOrTheirPlaneswalkerToAttack() {
+        addZaraReady();
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Card creature = new GrizzlyBears();
+        creature.setOwnerId(player2.getId());
+        harness.setHand(player2, List.of(creature));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(player2.getId(), jace.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.handlePermanentChosen(player1, jace.getId()));
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(bears.getAttackTarget()).isEqualTo(jace.getId());
     }
 
     private void addZaraReady() {

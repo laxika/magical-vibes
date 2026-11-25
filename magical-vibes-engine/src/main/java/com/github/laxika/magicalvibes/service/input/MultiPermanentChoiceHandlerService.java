@@ -234,8 +234,6 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
             eachPlayerChoosesCreatureThenSacrificesRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .EachPlayerChoosesLandAndPutCounterEffectHandler eachPlayerChoosesLandAndPutCounterHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
@@ -417,7 +415,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentThenReturnRestChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentAndPutCounterChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreatureThenSacrificesRestChoice
-                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice
                 || context instanceof MultiPermanentChoiceContext.ObjectVoteChoice vote && !vote.upToOne()
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest)
@@ -934,8 +931,6 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesNonlandPermanentAndPutCounter(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreatureThenSacrificesRestChoice ctx) {
             handleEachPlayerChoosesCreatureThenSacrificesRest(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice ctx) {
-            handleEachPlayerChoosesLandAndPutCounter(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyTapChoice ctx) {
             handleRaidingPartyTapChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyPlainsChoice ctx) {
@@ -2971,18 +2966,6 @@ public class MultiPermanentChoiceHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleEachPlayerChoosesLandAndPutCounter(
-            GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice context) {
-        eachPlayerChoosesLandAndPutCounterHandler.completeChoice(gameData, permanentIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleChooseLandOfEachBasicTypeThenDestroyChoice(

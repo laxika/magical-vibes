@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.d.DemonicTutor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,13 +9,14 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Sunimret.class, DemonicTutor.class, GrizzlyBears.class})
+@CardUsed({Sunimret.class, DemonicTutor.class, GrizzlyBears.class, AvenMindcensor.class})
 class SunimretTest extends BaseCardTest {
 
     @Test
@@ -99,5 +101,23 @@ class SunimretTest extends BaseCardTest {
         harness.handleCardChosen(player1, search.params().cards().indexOf(sunimret));
         assertThat(gd.playerHands.get(player1.getId())).contains(sunimret);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(sunimret.getId()));
+    }
+
+    @Test
+    @DisplayName("No reverse miracle offer when an opponent's Aven Mindcensor keeps the bottom card out of the search")
+    void noOfferWhenOnlyTheTopFourAreSearched() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        Card sunimret = new Sunimret();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), sunimret));
+
+        harness.castFromHand(player1, new DemonicTutor(), "{1}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).doesNotContain(sunimret);
     }
 }

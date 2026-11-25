@@ -55,6 +55,28 @@ class RamblingPossumTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature that saddled it can be returned though an opponent now controls it")
+    void returnsASaddlerAnOpponentNowControls() {
+        Permanent possum = addCreatureReady(player1, new RamblingPossum());
+        Permanent saddler = addCreatureReady(player1, new RamblingPossum());
+
+        saddle(possum);
+        setOwnerAndController(saddler, player1, player2);
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(saddler.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(saddler.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(saddler);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(saddler.getCard().getId()));
+    }
+
+    @Test
     @DisplayName("Declining the optional return leaves the saddler on the battlefield")
     void mayDeclineReturn() {
         Permanent possum = addCreatureReady(player1, new RamblingPossum());

@@ -341,7 +341,7 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Turf War's enter trigger can't choose Glimpse as the land to get a contested counter")
+    @DisplayName("Turf War's enter trigger can't target Glimpse as the land to get a contested counter")
     void turfWarEnterTriggerSkipsGlimpse() {
         Permanent ashaya = harness.addToBattlefieldAndReturn(player1, new AshayaSoulOfTheWild());
         Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
@@ -351,6 +351,11 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice targets =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(targets.validIds()).containsExactlyInAnyOrder(ashaya.getId(), opponentForest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ashaya.getId(), opponentForest.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

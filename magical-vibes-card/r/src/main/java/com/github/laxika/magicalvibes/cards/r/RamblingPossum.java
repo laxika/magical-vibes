@@ -26,8 +26,10 @@ public class RamblingPossum extends Card {
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 2),
                         new MayEffect(
+                                // "Creatures that saddled it this turn", whoever controls them now.
                                 ReturnChosenPermanentsToHandEffect.anyNumber(
-                                        Subjects.controlledBy(Subjects.you(), new PermanentThatSaddledSourceThisTurnPredicate()), "creature"),
+                                        Subjects.controlledBy(Subjects.eachPlayer(),
+                                                new PermanentThatSaddledSourceThisTurnPredicate()), "creature"),
                                 "Return any number of creatures that saddled it to their owners' hands?")));
 
         addActivatedAbility(new ActivatedAbility(

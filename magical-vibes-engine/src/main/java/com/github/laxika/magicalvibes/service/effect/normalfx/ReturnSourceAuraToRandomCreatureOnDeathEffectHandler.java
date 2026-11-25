@@ -31,6 +31,7 @@ public class ReturnSourceAuraToRandomCreatureOnDeathEffectHandler implements Nor
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +54,9 @@ public class ReturnSourceAuraToRandomCreatureOnDeathEffectHandler implements Nor
             return;
         }
 
+        // "Return this card to the battlefield" instructs the ability's controller, so it enters under their control
+        // (CR 110.2a) and what it can enchant is judged for them.
+        UUID returningControllerId = entry.getControllerId();
         List<UUID> validTargetIds = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -60,7 +64,7 @@ public class ReturnSourceAuraToRandomCreatureOnDeathEffectHandler implements Nor
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (isLegalCreature(gameData, auraCard, auraOwnerId, permanent)) {
+                if (isLegalCreature(gameData, auraCard, returningControllerId, permanent)) {
                     validTargetIds.add(permanent.getId());
                 }
             }
@@ -81,21 +85,24 @@ public class ReturnSourceAuraToRandomCreatureOnDeathEffectHandler implements Nor
         permanentRemovalService.removeCardFromGraveyardById(gameData, auraCardId);
         Permanent auraPermanent = new Permanent(auraCard);
         auraPermanent.setAttachedTo(targetId);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraOwnerId, auraPermanent);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, returningControllerId, auraPermanent);
+        if (!returningControllerId.equals(auraOwnerId)) {
+            graveyardReturnSupport.trackStolenCreature(gameData, auraPermanent.getId(), returningControllerId, auraOwnerId);
+        }
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(auraCard)
                 .text(" returns to the battlefield attached to ")
                 .card(target.getCard())
-                .text(" under " + gameData.playerIdToName.get(auraOwnerId) + "'s control.")
+                .text(" under " + gameData.playerIdToName.get(returningControllerId) + "'s control.")
                 .build());
         log.info("Game {} - {} returns attached to {} (chosen at random)",
                 gameData.id, auraCard.getName(), target.getCard().getName());
     }
 
-    private boolean isLegalCreature(GameData gameData, Card auraCard, UUID auraOwnerId, Permanent permanent) {
+    private boolean isLegalCreature(GameData gameData, Card auraCard, UUID auraControllerId, Permanent permanent) {
         if (!gameQueryService.isCreature(gameData, permanent)
-                || !auraAttachmentService.canEnchant(gameData, auraCard, auraOwnerId, permanent)) {
+                || !auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, permanent)) {
             return false;
         }
 

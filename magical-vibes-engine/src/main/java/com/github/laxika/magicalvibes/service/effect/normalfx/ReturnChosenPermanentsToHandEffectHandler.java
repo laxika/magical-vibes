@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnChosenPermanentsToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class ReturnChosenPermanentsToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final SubjectResolutionService subjectResolutionService;
+    private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final BounceSupport bounceSupport;
@@ -41,7 +43,8 @@ public class ReturnChosenPermanentsToHandEffectHandler implements NormalEffectHa
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choose = (ReturnChosenPermanentsToHandEffect) effect;
         entry.recordStep(StepKind.RETURN, StepOutcome.NONE);
-        List<Permanent> candidates = subjectResolutionService.permanents(gameData, entry, effect, choose.candidates());
+        List<Permanent> candidates = choosable(gameData,
+                subjectResolutionService.permanents(gameData, entry, effect, choose.candidates()));
         AmountContext context = AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot());
         int maximum = choose.maximum() == null ? candidates.size() : Math.min(candidates.size(),
                 Math.max(0, amountEvaluationService.evaluate(gameData, choose.maximum(), context)));
@@ -70,8 +73,8 @@ public class ReturnChosenPermanentsToHandEffectHandler implements NormalEffectHa
     public void completeChoice(GameData gameData, StackEntry entry, List<UUID> chosenIds,
                                MultiPermanentChoiceContext.ReturnChosenPermanentsToHand context) {
         List<Permanent> chosen = new ArrayList<>();
-        for (Permanent permanent : subjectResolutionService.permanents(
-                gameData, entry, context.effect(), context.effect().candidates())) {
+        for (Permanent permanent : choosable(gameData, subjectResolutionService.permanents(
+                gameData, entry, context.effect(), context.effect().candidates()))) {
             if (chosenIds.contains(permanent.getId())) {
                 chosen.add(permanent);
             }
@@ -82,5 +85,10 @@ public class ReturnChosenPermanentsToHandEffectHandler implements NormalEffectHa
             return;
         }
         bounceSupport.returnChosenTogether(gameData, entry, chosen);
+    }
+
+    /** What can be chosen of {@code permanents}: a permanent that can't be chosen is neither offered nor counted (CR 608.2d). */
+    private List<Permanent> choosable(GameData gameData, List<Permanent> permanents) {
+        return permanents.stream().filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent)).toList();
     }
 }

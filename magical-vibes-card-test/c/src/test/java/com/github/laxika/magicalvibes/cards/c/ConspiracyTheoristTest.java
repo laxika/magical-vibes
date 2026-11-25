@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.ThrillingDiscovery;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ConspiracyTheorist.class, GrizzlyBears.class, Shock.class, ThrillingDiscovery.class})
+@CardUsed({ConspiracyTheorist.class, GrizzlyBears.class, Shock.class, ThrillingDiscovery.class, Forest.class})
 class ConspiracyTheoristTest extends BaseCardTest {
 
     @Test
@@ -71,6 +72,25 @@ class ConspiracyTheoristTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBeforeCast - 2);
+    }
+
+    @Test
+    @DisplayName("Discarding only a land doesn't trigger the exile ability")
+    void discardingOnlyALandDoesNotTrigger() {
+        addCreatureReady(player1, new ConspiracyTheorist());
+        Card land = new Forest();
+        harness.setHand(player1, List.of(land));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

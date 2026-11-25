@@ -540,42 +540,42 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 
 **5. Wrong targets and choices.**
 
-- `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard). Fold run 4. Sure of the code.
-- `CardSubject.TriggeringCards` names a card only in the stay its event put it in, so `bindCardSubjects` reads no type for a discarded card that was exiled instead or has left the graveyard, where the text reads last-known characteristics (CR 608.2h; Diviner of Fates' fold). Fold run 4. Sure of the code.
-- Turf War's enter trigger doesn't target ("target land"): hexproof, shroud, protection, ward are skipped. P14. Sure.
+- `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard). Fold run 4. Sure of the code. Defect run D15: left; Zenos yae Galvus relies on the source's chosen-permanent write, which leaks into a later copy (CR 607.2d, 707.7): needs choices keyed by their linking ability.
+- `CardSubject.TriggeringCards` names a card only in the stay its event put it in, so `bindCardSubjects` reads no type for a discarded card that was exiled instead or has left the graveyard, where the text reads last-known characteristics (CR 608.2h; Diviner of Fates' fold). Fold run 4. Sure of the code. Defect run D15: already fixed (fold run 17d); use triggeringCardsAsTheyLastExisted when Diviner of Fates is folded.
+- ~~Turf War's enter trigger doesn't target ("target land"): hexproof, shroud, protection, ward are skipped. P14. Sure.~~ Fixed in defect run D15.
 - ~~Misfortune's second mode hits every opponent ("that player"). P13. Sure, multiplayer. Fold: opp-mode.~~ Fixed in fold run 19b.
 - ~~Kaya, Spirits' Justice targets any token ("target token you control"). P13. Fairly sure. Fold: copier.~~ Fixed in fold run 17b.
 - ~~Loss replacements apply in `LossReplacer` bean order: the losing player doesn't choose (CR 616.1; only several Archangels do). P04. Sure. Fold: loss-repl.~~ Fixed in fold run 39.
-- Delaying Shield and Force Bubble: damage goes to the first source found; the player should choose (CR 616.1). P06. Sure, rare.
+- ~~Delaying Shield and Force Bubble: damage goes to the first source found; the player should choose (CR 616.1). P06. Sure, rare.~~ Already fixed (checked in defect run D15).
 - ~~`AuraCopyService.beginChooseCreatureOnEnter` (Metamorphic Alteration), Ascent of the Worthy's choice: no can't-be-chosen check (CR 608.2d). P03. Sure. Fold: copier, redir-your. (Metamorphic Alteration fixed in fold run 17; Ascent of the Worthy open.)~~ Ascent fixed in fold run 27 (`ChoosePermanentsEffect`); line closed.
 - ~~Portal Mage, Capricopian: `getValidAttackTargetIds` keeps restrictions the reselection ignores (Portal Mage's ruling; Misleading Signpost uses `getValidReselectionTargetIds`). P09. Sure, low. Fold: reselect.~~ Fixed in fold run 19.
 - ~~Harness Infinity puts the hand into the graveyard with no order prompt (CR 404.3). P06. Sure, low. Fold: zone-exchange.~~ Fixed in fold run 45.
-- Moving a control-changing Aura (Halvar, Codsworth, Heavenly Blademaster, Kudzu, Steam Vines) doesn't recompute control; Glamer Spinners only for the new host. P02. Sure of the code. Fold: attach. (Halvar, Codsworth, Heavenly Blademaster, Kudzu, Steam Vines fixed in fold run 15; Glamer Spinners open.)
+- ~~Moving a control-changing Aura (Halvar, Codsworth, Heavenly Blademaster, Kudzu, Steam Vines) doesn't recompute control; Glamer Spinners only for the new host. P02. Sure of the code. Fold: attach. (Halvar, Codsworth, Heavenly Blademaster, Kudzu, Steam Vines fixed in fold run 15; Glamer Spinners open.)~~ Not a defect (defect run D15): the state-based pass's control reconcile returns the old host (guard test).
 - ~~Gilgamesh's "When you put one or more Equipment onto the battlefield this way" is asked inline, not as a reflexive ability (CR 603.12). P02. Fairly sure. Fold: attach.~~ Stale (fold run 15b): its follow-up has been a reflexive ability since `a4fa57bd34`.
-- Wicked Guardian draws with no other creature to damage ("If you do"). P01. Fairly sure. Fold: p-dmg. Done in fold run 2 (2026-11-23): the CHOOSE step gates the draw (`WickedGuardianTest`).
-- Infectious Rage returns the Aura under its owner's control; the instructed player is the ability's controller (CR 110.2a). Runs 10, 11. Code.
-- Conspiracy Theorist's discard trigger has no nonland filter. Run 8. Code.
-- Die Young declares a benign target for its -X/-X (AI only). T1. Code.
+- ~~Wicked Guardian draws with no other creature to damage ("If you do"). P01. Fairly sure. Fold: p-dmg. Done in fold run 2 (2026-11-23): the CHOOSE step gates the draw (`WickedGuardianTest`).~~ Already fixed (checked in defect run D15).
+- ~~Infectious Rage returns the Aura under its owner's control; the instructed player is the ability's controller (CR 110.2a). Runs 10, 11. Code.~~ Fixed in defect run D15.
+- ~~Conspiracy Theorist's discard trigger has no nonland filter. Run 8. Code.~~ Fixed in defect run D15.
+- ~~Die Young declares a benign target for its -X/-X (AI only). T1. Code.~~ Already fixed (checked in defect run D15).
 - ~~Enslave's owner comes from `stolenCreatures`, else the controller. T1. Unverified.~~ Fixed in fold run 26 (owner from the card; deals as last known; test).
-- Great Intelligence's Plan skips the villainous choice when neither option can do anything (The Valeyard not checked). P12. Low.
-- Snarlfang Vermin's "that creature" is a benign creature target spec; hexproof or protection at the trigger door not traced. P08. Low.
-- Resounding Wave's cycling trigger chooses as it resolves where its text targets (CR 603.3d). Run 10. Unverified.
-- Ravener with no targetable opponent is refused at cast (CR 603.3d); its trigger-time prompt asks for the creature first. Run 37. Unverified.
-- Ravenous Pursuit's recipient is "creature an opponent controls" for "creature you don't control". Run 37. Unverified.
-- Graceful Takedown: the same creature can be chosen for both dealer groups (CR 115.3). Run 38. Unverified.
-- `GainControlOfTargetEffectHandler.resolvePermanent` reads all the entry's targets, not the effect's group. Runs 35, 38. Unverified.
-- Origin of Thor's chapter target prompt doesn't consult protection. 5h. Unverified.
-- Soundwave's "from their graveyard" is the damaged player's; the scope admits any opponent's. 8.24. Unverified.
-- Zara attacks what the attackers' defender was, with no choice of that player's planeswalker (CR 508.4). Run 17. Unverified.
-- The Horus Heresy's prompt says "a creature you control" over every creature. Run 8. Unverified.
-- Opposition Agent's player can take a cast-only card as the find; the AI's search strategy answers only for the searcher. Run 9. Unverified.
-- Sunimret's reverse-miracle offer reads the bottom card when only the top four may be searched. Run 9. Unverified.
-- Rambling Possum offers only saddlers its controller still controls. Run 10. Unverified.
-- The chosen returns to a hand don't leave out a `CantBeChosenEffect` permanent. Run 10. Unverified.
-- `beginAnyTargetChoice` and the permanent-or-player prompt don't drop what can't be chosen; about 400 counting callers unswept. Runs 18, 19. Unverified.
-- A name prompt that requires a type offers a copy's name by the copy's types (CR 201.4a). Run 15. Unverified.
-- Scour the Scene offers battlefield creatures by card id; other perpetual hand prompts unaudited. Runs 16, 17. Unverified.
-- The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Run 12. Unverified.
+- ~~Great Intelligence's Plan skips the villainous choice when neither option can do anything (The Valeyard not checked). P12. Low.~~ Already fixed (checked in defect run D15).
+- ~~Snarlfang Vermin's "that creature" is a benign creature target spec; hexproof or protection at the trigger door not traced. P08. Low.~~ Not a defect (defect run D15): 'that creature' is bound without targeting (guard test).
+- ~~Resounding Wave's cycling trigger chooses as it resolves where its text targets (CR 603.3d). Run 10. Unverified.~~ Already fixed (checked in defect run D15).
+- ~~Ravener with no targetable opponent is refused at cast (CR 603.3d); its trigger-time prompt asks for the creature first. Run 37. Unverified.~~ Not a defect for the outcome (defect run D15): the trigger is removed (CR 603.3d); the creature prompt asked first is presentation only.
+- ~~Ravenous Pursuit's recipient is "creature an opponent controls" for "creature you don't control". Run 37. Unverified.~~ Not a defect (defect run D15): creatureAnOpponentControls() is built as 'not controlled by you'.
+- ~~Graceful Takedown: the same creature can be chosen for both dealer groups (CR 115.3). Run 38. Unverified.~~ Already fixed (checked in defect run D15).
+- ~~`GainControlOfTargetEffectHandler.resolvePermanent` reads all the entry's targets, not the effect's group. Runs 35, 38. Unverified.~~ Fixed in defect run D15.
+- ~~Origin of Thor's chapter target prompt doesn't consult protection. 5h. Unverified.~~ Already fixed (checked in defect run D15).
+- Soundwave's "from their graveyard" is the damaged player's; the scope admits any opponent's. 8.24. Unverified. Defect run D15: left; multiplayer only, needs a 'that player's graveyard' target scope and a three-player harness.
+- ~~Zara attacks what the attackers' defender was, with no choice of that player's planeswalker (CR 508.4). Run 17. Unverified.~~ Fixed in defect run D15.
+- ~~The Horus Heresy's prompt says "a creature you control" over every creature. Run 8. Unverified.~~ Fixed in defect run D15.
+- Opposition Agent's player can take a cast-only card as the find; the AI's search strategy answers only for the searcher. Run 9. Unverified. Defect run D15: the Agent player's cast-only find fixed; the AI half (its search strategy answers only for the searcher) left.
+- ~~Sunimret's reverse-miracle offer reads the bottom card when only the top four may be searched. Run 9. Unverified.~~ Fixed in defect run D15.
+- ~~Rambling Possum offers only saddlers its controller still controls. Run 10. Unverified.~~ Fixed in defect run D15.
+- ~~The chosen returns to a hand don't leave out a `CantBeChosenEffect` permanent. Run 10. Unverified.~~ Fixed in defect run D15.
+- `beginAnyTargetChoice` and the permanent-or-player prompt don't drop what can't be chosen; about 400 counting callers unswept. Runs 18, 19. Unverified. Defect run D15: the shared prompts (beginAnyTargetChoice, beginMultiPermanentOrPlayerChoice) fixed; the sweep of callers that count candidates before prompting left.
+- A name prompt that requires a type offers a copy's name by the copy's types (CR 201.4a). Run 15. Unverified. Defect run D15: left; collectCardNamesKnownTo should offer the original card and leave copied names to the Oracle catalog.
+- ~~Scour the Scene offers battlefield creatures by card id; other perpetual hand prompts unaudited. Runs 16, 17. Unverified.~~ Fixed for can't-be-chosen in defect run D15; offering by card id is not a defect (only the chooser sees it, CR 708.5).
+- The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Run 12. Unverified. Defect run D15: the processor head is not a defect (Ruin Processor's completion picks a random card of the pile); the Ulamog's Nullifier half is a new line.
 - Twinning Glass offers neither an Adventure nor a modal back face sharing the name and checks additional costs only on accept. Run 26. Unverified.
 - Vivien's Stampede grants through `otherCreaturesYouControl()` on a sorcery (every creature you control). Run 31. Unverified.
 - `DiscardCardThenEffect`'s reflexive cards inside a `MayEffect` are asked with no matching card. 8.22. Unverified.
@@ -604,6 +604,9 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `ReservoirKrakenTest` has 5 tests with no `@DisplayName`. Run 47b. Sure.
 - The AI's filtered must-be-blocked choice with menace (two blockers needed) is approximate: the greedy simulator doesn't narrow, and Easy and the exhaustive phase may skip the block (CR 509.1c). Run 7c. Fairly sure, AI only.
 - `LookAtTopCardsAndMayCastEffect` offers a spell that can't be cast (no legal target, Rule of Law, an unpayable mandatory additional cost); choosing it logs "can't be cast" (CR 608.2d). Galvanoth, Sunbird's Invocation, Rashmi, Unexpected Results, Velomachus. Run 8e. Fairly sure.
+- `ExileGraveyardCardsEffect.defendingPlayerOnly` (Graven Abomination): the flag is never read, so any opponent's graveyard can be targeted (multiplayer). Defect run D15. Sure of the code.
+- Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Defect run D15. Fairly sure.
+- Zara's hand-to-battlefield put calls `handleCreatureEnteredBattlefield` directly rather than the entry batch. Defect run D15. Unverified.
 
 **6. Payments and costs.**
 
@@ -871,7 +874,8 @@ entwine with two modes (P09).
 | D12 | groups 2 and 8, 34 | two-player assumptions; logs and hidden information. Done 2026-11-25: 15 fixed (clash, fateseal, Deliver Unto Evil, Distant Memories, the draw-stealing sources, Retribution, Nahiri; face-down copy, look and spell reads; Juggle), 7 not a defect, 4 already fixed, 8 left (the mid-flow "an opponent" prompt for seven cards, multi-defender blocks, multiplayer elimination); 6 new lines (groups 2, 8) |
 | D13 | group 3, 24 | simultaneity and APNAP. Done 2026-11-25: 6 fixed (Giant Albatross, Disorienting Choice, Sothera, Ol Rin's Searing Light, Make an Example, multi-sacrifice spell costs), 4 not a defect (one handler run is already one event), 9 left, 5 not reached (L17 to L21, L23: the Sothera pattern next: Gilded Ambusher, Dispersal); 3 new group-3 lines |
 | D14 | group 4, 31 | missing events or records. Done 2026-11-25: 13 fixed (flip events, dice advantage on every roll, vanishing's one sacrifice trigger, last-counter events, Sin's same-batch entrants, Parley steps, Edgar-won flips, no shuffle when a "may search" can't search), 7 not a defect or already fixed, 11 left (L17 for the owner: "if you do" after a draw replaced by draws); 4 new lines (groups 4, 9) |
-| D15, D16 | group 5, halves | wrong targets and choices |
+| D15 | group 5, first 28 | wrong targets and choices. Done 2026-11-25: 11 fixed (Turf War targets, Infectious Rage's controller, Conspiracy Theorist, Zara's attack choice, Opposition Agent, Sunimret, Rambling Possum, can't-be-chosen in the shared prompts), 7 already fixed, 5 not a defect, 5 left; 1 record dead; 3 new group-5 lines |
+| D16 | group 5, last 27 | wrong targets and choices |
 | D17 | group 6 | payments and costs |
 | D18 | group 7 | layers and copy values |
 | D19 to D22 | group 9, quarters | other |

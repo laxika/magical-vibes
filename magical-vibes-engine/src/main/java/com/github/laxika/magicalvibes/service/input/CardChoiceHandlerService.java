@@ -2192,7 +2192,32 @@ public class CardChoiceHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", chosenCard, " onto the battlefield under their control."));
 
+        if (choice.enterAttacking() && beginDefendingPlayerAttackTargetChoice(
+                gameData, player.getId(), choice.targetPlayerId(), permanent)) {
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * "Attacking that player or a planeswalker they control" (Zara, Renegade Recruiter): the creature's controller
+     * chooses which (CR 508.4). With no planeswalker of that player there is no choice; returns whether one is asked.
+     */
+    private boolean beginDefendingPlayerAttackTargetChoice(GameData gameData, UUID controllerId, UUID defendingPlayerId,
+                                                           Permanent attacker) {
+        List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(defendingPlayerId, List.of()).stream()
+                .filter(candidate -> gameQueryService.isPlaneswalker(gameData, candidate))
+                .map(Permanent::getId)
+                .toList();
+        if (planeswalkerIds.isEmpty() || !gameData.playerIds.contains(defendingPlayerId)) {
+            return false;
+        }
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.TokenAttackTargetChoice(controllerId, List.of(attacker.getId())));
+        playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkerIds, List.of(defendingPlayerId),
+                "Choose the player or planeswalker for " + FaceDownVisibility.publicName(gameData, attacker)
+                        + " to attack.");
+        return true;
     }
 
     /** The caster declines an optional revealed-hand choice (e.g. Vendilion Clique's "may"). */

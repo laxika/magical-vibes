@@ -54,7 +54,8 @@ public class ChooseCreatureCardInHandOrCreatureYouControlAndApplyPerpetualPowerT
         UUID playerId = interaction.playerId();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
             if (permanent.getCard().getId().equals(chosenCardId)
-                    && gameQueryService.isCreature(gameData, permanent)) {
+                    && gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 PerpetualCardPowerToughnessSupport.remember(
                         gameData, permanent.getCard(), interaction.powerBoost(), interaction.toughnessBoost());
                 return;
@@ -76,7 +77,7 @@ public class ChooseCreatureCardInHandOrCreatureYouControlAndApplyPerpetualPowerT
     private List<UUID> matchingObjectIds(GameData gameData, UUID playerId) {
         List<UUID> ids = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
+            if (gameQueryService.isCreature(gameData, permanent) && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 ids.add(permanent.getCard().getId());
             }
         }

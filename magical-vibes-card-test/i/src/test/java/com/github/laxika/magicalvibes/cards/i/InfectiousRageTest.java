@@ -76,6 +76,22 @@ class InfectiousRageTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Infectious Rage");
     }
 
+    @Test
+    @DisplayName("Returns under the control of its ability's controller, not its owner (CR 110.2a)")
+    void returnsUnderTheAbilityControllersControl() {
+        Permanent dyingCreature = addCreatureReady(player1, new AnuridBarkripper());
+        Permanent survivor = addCreatureReady(player2, new BattlewiseAven());
+        Permanent rage = harness.addToBattlefieldAndReturn(player2, new InfectiousRage());
+        setOwnerAndController(rage, player2, player1);
+        rage.setAttachedTo(dyingCreature.getId());
+
+        destroyCreature(dyingCreature);
+
+        Permanent returned = findPermanent(player1, "Infectious Rage");
+        assertThat(returned.getAttachedTo()).isEqualTo(survivor.getId());
+        harness.assertNotOnBattlefield(player2, "Infectious Rage");
+    }
+
     private Permanent attachRageTo(Player controller, Permanent creature) {
         Permanent auraPermanent = harness.addToBattlefieldAndReturn(controller, new InfectiousRage());
         auraPermanent.setAttachedTo(creature.getId());

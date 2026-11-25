@@ -531,7 +531,7 @@ public class PlayerInputService {
 
     public void beginAnyTargetChoice(GameData gameData, UUID playerId, List<UUID> validPermanentIds, List<UUID> validPlayerIds, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
-                playerId, new ArrayList<>(validPermanentIds), new ArrayList<>(validPlayerIds),
+                playerId, new ArrayList<>(choosablePermanentIds(gameData, validPermanentIds)), new ArrayList<>(validPlayerIds),
                 gameData.interaction.permanentChoiceContext(), prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -579,7 +579,7 @@ public class PlayerInputService {
                                                    int maxCount, MultiPermanentChoiceContext context,
                                                    String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
-                playerId, new ArrayList<>(validPermanentIds), new ArrayList<>(validPlayerIds),
+                playerId, new ArrayList<>(choosablePermanentIds(gameData, validPermanentIds)), new ArrayList<>(validPlayerIds),
                 new ArrayList<>(validCardIds), maxCount, context, prompt));
     }
 

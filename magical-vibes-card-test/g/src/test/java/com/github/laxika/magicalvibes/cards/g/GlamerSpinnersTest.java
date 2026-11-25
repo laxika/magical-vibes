@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.d.DroveOfElves;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -26,7 +27,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GlamerSpinners.class, GrizzlyBears.class, HolyStrength.class, Pacifism.class,
-        EvilPresence.class, Island.class})
+        EvilPresence.class, Island.class, ControlMagic.class})
 class GlamerSpinnersTest extends BaseCardTest {
 
 
@@ -217,6 +218,24 @@ class GlamerSpinnersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, recipient.getId());
 
         assertThat(aura.getAttachedTo()).isEqualTo(recipient.getId());
+    }
+
+    @Test
+    @DisplayName("Moving a control Aura off its host gives that host back to its owner")
+    void movingControlAuraReturnsTheOldHost() {
+        Permanent stolen = addCreature(player2);
+        Permanent recipient = addCreature(player1);
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, stolen.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolen);
+
+        resolveSpinnersEtb(stolen.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(stolen);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(recipient).doesNotContain(stolen);
     }
 
     private void castSpinners(UUID targetId) {

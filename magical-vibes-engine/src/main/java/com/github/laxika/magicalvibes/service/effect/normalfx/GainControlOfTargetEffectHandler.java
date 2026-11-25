@@ -107,10 +107,17 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolvePermanent(GameData gameData, StackEntry entry, GainControlOfTargetEffect e, Gain gain) {
-        List<UUID> targetIds = !isTargeted(e) ? named(gameData, entry, e)
-                : entry.getTargetIds().isEmpty()
-                ? (entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of())
-                : entry.getTargetIds();
+        // The targets of the effect's own group: another group's permanent target is no target of this effect.
+        List<UUID> targetIds = !isTargeted(e) ? named(gameData, entry, e) : entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetIds().isEmpty() && entry.getTargetId() != null && isTargeted(e)) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        // An effect bound to a player group whose permanent target is another group of the same effect
+        // ("target opponent gains control of target creature you control") reads every target.
+        if (isTargeted(e) && !targetIds.isEmpty() && targetIds.stream().allMatch(gameData.playerIds::contains)) {
+            targetIds = entry.getTargetIds().isEmpty() && entry.getTargetId() != null
+                    ? List.of(entry.getTargetId()) : entry.getTargetIds();
+        }
 
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

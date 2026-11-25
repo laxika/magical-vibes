@@ -1143,17 +1143,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** The effect controller chooses a land controlled by each player to receive a counter. */
-    record EachPlayerChoosesLandAndPutCounterChoice(
-            java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
-            CounterType counterType, String sourceName, UUID chooserId)
-            implements MultiPermanentChoiceContext {
-        public EachPlayerChoosesLandAndPutCounterChoice {
-            playerIds = java.util.List.copyOf(playerIds);
-            chosenIds = java.util.List.copyOf(chosenIds);
-        }
-    }
-
     /**
      * One player casts a vote for an object or a player ({@code VoteEffect} over permanents, cards or players, CR
      * 701.38a, 701.38b). Its queue of voters still to vote lets an answer be replayed with the same voter voting again

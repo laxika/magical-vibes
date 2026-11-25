@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.p.PanglacialWurm;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.RampantGrowth;
 import com.github.laxika.magicalvibes.cards.s.SylvanScrying;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OppositionAgent.class, SylvanScrying.class, Plains.class, Forest.class})
+@CardUsed({OppositionAgent.class, SylvanScrying.class, Plains.class, Forest.class, PanglacialWurm.class,
+        RampantGrowth.class})
 class OppositionAgentTest extends BaseCardTest {
 
     @Test
@@ -46,6 +49,27 @@ class OppositionAgentTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissionHolder(chosen.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosen.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A card the search only lets its searcher cast isn't offered as the Agent's find")
+    void castOnlyCardIsNotOfferedAsTheFind() {
+        harness.addToBattlefield(player1, new OppositionAgent());
+        Card wurm = new PanglacialWurm();
+        Card forest = new Forest();
+        harness.setLibrary(player2, List.of(wurm, forest));
+        harness.setHand(player2, List.of(new RampantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 9);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(search.params().cards()).containsExactly(forest);
     }
 
     @Test

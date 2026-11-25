@@ -341,6 +341,22 @@ class PlayerInputServiceTest {
         }
 
         @Test
+        @DisplayName("Leaves out a permanent that can't be chosen")
+        void leavesOutAPermanentThatCantBeChosen() {
+            Permanent unchoosable = new Permanent(createCreature("Glimpse, the Unthinkable"));
+            Permanent choosable = new Permanent(createCreature("Grizzly Bears"));
+            org.mockito.Mockito.when(gameQueryService.findPermanentById(gd, unchoosable.getId())).thenReturn(unchoosable);
+            org.mockito.Mockito.when(gameQueryService.findPermanentById(gd, choosable.getId())).thenReturn(choosable);
+            org.mockito.Mockito.when(gameQueryService.cantBeChosen(gd, unchoosable)).thenReturn(true);
+
+            svc.beginAnyTargetChoice(gd, PLAYER1_ID, List.of(unchoosable.getId(), choosable.getId()),
+                    List.of(PLAYER2_ID), "Choose any");
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                    .containsExactlyInAnyOrder(choosable.getId(), PLAYER2_ID);
+        }
+
+        @Test
         @DisplayName("Combines permanent and player IDs in interaction valid set")
         void combinesValidIds() {
             UUID permId = UUID.randomUUID();
@@ -380,6 +396,29 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
             assertThat(msg.maxCount()).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("beginMultiPermanentOrPlayerChoice")
+    class BeginMultiPermanentOrPlayerChoice {
+
+        @Test
+        @DisplayName("Leaves out a permanent that can't be chosen")
+        void leavesOutAPermanentThatCantBeChosen() {
+            Permanent unchoosable = new Permanent(createCreature("Glimpse, the Unthinkable"));
+            Permanent choosable = new Permanent(createCreature("Grizzly Bears"));
+            org.mockito.Mockito.when(gameQueryService.findPermanentById(gd, unchoosable.getId())).thenReturn(unchoosable);
+            org.mockito.Mockito.when(gameQueryService.findPermanentById(gd, choosable.getId())).thenReturn(choosable);
+            org.mockito.Mockito.when(gameQueryService.cantBeChosen(gd, unchoosable)).thenReturn(true);
+
+            svc.beginMultiPermanentOrPlayerChoice(gd, PLAYER1_ID, List.of(unchoosable.getId(), choosable.getId()),
+                    List.of(PLAYER2_ID), 2, null, "Choose up to two");
+
+            PendingInteraction.MultiPermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+            assertThat(choice.validIds()).containsExactly(choosable.getId());
+            assertThat(choice.validPlayerIds()).containsExactly(PLAYER2_ID);
         }
     }
 

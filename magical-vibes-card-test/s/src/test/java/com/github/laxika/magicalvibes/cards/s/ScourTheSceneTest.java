@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.g.GrimBauble;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,13 +8,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScourTheScene.class, GrimBauble.class, GrizzlyBears.class})
+@CardUsed({ScourTheScene.class, GrimBauble.class, GrizzlyBears.class, GlimpseTheUnthinkablePlaytest.class})
 class ScourTheSceneTest extends BaseCardTest {
 
     @Test
@@ -73,6 +75,23 @@ class ScourTheSceneTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature you control that can't be chosen isn't offered")
+    void doesNotOfferACreatureThatCantBeChosen() {
+        harness.addToBattlefield(player1, new ScourTheScene());
+        harness.addToBattlefield(player1, new GrimBauble());
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSacrificeMana();
+
+        sacrificeGrimBauble();
+
+        PendingInteraction.PerpetualCreatureCardOrPermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.PerpetualCreatureCardOrPermanentChoice.class);
+        assertThat(choice.validCardIds()).contains(bears.getCard().getId())
+                .doesNotContain(glimpse.getCard().getId());
     }
 
     private void sacrificeGrimBauble() {
