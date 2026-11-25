@@ -140,7 +140,8 @@ class WildgroveSummonerTest extends BaseCardTest {
     }
 
     @Test
-    void seekingAnimatedForestsTriggersCardsPutIntoHandFromLibrary() {
+    @org.junit.jupiter.api.DisplayName("Forests sought onto the battlefield pass through the hand, but have left it before a hand trigger's boost resolves (CR 400.7)")
+    void seekingAnimatedForestsOntoTheBattlefieldLeavesTheHandBeforeAHandTriggerResolves() {
         harness.addToBattlefield(player1, new VolatileRift());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         Permanent summoner = harness.enterBattlefieldAndReturn(player1, new WildgroveSummoner());
@@ -152,7 +153,8 @@ class WildgroveSummonerTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Forest")).hasSize(2);
         for (Permanent forest : findPermanents(player1, "Forest")) {
-            assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(5);
+            assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(forest.getCard().getId());
+            assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
         }
     }

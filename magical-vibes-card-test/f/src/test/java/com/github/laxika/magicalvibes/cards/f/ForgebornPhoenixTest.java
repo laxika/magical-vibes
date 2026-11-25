@@ -241,4 +241,38 @@ class ForgebornPhoenixTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, phoenix.getId());
         resolveAllTriggers();
     }
+
+    @Test
+    @DisplayName("A Phoenix exiled from the graveyard before its death ability resolves gains nothing (CR 400.7)")
+    void phoenixExiledFromTheGraveyardGainsNothing() {
+        Permanent phoenix = addReadyPhoenix();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, phoenix.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(phoenix.getCard()));
+        resolveAllTriggers();
+
+        assertThat(gd.perpetualAbilities(phoenix.getCard().getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An equipped creature card exiled from the graveyard before the ability resolves gains nothing (CR 400.7)")
+    void equippedCreatureCardExiledFromTheGraveyardGainsNothing() {
+        Permanent phoenix = addReadyPhoenix();
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        phoenix.setAttachedTo(dyingCreature.getId());
+
+        dyingCreature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(dyingCreature.getCard()));
+        resolveAllTriggers();
+
+        assertThat(gd.perpetualAbilities(dyingCreature.getCard().getId())).isEmpty();
+        assertThat(gd.perpetualAbilities(phoenix.getCard().getId())).isEmpty();
+    }
 }

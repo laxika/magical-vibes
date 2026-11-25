@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoGraveyardThenDoubleAndShuffleEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
@@ -28,16 +29,19 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
+    private final SubjectResolutionService subjectResolutionService;
 
     public ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler(
             GameQueryService gameQueryService,
             GameLogService gameLogService,
             GraveyardService graveyardService,
-            PermanentRemovalService permanentRemovalService) {
+            PermanentRemovalService permanentRemovalService,
+            SubjectResolutionService subjectResolutionService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.graveyardService = graveyardService;
         this.permanentRemovalService = permanentRemovalService;
+        this.subjectResolutionService = subjectResolutionService;
     }
 
     @Override
@@ -48,10 +52,10 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var conjure = (ConjureCardIntoGraveyardThenDoubleAndShuffleEffect) effect;
-        UUID dyingCardId = entry.getTriggeringCardId();
-        if (dyingCardId == null) {
-            return;
-        }
+        // "Mephidross Slime": the card the dying Slime became in the graveyard, while it is still that object
+        // (CR 400.7, 400.7e); one exiled from the graveyard in response is neither doubled nor shuffled.
+        var dying = subjectResolutionService.sourceObjectCard(gameData, entry, effect);
+        Card dyingCard = dying != null && dying.zone() == Zone.GRAVEYARD ? dying.card() : null;
 
         UUID controllerId = entry.getControllerId();
         Card duplicate = conjure.cardFactory().get();
@@ -61,13 +65,18 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
                 gameData, controllerId, duplicate);
         ActionEvents.conjured(gameData, controllerId, 1);
 
-        rememberDouble(gameData, dyingCardId, duplicate);
-        rememberDouble(gameData, duplicate.getId(), duplicate);
+        // Each card's power and toughness as it is now, doubled (a Clone that copied the Slime is its own 0/0 card).
+        if (dyingCard != null) {
+            rememberDouble(gameData, dyingCard);
+        }
+        rememberDouble(gameData, duplicate);
 
         Map<UUID, Integer> movedByOwner = new HashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
-            moveToOwnersLibrary(gameData, dyingCardId, movedByOwner);
+            if (dyingCard != null) {
+                moveToOwnersLibrary(gameData, dyingCard.getId(), movedByOwner);
+            }
             if (duplicateEnteredGraveyard) {
                 moveToOwnersLibrary(gameData, duplicate.getId(), movedByOwner);
             }
@@ -84,22 +93,12 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
                         + " then shuffles them into their owners' libraries."));
     }
 
-    private void rememberDouble(GameData gameData, UUID cardId, Card printedSource) {
-        CardPowerToughnessModifier current = gameData.perpetualCardPowerToughnessModifiers.get(cardId);
-        int power = effectiveValue(printedSource.getPower(), current, true);
-        int toughness = effectiveValue(printedSource.getToughness(), current, false);
-        gameData.perpetualCardPowerToughnessModifiers.merge(
-                cardId,
-                new CardPowerToughnessModifier(power, toughness),
-                (existing, added) -> existing.add(added.power(), added.toughness()));
-    }
-
-    private int effectiveValue(Integer printedValue, CardPowerToughnessModifier modifier, boolean power) {
-        int value = printedValue == null ? 0 : printedValue;
-        if (modifier != null) {
-            value += power ? modifier.power() : modifier.toughness();
-        }
-        return value;
+    /** Doubles {@code card}'s power and toughness as they are now: it perpetually gets +X/+Y for them (CR 701.10b). */
+    private void rememberDouble(GameData gameData, Card card) {
+        Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
+        Integer toughness = gameQueryService.getEffectiveCardToughness(gameData, card);
+        PerpetualCardPowerToughnessSupport.remember(gameData, card,
+                power == null ? 0 : power, toughness == null ? 0 : toughness);
     }
 
     private void moveToOwnersLibrary(GameData gameData, UUID cardId, Map<UUID, Integer> movedByOwner) {

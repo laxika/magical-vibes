@@ -270,4 +270,18 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("A land that left the battlefield before the landfall ability resolves gains nothing (CR 400.7)")
+    void landThatLeftGainsNothing() {
+        harness.addToBattlefield(player1, new GitrogHorrorOfZhava());
+        Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, forest));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.perpetualAbilities(forest.getCard().getId())).isEmpty();
+    }
 }

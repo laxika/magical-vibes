@@ -103,17 +103,18 @@ class PerennialGravewardenTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The entry boost still applies if it dies before the trigger resolves")
-    void entryBoostAppliesAfterDyingInResponse() {
+    @DisplayName("The entry boost does nothing if it dies before the trigger resolves (CR 400.7)")
+    void entryBoostDoesNothingAfterDyingInResponse() {
         Permanent gravewarden = harness.enterBattlefieldAndReturn(player1, new PerennialGravewarden());
         destroyWithShock(gravewarden.getId());
         resolveAllTriggers();
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(gravewarden.getCard().getId());
         advanceToEndStep(player1);
 
         Permanent returned = findPermanent(player1, "Perennial Gravewarden");
         assertThat(returned.isTapped()).isTrue();
-        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
     }
 
     @Test

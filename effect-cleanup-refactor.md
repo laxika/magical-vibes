@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs D11 to D22 (one per group) done 2026-11-25; the defect queue keeps the lines left, each with what it needs. Next: step 10 (needs the owner's sign-off per verb). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34) and set exchanges under CR 701.12a (D19 L22). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34) and set exchanges under CR 701.12a (D19 L22). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs D11 to D22 (one per group) and D23 (the owner's perpetual "it" decision) done 2026-11-25; the defect queue keeps the lines left, each with what it needs. Next: step 10 (needs the owner's sign-off per verb). Waiting on the owner: 2 rows (gift opponent), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source.  |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,005 / 2,431 (after fold run D22) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,002 / 2,428 (after fold run D23) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,764 rows over 4,580 classes (after fold run D22). Latest verdict per class: unique 1,195, absorbed 1,359, split 691, blocked-other 561, survivor 461, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,775 rows over 4,581 classes (after fold run D23). Latest verdict per class: unique 1,195, absorbed 1,362, split 691, blocked-other 560, survivor 460, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 2 rows on the owner's open question (gift opponent) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -273,7 +273,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Create | 19–20 | closed; token copies read copiable values |
 | Prevent | 20–24 | closed; `PreventDamageToRecipientsEffect`, preventions moved into the damage pools |
 | May | 25–27 | closed; 11 cost combinators listed for step 10 |
-| Perpetually | 27–29, P16, D10 | triaged: the hand and library records are in fold run 12b since D10; three wait for the owner's "it" decision |
+| Perpetually | 27–29, P16, D10 | triaged: the hand and library records are in fold run 12b since D10; the "it" records done in defect run D23 |
 | Conjure | 29–31, P16, D10 | triaged: the hand and library conjures are in fold run 12a since D10; the CONJURE step, duplicate-destination and graveyard-ability store batches are in the Fold queue |
 | Register | 30–34 | closed; the delayed step and event registrations, `NoteAmountEffect` |
 | Target | 32–41 | closed; `PlayerRestrictionEffect`, the gain-control and choose-permanents choosers, one cast check |
@@ -1216,6 +1216,10 @@ The scratch files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a
 - run3.log (the broad run)
 - broad.txt (the classes run)
 
+- `Subjects.cardsOf(PermanentSubject)` (`CardSubject.CardsOf`): "that creature / that spell perpetually …"; a permanent's own card while it is still that permanent, or `cardsOf(triggeringSpell())`'s card while the spell is on the stack. Perpetual verbs only.
+- `Subjects.sourceObjectCard()` / `SubjectResolutionService.sourceObjectCard(gd, entry, effect)`: "this card" as the same object in whatever zone the ability refers to it; no card once it has changed zones. Perpetual verbs and graveyard cast permissions.
+- `PerpetuallyBoostCardEffect.toCards(CardSubject, DynamicAmount, DynamicAmount)`.
+
 ### Blocked causes still open
 
 Counts are ledger rows of existing classes whose latest note names the cause (approximate, by keyword).
@@ -1228,7 +1232,7 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
 | A delayed trigger shape (end-of-combat, coin flip, the old delayed mechanism) | about 20 | the delayed-mechanism unification onto `RegisterDelayed*` |
 | Planar deck cards | 9 | a card subject for the planar deck with its reveal, bottom-order and planeswalk steps |
 | Next-draw replacement payloads (`DrawService`'s inline payloads) | about 20 | a "this draw was replaced" record in `DrawService` |
-| Owner's questions (perpetual "it", gift opponent) | 5 | the owner's decisions below |
+| Owner's questions (gift opponent) | 2 | the owner's decisions below |
 | A token controller on `CreateTokenEffect` / the token copies | 5 | a `PlayerSubject` token controller with the Esix, investigate and attack paths agreeing; the token copies have one since fold run 19c (`forController`), the four `CreateTokenFor*` records remain |
 | Out-of-battlefield characteristics (the all-zones grants) | 5 | a redesign of the out-of-battlefield characteristic queries (outside this plan) |
 | One or two classes each | most of the other blocked-other rows | a third user; each note names the part |
@@ -1261,6 +1265,11 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
   (`DraftCardIntoHandEffect` naming the drafted card, Hydroponics Architect naming its random library card, the per-card perpetual
   hand lines) in a defect run with failing-first tests. Done in defect run D10: the leaks fixed, the rule under Conventions, the 73 rows
   re-verdicted (71 `step-9` in fold runs 12, 12a, 12b and 20; one survivor; Territorial Strike's `blocked-other` for a beheld-object subject).
+- **2026-11-25, the perpetual "it"** (option B): a change an ability makes to "it", "this card" or "that card" (perpetual
+  changes and cast permissions alike) reaches the card only while it is still the object the ability refers to (CR 400.7);
+  the CR's own exceptions stand (a zone-change trigger finds the card in the zone it went to, CR 400.7e, 603.6c; a card the
+  same resolution moved, CR 400.7j). Card subjects: `Subjects.cardsOf(...)`, `Subjects.sourceObjectCard()`. Done in defect
+  run D23.
 
 ### The owner's open questions
 
@@ -1268,10 +1277,6 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
   through `CounterSupport`) and set option C aside for step 10 (one `CounterUnlessEffect`-shaped record replacing every "counter
   unless" record, ward {N} included). The owner hasn't confirmed either; ask before step 10 builds option C. About 20 blocked rows
   wait for it (the ransom records, the ward variants, the per-object ransoms).
-- **The perpetual "it"** (CR 400.7): whether a perpetual change follows a card that changed zones before the grant resolved. Holds
-  `PerpetuallyGrantAbilityToTriggeringCardEffect` (the triggering card anywhere; Forgeborn Phoenix), `PerpetuallyBoostTriggeringCardEffect`
-  (4 cards), Rothga's and Mutable Pupa's records against `Subjects.triggeringCards()`. 3 rows wait for it (Rothga's, Mutable Pupa's,
-  Mephidross Slime's `ConjureCardIntoGraveyardThenDoubleAndShuffleEffect`).
 - **The gift opponent** (CR 702.174a, `missing-features-to-do.md` entry 80): no gift opponent is recorded; every gift handler
   (`TargetOpponentCreatesTokenEffect`, `ConjureCardToOpponentBattlefieldEffect`, `EachOtherPlayerDrawsCardEffect`, ...) gives it to
   `getOpponentId`, every other player, or the spell's target, right with two players only; the gifts of Cruelclaw's Heist, Consumed by
@@ -5750,6 +5755,47 @@ Group 9, last quarter. 16 fixed, 2 already fixed, 3 not a defect, 5 left, 1 not 
 - **Dead code deleted:** `LibrarySearchDestination.CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND` and its handler branch; `GameData.clearExiledByPermanent`.
 - **Seen, not changed:** Terminal Velocity's then-effects read `Subjects.source()` for the put permanent (unverified). The hard AI pays "unless any player pays" costs as controller when the value is positive.
 - **For the next run:** L14 (multi-pick search casts), L22 (exile links), L15 (step 11), L23.
+
+### Step 9, defect run D23 (2026-11-25)
+
+The owner's perpetual "it" decision (B, taken 2026-11-25) is applied: a change to "it", "this card" or "that card" reaches a
+card only while it is still the object the ability refers to (CR 400.7), with the CR's own exceptions (a zone-change trigger
+finds the card in the zone it went to, CR 400.7e, 603.6c; a card the same resolution moved, CR 400.7j). Three records folded,
+three fixed in place, `PerpetuallyBoostSourceEffect` changed meaning; ratchet 3,002 / 2,428.
+
+**New subjects.** `Subjects.cardsOf(PermanentSubject)` names a permanent's own card while it is still that permanent; over
+`triggeringSpell()` the spell's card while the spell is on the stack, never a copy (CR 707.10). `Subjects.sourceObjectCard()`
+(`SubjectResolutionService.sourceObjectCard`) names "this card" as the same object: the source permanent, a graveyard or
+exile stay (dies triggers too), a hand ability's card, or the permanent this resolution returned. It never names the card a
+battlefield ability's permanent became in a graveyard, which the lenient `sourceCard()` with no recorded stay still finds.
+
+**Folds.** The boons (Flaming Fist, Dragonborn, Mephit's, Valiant), Volatile Rift, Darigaaz's Whelp and Tiana on
+`PerpetuallyBoostCardEffect.toCards(cardsOf(triggeringSpell()) | triggeringCardsInHand() | cardsOf(triggering()), ...)`
+(`PerpetuallyBoostTriggeringCardEffect` gone); Forgeborn Phoenix, Oglor, Gitrog on `PerpetuallyGrantAbilitiesEffect`
+(`PerpetuallyGrantAbilityToTriggeringCardEffect` gone); Ichor Aberration, Skyclave Shade on
+`AllowCastTargetCardFromGraveyardThisTurnEffect.of(...)` (`AllowCastSourceCardFromGraveyardThisTurnEffect` gone); Emperor
+Apatzec, Jaheira, Lulu, Sworn to the Legion on `PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(cardsOf(...))` (its
+any-zone card-id path removed). `PerpetuallyBoostCardEffect(this, ...)` and `PerpetuallyBoostSourceEffect` read
+`sourceObjectCard`; Cantor of the Refrain is `PerpetuallyBoostCardEffect(this, 1, 0)`. Rothga, Mutable Pupa and Mephidross
+Slime are fixed in place (`blocked-other` for their own shapes).
+
+**Behaviour changes.** A creature spell that left the stack (Rothga, the boons), a card that left the hand (Volatile Rift,
+Darigaaz's draw), a source that left the battlefield (Mutable Pupa, Perennial Gravewarden, Darigaaz's Whelp, Wary Zone Guard),
+a Vehicle or land that left (Tiana, Gitrog), a card exiled from the graveyard (Forgeborn Phoenix, Oglor, Tomakul Phoenix)
+gets nothing. Cantor boosts only the permanent it returned. Mephidross Slime: a Slime exiled from the graveyard in response
+is neither doubled nor shuffled (the conjured card still is), and each card's own P/T is doubled (CR 701.10b). Ichor
+Aberration's permission from its battlefield trigger no longer lets the card be cast after it dies that turn. Face-down
+spells and permanents are logged unnamed by `PerpetualChangeLog` (CR 708.2). Tests rewritten to the decision: Volatile Rift,
+Perennial Gravewarden, Wary Zone Guard (2), Wildgrove Summoner, Ichor Aberration; Mephidross Slime's exile test strengthened.
+
+**Seen, not changed** (new defect lines): `PerpetuallyGrantKeywordToSourceEffect` and
+`PerpetuallyGrantStaticEffectToSourceEffect` swap the permanent's card for a modified copy (the change is lost on a zone
+change); `PerpetuallyBoostSourceEffect`'s graveyard path rewrites printed P/T; Rothga reads a face-down spell's real power;
+`RemovePerpetualTriggeredAbilityEffect` and `PerpetuallyGrantKeywordsToStationingCreatureEffect` find their card by id in any
+zone. `PerpetuallyRemoveKeywordEffect` has no card users.
+
+**For the next run.** The two card-swapping source grants onto the perpetual stores and `sourceObjectCard`; then step 10 can
+fold `PerpetuallyBoostSourceEffect` onto `toCards(sourceObjectCard())`.
 
 ## Prompt
 

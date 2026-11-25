@@ -6,7 +6,8 @@ import java.util.Set;
 
 /**
  * Perpetually gives the source card the supported keywords the triggering creature has as the ability resolves, or had
- * as it last existed on the battlefield (the stack entry's triggering permanent).
+ * as it last existed on the battlefield (the stack entry's triggering permanent), while the source is still the
+ * permanent whose ability it is: one that left the battlefield is a new object and gains nothing (CR 400.7).
  */
 public record PerpetuallyGainKeywordsOfTriggeringCreatureEffect() implements CardEffect {
 

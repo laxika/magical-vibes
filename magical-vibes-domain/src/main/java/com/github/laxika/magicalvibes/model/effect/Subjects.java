@@ -435,6 +435,23 @@ public final class Subjects {
         return new CardSubject.ExiledAsCost();
     }
 
+    /**
+     * "That creature", "that spell", "it" of a perpetual change to a permanent or a spell (digital only): the cards of the
+     * permanents {@code permanents} names while they are still those permanents, or the triggering spell's card while
+     * that spell is on the stack ({@link CardSubject.CardsOf}); only for the perpetual verbs.
+     */
+    public static CardSubject cardsOf(PermanentSubject permanents) {
+        return new CardSubject.CardsOf(permanents);
+    }
+
+    /**
+     * "This card", "it" of the ability's own object wherever the ability refers to it, while it is still that object
+     * ({@link CardSubject.SourceObjectCard}); only for the perpetual verbs and a graveyard cast permission.
+     */
+    public static CardSubject sourceObjectCard() {
+        return new CardSubject.SourceObjectCard();
+    }
+
     /** "This card" in an ability that works from a graveyard. */
     public static CardSubject sourceCard() {
         return new CardSubject.SourceCard();

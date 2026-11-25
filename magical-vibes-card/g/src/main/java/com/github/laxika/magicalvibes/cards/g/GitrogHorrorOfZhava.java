@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilityToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SeekCardToBattlefieldEffect;
@@ -47,7 +47,8 @@ public class GitrogHorrorOfZhava extends Card {
 
         // Whenever a land enters under your control, it perpetually gains the activated ability.
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new PerpetuallyGrantAbilityToTriggeringCardEffect(landSacrificeDrawAbility()));
+                new PerpetuallyGrantAbilitiesEffect(Subjects.cardsOf(Subjects.triggering()),
+                        List.of(landSacrificeDrawAbility())));
     }
 
     private static ActivatedAbility landSacrificeDrawAbility() {

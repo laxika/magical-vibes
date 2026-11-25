@@ -5,28 +5,21 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
- * Applies a permanent power/toughness modification to a physical card identity: {@code card}, or with a {@code null}
- * card the card of the stack entry's triggering permanent as the ability triggered ("that Vehicle perpetually gets
- * +1/+0", Tiana, Angelic Mechanic; {@link #ofTriggeringPermanent}).
+ * "[It] perpetually gets +P/+T" (digital only). With {@code cards}, the cards that subject names ("the duplicate", "that
+ * card", "that creature": {@code Subjects.cardsOf(...)}); without, the ability's own card ({@code card} is this card,
+ * "this creature perpetually gets +1/+1"), while it is still the object the ability refers to: the source permanent,
+ * the card in the graveyard or exile stay its ability works from, the card in the hand its ability was activated from,
+ * or the permanent this resolution returned it as (CR 400.7, 400.7e, 400.7j). The change is made to the physical card,
+ * so a copying permanent's own card is changed.
  */
 public record PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                          CardSubject cards)
         implements CardEffect {
 
-    /**
-     * "That [permanent] perpetually gets +P/+T": the triggering permanent's card; with no triggering permanent, the
-     * stack entry's triggering card ({@link #ofTriggeringCard}). The same record as {@link #ofTriggeringCard}.
-     */
-    public static PerpetuallyBoostCardEffect ofTriggeringPermanent(int powerBoost, int toughnessBoost) {
-        return new PerpetuallyBoostCardEffect(null, new Fixed(powerBoost), new Fixed(toughnessBoost), null);
-    }
-
-    /**
-     * "It perpetually gets +P/+T" of a card the trigger event was about ("whenever you draw a Dragon card"): the stack
-     * entry's triggering card, the card as the ability triggered. The same record as {@link #ofTriggeringPermanent}.
-     */
-    public static PerpetuallyBoostCardEffect ofTriggeringCard(int powerBoost, int toughnessBoost) {
-        return ofTriggeringPermanent(powerBoost, toughnessBoost);
+    public PerpetuallyBoostCardEffect {
+        if (card == null && cards == null) {
+            throw new IllegalArgumentException("Either this card or a card subject is boosted");
+        }
     }
 
     public PerpetuallyBoostCardEffect(Card card, int powerBoost, int toughnessBoost) {
@@ -37,8 +30,14 @@ public record PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, Dy
         this(card, powerBoost, toughnessBoost, null);
     }
 
-    /** "It perpetually gets +N/+M" of the cards an earlier step moved ("return ... If it's a creature card, it ..."). */
+    /** "It perpetually gets +N/+M" of the cards {@code cards} names. */
     public static PerpetuallyBoostCardEffect toCards(CardSubject cards, int powerBoost, int toughnessBoost) {
         return new PerpetuallyBoostCardEffect(null, new Fixed(powerBoost), new Fixed(toughnessBoost), cards);
+    }
+
+    /** "It perpetually gets +X/+Y" of the cards {@code cards} names, the amounts read as the ability resolves. */
+    public static PerpetuallyBoostCardEffect toCards(CardSubject cards, DynamicAmount powerBoost,
+                                                     DynamicAmount toughnessBoost) {
+        return new PerpetuallyBoostCardEffect(null, powerBoost, toughnessBoost, cards);
     }
 }

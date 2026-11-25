@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +27,7 @@ public class ValiantFarewell extends Card {
                         new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         RegisterDelayedControllerSpellCastTriggerEffect.boon(
                                 new CardTypePredicate(CardType.CREATURE),
-                                List.of(new PerpetuallyBoostTriggeringCardEffect(2, 0)))), true))
+                                List.of(PerpetuallyBoostCardEffect.toCards(Subjects.cardsOf(Subjects.triggeringSpell()), 2, 0)))), true))
                 .addSpellEffect(new DrawCardEffect(1));
     }
 }

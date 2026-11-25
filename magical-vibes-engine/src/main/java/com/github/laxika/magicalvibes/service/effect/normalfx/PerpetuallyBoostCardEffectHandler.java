@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -49,38 +48,11 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
                     located, String.format(" perpetually gets %+d/%+d.", powerBoost, toughnessBoost));
             return;
         }
-        if (boost.card() == null) {
-            // "That Vehicle perpetually gets …": the card of the permanent the trigger event was about, as it was then;
-            // "it perpetually gets …" of a drawn card: the entry's triggering card.
-            Permanent triggering = entry.getTriggeringPermanentSnapshot();
-            Card triggeringCard = triggering != null ? triggering.getCard() : entry.triggeringSpellOrCard();
-            if (triggeringCard != null) {
-                PerpetualCardPowerToughnessSupport.remember(gameData, triggeringCard, powerBoost, toughnessBoost);
-            }
-            return;
+        // "This creature perpetually gets ...": the ability's own object, its physical card (a copying permanent's
+        // own card), while it is still that object (CR 400.7).
+        var self = subjectResolutionService.sourceObjectCard(gameData, entry, effect);
+        if (self != null) {
+            PerpetualCardPowerToughnessSupport.remember(gameData, self.card(), powerBoost, toughnessBoost);
         }
-        // The copying permanent reads its physical card's modifier too (GameQueryService), so one record does.
-        PerpetualCardPowerToughnessSupport.remember(gameData, boostedCard(boost, source), powerBoost, toughnessBoost);
-    }
-
-    /**
-     * The card the boost applies to. A card that boosts "itself" references its own printed instance,
-     * so when the ability is being used by a copy of that card (Clone copying it) the physical card
-     * of the copying permanent is boosted instead.
-     */
-    private static Card boostedCard(PerpetuallyBoostCardEffect boost, Permanent source) {
-        if (source == null || source.getOriginalCard() == null || source.getOriginalCard() == boost.card()) {
-            return boost.card();
-        }
-        java.util.List<CardEffect> candidates = new java.util.ArrayList<>(source.getCard().getCastingCostsAndSpellEffects());
-        candidates.addAll(source.getCard().getStaticEffects());
-        candidates.addAll(source.getCard().getTriggeredEffects());
-        for (CardEffect candidate : candidates) {
-            if (candidate == boost
-                    || candidate instanceof PerpetuallyBoostCardEffect other && other.card() == boost.card()) {
-                return source.getOriginalCard();
-            }
-        }
-        return boost.card();
     }
 }

@@ -37,19 +37,12 @@ public class PerpetuallyGrantKeywordsToTriggeringCardEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (PerpetuallyGrantKeywordsToTriggeringCardEffect) effect;
-        if (grant.cards() != null) {
-            var located = subjectResolutionService.locatedCards(gameData, entry, grant, grant.cards());
-            located.forEach(card -> grant(gameData, card.card().getId(), grant.keywords()));
-            PerpetualChangeLog.log(gameLogService, subjectResolutionService, gameData, entry, grant, grant.cards(),
-                    located, " perpetually gains " + grant.keywords().stream()
-                            .map(keyword -> keyword.name().toLowerCase(Locale.ROOT).replace('_', ' '))
-                            .sorted().collect(Collectors.joining(" and ")) + ".");
-            return;
-        }
-        UUID cardId = entry.getTriggeringCardId();
-        if (cardId != null) {
-            grant(gameData, cardId, grant.keywords());
-        }
+        var located = subjectResolutionService.locatedCards(gameData, entry, grant, grant.cards());
+        located.forEach(card -> grant(gameData, card.card().getId(), grant.keywords()));
+        PerpetualChangeLog.log(gameLogService, subjectResolutionService, gameData, entry, grant, grant.cards(),
+                located, " perpetually gains " + grant.keywords().stream()
+                        .map(keyword -> keyword.name().toLowerCase(Locale.ROOT).replace('_', ' '))
+                        .sorted().collect(Collectors.joining(" and ")) + ".");
     }
 
     /**

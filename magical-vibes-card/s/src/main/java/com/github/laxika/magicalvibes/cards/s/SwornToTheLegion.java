@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,6 +32,6 @@ public class SwornToTheLegion extends Card {
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         Set.of(Keyword.DOUBLE_TEAM)));
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
-                new PerpetuallyGrantKeywordsToTriggeringCardEffect(Set.of(Keyword.DOUBLE_TEAM)));
+                PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.cardsOf(Subjects.triggeringSpell()), Keyword.DOUBLE_TEAM));
     }
 }

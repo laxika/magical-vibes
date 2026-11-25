@@ -10,9 +10,10 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,6 +34,7 @@ public class MephitsEnthusiasm extends Card {
         addSpellEffect(new ConditionalEffect(new EventValueAtLeast(1), SequenceEffect.of(
                 new NoteAmountEffect(new EventValue()),
                 RegisterDelayedControllerSpellCastTriggerEffect.boon(new CardTypePredicate(CardType.CREATURE),
-                        List.of(new PerpetuallyBoostTriggeringCardEffect(AmountThisWay.noted(), new Fixed(0)))))));
+                        List.of(PerpetuallyBoostCardEffect.toCards(Subjects.cardsOf(Subjects.triggeringSpell()),
+                                AmountThisWay.noted(), new Fixed(0)))))));
     }
 }

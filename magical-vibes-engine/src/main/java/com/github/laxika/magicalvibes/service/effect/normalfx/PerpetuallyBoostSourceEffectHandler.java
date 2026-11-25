@@ -1,23 +1,27 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/** Applies a perpetual power/toughness change to the source card's runtime copy. */
+/**
+ * Applies a perpetual power/toughness change to the ability's own card while it is still the object the ability
+ * refers to ({@link SubjectResolutionService#sourceObjectCard}): a source that has changed zones since is a new
+ * object and is not changed (CR 400.7).
+ */
 @Component
 @RequiredArgsConstructor
 public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,23 +31,15 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PerpetuallyBoostSourceEffect boost = (PerpetuallyBoostSourceEffect) effect;
-        Card sourceCard = entry.getCard();
-        Permanent source = entry.getSourcePermanentId() == null
-                ? findBattlefieldSource(gameData, sourceCard)
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        var source = subjectResolutionService.sourceObjectCard(gameData, entry, effect);
         if (source == null) {
-            // Perpetual changes stay with the card in any zone, so a source that already left the
-            // battlefield (e.g. returned to hand before this resolved) is remembered by card id. A card
-            // that has since re-entered the battlefield is a new object the ability can't change (CR 400.7).
-            if (isInGraveyard(gameData, sourceCard)) {
-                applyToGraveyardSource(gameData, sourceCard, boost);
-            } else if (findBattlefieldSource(gameData, sourceCard) == null) {
-                PerpetualCardPowerToughnessSupport.remember(
-                        gameData, sourceCard, boost.powerBoost(), boost.toughnessBoost());
-            }
+            return;
+        }
+        if (source.zone() == Zone.GRAVEYARD) {
+            applyToGraveyardSource(gameData, source.card(), boost);
         } else {
             PerpetualCardPowerToughnessSupport.remember(
-                    gameData, source.getCard(), boost.powerBoost(), boost.toughnessBoost());
+                    gameData, source.card(), boost.powerBoost(), boost.toughnessBoost());
         }
     }
 
@@ -59,32 +55,8 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
         return copy;
     }
 
-    private Permanent findBattlefieldSource(GameData gameData, Card sourceCard) {
-        if (sourceCard == null) {
-            return null;
-        }
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getId().equals(sourceCard.getId())
-                        || permanent.getOriginalCard().getId().equals(sourceCard.getId())) {
-                    return permanent;
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean isInGraveyard(GameData gameData, Card sourceCard) {
-        return gameData.playerGraveyards.values().stream()
-                .anyMatch(graveyard -> graveyard.stream()
-                        .anyMatch(card -> card.getId().equals(sourceCard.getId())));
-    }
-
     private void applyToGraveyardSource(GameData gameData, Card sourceCard,
                                         PerpetuallyBoostSourceEffect boost) {
-        if (sourceCard == null) {
-            return;
-        }
         for (List<Card> graveyard : gameData.playerGraveyards.values()) {
             for (int i = 0; i < graveyard.size(); i++) {
                 Card card = graveyard.get(i);

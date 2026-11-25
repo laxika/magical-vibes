@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TianaAngelicMechanicTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A Vehicle Tiana crews perpetually gets +1/+0")
     void tianaPerpetuallyBoostsVehicleSheCrews() {
         addCreatureReady(player1, new TianaAngelicMechanic());
         Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
@@ -40,6 +42,7 @@ class TianaAngelicMechanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Vehicle another legendary creature crews perpetually gets +1/+0")
     void anotherLegendaryCreaturePerpetuallyBoostsVehicleItCrews() {
         Permanent tiana = addCreatureReady(player1, new TianaAngelicMechanic());
         tiana.tap();
@@ -53,6 +56,7 @@ class TianaAngelicMechanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A nonlegendary creature crewing doesn't trigger it")
     void nonLegendaryCreatureDoesNotTriggerTiana() {
         Permanent tiana = addCreatureReady(player1, new TianaAngelicMechanic());
         tiana.tap();
@@ -66,6 +70,7 @@ class TianaAngelicMechanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A nonlegendary copy of Tiana triggers when it crews")
     void nonlegendaryCopyOfTianaTriggersWhenItCrews() {
         Permanent tiana = addCreatureReady(player1, new TianaAngelicMechanic());
         Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfTheHost());
@@ -90,6 +95,7 @@ class TianaAngelicMechanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's legendary creature crewing doesn't trigger it")
     void opponentsLegendaryCreatureDoesNotTriggerTiana() {
         addCreatureReady(player1, new TianaAngelicMechanic());
         addCreatureReady(player2, new ArvadTheCursed());
@@ -103,6 +109,7 @@ class TianaAngelicMechanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Vehicle is boosted even after Tiana leaves")
     void triggerStillBoostsVehicleAfterTianaLeaves() {
         Permanent tiana = addCreatureReady(player1, new TianaAngelicMechanic());
         Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
@@ -119,6 +126,7 @@ class TianaAngelicMechanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The boost stays on the Vehicle card after it returns to hand and stacks with another crew")
     void perpetualBoostSurvivesReturningToHandAndStacksWithAnotherCrew() {
         Permanent tiana = addCreatureReady(player1, new TianaAngelicMechanic());
         Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
@@ -149,5 +157,18 @@ class TianaAngelicMechanicTest extends BaseCardTest {
 
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    }
+
+    @Test
+    @DisplayName("A Vehicle that left the battlefield before the ability resolves isn't boosted (CR 400.7)")
+    void vehicleThatLeftIsNotBoosted() {
+        addCreatureReady(player1, new TianaAngelicMechanic());
+        Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
+        harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, vehicle));
+        resolveAllTriggers();
+
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(vehicle.getCard().getId());
     }
 }

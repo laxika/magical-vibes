@@ -2,22 +2,20 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
- * Perpetually grants keywords to the card that caused the surrounding trigger, or to the cards {@code cards} names
- * ("that card perpetually gains menace" after a seek).
+ * "It perpetually gains [keywords]": the cards {@code cards} names gain them ("that card perpetually gains menace" after
+ * a seek, {@code Subjects.cardsOf(Subjects.triggeringSpell())} for "when you cast a creature spell, it perpetually gains
+ * haste", {@code Subjects.cardsOf(Subjects.triggering())} for "whenever another creature enters, it perpetually gains
+ * haste"), each only while it is still the object named (CR 400.7).
  *
  * @param keywords the keywords
- * @param cards    the cards; {@code null} for the triggering card
+ * @param cards    the cards
  */
 public record PerpetuallyGrantKeywordsToTriggeringCardEffect(Set<Keyword> keywords, CardSubject cards)
         implements CardEffect {
-
-    /** The triggering card gains them. */
-    public PerpetuallyGrantKeywordsToTriggeringCardEffect(Set<Keyword> keywords) {
-        this(keywords, null);
-    }
 
     /** The cards {@code cards} names gain them. */
     public static PerpetuallyGrantKeywordsToTriggeringCardEffect toCards(CardSubject cards, Keyword... keywords) {
@@ -29,5 +27,6 @@ public record PerpetuallyGrantKeywordsToTriggeringCardEffect(Set<Keyword> keywor
             throw new IllegalArgumentException("At least one keyword is required");
         }
         keywords = Set.copyOf(keywords);
+        Objects.requireNonNull(cards, "cards");
     }
 }

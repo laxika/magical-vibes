@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VolatileRiftTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A creature card put into your hand from your library perpetually gets +X/+0 for the colors among your permanents")
     void creatureDrawnFromLibraryGetsPerpetualPowerBoostForControlledColors() {
         harness.addToBattlefield(player1, new VolatileRift());
         harness.addToBattlefield(player1, new Forest());
@@ -32,6 +34,7 @@ class VolatileRiftTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A noncreature card put into your hand doesn't trigger it")
     void noncreatureCardPutIntoHandDoesNotTrigger() {
         harness.addToBattlefield(player1, new VolatileRift());
         Card noncreature = new Forest();
@@ -43,6 +46,7 @@ class VolatileRiftTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's creature card put into their hand doesn't trigger it")
     void opponentsCreatureDrawDoesNotTrigger() {
         harness.addToBattlefield(player1, new VolatileRift());
         Card creature = new GrizzlyBears();
@@ -55,6 +59,7 @@ class VolatileRiftTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Rifts each boost the card, each counting the colors once")
     void multipleRiftsAccumulateBoostsWithoutCountingColorsTwice() {
         harness.addToBattlefield(player1, new VolatileRift());
         harness.addToBattlefield(player1, new VolatileRift());
@@ -70,6 +75,7 @@ class VolatileRiftTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The colors are counted as the ability resolves, after the Rift has left")
     void colorsAreCountedAtResolutionAfterRiftLeavesBattlefield() {
         var rift = harness.addToBattlefieldAndReturn(player1, new VolatileRift());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -86,7 +92,8 @@ class VolatileRiftTest extends BaseCardTest {
     }
 
     @Test
-    void boostStillAppliesWhenDrawnCreatureMovesToGraveyardBeforeResolution() {
+    @DisplayName("The boost does nothing once the creature card has left the hand before it resolves (CR 400.7)")
+    void boostDoesNothingOnceTheDrawnCreatureHasLeftTheHand() {
         harness.addToBattlefield(player1, new VolatileRift());
         Card creature = new GrizzlyBears();
         harness.setLibrary(player1, List.of(creature));
@@ -97,6 +104,6 @@ class VolatileRiftTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.perpetualCardPowerToughnessModifiers)
-                .containsEntry(creature.getId(), new CardPowerToughnessModifier(2, 0));
+                .doesNotContainKey(creature.getId());
     }
 }

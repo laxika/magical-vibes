@@ -11,9 +11,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MutablePupaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Perpetually gains flying when another creature with flying enters")
     void perpetuallyGainsFlyingFromAnotherFlyingCreature() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
 
@@ -34,6 +37,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gains nothing from a creature without any of the listed keywords")
     void doesNotGainKeywordsFromACreatureWithoutSupportedKeywords() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
 
@@ -48,6 +52,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses the entering creature's last known keywords once it has left")
     void usesLastKnownKeywordsIfTheEnteringCreatureLeavesBeforeResolution() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
 
@@ -66,6 +71,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Evolves when a creature with greater power or toughness enters")
     void evolvesWhenAnotherCreatureHasGreaterPowerOrToughness() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
 
@@ -77,6 +83,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its own entry doesn't trigger it")
     void doesNotTriggerForItsOwnEntry() {
         Permanent pupa = harness.enterBattlefieldAndReturn(player1, new MutablePupa());
 
@@ -85,6 +92,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's creature entering doesn't trigger it")
     void doesNotGainKeywordsFromAnOpponentsCreature() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
 
@@ -95,6 +103,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reads keywords the creature gained after entering while it is still there")
     void usesKeywordsGainedAfterEntryWhenTheCreatureIsStillPresent() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
         Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -109,6 +118,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reads keywords the creature had as it last existed when it died in response")
     void usesKeywordsGainedAfterEntryWhenTheCreatureDiesBeforeResolution() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
         Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -126,6 +136,7 @@ class MutablePupaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Keeps perpetually gained flying after returning to hand and being cast again")
     void keepsPerpetuallyGainedFlyingAfterReturningToHandAndBeingRecast() {
         Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
         harness.enterBattlefieldAndReturn(player1, new CloudfinRaptor());
@@ -143,5 +154,24 @@ class MutablePupaTest extends BaseCardTest {
 
         Permanent recastPupa = findPermanent(player1, "Mutable Pupa");
         assertThat(gqs.hasKeyword(gd, recastPupa, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gains nothing once it has left the battlefield before the ability resolves (CR 400.7)")
+    void gainsNothingOnceItHasLeftTheBattlefield() {
+        Permanent pupa = harness.addToBattlefieldAndReturn(player1, new MutablePupa());
+        harness.setHand(player1, List.of(new CloudfinRaptor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, pupa.getId());
+        harness.assertInHand(player1, "Mutable Pupa");
+        resolveAllTriggers();
+
+        assertThat(gd.perpetualCardKeywords.getOrDefault(pupa.getCard().getId(), Set.of()))
+                .doesNotContain(Keyword.FLYING);
     }
 }

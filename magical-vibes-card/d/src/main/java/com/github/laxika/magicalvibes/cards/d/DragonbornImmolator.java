@@ -10,9 +10,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -35,7 +36,7 @@ public class DragonbornImmolator extends Card {
                 SequenceEffect.of(
                         new NoteAmountEffect(new EventValue()),
                         RegisterDelayedControllerSpellCastTriggerEffect.boon(new CardTypePredicate(CardType.CREATURE),
-                                List.of(new PerpetuallyBoostTriggeringCardEffect(AmountThisWay.noted(),
-                                        new Fixed(0))))));
+                                List.of(PerpetuallyBoostCardEffect.toCards(Subjects.cardsOf(Subjects.triggeringSpell()),
+                                        AmountThisWay.noted(), new Fixed(0))))));
     }
 }

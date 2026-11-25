@@ -238,6 +238,10 @@ public class SubjectResolutionService {
                     .filter(Objects::nonNull)
                     .toList();
             case CardSubject.SourceCard ignored -> sourceCard(gameData, entry);
+            case CardSubject.SourceObjectCard ignored -> {
+                LocatedCard self = sourceObjectCard(gameData, entry, effect);
+                yield self == null ? List.of() : List.of(self);
+            }
             case CardSubject.InGraveyards in -> inGraveyards(gameData, entry, effect, in);
             case CardSubject.InExile in -> inExile(gameData, entry, effect, in);
             case CardSubject.ExiledAsCost ignored -> exiledAsCost(gameData, entry);
@@ -265,6 +269,7 @@ public class SubjectResolutionService {
                     .filter(Objects::nonNull)
                     .toList();
             case CardSubject.Owned owned -> owned(gameData, entry, effect, owned);
+            case CardSubject.CardsOf of -> cardsOf(gameData, entry, effect, of);
             case CardSubject.OutsideTheGame outside -> outsideTheGame(gameData, entry, effect, outside);
             case CardSubject.InYourGraveyard yours -> locatedCards(gameData, entry, effect, yours.cards()).stream()
                     .filter(located -> located.zone() == Zone.GRAVEYARD
@@ -975,6 +980,87 @@ public class SubjectResolutionService {
                     gameData.ownerOf(spell.getCard()));
         }
         return List.copyOf(named.values());
+    }
+
+    /**
+     * {@link CardSubject.CardsOf}: the triggering spell's card while that spell is on the stack (none for a copy, which
+     * is no card, CR 707.10), else each named permanent's own physical card while it is that permanent, a token's
+     * included (CR 400.7).
+     */
+    private List<LocatedCard> cardsOf(GameData gameData, StackEntry entry, CardEffect effect, CardSubject.CardsOf of) {
+        if (of.permanents() instanceof PermanentSubject.TriggeringSpell) {
+            StackEntry spell = spellOnStack(gameData, entry, of.permanents());
+            Card card = spell == null || spell.isCopy() ? null : spell.getPhysicalCard();
+            return card == null ? List.of()
+                    : List.of(new LocatedCard(card, Zone.STACK,
+                            Objects.requireNonNullElse(gameData.ownerOf(card), spell.getControllerId())));
+        }
+        List<LocatedCard> named = new ArrayList<>();
+        for (Permanent permanent : permanents(gameData, entry, effect, of.permanents())) {
+            Card physical = permanent.getOriginalCard() != null ? permanent.getOriginalCard() : permanent.getCard();
+            UUID ownerId = Objects.requireNonNullElse(gameData.ownerOf(physical),
+                    gameQueryService.findPermanentController(gameData, permanent.getId()));
+            if (named.stream().noneMatch(located -> located.card().getId().equals(physical.getId()))) {
+                named.add(new LocatedCard(physical, Zone.BATTLEFIELD, ownerId));
+            }
+        }
+        return named;
+    }
+
+    /**
+     * "This card", "this creature", "it" of the ability's own object, for a change made to its card (a perpetual change,
+     * a permission to cast it), while it is still the object the ability refers to (CR 400.7): the source permanent's
+     * own physical card while it is that permanent; for an ability of a card in a graveyard or exile, or one that
+     * triggered as its permanent went to the graveyard (CR 400.7e), the card in that stay
+     * ({@link CardSubject.SourceCard}); for an ability of a card in a hand (Heir to Dragonfire), the card while it is in
+     * that hand (an ability of a card in a hand, exile or a graveyard whose stay the entry doesn't record is looked
+     * for in those zones); else the permanent a step of this resolution put onto the battlefield from that card
+     * ("return this card ... It perpetually gets +1/+0", CR 400.7j). A copy's ability is about the copying permanent's
+     * own card. {@code null} once the object has changed zones: a battlefield ability's card that went to a graveyard
+     * since is a new object, not the card a dies trigger finds.
+     */
+    public LocatedCard sourceObjectCard(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (entry.getCard() == null) {
+            return null;
+        }
+        if (entry.getSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null) {
+            return cardsOf(gameData, entry, effect, new CardSubject.CardsOf(Subjects.source())).stream()
+                    .findFirst().orElse(null);
+        }
+        // The physical card: a copy's ability (a Clone that copied it) is about the Clone's own card.
+        Permanent snapshot = entry.getSourcePermanentSnapshot();
+        Card card = snapshot != null && snapshot.getOriginalCard() != null ? snapshot.getOriginalCard()
+                : entry.getCard();
+        UUID cardId = card.getId();
+        long exileStay = entry.getSourceExileEntryVersion();
+        long graveyardStay = entry.sourceCardGraveyardEntryVersion();
+        LocatedCard found = null;
+        if (exileStay >= 0) {
+            found = gameData.exileEntryVersionsOf(List.of(cardId)).get(cardId) != exileStay
+                    ? null : locate(gameData, cardId, Zone.EXILE);
+        } else if (graveyardStay >= 0) {
+            found = gameData.graveyardEntryVersion(cardId) != graveyardStay
+                    ? null : locate(gameData, cardId, Zone.GRAVEYARD);
+        } else if (entry.getSourcePermanentId() == null && entry.getEntryType().isAbility()) {
+            // An ability of a card in a hand, exile or a graveyard whose stay the entry doesn't record.
+            for (Zone zone : List.of(Zone.HAND, Zone.EXILE, Zone.GRAVEYARD)) {
+                found = found != null ? found : locate(gameData, cardId, zone);
+            }
+        }
+        if (found != null) {
+            return found;
+        }
+        for (UUID returnedId : entry.getReturnedPermanentIds()) {
+            Permanent returned = gameQueryService.findPermanentById(gameData, returnedId);
+            Card physical = returned == null ? null
+                    : returned.getOriginalCard() != null ? returned.getOriginalCard() : returned.getCard();
+            if (physical != null && physical.getId().equals(cardId)) {
+                return new LocatedCard(physical, Zone.BATTLEFIELD, Objects.requireNonNullElse(
+                        gameData.ownerOf(physical), gameQueryService.findPermanentController(gameData, returnedId)));
+            }
+        }
+        return null;
     }
 
     /** Names {@code physical} for {@link #owned} when it is a card one of {@code owners} owns and {@code judged} matches. */

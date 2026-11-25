@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -31,7 +32,7 @@ public class SkyclaveShade extends Card {
                                 ObjectRelation.YOU_CONTROL).onlyDuringYourTurn(),
                         AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new MayEffect(new AllowCastSourceCardFromGraveyardThisTurnEffect(),
+                new MayEffect(AllowCastTargetCardFromGraveyardThisTurnEffect.of(Subjects.sourceCard(), false),
                         "Cast this card from your graveyard this turn?"));
     }
 }

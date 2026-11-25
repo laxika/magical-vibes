@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGainKeywordsOfTriggeringCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,7 @@ public class PerpetuallyGainKeywordsOfTriggeringCreatureEffectHandler implements
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,10 +33,12 @@ public class PerpetuallyGainKeywordsOfTriggeringCreatureEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card sourceCard = entry.getCard();
-        if (sourceCard == null) {
+        // "This creature": the source permanent's own card while it is still that permanent (CR 400.7).
+        var self = subjectResolutionService.sourceObjectCard(gameData, entry, effect);
+        if (self == null || self.zone() != Zone.BATTLEFIELD) {
             return;
         }
+        Card sourceCard = self.card();
 
         Permanent triggeringCreature = gameQueryService.findPermanentById(
                 gameData, entry.getTriggeringPermanentId());

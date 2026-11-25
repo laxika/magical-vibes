@@ -67,8 +67,8 @@ class IchorAberrationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A battlefield proliferate trigger permits casting after the creature dies later that turn")
-    void battlefieldTriggerPermitsCastingAfterLaterDeath() {
+    @DisplayName("A battlefield proliferate trigger gives the card it becomes in the graveyard no permission (CR 400.7)")
+    void battlefieldTriggerGivesTheDeadCardNoPermission() {
         Permanent aberration = addReadyAberration();
         castContentiousPlan();
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -82,12 +82,11 @@ class IchorAberrationTest extends BaseCardTest {
                 .equals(aberration.getCard().getId())) {
             aberrationIndex++;
         }
-        harness.castFromGraveyard(player1, aberrationIndex);
-        harness.passBothPriorities();
+        int index = aberrationIndex;
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(4);
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, index))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.getEffectiveCardPower(gd, aberration.getCard())).isEqualTo(4);
     }
 
     @Test
@@ -173,5 +172,29 @@ class IchorAberrationTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
+    }
+
+    @Test
+    @DisplayName("Dying in response to its battlefield trigger, the card is neither boosted nor castable (CR 400.7)")
+    void dyingInResponseToTheBattlefieldTriggerGivesNothing() {
+        Permanent aberration = addReadyAberration();
+        harness.setHand(player1, List.of(new ContentiousPlan()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, aberration));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveCardPower(gd, aberration.getCard())).isEqualTo(3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int index = gd.playerGraveyards.get(player1.getId()).stream().map(card -> card.getId()).toList()
+                .indexOf(aberration.getCard().getId());
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, index))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

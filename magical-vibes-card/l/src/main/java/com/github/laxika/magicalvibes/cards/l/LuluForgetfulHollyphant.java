@@ -53,8 +53,8 @@ public class LuluForgetfulHollyphant extends Card {
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardNotPredicate(new CardKeywordPredicate(Keyword.FLYING)))),
-                        List.of(new PerpetuallyGrantKeywordsToTriggeringCardEffect(
-                                Set.of(Keyword.FLYING)))));
+                        List.of(PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(
+                                Subjects.cardsOf(Subjects.triggeringSpell()), Keyword.FLYING))));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);

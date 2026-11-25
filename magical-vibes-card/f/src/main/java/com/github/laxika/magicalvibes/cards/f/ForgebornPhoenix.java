@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilityToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,12 +38,14 @@ public class ForgebornPhoenix extends Card {
                 Duration.WHILE_ATTACHED));
 
         var returnTrigger = new ReturnSourceCardFromGraveyardToBattlefieldEffect(true);
-        var perpetualGrant = new PerpetuallyGrantAbilityToTriggeringCardEffect(
-                new TriggeredAbility(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker().withFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentIsEquippedPredicate()))),
-                                AbilityZones.GRAVEYARD),
-                        returnTrigger));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), perpetualGrant);
-        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), perpetualGrant);
+        var returnAbility = new TriggeredAbility(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker().withFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentIsEquippedPredicate()))),
+                        AbilityZones.GRAVEYARD),
+                returnTrigger);
+        // "It": the card the dying Phoenix or equipped creature became in the graveyard (CR 400.7e).
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                new PerpetuallyGrantAbilitiesEffect(Subjects.sourceCard(), List.of(returnAbility)));
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
+                new PerpetuallyGrantAbilitiesEffect(Subjects.triggeringCards(), List.of(returnAbility)));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

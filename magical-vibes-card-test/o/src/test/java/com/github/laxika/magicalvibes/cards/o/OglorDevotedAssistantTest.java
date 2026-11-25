@@ -187,4 +187,23 @@ class OglorDevotedAssistantTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
         return creature;
     }
+
+    @Test
+    @DisplayName("A creature card that left the graveyard before the ability resolves gains nothing (CR 400.7)")
+    void creatureCardThatLeftTheGraveyardGainsNothing() {
+        harness.addToBattlefield(player1, new OglorDevotedAssistant());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(new MindRot(), creature, new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.stack).isNotEmpty();
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        resolveAllTriggers();
+
+        assertThat(gd.perpetualAbilities(creature.getId())).isEmpty();
+    }
 }

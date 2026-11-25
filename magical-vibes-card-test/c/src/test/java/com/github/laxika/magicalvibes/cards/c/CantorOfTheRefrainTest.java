@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CantorOfTheRefrainTest extends BaseCardTest {
 
     @Test
+    @DisplayName("It can't block")
     void cantorCannotBlock() {
         Permanent cantor = addCreatureReady(player1, new CantorOfTheRefrain());
 
@@ -22,6 +24,7 @@ class CantorOfTheRefrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A warp cast returns it from the graveyard and it perpetually gets +1/+0")
     void warpCastReturnsCantorAndPerpetuallyBoostsIt() {
         CantorOfTheRefrain cantor = new CantorOfTheRefrain();
         harness.setGraveyard(player1, List.of(cantor));
@@ -39,6 +42,7 @@ class CantorOfTheRefrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A spell cast for its mana cost doesn't return it")
     void normalCastDoesNotReturnCantor() {
         CantorOfTheRefrain cantor = new CantorOfTheRefrain();
         harness.setGraveyard(player1, List.of(cantor));
@@ -55,6 +59,7 @@ class CantorOfTheRefrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's warp cast doesn't return it")
     void warpCastDoesNotReturnOpponentsCantor() {
         CantorOfTheRefrain cantor = new CantorOfTheRefrain();
         harness.setGraveyard(player2, List.of(cantor));
@@ -71,6 +76,7 @@ class CantorOfTheRefrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Cantor in the graveyard returns and is boosted once")
     void warpCastReturnsAndBoostsEachGraveyardCopyOnlyOnce() {
         CantorOfTheRefrain first = new CantorOfTheRefrain();
         CantorOfTheRefrain second = new CantorOfTheRefrain();
@@ -94,6 +100,7 @@ class CantorOfTheRefrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Cantor already on the battlefield isn't boosted")
     void warpCastDoesNotBoostCantorAlreadyOnBattlefield() {
         Permanent cantor = addCreatureReady(player1, new CantorOfTheRefrain());
         harness.setHand(player1, List.of(new KnightLuminary()));
@@ -108,6 +115,7 @@ class CantorOfTheRefrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The boost stays after it dies and adds up on another return")
     void perpetualBoostSurvivesDeathAndAccumulatesOnAnotherReturn() {
         harness.setGraveyard(player1, List.of(new CantorOfTheRefrain()));
         harness.setHand(player1, List.of(new KnightLuminary(), new KnightLuminary()));
@@ -130,5 +138,23 @@ class CantorOfTheRefrainTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, secondReturn)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, secondReturn)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Cantor of the Refrain");
+    }
+
+    @Test
+    @DisplayName("A Cantor exiled from the graveyard before the ability resolves is neither returned nor boosted (CR 400.7)")
+    void cantorExiledInResponseIsNotBoosted() {
+        CantorOfTheRefrain cantor = new CantorOfTheRefrain();
+        harness.setGraveyard(player1, List.of(cantor));
+        harness.setHand(player1, List.of(new KnightLuminary()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(cantor));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Cantor of the Refrain");
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(cantor.getId());
     }
 }

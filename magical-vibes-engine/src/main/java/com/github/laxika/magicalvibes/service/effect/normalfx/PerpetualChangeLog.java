@@ -49,6 +49,10 @@ final class PerpetualChangeLog {
         for (LocatedCard card : located) {
             if (isHidden(card.zone())) {
                 hiddenZones.add(new HiddenZone(card.ownerId(), card.zone()));
+            } else if (isFaceDownObject(gameData, card)) {
+                // A face-down permanent or spell's card is not named (CR 708.2, 708.5).
+                gameLogService.append(gameData, GameLog.text((card.zone() == Zone.STACK
+                        ? "A face-down spell" : "A face-down permanent") + change));
             } else {
                 gameLogService.append(gameData, GameLog.cardThenUnlessHidden(gameData, card.card(), change));
             }
@@ -58,6 +62,19 @@ final class PerpetualChangeLog {
                     + gameData.playerIdToName.get(zone.ownerId()) + "'s "
                     + (zone.zone() == Zone.HAND ? "hand" : "library") + change));
         }
+    }
+
+    private static boolean isFaceDownObject(GameData gameData, LocatedCard card) {
+        UUID cardId = card.card().getId();
+        if (card.zone() == Zone.BATTLEFIELD) {
+            return gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                    .anyMatch(permanent -> permanent.isFaceDown() && (permanent.getCard().getId().equals(cardId)
+                            || permanent.getOriginalCard() != null
+                            && permanent.getOriginalCard().getId().equals(cardId)));
+        }
+        return card.zone() == Zone.STACK && gameData.stack.stream()
+                .anyMatch(spell -> spell.isCastFaceDown() && spell.getPhysicalCard() != null
+                        && spell.getPhysicalCard().getId().equals(cardId));
     }
 
     private static boolean isHidden(Zone zone) {

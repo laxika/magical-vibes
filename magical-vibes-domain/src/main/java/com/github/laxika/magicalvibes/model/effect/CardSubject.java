@@ -15,8 +15,9 @@ import java.util.Objects;
  * names each card as it is now, in the zone it is expected to be in, and nothing for a card that has left that
  * zone (a card that moves is a new object, CR 400.7). Six variants name cards no other player may see, {@link InHand},
  * {@link InLibrary}, {@link TopmostInLibrary}, {@link TriggeringCardsInHand}, {@link Owned} and {@link OutsideTheGame}
- * ({@link #inHiddenZone()}): they say nothing about who may see those cards. {@link Owned} alone also names the cards
- * of permanents and spells, so only the perpetual verbs read it.
+ * ({@link #inHiddenZone()}): they say nothing about who may see those cards. {@link Owned}, {@link CardsOf} and
+ * {@link SourceObjectCard} also name the cards of permanents and spells, so only the perpetual verbs and a verb that
+ * looks at the zone it is given (a graveyard cast permission) read them.
  *
  * <p>{@link TargetCard} and {@link TargetExiledCard} declare a card target, and a variant of a target player's cards
  * that player ({@link #declaresTarget()}, {@link #targetSpec()}). A static ability can use {@link InExile},
@@ -31,7 +32,8 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
         CardSubject.TopmostInLibrary, CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted,
-        CardSubject.Owned, CardSubject.OutsideTheGame, CardSubject.TargetGraveyardCards {
+        CardSubject.Owned, CardSubject.OutsideTheGame, CardSubject.TargetGraveyardCards, CardSubject.CardsOf,
+        CardSubject.SourceObjectCard {
 
     /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -150,6 +152,18 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
     }
 
     /**
+     * "This card", "this creature", "it" of the ability's own object in whichever zone the ability refers to it: the
+     * source permanent's own card while it is that permanent, the card in the graveyard or exile stay its ability works
+     * from or its dies trigger found it in (CR 400.7e), the card in the hand its ability was activated from, or the
+     * permanent this resolution returned it as (CR 400.7j); nothing once it has changed zones since (CR 400.7). Unlike
+     * {@link SourceCard} it never names the card a battlefield ability's permanent became in a graveyard. Only for the
+     * perpetual verbs and "you may cast it from your graveyard this turn" (Ichor Aberration), which grants the
+     * permission only to a card it names in a graveyard.
+     */
+    record SourceObjectCard() implements CardSubject {
+    }
+
+    /**
      * "The exiled card" of an ability whose cost exiled it: the card this ability or spell exiled to pay for itself,
      * while it is in exile (CR 400.7j, 608.2h), whatever the source imprinted or exiled before or since; "the exiled
      * cards" of an activated ability whose cost exiled several from a graveyard (Coin of Fate), those still in exile.
@@ -158,6 +172,27 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * that has left exile since still counts (Soulflayer).
      */
     record ExiledAsCost() implements CardSubject {
+    }
+
+    /**
+     * "That creature perpetually gets +1/+0", "it perpetually gains haste" of a permanent or a spell (digital only): the
+     * physical card of each permanent {@code permanents} names while it is still that permanent on the battlefield (its
+     * own card, which a copy effect doesn't change), or, for {@code Subjects.triggeringSpell()}, the card of the spell
+     * the trigger event was about while that spell is still on the stack (no copy of a spell, which is no card,
+     * CR 707.10). A permanent or spell that has left is a new object (CR 400.7), so nothing is named for it. Only for
+     * the perpetual verbs, which change the cards themselves: it names cards no mover may move.
+     *
+     * @param permanents the permanents (or the triggering spell) whose cards are named; it declares no target
+     */
+    record CardsOf(PermanentSubject permanents) implements CardSubject {
+
+        public CardsOf {
+            Objects.requireNonNull(permanents, "permanents");
+            if (permanents.declaresTarget()) {
+                throw new IllegalArgumentException("A perpetual change to a target's card names it by its own subject: "
+                        + permanents);
+            }
+        }
     }
 
     /**

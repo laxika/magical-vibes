@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,6 +25,6 @@ public class CantorOfTheRefrain extends Card {
                 TriggerOptions.DEFAULT,
                 SequenceEffect.of(
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),
-                        PerpetuallyBoostCardEffect.toCards(Subjects.cardsYouOwn(new CardIsSelfPredicate()), 1, 0)));
+                        new PerpetuallyBoostCardEffect(this, 1, 0)));
     }
 }

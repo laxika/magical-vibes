@@ -2508,4 +2508,51 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(predicates().matchesCardPredicate(new GrizzlyBears(), bound, null, gd, player1.getId())).isFalse();
         }
     }
+
+    @Nested
+    @DisplayName("cardsOf() and sourceObjectCard(): a perpetual change's \"it\" (CR 400.7)")
+    class PerpetualObjects {
+
+        @Test
+        @DisplayName("cardsOf(source()) names the source permanent's card while it is that permanent, nothing once it left")
+        void cardsOfSourcePermanent() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, bears.getId());
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.cardsOf(source())))
+                    .singleElement()
+                    .satisfies(located -> {
+                        assertThat(located.card()).isSameAs(bears.getCard());
+                        assertThat(located.zone()).isEqualTo(Zone.BATTLEFIELD);
+                    });
+
+            leaveBattlefield(bears);
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.cardsOf(source()))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("cardsOf(triggeringSpell()) names nothing once the spell has left the stack")
+        void cardsOfTriggeringSpellThatLeft() {
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringCardId(new GrizzlyBears().getId());
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.cardsOf(Subjects.triggeringSpell())))
+                    .isEmpty();
+        }
+
+        @Test
+        @DisplayName("sourceObjectCard() names a battlefield ability's card while it is the permanent, not the card it became in a graveyard")
+        void sourceObjectCardOfBattlefieldAbility() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, bears.getId());
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.sourceObjectCard())).containsExactly(bears.getCard());
+
+            leaveBattlefield(bears);
+
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.sourceObjectCard())).isEmpty();
+        }
+    }
 }

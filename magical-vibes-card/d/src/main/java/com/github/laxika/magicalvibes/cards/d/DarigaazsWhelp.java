@@ -21,7 +21,7 @@ public class DarigaazsWhelp extends Card {
     public DarigaazsWhelp() {
         addStaticEffect(new KickerEffect("{1}{R}"));
         addTrigger(Triggers.youDrawCard().withFilter(new CardSubtypePredicate(CardSubtype.DRAGON)),
-                PerpetuallyBoostCardEffect.ofTriggeringCard(1, 1));
+                PerpetuallyBoostCardEffect.toCards(Subjects.triggeringCardsInHand(), 1, 1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 SequenceEffect.of(

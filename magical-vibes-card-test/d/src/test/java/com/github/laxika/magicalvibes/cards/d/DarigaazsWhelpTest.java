@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LurkerInTheDeep;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DarigaazsWhelpTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A drawn Dragon card perpetually gets +1/+1")
     void drawingDragonPerpetuallyBoostsIt() {
         Permanent whelp = harness.addToBattlefieldAndReturn(player1, new DarigaazsWhelp());
         FurnaceWhelp dragon = new FurnaceWhelp();
@@ -42,6 +45,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Kicked, it seeks a Dragon card and both it and that card perpetually get +1/+1")
     void kickedEntryBoostsTheWhelpAndSeeksAndBoostsADragon() {
         FurnaceWhelp dragon = new FurnaceWhelp();
         harness.setLibrary(player1, List.of(new GrizzlyBears(), dragon));
@@ -70,6 +74,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A drawn non-Dragon card isn't boosted")
     void drawingNonDragonDoesNotBoostIt() {
         harness.addToBattlefield(player1, new DarigaazsWhelp());
         GrizzlyBears bears = new GrizzlyBears();
@@ -81,6 +86,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Unkicked, it neither seeks nor boosts")
     void unkickedEntryDoesNotSeekOrBoost() {
         FurnaceWhelp dragon = new FurnaceWhelp();
         harness.setLibrary(player1, List.of(dragon));
@@ -99,6 +105,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Kicked, it is boosted even when no Dragon card can be sought")
     void kickedEntryStillBoostsWhelpWhenNoDragonCanBeSought() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bears));
@@ -118,6 +125,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent drawing a Dragon card doesn't trigger it")
     void opponentDrawingDragonDoesNotTriggerWhelp() {
         harness.addToBattlefield(player1, new DarigaazsWhelp());
         harness.setLibrary(player2, List.of(new FurnaceWhelp()));
@@ -128,6 +136,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Whelps each boost the same drawn Dragon card")
     void twoWhelpsEachBoostTheSameDrawnDragon() {
         harness.addToBattlefield(player1, new DarigaazsWhelp());
         harness.addToBattlefield(player1, new DarigaazsWhelp());
@@ -149,6 +158,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Seeking doesn't shuffle the library")
     void seekingDoesNotCauseShuffleTriggers() {
         harness.addToBattlefield(player2, new PsychogenicProbe());
         FurnaceWhelp dragon = new FurnaceWhelp();
@@ -168,6 +178,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Seeking triggers abilities that watch for seeking")
     void seekingDragonTriggersAbilitiesThatWatchSeeking() {
         harness.forceActivePlayer(player1);
         harness.addToBattlefield(player1, new LurkerInTheDeep());
@@ -199,4 +210,41 @@ class DarigaazsWhelpTest extends BaseCardTest {
                 .orElseThrow();
     }
 
+    @Test
+    @DisplayName("A drawn Dragon card that left the hand before the ability resolves isn't boosted (CR 400.7)")
+    void drawnDragonThatLeftTheHandIsNotBoosted() {
+        harness.addToBattlefield(player1, new DarigaazsWhelp());
+        FurnaceWhelp dragon = new FurnaceWhelp();
+        harness.setLibrary(player1, List.of(dragon));
+
+        draw(player1.getId());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(dragon.getId());
+    }
+
+    @Test
+    @DisplayName("Kicked, a Whelp that left the battlefield before the ability resolves isn't boosted; the sought Dragon card is (CR 400.7)")
+    void whelpThatLeftIsNotBoostedButTheSoughtDragonIs() {
+        FurnaceWhelp dragon = new FurnaceWhelp();
+        DarigaazsWhelp whelpCard = new DarigaazsWhelp();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), dragon));
+        harness.setHand(player1, List.of(whelpCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent whelp = findPermanent(player1, whelpCard);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, whelp));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(whelpCard, dragon);
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .doesNotContainKey(whelpCard.getId())
+                .containsEntry(dragon.getId(), new CardPowerToughnessModifier(1, 1));
+    }
 }

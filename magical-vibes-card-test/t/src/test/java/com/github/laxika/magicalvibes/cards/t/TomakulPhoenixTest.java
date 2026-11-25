@@ -85,4 +85,27 @@ class TomakulPhoenixTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("A Phoenix exiled from the graveyard before its death ability resolves isn't boosted (CR 400.7)")
+    void phoenixExiledFromTheGraveyardIsNotBoosted() {
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new TomakulPhoenix());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, phoenix.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(phoenix.getCard()));
+        harness.passBothPriorities();
+
+        var exiled = gd.findExiledCard(phoenix.getCard().getId());
+        assertThat(exiled).isNotNull();
+        assertThat(gqs.getEffectiveCardPower(gd, exiled.card())).isEqualTo(2);
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(phoenix.getCard().getId());
+    }
 }

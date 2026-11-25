@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WaryZoneGuardTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Enters tapped; survival returns a land card and it perpetually gets +1/+1")
     void entersTappedAndSurvivalReturnsLandAndPerpetuallyBoostsGuard() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         Card forest = new Forest();
@@ -45,6 +47,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no land card in the graveyard, survival still boosts it")
     void survivalCanBeDeclinedWhenNoLandIsInGraveyard() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
 
@@ -56,6 +59,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An untapped Guard doesn't trigger survival")
     void untappedGuardDoesNotTriggerSurvival() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         guard.untap();
@@ -69,6 +73,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Untapping before survival resolves stops both the return and the growth")
     void untappingBeforeResolutionPreventsReturnAndGrowth() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         Card forest = new Forest();
@@ -86,6 +91,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing no land target still boosts it")
     void choosingNoTargetStillBoostsGuardWhenLandIsAvailable() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         Card forest = new Forest();
@@ -101,6 +107,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's second main phase doesn't trigger survival")
     void opponentsSecondMainPhaseDoesNotTriggerSurvival() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         harness.setGraveyard(player1, List.of(new Forest()));
@@ -113,6 +120,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing the only target stops both the return and the growth")
     void removingTheOnlyTargetPreventsBothReturnAndGrowth() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         Card forest = new Forest();
@@ -130,6 +138,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Survival returns only a land card from its controller's graveyard")
     void survivalReturnsOnlyControllersLand() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         Card ownForest = new Forest();
@@ -149,6 +158,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The growth stays after it returns to hand and is cast again")
     void perpetualGrowthSurvivesReturningToHandAndRecasting() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         advanceToPostcombatMain(player1);
@@ -169,7 +179,8 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
-    void returningTappedGuardToHandBeforeResolutionStillReturnsLandAndPerpetuallyBoostsCard() {
+    @DisplayName("Returned to hand before survival resolves, the land still returns but the card isn't boosted (CR 400.7)")
+    void returningTappedGuardToHandBeforeResolutionStillReturnsLandButDoesNotBoostTheCard() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         Card forest = new Forest();
         harness.setGraveyard(player1, List.of(forest));
@@ -187,12 +198,13 @@ class WaryZoneGuardTest extends BaseCardTest {
         Permanent recastGuard = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(returnedGuard.getId()))
                 .findFirst().orElseThrow();
-        assertThat(gqs.getEffectivePower(gd, recastGuard)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, recastGuard)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, recastGuard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, recastGuard)).isEqualTo(3);
     }
 
     @Test
-    void dyingTappedBeforeResolutionStillReturnsLandAndPerpetuallyBoostsCard() {
+    @DisplayName("Dying before survival resolves, the land still returns but the card isn't boosted (CR 400.7)")
+    void dyingTappedBeforeResolutionStillReturnsLandButDoesNotBoostTheCard() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         Card forest = new Forest();
         harness.setGraveyard(player1, List.of(forest));
@@ -207,11 +219,12 @@ class WaryZoneGuardTest extends BaseCardTest {
                 .filter(card -> card.getId().equals(guard.getCard().getId())).findFirst().orElseThrow();
         harness.setGraveyard(player1, List.of());
         Permanent returnedGuard = harness.enterBattlefieldAndReturn(player1, deadGuard);
-        assertThat(gqs.getEffectivePower(gd, returnedGuard)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, returnedGuard)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, returnedGuard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, returnedGuard)).isEqualTo(3);
     }
 
     @Test
+    @DisplayName("Survival doesn't trigger in a later main phase of the same turn")
     void survivalDoesNotTriggerDuringLaterMainPhaseOfSameTurn() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         gd.mainPhasesBegunThisTurn = 2;
@@ -224,6 +237,7 @@ class WaryZoneGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Survival triggers in the second main phase after an additional combat")
     void survivalTriggersInTheSecondMainPhaseAfterAnAdditionalCombat() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
         gd.combatPhasesThisTurn = 2;

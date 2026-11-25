@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilityToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "YMID", collectorNumber = "20")
@@ -23,8 +25,8 @@ public class OglorDevotedAssistant extends Card {
                 LookAtTopCardsEffect.putOneIntoGraveyardRestOnTop(2));
         addTrigger(Triggers.putIntoGraveyardFrom(Set.of(Zone.LIBRARY, Zone.HAND), Triggers.NONTOKEN_CREATURE,
                         ObjectRelation.YOU_OWN),
-                new PerpetuallyGrantAbilityToTriggeringCardEffect(new TriggeredAbility(
+                new PerpetuallyGrantAbilitiesEffect(Subjects.triggeringCards(), List.of(new TriggeredAbility(
                         new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.THIS), AbilityZones.GRAVEYARD),
-                        CreateTokenEffect.blackZombie(1).withTapped(true))));
+                        CreateTokenEffect.blackZombie(1).withTapped(true)))));
     }
 }
