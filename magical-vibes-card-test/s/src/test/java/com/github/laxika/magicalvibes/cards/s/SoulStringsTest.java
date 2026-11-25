@@ -97,6 +97,8 @@ class SoulStringsTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        // Each player gets the option to pay, even after another player paid (PCY ruling).
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
