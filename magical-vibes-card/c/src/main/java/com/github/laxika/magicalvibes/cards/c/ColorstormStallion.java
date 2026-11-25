@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
@@ -19,7 +19,7 @@ import java.util.List;
 public class ColorstormStallion extends Card {
 
     public ColorstormStallion() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(1));
         // Opus — Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn.
         // If five or more mana was spent to cast that spell, create a token that's a copy of this creature.
         addTrigger(Triggers.youCastSpell()

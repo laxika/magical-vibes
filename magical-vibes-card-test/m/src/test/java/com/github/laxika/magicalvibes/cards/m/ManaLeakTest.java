@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.c.Combust;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.r.RocEgg;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaLeak.class, Shock.class, RuneclawBear.class, Combust.class, Island.class, RocEgg.class})
+@CardUsed({ManaLeak.class, Shock.class, RuneclawBear.class, Combust.class, Island.class, RocEgg.class, Firebolt.class})
 class ManaLeakTest extends BaseCardTest {
 
     @Test
@@ -280,5 +282,30 @@ class ManaLeakTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Runeclaw Bear");
         harness.assertInGraveyard(player1, "Mana Leak");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Exiles a flashback spell whose controller can't pay {3}")
+    void exilesUnpayableFlashbackSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Firebolt firebolt = new Firebolt();
+        harness.setGraveyard(player1, List.of(firebolt));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castFlashback(player1, 0, player2.getId());
+
+        harness.setHand(player2, List.of(new ManaLeak()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, firebolt.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Firebolt");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(firebolt.getId()));
+        harness.assertLife(player2, 20);
     }
 }

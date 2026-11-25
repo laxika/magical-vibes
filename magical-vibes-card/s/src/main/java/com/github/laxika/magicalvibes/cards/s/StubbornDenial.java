@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -30,7 +30,7 @@ public class StubbornDenial extends Card {
                 new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4)))),
-                new CounterUnlessPaysEffect(1),
+                UnlessPaysEffect.counterUnlessPays(1),
                 new CounterSpellEffect()
         ));
     }

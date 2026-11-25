@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTargetCreatureEffect;
@@ -30,7 +30,7 @@ class TargetTriggerTest {
 
     private static final CardEffect DRAW = new DrawCardEffect(1);
     private static final CardEffect SACRIFICE = new SacrificeSelfEffect();
-    private static final CardEffect WARD = new CounterUnlessPaysEffect(2);
+    private static final CardEffect WARD = UnlessPaysEffect.counterUnlessPays(2);
     private static final PermanentPredicate DRAGON = new PermanentHasSubtypePredicate(CardSubtype.DRAGON);
 
     @Test

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndCopyEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class SecretInvasion extends Card {
         target(TargetFilters.creatureYouControl())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(2)), Subjects.attachedCreature()));
+                        UnlessPaysEffect.counterUnlessPays(2)), Subjects.attachedCreature()));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

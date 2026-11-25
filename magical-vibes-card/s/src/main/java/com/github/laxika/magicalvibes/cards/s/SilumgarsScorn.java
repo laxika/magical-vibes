@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
 import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -27,7 +27,7 @@ public class SilumgarsScorn extends Card {
                 new ControlledDragonAsCast()));
         addSpellEffect(new ConditionalReplacementEffect(
                 dragonBonus,
-                new CounterUnlessPaysEffect(1),
+                UnlessPaysEffect.counterUnlessPays(1),
                 new CounterSpellEffect()));
     }
 }

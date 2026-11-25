@@ -226,11 +226,26 @@ class AureliasVindicatorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ward protects a face-up Vindicator from an opposing spell")
+    @DisplayName("Ward {2} is paid with mana, not life")
+    void wardIsPaidWithMana() {
+        harness.addToBattlefield(player1, new AureliasVindicator());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Aurelia's Vindicator"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof Shock);
+    }
+
+    @Test
+    @DisplayName("Ward protects a face-up Vindicator from an opposing spell whose controller declines to pay {2}")
     void wardProtectsFaceUpVindicator() {
         harness.addToBattlefield(player1, new AureliasVindicator());
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 3);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Aurelia's Vindicator"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);

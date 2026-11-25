@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -29,7 +29,7 @@ public class MagesAttendant extends Card {
                 false, false, List.of(), List.of(new ActivatedAbility(
                         false,
                         "{1}",
-                        List.of(new SacrificeSelfCost(), new CounterUnlessPaysEffect(1)),
+                        List.of(new SacrificeSelfCost(), UnlessPaysEffect.counterUnlessPays(1)),
                         "{1}, Sacrifice this token: Counter target noncreature spell unless its controller pays {1}.",
                         new StackEntryPredicateTargetFilter(
                                 new StackEntryNotPredicate(

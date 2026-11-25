@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -18,7 +17,7 @@ public class HagOfMagesDoom extends Card {
         // Warlocks you control have "Ward—Pay 2 life."
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysLifeEffect(new Fixed(2))),
+                UnlessPaysEffect.counterUnlessPaysLife(2)),
                 Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.WARLOCK)));
     }

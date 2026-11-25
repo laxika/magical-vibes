@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +25,7 @@ public class ZulAshurLichLord extends Card {
     public ZulAshurLichLord() {
         // Ward—Pay 2 life.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(0, 2));
+                UnlessPaysEffect.counterUnlessPaysLife(2));
 
         // {T}: You may cast target Zombie creature card from your graveyard this turn.
         addActivatedAbility(new ActivatedAbility(

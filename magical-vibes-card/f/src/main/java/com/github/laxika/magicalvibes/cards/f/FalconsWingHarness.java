@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -25,7 +25,7 @@ public class FalconsWingHarness extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(1)), Subjects.attachedCreature()));
+                UnlessPaysEffect.counterUnlessPays(1)), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}{U}"));
     }
 }

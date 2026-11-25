@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -25,7 +25,7 @@ import java.util.List;
 public class DragonflySwarm extends Card {
 
     public DragonflySwarm() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(1));
         CardsInGraveyard noncreatureNonlandCards = new CardsInGraveyard(new CardAllOfPredicate(List.of(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))

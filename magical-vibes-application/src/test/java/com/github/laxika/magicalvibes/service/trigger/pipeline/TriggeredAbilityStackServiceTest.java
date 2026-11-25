@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -1133,7 +1133,7 @@ class TriggeredAbilityStackServiceTest {
                 "Bolt", List.of());
 
         stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
-                Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2)), card, warded,
+                Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2)), card, warded,
                 PLAYER1_ID, "ward", ConditionContext.forPermanent(warded, PLAYER1_ID), entry -> {
                     entry.setTargetId(PLAYER2_ID);
                     entry.setNonTargeting(true);
@@ -1156,7 +1156,7 @@ class TriggeredAbilityStackServiceTest {
                 "Bolt", List.of());
 
         stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
-                Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2)), card, watcher,
+                Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2)), card, watcher,
                 PLAYER1_ID, "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID), entry -> {
                     entry.setTargetId(named.getId());
                     entry.setNonTargeting(true);

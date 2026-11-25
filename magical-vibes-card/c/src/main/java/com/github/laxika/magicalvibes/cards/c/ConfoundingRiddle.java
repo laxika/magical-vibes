@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class ConfoundingRiddle extends Card {
                         LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays {4}",
-                        new CounterUnlessPaysEffect(4))
+                        UnlessPaysEffect.counterUnlessPays(4))
         )));
     }
 }

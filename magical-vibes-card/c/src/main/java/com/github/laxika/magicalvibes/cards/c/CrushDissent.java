@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -28,7 +28,7 @@ import java.util.Set;
 public class CrushDissent extends Card {
 
     public CrushDissent() {
-        addSpellEffect(new CounterUnlessPaysEffect(2));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(2));
 
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

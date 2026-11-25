@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "46")
@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 public class Censor extends Card {
 
     public Censor() {
-        addSpellEffect(new CounterUnlessPaysEffect(1));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(1));
 
         // Cycling {U} ({U}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{U}");

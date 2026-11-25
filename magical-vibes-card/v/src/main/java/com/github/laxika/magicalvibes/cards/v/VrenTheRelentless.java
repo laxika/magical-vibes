@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreaturesExiledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +24,7 @@ public class VrenTheRelentless extends Card {
 
     public VrenTheRelentless() {
         // Ward {2}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         addStaticEffect(new ExileOpponentCreaturesInsteadOfDyingEffect());
 

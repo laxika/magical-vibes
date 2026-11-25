@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +24,7 @@ public class MicaReaderOfRuins extends Card {
     public MicaReaderOfRuins() {
         // Ward—Pay 3 life.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysLifeEffect(new Fixed(3)));
+                UnlessPaysEffect.counterUnlessPaysLife(3));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

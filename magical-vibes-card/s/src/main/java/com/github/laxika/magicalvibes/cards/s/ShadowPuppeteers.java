@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -29,7 +29,7 @@ public class ShadowPuppeteers extends Card {
     public ShadowPuppeteers() {
         // Flying, ward {2}.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2));
+                UnlessPaysEffect.counterUnlessPays(2));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Faerie Rogue", 1, 1, CardColor.BLACK,

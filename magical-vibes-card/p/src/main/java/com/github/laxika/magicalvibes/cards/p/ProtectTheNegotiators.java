@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -17,7 +17,7 @@ public class ProtectTheNegotiators extends Card {
     public ProtectTheNegotiators() {
         addStaticEffect(new KickerEffect("{W}"));
         addSpellEffect(new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(1)));
-        addSpellEffect(new CounterUnlessPaysEffect(
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }
 }

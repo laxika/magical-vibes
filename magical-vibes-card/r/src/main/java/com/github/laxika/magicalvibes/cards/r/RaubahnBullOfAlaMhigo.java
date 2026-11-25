@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -20,7 +20,7 @@ public class RaubahnBullOfAlaMhigo extends Card {
 
     public RaubahnBullOfAlaMhigo() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysLifeEffect(new SourcePower()));
+                UnlessPaysEffect.counterUnlessPaysLife(new SourcePower()));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -28,7 +28,7 @@ public class LiltingRefrain extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new CounterUnlessPaysEffect(new CountersOnSource(CounterType.VERSE))
+                        UnlessPaysEffect.counterUnlessPays(new CountersOnSource(CounterType.VERSE))
                 ),
                 "Sacrifice Lilting Refrain: Counter target spell unless its controller pays {X}, "
                         + "where X is the number of verse counters on Lilting Refrain."

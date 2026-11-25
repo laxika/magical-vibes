@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 import java.util.List;
 
@@ -13,11 +13,11 @@ public class GhostLitWarder extends Card {
 
     public GhostLitWarder() {
         addActivatedAbility(new ActivatedAbility(true, "{3}{U}",
-                List.of(new CounterUnlessPaysEffect(2)),
+                List.of(UnlessPaysEffect.counterUnlessPays(2)),
                 "{3}{U}, {T}: Counter target spell unless its controller pays {2}."));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{3}{U}",
-                List.of(new CounterUnlessPaysEffect(4)),
+                List.of(UnlessPaysEffect.counterUnlessPays(4)),
                 "Channel — {3}{U}, Discard this card: Counter target spell unless its controller pays {4}."));
     }
 }

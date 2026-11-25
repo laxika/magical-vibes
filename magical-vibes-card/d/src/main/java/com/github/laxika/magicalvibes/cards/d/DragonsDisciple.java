@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersWithCountersEffect;
@@ -34,7 +34,8 @@ public class DragonsDisciple extends Card {
                         CardSubtype.DRAGON, CounterType.PLUS_ONE_PLUS_ONE, 1)));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1)),
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                        UnlessPaysEffect.counterUnlessPays(1)),
                 Subjects.creaturesYouControl(),
                 dragon));
     }

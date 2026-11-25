@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.cards.m.ManaLeak;
 import com.github.laxika.magicalvibes.cards.r.RealitySmasher;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Thoughtseize;
+import com.github.laxika.magicalvibes.cards.w.WaterfallAerialist;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Guile.class, Cancel.class, GrizzlyBears.class, Thoughtseize.class, Lignify.class, RealitySmasher.class,
-        Shock.class})
+        Shock.class, WaterfallAerialist.class, ManaLeak.class})
 class GuileTest extends BaseCardTest {
 
     @Test
@@ -301,6 +303,53 @@ class GuileTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Shock");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getId().equals(shock.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A declined ward {2} you control exiles the spell instead and offers a free play")
+    void declinedWardExilesInsteadOfCountering() {
+        harness.addToBattlefield(player1, new Guile());
+        Permanent aerialist = addCreatureReady(player1, new WaterfallAerialist());
+        Shock shock = new Shock();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player2, 0, aerialist.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotInGraveyard(player2, "Shock");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(shock.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.assertOnBattlefield(player1, "Waterfall Aerialist");
+    }
+
+    @Test
+    @DisplayName("Mana Leak against a spell whose controller can't pay exiles it instead and offers a free play")
+    void unpayableManaLeakExilesInsteadOfCountering() {
+        harness.addToBattlefield(player1, new Guile());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, bears, "{1}{G}");
+        harness.setHand(player1, List.of(new ManaLeak()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getId()));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
     }

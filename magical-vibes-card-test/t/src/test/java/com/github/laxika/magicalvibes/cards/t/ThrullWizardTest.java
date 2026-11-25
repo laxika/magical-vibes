@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.i.IcatianInfantry;
+import com.github.laxika.magicalvibes.cards.k.KrrikSonOfYawgmoth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThrullWizard.class, BasalThrull.class, IcatianInfantry.class})
+@CardUsed({ThrullWizard.class, BasalThrull.class, IcatianInfantry.class, KrrikSonOfYawgmoth.class})
 class ThrullWizardTest extends BaseCardTest {
 
     @Test
@@ -155,6 +156,25 @@ class ThrullWizardTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Basal Thrull");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("K'rrik's controller may pay the {B} of the ransom with 2 life")
+    void krrikPaysTheBlackRansomWithLife() {
+        addReadyWizard();
+        harness.addToBattlefield(player2, new KrrikSonOfYawgmoth());
+        castBasalThrull();
+
+        harness.activateAbility(player1, 0, null, targetSpellId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.assertNotInGraveyard(player2, "Basal Thrull");
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Basal Thrull"));
     }
 
     private Permanent addReadyWizard() {

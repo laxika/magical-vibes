@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -27,7 +27,7 @@ public class GuardianSunmare extends Card {
 
     public GuardianSunmare() {
         // Ward {2}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new SearchLibraryEffect(

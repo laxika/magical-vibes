@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "55")
 @CardRegistration(set = "EMN", collectorNumber = "53")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 public class Convolute extends Card {
 
     public Convolute() {
-        addSpellEffect(new CounterUnlessPaysEffect(4));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(4));
     }
 }

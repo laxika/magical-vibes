@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class AmaliaBenavidesAguirre extends Card {
 
     public AmaliaBenavidesAguirre() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(0, 3));
+                UnlessPaysEffect.counterUnlessPaysLife(3));
 
         addTrigger(Triggers.youGainLife(), SequenceEffect.of(
                 new ExploreEffect(),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -17,7 +17,7 @@ public class FamishedWorldsire extends Card {
 
     public FamishedWorldsire() {
         // Ward {3}
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(3));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(3));
         addStaticEffect(new SacrificePermanentsAsEntersForCountersEffect(new PermanentIsLandPredicate(), 3));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 LookAtTopCardsEffect.mayPutAnyNumberMatchingOntoBattlefieldTappedShuffleRest(

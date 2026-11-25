@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class AegisSculptor extends Card {
 
     public AegisSculptor() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect(2));
+                UnlessPaysEffect.counterUnlessPays(2));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(new GraveyardCardThreshold(2, new CardTruePredicate()))),
                 new MayEffect(

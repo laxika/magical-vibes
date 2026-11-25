@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -36,7 +36,7 @@ public class IzzetCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target noncreature spell unless its controller pays {2}",
-                        new CounterUnlessPaysEffect(2),
+                        UnlessPaysEffect.counterUnlessPays(2),
                         new StackEntryPredicateTargetFilter(
                                 new StackEntryNotPredicate(
                                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
@@ -21,7 +21,7 @@ public class RoamingThrone extends Card {
 
     public RoamingThrone() {
         // Ward {2}
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
         addStaticEffect(new AdditionalTriggeredAbilityEffect(

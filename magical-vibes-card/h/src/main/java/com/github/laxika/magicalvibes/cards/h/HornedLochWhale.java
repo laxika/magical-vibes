@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class HornedLochWhale extends Card {
         setBackFaceCard(new LagoonBreach());
         addCastingOption(new AdventureCast("{1}{U}"));
 
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new ControllerTurn()), new EntersTappedEffect()));

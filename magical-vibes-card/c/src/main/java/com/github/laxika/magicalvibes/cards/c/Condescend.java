@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "27")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class Condescend extends Card {
 
     public Condescend() {
-        addSpellEffect(new CounterUnlessPaysEffect(0, true, false));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPaysX());
         addSpellEffect(new ScryEffect(2));
     }
 }

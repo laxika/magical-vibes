@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
@@ -34,7 +34,7 @@ public class LeylineImmersion extends Card {
         target(new PermanentPredicateTargetFilter(legendaryCreature, "Target must be a legendary creature"))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(2)),
+                        UnlessPaysEffect.counterUnlessPays(2)),
                         Subjects.attachedCreature()
                 ))
                 .addStaticEffect(new GrantActivatedAbilityEffect(

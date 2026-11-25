@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreaturesByPowerAboveBasePowerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,7 +13,7 @@ public class SovereignOkinecAhau extends Card {
 
     public SovereignOkinecAhau() {
         // Ward {2}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         addTrigger(Triggers.attacks(),
                 new PutCountersOnControlledCreaturesByPowerAboveBasePowerEffect(

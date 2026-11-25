@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -155,6 +157,58 @@ class GisaTheHellraiserTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .count();
     }
+
+    @Test
+    @DisplayName("Ward: an opponent's spell resolves when its controller pays {2} and 2 life")
+    void wardPaidWithManaAndLife() {
+        Permanent gisa = harness.addToBattlefieldAndReturn(player1, new GisaTheHellraiser());
+        castShockAtGisa(gisa, 3);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        assertThat(gisa.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ward: an opponent's spell is countered when its controller declines to pay {2} and 2 life")
+    void wardDeclinedCounters() {
+        Permanent gisa = harness.addToBattlefieldAndReturn(player1, new GisaTheHellraiser());
+        castShockAtGisa(gisa, 3);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gisa.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ward: an opponent with the mana but too little life can't pay, and the spell is countered")
+    void wardUnpayableLifeCounters() {
+        Permanent gisa = harness.addToBattlefieldAndReturn(player1, new GisaTheHellraiser());
+        harness.setLife(player2, 1);
+        castShockAtGisa(gisa, 3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player2, 1);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    private void castShockAtGisa(Permanent gisa, int mana) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, mana);
+        harness.castInstant(player2, 0, gisa.getId());
+    }
 }
-
-

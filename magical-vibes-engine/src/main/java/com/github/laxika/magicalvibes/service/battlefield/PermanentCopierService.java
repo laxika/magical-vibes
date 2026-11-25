@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -74,7 +74,7 @@ public class PermanentCopierService {
     /** Gives {@code card} ward {2}: the keyword and its triggered ability (CR 702.21a). */
     public static Card withWardTwo(Card card) {
         card.setKeywords(EnumSet.of(Keyword.WARD));
-        card.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        card.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         return card;
     }
 

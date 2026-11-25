@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -1045,6 +1046,10 @@ public class Card {
             case MayPayManaEffect e -> {
                 if (e.wrapped() != null) bindEffectToTargetGroup(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) bindEffectToTargetGroup(e.elseEffect(), targetIndex);
+            }
+            case UnlessPaysEffect e -> {
+                bindEffectToTargetGroup(e.ifNotPaid(), targetIndex);
+                if (e.ifPaid() != null) bindEffectToTargetGroup(e.ifPaid(), targetIndex);
             }
             case MayPayTapPermanentsEffect e -> {
                 if (e.wrapped() != null) bindEffectToTargetGroup(e.wrapped(), targetIndex);

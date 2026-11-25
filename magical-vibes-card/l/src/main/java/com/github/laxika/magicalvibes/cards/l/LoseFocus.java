@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +17,7 @@ public class LoseFocus extends Card {
 
     public LoseFocus() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}")));
-        addSpellEffect(new CounterUnlessPaysEffect(2));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(2));
         addTrigger(Triggers.youCastThisSpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{U}")),
                 new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount("{U}")));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -22,7 +22,7 @@ public class AyeshaTanaka extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new CounterUnlessPaysEffect("{W}")),
+                List.of(UnlessPaysEffect.counterUnlessPays("{W}")),
                 "{T}: Counter target activated ability from an artifact source unless that ability's controller pays {W}.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(

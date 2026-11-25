@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class FrontlineMedic extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new CounterUnlessPaysEffect(3)),
+                List.of(new SacrificeSelfCost(), UnlessPaysEffect.counterUnlessPays(3)),
                 "Sacrifice Frontline Medic: Counter target spell with {X} in its mana cost unless its controller pays {3}.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryHasXInManaCostPredicate(),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AdrixAndNevTwincasters extends Card {
 
     public AdrixAndNevTwincasters() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addStaticEffect(new MultiplyTokenCreationEffect(2));
     }
 }

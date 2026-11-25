@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
@@ -15,7 +15,7 @@ public class SkywardSpider extends Card {
 
     public SkywardSpider() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2));
+                UnlessPaysEffect.counterUnlessPays(2));
         addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.source(), new PermanentIsModifiedPredicate()));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAnyNumberEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "99")
@@ -12,6 +12,6 @@ public class RitesOfRefusal extends Card {
 
     public RitesOfRefusal() {
         addSpellEffect(new DiscardAnyNumberEffect());
-        addSpellEffect(new CounterUnlessPaysEffect(new Scaled(new EventValue(), 3)));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(new Scaled(new EventValue(), 3)));
     }
 }

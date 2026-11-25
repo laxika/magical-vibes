@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class VarisSilverymoonRanger extends Card {
 
     public VarisSilverymoonRanger() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(1));
 
         addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAnyOfPredicate(List.of(

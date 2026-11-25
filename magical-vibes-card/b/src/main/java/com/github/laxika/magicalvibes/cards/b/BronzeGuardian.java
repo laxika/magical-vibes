@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,14 +25,14 @@ import java.util.List;
 public class BronzeGuardian extends Card {
 
     public BronzeGuardian() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         PermanentPredicate otherArtifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)),
+                UnlessPaysEffect.counterUnlessPays(2)),
                 Subjects.permanentsYouControl(),
                 otherArtifact));
 

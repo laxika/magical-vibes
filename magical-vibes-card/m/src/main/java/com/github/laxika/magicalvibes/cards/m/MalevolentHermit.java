@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -25,7 +25,7 @@ public class MalevolentHermit extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new SacrificeSelfCost(), new CounterUnlessPaysEffect(3)),
+                List.of(new SacrificeSelfCost(), UnlessPaysEffect.counterUnlessPays(3)),
                 "{U}, Sacrifice Malevolent Hermit: Counter target noncreature spell unless its controller pays {3}.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryNotPredicate(

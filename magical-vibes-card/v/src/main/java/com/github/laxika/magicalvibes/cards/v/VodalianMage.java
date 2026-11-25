@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class VodalianMage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new CounterUnlessPaysEffect(1)),
+                List.of(UnlessPaysEffect.counterUnlessPays(1)),
                 "{U}, {T}: Counter target spell unless its controller pays {1}."
         ));
     }

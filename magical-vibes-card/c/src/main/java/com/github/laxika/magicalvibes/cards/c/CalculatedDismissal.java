@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,7 +16,7 @@ import java.util.List;
 public class CalculatedDismissal extends Card {
 
     public CalculatedDismissal() {
-        addSpellEffect(new CounterUnlessPaysEffect(3));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(3));
         addSpellEffect(new ConditionalEffect(new GraveyardCardThreshold(2, new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)

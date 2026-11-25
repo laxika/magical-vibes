@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnsCardInExile;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
 public class DreadlightMonstrosity extends Card {
 
     public DreadlightMonstrosity() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{U}{U}",

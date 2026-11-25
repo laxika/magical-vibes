@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -62,7 +62,7 @@ public class RedtoothGenealogist extends Card {
                         new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                                new CounterUnlessPaysEffect(1)),
+                                UnlessPaysEffect.counterUnlessPays(1)),
                                 Subjects.attachedCreature())))),
                 List.of(),
                 false,

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -22,7 +22,7 @@ import java.util.Set;
 public class SummonLeviathan extends Card {
 
     public SummonLeviathan() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         var seaCreature = new PermanentHasAnySubtypePredicate(Set.of(
                 CardSubtype.KRAKEN, CardSubtype.LEVIATHAN, CardSubtype.MERFOLK,

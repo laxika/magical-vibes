@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "BLB", collectorNumber = "45")
@@ -14,8 +14,8 @@ public class DazzlingDenial extends Card {
     public DazzlingDenial() {
         addSpellEffect(new ConditionalReplacementEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
-                new CounterUnlessPaysEffect(2),
-                new CounterUnlessPaysEffect(4)
+                UnlessPaysEffect.counterUnlessPays(2),
+                UnlessPaysEffect.counterUnlessPays(4)
         ));
     }
 }

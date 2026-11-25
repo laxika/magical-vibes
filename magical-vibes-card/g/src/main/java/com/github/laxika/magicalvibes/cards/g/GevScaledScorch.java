@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -20,7 +19,7 @@ public class GevScaledScorch extends Card {
 
     public GevScaledScorch() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysLifeEffect(new Fixed(2)));
+                UnlessPaysEffect.counterUnlessPaysLife(2));
 
         addStaticEffect(ControlledCreaturesEnterWithAdditionalCountersEffect.forAllCreatures(
                         new OpponentsWhoLostLifeThisTurn()));

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -19,6 +19,6 @@ public class Reject extends Card {
                         StackEntryType.PLANESWALKER_SPELL
                 )),
                 "Target must be a creature or planeswalker spell."
-        )).addSpellEffect(new CounterUnlessPaysEffect(3, false, true));
+        )).addSpellEffect(UnlessPaysEffect.counterUnlessPays(3).exilingIfCountered());
     }
 }

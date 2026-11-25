@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
@@ -35,7 +35,7 @@ public class ExperimentalPilot extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("THB", "239"));
 
     public ExperimentalPilot() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

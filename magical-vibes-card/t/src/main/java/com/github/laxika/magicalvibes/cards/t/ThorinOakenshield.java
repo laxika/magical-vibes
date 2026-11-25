@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class ThorinOakenshield extends Card {
                 new ControllerHasEnduringStory(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(1)),
+                        UnlessPaysEffect.counterUnlessPays(1)),
                         Subjects.permanentsYouControl(),
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

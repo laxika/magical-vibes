@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -36,7 +36,7 @@ public class ReservoirKraken extends Card {
                         "Tap an untapped creature you control? If a player does, Reservoir Kraken becomes tapped"
                                 + " and its controller creates a 1/1 Fish.",
                         SequenceEffect.of(new TapPermanentsEffect(Subjects.source()), fishToken()), null));
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
     }
 
     private static CreateTokenEffect fishToken() {

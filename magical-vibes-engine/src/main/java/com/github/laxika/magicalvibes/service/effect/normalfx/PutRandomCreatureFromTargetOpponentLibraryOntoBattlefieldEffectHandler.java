@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -90,7 +90,7 @@ public class PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHand
                 new GameData.PerpetualBasePowerToughness(powerAndToughness, powerAndToughness,
                         gameData.nextTimestamp()));
 
-        CounterUnlessPaysEffect ward = new CounterUnlessPaysEffect(1);
+        UnlessPaysEffect ward = UnlessPaysEffect.counterUnlessPays(1);
         rememberPerpetualWard(gameData, modified.getId(), ward);
 
         Permanent permanent = new Permanent(modified, Zone.LIBRARY);
@@ -103,7 +103,7 @@ public class PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHand
                 modified, gameData.playerIdToName.get(controllerId)));
     }
 
-    private void rememberPerpetualWard(GameData gameData, UUID cardId, CounterUnlessPaysEffect ward) {
+    private void rememberPerpetualWard(GameData gameData, UUID cardId, UnlessPaysEffect ward) {
         gameData.perpetualCardKeywords.merge(cardId, Set.of(Keyword.WARD),
                 PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler::mergeKeywords);
         gameData.grantPerpetualAbility(cardId,

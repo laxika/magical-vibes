@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -17,6 +17,6 @@ public class LookoutsDispersal extends Card {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
-        addSpellEffect(new CounterUnlessPaysEffect(4));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(4));
     }
 }

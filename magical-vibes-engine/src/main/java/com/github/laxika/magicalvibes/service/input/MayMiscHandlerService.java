@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect;
@@ -234,7 +234,7 @@ public class MayMiscHandlerService {
             gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.forTheRestOfTheGame(
                     ability.controllerId(), ability.sourceCard(), new TriggeredAbility(
                             Triggers.opponentCastsSpell().firstThisGame(),
-                            new CounterUnlessPaysEffect(effect.genericManaAmount()))));
+                            UnlessPaysEffect.counterUnlessPays(effect.genericManaAmount()))));
 
             
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " , ability.sourceCard(), " from their opening hand."));

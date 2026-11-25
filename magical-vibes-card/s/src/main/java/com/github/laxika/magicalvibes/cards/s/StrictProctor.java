@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 public class StrictProctor extends Card {
 
     public StrictProctor() {
-        addTrigger(Triggers.permanentEnteringCausesAbilityToTrigger(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.permanentEnteringCausesAbilityToTrigger(), UnlessPaysEffect.counterUnlessPays(2));
     }
 }

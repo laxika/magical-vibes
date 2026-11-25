@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -31,8 +31,8 @@ public class RimewallProtector extends Card {
                 new PerpetuallyGrantKeywordToMatchingCardsEffect(
                         giantOrWizardCard, giantOrWizardPermanent, Set.of(Keyword.WARD),
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(1))));
+                        UnlessPaysEffect.counterUnlessPays(1))));
         // Ward {1}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(1));
     }
 }

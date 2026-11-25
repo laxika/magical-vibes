@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class CathedralAcolyte extends Card {
     public CathedralAcolyte() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(1)),
+                UnlessPaysEffect.counterUnlessPays(1)),
                 Subjects.creaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.ANY)));
 

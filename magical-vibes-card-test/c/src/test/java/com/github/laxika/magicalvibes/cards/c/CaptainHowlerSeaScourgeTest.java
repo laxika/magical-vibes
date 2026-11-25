@@ -123,6 +123,22 @@ class CaptainHowlerSeaScourgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ward—{2}, Pay 2 life: an opponent who pays spends both the mana and the life")
+    void wardCostsManaAndLife() {
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new CaptainHowlerSeaScourge());
+        harness.setHand(player2, List.of(new BounceOff()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player2, 0, captain.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof BounceOff);
+    }
+
+    @Test
     @DisplayName("Ward counters an opponent's spell when they cannot pay the mana cost")
     void unpaidWardCountersOpponentSpell() {
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new CaptainHowlerSeaScourge());

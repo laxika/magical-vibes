@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "25")
 @CardRegistration(set = "MB1", collectorNumber = "171")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 public class ManaTithe extends Card {
 
     public ManaTithe() {
-        addSpellEffect(new CounterUnlessPaysEffect(1));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(1));
     }
 }

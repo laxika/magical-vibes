@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -22,7 +22,7 @@ public class AssimilateEssence extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL, StackEntryType.BATTLE_SPELL)),
                 "Target must be a creature or battle spell."
-        )).addSpellEffect(new CounterUnlessPaysEffect(4, List.of(incubatorToken())));
+        )).addSpellEffect(UnlessPaysEffect.counterUnlessPays(4).ifPaid(incubatorToken()));
     }
 
     private static CreateTokenEffect incubatorToken() {

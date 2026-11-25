@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "46")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 public class RuneSnag extends Card {
 
     public RuneSnag() {
-        addSpellEffect(new CounterUnlessPaysEffect(new Sum(
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(new Sum(
                 new Fixed(2),
                 new Scaled(new CardsInGraveyard(
                         new CardNamedPredicate("Rune Snag"), CountScope.ANY_PLAYER), 2))));

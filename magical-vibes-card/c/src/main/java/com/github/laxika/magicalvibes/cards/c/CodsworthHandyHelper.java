@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
@@ -31,12 +31,12 @@ public class CodsworthHandyHelper extends Card {
     public CodsworthHandyHelper() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)),
+                UnlessPaysEffect.counterUnlessPays(2)),
                 Subjects.permanentsYouControl(),
                 new PermanentIsCommanderPredicate()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)), Subjects.source(),
+                UnlessPaysEffect.counterUnlessPays(2)), Subjects.source(),
                 new PermanentIsCommanderPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class RedGhostIntangibleGenius extends Card {
 
     public RedGhostIntangibleGenius() {
         // Ward {2}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addStaticEffect(new CantBeBlockedEffect());
         addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new CreateTokenEffect("Ape", 3, 3, CardColor.RED,

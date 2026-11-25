@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.ConvokeCreatureCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOM", collectorNumber = "174")
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AncientImperiosaur extends Card {
 
     public AncientImperiosaur() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Scaled(new ConvokeCreatureCount(), 2)));
     }

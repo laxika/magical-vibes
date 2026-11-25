@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -24,7 +24,7 @@ public class ShelteredByGhosts extends Card {
                 .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(2)), Subjects.attachedCreature()));
+                        UnlessPaysEffect.counterUnlessPays(2)), Subjects.attachedCreature()));
 
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),

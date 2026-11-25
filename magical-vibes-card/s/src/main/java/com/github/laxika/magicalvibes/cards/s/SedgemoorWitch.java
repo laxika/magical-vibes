@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -23,7 +23,7 @@ public class SedgemoorWitch extends Card {
 
     public SedgemoorWitch() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(0, 3));
+                UnlessPaysEffect.counterUnlessPaysLife(3));
 
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

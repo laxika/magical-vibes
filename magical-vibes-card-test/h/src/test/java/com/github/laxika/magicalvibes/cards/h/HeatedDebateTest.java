@@ -77,7 +77,7 @@ class HeatedDebateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ward cannot counter Heated Debate or require a life payment")
+    @DisplayName("Ward can't counter Heated Debate; its caster may decline the life payment")
     void ignoresWard() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new OwlinShieldmage());
         harness.setHand(player1, List.of(new HeatedDebate()));
@@ -86,6 +86,8 @@ class HeatedDebateTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        // The ward payment is still offered for a spell that can't be countered (owner's decision 2026-11-25).
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Owlin Shieldmage");

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "70")
@@ -10,7 +10,7 @@ public class ForceVoid extends Card {
 
     public ForceVoid() {
         // Counter target spell unless its controller pays {1}.
-        addSpellEffect(new CounterUnlessPaysEffect(1));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(1));
 
         // Draw a card at the beginning of the next turn's upkeep.
         addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());

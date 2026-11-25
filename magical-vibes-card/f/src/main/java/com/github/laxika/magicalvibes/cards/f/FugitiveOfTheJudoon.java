@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -34,7 +34,7 @@ public class FugitiveOfTheJudoon extends Card {
                 CardType.CREATURE, 1, "Human", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.HUMAN), Set.of(Keyword.WARD), Set.of(), false, false,
                 List.of(new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(2))),
+                        UnlessPaysEffect.counterUnlessPays(2))),
                 List.of(), false, false, false, 0, Set.of());
         CreateTokenEffect rhinoToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Alien Rhino", 4, 4, CardColor.WHITE, null,

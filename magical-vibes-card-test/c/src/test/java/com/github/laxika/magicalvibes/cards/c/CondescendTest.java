@@ -221,4 +221,28 @@ class CondescendTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstCounter, secondCounter);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Mana that can only be spent on {X} (Rosheen Meanderer's) pays the X ransom")
+    void xCostOnlyManaPaysTheRansom() {
+        AuriokChampion champion = new AuriokChampion();
+        harness.setHand(player1, List.of(champion));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.setHand(player2, List.of(new Condescend()));
+        harness.addMana(player2, ManaColor.BLUE, 3); // {U} + X=2
+
+        harness.castCreature(player1, 0);
+        gd.playerManaPools.get(player1.getId()).addXCostOnlyColorless(2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 2, champion.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getXCostOnlyColorless()).isZero();
+        harness.assertNotInGraveyard(player1, "Auriok Champion");
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Auriok Champion"));
+    }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,6 +16,6 @@ public class RepulsiveMutation extends Card {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         target(0, 1)
-                .addSpellEffect(new CounterUnlessPaysEffect(new GreatestPowerAmongControlled()));
+                .addSpellEffect(UnlessPaysEffect.counterUnlessPays(new GreatestPowerAmongControlled()));
     }
 }

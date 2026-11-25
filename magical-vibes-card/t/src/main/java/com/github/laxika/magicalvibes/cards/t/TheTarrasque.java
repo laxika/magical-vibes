@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
@@ -28,7 +28,7 @@ public class TheTarrasque extends Card {
         addStaticEffect(new ConditionalEffect(new WasCast(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(10)), Subjects.source())));
+                        UnlessPaysEffect.counterUnlessPays(10)), Subjects.source())));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

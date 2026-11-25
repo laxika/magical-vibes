@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -150,7 +150,7 @@ public class TargetTriggers {
      * ability an opponent controls, counter that spell or ability unless that player pays {2}" (CR 702.21a).
      */
     private static final TriggeredAbility CLOAKED_WARD_ABILITY = new TriggeredAbility(
-            Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+            Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
     /**
      * Detects every becomes-the-target trigger of one spell's targeting event. All of them trigger

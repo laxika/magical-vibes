@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class ThassasIntervention extends Card {
                         LookAtTopCardsEffect.chooseUpToNToHandRestOnBottomRandom(new XValue(), 2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays twice {X}",
-                        new CounterUnlessPaysEffect(new Scaled(new XValue(), 2)))
+                        UnlessPaysEffect.counterUnlessPays(new Scaled(new XValue(), 2)))
         )));
     }
 }

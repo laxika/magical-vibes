@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,6 +22,6 @@ public class SilentExtraction extends Card {
                         new Fixed(1),
                         new CardTypePredicate(CardType.CREATURE),
                         new ManaValueBound(new TargetSpellManaValue(), true, 0))));
-        addSpellEffect(new CounterUnlessPaysEffect(2));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(2));
     }
 }

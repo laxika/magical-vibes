@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Complicate extends Card {
 
     public Complicate() {
-        addSpellEffect(new CounterUnlessPaysEffect(3));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(3));
 
         addCycling("{2}{U}");
         addTrigger(Triggers.youCycleThisCard(), new MayEffect(
-                new CounterUnlessPaysEffect(1), "Counter target spell unless its controller pays {1}?"));
+                UnlessPaysEffect.counterUnlessPays(1), "Counter target spell unless its controller pays {1}?"));
     }
 }

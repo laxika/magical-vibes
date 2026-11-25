@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
@@ -47,7 +47,7 @@ public class WilsonBearComrade extends Card {
 
     public static void addWardAbility(Card card) {
         card.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2));
+                UnlessPaysEffect.counterUnlessPays(2));
     }
 
     private void addSpecializeAbility(CardColor color, CardSubtype basicLandType) {
@@ -114,7 +114,7 @@ public class WilsonBearComrade extends Card {
             case GREEN -> new PerpetuallyGrantKeywordsToTargetCreatureEffect(
                     EnumSet.of(Keyword.REACH, Keyword.TRAMPLE, Keyword.WARD),
                     new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                    new CounterUnlessPaysEffect(2)));
+                    UnlessPaysEffect.counterUnlessPays(2)));
         };
     }
 

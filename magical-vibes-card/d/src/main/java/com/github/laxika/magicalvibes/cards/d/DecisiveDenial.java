@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -41,7 +41,7 @@ public class DecisiveDenial extends Card {
                                         "Second target must be a creature you don't control"))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target noncreature spell unless its controller pays {3}",
-                        new CounterUnlessPaysEffect(3),
+                        UnlessPaysEffect.counterUnlessPays(3),
                         new StackEntryPredicateTargetFilter(
                                 new StackEntryNotPredicate(
                                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))),

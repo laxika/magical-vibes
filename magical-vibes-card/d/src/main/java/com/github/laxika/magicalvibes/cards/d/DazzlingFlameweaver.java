@@ -3,11 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +35,7 @@ public class DazzlingFlameweaver extends Card {
     public DazzlingFlameweaver() {
         // Ward—Pay 3 life.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysLifeEffect(new Fixed(3)));
+                UnlessPaysEffect.counterUnlessPaysLife(3));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCreaturePredicate()),

@@ -10,9 +10,10 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 
 /**
  * Cost effect: pay {@code amount} life, as an activation cost, an additional cost to cast a spell, a kicker or buyback
- * cost, or a forced cost. The amount is a {@link DynamicAmount} read against the payer as the total cost is determined
- * (CR 601.2f, 602.2b): a {@link Fixed} number, the announced X ({@link #x()}, Fire Covenant, Krumar Initiate), half the
- * payer's life rounded up ({@link #halfLife()}, Murderous Betrayal), a number per counter on the source
+ * cost, a forced cost, or the ransom of an {@link UnlessPaysEffect} ("Ward—Pay 3 life"). The amount is a
+ * {@link DynamicAmount} read against the payer as the total cost is determined (CR 601.2f, 602.2b): a {@link Fixed}
+ * number, the announced X ({@link #x()}, Fire Covenant, Krumar Initiate), half the payer's life rounded up
+ * ({@link #halfLife()}, Murderous Betrayal), a number per counter on the source
  * ({@link #perSourceCounter}, Tornado), one per card in the payer's hand (Hand of Vecna), or the colors in their
  * commanders' color identity (War Room). Life can be paid only up to the life total (CR 119.4, 118.3), and not while
  * the payer's life total can't change (CR 119.8).

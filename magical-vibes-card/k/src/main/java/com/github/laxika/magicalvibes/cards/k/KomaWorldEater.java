@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class KomaWorldEater extends Card {
 
     public KomaWorldEater() {
         addStaticEffect(new CantBeCounteredEffect());
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(4));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(4));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new CreateTokenEffect(4, "Koma's Coil", 3, 3, CardColor.BLUE,
                         List.of(CardSubtype.SERPENT), Set.of(), Set.of()));

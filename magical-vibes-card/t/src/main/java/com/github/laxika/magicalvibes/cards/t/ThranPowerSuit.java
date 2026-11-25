@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class ThranPowerSuit extends Card {
                 attachments, attachments, Subjects.attachedCreature(), true));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)), Subjects.attachedCreature()));
+                UnlessPaysEffect.counterUnlessPays(2)), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,7 +15,7 @@ public class AureliasVindicator extends Card {
     public AureliasVindicator() {
         addMorph("{X}{3}{W}");
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(0, 2));
+                UnlessPaysEffect.counterUnlessPays(2));
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                 new ExileTargetCreaturesUntilSourceLeavesEffect(Integer.MAX_VALUE, true, true));
     }

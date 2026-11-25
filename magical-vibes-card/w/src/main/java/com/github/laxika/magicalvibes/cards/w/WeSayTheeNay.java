@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 
 @CardRegistration(set = "MSH", collectorNumber = "82")
@@ -14,8 +14,8 @@ public class WeSayTheeNay extends Card {
         addCastingCost(new TeamworkCost(2));
         addSpellEffect(new ConditionalReplacementEffect(
                 new TeamworkCostPaid(),
-                new CounterUnlessPaysEffect(2),
-                new CounterUnlessPaysEffect(4)
+                UnlessPaysEffect.counterUnlessPays(2),
+                UnlessPaysEffect.counterUnlessPays(4)
         ));
     }
 }

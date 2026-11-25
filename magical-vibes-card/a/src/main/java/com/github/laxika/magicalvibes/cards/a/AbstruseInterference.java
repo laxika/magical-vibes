@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -18,7 +18,7 @@ import java.util.Set;
 public class AbstruseInterference extends Card {
 
     public AbstruseInterference() {
-        addSpellEffect(new CounterUnlessPaysEffect(1));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(1));
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 1,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -31,7 +31,7 @@ public class OctaviaLivingThesis extends Card {
                 new ReduceOwnCastCostEffect(new Fixed(8))));
 
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(8));
+                UnlessPaysEffect.counterUnlessPays(8));
 
         List<CardEffect> setBasePowerToughness = List.of(new SetBasePowerToughnessEffect(8, 8));
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -25,7 +25,7 @@ public class PlateArmor extends Card {
         addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(1)),
+                UnlessPaysEffect.counterUnlessPays(1)),
                 Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}", new ReduceActivationCostEffect(otherEquipment)));
     }

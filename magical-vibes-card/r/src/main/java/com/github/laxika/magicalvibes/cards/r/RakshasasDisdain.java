@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 @CardRegistration(set = "FRF", collectorNumber = "45")
 public class RakshasasDisdain extends Card {
 
     public RakshasasDisdain() {
-        addSpellEffect(new CounterUnlessPaysEffect(
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(
                 new CardsInGraveyard(null, CountScope.CONTROLLER)));
     }
 }

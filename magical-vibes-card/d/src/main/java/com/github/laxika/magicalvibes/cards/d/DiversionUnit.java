@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -19,7 +19,7 @@ public class DiversionUnit extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new SacrificeSelfCost(), new CounterUnlessPaysEffect(3)),
+                List.of(new SacrificeSelfCost(), UnlessPaysEffect.counterUnlessPays(3)),
                 "Sacrifice this creature: Counter target instant or sorcery spell unless its controller pays {3}.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryTypeInPredicate(Set.of(

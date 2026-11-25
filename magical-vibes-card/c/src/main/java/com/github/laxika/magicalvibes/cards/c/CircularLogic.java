@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "33")
 @CardRegistration(set = "VMA", collectorNumber = "60")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 public class CircularLogic extends Card {
 
     public CircularLogic() {
-        addSpellEffect(new CounterUnlessPaysEffect(
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(
                 new CardsInGraveyard(null, CountScope.CONTROLLER)));
         addCastingOption(new MadnessCast("{U}"));
     }

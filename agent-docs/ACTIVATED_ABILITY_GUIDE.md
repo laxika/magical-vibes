@@ -266,7 +266,7 @@ new ActivatedAbility(false, null,
 
 Cards: `SpawningPool` (ONLY_WHILE_ANIMATED_BY_ITS_OWN_ABILITY), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED), `VonaButcherOfMagan` (ONLY_DURING_YOUR_TURN)
 
-**Note:** For abilities that target spells on the stack (e.g. activated counter ability), spell targeting is auto-derived from effects (e.g. `CounterUnlessPaysEffect.targetSpec()` returns `benign(SPELL_ON_STACK)`). Use a `StackEntryPredicateTargetFilter` if target legality is restricted.
+**Note:** For abilities that target spells on the stack (e.g. activated counter ability), spell targeting is auto-derived from effects (e.g. `UnlessPaysEffect.targetSpec()` returns `benign(SPELL_ON_STACK)`). Use a `StackEntryPredicateTargetFilter` if target legality is restricted.
 
 ---
 

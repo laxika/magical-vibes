@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M12", collectorNumber = "63")
@@ -19,6 +19,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ManaLeak extends Card {
 
     public ManaLeak() {
-        addSpellEffect(new CounterUnlessPaysEffect(3));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(3));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -41,7 +41,7 @@ public class MausoleumWanderer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(true), new CounterUnlessPaysEffect(0, true, false)),
+                List.of(new SacrificeSelfCost(true), UnlessPaysEffect.counterUnlessPaysX()),
                 "Sacrifice this creature: Counter target instant or sorcery spell unless its "
                         + "controller pays {X}, where X is this creature's power.",
                 new StackEntryPredicateTargetFilter(

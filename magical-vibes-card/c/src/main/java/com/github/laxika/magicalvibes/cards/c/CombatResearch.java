@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -34,7 +34,7 @@ public class CombatResearch extends Card {
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                                new CounterUnlessPaysEffect(1)),
+                                UnlessPaysEffect.counterUnlessPays(1)),
                                 Subjects.attachedCreature()),
                         null));
     }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.f.FlametongueKavu;
 import com.github.laxika.magicalvibes.cards.l.LullmageMentor;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SpinedKarok;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WaterfallAerialist.class, Shock.class, SpinedKarok.class, ProdigalPyromancer.class, Firebolt.class,
-        LullmageMentor.class})
+        LullmageMentor.class, FlametongueKavu.class})
 class WaterfallAerialistTest extends BaseCardTest {
 
     @Test
@@ -42,8 +43,31 @@ class WaterfallAerialistTest extends BaseCardTest {
     @Nested
     @DisplayName("Ward")
     @CardUsed({WaterfallAerialist.class, Shock.class, ProdigalPyromancer.class, Firebolt.class,
-            LullmageMentor.class})
+            LullmageMentor.class, FlametongueKavu.class})
     class Ward {
+
+        @Test
+        @DisplayName("counters an opponent's triggered ability that targets it when its controller declines to pay {2}")
+        void countersOpponentsTriggeredAbility() {
+            var aerialist = addReadyAerialist();
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.setHand(player2, List.of(new FlametongueKavu()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 5);
+            harness.castCreature(player2, 0, 0, aerialist.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player2, false);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(aerialist.getMarkedDamage()).isZero();
+            harness.assertOnBattlefield(player1, "Waterfall Aerialist");
+            assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+        }
 
         @Test
         @DisplayName("triggers when an opponent casts a spell targeting Waterfall Aerialist")

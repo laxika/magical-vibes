@@ -14,10 +14,6 @@ public interface CounterUnlessEffect extends CardEffect {
 
     /** The kind of ransom the controller may pay to avoid the counter. */
     enum RansomKind {
-        /** Pay a generic mana amount (e.g. Mana Leak, Power Sink). */
-        PAY_MANA,
-        /** Pay a life amount (e.g. Phyrexian Fleshgorger's ward). */
-        PAY_LIFE,
         /** Discard a card (e.g. the "Ward—Discard a card" variant). */
         DISCARD_CARD,
         /** Discard a card or pay generic mana. */
@@ -40,10 +36,8 @@ public interface CounterUnlessEffect extends CardEffect {
     RansomKind ransomKind();
 
     /**
-     * The base magnitude of the ransom, as a components-derived fact: for {@link RansomKind#PAY_MANA}
-     * and {@link RansomKind#PAY_WATERBEND} the generic mana amount component (which may be overridden
-     * at resolution when the effect uses an X or dynamic amount); for {@link RansomKind#PAY_LIFE} a dynamic amount may be evaluated at
-     * resolution, so the concrete effect may return 0; for {@link RansomKind#DISCARD_CARD} the number
+     * The base magnitude of the ransom, as a components-derived fact: for {@link RansomKind#PAY_WATERBEND}
+     * the generic mana amount component; for {@link RansomKind#DISCARD_CARD} the number
      * of cards to discard (currently always 1), the generic mana amount for
      * {@link RansomKind#DISCARD_CARD_OR_PAY_MANA}, 0 for {@link RansomKind#DISCARD_HAND}, 1 for a
      * permanent sacrifice, the evidence threshold for {@link RansomKind#COLLECT_EVIDENCE}, or the

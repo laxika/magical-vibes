@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -28,7 +28,7 @@ public class PhantomInterference extends Card {
                                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays {2}",
-                        new CounterUnlessPaysEffect(2),
+                        UnlessPaysEffect.counterUnlessPays(2),
                         new StackEntryPredicateTargetFilter(
                                 new StackEntryTypeInPredicate(Set.of(
                                         StackEntryType.CREATURE_SPELL,

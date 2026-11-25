@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -38,7 +38,7 @@ public class DiscipleOfTheRing extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 COST,
-                List.of(exileInstantOrSorceryCost(), new CounterUnlessPaysEffect(2)),
+                List.of(exileInstantOrSorceryCost(), UnlessPaysEffect.counterUnlessPays(2)),
                 "{1}, Exile an instant or sorcery card from your graveyard: Counter target noncreature spell "
                         + "unless its controller pays {2}.",
                 new StackEntryPredicateTargetFilter(

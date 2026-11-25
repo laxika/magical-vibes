@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CasualtyCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class MakeDisappear extends Card {
         addTrigger(Triggers.youCastThisSpell(), TriggerOptions.DEFAULT.withInterveningIf(new CasualtyCostPaid()),
                 new CopyTriggeringSpellEffect());
         addCastingCost(new CasualtyCost(1));
-        addSpellEffect(new CounterUnlessPaysEffect(2));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(2));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -14,7 +14,7 @@ public class SagesDousing extends Card {
 
     public SagesDousing() {
         // Counter target spell unless its controller pays {3}. If you control a Wizard, draw a card.
-        addSpellEffect(new CounterUnlessPaysEffect(3));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(3));
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
                 new DrawCardEffect()));

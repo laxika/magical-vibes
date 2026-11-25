@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnSourceThisTurn;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class FractalTender extends Card {
 
     public FractalTender() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new PutCounterOnSourceThisTurn()),
                 SequenceEffect.of(

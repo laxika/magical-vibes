@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
@@ -72,6 +73,9 @@ public class MayAbilityHandlerService {
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler mayPayManaEffectHandler;
+
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.UnlessPaysEffectHandler unlessPaysEffectHandler;
 
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
@@ -296,6 +300,20 @@ public class MayAbilityHandlerService {
      */
     private void handleResolutionTimeMayChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         gameData.resolvingMayEffectFromStack = false;
+        UnlessPaysEffect unless = ability.effects().stream()
+                .filter(UnlessPaysEffect.class::isInstance)
+                .map(UnlessPaysEffect.class::cast)
+                .findFirst().orElse(null);
+        if (unless != null) {
+            // "[Do X] unless [P pays]" (CR 118.12a): the ransom is paid, or not, and the resolution resumes with the branch.
+            Boolean paid = unlessPaysEffectHandler.answer(gameData, player, accepted, ability, unless);
+            if (paid == null) {
+                return;
+            }
+            gameData.resolvedMayAccepted = paid;
+            resumeAfterResolutionTimeMayChoice(gameData);
+            return;
+        }
         MayPayManaEffect anyPlayerMayPay = ability.effects().stream()
                 .filter(e -> e instanceof MayPayManaEffect mayPay
                         && (mayPay.payer() == MayPayPayer.ANY_PLAYER

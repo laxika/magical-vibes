@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,7 +38,7 @@ public class HallOfStormGiants extends Card {
                                 7, 7, List.of(CardSubtype.GIANT), Set.of(), CardColor.BLUE),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                                        new CounterUnlessPaysEffect(3)), Subjects.source())),
+                                        UnlessPaysEffect.counterUnlessPays(3)), Subjects.source())),
                 "{5}{U}: Until end of turn, this land becomes a 7/7 blue Giant creature with ward {3}. It's still a land."
         ));
     }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -18,6 +18,6 @@ public class Miscast extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell."
-        )).addSpellEffect(new CounterUnlessPaysEffect(3));
+        )).addSpellEffect(UnlessPaysEffect.counterUnlessPays(3));
     }
 }

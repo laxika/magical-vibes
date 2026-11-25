@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.q;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,7 +20,7 @@ public class QuandrixCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays {2}",
-                        new CounterUnlessPaysEffect(2)),
+                        UnlessPaysEffect.counterUnlessPays(2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target enchantment",
                         new DestroyTargetPermanentEffect(),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -29,7 +29,7 @@ public class TemurCharm extends Card {
                         List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays {3}",
-                        new CounterUnlessPaysEffect(3),
+                        UnlessPaysEffect.counterUnlessPays(3),
                         new StackEntryPredicateTargetFilter(
                                 new StackEntryTypeInPredicate(Set.of(
                                         StackEntryType.CREATURE_SPELL,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardTwoUnlessCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -47,7 +47,7 @@ public class TeferiAkosaOfZhalfir extends Card {
                                 new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(), knight),
                                 new GrantTriggeredAbilityEffect(
                                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                                        new CounterUnlessPaysEffect(1)),
+                                        UnlessPaysEffect.counterUnlessPays(1)),
                                         Subjects.otherCreaturesYouControl(),
                                         knight)
                         ),

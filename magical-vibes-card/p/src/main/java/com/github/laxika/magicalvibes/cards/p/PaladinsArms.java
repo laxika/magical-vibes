@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -28,7 +28,7 @@ public class PaladinsArms extends Card {
         addStaticEffect(new StaticBoostEffect(2, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(1)), Subjects.attachedCreature()));
+                UnlessPaysEffect.counterUnlessPays(1)), Subjects.attachedCreature()));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.KNIGHT, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,7 +24,7 @@ public class TheMeep extends Card {
 
     public TheMeep() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysLifeEffect(new Fixed(3)));
+                UnlessPaysEffect.counterUnlessPaysLife(3));
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -15,7 +15,7 @@ public class GhyrsonStarnKelermorph extends Card {
 
     public GhyrsonStarnKelermorph() {
         // Ward {2}
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         // Three Autostubs: "exactly 1 damage" is a fact of the event, judged as the ability triggers.
         addTrigger(Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer(),
                 TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new EventValueAtLeast(2))),

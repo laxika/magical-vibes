@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsWithinTotalManaValueEffect;
@@ -24,7 +24,7 @@ import java.util.List;
 public class KairiTheSwirlingSky extends Card {
 
     public KairiTheSwirlingSky() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(3));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(3));
 
         PermanentPredicate nonlandPermanent = TargetFilters.nonlandPermanent().predicate();
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(

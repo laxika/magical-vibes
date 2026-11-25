@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param trackPower when true, snapshot this permanent's effective power into the stack entry's
  *                   {@code xValue} at payment time (last-known information after the sacrifice).
- *                   Use with {@code CounterUnlessPaysEffect(0, true, false)} for "unless its
+ *                   Use with {@code UnlessPaysEffect.counterUnlessPaysX()} for "unless its
  *                   controller pays {X}, where X is this creature's power" (Mausoleum Wanderer).
  * @param signedPower when true together with {@code trackPower}, a negative power is kept as a
  *                   negative X instead of being treated as 0, for comparisons against the power

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AsThisBecomesAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -31,7 +31,7 @@ public class PsychicPaper extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.WARD, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(1)), Subjects.attachedCreature()));
+                        UnlessPaysEffect.counterUnlessPays(1)), Subjects.attachedCreature()));
         addStaticEffect(new CantBeBlockedEffect());
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

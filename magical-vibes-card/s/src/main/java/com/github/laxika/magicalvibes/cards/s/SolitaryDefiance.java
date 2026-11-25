@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -40,7 +40,7 @@ public class SolitaryDefiance extends Card {
         addStaticEffect(new ConditionalEffect(exactlyOneCreature,
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(2)), Subjects.otherCreaturesYouControl())));
+                        UnlessPaysEffect.counterUnlessPays(2)), Subjects.otherCreaturesYouControl())));
 
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),

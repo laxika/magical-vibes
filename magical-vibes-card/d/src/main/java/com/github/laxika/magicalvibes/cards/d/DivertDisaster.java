@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -33,6 +33,6 @@ public class DivertDisaster extends Card {
     );
 
     public DivertDisaster() {
-        addSpellEffect(new CounterUnlessPaysEffect(2, List.of(LANDER)));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(2).ifPaid(LANDER));
     }
 }

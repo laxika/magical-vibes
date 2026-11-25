@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -24,7 +24,7 @@ public class MikeyDonPartyPlanners extends Card {
                 new CardSubtypePredicate(CardSubtype.NINJA),
                 new CardSubtypePredicate(CardSubtype.TURTLE)));
         // Ward {2}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new PlayLandsFromTopOfLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(

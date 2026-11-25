@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -44,7 +44,7 @@ public class SarumanTheWhiteHand extends Card {
         ));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)),
+                UnlessPaysEffect.counterUnlessPays(2)),
                 Subjects.permanentsYouControl(),
                 goblinOrOrc
         ));

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
@@ -14,6 +14,6 @@ public class ScentOfBrine extends Card {
     public ScentOfBrine() {
         addSpellEffect(new RevealAnyNumberOfCardsFromHandEffect(
                 new CardColorPredicate(CardColor.BLUE)));
-        addSpellEffect(new CounterUnlessPaysEffect(new EventValue()));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(new EventValue()));
     }
 }

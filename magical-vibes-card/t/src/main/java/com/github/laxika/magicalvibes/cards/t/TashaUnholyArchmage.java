@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -48,7 +48,7 @@ public class TashaUnholyArchmage extends Card {
                                         Subjects.source(), Duration.PERMANENT),
                                 new GrantTriggeredAbilityEffect(
                                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                                        new CounterUnlessPaysEffect(2)), Subjects.source())))),
+                                        UnlessPaysEffect.counterUnlessPays(2)), Subjects.source())))),
                 "−2: Target opponent puts a creature card of their choice from their graveyard onto the battlefield under your control. That creature gains ward {2}.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -80,6 +81,10 @@ public class EffectResolutionService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private DepartureService departureService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.UnlessPaysEffectHandler unlessPaysEffectHandler;
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -541,6 +546,28 @@ public class EffectResolutionService {
                     skipEffect = true;
                 } else {
                     effectToResolve = may.elseEffect();
+                }
+            }
+
+            // CR 118.12a — "[do X] unless [a player pays]": the payer's answer, or a payment they couldn't make
+            // (CR 118.3, 608.2d), chooses the branch that resolves as this effect.
+            if (!skipEffect && effectToResolve instanceof UnlessPaysEffect unless) {
+                Boolean paid = gameData.resolvedMayAccepted;
+                gameData.resolvedMayAccepted = null;
+                if (paid == null && unlessPaysEffectHandler != null
+                        && unlessPaysEffectHandler.cannotBePaid(gameData, entry, unless)) {
+                    paid = false;
+                }
+                if (paid != null) {
+                    CardEffect branch = paid ? unless.ifPaid() : unless.ifNotPaid();
+                    if (branch instanceof SequenceEffect sequence) {
+                        entry.spliceSequenceSteps(i, sequence.steps(), sequence.simultaneous());
+                        skipEffect = true;
+                    } else if (branch == null) {
+                        skipEffect = true;
+                    } else {
+                        effectToResolve = branch;
+                    }
                 }
             }
 

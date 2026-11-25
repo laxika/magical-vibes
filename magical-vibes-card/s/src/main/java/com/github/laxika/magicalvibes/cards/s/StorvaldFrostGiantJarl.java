@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,10 +20,10 @@ public class StorvaldFrostGiantJarl extends Card {
 
     public StorvaldFrostGiantJarl() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(3));
+                UnlessPaysEffect.counterUnlessPays(3));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(3)), Subjects.otherCreaturesYouControl()));
+                UnlessPaysEffect.counterUnlessPays(3)), Subjects.otherCreaturesYouControl()));
 
         setAllowSharedTargets(true);
         ChooseOneEffect modes = ChooseOneEffect.oneOrMore(List.of(

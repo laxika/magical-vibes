@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -30,6 +30,6 @@ public class GuildpactGreenwalker extends Card {
                 Keyword.WARD, Subjects.otherCreaturesYouControl(), multicoloredCreature));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)), Subjects.otherCreaturesYouControl(), multicoloredCreature));
+                UnlessPaysEffect.counterUnlessPays(2)), Subjects.otherCreaturesYouControl(), multicoloredCreature));
     }
 }

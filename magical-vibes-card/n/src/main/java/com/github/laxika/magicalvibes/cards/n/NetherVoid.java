@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LEG", collectorNumber = "113")
@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class NetherVoid extends Card {
 
     public NetherVoid() {
-        addTrigger(Triggers.playerCastsSpell().anySpell(), new CounterUnlessPaysEffect(3));
+        addTrigger(Triggers.playerCastsSpell().anySpell(), UnlessPaysEffect.counterUnlessPays(3));
     }
 }

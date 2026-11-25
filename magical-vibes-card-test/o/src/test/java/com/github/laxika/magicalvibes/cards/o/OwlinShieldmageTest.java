@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.Combust;
+import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OwlinShieldmage.class, GiantGrowth.class, IcyManipulator.class, Shock.class})
+@CardUsed({OwlinShieldmage.class, GiantGrowth.class, IcyManipulator.class, Shock.class, Combust.class, CourageousResolve.class})
 class OwlinShieldmageTest extends BaseCardTest {
 
     @Test
@@ -122,6 +125,71 @@ class OwlinShieldmageTest extends BaseCardTest {
         harness.assertLife(player2, 17);
         assertThat(owlin.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ward still asks for 3 life when the spell can't be countered, and paying spends the life")
+    void wardAsksForASpellThatCantBeCountered() {
+        Permanent owlin = addReadyOwlin(player1);
+        castCombustAt(owlin);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertLife(player2, 17);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Owlin Shieldmage");
+    }
+
+    @Test
+    @DisplayName("Declining ward for a spell that can't be countered leaves the spell to resolve")
+    void decliningWardForASpellThatCantBeCountered() {
+        Permanent owlin = addReadyOwlin(player1);
+        castCombustAt(owlin);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Combust"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Owlin Shieldmage");
+    }
+
+    @Test
+    @DisplayName("An opponent who can't lose life (Courageous Resolve) can't pay ward's life, and the spell is countered")
+    void opponentWhoCantLoseLifeCantPayWard() {
+        Permanent owlin = addReadyOwlin(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLife(player2, 5);
+        harness.setHand(player2, List.of(new CourageousResolve(), new Shock()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        assertThat(gqs.canPlayerLoseLife(gd, player2.getId())).isFalse();
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, owlin.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player2, 5);
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(owlin.getMarkedDamage()).isZero();
+    }
+
+    private void castCombustAt(Permanent target) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Combust()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, target.getId());
     }
 
     private void castShockAt(Player caster, Permanent target) {

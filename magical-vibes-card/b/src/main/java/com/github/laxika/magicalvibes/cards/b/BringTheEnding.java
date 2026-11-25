@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControllerPoisonCountersAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 @CardRegistration(set = "ONE", collectorNumber = "44")
 public class BringTheEnding extends Card {
@@ -15,6 +15,6 @@ public class BringTheEnding extends Card {
         addSpellEffect(new ConditionalEffect(
                 new TargetSpellMatches(new StackEntryControllerPoisonCountersAtLeastPredicate(3)),
                 new CounterSpellEffect()));
-        addSpellEffect(new CounterUnlessPaysEffect(2));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(2));
     }
 }

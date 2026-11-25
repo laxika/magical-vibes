@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsOrPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -63,10 +63,9 @@ public class CounterUnlessDiscardsOrPaysEffectHandler implements NormalEffectHan
                             + " from being countered?",
                     targetCardId, entry.getControllerId()));
         } else {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    entry.getCard(), targetControllerId,
-                    List.of(new CounterUnlessPaysEffect(ransom.amount())), prompt,
-                    targetCardId, entry.getControllerId()));
+            // With no card to discard, only the mana can be paid: the next step asks for it.
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(UnlessPaysEffect.counterUnlessPays(ransom.amount())));
         }
     }
 }

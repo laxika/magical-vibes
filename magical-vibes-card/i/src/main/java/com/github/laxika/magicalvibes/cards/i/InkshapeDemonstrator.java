@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -22,7 +22,7 @@ public class InkshapeDemonstrator extends Card {
     public InkshapeDemonstrator() {
         // Ward {2} (Whenever this creature becomes the target of a spell or ability an opponent
         // controls, counter it unless that player pays {2}.)
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,
         // this creature gets +1/+0 and gains lifelink until end of turn.

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class WatcherOfHours extends Card {
 
     public WatcherOfHours() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(3));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(3));
         addTrigger(Triggers.youRemoveTimeCounterFromThisInExile(), new SurveilEffect(1));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

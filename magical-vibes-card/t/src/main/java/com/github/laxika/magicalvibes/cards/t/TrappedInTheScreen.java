@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -23,7 +23,7 @@ public class TrappedInTheScreen extends Card {
 
     public TrappedInTheScreen() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2));
+                UnlessPaysEffect.counterUnlessPays(2));
 
         PermanentPredicate targetPredicate = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

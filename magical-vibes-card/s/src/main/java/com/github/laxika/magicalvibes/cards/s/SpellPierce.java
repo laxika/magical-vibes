@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -33,6 +33,6 @@ public class SpellPierce extends Card {
                 ),
                 "Target must be a noncreature spell."
         ))
-                .addSpellEffect(new CounterUnlessPaysEffect(2));
+                .addSpellEffect(UnlessPaysEffect.counterUnlessPays(2));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class JarakuTheInterloper extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.KI),
-                        new CounterUnlessPaysEffect(2)
+                        UnlessPaysEffect.counterUnlessPays(2)
                 ),
                 "Remove a ki counter from Jaraku: Counter target spell unless its controller pays {2}."
         ));

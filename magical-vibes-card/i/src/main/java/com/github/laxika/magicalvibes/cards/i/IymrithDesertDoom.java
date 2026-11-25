@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -28,7 +28,7 @@ public class IymrithDesertDoom extends Card {
         addStaticEffect(new ConditionalEffect(new SourceUntapped(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(4)),
+                        UnlessPaysEffect.counterUnlessPays(4)),
                         Subjects.source())));
 
         CardsInHand controllerHand = new CardsInHand(CountScope.CONTROLLER);

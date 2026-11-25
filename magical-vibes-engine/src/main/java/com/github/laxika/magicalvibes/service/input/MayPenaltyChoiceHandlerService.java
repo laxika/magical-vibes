@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidence
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessGetsPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsOrPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
@@ -185,81 +184,6 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        CounterUnlessPaysEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof CounterUnlessEffect ce && ce.ransomKind() == CounterUnlessEffect.RansomKind.PAY_MANA)
-                .map(e -> (CounterUnlessPaysEffect) e)
-                .findFirst().orElseThrow();
-        int amount = effect.amount();
-        int lifeCost = effect.lifeCost();
-        boolean exileIfCountered = effect.exileIfCountered();
-        List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
-        List<CardEffect> onPaidEffects = effect.onPaidEffects();
-        UUID targetCardId = ability.targetCardId();
-        String manaCost = effect.manaCost() != null ? effect.manaCost() : "{" + amount + "}";
-        String costText = manaCost.equals("{0}") && lifeCost > 0
-                ? lifeCost + " life"
-                : manaCost + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
-
-        StackEntry targetEntry = null;
-        for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetCardId)) {
-                targetEntry = se;
-                break;
-            }
-        }
-
-        if (targetEntry == null) {
-            log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (accepted) {
-            ManaCost cost = new ManaCost(manaCost);
-            if (effect.useXValue()) {
-                cost.asAnnouncedXCost();
-            }
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            boolean canPayLife = lifeCost <= 0
-                    || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
-                            && gameData.getLife(player.getId()) >= lifeCost);
-            if (cost.canPayResolutionCost(pool) && canPayLife) {
-                StackEntry paidFor = targetEntry;
-                Runnable payment = () -> {
-                    cost.payResolutionCost(pool);
-                    ActionEvents.taxPaid(
-                            gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
-                    if (lifeCost > 0) {
-                        lifeSupport.applyLifePayment(gameData, player.getId(), lifeCost,
-                                ability.sourceCard().getName());
-                    }
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " pays " + costText + ". ", paidFor.getCard(), " is not countered."));
-                    log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
-                    counterSupport.resolvePaidRider(gameData, ability.sourceCard(), ability.sourceControllerId(),
-                            player.getId(), onPaidEffects);
-                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-                };
-                if (lifeCost > 0) {
-                    payLifeAskingDeathReplacementsFirst(gameData, player, ability,
-                            Map.of(player.getId(), lifeCost), payment);
-                } else {
-                    payment.run();
-                }
-                return;
-            } else {
-                counterSpell(gameData, player, ability.sourceCard(), ability.sourceControllerId(), targetEntry,
-                        costText, exileIfCountered, onNotPaidEffects);
-            }
-        } else {
-            counterSpell(gameData, player, ability.sourceCard(), ability.sourceControllerId(), targetEntry,
-                        costText, exileIfCountered, onNotPaidEffects);
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleCounterUnlessWaterbendsChoice(GameData gameData, Player player, boolean accepted,
                                                     PendingMayAbility ability) {
         CounterUnlessEffect effect = ability.effects().stream()
@@ -310,21 +234,18 @@ public class MayPenaltyChoiceHandlerService {
                     player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
         } else {
             counterSpell(gameData, player, ability.sourceCard(), ability.sourceControllerId(), targetEntry,
-                    costText, false, List.of());
+                    costText);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
-     * A declined (or unpayable) ward / "counter unless pays" ransom counters through {@link CounterSupport}, so the
-     * countered card goes where a countered card goes (flashback's exile, Guile's replacement for the ransom's
-     * controller) and the "is countered" events fire; the not-paid rider (Power Sink) follows either way.
+     * A declined waterbend ward counters through {@link CounterSupport}, so the countered card goes where a countered
+     * card goes (flashback's exile, Guile's replacement for the ransom's controller) and the "is countered" events fire.
      */
     private void counterSpell(GameData gameData, Player player, Card sourceCard, UUID sourceControllerId,
-                              StackEntry targetEntry,
-                              String costText, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
-        UUID counteredControllerId = targetEntry.getControllerId();
+                              StackEntry targetEntry, String costText) {
         boolean counterable = !gameQueryService.isUncounterable(gameData, targetEntry.getCard())
                 && !gameQueryService.isProtectedFromCounterBySourceCard(
                 gameData, targetEntry.getControllerId(), sourceCard);
@@ -333,21 +254,11 @@ public class MayPenaltyChoiceHandlerService {
                     player.getUsername() + " declines to pay " + costText + ". ", targetEntry.getCard(),
                     " cannot be countered."));
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
-            counterSupport.resolveNotPaidRider(gameData, sourceCard, sourceControllerId, counteredControllerId,
-                    onNotPaidEffects);
             return;
         }
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " declines to pay " + costText + "."));
-        if (exileIfCountered) {
-            counterSupport.counterSpellAndExile(gameData, sourceControllerId, sourceCard.getName(), targetEntry);
-        } else {
-            counterSupport.counterSpell(gameData, sourceControllerId, sourceCard.getName(), targetEntry);
-        }
-
-        // Not paid: resolve any rider against the countered spell's controller (Power Sink).
-        counterSupport.resolveNotPaidRider(gameData, sourceCard, sourceControllerId, counteredControllerId,
-                    onNotPaidEffects);
+        counterSupport.counterSpell(gameData, sourceControllerId, sourceCard.getName(), targetEntry);
     }
 
     public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

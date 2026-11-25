@@ -119,7 +119,7 @@ class SliceFromTheShadowsTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 1, target.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        // Ward {2} can't be paid with no mana left, so nothing is asked (CR 118.3).
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);

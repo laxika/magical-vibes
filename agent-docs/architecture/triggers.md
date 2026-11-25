@@ -771,7 +771,7 @@ Matchers record the event whatever the effects are; effects read it as they reso
   `withCopies(new SpellsCastBeforeTriggeringSpellThisTurn(filter))` up to `triggeringSpellCastIndex`; storm
   (`CopyTriggeringSpellEffect.storm()`, CR 702.40a) up to `triggeringSpellTurnCastIndex`; "copy this spell" entries record
   both places, X and repeated cost payments (replicate, gravestorm).
-- "Counter that spell" (`CounterSpellEffect`, `CounterUnlessPaysEffect`) is aimed at it untargeted (Chalice of the Void,
+- "Counter that spell" (`CounterSpellEffect`, `UnlessPaysEffect.counterUnlessPays(...)`) is aimed at it untargeted (Chalice of the Void,
   Void Mirror, Cephalid Shrine); Knowledge Pool, Possibility Storm, Eye of the Storm and Ice Cave read spell, caster and
   source from the entry.
 - `TriggeringSpellMatches` on an effect is judged on resolution; Spellweaver Helix's "if" at the cast and on resolution.

@@ -57,7 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBatt
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
@@ -871,7 +871,7 @@ class SpellTriggersTest {
     @DisplayName("A same-name counter-unless trigger goes on the stack as written, aimed at the spell without targeting it")
     void sameNameCounterUnlessTriggerGoesOnTheStackAsWritten() {
         Permanent perm = createPermanent("Cephalid Shrine");
-        CardEffect counter = new CounterUnlessPaysEffect(
+        CardEffect counter = UnlessPaysEffect.counterUnlessPays(
                 new CardsInGraveyard(new CardSharesNameWithTriggeringSpellPredicate(), CountScope.ANY_PLAYER));
         CastAbility ability = castAbility(Triggers.playerCastsSpell().anySpell(), counter);
         Card spellCard = createInstant("Grizzly Bears");
@@ -1510,14 +1510,14 @@ class SpellTriggersTest {
     }
 
     @Nested
-    @DisplayName("ON_OPPONENT_CASTS_SPELL — CounterUnlessPaysEffect")
+    @DisplayName("ON_OPPONENT_CASTS_SPELL — counter unless pays (UnlessPaysEffect)")
     class OpponentCounterUnlessPays {
 
         @Test
         @DisplayName("puts triggered ability on stack targeting the spell on the stack")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Chalice of the Void");
-            var effect = new CounterUnlessPaysEffect(2);
+            var effect = UnlessPaysEffect.counterUnlessPays(2);
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
             gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2Id, "Grizzly Bears",
@@ -1538,10 +1538,10 @@ class SpellTriggersTest {
         }
 
         @Test
-        @DisplayName("stack entry includes the CounterUnlessPaysEffect")
+        @DisplayName("stack entry includes the counter-unless-pays effect")
         void stackEntryIncludesEffect() {
             Permanent perm = createPermanent("Chalice of the Void");
-            var effect = new CounterUnlessPaysEffect(2);
+            var effect = UnlessPaysEffect.counterUnlessPays(2);
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 

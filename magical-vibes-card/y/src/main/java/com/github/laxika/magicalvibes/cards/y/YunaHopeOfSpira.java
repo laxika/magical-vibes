@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -44,11 +44,11 @@ public class YunaHopeOfSpira extends Card {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(2)), Subjects.source())));
+                        UnlessPaysEffect.counterUnlessPays(2)), Subjects.source())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(2)), Subjects.creaturesYouControl(),
+                        UnlessPaysEffect.counterUnlessPays(2)), Subjects.creaturesYouControl(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsEnchantmentPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))));

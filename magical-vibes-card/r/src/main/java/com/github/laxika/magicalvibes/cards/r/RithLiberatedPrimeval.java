@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentDealtExcessDamageThisTurn;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,12 +26,12 @@ public class RithLiberatedPrimeval extends Card {
         PermanentHasSubtypePredicate dragon = new PermanentHasSubtypePredicate(CardSubtype.DRAGON);
 
         // Ward {2}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         // Other Dragons you control have ward {2}.
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)), Subjects.otherCreaturesYouControl(), dragon));
+                UnlessPaysEffect.counterUnlessPays(2)), Subjects.otherCreaturesYouControl(), dragon));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new OpponentPermanentDealtExcessDamageThisTurn()),
                 new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LootTheKeyToEverything extends Card {
 
     public LootTheKeyToEverything() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(1));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ExileTopCardMayPlayThisTurnEffect(
                 new CardTypesAmongControlledPermanents(
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),

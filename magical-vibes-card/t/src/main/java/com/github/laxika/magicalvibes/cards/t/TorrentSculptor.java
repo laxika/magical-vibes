@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +25,7 @@ public class TorrentSculptor extends Card {
 
     public TorrentSculptor() {
         // Ward {2}.
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
 
         FlamethrowerSonata backFace = new FlamethrowerSonata();
         setBackFaceCard(backFace);

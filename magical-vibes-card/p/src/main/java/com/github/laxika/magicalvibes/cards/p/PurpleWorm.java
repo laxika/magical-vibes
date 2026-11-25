@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class PurpleWorm extends Card {
     public PurpleWorm() {
         addStaticEffect(new ConditionalEffect(
                 new Morbid(), new ReduceOwnCastCostEffect(new Fixed(2))));
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
     }
 }

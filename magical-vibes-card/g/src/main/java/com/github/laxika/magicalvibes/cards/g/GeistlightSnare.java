@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -27,6 +27,6 @@ public class GeistlightSnare extends Card {
                 new ControlsPermanent(new PermanentIsEnchantmentPredicate()),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         // Counter target spell unless its controller pays {3}.
-        addSpellEffect(new CounterUnlessPaysEffect(3));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(3));
     }
 }

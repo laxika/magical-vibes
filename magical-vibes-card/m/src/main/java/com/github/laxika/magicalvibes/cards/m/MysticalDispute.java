@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 
@@ -16,6 +16,6 @@ public class MysticalDispute extends Card {
     public MysticalDispute() {
         addStaticEffect(new ReduceOwnCastCostIfTargetingStackEntryEffect(
                 new StackEntryColorInPredicate(Set.of(CardColor.BLUE)), 2));
-        addSpellEffect(new CounterUnlessPaysEffect(3));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(3));
     }
 }

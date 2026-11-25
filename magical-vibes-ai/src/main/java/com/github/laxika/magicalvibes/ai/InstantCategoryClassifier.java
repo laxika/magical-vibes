@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -62,6 +63,10 @@ public final class InstantCategoryClassifier {
     private static InstantCategory classifySingleEffect(CardEffect effect) {
         // Counter spells (highest priority — reactive by nature)
         if (effect instanceof CounterSpellingEffect) {
+            return InstantCategory.COUNTERSPELL;
+        }
+        // "Counter target spell unless its controller pays {3}" (Mana Leak): a counter unless the ransom is paid.
+        if (effect instanceof UnlessPaysEffect unless && unless.counters()) {
             return InstantCategory.COUNTERSPELL;
         }
         // "You and target spell's controller bid life ... If you win the bidding, counter that spell" (Mages' Contest).

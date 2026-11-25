@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "49")
 public class ClashOfWills extends Card {
@@ -11,6 +11,6 @@ public class ClashOfWills extends Card {
         // Counter target spell unless its controller pays {X}.
         //
         // useX makes the cost the X paid for this spell; targeting is auto-derived from the effect.
-        addSpellEffect(new CounterUnlessPaysEffect(0, true, false));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPaysX());
     }
 }

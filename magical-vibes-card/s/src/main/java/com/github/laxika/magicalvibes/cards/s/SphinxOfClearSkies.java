@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SphinxOfClearSkies extends Card {
 
     public SphinxOfClearSkies() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new RevealTopCardsAndSeparateEffect(new BasicLandTypesAmongControlledLands()));
     }

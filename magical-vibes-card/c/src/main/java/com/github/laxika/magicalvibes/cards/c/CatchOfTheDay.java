@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -48,7 +48,7 @@ public class CatchOfTheDay extends Card {
 
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(WARD)),
-                new CounterUnlessPaysEffect(3));
+                UnlessPaysEffect.counterUnlessPays(3));
 
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(SCRY)),

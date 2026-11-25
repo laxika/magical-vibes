@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 
 @CardRegistration(set = "NEM", collectorNumber = "30")
 @CardRegistration(set = "DD2", collectorNumber = "23")
@@ -24,6 +24,6 @@ public class Daze extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ReturnPermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))
         )));
-        addSpellEffect(new CounterUnlessPaysEffect(1));
+        addSpellEffect(UnlessPaysEffect.counterUnlessPays(1));
     }
 }
