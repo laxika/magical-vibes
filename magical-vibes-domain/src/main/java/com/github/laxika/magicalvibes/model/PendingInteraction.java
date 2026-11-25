@@ -141,7 +141,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.SpellbookCardChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.LibrarySearch,
-        PendingInteraction.SearchOutsideGameOrExileCardChoice,
+        PendingInteraction.OutsideGameCardChoice,
         PendingInteraction.ExchangeOutsideGameCardChoice,
         PendingInteraction.ExchangeOutsideGameHandChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
@@ -5221,11 +5221,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Chooses one matching card the player owns from outside the game, which stays there: {@code followUpEffect} reads
      * it as the resolving entry's chosen card (Grizzled Huntmaster).
      */
-    record SearchOutsideGameOrExileCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
+    record OutsideGameCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                CardPredicate filter, String cardLabel,
                                                CardEffect followUpEffect) implements PendingInteraction {
 
-        public SearchOutsideGameOrExileCardChoice {
+        public OutsideGameCardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
         }
 

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -31,6 +32,8 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -517,6 +520,33 @@ class ColorChoiceAiStrategyTest {
         PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(aiPlayerId, null, null,
                 new ChoiceContext.ChooseCardNameAtResolutionChoice(source, aiPlayerId, null, choose, null),
                 options, "Choose a card name.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        return ((InteractionAnswer.ListChoiceMade) captor.getValue()).choice();
+    }
+
+    @ParameterizedTest(name = "{0} counters on the AI''s own permanent: {1}; on an opponent''s: {2}")
+    @CsvSource({"PLUS_ONE_PLUS_ONE, 0, 3", "MINUS_ONE_MINUS_ONE, 3, 0"})
+    @DisplayName("A counter removal removes the counters that hurt the AI and keeps those that help it")
+    void counterRemovalFollowsTheCountersPolarity(CounterType kind, String fromOwn, String fromOpponent) {
+        assertThat(removalAnswer(kind, true)).isEqualTo(fromOwn);
+        assertThat(removalAnswer(kind, false)).isEqualTo(fromOpponent);
+    }
+
+    /** The AI's answer to removing up to three {@code kind} counters from a permanent it controls or an opponent does. */
+    private String removalAnswer(CounterType kind, boolean aiControls) {
+        UUID permanentId = UUID.randomUUID();
+        when(gameQueryService.findPermanentController(gameData, permanentId))
+                .thenReturn(aiControls ? aiPlayerId : UUID.randomUUID());
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(aiPlayerId, null, null,
+                new ChoiceContext.MoveCountersAmountChoice(
+                        List.of(new ChoiceContext.CounterMoveSlot(permanentId, null, kind)), 0, List.of(), "Rhys"),
+                List.of("0", "1", "2", "3"), "Remove how many?");
+        org.mockito.Mockito.clearInvocations(gameActions);
 
         strategy.answer(interaction, new AiInteractionContext(
                 gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));

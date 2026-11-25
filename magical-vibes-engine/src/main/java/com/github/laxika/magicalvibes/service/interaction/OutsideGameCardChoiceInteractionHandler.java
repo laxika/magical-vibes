@@ -18,16 +18,16 @@ import org.springframework.stereotype.Component;
 /** Completes the choice of a card outside the game that stays there, handing it to the follow-up effect. */
 @Component
 @RequiredArgsConstructor
-public class SearchOutsideGameOrExileCardChoiceInteractionHandler
-        implements InteractionHandler<PendingInteraction.SearchOutsideGameOrExileCardChoice> {
+public class OutsideGameCardChoiceInteractionHandler
+        implements InteractionHandler<PendingInteraction.OutsideGameCardChoice> {
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
 
     @Override
-    public Class<PendingInteraction.SearchOutsideGameOrExileCardChoice> handledType() {
-        return PendingInteraction.SearchOutsideGameOrExileCardChoice.class;
+    public Class<PendingInteraction.OutsideGameCardChoice> handledType() {
+        return PendingInteraction.OutsideGameCardChoice.class;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
 
     @Override
     public void handleAnswer(GameData gameData, Player player,
-                             PendingInteraction.SearchOutsideGameOrExileCardChoice interaction,
+                             PendingInteraction.OutsideGameCardChoice interaction,
                              InteractionAnswer answer) {
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (chosenIds == null || chosenIds.size() != 1 || !interaction.validCardIds().contains(chosenIds.getFirst())) {

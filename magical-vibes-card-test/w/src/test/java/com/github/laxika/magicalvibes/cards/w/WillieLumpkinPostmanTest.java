@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HarmsWay;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WillieLumpkinPostman.class, GrizzlyBears.class})
+@CardUsed({WillieLumpkinPostman.class, GrizzlyBears.class, HarmsWay.class})
 class WillieLumpkinPostmanTest extends BaseCardTest {
 
     @Test
@@ -127,5 +129,31 @@ class WillieLumpkinPostmanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
+    }
+
+    @Test
+    @DisplayName("Combat damage redirected to its own controller is not dealt to an opponent, so nothing triggers")
+    void combatDamageRedirectedToItsControllerDoesNotTrigger() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        Permanent willie = addCreatureReady(player2, new WillieLumpkinPostman());
+        harness.setHand(player1, List.of(new HarmsWay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, willie.getId());
+        harness.setHand(player1, List.of());
+
+        harness.forceActivePlayer(player2);
+        willie.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

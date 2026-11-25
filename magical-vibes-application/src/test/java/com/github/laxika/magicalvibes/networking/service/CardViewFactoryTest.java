@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
@@ -63,6 +65,22 @@ class CardViewFactoryTest {
 
         assertThat(view.activatedAbilities()).extracting(ActivatedAbilityView::xValueFromEnergyCounters)
                 .containsExactly(true, false);
+    }
+
+    @Test
+    @DisplayName("An ability whose target is chosen at random asks the activating player for no target")
+    void randomTargetAbilityAsksForNoTarget() {
+        Card card = card("Goblin Test Pilot", CardType.CREATURE);
+        card.addActivatedAbility(new ActivatedAbility(true, null,
+                List.of(DealDamageToAnyTargetEffect.toAnyTargetChosenAtRandom(new Fixed(2))),
+                "{T}: This creature deals 2 damage to any target chosen at random."));
+        card.addActivatedAbility(new ActivatedAbility(true, null,
+                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
+
+        CardView view = factory.create(card);
+
+        assertThat(view.activatedAbilities()).extracting(ActivatedAbilityView::needsTarget)
+                .containsExactly(false, true);
     }
 
     @Test

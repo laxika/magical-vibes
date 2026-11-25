@@ -9272,18 +9272,39 @@ public class GameQueryService {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
         }
         if (source != null) {
-            return predicateEvaluationService.matchesPermanentPredicate(source, predicate, onBattlefield);
+            return predicateEvaluationService.matchesPermanentPredicate(source,
+                    asDamageSourcePredicate(gameData, predicate, getEffectiveColors(gameData, source)), onBattlefield);
         }
         Permanent lastKnownSource = entry == null ? null : entry.getSourcePermanentSnapshot();
-        if (lastKnownSource == null) {
+        Set<CardColor> lastKnownColors = null;
+        if (lastKnownSource != null) {
+            lastKnownColors = getEffectiveColors(gameData, lastKnownSource);
+        } else {
             Card effectiveSourceCard = sourceCard != null
                     ? sourceCard : entry == null ? null : entry.getEffectiveDamageSourceCard();
             if (effectiveSourceCard != null) {
                 lastKnownSource = new Permanent(effectiveSourceCard);
+                lastKnownColors = getEffectiveCardColors(gameData, effectiveSourceCard);
             }
         }
         return lastKnownSource != null
-                && predicateEvaluationService.matchesPermanentPredicate(lastKnownSource, predicate, onCard);
+                && predicateEvaluationService.matchesPermanentPredicate(lastKnownSource,
+                asDamageSourcePredicate(gameData, predicate, lastKnownColors), onCard);
+    }
+
+    /**
+     * {@code predicate} as it judges a source of damage whose colours are {@code sourceColors}: while a
+     * {@link DamageSourcesOfColorsAreColorlessEffect} makes the source colourless for damage (Ghostly Flame), its colour
+     * leaves are judged on that colourless damage (CR 609.7b: a shield rechecks the source's properties as it would deal
+     * damage); otherwise {@code predicate} itself.
+     */
+    public PermanentPredicate asDamageSourcePredicate(GameData gameData, PermanentPredicate predicate,
+                                                      Set<CardColor> sourceColors) {
+        if (predicate == null || sourceColors == null || sourceColors.isEmpty()) {
+            return predicate;
+        }
+        Set<CardColor> damageColors = getDamageSourceColors(gameData, sourceColors);
+        return damageColors.equals(sourceColors) ? predicate : withDamageColors(predicate, damageColors);
     }
 
     /**
@@ -13386,13 +13407,16 @@ public class GameQueryService {
             return true;
         }
         if (isCombatDamage && gameData.combatDamageExemptPredicate != null
-                && !predicateEvaluationService.matchesPermanentPredicate(creature, gameData.combatDamageExemptPredicate,
+                && !predicateEvaluationService.matchesPermanentPredicate(creature,
+                asDamageSourcePredicate(gameData, gameData.combatDamageExemptPredicate,
+                        getEffectiveColors(gameData, creature)),
                 FilterContext.of(gameData).withSourceControllerId(gameData.combatDamageExemptControllerId))) {
             return true;
         }
         if (isCombatDamage && gameData.preventionEffects(PreventionScope.ALL_COMBAT_EXCEPT).stream()
                 .anyMatch(exemption -> !predicateEvaluationService.matchesPermanentPredicate(creature,
-                        ((PreventDamageEffect) exemption.effect()).exemptPredicate(),
+                        asDamageSourcePredicate(gameData, ((PreventDamageEffect) exemption.effect()).exemptPredicate(),
+                                getEffectiveColors(gameData, creature)),
                         FilterContext.of(gameData).withSourceControllerId(exemption.affectedPlayerId())))) {
             return true;
         }

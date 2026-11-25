@@ -202,18 +202,26 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.MoveCountersAmountChoice move) {
-            // "Move / remove any number of counters": options are 0..N. Move or remove them all, except a move from the
-            // AI's own permanent onto one it doesn't control (Forgotten Ancient's "onto other creatures"). A removal
-            // slot has no destination (or is a player's counters); what it removes is counted by the steps after it
-            // (Galloping Lizrog, Eventide's Shadow, Sensational Spider-Man, Hex Parasite, Tetravus's tokens).
+            // "Move / remove any number of counters": options are the lowest allowed answer up to N. Move or remove
+            // them all, except a move from the AI's own permanent onto one it doesn't control (Forgotten Ancient's
+            // "onto other creatures"), and a removal from a permanent that strips a counter helping its controller's
+            // side or keeps one hurting it: the AI's own +1/+1 counters and an opponent's -1/-1 counters stay (Rhys,
+            // the Evermore; Eventide's Shadow). A removal slot has no destination (or is a player's counters); what it
+            // removes is counted by the steps after it (Galloping Lizrog, Sensational Spider-Man, Hex Parasite).
             ChoiceContext.CounterMoveSlot slot = move.slots().get(move.index());
             boolean givesAway = slot.toPermanentId() != null
                     && aiPlayerId.equals(ctx.gameQueryService()
                     .findPermanentController(gameData, slot.fromPermanentId()))
                     && !aiPlayerId.equals(ctx.gameQueryService()
                     .findPermanentController(gameData, slot.toPermanentId()));
+            boolean keepsCounters = slot.toPermanentId() == null && slot.fromPermanentId() != null
+                    && slot.counterType() != null && slot.counterType() != CounterType.ANY
+                    && aiPlayerId.equals(ctx.gameQueryService()
+                    .findPermanentController(gameData, slot.fromPermanentId()))
+                    == helpsItsHolder(slot.counterType());
             List<String> options = interaction.options();
-            String chosenNumber = options.isEmpty() || givesAway ? "0" : options.get(options.size() - 1);
+            String chosenNumber = options.isEmpty() ? "0"
+                    : givesAway || keepsCounters ? options.getFirst() : options.get(options.size() - 1);
             log.info("AI: Choosing {} counters to {} in game {}", chosenNumber,
                     slot.toPermanentId() == null ? "remove" : "move", gameId);
             answerWith(ctx, interaction, chosenNumber);
@@ -724,5 +732,10 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
     private static boolean namesAi(StackEntry resolving, PlayerSubject player, UUID aiPlayerId) {
         return player instanceof PlayerSubject.You && aiPlayerId.equals(resolving.getControllerId())
                 || player instanceof PlayerSubject.TargetPlayer && aiPlayerId.equals(resolving.getTargetId());
+    }
+
+    /** Whether a counter of {@code kind} helps the permanent it is on; a -1/-1-style counter doesn't. */
+    private static boolean helpsItsHolder(CounterType kind) {
+        return kind != CounterType.MINUS_ONE_MINUS_ONE && kind != CounterType.MINUS_TWO_MINUS_ONE;
     }
 }

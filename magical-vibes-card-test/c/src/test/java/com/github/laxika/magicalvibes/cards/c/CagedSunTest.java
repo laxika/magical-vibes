@@ -26,7 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CagedSun.class, Forest.class, GemstoneMine.class, Mountain.class, Piracy.class, ShimmeringGrotto.class, Taiga.class,
+@CardUsed({CagedSun.class, CityOfBrass.class, Forest.class, GemstoneMine.class, Mountain.class, Piracy.class, ShimmeringGrotto.class, Taiga.class,
         WoodlandCemetery.class})
 class CagedSunTest extends BaseCardTest {
 
@@ -346,6 +346,21 @@ class CagedSunTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.tapForeignLandForMana(player1, taiga.getId());
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A nonbasic land tapped through Piracy for the chosen color adds one extra mana of it")
+    void foreignNonbasicLandChosenColorGetsBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.GREEN);
+        Permanent city = harness.addToBattlefieldAndReturn(player2, new CityOfBrass());
+        harness.castFromHand(player1, new Piracy(), "{U}{U}");
+        harness.passBothPriorities();
+
+        harness.tapForeignLandForMana(player1, city.getId());
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);

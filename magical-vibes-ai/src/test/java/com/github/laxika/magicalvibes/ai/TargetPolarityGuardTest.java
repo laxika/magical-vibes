@@ -445,6 +445,20 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.BENEFICIAL);
     }
 
+    @Test
+    @DisplayName("Preventing the next damage a target creature would deal aims at an opponent's creature")
+    void preventingATargetCreaturesNextDamageIsHarmful() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(harness.getGameData(),
+                new com.github.laxika.magicalvibes.cards.a.AweStrike(), harness.getPlayer2().getId()))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classifyCard(harness.getGameData(),
+                new com.github.laxika.magicalvibes.cards.d.DazzlingReflection(), harness.getPlayer2().getId()))
+                .isEqualTo(TargetPolarity.HARMFUL);
+    }
+
     private TargetPolarityClassifier createClassifier(GameTestHarness harness) {
         AmountEvaluationService amountEvaluationService = new AmountEvaluationService(
                 new PredicateEvaluationService(harness.getGameQueryService()), harness.getGameQueryService());

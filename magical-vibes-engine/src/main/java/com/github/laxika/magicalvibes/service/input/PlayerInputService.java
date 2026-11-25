@@ -2586,7 +2586,7 @@ public class PlayerInputService {
     /** "Choose a [filter] card you own from outside the game": it stays there, and {@code followUpEffect} reads it. */
     public void beginOutsideGameCardChoice(GameData gameData, UUID playerId, List<Card> matchingCards,
                                            CardPredicate filter, String cardLabel, CardEffect followUpEffect) {
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.SearchOutsideGameOrExileCardChoice(
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.OutsideGameCardChoice(
                 playerId, matchingCards.stream().map(Card::getId).toList(), filter, cardLabel, followUpEffect));
     }
 

@@ -72,6 +72,25 @@ public class AwardManaOfTypeLandsCouldProduceEffectHandler implements ManaAbilit
                 "Choose a type of mana to add."));
     }
 
+    /**
+     * The mana a land replacement sees this ability produce (CR 106.12b): its amount when a land could produce a type,
+     * none otherwise (CR 106.7), so "if a land is tapped for mana, it produces ... instead" replaces it.
+     */
+    @Override
+    public int calculateManaProduction(GameData gameData, UUID playerId, Permanent permanent, CardEffect cardEffect,
+                                       int xValue) {
+        var effect = (AwardManaOfTypeLandsCouldProduceEffect) cardEffect;
+        int amount = Math.max(0, amountEvaluationService.evaluate(gameData, effect.amount(),
+                AmountContext.forManaAbility(permanent, playerId)));
+        if (amount == 0) {
+            return 0;
+        }
+        Set<ManaColor> availableTypes = effect.scope().paidInCost()
+                ? landManaTypeSupport.manaTypesCouldProduce(gameData, landPaidInCost(gameData, permanent, effect.scope()))
+                : collectAvailableTypes(gameData, playerId, effect);
+        return availableTypes.isEmpty() ? 0 : amount;
+    }
+
     @Override
     public boolean isRevertable() {
         return true;

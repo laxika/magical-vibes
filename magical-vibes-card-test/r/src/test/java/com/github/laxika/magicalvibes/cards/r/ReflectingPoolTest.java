@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GaeasCradle;
+import com.github.laxika.magicalvibes.cards.p.PaleMoon;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.cards.s.SunkenRuins;
 import com.github.laxika.magicalvibes.cards.t.ThreeTreeCity;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ReflectingPool.class, Forest.class, Island.class, Wasteland.class,
         GaeasCradle.class, SongOfTheDryads.class, SunkenRuins.class, WiltLeafCavaliers.class, ThreeTreeCity.class,
-        LlanowarElves.class})
+        LlanowarElves.class, PaleMoon.class})
 class ReflectingPoolTest extends BaseCardTest {
 
     @Test
@@ -216,5 +217,22 @@ class ReflectingPoolTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("It is tapped for one mana, so a nonbasic land-mana replacement replaces that mana")
+    void landManaReplacementReplacesItsMana() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new ReflectingPool());
+        harness.castFromHand(player1, new PaleMoon(), "{1}{U}");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 2, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }

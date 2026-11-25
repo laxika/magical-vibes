@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PreventNextDamageByTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Card;
@@ -402,6 +403,12 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect) {
             return TargetPolarity.HARMFUL_DAMAGE;
+        }
+
+        // "The next time target creature would deal damage this turn, prevent that damage" aims at an opponent's
+        // creature (Awe Strike, Dazzling Reflection); "it deals double that damage instead" at your own.
+        if (effect instanceof PreventNextDamageByTargetCreatureEffect nextDamage) {
+            return nextDamage.doubling() ? TargetPolarity.BENEFICIAL : TargetPolarity.HARMFUL;
         }
 
         // Tap/untap family: the scope or subject decides whether a permanent is targeted at all.
@@ -836,7 +843,6 @@ public class TargetPolarityClassifier {
             entry("PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetFromChosenSourceEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDividedDamageEffect", TargetPolarity.BENEFICIAL),
-            entry("PreventNextDamageByTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageToTargetAndAddPlusOnePlusOneCountersEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageToTargetAndAddToughnessCountersEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),

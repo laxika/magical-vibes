@@ -505,10 +505,14 @@ public class CardViewFactory {
         ChooseOneEffect modalEffect = ability.modalEffectAtActivation();
         List<ModalOptionView> modalOptions = modalEffect == null ? null
                 : modalEffect.options().stream().map(option -> createModalOptionView(option, false)).toList();
+        // A target "chosen at random" is no player's choice: the client asks for none and the server picks it among
+        // the legal targets as the ability is activated (Goblin Test Pilot).
+        boolean playerChoosesTarget = ability.isNeedsTarget()
+                && ability.getEffects().stream().noneMatch(CardEffect::targetChosenAtRandom);
         return new ActivatedAbilityView(
                 ability.getDescription(),
                 ability.isRequiresTap(),
-                ability.isNeedsTarget(),
+                playerChoosesTarget,
                 ability.isNeedsSpellTarget(),
                 ability.getManaCost(),
                 ability.getLoyaltyCost(),

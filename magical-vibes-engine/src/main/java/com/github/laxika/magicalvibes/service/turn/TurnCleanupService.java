@@ -512,7 +512,9 @@ public class TurnCleanupService {
     }
 
     /**
-     * The newest maximum hand size change that names this player, or null if none. Outside a hand-size computation
+     * The newest maximum hand size setter ("your maximum hand size is N") that names this player, or null if none. Only
+     * a setter overrides an older "no maximum hand size": applied in timestamp order (CR 613.11), an increase or a
+     * reduction of no maximum leaves no maximum (Reliquary Tower's ruling). Outside a hand-size computation
      * a conditional change counts while its condition holds; inside one (a condition asking about maximum hand size)
      * only the unconditional printed ones count, so the query cannot recurse.
      */
@@ -541,6 +543,7 @@ public class TurnCleanupService {
                         : gameQueryService.getActiveStaticEffects(gameData, perm, otherPlayerId);
                 for (CardEffect effect : staticEffects) {
                     if (effect instanceof SetControllerMaximumHandSizeEffect change
+                            && change.change() == SetControllerMaximumHandSizeEffect.Change.SET
                             && SubjectResolutionService.namesPlayer(gameData, perm, otherPlayerId, playerId,
                             change.players())) {
                         HandSizeStamp stamp = new HandSizeStamp(perm.getTimestamp(), handSizePosition(gameData, perm));
@@ -554,7 +557,8 @@ public class TurnCleanupService {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (playerId.equals(floating.affectedPlayerId())
-                        && floating.effect() instanceof SetControllerMaximumHandSizeEffect) {
+                        && floating.effect() instanceof SetControllerMaximumHandSizeEffect change
+                        && change.change() == SetControllerMaximumHandSizeEffect.Change.SET) {
                     HandSizeStamp stamp = new HandSizeStamp(floating.timestamp(), Integer.MAX_VALUE);
                     if (latest == null || stamp.isNewerThan(latest)) {
                         latest = stamp;

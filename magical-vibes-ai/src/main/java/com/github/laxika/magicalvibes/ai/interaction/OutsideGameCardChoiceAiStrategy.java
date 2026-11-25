@@ -10,16 +10,16 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Chooses the highest-mana-value eligible card from the AI's cards outside the game. */
-class SearchOutsideGameOrExileCardChoiceAiStrategy
-        implements AiInteractionStrategy<PendingInteraction.SearchOutsideGameOrExileCardChoice> {
+class OutsideGameCardChoiceAiStrategy
+        implements AiInteractionStrategy<PendingInteraction.OutsideGameCardChoice> {
 
     @Override
-    public Class<PendingInteraction.SearchOutsideGameOrExileCardChoice> handledType() {
-        return PendingInteraction.SearchOutsideGameOrExileCardChoice.class;
+    public Class<PendingInteraction.OutsideGameCardChoice> handledType() {
+        return PendingInteraction.OutsideGameCardChoice.class;
     }
 
     @Override
-    public void answer(PendingInteraction.SearchOutsideGameOrExileCardChoice interaction,
+    public void answer(PendingInteraction.OutsideGameCardChoice interaction,
                        AiInteractionContext ctx) throws Exception {
         if (!ctx.aiPlayerId().equals(interaction.playerId())) {
             return;

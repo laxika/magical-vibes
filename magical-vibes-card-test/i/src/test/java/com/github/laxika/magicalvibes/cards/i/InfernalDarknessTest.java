@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FyndhornElder;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.ReflectingPool;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InfernalDarkness.class, AncientTomb.class, Forest.class, FyndhornElder.class,
-        Island.class, Mountain.class, Plains.class})
+        Island.class, Mountain.class, Plains.class, ReflectingPool.class})
 class InfernalDarknessTest extends BaseCardTest {
 
     @Test
@@ -55,6 +56,22 @@ class InfernalDarknessTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A land adding a type another land could produce is tapped for mana too, so it produces black")
+    void landAddingATypeAnotherLandCouldProduceProducesBlack() {
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new ReflectingPool());
+
+        harness.tapPermanent(player1, 3);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
     @Test

@@ -906,10 +906,12 @@ public class AbilityActivationService {
                 if (gameData.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice pending
                         && pending.context() instanceof ChoiceContext.ManaColorChoice colorChoice) {
                     gameData.interaction.clearAwaitingInput();
+                    // One color for all of the land's mana, as its own choice was; the tap triggers waiting on the
+                    // type it produced resolve once it is chosen (CR 106.12a).
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             pending.playerId(), pending.permanentId(), pending.etbTargetId(),
                             new ChoiceContext.SpellOnlyManaColorChoice(colorChoice.playerId(),
-                                    colorChoice.fromCreature(), colorChoice.amount(), true),
+                                    colorChoice.fromCreature(), colorChoice.amount(), false),
                             pending.options(), "Choose a color of mana to add (spells only)."));
                 }
                 for (ManaColor color : ManaColor.values()) {

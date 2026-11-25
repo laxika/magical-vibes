@@ -255,8 +255,11 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 || copyEffect.tokenController() != null || copyEffect.tappedAndAttacking()) {
             return false;
         }
+        // A copy of a permanent that left is made from its last known information (Red Sun's Twilight's destroyed
+        // artifacts), so it is one of the tokens the replacement may replace.
         long existingTargets = targetIds.stream()
-                .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null)
+                .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null
+                        || lastKnownCopySource(gameData, entry, copyEffect, targetId) != null)
                 .count();
         if (existingTargets == 0) {
             return false;

@@ -42,8 +42,8 @@ class GrizzledHuntmasterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(additionalHandCopy.getId(), libraryCopy.getId()));
 
-        PendingInteraction.SearchOutsideGameOrExileCardChoice outsideChoice =
-                gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+        PendingInteraction.OutsideGameCardChoice outsideChoice =
+                gd.interaction.activeInteraction(PendingInteraction.OutsideGameCardChoice.class);
         assertThat(outsideChoice).isNotNull();
         assertThat(((InteractionOptions.MultiCardPick) outsideChoice.legalOptions()).minCount()).isEqualTo(1);
         assertThat(outsideChoice.validCardIds()).containsExactly(outsideCreature.getId());
@@ -92,8 +92,8 @@ class GrizzledHuntmasterTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of());
 
-        PendingInteraction.SearchOutsideGameOrExileCardChoice outsideChoice =
-                gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+        PendingInteraction.OutsideGameCardChoice outsideChoice =
+                gd.interaction.activeInteraction(PendingInteraction.OutsideGameCardChoice.class);
         assertThat(outsideChoice).isNotNull();
         assertThat(outsideChoice.validCardIds()).containsExactly(outsideCreature.getId());
         harness.handleMultipleCardsChosen(player1, List.of(outsideCreature.getId()));
@@ -145,7 +145,7 @@ class GrizzledHuntmasterTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+                .isInstanceOf(PendingInteraction.OutsideGameCardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(outsideCreature.getId()));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosenFromHand);

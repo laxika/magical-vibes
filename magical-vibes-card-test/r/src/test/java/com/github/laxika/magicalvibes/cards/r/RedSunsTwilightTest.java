@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlueSunsTwilight;
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MyrConvert;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -21,7 +24,8 @@ import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RedSunsTwilight.class, MyrConvert.class, BlueSunsTwilight.class})
+@CardUsed({RedSunsTwilight.class, MyrConvert.class, BlueSunsTwilight.class, EsixFractalBloom.class,
+        GrizzlyBears.class})
 class RedSunsTwilightTest extends BaseCardTest {
 
     @Test
@@ -163,6 +167,26 @@ class RedSunsTwilightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(first.getId(), second.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("Copies of the destroyed artifacts are the first tokens of the turn, so Esix may replace them")
+    void esixMayReplaceTheCopiesOfDestroyedArtifacts() {
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, artifact("First Artifact"));
+        Permanent second = harness.addToBattlefieldAndReturn(player2, artifact("Second Artifact"));
+
+        castAndResolve(5, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2)
+                .allMatch(token -> token.getCard().getName().equals("Grizzly Bears"));
     }
 
     private void castAndResolve(int xValue, List<java.util.UUID> targetIds) {

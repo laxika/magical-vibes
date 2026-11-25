@@ -1209,7 +1209,11 @@ public class ConditionEvaluationService {
                             && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                             || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
                             && gameData.stack.isEmpty();
-            case StackIsEmpty ignored -> gameData.stack.isEmpty();
+            // A resolving spell or ability is on the stack until the final part of its resolution (CR 608.2n), so a
+            // spell cast while it resolves (CR 608.2g) is cast with something on the stack; the engine has already
+            // taken it off gameData.stack.
+            case StackIsEmpty ignored -> gameData.stack.isEmpty() && gameData.resolvingEntry == null
+                    && gameData.pendingEffectResolutionEntry == null;
             case TargetPlayerIsActivePlayer ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerIsController ignored ->

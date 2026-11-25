@@ -400,8 +400,8 @@ class SpecializedInteractionAiStrategiesTest {
         Card invalid = card("Invalid", "{9}");
         gameData.playerSideboards.get(aiPlayerId).addAll(List.of(cheap, expensive, invalid));
 
-        new SearchOutsideGameOrExileCardChoiceAiStrategy().answer(
-                new PendingInteraction.SearchOutsideGameOrExileCardChoice(
+        new OutsideGameCardChoiceAiStrategy().answer(
+                new PendingInteraction.OutsideGameCardChoice(
                         aiPlayerId, List.of(cheap.getId(), expensive.getId()), null, "card", null),
                 context);
 
@@ -519,7 +519,7 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 PendingInteraction.ExiledCardMayPlayChoice.class,
-                PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
+                PendingInteraction.OutsideGameCardChoice.class,
                 PendingInteraction.TargetedHandBattlefieldChoice.class,
                 PendingInteraction.LifeBidChoice.class,
                 PendingInteraction.TargetLibraryDestinationChoice.class,

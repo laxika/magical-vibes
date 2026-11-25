@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -254,5 +257,26 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Rasaad, Radiant Monk");
         assertThat(gd.findExiledCard(target.getCard().getId()).card().getPower()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Radiant Monk face's ability triggers only when it specializes, not when it enters")
+    void radiantFaceHasNoEntersTrigger() {
+        SteadfastPaladin paladin = new SteadfastPaladin();
+        gd.exiledCards.add(new ExiledCardEntry(paladin, player2.getId(), null));
+        Card radiantFace = new Card();
+        RasaadMonkOfSelNe.specializedFace(radiantFace, CardColor.WHITE);
+        harness.setHand(player1, List.of(radiantFace));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Rasaad, Radiant Monk")).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        Card exiled = gd.findExiledCard(paladin.getId()).card();
+        assertThat(exiled.getPower()).isEqualTo(paladin.getPower());
+        assertThat(exiled.getKeywords()).contains(Keyword.LIFELINK);
     }
 }

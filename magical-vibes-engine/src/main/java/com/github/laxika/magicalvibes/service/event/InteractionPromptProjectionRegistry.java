@@ -266,8 +266,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ApplejackToyChoice.class, this::projectApplejackToyChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
-        register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
-                this::projectSearchOutsideGameOrExileCardChoice);
+        register(PendingInteraction.OutsideGameCardChoice.class,
+                this::projectOutsideGameCardChoice);
         register(PendingInteraction.ExchangeOutsideGameCardChoice.class,
                 this::projectExchangeOutsideGameCardChoice);
         register(PendingInteraction.ExchangeOutsideGameHandChoice.class,
@@ -1553,8 +1553,8 @@ public class InteractionPromptProjectionRegistry {
                 interaction.messageCanFailToFind());
     }
 
-    private InteractionPromptMessage projectSearchOutsideGameOrExileCardChoice(
-            GameData gameData, PendingInteraction.SearchOutsideGameOrExileCardChoice interaction) {
+    private InteractionPromptMessage projectOutsideGameCardChoice(
+            GameData gameData, PendingInteraction.OutsideGameCardChoice interaction) {
         List<CardView> cardViews = new ArrayList<>();
         addMatchingCardViews(cardViews,
                 com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId()),

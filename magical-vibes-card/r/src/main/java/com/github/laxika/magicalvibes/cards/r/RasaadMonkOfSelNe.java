@@ -90,7 +90,6 @@ public class RasaadMonkOfSelNe extends Card {
                 face.setCardText("When this creature specializes, target creature card exiled with this creature perpetually loses all abilities and has base power and toughness 1/1.");
                 face.setPower(4);
                 face.setToughness(4);
-                face.addTrigger(Triggers.enters(ObjectRelation.THIS), specializedTrigger);
             }
             case BLUE -> {
                 face.setName("Rasaad, Dragon Monk");

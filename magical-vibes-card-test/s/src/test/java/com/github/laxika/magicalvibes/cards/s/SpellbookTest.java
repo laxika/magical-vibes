@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TrustedAdvisor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Spellbook.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class,
-        Humility.class, MarchOfTheMachines.class})
+        Humility.class, MarchOfTheMachines.class, TrustedAdvisor.class})
 class SpellbookTest extends BaseCardTest {
 
     // ===== Hand limit enforcement =====
@@ -245,5 +246,24 @@ class SpellbookTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("A newer increase of maximum hand size doesn't restore a maximum Spellbook removed")
+    void newerHandSizeIncreaseKeepsNoMaximum() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new TrustedAdvisor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        List<com.github.laxika.magicalvibes.model.Card> hand = new ArrayList<>();
+        for (int i = 0; i < 11; i++) {
+            hand.add(new Forest());
+        }
+        harness.setHand(player1, hand);
+
+        harness.getGameService().advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(11);
     }
 }

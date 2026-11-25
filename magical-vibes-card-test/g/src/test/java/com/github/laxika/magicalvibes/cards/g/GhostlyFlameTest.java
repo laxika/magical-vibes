@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.e.EmrakulTheAeonsTorn;
 import com.github.laxika.magicalvibes.cards.f.FlameSpirit;
+import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.r.RadiantKavu;
 import com.github.laxika.magicalvibes.cards.w.WellLaidPlans;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -28,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GhostlyFlame.class, CircleOfProtectionRed.class, Incinerate.class,
         Disenchant.class, EmrakulTheAeonsTorn.class, FlameSpirit.class,
-        Pyroclasm.class, WellLaidPlans.class})
+        Pyroclasm.class, WellLaidPlans.class, RadiantKavu.class, MaggotCarrier.class})
 class GhostlyFlameTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
@@ -264,5 +267,26 @@ class GhostlyFlameTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(countPermanents(player2, "Red Ward")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A black creature's combat damage is colorless, so Radiant Kavu's black-creature prevention doesn't apply")
+    void blackCreatureDamageIsNotPreventedAsBlackSourceDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new RadiantKavu());
+        Permanent black = addCreatureReady(player1, new MaggotCarrier());
+        addGhostlyFlame();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        black.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 19);
     }
 }

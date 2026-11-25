@@ -1628,6 +1628,13 @@ public class ChoiceHandlerService {
             // A land tapped through Piracy for one of its basic land types' colors: the abilities that read the
             // type it produced waited for this choice (CR 106.12a).
             resolveProducedManaTriggers(gameData, manaColor);
+            // A nonbasic land's own mana ability waited for this choice too: it is tapped for mana now, so the
+            // land-tap watchers see it with the type it produced (CR 106.12a).
+            PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+            if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+                gameData.pendingRevertableManaActivation = null;
+                completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+            }
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
