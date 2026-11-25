@@ -26,7 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Resolves Make an Example's opponent-by-opponent pile separation and sacrifice flow. */
+/**
+ * Resolves Make an Example as its three actions (CR 608.2e): each opponent separates their creatures into two piles,
+ * in APNAP order (CR 101.4); then the controller chooses one pile of each opponent; then every opponent sacrifices
+ * the creatures of their chosen pile, all at once.
+ */
 @Component
 @RequiredArgsConstructor
 public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
@@ -44,7 +48,12 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> opponents = gameData.orderedPlayerIds.stream()
+        List<UUID> players = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = players.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) {
+            java.util.Collections.rotate(players, -activeIndex);
+        }
+        List<UUID> opponents = players.stream()
                 .filter(playerId -> !playerId.equals(entry.getControllerId()))
                 .toList();
         if (opponents.isEmpty()) {
@@ -53,10 +62,11 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
 
         gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingMakeAnExample(
-                entry.getControllerId(), opponents, 0, entry.getCard().getName()));
+                entry.getControllerId(), opponents, entry.getCard().getName()));
         beginNextOpponent(gameData);
     }
 
+    /** An opponent has separated their creatures: the piles are recorded and the next opponent separates. */
     public void completePileSeparationStep1(GameData gameData, List<UUID> pile1Ids) {
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
         if (state == null) {
@@ -67,78 +77,82 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
         List<UUID> pile2 = state.allPermanentIds().stream()
                 .filter(id -> !pile1Ids.contains(id))
                 .toList();
-        gameData.queueInteraction(new PendingPileSeparation(
-                state.controllerId(), state.targetPlayerId(), state.allPermanentIds(),
-                List.of(), Map.of(), pile1, pile2, CardPileDisposition.MAKE_AN_EXAMPLE, true));
-
         String separatingPlayer = gameData.playerIdToName.get(state.controllerId());
-        String pile1Description = buildPileDescription(gameData, pile1);
-        String pile2Description = buildPileDescription(gameData, pile2);
         gameLogService.append(gameData, GameLog.text(separatingPlayer
-                + " separates creatures into two piles. Pile 1: " + pile1Description
-                + ". Pile 2: " + pile2Description + "."));
+                + " separates creatures into two piles. Pile 1: " + buildPileDescription(gameData, pile1)
+                + ". Pile 2: " + buildPileDescription(gameData, pile2) + "."));
 
-        String prompt = "Choose a pile for " + separatingPlayer + " to sacrifice. Yes = Pile 1 ("
-                + pile1Description + "), No = Pile 2 (" + pile2Description + ").";
-        gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                null, state.targetPlayerId(), List.of(), prompt));
-        playerInputService.processNextMayAbility(gameData);
+        PendingMakeAnExample progress = pollProgress(gameData);
+        gameData.queueInteraction(progress.withSeparation(
+                new PendingMakeAnExample.Separation(state.controllerId(), pile1, pile2)));
+        beginNextOpponent(gameData);
     }
 
     /**
-     * The opponent sacrifices the chosen pile as one event, and only then is the next opponent asked to separate
-     * theirs. The separation stays pending until the pile has left, so a completion stopped for a CR 616.1
-     * question is completed again unchanged.
+     * The controller chose a pile of one opponent. After the last choice every chosen creature is sacrificed as one
+     * event; the choice stays pending until they have left, so a completion stopped for a CR 616.1 question is
+     * completed again unchanged.
      */
     public void completePileSeparationStep2(GameData gameData, boolean choosePile1) {
         PendingPileSeparation state = gameData.peekPendingInteraction(PendingPileSeparation.class);
-        if (state == null) {
+        PendingMakeAnExample progress = gameData.peekPendingInteraction(PendingMakeAnExample.class);
+        if (state == null || progress == null) {
             throw new IllegalStateException("No pending Make an Example pile choice");
         }
 
-        UUID sacrificingPlayerId = state.controllerId();
-        List<UUID> chosenPile = choosePile1 ? state.pile1Ids() : state.pile2Ids();
+        PendingMakeAnExample chosen = progress.withChosenPile(choosePile1 ? state.pile1Ids() : state.pile2Ids());
+        if (chosen.currentChoiceIndex() < chosen.separations().size()) {
+            gameData.pollPendingInteraction(PendingPileSeparation.class);
+            pollProgress(gameData);
+            gameData.queueInteraction(chosen);
+            beginNextChoice(gameData);
+            return;
+        }
+        sacrificeChosen(gameData, chosen);
+    }
+
+    private void sacrificeChosen(GameData gameData, PendingMakeAnExample chosen) {
+        Map<UUID, UUID> sacrificingPlayers = new java.util.HashMap<>();
+        for (PendingMakeAnExample.Separation separation : chosen.separations()) {
+            separation.pile1Ids().forEach(id -> sacrificingPlayers.put(id, separation.opponentId()));
+            separation.pile2Ids().forEach(id -> sacrificingPlayers.put(id, separation.opponentId()));
+        }
         List<DepartureIntent> toSacrifice = new ArrayList<>();
-        for (UUID permanentId : chosenPile) {
+        for (UUID permanentId : chosen.chosenToSacrifice()) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent == null || !gameQueryService.isCreature(gameData, permanent)
+                    || !sacrificingPlayers.get(permanentId).equals(
+                    gameQueryService.findPermanentController(gameData, permanentId))
                     || gameQueryService.cantBeSacrificed(gameData, permanent)) {
                 continue;
             }
             toSacrifice.add(DepartureIntent.sacrifice(permanentId));
         }
         departureService.departNow(gameData, DepartureBatch.of(toSacrifice), new DepartureService.Hooks(
-                () -> gameData.pollPendingInteraction(PendingPileSeparation.class),
+                () -> {
+                    gameData.pollPendingInteraction(PendingPileSeparation.class);
+                    pollProgress(gameData);
+                },
                 (intent, permanent, snapshot, removed) -> {
                     if (removed) {
+                        UUID sacrificingPlayerId = sacrificingPlayers.get(permanent.getId());
                         ActionEvents.sacrificed(gameData, sacrificingPlayerId, permanent.getCard());
                         gameData.recordSacrificedPermanent(sacrificingPlayerId, permanent.getCard());
                         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
                         permanentRemovalService.removeOrphanedAuras(gameData);
                     }
                 }));
-
-        PendingMakeAnExample progress = gameData.pollPendingInteraction(PendingMakeAnExample.class);
-        if (progress == null) {
-            throw new IllegalStateException("Make an Example progress state is missing");
-        }
-
-        PendingMakeAnExample next = new PendingMakeAnExample(
-                progress.controllerId(), progress.opponentIds(),
-                progress.currentOpponentIndex() + 1, progress.sourceName());
-        gameData.queueInteraction(next);
-        beginNextOpponent(gameData);
     }
 
+    /** Asks the next opponent with creatures to separate them; after the last one, the controller chooses. */
     private void beginNextOpponent(GameData gameData) {
         PendingMakeAnExample progress = gameData.peekPendingInteraction(PendingMakeAnExample.class);
         if (progress == null) {
             return;
         }
 
-        int index = progress.currentOpponentIndex();
-        while (index < progress.opponentIds().size()) {
-            UUID opponentId = progress.opponentIds().get(index);
+        while (progress.currentOpponentIndex() < progress.opponentIds().size()) {
+            UUID opponentId = progress.opponentIds().get(progress.currentOpponentIndex());
             List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
             List<UUID> creatureIds = battlefield == null
                     ? List.of()
@@ -155,14 +169,47 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
                                 + "Pile 1 (unselected creatures form Pile 2).");
                 return;
             }
-            index++;
-            progress = new PendingMakeAnExample(progress.controllerId(), progress.opponentIds(),
-                    index, progress.sourceName());
-            gameData.pollPendingInteraction(PendingMakeAnExample.class);
+            pollProgress(gameData);
+            progress = progress.nextOpponent();
             gameData.queueInteraction(progress);
         }
 
-        gameData.pollPendingInteraction(PendingMakeAnExample.class);
+        beginNextChoice(gameData);
+    }
+
+    /** Asks the controller to choose the next opponent's pile; after the last one, the piles are sacrificed. */
+    private void beginNextChoice(GameData gameData) {
+        PendingMakeAnExample progress = gameData.peekPendingInteraction(PendingMakeAnExample.class);
+        if (progress == null) {
+            return;
+        }
+        if (progress.currentChoiceIndex() >= progress.separations().size()) {
+            pollProgress(gameData);
+            return;
+        }
+        PendingMakeAnExample.Separation separation = progress.separations().get(progress.currentChoiceIndex());
+        List<UUID> all = new ArrayList<>(separation.pile1Ids());
+        all.addAll(separation.pile2Ids());
+        gameData.queueInteraction(new PendingPileSeparation(
+                separation.opponentId(), progress.controllerId(), all,
+                List.of(), Map.of(), separation.pile1Ids(), separation.pile2Ids(),
+                CardPileDisposition.MAKE_AN_EXAMPLE, true));
+
+        String separatingPlayer = gameData.playerIdToName.get(separation.opponentId());
+        String prompt = "Choose a pile for " + separatingPlayer + " to sacrifice. Yes = Pile 1 ("
+                + buildPileDescription(gameData, separation.pile1Ids()) + "), No = Pile 2 ("
+                + buildPileDescription(gameData, separation.pile2Ids()) + ").";
+        gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                null, progress.controllerId(), List.of(), prompt));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    private PendingMakeAnExample pollProgress(GameData gameData) {
+        PendingMakeAnExample progress = gameData.pollPendingInteraction(PendingMakeAnExample.class);
+        if (progress == null) {
+            throw new IllegalStateException("Make an Example progress state is missing");
+        }
+        return progress;
     }
 
     private String buildPileDescription(GameData gameData, List<UUID> permanentIds) {

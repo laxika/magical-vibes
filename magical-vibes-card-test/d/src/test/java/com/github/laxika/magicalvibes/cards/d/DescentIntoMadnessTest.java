@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.s.SuperShredder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DescentIntoMadness.class, GrizzlyBears.class, SavannahLions.class, Naturalize.class})
+@CardUsed({DescentIntoMadness.class, GrizzlyBears.class, SavannahLions.class, Naturalize.class, SuperShredder.class})
 class DescentIntoMadnessTest extends BaseCardTest {
 
     @Test
@@ -43,6 +44,20 @@ class DescentIntoMadnessTest extends BaseCardTest {
         assertThat(battlefield(player2)).doesNotContain(lions);
         assertThat(exiledCardIds()).contains(bears.getCard().getId(), lions.getCard().getId());
         assertThat(battlefield(player1)).contains(descent);
+    }
+
+    @Test
+    @DisplayName("Every chosen permanent is exiled in one event, so each sees the others leave (CR 603.10a)")
+    void chosenPermanentsLeaveTogether() {
+        emptyHands();
+        Permanent shredder = addCreature(player1, new SuperShredder());
+        Permanent descent = addDescent(player1);
+        descent.setCounterCount(CounterType.DESPAIR, 1);
+
+        triggerUpkeep(player1);
+
+        assertThat(battlefield(player1)).doesNotContain(shredder, descent);
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Super Shredder")).hasSize(1);
     }
 
     @Test

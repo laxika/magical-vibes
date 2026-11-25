@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b (each in Findings; the fold queue marks its rows). Defect runs (one per group, D11 to D22; the defect queue table): D11 done. Running in parallel worktrees: D12, D13, D14, 50c (the last step-9 leftovers). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b (each in Findings; the fold queue marks its rows). Defect runs (one per group, D11 to D22; the defect queue table): D11, D13 done. Running in parallel worktrees: D14, D15, D16, 50c (the last step-9 leftovers); merge queue D12. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                 |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,009 / 2,435 (after fold run D11) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,009 / 2,435 (after fold run D13) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,741 rows over 4,578 classes (after fold run D11). Latest verdict per class: `step-9` 2, unique 1,196, absorbed 1,356, split 690, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 2 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,746 rows over 4,578 classes (after fold run D13). Latest verdict per class: `step-9` 2, unique 1,196, absorbed 1,356, split 690, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 2 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1151,6 +1151,9 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 
 - `GameQueryService.entersWithCardType` (private): an entering permanent's card type as it would exist on the battlefield (CR 614.12); the counter-placement paths use it.
 - `isManifestBlockedFromZone` now judges the face-down 2/2 (`faceDownSpellCharacteristics`) for manifest and cloak.
+
+- `SpellCastingService.paySacrificeCostTogether`: a cost sacrificing several permanents leaves as one departure batch.
+- Choose-then-act for "each opponent chooses, then [verb]": collect the choices in the choice context, then act once (leave batch or departure batch). Reference handlers: Sothera, Ol Rin's Searing Light.
 
 ### Blocked causes still open
 
@@ -5398,6 +5401,18 @@ Group 1, 34 lines: 18 fixed (2 partly), 10 already fixed, 4 not a defect, 4 left
   - `areCreatureDeathTriggersSuppressed`' simultaneous-death scan asks only the floating flag and skips no face-down source.
   - `findAlmsCollectorSource`, `findReturnFromGraveyardInsteadOfDrawSourceCard` and Quantum Riddler's reader skip no face-down source.
 - **For the next run:** a "rule, not ability" mode for `GrantEffectToTargetUntilEndOfTurnEffect` / `GrantTargetingRestrictionToTargetUntilEndOfTurnEffect` (floated on the permanent, like `makeUnblockableThisTurn`) would close Lockjaw, Slicer and Vines. A sweep of the remaining printed readers above onto active statics.
+
+### Step 9, defect run D13 (2026-11-25, parallel worktree)
+Group 3. 6 fixed, 4 not a defect, 9 left, 5 not reached. Ratchet unchanged.
+- **Main finding:** leaving one at a time inside one handler run, with no prompt in between, is already one event for triggers. The resolving effect's rules-event batch matches "one or more" triggers once and keeps leave snapshots for look-back (Ulamog, Resounding Wave, Descent tests). Real defects are the ones where a prompt or answer comes between departures: the choice completions.
+- **Fix pattern:** collect the choices in the choice context or state, then act once: `destroyBatch` (Albatross, with the payment in `beforeDestruction`), a leave batch (Sothera, Ol Rin's), `departNow` (Make an Example). Highcliff Felidar's `chosenPermanentIds` was the model.
+- **Spell costs:** `paySacrificeCostTogether` checks each permanent, then sacrifices them all with one `sacrificeForSpellCost`.
+- **Seen, not changed:**
+- Eumidian Wastewaker counts a sacrificed land token, and a permanent that is a land only on the battlefield, as a land card (its ruling). Sure.
+- Ezuri's Predation fights the opponents' creatures as of the fight, not the ones it counted (CR 608.2h). Low.
+- SotheraTheSupervoidTest and OlRinsSearingLightTest have methods without `@DisplayName`.
+- Cut the Tethers (`ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler`) bounces at each answer, the same shape as Albatross was.
+- **For the next run:** Gilded Ambusher and Dispersal (Sothera pattern), Eumidian Wastewaker, Cut the Tethers, L23, then L17–L21.
 
 ## Prompt
 

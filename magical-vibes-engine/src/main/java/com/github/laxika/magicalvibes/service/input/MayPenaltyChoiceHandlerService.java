@@ -1108,7 +1108,8 @@ public class MayPenaltyChoiceHandlerService {
 
     /**
      * Giant Albatross: the damaging creature's controller either pays the life or that creature is
-     * destroyed and can't be regenerated; either way the next queued damaging creature is offered.
+     * destroyed and can't be regenerated; either way the next queued damaging creature is offered, and
+     * after the last decision the unpaid creatures are destroyed together (CR 101.4).
      */
     public void handleDestroyCreaturesThatDamagedSourceUnlessPaysLifeChoice(GameData gameData, Player player,
             boolean accepted, PendingMayAbility ability,
@@ -1120,19 +1121,20 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted && canPay) {
             payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(payingPlayerId, effect.lifeCost()),
                     () -> {
-                        lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
-                                ability.sourceCard().getName());
-                        log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
-                                player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
                         destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
-                                gameData, ability, effect, true);
+                                gameData, ability, effect, true, () -> {
+                                    lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
+                                            ability.sourceCard().getName());
+                                    log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
+                                            player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                                });
                         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     });
             return;
         }
 
         destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
-                gameData, ability, effect, false);
+                gameData, ability, effect, false, () -> { });
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

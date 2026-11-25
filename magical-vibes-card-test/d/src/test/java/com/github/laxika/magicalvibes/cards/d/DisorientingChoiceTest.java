@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -142,6 +145,47 @@ class DisorientingChoiceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponents decide in turn order, then every permanent to exile is exiled at once (ruling)")
+    void opponentsDecideInTurnOrderThenExileTogether() {
+        Player player3 = addThirdPlayer();
+        Permanent ring = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player3, new GloriousAnthem());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        cast(List.of(anthem.getId(), ring.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleListChoice(player2, "Exile it");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ring);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleListChoice(player3, "Exile it");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(ring);
+        assertThat(gd.playerBattlefields.get(player3.getId())).doesNotContain(anthem);
+        assertThat(gd.findExiledCard(ring.getCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(anthem.getCard().getId())).isNotNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    private Player addThirdPlayer() {
+        Player player3 = new Player(UUID.randomUUID(), "Third opponent");
+        gd.playerIds.add(player3.getId());
+        gd.orderedPlayerIds.add(player3.getId());
+        gd.playerNames.add(player3.getUsername());
+        gd.playerIdToName.put(player3.getId(), player3.getUsername());
+        gd.playerDecks.put(player3.getId(), new ArrayList<>());
+        gd.playerHands.put(player3.getId(), new ArrayList<>());
+        gd.playerGraveyards.put(player3.getId(), new ArrayList<>());
+        gd.playerBattlefields.put(player3.getId(), new ArrayList<>());
+        gd.playerManaPools.put(player3.getId(), new ManaPool());
+        gd.playerLifeTotals.put(player3.getId(), 20);
+        return player3;
     }
 
     private void cast(List<UUID> targetIds) {

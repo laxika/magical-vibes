@@ -129,6 +129,40 @@ class GiantAlbatrossTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Unpaid creatures are destroyed together once every controller has answered (CR 101.4)")
+    void unpaidCreaturesAreDestroyedTogetherAfterTheLastAnswer() {
+        Permanent albatross = addCreatureReady(player1, new GiantAlbatross());
+        albatross.setAttacking(true);
+
+        Permanent firstBlocker = addCreatureReady(player2, new WillowFaerie());
+        firstBlocker.setBlocking(true);
+        firstBlocker.addBlockingTarget(0);
+
+        Permanent secondBlocker = addCreatureReady(player2, new WillowFaerie());
+        secondBlocker.setBlocking(true);
+        secondBlocker.addBlockingTarget(0);
+
+        resolveCombat(player1);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(firstBlocker.getId(), 1));
+        harness.passBothPriorities();
+        addAlbatrossPaymentMana();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(findPermanents(player2, "Willow Faerie")).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(findPermanents(player2, "Willow Faerie")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Willow Faerie", "Willow Faerie");
+    }
+
+    @Test
     @DisplayName("A creature destroyed by the ability is not saved by a regeneration shield")
     void destructionIgnoresRegenerationShield() {
         Permanent troll = killByCreatureUntilMayPrompt(new SeaTroll());

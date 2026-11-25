@@ -1033,6 +1033,11 @@ public class GameData {
      */
     public final List<UUID> destroyDamagersUnlessPaysRemaining = new ArrayList<>();
     /**
+     * DestroyCreaturesThatDamagedSourceUnlessControllerPaysLife: ids of the damaging creatures already decided
+     * unpaid. They are destroyed together once the last decision is made (CR 101.4). Cleared with the queue.
+     */
+    public final List<UUID> destroyDamagersUnlessPaysUnpaid = new ArrayList<>();
+    /**
      * ReturnMatchingPermanentsUnlessOwnerPays: ids of the matching permanents still to be
      * offered the pay-or-be-bounced prompt (each to that permanent's owner) after the one
      * currently being decided. Cleared when the queue drains.
@@ -10057,6 +10062,7 @@ public class GameData {
         copy.disorientingChoice.active = this.disorientingChoice.active;
         copy.disorientingChoice.remainingTargetIds.addAll(this.disorientingChoice.remainingTargetIds);
         copy.disorientingChoice.selectedTargetIds.addAll(this.disorientingChoice.selectedTargetIds);
+        copy.disorientingChoice.exileTargetIds.addAll(this.disorientingChoice.exileTargetIds);
         copy.disorientingChoice.currentTargetId = this.disorientingChoice.currentTargetId;
         copy.disorientingChoice.chosenMode = this.disorientingChoice.chosenMode;
         copy.forgottenLore.active = this.forgottenLore.active;
@@ -10720,6 +10726,7 @@ public class GameData {
         copy.pendingDiscardToLibraryCardIndex = this.pendingDiscardToLibraryCardIndex;
         copy.pendingDiscardToLibraryDecision = this.pendingDiscardToLibraryDecision;
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
+        copy.destroyDamagersUnlessPaysUnpaid.addAll(this.destroyDamagersUnlessPaysUnpaid);
         copy.bounceUnlessPaysRemaining.addAll(this.bounceUnlessPaysRemaining);
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the

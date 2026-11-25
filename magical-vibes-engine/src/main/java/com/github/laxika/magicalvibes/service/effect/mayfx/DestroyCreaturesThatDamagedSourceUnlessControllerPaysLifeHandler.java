@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Per-damaging-creature pay-or-be-destroyed (Giant Albatross): "destroy that creature unless its
- * controller pays 2 life". A decline pays nothing and destroys the creature before it offers the next
- * one, so a creature with competing death replacements is asked about before it leaves (CR 616.1) and
- * the decline is completed again with that answer.
+ * controller pays 2 life". The unpaid creatures are destroyed together after the last decision (CR 101.4);
+ * that answer is completed with the death replacement window open, so a creature with competing death
+ * replacements is asked about before it leaves (CR 616.1) and the answer is completed again with that choice.
  */
 @Component
 @RequiredArgsConstructor

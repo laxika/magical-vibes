@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CursedTotem;
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
+import com.github.laxika.magicalvibes.cards.s.SuperShredder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhyrexianTribute.class, FeralShadow.class, CursedTotem.class})
+@CardUsed({PhyrexianTribute.class, FeralShadow.class, CursedTotem.class, SuperShredder.class})
 class PhyrexianTributeTest extends BaseCardTest {
 
     @Test
@@ -45,6 +46,23 @@ class PhyrexianTributeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(survivor);
         harness.assertInGraveyard(player2, "Cursed Totem");
         harness.assertInGraveyard(player1, "Phyrexian Tribute");
+    }
+
+    @Test
+    @DisplayName("Both sacrificed creatures leave together, so the first sacrificed sees the other leave (CR 603.10a)")
+    void sacrificedCreaturesLeaveTogether() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SuperShredder());
+        Permanent shadow = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
+
+        harness.setHand(player1, List.of(new PhyrexianTribute()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithSacrifices(player1, 0, artifact.getId(),
+                List.of(shredder.getId(), shadow.getId()));
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Super Shredder")).hasSize(1);
     }
 
     @Test

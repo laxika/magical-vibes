@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
 import com.github.laxika.magicalvibes.cards.d.DeftDuelist;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SuperShredder;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ResoundingWave.class, DregscapeZombie.class, Island.class, DeftDuelist.class})
+@CardUsed({ResoundingWave.class, DregscapeZombie.class, Island.class, DeftDuelist.class, SuperShredder.class})
 class ResoundingWaveTest extends BaseCardTest {
 
     @Test
@@ -72,6 +73,27 @@ class ResoundingWaveTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Resounding Wave");
         harness.assertInHand(player1, "Dregscape Zombie");
+    }
+
+    @Test
+    @DisplayName("Cycling returns both targets as one event, so the first returned sees the other leave (CR 603.10a)")
+    void cyclingReturnsBothTargetsTogether() {
+        harness.setHand(player1, List.of(new ResoundingWave()));
+        harness.setLibrary(player1, List.of(new DregscapeZombie()));
+        harness.addToBattlefield(player2, new SuperShredder());
+        harness.addToBattlefield(player2, new DregscapeZombie());
+        addCyclingMana(player1);
+
+        UUID shredderId = harness.getPermanentId(player2, "Super Shredder");
+        UUID zombieId = harness.getPermanentId(player2, "Dregscape Zombie");
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.handleMultiplePermanentsChosen(player1, List.of(shredderId, zombieId));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Super Shredder");
+        harness.assertInHand(player2, "Dregscape Zombie");
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Super Shredder")).hasSize(1);
     }
 
     @Test

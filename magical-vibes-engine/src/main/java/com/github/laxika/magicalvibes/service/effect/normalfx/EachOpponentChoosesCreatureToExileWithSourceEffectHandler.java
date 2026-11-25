@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureToExileWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class EachOpponentChoosesCreatureToExileWithSourceEffectHandler implement
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,12 +44,17 @@ public class EachOpponentChoosesCreatureToExileWithSourceEffectHandler implement
             sourcePermanentId = findSourcePermanentId(gameData, entry);
         }
         beginNextOpponent(gameData, entry.getControllerId(), entry.getCard(), sourcePermanentId,
-                apnapOpponents(gameData, entry.getControllerId()));
+                apnapOpponents(gameData, entry.getControllerId()), List.of());
     }
 
+    /**
+     * Asks the next opponent with a choice, in APNAP order; an opponent with one creature chooses it unasked. Once
+     * every opponent has chosen, the chosen creatures are exiled together (CR 101.4).
+     */
     public void beginNextOpponent(GameData gameData, UUID controllerId, Card sourceCard,
-            UUID sourcePermanentId, List<UUID> remainingOpponentIds) {
+            UUID sourcePermanentId, List<UUID> remainingOpponentIds, List<UUID> chosenPermanentIds) {
         List<UUID> remaining = new ArrayList<>(remainingOpponentIds);
+        List<UUID> chosen = new ArrayList<>(chosenPermanentIds);
         while (!remaining.isEmpty()) {
             UUID opponentId = remaining.removeFirst();
             List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, opponentId,
@@ -60,21 +67,20 @@ public class EachOpponentChoosesCreatureToExileWithSourceEffectHandler implement
             }
 
             if (creatureIds.size() == 1) {
-                Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
-                if (creature != null) {
-                    exileChosen(gameData, creature, sourceCard, sourcePermanentId);
-                }
+                chosen.add(creatureIds.getFirst());
                 continue;
             }
 
             PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource context =
                     new PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource(
-                            sourceCard, sourcePermanentId, controllerId, opponentId, List.copyOf(remaining));
+                            sourceCard, sourcePermanentId, controllerId, opponentId, List.copyOf(remaining),
+                            chosen);
             gameData.interaction.setPermanentChoiceContext(context);
             playerInputService.beginPermanentChoice(gameData, opponentId, creatureIds, context,
                     sourceCard.getName() + " — choose a creature you control to exile.");
             return;
         }
+        exileChosen(gameData, chosen, sourceCard, sourcePermanentId);
     }
 
     public void completeChoice(GameData gameData, UUID permanentId,
@@ -86,16 +92,33 @@ public class EachOpponentChoosesCreatureToExileWithSourceEffectHandler implement
             throw new IllegalStateException("Chosen permanent is no longer a creature controlled by the choosing player");
         }
 
-        exileChosen(gameData, chosen, context.sourceCard(), context.sourcePermanentId());
+        List<UUID> chosenPermanentIds = new ArrayList<>(context.chosenPermanentIds());
+        chosenPermanentIds.add(permanentId);
         beginNextOpponent(gameData, context.controllerId(), context.sourceCard(), context.sourcePermanentId(),
-                context.remainingOpponentIds());
+                context.remainingOpponentIds(), chosenPermanentIds);
     }
 
-    private void exileChosen(GameData gameData, Permanent creature, Card sourceCard, UUID sourcePermanentId) {
-        if (sourcePermanentId != null) {
-            exileSupport.exilePermanentAndTrackWithSource(gameData, creature, sourcePermanentId, sourceCard);
-        } else {
-            exileSupport.exilePermanentAndLog(gameData, creature, sourceCard.getName());
+    /** Exiles the chosen creatures still on the battlefield as one event. */
+    private void exileChosen(GameData gameData, List<UUID> chosenPermanentIds, Card sourceCard,
+            UUID sourcePermanentId) {
+        List<Permanent> creatures = chosenPermanentIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        if (creatures.isEmpty()) {
+            return;
+        }
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent creature : creatures) {
+                if (sourcePermanentId != null) {
+                    exileSupport.exilePermanentAndTrackWithSource(gameData, creature, sourcePermanentId, sourceCard);
+                } else {
+                    exileSupport.exilePermanentAndLog(gameData, creature, sourceCard.getName());
+                }
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
     }
 

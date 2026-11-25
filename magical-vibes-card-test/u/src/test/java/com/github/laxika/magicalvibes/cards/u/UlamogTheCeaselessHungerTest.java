@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.cards.g.GideonAllyOfZendikar;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionEnvoy;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
+import com.github.laxika.magicalvibes.cards.s.SuperShredder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +21,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({UlamogTheCeaselessHunger.class, ExpeditionEnvoy.class,
-        GideonAllyOfZendikar.class, SmiteTheMonstrous.class})
+        GideonAllyOfZendikar.class, SmiteTheMonstrous.class, DourPortMage.class, SuperShredder.class})
 class UlamogTheCeaselessHungerTest extends BaseCardTest {
 
     @Test
@@ -123,6 +125,37 @@ class UlamogTheCeaselessHungerTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Ulamog, the Ceaseless Hunger");
+    }
+
+    @Test
+    @DisplayName("Both targets leave as one event: a \"one or more\" leave trigger triggers once (CR 608.2f)")
+    void bothTargetsLeaveAsOneEvent() {
+        harness.addToBattlefield(player2, new DourPortMage());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new ExpeditionEnvoy());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new ExpeditionEnvoy());
+        harness.setHand(player1, List.of(new UlamogTheCeaselessHunger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castCreature(player1, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Dour Port-Mage")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A target exiled first still sees the other target leave with it (CR 603.10a)")
+    void firstExiledTargetSeesTheOtherLeave() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player2, new SuperShredder());
+        Permanent envoy = harness.addToBattlefieldAndReturn(player2, new ExpeditionEnvoy());
+        harness.setHand(player1, List.of(new UlamogTheCeaselessHunger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castCreature(player1, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(shredder.getId(), envoy.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Super Shredder")).hasSize(1);
     }
 
     @Test

@@ -8763,10 +8763,8 @@ public class SpellCastingService {
         if (cost == null) {
             return;
         }
-        for (UUID id : sacrificePermanentIds) {
-            paySingleSacrificeCost(gameData, player, card, id, "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
-        }
+        paySacrificeCostTogether(gameData, player, card, sacrificePermanentIds, "a matching permanent",
+                p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
     }
 
     private void paySacrificeFractionRoundedUpCost(
@@ -8777,10 +8775,9 @@ public class SpellCastingService {
         }
         List<Permanent> toSacrifice = additionalSpellCostService.validateSacrificeFractionRoundedUpCost(
                 gameData, player, card, cost, sacrificePermanentIds);
-        for (Permanent permanent : toSacrifice) {
-            paySingleSacrificeCost(gameData, player, card, permanent.getId(), "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
-        }
+        paySacrificeCostTogether(gameData, player, card, toSacrifice.stream().map(Permanent::getId).toList(),
+                "a matching permanent",
+                p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
     }
 
     /** Pays an escalate or entwine cost paid by sacrificing permanents, once per payment owed. */
@@ -8795,11 +8792,9 @@ public class SpellCastingService {
         if (required == 0) {
             return;
         }
-        for (UUID id : sacrificePermanentIds) {
-            paySingleSacrificeCost(gameData, player, card, id, "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, p, cost.consumedPermanentFilter()));
-        }
+        paySacrificeCostTogether(gameData, player, card, sacrificePermanentIds, "a matching permanent",
+                p -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, p, cost.consumedPermanentFilter()));
     }
 
     private void payEscalateTapCost(GameData gameData, Player player, Card card,
@@ -9589,6 +9584,35 @@ public class SpellCastingService {
                                           boolean triggerWithSourceCard) {
         return permanent != null && !sacrificeForSpellCost(gameData, player, sourceCard, List.of(permanent), " for ",
                 Permanent::getCard, triggerWithSourceCard).isEmpty();
+    }
+
+    /**
+     * Pays a cost that sacrifices several permanents ({@code sacrificePermanentIds}): each is checked as a single
+     * sacrifice would be, then they are all sacrificed together, as one event (CR 603.10a), each seen by its "whenever
+     * you sacrifice" triggers as it was on the battlefield.
+     */
+    private void paySacrificeCostTogether(GameData gameData, Player player, Card sourceCard,
+                                          List<UUID> sacrificePermanentIds, String typeDescription,
+                                          Predicate<Permanent> typeCheck) {
+        List<Permanent> toSacrifice = new ArrayList<>();
+        Map<UUID, Card> sacrificedCards = new HashMap<>();
+        for (UUID id : sacrificePermanentIds) {
+            Permanent permanent = additionalSpellCostService.validateSingleSacrificeCost(gameData, player, sourceCard,
+                    id, typeDescription, typeCheck);
+            toSacrifice.add(permanent);
+            sacrificedCards.put(permanent.getId(),
+                    permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent));
+        }
+        UUID previousCauseControllerId = gameData.currentlyResolvingControllerId;
+        try {
+            gameData.currentlyResolvingControllerId = player.getId();
+            gameData.sacrificingAsSpellCost = true;
+            sacrificeForSpellCost(gameData, player, sourceCard, toSacrifice, " for ",
+                    permanent -> sacrificedCards.get(permanent.getId()), true);
+        } finally {
+            gameData.sacrificingAsSpellCost = false;
+            gameData.currentlyResolvingControllerId = previousCauseControllerId;
+        }
     }
 
     private SacrificedCreatureStats paySingleSacrificeCost(GameData gameData, Player player, Card sourceCard,

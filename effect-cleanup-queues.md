@@ -446,11 +446,11 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 
 **3. Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e).**
 
-- Giant Albatross destroys each creature as its controller answers; needs the unpaid creatures collected across the pay-life prompts and one `DestructionSupport.destroyBatchWithOutcome` at the end. T3, defect runs 1, 2. Code.
-- Multi-dealer damage is dealt one dealer at a time: the bite (runs 37, 38), Rakdos Charm's third mode (T1, defect run 2: needs the open simultaneous event, `DamageSupport.beginDamageEvent`), Judgment of Alexander (P12). Code. Also Alpha Brawl's second step (fold run 26). Sure.
-- Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. P12. Sure.
+- ~~Giant Albatross destroys each creature as its controller answers; needs the unpaid creatures collected across the pay-life prompts and one `DestructionSupport.destroyBatchWithOutcome` at the end. T3, defect runs 1, 2. Code.~~ Fixed in defect run D13.
+- Multi-dealer damage is dealt one dealer at a time: the bite (runs 37, 38), Rakdos Charm's third mode (T1, defect run 2: needs the open simultaneous event, `DamageSupport.beginDamageEvent`), Judgment of Alexander (P12). Code. Also Alpha Brawl's second step (fold run 26). Sure. Defect run D13: left; needs per-recipient handling across sources in DamageSupport.dealSimultaneousDamage, else marking the handlers one event changes nothing observable.
+- Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. P12. Sure. Defect run D13: Disorienting Choice fixed (APNAP, then exiled together); Eumidian Wastewaker left: needs its discard-or-sacrifice choice made before anything is discarded or sacrificed.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). P12. Sure.
-- Make an Example sacrifices each opponent's piles before the next separates. P05. Sure.
+- ~~Make an Example sacrifices each opponent's piles before the next separates. P05. Sure.~~ Fixed in defect run D13 (the test was written after the fix; by reading, the old code asks for the pile right after one opponent separates).
 - ~~Hive Mind, Curse of Echoes copy in seat order from the first seat, not APNAP (Curse of Echoes ruling); Hive Mind's optional branch is unreachable. T7. Sure.~~ Fixed in fold run 29 (APNAP; the old record and its branch are gone).
 - ~~The "any opponent may sacrifice" handlers disagree: Desecration Demon, Clackbridge Troll, Gitrog, Argothian Wurm sacrifice as chosen; Innocent Traveler, Brain Gorgers collect first (the PLC ruling supports acting at once for the counters). P04. Sure of the code. Fold: punisher. Fixed in fold run 47 for the non-counter cards: every punisher sacrifice is picked in turn and made together (Clackbridge and Innocent Traveler rulings); Brain Gorgers and the other counter cards remain for fold run 47b.~~ Fixed in fold run 47b: Brain Gorgers and the other counter cards sacrifice as each player accepts and counter at once (PLC ruling).
 - ~~Tempt with Glory, Bunnies, Mayhem, Immortality act as each opponent accepts (C13 ruling: all decide first). P07. Sure, low. Fold: tempting. Fold run 19c: Glory and Bunnies fixed; Mayhem is not a defect (its M3C ruling has each opponent choose the copy's targets while deciding); Immortality still open (19d).~~ Fold run 19d: Immortality fixed (all decide, then the acceptors return together); line closed.
@@ -460,17 +460,17 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - ~~Teferi, Temporal Pilgrim's -12 removes permanents one at a time. P03. Low. Fold: perm-shuffle.~~ Fixed in fold run 21b (one leave batch; Imperial Cosmographer test).
 - ~~Lethal Scheme's convoking creatures connive in cast order (CR 701.50c, its ruling). P10. Sure, low. Fold: connive.~~ Fixed in fold run 44.
 - Glimpse of Tomorrow, Morphic Tide put each Aura in its own continuation, not one batch. P09. Medium, low.
-- `ExileTargetPermanentEffect`'s target path exiles several targets one at a time; the subject path batches. Run 6. Unverified.
-- Descent into Madness, Sothera exile the chosen permanents one at a time (Sothera before the next opponent chooses). Runs 8, 9. Unverified.
-- Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses. Run 9. Unverified.
-- Kairi, Leadership Vacuum, Resounding Wave's cycling return one permanent at a time. Run 10. Unverified.
+- ~~`ExileTargetPermanentEffect`'s target path exiles several targets one at a time; the subject path batches. Run 6. Unverified.~~ Not a defect (defect run D13): inside one handler run with no prompt between, the resolving effect's rules-event batch already makes the exiles one event (Ulamog tests).
+- ~~Descent into Madness, Sothera exile the chosen permanents one at a time (Sothera before the next opponent chooses). Runs 8, 9. Unverified.~~ Defect run D13: Sothera fixed (choices collected, one leave batch); Descent into Madness not a defect (test passes on the old code).
+- Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses. Run 9. Unverified. Defect run D13: Ol Rin's Searing Light fixed; Gilded Ambusher and Dispersal not reached (Sothera pattern); The Second Doctor and Kwain low, left (the draws are one after another in APNAP order anyway, CR 121.2c; only the choices interleave).
+- Kairi, Leadership Vacuum, Resounding Wave's cycling return one permanent at a time. Run 10. Unverified. Defect run D13: Resounding Wave not a defect (one handler run, one event; test); Kairi and Leadership Vacuum likely the same, untested.
 - Unfinished Business puts its two attachments onto the battlefield one after the other. Run 10. Unverified.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Run 31. Unverified.
-- Disorder deals its damage as two events (the players first, then the white creatures) where its one sentence is one event; `addSimultaneousEffects` would join them. Fold run 2. Fairly sure; low impact (a "whenever a source deals damage" trigger sees two events).
+- Disorder deals its damage as two events (the players first, then the white creatures) where its one sentence is one event; `addSimultaneousEffects` would join them. Fold run 2. Fairly sure; low impact (a "whenever a source deals damage" trigger sees two events). Defect run D13: left; no reader yet tells two same-source events with different recipients apart, so no failing test.
 
 - An additional time a triggered ability triggers (CR 603.2d) is made by `GameData.TriggerAwareStackList.add` copying the first entry (`copyForNewStackObject`) once it reaches the stack, so the copies keep the first instance's targets and any mode announced before it got there; each instance should choose its own (CR 603.3c, 603.3d). A "choose one at random" now routes each instance on its own (fold run 7). Fold run 7. Unsure (by reading; no doubler-with-targets test checked).
 - `ParleyEffect`'s token form (Cutthroat Negotiator, Innocuous Researcher) creates the tokens inside its own handler, so a token-creation prompt pauses it after the draws' order is set and a rerun would reveal and draw again; Storm Fleet Negotiator and Phabine now use the step form. Fold run 7. Unsure (by reading).
-- Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified"). Fold run 22. Code sure, rule unsure.
+- Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified"). Fold run 22. Code sure, rule unsure. Defect run D13: left for the owner (CR 702.104b and the BNG rulings don't say whether a reduced placement counts as paid).
 - Experience counters and `MultiPermanentChoiceHandlerService`'s poison counters name no placer, so Vorinclex and Halving Season don't apply to them. Fold run 22. Sure.
 - The 6-argument entering `replaceCounters` (a named placer) skips `appliesToAllPermanents` doublers on opponents' permanents (Primal Vigor's counter half). Fold run 22. Fairly sure.
 - `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the tokens' creator after Crafty Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling applies entering-control changes after (CR 616.1). Fold run 22b. Fairly sure.
@@ -479,7 +479,10 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - ~~Blind Fury's `getCombatDamageToCreatureMultiplier` skips Maro's Gone Nuts. Fold run 25. Sure.~~ Fixed in fold run 40b.
 - Precursor Golem, Ink-Treader Nephilim: the copies' controller doesn't choose the order they go on the stack (rulings). Seen in fold run 29. Sure.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds, Dakra Mystic) gives no CR 404.3 order prompt. Run 45. Sure, low.
-- Betrayal of Flesh, Solar Tide, Phyrexian Tribute: the escalate/entwine sacrifice payer and `payMultipleSacrificeCost` sacrifice their cost permanents one at a time, not as one event (CR 603.10a). Run 49b. Fairly sure.
+- ~~Betrayal of Flesh, Solar Tide, Phyrexian Tribute: the escalate/entwine sacrifice payer and `payMultipleSacrificeCost` sacrifice their cost permanents one at a time, not as one event (CR 603.10a). Run 49b. Fairly sure.~~ Fixed in defect run D13.
+- Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Defect run D13. Sure.
+- Cut the Tethers (`ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler`) bounces at each owner's answer, not together after the last (CR 101.4). Defect run D13. Sure.
+- Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h). Defect run D13. Low.
 
 **4. Missing events or records (searches, coin flips, seeks, shuffles, counters, draws).**
 
@@ -854,7 +857,7 @@ entwine with two modes (P09).
 | D10 | group 8, 13 | logs and hidden information. Done 2026-11-23: 5 fixed, 3 not a defect, 5 left (Malik / Vault 11 for the vote fold; Mycosynth Gardens / Valki, a missing line breaking no rule; Moonring Mirror / Duplicity, the face-down Aura host and `cardsThisWay(REVEAL)` not verified); 4 found |
 | D11 | group 1, 34 (2026-11-25 plan: one run per group, from here on) | face-down and lost-ability reads. Done 2026-11-25: 18 fixed (2 partly), 10 already fixed, 4 not a defect, 4 left (Lockjaw / Slicer / Vines need a rule form of the until-end-of-turn grant; Soulless Jailer; Zilortha / Stoic Star-Captain; the reader audit), 1 not reached; 5 new group-1 lines |
 | D12 | groups 2 and 8 | two-player assumptions; logs and hidden information |
-| D13 | group 3 | simultaneity and APNAP |
+| D13 | group 3, 24 | simultaneity and APNAP. Done 2026-11-25: 6 fixed (Giant Albatross, Disorienting Choice, Sothera, Ol Rin's Searing Light, Make an Example, multi-sacrifice spell costs), 4 not a defect (one handler run is already one event), 9 left, 5 not reached (L17 to L21, L23: the Sothera pattern next: Gilded Ambusher, Dispersal); 3 new group-3 lines |
 | D14 | group 4 | missing events or records |
 | D15, D16 | group 5, halves | wrong targets and choices |
 | D17 | group 6 | payments and costs |

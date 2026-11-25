@@ -21,7 +21,11 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Disorienting Choice's independent exile decisions and follow-up land search. */
+/**
+ * Resolves Disorienting Choice's independent exile decisions and follow-up land search. The chosen permanents'
+ * controllers decide in turn order, each knowing the earlier decisions, then the permanents are exiled together
+ * (its ruling; CR 101.4).
+ */
 @Component
 @RequiredArgsConstructor
 public class DisorientingChoiceEffectHandler implements NormalEffectHandlerBean {
@@ -45,17 +49,14 @@ public class DisorientingChoiceEffectHandler implements NormalEffectHandlerBean 
             state.reset();
             state.active = true;
             state.selectedTargetIds.addAll(entry.targetsForEffect(effect));
-            state.remainingTargetIds.addAll(state.selectedTargetIds);
+            state.remainingTargetIds.addAll(inApnapOrderOfControllers(gameData, state.selectedTargetIds));
         }
 
         if (state.chosenMode != null) {
             String chosenMode = state.chosenMode;
             state.chosenMode = null;
             if (ChoiceContext.DisorientingChoiceExileChoice.EXILE.equals(chosenMode)) {
-                Permanent target = gameQueryService.findPermanentById(gameData, state.currentTargetId);
-                if (target != null) {
-                    exileSupport.exilePermanentAndLog(gameData, target, sourceName);
-                }
+                state.exileTargetIds.add(state.currentTargetId);
             }
         }
 
@@ -87,6 +88,14 @@ public class DisorientingChoiceEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
+        // Every controller has decided: the permanents they chose leave together (CR 101.4).
+        for (UUID targetId : state.exileTargetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null) {
+                exileSupport.exilePermanentAndLog(gameData, target, sourceName);
+            }
+        }
+
         int remainingOnBattlefield = (int) state.selectedTargetIds.stream()
                 .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null)
                 .count();
@@ -105,5 +114,21 @@ public class DisorientingChoiceEffectHandler implements NormalEffectHandlerBean 
         searchEntry.setEventValue(remainingOnBattlefield);
         searchEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         searchLibraryEffectHandler.resolve(gameData, searchEntry, search);
+    }
+
+    /** The targets ordered by their controllers' APNAP order (CR 101.4), each controller's in target order. */
+    private List<UUID> inApnapOrderOfControllers(GameData gameData, List<UUID> targetIds) {
+        List<UUID> players = new java.util.ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = players.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) {
+            java.util.Collections.rotate(players, -activeIndex);
+        }
+        java.util.Map<UUID, Integer> order = new java.util.HashMap<>();
+        for (UUID targetId : targetIds) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+            int index = controllerId == null ? -1 : players.indexOf(controllerId);
+            order.put(targetId, index < 0 ? players.size() : index);
+        }
+        return targetIds.stream().sorted(java.util.Comparator.comparingInt(order::get)).toList();
     }
 }

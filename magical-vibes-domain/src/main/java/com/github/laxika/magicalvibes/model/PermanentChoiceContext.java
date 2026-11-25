@@ -411,17 +411,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> chosenPermanentIds
     ) implements PermanentChoiceContext {}
 
-    /** Olórin's Searing Light: each opponent chooses a greatest-power creature to exile. */
+    /**
+     * Olórin's Searing Light: each opponent chooses a greatest-power creature to exile; the creatures chosen so far
+     * ({@code chosenCreatureIds}, by opponent) are exiled together after the last choice.
+     */
     record EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage(
             StackEntry resolvingEntry,
             UUID opponentId,
             List<UUID> remainingOpponentIds,
             com.github.laxika.magicalvibes.model.condition.Condition damageCondition,
-            Map<UUID, Integer> exiledPowers
+            Map<UUID, UUID> chosenCreatureIds
     ) implements PermanentChoiceContext {
         public EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
-            exiledPowers = Map.copyOf(exiledPowers);
+            chosenCreatureIds = Map.copyOf(chosenCreatureIds);
         }
     }
 
@@ -565,16 +568,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record CaughtInAParallelUniverseCreatureCopy(UUID permanentId, UUID tokenControllerId) {
     }
 
-    /** Sothera: each opponent chooses a creature they control to exile with the source. */
+    /**
+     * Sothera: each opponent chooses a creature they control to exile with the source; the creatures chosen so far
+     * ({@code chosenPermanentIds}) are exiled together after the last choice.
+     */
     record EachOpponentChoosesCreatureToExileWithSource(
             Card sourceCard,
             UUID sourcePermanentId,
             UUID controllerId,
             UUID choosingPlayerId,
-            List<UUID> remainingOpponentIds
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
     ) implements PermanentChoiceContext {
         public EachOpponentChoosesCreatureToExileWithSource {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
         }
     }
 

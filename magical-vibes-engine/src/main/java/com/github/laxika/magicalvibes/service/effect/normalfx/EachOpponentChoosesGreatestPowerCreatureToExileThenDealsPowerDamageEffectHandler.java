@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -32,6 +33,7 @@ public class EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,53 +60,65 @@ public class EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage
                     "Chosen permanent is no longer a greatest-power creature controlled by the opponent");
         }
 
-        processOpponent(gameData, entry, context.opponentId(), context.remainingOpponentIds(),
-                context.damageCondition(), context.exiledPowers(), chosen);
+        Map<UUID, UUID> chosenCreatureIds = new java.util.LinkedHashMap<>(context.chosenCreatureIds());
+        chosenCreatureIds.put(context.opponentId(), permanentId);
+        beginNextOpponent(gameData, entry, context.remainingOpponentIds(), context.damageCondition(),
+                chosenCreatureIds);
     }
 
+    /**
+     * Asks the next opponent with tied greatest-power creatures, in APNAP order, each knowing the earlier choices;
+     * an opponent with one such creature chooses it unasked. Once every opponent has chosen, the creatures are
+     * exiled together (its ruling; CR 101.4).
+     */
     private void beginNextOpponent(GameData gameData, StackEntry entry, List<UUID> remainingOpponentIds,
                                    Condition damageCondition,
-                                   Map<UUID, Integer> exiledPowers) {
-        if (remainingOpponentIds.isEmpty()) {
-            finish(gameData, entry, damageCondition, exiledPowers);
-            return;
+                                   Map<UUID, UUID> chosenCreatureIds) {
+        Map<UUID, UUID> chosen = new java.util.LinkedHashMap<>(chosenCreatureIds);
+        List<UUID> remaining = new ArrayList<>(remainingOpponentIds);
+        while (!remaining.isEmpty()) {
+            UUID opponentId = remaining.removeFirst();
+            List<UUID> candidates = greatestPowerCreatures(gameData, opponentId).stream()
+                    .map(Permanent::getId).toList();
+            if (candidates.size() > 1) {
+                PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage context =
+                        new PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage(
+                                entry, opponentId, List.copyOf(remaining), damageCondition, chosen);
+                gameData.interaction.setPermanentChoiceContext(context);
+                playerInputService.beginPermanentChoice(gameData, opponentId, candidates, context,
+                        entry.getCard().getName() + " — choose a creature with the greatest power to exile.");
+                return;
+            }
+            if (!candidates.isEmpty()) {
+                chosen.put(opponentId, candidates.getFirst());
+            }
         }
-
-        UUID opponentId = remainingOpponentIds.getFirst();
-        List<UUID> rest = remainingOpponentIds.size() > 1
-                ? List.copyOf(remainingOpponentIds.subList(1, remainingOpponentIds.size())) : List.of();
-        List<Permanent> greatestPowerCreatures = greatestPowerCreatures(gameData, opponentId);
-        List<UUID> candidates = greatestPowerCreatures.stream().map(Permanent::getId).toList();
-
-        if (candidates.size() > 1) {
-            PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage context =
-                    new PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage(
-                            entry, opponentId, rest, damageCondition, exiledPowers);
-            gameData.interaction.setPermanentChoiceContext(context);
-            playerInputService.beginPermanentChoice(gameData, opponentId, candidates, context,
-                    entry.getCard().getName() + " — choose a creature with the greatest power to exile.");
-            return;
-        }
-
-        Permanent chosen = candidates.isEmpty() ? null
-                : gameQueryService.findPermanentById(gameData, candidates.getFirst());
-        processOpponent(gameData, entry, opponentId, rest, damageCondition, exiledPowers, chosen);
+        finish(gameData, entry, damageCondition, exileChosen(gameData, entry, chosen));
     }
 
-    private void processOpponent(GameData gameData, StackEntry entry, UUID opponentId,
-                                 List<UUID> remainingOpponentIds,
-                                 Condition damageCondition,
-                                 Map<UUID, Integer> exiledPowers, Permanent chosen) {
-        Map<UUID, Integer> updatedPowers = new java.util.HashMap<>(exiledPowers);
-        if (chosen != null
-                && opponentId.equals(gameQueryService.findPermanentController(gameData, chosen.getId()))
-                && greatestPowerCreatures(gameData, opponentId).stream()
-                .anyMatch(permanent -> permanent.getId().equals(chosen.getId()))) {
-            int power = Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
-            exileSupport.exilePermanentAndLog(gameData, chosen, entry.getCard().getName());
-            updatedPowers.put(opponentId, power);
+    /**
+     * Exiles each opponent's chosen creature still on the battlefield, all as one event, and returns the power each
+     * had as it last existed on the battlefield (its ruling), by opponent.
+     */
+    private Map<UUID, Integer> exileChosen(GameData gameData, StackEntry entry, Map<UUID, UUID> chosenCreatureIds) {
+        Map<UUID, Integer> exiledPowers = new java.util.HashMap<>();
+        Map<UUID, Permanent> toExile = new java.util.LinkedHashMap<>();
+        chosenCreatureIds.forEach((opponentId, permanentId) -> {
+            Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+            if (creature != null
+                    && opponentId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                toExile.put(opponentId, creature);
+                exiledPowers.put(opponentId, Math.max(0, gameQueryService.getEffectivePower(gameData, creature)));
+            }
+        });
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            toExile.values().forEach(creature ->
+                    exileSupport.exilePermanentAndLog(gameData, creature, entry.getCard().getName()));
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
-        beginNextOpponent(gameData, entry, remainingOpponentIds, damageCondition, updatedPowers);
+        return exiledPowers;
     }
 
     private void finish(GameData gameData, StackEntry entry,

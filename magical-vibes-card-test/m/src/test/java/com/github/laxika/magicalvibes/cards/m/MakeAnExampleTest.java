@@ -7,15 +7,19 @@ import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -159,6 +163,54 @@ class MakeAnExampleTest extends BaseCardTest {
         }
         harness.assertLife(player1, 16);
         harness.assertLife(player2, 24);
+    }
+
+    @Test
+    @DisplayName("Every opponent separates, then the controller chooses, then the chosen piles are sacrificed at once (CR 608.2e)")
+    void opponentsSeparateThenControllerChoosesThenAllSacrifice() {
+        Player player3 = addThirdPlayer();
+        Permanent secondBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        Permanent thirdBears = harness.addToBattlefieldAndReturn(player3, new GrizzlyBears());
+        harness.addToBattlefield(player3, new GiantSpider());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondBears.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMultiplePermanentsChosen(player3, List.of(thirdBears.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player3, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertOnBattlefield(player3, "Giant Spider");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player3, "Grizzly Bears");
+    }
+
+    private Player addThirdPlayer() {
+        Player player3 = new Player(UUID.randomUUID(), "Third opponent");
+        gd.playerIds.add(player3.getId());
+        gd.orderedPlayerIds.add(player3.getId());
+        gd.playerNames.add(player3.getUsername());
+        gd.playerIdToName.put(player3.getId(), player3.getUsername());
+        gd.playerDecks.put(player3.getId(), new ArrayList<>());
+        gd.playerHands.put(player3.getId(), new ArrayList<>());
+        gd.playerGraveyards.put(player3.getId(), new ArrayList<>());
+        gd.playerBattlefields.put(player3.getId(), new ArrayList<>());
+        gd.playerManaPools.put(player3.getId(), new ManaPool());
+        gd.playerLifeTotals.put(player3.getId(), 20);
+        return player3;
     }
 
     private void cast() {
