@@ -80,7 +80,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         if (!capReadsEventValue) {
             entry.setEventValue(0);
         }
-        if (returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS) {
+        if (returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS
+                || returnEffect.source() == GraveyardSearchScope.OPPONENT_GRAVEYARD) {
+            // The targets were chosen from the graveyards the scope names ("from that player's graveyard" narrowed to
+            // the event's player at the stack door); each returns from its owner's graveyard.
             resolveFromAllGraveyards(gameData, entry, returnEffect);
         } else {
             resolveForController(gameData, entry, effect, entry.getControllerId());

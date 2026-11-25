@@ -4923,12 +4923,14 @@ public class TargetLegalityService {
                 && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, sourcePlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted";
         }
-        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
-        if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
-                && effectiveColor != null
-                && gameQueryService.playerHasHexproofFromColor(gameData, targetPlayerId, effectiveColor)) {
-            return gameData.playerIdToName.get(targetPlayerId) + " has hexproof from "
-                    + effectiveColor.name().toLowerCase();
+        if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)) {
+            // Each of a multicolored source's colors counts: a red and black source is a black source.
+            for (CardColor color : effectiveSourceColors(gameData, sourceCard)) {
+                if (gameQueryService.playerHasHexproofFromColor(gameData, targetPlayerId, color)) {
+                    return gameData.playerIdToName.get(targetPlayerId) + " has hexproof from "
+                            + color.name().toLowerCase();
+                }
+            }
         }
         return null;
     }

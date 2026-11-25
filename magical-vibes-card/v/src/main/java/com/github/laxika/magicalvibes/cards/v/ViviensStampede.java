@@ -18,7 +18,7 @@ public class ViviensStampede extends Card {
 
     public ViviensStampede() {
         addSpellEffect(new GrantKeywordEffect(
-                Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.MELEE), Subjects.otherCreaturesYouControl()));
+                Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.MELEE), Subjects.creaturesYouControl()));
         addSpellEffect(RegisterDelayedStepTriggerEffect.atNextMainPhaseThisTurn(ActivePlayer.ANY,
                 new DrawCardEffect(new PlayersDealtCombatDamageThisTurn())));
     }

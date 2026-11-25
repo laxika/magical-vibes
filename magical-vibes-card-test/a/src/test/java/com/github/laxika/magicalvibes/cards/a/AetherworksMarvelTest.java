@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -160,6 +161,7 @@ class AetherworksMarvelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A spell whose additional discard can't be paid isn't offered, and the cards stay in the library")
     void cannotCastCatharticReunionWithoutTwoCardsToDiscard() {
         addMarvel();
         gd.playerEnergyCounters.put(player1.getId(), 6);
@@ -169,7 +171,8 @@ class AetherworksMarvelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch).isFalse();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).contains(reunion).hasSize(3);

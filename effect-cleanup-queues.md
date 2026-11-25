@@ -422,6 +422,8 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `GameQueryService.getEffectiveCardColors`' off-battlefield scan (Celestial Dawn) asks only the floating flag (CR 613.1f). Defect run D11. Sure of the code, low.
 - `areCreatureDeathTriggersSuppressed`' simultaneous-death scan asks only the floating flag and skips no face-down source (CR 708.2a). Defect run D11. Fairly sure, low.
 - `DrawService` Alms Collector, Words-return and Quantum Riddler readers skip no face-down source (CR 708.2a). Defect run D11. Sure of the code.
+- The static-set filter reads in `GameQueryService.layeredQueryReads` (`matchesLeaf`) use printed keywords and types ("creatures with flying" in static locks other than the tap lock; Katabatic Winds' attack/block half unverified). CR 613. Defect run D16. Fairly sure.
+- Painter's Servant doesn't colour cards that aren't on the battlefield, or spells (Oracle text). Defect run D16. Sure.
 
 **2. Two-player assumptions (`getOpponentId`, first seat).** All right with two players only.
 
@@ -576,37 +578,39 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - A name prompt that requires a type offers a copy's name by the copy's types (CR 201.4a). Run 15. Unverified. Defect run D15: left; collectCardNamesKnownTo should offer the original card and leave copied names to the Oracle catalog.
 - ~~Scour the Scene offers battlefield creatures by card id; other perpetual hand prompts unaudited. Runs 16, 17. Unverified.~~ Fixed for can't-be-chosen in defect run D15; offering by card id is not a defect (only the chooser sees it, CR 708.5).
 - The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Run 12. Unverified. Defect run D15: the processor head is not a defect (Ruin Processor's completion picks a random card of the pile); the Ulamog's Nullifier half is a new line.
-- Twinning Glass offers neither an Adventure nor a modal back face sharing the name and checks additional costs only on accept. Run 26. Unverified.
-- Vivien's Stampede grants through `otherCreaturesYouControl()` on a sorcery (every creature you control). Run 31. Unverified.
-- `DiscardCardThenEffect`'s reflexive cards inside a `MayEffect` are asked with no matching card. 8.22. Unverified.
-- Soul Tithe's {X} reads the current host's mana value (arguably the trigger-time one). 5j. Unverified.
-- Nascent Metamorph's block trigger targets any player, not "target opponent" (the filter is only on the attack trigger). Fold run 17. Fairly sure.
-- `ImprovisationCapstoneCastChoice` offers an Adventure card only as its creature, with no face choice (CR 716.3). Fold run 18. Sure of the code.
-- `ExileTopCardsAndMayCastSpellsEffect` with a total cap checks an Adventure offer against the card's own mana value, not the Adventure's (CR 716.3a). Fold run 18. Fairly sure.
-- `SubjectResolutionService.attachedId` gives no host for an Aura that left together with its host when the entry has no source snapshot (the shuffle survivor reads the captured target instead). Fold run 21b. Sure of the code, low.
-- Power Pack: its random graveyard target goes on the stack as `nonTargeting(true)`, so no targets-chosen event fires (CR 601.2c). Seen in fold run 26b. Fairly sure.
-- Kefnet, Reversal of Fortune, Spellweaver Volute: a copy of a card is created and cast in exile, not in the card's own zone (CR 707.12; Kefnet and Reversal rulings), so a "cast from hand / graveyard" trigger misses it. Seen in fold run 29b. Sure.
-- The Clone Saga (SPM 28) chapter II offers new targets for the copy although the text doesn't say it may (CR 707.10, 707.10c). Not observable until a creature spell can have targets. Seen in fold run 28c. Fairly sure.
-- Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Seen in fold run 35. Sure of the text.
+- ~~Twinning Glass offers neither an Adventure nor a modal back face sharing the name and checks additional costs only on accept. Run 26. Unverified.~~ Fixed in defect run D16 (Twinning Glass onto MayCastAnySpellFromHandWithoutPayingManaCostEffect with CardSharesNameWithSpellCastThisTurnPredicate; the Adventure test was written after the fix).
+- ~~Vivien's Stampede grants through `otherCreaturesYouControl()` on a sorcery (every creature you control). Run 31. Unverified.~~ Not a defect (defect run D16): on a sorcery otherCreaturesYouControl() excludes nothing; the card now says creaturesYouControl() to match its text.
+- ~~`DiscardCardThenEffect`'s reflexive cards inside a `MayEffect` are asked with no matching card. 8.22. Unverified.~~ Fixed in defect run D16.
+- ~~Soul Tithe's {X} reads the current host's mana value (arguably the trigger-time one). 5j. Unverified.~~ Fixed in defect run D16.
+- ~~Nascent Metamorph's block trigger targets any player, not "target opponent" (the filter is only on the attack trigger). Fold run 17. Fairly sure.~~ Not a defect (defect run D16): the shared effect instance binds the block trigger to the opponent target group too (test passes on the old code).
+- `ImprovisationCapstoneCastChoice` offers an Adventure card only as its creature, with no face choice (CR 716.3). Fold run 18. Sure of the code. Defect run D16: left; the free-cast queue needs a face-choice prompt for an Adventure card whose faces both fit (CR 716.3), resuming castNextFromQueue.
+- `ExileTopCardsAndMayCastSpellsEffect` with a total cap checks an Adventure offer against the card's own mana value, not the Adventure's (CR 716.3a). Fold run 18. Fairly sure. Defect run D16: left; depends on the line above, no card shows it today (Primeval Spawn's limit is 10).
+- `SubjectResolutionService.attachedId` gives no host for an Aura that left together with its host when the entry has no source snapshot (the shuffle survivor reads the captured target instead). Fold run 21b. Sure of the code, low. Defect run D16: left, nothing shows it (every Aura entry path found records a source or host snapshot). Low.
+- ~~Power Pack: its random graveyard target goes on the stack as `nonTargeting(true)`, so no targets-chosen event fires (CR 601.2c). Seen in fold run 26b. Fairly sure.~~ Not a defect (defect run D16): no ability watches a card in its owner's own graveyard become a target (crime needs an opponent's graveyard, CR 700.13).
+- Kefnet, Reversal of Fortune, Spellweaver Volute: a copy of a card is created and cast in exile, not in the card's own zone (CR 707.12; Kefnet and Reversal rulings), so a "cast from hand / graveyard" trigger misses it. Seen in fold run 29b. Sure. Defect run D16: left; needs a copy created and cast in the card's own zone (CR 707.12).
+- The Clone Saga (SPM 28) chapter II offers new targets for the copy although the text doesn't say it may (CR 707.10, 707.10c). Not observable until a creature spell can have targets. Seen in fold run 28c. Fairly sure. Defect run D16: left; not observable until mutate is a casting option.
+- Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Seen in fold run 35. Sure of the text. Defect run D16: left for the owner (a one-card option on IgnoreOpponentHexproofEffect; multiplayer only); the ward half goes with it.
 - ~~`playerHasProtectionFromOpponents` ignores objects the player owns that no other player controls (CR 702.16k). Seen in fold run 35. Sure of the code.~~ Fixed in fold run 35c (one reader `playerProtectionFrom`; GameQueryServiceTest).
-- EyeForAnEye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle collect damage sources with their own lists, missing part of CR 609.7a's set (sources of waiting shields, cards stack objects refer to); move them onto `ChooseDamageSourceEffect`. Seen in fold run 27b. Sure of the code.
-- `ExileCastTargetSupport.flatSingleTargetCandidates` offers hexproof or protected permanents (CR 702.11b) to the 3-argument `firstSlotCandidates` users (Chandra, Torch of Defiance; Vaan; Paradigm; `ExileReducedCastSupport`; `OutsideGameNormalCostCastSupport`; `CopyDrawnInstantOrSorceryAndMayCastCopyHandler`). Seen in fold run 29d. Sure of the candidates; whether the completion rejects them is unverified.
-- Player "hexproof from [colour]" checks one effective colour of a multicolour source (CR 702.11d). Seen in fold run 35c. Fairly sure.
-- Katabatic Winds' lock names noncreature permanents with flying too (its text: "creatures with flying"). Run 37. Sure of the code.
-- Pack Hunt: the AI aims it HARMFUL at an opposing creature, though its own creature is the one whose copies it wants. Run 41b. Unsure, AI only.
-- Avatar's Wrath: the AI reads its spared target as harmful removal. Run 44. Sure, AI only.
-- The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Run 44. Unverified.
-- Muck Drubb: "spell that targets only a single creature" isn't enforced at targeting (its ruling). Run 45. Sure.
-- Barrin's Spite: its controller can choose a target that can't be sacrificed (CR 608.2d); `ChoosePermanentsEffect.toSacrifice()` would offer both when neither can be, so check the rulings first. Run 41c. Unsure.
-- Overblaze: `TargetPolarityClassifier` aims `DoubleDamageFromTargetPermanentThisTurnEffect` as HARMFUL_DAMAGE, though the useful target is usually your own creature. Run 40b. AI only, unsure.
-- Fire Lord Sozin: the reflexive ability targets any graveyard, though its text says "from that player's graveyard" (`ReturnTargetCards…` resolves only CONTROLLERS or ALL scopes). Run 46b. Sure.
-- Reservoir Kraken: its Fish is no longer a `TokenCreatingEffect` the AI reads (inside `MayPayManaEffect`). Run 47b. Sure, AI only, low.
-- `ReservoirKrakenTest` has 5 tests with no `@DisplayName`. Run 47b. Sure.
-- The AI's filtered must-be-blocked choice with menace (two blockers needed) is approximate: the greedy simulator doesn't narrow, and Easy and the exhaustive phase may skip the block (CR 509.1c). Run 7c. Fairly sure, AI only.
-- `LookAtTopCardsAndMayCastEffect` offers a spell that can't be cast (no legal target, Rule of Law, an unpayable mandatory additional cost); choosing it logs "can't be cast" (CR 608.2d). Galvanoth, Sunbird's Invocation, Rashmi, Unexpected Results, Velomachus. Run 8e. Fairly sure.
+- EyeForAnEye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle collect damage sources with their own lists, missing part of CR 609.7a's set (sources of waiting shields, cards stack objects refer to); move them onto `ChooseDamageSourceEffect`. Seen in fold run 27b. Sure of the code. Defect run D16: left; fold-sized (six cards onto ChooseDamageSourceEffect).
+- ~~`ExileCastTargetSupport.flatSingleTargetCandidates` offers hexproof or protected permanents (CR 702.11b) to the 3-argument `firstSlotCandidates` users (Chandra, Torch of Defiance; Vaan; Paradigm; `ExileReducedCastSupport`; `OutsideGameNormalCostCastSupport`; `CopyDrawnInstantOrSorceryAndMayCastCopyHandler`). Seen in fold run 29d. Sure of the candidates; whether the completion rejects them is unverified.~~ Fixed in defect run D16.
+- ~~Player "hexproof from [colour]" checks one effective colour of a multicolour source (CR 702.11d). Seen in fold run 35c. Fairly sure.~~ Fixed in defect run D16.
+- ~~Katabatic Winds' lock names noncreature permanents with flying too (its text: "creatures with flying"). Run 37. Sure of the code.~~ Fixed in defect run D16.
+- ~~Pack Hunt: the AI aims it HARMFUL at an opposing creature, though its own creature is the one whose copies it wants. Run 41b. Unsure, AI only.~~ Fixed in defect run D16.
+- ~~Avatar's Wrath: the AI reads its spared target as harmful removal. Run 44. Sure, AI only.~~ Fixed in defect run D16.
+- The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Run 44. Unverified. Defect run D16: now sure of the code: Permanent.tap, addMarkedDamage and CombatDamageService turn a masked creature face up before the engine can ask isTurnFaceUpPrevented; the flip has to move into the engine.
+- ~~Muck Drubb: "spell that targets only a single creature" isn't enforced at targeting (its ruling). Run 45. Sure.~~ Not a defect (defect run D16): TargetLegalityService.targetsOnlySingleCreature enforces it at targeting (test).
+- ~~Barrin's Spite: its controller can choose a target that can't be sacrificed (CR 608.2d); `ChoosePermanentsEffect.toSacrifice()` would offer both when neither can be, so check the rulings first. Run 41c. Unsure.~~ Fixed in defect run D16.
+- ~~Overblaze: `TargetPolarityClassifier` aims `DoubleDamageFromTargetPermanentThisTurnEffect` as HARMFUL_DAMAGE, though the useful target is usually your own creature. Run 40b. AI only, unsure.~~ Fixed in defect run D16.
+- ~~Fire Lord Sozin: the reflexive ability targets any graveyard, though its text says "from that player's graveyard" (`ReturnTargetCards…` resolves only CONTROLLERS or ALL scopes). Run 46b. Sure.~~ Fixed in defect run D16.
+- ~~Reservoir Kraken: its Fish is no longer a `TokenCreatingEffect` the AI reads (inside `MayPayManaEffect`). Run 47b. Sure, AI only, low.~~ Not a defect (defect run D16): no AI reader reads a beginning-of-combat trigger's effects.
+- ~~`ReservoirKrakenTest` has 5 tests with no `@DisplayName`. Run 47b. Sure.~~ Fixed in defect run D16.
+- The AI's filtered must-be-blocked choice with menace (two blockers needed) is approximate: the greedy simulator doesn't narrow, and Easy and the exhaustive phase may skip the block (CR 509.1c). Run 7c. Fairly sure, AI only. Defect run D16: left; needs a redesign of the AI combat simulator.
+- ~~`LookAtTopCardsAndMayCastEffect` offers a spell that can't be cast (no legal target, Rule of Law, an unpayable mandatory additional cost); choosing it logs "can't be cast" (CR 608.2d). Galvanoth, Sunbird's Invocation, Rashmi, Unexpected Results, Velomachus. Run 8e. Fairly sure.~~ Fixed in defect run D16.
 - `ExileGraveyardCardsEffect.defendingPlayerOnly` (Graven Abomination): the flag is never read, so any opponent's graveyard can be targeted (multiplayer). Defect run D15. Sure of the code.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Defect run D15. Fairly sure.
 - Zara's hand-to-battlefield put calls `handleCreatureEnteredBattlefield` directly rather than the entry batch. Defect run D15. Unverified.
+- Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Defect run D16. Sure, low.
+- Avatar's Wrath's airbend is scored by `SpellEvaluator` as single-target exile removal (AI). Defect run D16. Unverified.
 
 **6. Payments and costs.**
 
@@ -875,7 +879,7 @@ entwine with two modes (P09).
 | D13 | group 3, 24 | simultaneity and APNAP. Done 2026-11-25: 6 fixed (Giant Albatross, Disorienting Choice, Sothera, Ol Rin's Searing Light, Make an Example, multi-sacrifice spell costs), 4 not a defect (one handler run is already one event), 9 left, 5 not reached (L17 to L21, L23: the Sothera pattern next: Gilded Ambusher, Dispersal); 3 new group-3 lines |
 | D14 | group 4, 31 | missing events or records. Done 2026-11-25: 13 fixed (flip events, dice advantage on every roll, vanishing's one sacrifice trigger, last-counter events, Sin's same-batch entrants, Parley steps, Edgar-won flips, no shuffle when a "may search" can't search), 7 not a defect or already fixed, 11 left (L17 for the owner: "if you do" after a draw replaced by draws); 4 new lines (groups 4, 9) |
 | D15 | group 5, first 28 | wrong targets and choices. Done 2026-11-25: 11 fixed (Turf War targets, Infectious Rage's controller, Conspiracy Theorist, Zara's attack choice, Opposition Agent, Sunimret, Rambling Possum, can't-be-chosen in the shared prompts), 7 already fixed, 5 not a defect, 5 left; 1 record dead; 3 new group-5 lines |
-| D16 | group 5, last 27 | wrong targets and choices |
+| D16 | group 5, last 27 | wrong targets and choices. Done 2026-11-25: 15 fixed (CR 608.2d offers, hexproof from multicolour sources, the layered tap-lock filter, Fire Lord Sozin, Soul Tithe, Twinning Glass, Barrin's Spite, three AI polarities), 6 not a defect, 6 left (L12 Nowhere to Run for the owner); 1 record absorbed; 4 new lines (groups 1, 5) |
 | D17 | group 6 | payments and costs |
 | D18 | group 7 | layers and copy values |
 | D19 to D22 | group 9, quarters | other |

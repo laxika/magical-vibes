@@ -108,6 +108,7 @@ public sealed interface CardPredicate permits
         CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate,
         CardToughnessLessThanSourceToughnessPredicate,
         CardSharesNameWithAPermanentPredicate,
+        CardSharesNameWithSpellCastThisTurnPredicate,
         CardSharesNameWithPermanentsPredicate,
         CardSharesCardTypeWithPermanentsPredicate,
         CardSharesCreatureTypeWithPermanentsPredicate,

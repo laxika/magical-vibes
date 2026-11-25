@@ -8,15 +8,20 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -99,6 +104,53 @@ class TheRiseOfSozinTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Hill Giant");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Child of Night");
+    }
+
+    @Test
+    @DisplayName("Fire Lord Sozin offers only creature cards from the damaged player's graveyard, not its controller's")
+    void fireLordSozinOffersOnlyTheDamagedPlayersGraveyard() {
+        addTransformedSaga();
+        Card opponentsBears = new GrizzlyBears();
+        Card ownBears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(opponentsBears));
+        harness.setGraveyard(player1, List.of(ownBears));
+        gd.playerManaPools.get(player1.getId()).addPersistentMana(ManaColor.COLORLESS, 4);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 4);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(opponentsBears.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(opponentsBears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("With three players, Fire Lord Sozin doesn't offer the graveyard of an opponent it didn't damage")
+    void fireLordSozinDoesNotOfferAnUndamagedOpponentsGraveyard() {
+        Player player3 = addThirdPlayer();
+        addTransformedSaga();
+        Card damagedPlayersBears = new GrizzlyBears();
+        Card otherOpponentsBears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(damagedPlayersBears));
+        harness.setGraveyard(player3, List.of(otherOpponentsBears));
+        gd.playerManaPools.get(player1.getId()).addPersistentMana(ManaColor.COLORLESS, 4);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 4);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(damagedPlayersBears.getId());
     }
 
     @Test
@@ -217,6 +269,24 @@ class TheRiseOfSozinTest extends BaseCardTest {
         saga.setTransformed(true);
         saga.setSummoningSick(false);
         return saga;
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private void advanceToNextChapter() {

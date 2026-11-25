@@ -66,12 +66,17 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (choose.sacrificing()) {
-            // One to sacrifice: a permanent the chooser couldn't sacrifice is no option (CR 608.2d, 701.21a).
-            candidates = candidates.stream()
+            // One to sacrifice: a permanent the chooser couldn't sacrifice is no option (CR 608.2d, 701.21a). When
+            // they could sacrifice none of theirs, a required choice is still made among them, as the rest of the
+            // instruction reads it ("return the other", Barrin's Spite); the sacrifice then does nothing.
+            List<Permanent> theirs = candidates.stream()
                     .filter(permanent -> chooserId.equals(gameQueryService.findPermanentController(gameData,
                             permanent.getId())))
+                    .toList();
+            List<Permanent> sacrificeable = theirs.stream()
                     .filter(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
                     .toList();
+            candidates = sacrificeable.isEmpty() && !choose.minimum().equals(new Fixed(0)) ? theirs : sacrificeable;
         }
         AmountContext context = AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot());
         int maximum = choose.maximum() == null ? candidates.size() : Math.min(candidates.size(),

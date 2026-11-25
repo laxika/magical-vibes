@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.g.GreenbeltRadical;
 import com.github.laxika.magicalvibes.cards.l.LowlandOaf;
 import com.github.laxika.magicalvibes.cards.o.OmnipresentImpostor;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TwinningGlass.class, WoodlandChangeling.class, LowlandOaf.class, Tarfire.class, ThornOfAmethyst.class,
-        OmnipresentImpostor.class, GreenbeltRadical.class})
+        OmnipresentImpostor.class, GreenbeltRadical.class, BonecrusherGiant.class})
 class TwinningGlassTest extends BaseCardTest {
 
     @Test
@@ -50,6 +51,35 @@ class TwinningGlassTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(freeCopy.getId());
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(freeCopy.getId()));
+    }
+
+    @Test
+    @DisplayName("An Adventure sharing its name with a spell cast this turn is offered and cast as that Adventure")
+    void offersAnAdventureSharingTheName() {
+        BonecrusherGiant first = new BonecrusherGiant();
+        BonecrusherGiant second = new BonecrusherGiant();
+        harness.addToBattlefield(player1, new TwinningGlass());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(first, second));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Stomp");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
     }
 
     @Test

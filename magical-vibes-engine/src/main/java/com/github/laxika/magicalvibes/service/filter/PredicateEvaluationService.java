@@ -142,6 +142,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardCouldEnchantPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringPermanentPredicate;
@@ -1417,6 +1418,10 @@ public class PredicateEvaluationService {
                     gameData != null && gameData.playerBattlefields.values().stream()
                             .flatMap(java.util.List::stream)
                             .anyMatch(perm -> !perm.isFaceDown() && perm.getCard().getName().equals(card.getName()));
+            case CardSharesNameWithSpellCastThisTurnPredicate ignored ->
+                    gameData != null && gameData.orderedPlayerIds.stream()
+                            .flatMap(playerId -> gameData.getSpellsCastThisTurn(playerId).stream())
+                            .anyMatch(spell -> sharesAName(card, spell));
             // Only the graveyard count that has the resolving entry knows the triggering spell (AmountEvaluationService).
             case CardSharesNameWithTriggeringSpellPredicate ignored -> false;
             // Bound to the resolving entry's triggering spell by AmountEvaluationService.bindTriggeringSpellCardTypes.
@@ -5793,5 +5798,17 @@ public class PredicateEvaluationService {
         Permanent live = sourceId == null || filterContext.gameData() == null
                 ? null : gameQueryService.findPermanentById(filterContext.gameData(), sourceId);
         return live != null ? live : filterContext.sourcePermanentSnapshot();
+    }
+
+    /**
+     * Whether {@code card} and {@code spell} have a name in common: a spell with no name (one cast face down) has none
+     * (CR 201.2a), a split card has each half's name (CR 709.4a), and a card that has all card names shares each one.
+     */
+    private static boolean sharesAName(Card card, Card spell) {
+        List<String> spellNames = spell.getNames().stream().filter(name -> !name.isBlank()).toList();
+        if (spell.hasAllCardNames()) {
+            return card.hasAllCardNames() || card.getNames().stream().anyMatch(name -> !name.isBlank());
+        }
+        return spellNames.stream().anyMatch(card::hasName);
     }
 }

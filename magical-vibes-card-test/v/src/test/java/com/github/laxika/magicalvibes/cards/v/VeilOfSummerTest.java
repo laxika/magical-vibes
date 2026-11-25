@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.cards.b.BoneToAsh;
 import com.github.laxika.magicalvibes.cards.k.KioraBehemothBeckoner;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.n.Negate;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.m.MawOfTheMire;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
@@ -17,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -26,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VeilOfSummer.class, Forest.class, CloudkinSeer.class, MawOfTheMire.class, MindRot.class,
         RedElementalBlast.class, BoneToAsh.class, KioraBehemothBeckoner.class, Murder.class, Negate.class,
-        Shock.class, Unsummon.class})
+        Shock.class, Unsummon.class, PaintersServant.class, ProdigalPyromancer.class})
 class VeilOfSummerTest extends BaseCardTest {
 
     @Test
@@ -226,6 +230,26 @@ class VeilOfSummerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.assertInHand(player1, "Cloudkin Seer");
+    }
+
+    @Test
+    @DisplayName("A red source that is also black can't target the protected player")
+    void blocksPlayerTargetingFromAMulticoloredSourceThatIsAlsoBlack() {
+        harness.setHand(player1, List.of(new VeilOfSummer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+        Permanent servant = harness.addToBattlefieldAndReturn(player2, new PaintersServant());
+        servant.setChosenColor(CardColor.BLACK);
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int idx = gd.playerBattlefields.get(player2.getId()).indexOf(pyromancer);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, idx, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
+        harness.assertLife(player1, 20);
     }
 
     @Test

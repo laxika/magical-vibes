@@ -82,7 +82,7 @@ class DokuchiSilencerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the ability does nothing when the hand has no creature card")
+    @DisplayName("With no creature card in hand, the discard isn't offered and nothing happens")
     void noCreatureCardMeansNoFollowUp() {
         Permanent silencer = addCreatureReady(player1, new DokuchiSilencer());
         silencer.setAttacking(true);
@@ -91,7 +91,6 @@ class DokuchiSilencerTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Bearer of Memory");

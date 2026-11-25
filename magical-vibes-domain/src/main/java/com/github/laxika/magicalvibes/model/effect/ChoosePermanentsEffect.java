@@ -231,6 +231,8 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
      * The same choice of one to sacrifice ("that player sacrifices one of them", "you may sacrifice one of them"):
      * only the candidates the chooser controls and could sacrifice are offered (CR 608.2d, 701.21a), so the
      * {@code SacrificeSelfEffect} over {@code Subjects.thisWay(StepKind.CHOOSE)} after it sacrifices what was chosen.
+     * When the chooser could sacrifice none of theirs, a required choice is made among all of theirs, for the steps
+     * that read "the other" (Barrin's Spite).
      */
     public ChoosePermanentsEffect toSacrifice() {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,

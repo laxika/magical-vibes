@@ -1761,10 +1761,19 @@ public class AmountEvaluationService {
 
     /** Mana value of the permanent the source Aura enchants (Soul Tithe); 0 if there is none. */
     private int enchantedPermanentManaValue(GameData gameData, AmountContext ctx) {
-        Permanent source = ctx.sourcePermanent();
-        if (source == null || source.getAttachedTo() == null) return 0;
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
-        return enchanted == null ? 0 : enchanted.getCard().getManaValue();
+        // A triggered ability's "its mana value" is the mana value of the permanent it enchanted as the ability
+        // triggered, though the Aura has moved since (Soul Tithe's "that player sacrifices it ... where X is its mana
+        // value"); a face-down permanent's mana value is 0 (CR 708.2a).
+        StackEntry entry = ctx.stackEntry();
+        UUID enchantedId = entry != null && entry.getAttachedPermanentSnapshot() != null
+                ? entry.getAttachedPermanentSnapshot().getId() : null;
+        if (enchantedId == null) {
+            Permanent source = ctx.sourcePermanent();
+            enchantedId = source == null ? null : source.getAttachedTo();
+        }
+        if (enchantedId == null) return 0;
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
+        return enchanted == null ? 0 : gameQueryService.getPermanentManaValue(enchanted);
     }
 
     /** Effective power of the permanent the source Aura enchants; 0 if there is none. */

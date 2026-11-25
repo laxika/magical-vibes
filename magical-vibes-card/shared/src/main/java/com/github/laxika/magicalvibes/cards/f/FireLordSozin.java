@@ -27,7 +27,7 @@ public class FireLordSozin extends Card {
                                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                         new CardTypePredicate(CardType.CREATURE), 0, false, false,
                                         null, 0, new EventValue(), null, null, null, 0,
-                                        GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false, 0, 0),
+                                        GraveyardSearchScope.OPPONENT_GRAVEYARD, false, false, false, 0, 0),
                                 AmountThisWay.manaPaid())),
                         "Pay {X} to put creature cards with total mana value X or less from that player's "
                                 + "graveyard onto the battlefield?"));

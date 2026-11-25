@@ -23,8 +23,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -52,6 +55,9 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    @Lazy
+    private LibraryChoiceHandlerService libraryChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -139,7 +145,9 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
 
     /**
      * Whether {@code face} may be offered: a nonland face (a land is played, not cast) matching the cast filter, its
-     * smallest spell mana value within the bound (CR 709.3a: a split card is cast as one half).
+     * smallest spell mana value within the bound (CR 709.3a: a split card is cast as one half), that could be cast now
+     * (permission, timing restrictions, mandatory additional costs, a legal target): a spell that can't be cast is no
+     * option (CR 608.2d). A split card's halves are each judged as one is chosen.
      */
     private boolean offersFace(GameData gameData, StackEntry entry, LookAtTopCardsAndMayCastEffect look,
                                UUID controllerId, Card face, Integer manaValueBound) {
@@ -149,8 +157,12 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
         if (manaValueBound != null && face.getSmallestSpellManaValue() > manaValueBound) {
             return false;
         }
-        return look.castFilter() == null || predicateEvaluationService.matchesCardPredicate(
+        if (look.castFilter() != null && !predicateEvaluationService.matchesCardPredicate(
                 face, look.castFilter(), entry.getCard().getId(), gameData, controllerId,
-                entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot());
+                entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot())) {
+            return false;
+        }
+        return SplitCardCastSupport.isSplitCard(face) || libraryChoiceHandlerService.canCastFromLibraryWithoutPaying(
+                gameData, controllerId, face, manaValueBound == null ? Integer.MAX_VALUE : manaValueBound);
     }
 }

@@ -344,11 +344,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             insertElseEffect(entry, e);
             return;
         }
-        if (optionalAction instanceof DiscardCardThenEffect discardThen && e.elseEffect() != null
+        if (optionalAction instanceof DiscardCardThenEffect discardThen && !discardThen.thenWithoutDiscard()
                 && discardThen.player() instanceof PlayerSubject.You
                 && countDiscardable(gameData, entry, entry.getControllerId(), discardThen.filter()) == 0) {
-            // "Sacrifice this unless you discard a card. When you discard a card this way, ...": nothing can be
-            // discarded, so the choice isn't offered and the penalty happens (CR 118.12a, 608.2d).
+            // "You may discard a [kind] card. When you do, ..." and "Sacrifice this unless you discard a card": with
+            // nothing that could be discarded, the choice isn't offered and any penalty happens (CR 118.12a, 608.2d).
             gameData.resolvingMayEffectFromStack = false;
             insertElseEffect(entry, e);
             return;

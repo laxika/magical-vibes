@@ -1582,9 +1582,10 @@ public class ValidTargetService {
             return false;
         }
 
-        var effectiveSourceColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
-        if (!abilityControllerId.equals(playerId) && effectiveSourceColor != null
-                && gameQueryService.playerHasHexproofFromColor(gameData, playerId, effectiveSourceColor)) {
+        // Each of a multicolored source's colors counts: a red and black source is a black source.
+        if (!abilityControllerId.equals(playerId)
+                && targetLegalityService.effectiveSourceColors(gameData, sourceCard).stream()
+                .anyMatch(color -> gameQueryService.playerHasHexproofFromColor(gameData, playerId, color))) {
             return false;
         }
 

@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GuidingSpirit;
 import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.cards.q.QuirionDruid;
 import com.github.laxika.magicalvibes.cards.c.CoralAtoll;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SpittingDrake;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KatabaticWinds.class, SpittingDrake.class, PantherWarriors.class, GuidingSpirit.class,
-        QuirionDruid.class, CoralAtoll.class})
+        QuirionDruid.class, CoralAtoll.class, RodOfRuin.class})
 class KatabaticWindsTest extends BaseCardTest {
 
     @Test
@@ -89,6 +91,40 @@ class KatabaticWindsTest extends BaseCardTest {
         int spiritIdx = gd.playerBattlefields.get(player2.getId()).indexOf(spirit);
 
         assertThatThrownBy(() -> harness.activateAbility(player2, spiritIdx, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    @DisplayName("A noncreature permanent with flying can still activate a {T} ability")
+    void noncreatureWithFlyingCanActivateTapAbility() {
+        harness.addToBattlefield(player1, new KatabaticWinds());
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        rod.setSummoningSick(false);
+        PermanentGrants.keyword(gd, rod, Keyword.FLYING);
+        assertThat(gqs.hasKeyword(gd, rod, Keyword.FLYING)).isTrue();
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(rod), null,
+                player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(rod.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature given flying by an effect cannot activate a {T} ability")
+    void creatureGivenFlyingCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new KatabaticWinds());
+        Permanent druid = addCreatureReady(player1, new QuirionDruid());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CoralAtoll());
+        PermanentGrants.keyword(gd, druid, Keyword.FLYING);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int druidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(druid);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, druidIdx, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }

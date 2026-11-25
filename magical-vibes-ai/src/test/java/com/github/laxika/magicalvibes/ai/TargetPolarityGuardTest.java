@@ -278,6 +278,25 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Avatar's Wrath, Overblaze and Pack Hunt aim at the AI's own creature")
+    void sparedDoubledAndCopiedTargetsAreTheAisOwn() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.a.AvatarsWrath(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.o.Overblaze(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.p.PackHunt(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+    }
+
+    @Test
     void perpetualAbilitiesUseTheirGrantedEffectToChooseTargets() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();

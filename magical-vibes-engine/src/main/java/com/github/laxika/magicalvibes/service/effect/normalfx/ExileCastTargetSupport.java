@@ -193,7 +193,8 @@ public class ExileCastTargetSupport {
 
     /**
      * Historical single-target candidate list (permanents matching the card's target filter, or all
-     * creatures when unfiltered, plus every player when the spell can target players, plus the legal
+     * creatures when unfiltered, that the spell could legally target, plus every player when the spell can target
+     * players, plus the legal
      * graveyard cards when the spell targets a card in a graveyard — cipher copies of cards such as
      * Midnight Recovery would otherwise never find a target).
      */
@@ -208,11 +209,13 @@ public class ExileCastTargetSupport {
                     continue;
                 }
                 for (Permanent p : battlefield) {
-                    if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                            validTargets.add(p.getId());
-                        }
-                    } else if (gameQueryService.isCreature(gameData, p)) {
+                    boolean matches = card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter
+                            ? predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())
+                            : gameQueryService.isCreature(gameData, p);
+                    // Hexproof, shroud, protection and the other targeting rules, as for a player candidate
+                    // (CR 702.11b, 702.16b).
+                    if (matches && targetLegalityService.checkSpellTargeting(
+                            gameData, card, p.getId(), null, controllerId).isEmpty()) {
                         validTargets.add(p.getId());
                     }
                 }

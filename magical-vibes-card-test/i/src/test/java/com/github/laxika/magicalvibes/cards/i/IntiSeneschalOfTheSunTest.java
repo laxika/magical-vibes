@@ -15,12 +15,14 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @CardUsed({IntiSeneschalOfTheSun.class, GrizzlyBears.class, Shock.class, Forest.class, BitterTriumph.class})
 class IntiSeneschalOfTheSunTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Discarding a card on attack puts a +1/+1 counter on target attacking creature and gives it trample")
     void discardingOnAttackTargetsAnAttackingCreatureForCounterAndTrample() {
         addCreatureReady(player1, new IntiSeneschalOfTheSun());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -56,6 +58,7 @@ class IntiSeneschalOfTheSunTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the attack ability discards nothing")
     void decliningTheAttackAbilityDoesNotDiscardOrExile() {
         addCreatureReady(player1, new IntiSeneschalOfTheSun());
         Shock discarded = new Shock();
@@ -73,6 +76,7 @@ class IntiSeneschalOfTheSunTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A card exiled by the discard trigger can no longer be played once the next end step begins")
     void exiledCardCannotBeCastOnceTheNextEndStepBegins() {
         Permanent inti = addCreatureReady(player1, new IntiSeneschalOfTheSun());
         Shock exiled = new Shock();
@@ -97,6 +101,7 @@ class IntiSeneschalOfTheSunTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Inti need not attack, and a nonattacking creature is not a legal target")
     void intiNeedNotAttackAndNonattackingCreaturesAreNotLegalTargets() {
         Permanent inti = addCreatureReady(player1, new IntiSeneschalOfTheSun());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -122,6 +127,7 @@ class IntiSeneschalOfTheSunTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With an empty hand the discard isn't offered: no reflexive trigger, nothing exiled")
     void acceptingWithAnEmptyHandDoesNotCreateAReflexiveTriggerOrExile() {
         Permanent inti = addCreatureReady(player1, new IntiSeneschalOfTheSun());
         Forest topCard = new Forest();
@@ -130,7 +136,6 @@ class IntiSeneschalOfTheSunTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -142,6 +147,7 @@ class IntiSeneschalOfTheSunTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Discarding a card to pay a spell's cost triggers the exile before the spell resolves")
     void discardingAsASpellCostExilesBeforeTheSpellResolves() {
         Permanent inti = addCreatureReady(player1, new IntiSeneschalOfTheSun());
         Forest discarded = new Forest();

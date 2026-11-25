@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
@@ -28,7 +29,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Galvanoth.class, GrizzlyBears.class, KuldothaRebirth.class, Pyroclasm.class, Shock.class, Slagstorm.class})
+@CardUsed({Galvanoth.class, GrizzlyBears.class, KuldothaRebirth.class, Pyroclasm.class, Shock.class, Slagstorm.class,
+        Shatter.class})
 class GalvanothTest extends BaseCardTest {
 
     // ===== Upkeep trigger — may look prompt =====
@@ -46,6 +48,21 @@ class GalvanothTest extends BaseCardTest {
     }
 
     // ===== Declining to look =====
+
+    @Test
+    @DisplayName("A sorcery or instant on top with no legal target is not offered to cast")
+    void spellWithNoLegalTargetIsNotOffered() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        Card shatter = new Shatter();
+        gd.playerDecks.get(player1.getId()).addFirst(shatter);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(shatter);
+    }
 
     @Test
     @DisplayName("Declining to look does nothing")
@@ -394,7 +411,7 @@ class GalvanothTest extends BaseCardTest {
 
     @Test
     @CardUsed({TeferiTimeRaveler.class})
-    @DisplayName("An opponent's Teferi, Time Raveler stops the cast, and the card stays on top of the library")
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast: the card isn't offered and stays on top of the library")
     void opponentsTeferiStopsTheCast() {
         harness.addToBattlefield(player1, new Galvanoth());
         harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
@@ -405,7 +422,8 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch).isFalse();
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(pyroclasm.getId()));
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(pyroclasm);

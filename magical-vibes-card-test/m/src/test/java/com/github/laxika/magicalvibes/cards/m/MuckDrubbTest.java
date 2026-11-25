@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CitanulWoodreaders;
 import com.github.laxika.magicalvibes.cards.c.CradleToGrave;
+import com.github.laxika.magicalvibes.cards.d.DeadReckoning;
+import com.github.laxika.magicalvibes.cards.j.JagwaspSwarm;
 import com.github.laxika.magicalvibes.cards.k.KorDirge;
 import com.github.laxika.magicalvibes.cards.p.PiracyCharm;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Sunlance;
 import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MuckDrubb.class, CitanulWoodreaders.class, CradleToGrave.class, KorDirge.class,
-        PiracyCharm.class, ProdigalPyromancer.class, Sunlance.class, SeedsOfStrength.class})
+        PiracyCharm.class, ProdigalPyromancer.class, Sunlance.class, SeedsOfStrength.class,
+        DeadReckoning.class, JagwaspSwarm.class})
 class MuckDrubbTest extends BaseCardTest {
 
     @Test
@@ -116,6 +120,26 @@ class MuckDrubbTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player2, damageSource.getId());
+    }
+
+    @Test
+    @DisplayName("A spell targeting a creature and a graveyard card is not a legal ETB target")
+    void doesNotTargetSpellWithACreatureAndAGraveyardCardTarget() {
+        Permanent woodreaders = addCreatureReady(player1, new CitanulWoodreaders());
+        Card graveyardCreature = new JagwaspSwarm();
+        harness.setGraveyard(player2, List.of(graveyardCreature));
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DeadReckoning()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player2, 0, List.of(graveyardCreature.getId(), woodreaders.getId()));
+        harness.passPriority(player2);
+
+        harness.castFromHand(player1, new MuckDrubb(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Muck Drubb");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

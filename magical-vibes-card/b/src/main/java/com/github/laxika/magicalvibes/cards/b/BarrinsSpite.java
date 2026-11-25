@@ -19,7 +19,7 @@ public class BarrinsSpite extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(ChoosePermanentsEffect.exactly(1, Subjects.allTargets(),
                                 "a creature to sacrifice; the other returns to its owner's hand")
-                        .chosenBy(Subjects.controllerOf(Subjects.allTargets())))
+                        .chosenBy(Subjects.controllerOf(Subjects.allTargets())).toSacrifice())
                 .addSpellEffect(new SacrificeSelfEffect(Subjects.thisWay(StepKind.CHOOSE),
                         Subjects.controllerOf(Subjects.thisWay(StepKind.CHOOSE))))
                 .addSpellEffect(new ReturnToHandEffect(

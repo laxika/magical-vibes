@@ -5404,6 +5404,16 @@ public class LibraryChoiceHandlerService {
         return canCastWithoutPaying(gameData, controllerId, card, Integer.MAX_VALUE, Zone.HAND);
     }
 
+    /**
+     * {@link #canCastRevealedFromHandWithoutPaying} for a card looked at or revealed in {@code controllerId}'s
+     * library, under a "spell with mana value N or less" limit: a spell that couldn't be cast now is no option of a
+     * "you may cast a spell from among them" (CR 608.2d). Used by {@code LookAtTopCardsAndMayCastEffect}.
+     */
+    public boolean canCastFromLibraryWithoutPaying(GameData gameData, UUID controllerId, Card card,
+                                                   int spellManaValueLimit) {
+        return canCastWithoutPaying(gameData, controllerId, card, spellManaValueLimit, Zone.LIBRARY);
+    }
+
     private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
                                          Zone sourceZone) {
         if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)) return false;

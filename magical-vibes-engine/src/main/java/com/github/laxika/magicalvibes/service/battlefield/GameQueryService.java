@@ -14192,8 +14192,17 @@ public class GameQueryService {
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         for (ActiveStaticEffect<MatchingPermanentsCantActivateTapAbilitiesEffect> active
                 : activeStaticEffects(gameData, MatchingPermanentsCantActivateTapAbilitiesEffect.class)) {
-            if (!active.effect().locksAttachedPermanent() && staticSubjectNames(gameData, active.source(),
-                    active.controllerId(), controllerId, permanent, active.effect().subject())) {
+            if (!active.effect().locksAttachedPermanent()
+                    && active.effect().subject() instanceof PermanentSubject.ControlledBy set
+                    && staticSubjectNames(gameData, active.source(), active.controllerId(), controllerId, permanent,
+                    new PermanentSubject.ControlledBy(set.players(), new PermanentTruePredicate()))
+                    // The set's filter is judged on the permanent as it is now ("creatures with flying": a creature
+                    // given flying is one, CR 613), not on its printed characteristics.
+                    && predicateEvaluationService.matchesPermanentPredicate(permanent, set.filter(),
+                    FilterContext.of(gameData)
+                            .withSourceCardId(active.source().getCard().getId())
+                            .withSourceControllerId(active.controllerId())
+                            .withSourcePermanentId(active.source().getId()))) {
                 return true;
             }
         }

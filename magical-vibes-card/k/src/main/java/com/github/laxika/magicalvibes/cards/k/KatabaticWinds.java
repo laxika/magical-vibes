@@ -5,7 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+
+import java.util.List;
 
 /**
  * Katabatic Winds — {2}{G} Enchantment.
@@ -22,6 +26,7 @@ public class KatabaticWinds extends Card {
         PermanentHasKeywordPredicate flying = new PermanentHasKeywordPredicate(Keyword.FLYING);
         addStaticEffect(new MatchingCreaturesCantAttackOrBlockEffect(
                 flying, "Creatures with flying can't attack or block"));
-        addStaticEffect(new MatchingPermanentsCantActivateTapAbilitiesEffect(flying));
+        addStaticEffect(new MatchingPermanentsCantActivateTapAbilitiesEffect(new PermanentAllOfPredicate(
+                List.of(new PermanentIsCreaturePredicate(), flying))));
     }
 }

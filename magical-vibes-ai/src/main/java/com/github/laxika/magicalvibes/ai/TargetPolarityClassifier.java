@@ -331,11 +331,19 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL_REMOVAL;
         }
 
-        // A search whose filter reads a target permanent ("cards with the same name as target creature", Pack Hunt) kept
-        // the aim of its former record's name entry: the opposing creature.
+        // A search whose filter reads a target permanent ("cards with the same name as target creature", Pack Hunt) finds
+        // cards of the AI's own library, so it names one of the AI's own creatures.
         if (effect instanceof com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect search
                 && search.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-            return TargetPolarity.HARMFUL;
+            return TargetPolarity.BENEFICIAL;
+        }
+
+        // "Airbend all other creatures" after "up to one target creature" (Avatar's Wrath): the target is the one spared,
+        // the AI's own creature.
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect airbend
+                && airbend.subject() instanceof PermanentSubject.Except except
+                && except.excluded() instanceof PermanentSubject.TargetDeclaredElsewhere) {
+            return TargetPolarity.BENEFICIAL;
         }
 
         // A wipe that reads the target's power as a threshold and spares the target itself (Fell the Mighty, Mandate of
@@ -746,7 +754,6 @@ public class TargetPolarityClassifier {
             entry("PreventNextDamageAndRedirectEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectNextDamageFromChosenSourceToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectNextDamageFromTargetToAnotherTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandBottomThenDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -792,6 +799,7 @@ public class TargetPolarityClassifier {
             entry("TurnSourceFaceUpEffect", TargetPolarity.NEUTRAL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
+            entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.BENEFICIAL),
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),
             entry("EarthbendTargetLandEffect", TargetPolarity.BENEFICIAL),
             entry("EarthbendTargetLandThenFightEffect", TargetPolarity.BENEFICIAL),

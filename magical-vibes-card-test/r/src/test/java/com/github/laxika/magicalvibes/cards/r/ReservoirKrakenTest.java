@@ -102,6 +102,7 @@ class ReservoirKrakenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped Kraken puts no ability on the stack at the beginning of combat")
     void tappedKrakenDoesNotPutAnAbilityOnTheStack() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new ReservoirKraken());
         kraken.tap();
@@ -114,6 +115,7 @@ class ReservoirKrakenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Kraken tapped while its ability waits on the stack does nothing as it resolves")
     void krakenTappedInResponseDoesNothing() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new ReservoirKraken());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BrokersVeteran());
@@ -128,6 +130,7 @@ class ReservoirKrakenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no untapped opposing creature nobody is asked and the Kraken stays untapped")
     void noUntappedOpposingCreatureLeavesKrakenUntapped() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new ReservoirKraken());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BrokersVeteran());
@@ -141,6 +144,7 @@ class ReservoirKrakenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no opposing creatures nobody is asked and the Kraken stays untapped")
     void noOpposingCreaturesLeavesKrakenUntapped() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new ReservoirKraken());
 

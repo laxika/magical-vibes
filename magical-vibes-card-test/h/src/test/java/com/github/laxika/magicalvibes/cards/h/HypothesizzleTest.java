@@ -50,7 +50,7 @@ class HypothesizzleTest extends BaseCardTest {
     @DisplayName("Declining the discard still keeps the two drawn cards and deals no damage")
     void decliningDiscardDealsNoDamage() {
         harness.setHand(player1, List.of(new Hypothesizzle()));
-        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new VernadiShieldmate()));
         harness.addToBattlefield(player2, new VernadiShieldmate());
         addMana();
 
@@ -80,7 +80,7 @@ class HypothesizzleTest extends BaseCardTest {
 
 
     @Test
-    @DisplayName("Accepting with only lands in hand finishes without discarding or dealing damage")
+    @DisplayName("With only lands in hand the discard isn't offered, and nothing is discarded or dealt")
     void cannotDiscardWhenOnlyLandsWereDrawn() {
         harness.setHand(player1, List.of(new Hypothesizzle()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
@@ -88,7 +88,6 @@ class HypothesizzleTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveInstant(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();

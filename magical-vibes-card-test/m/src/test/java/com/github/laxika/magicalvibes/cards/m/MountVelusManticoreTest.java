@@ -76,14 +76,13 @@ class MountVelusManticoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An empty hand cannot create the damage trigger")
+    @DisplayName("An empty hand isn't offered the discard and cannot create the damage trigger")
     void emptyHandDoesNotDealDamage() {
         harness.addToBattlefield(player1, new MountVelusManticore());
         harness.setHand(player1, List.of());
 
         triggerAtBeginningOfCombat(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

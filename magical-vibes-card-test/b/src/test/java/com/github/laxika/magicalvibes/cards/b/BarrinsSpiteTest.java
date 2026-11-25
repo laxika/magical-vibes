@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
 import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
 import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BarrinsSpite.class, BenalishLancer.class, CaptainSisay.class, EmpressGalina.class,
-        KavuAggressor.class})
+        KavuAggressor.class, AlexiosDeimosOfKosmos.class})
 class BarrinsSpiteTest extends BaseCardTest {
 
     private void castBarrinsSpite(Permanent first, Permanent second) {
@@ -55,6 +59,36 @@ class BarrinsSpiteTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Kavu Aggressor");
         harness.assertNotOnBattlefield(player2, "Kavu Aggressor");
         harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInHand(player2, "Benalish Lancer");
+    }
+
+    @Test
+    @DisplayName("A creature that can't be sacrificed can't be chosen; the other is sacrificed and it returns to hand")
+    void creatureThatCantBeSacrificedIsNotChosenToSacrifice() {
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+        Permanent alexios = addCreatureReady(player2, new AlexiosDeimosOfKosmos());
+
+        castBarrinsSpite(kavu, alexios);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Kavu Aggressor");
+        harness.assertInHand(player2, "Alexios, Deimos of Kosmos");
+    }
+
+    @Test
+    @DisplayName("When neither creature can be sacrificed, the controller still chooses one and the other returns to hand")
+    void neitherCanBeSacrificedStillReturnsTheOther() {
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+        Permanent lancer = addCreatureReady(player2, new BenalishLancer());
+        PermanentGrants.ability(gd, kavu, StaticAbility.of(new CantBeSacrificedEffect()));
+        PermanentGrants.ability(gd, lancer, StaticAbility.of(new CantBeSacrificedEffect()));
+
+        castBarrinsSpite(kavu, lancer);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(kavu.getId(), lancer.getId());
+        harness.handlePermanentChosen(player2, kavu.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(kavu);
         harness.assertInHand(player2, "Benalish Lancer");
     }
 

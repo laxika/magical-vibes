@@ -203,6 +203,25 @@ class SoulTitheTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Moving the Aura before resolution keeps X the mana value of the permanent it enchanted as it triggered")
+    void paymentUsesManaValueOfAttachmentAtTrigger() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent replacement = addCreatureReady(player2, new GrizzlyBears());
+        attachSoulTithe(original);
+        Permanent aura = findPermanent(player1, "Soul Tithe");
+        advanceToUpkeep(player2);
+
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handlePermanentChosen(player1, replacement.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player2, true));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(original, replacement);
+    }
+
+    @Test
     @DisplayName("The upkeep player cannot sacrifice a permanent whose controller has changed")
     void decliningAfterControlChangeDoesNotSacrificePermanent() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());

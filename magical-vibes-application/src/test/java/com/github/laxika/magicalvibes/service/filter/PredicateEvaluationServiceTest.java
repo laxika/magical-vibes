@@ -3617,4 +3617,19 @@ class PredicateEvaluationServiceTest {
         equipment.setCard(nonLegendaryEquipment);
         assertThat(evaluator.matchesPermanentPredicate(gd, creature, predicate)).isFalse();
     }
+
+    @Test
+    @DisplayName("A card shares a name with a spell any player cast this turn, and with none before one is cast")
+    void cardSharesNameWithSpellCastThisTurn() {
+        Card inHand = createCreature("Grizzly Bears", 2, 2, CardColor.GREEN);
+        Card cast = createCreature("Grizzly Bears", 2, 2, CardColor.GREEN);
+        Card other = createCreature("Hill Giant", 3, 3, CardColor.RED);
+        var predicate = new com.github.laxika.magicalvibes.model.filter.CardSharesNameWithSpellCastThisTurnPredicate();
+
+        assertThat(evaluator.matchesCardPredicate(inHand, predicate, null, gd, player1Id)).isFalse();
+        gd.recordSpellCast(player2Id, cast);
+
+        assertThat(evaluator.matchesCardPredicate(inHand, predicate, null, gd, player1Id)).isTrue();
+        assertThat(evaluator.matchesCardPredicate(other, predicate, null, gd, player1Id)).isFalse();
+    }
 }

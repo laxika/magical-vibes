@@ -61,6 +61,21 @@ class NascentMetamorphTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The block trigger, like the attack trigger, can target only an opponent")
+    void blockTriggerTargetsOnlyAnOpponent() {
+        addCreatureReady(player1, new NascentMetamorph());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
+    }
+
+    @Test
     @DisplayName("A missing creature leaves the Metamorph unchanged and bottoms all revealed cards")
     void noCreatureFound() {
         Permanent metamorph = addCreatureReady(player1, new NascentMetamorph());
