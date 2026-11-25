@@ -1,19 +1,42 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArrogantPoet.class})
+@CardUsed({ArrogantPoet.class, CourageousResolve.class})
 class ArrogantPoetTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A controller who can't lose life (Courageous Resolve) can't pay the life and isn't asked (CR 119.8)")
+    void controllerWhoCantLoseLifeIsNotAsked() {
+        Permanent poet = addCreatureReady(player1, new ArrogantPoet());
+        harness.setLife(player1, 5);
+        harness.setHand(player1, List.of(new CourageousResolve()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gqs.canPlayerLoseLife(gd, player1.getId())).isFalse();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, poet, Keyword.FLYING)).isFalse();
+    }
 
     @Test
     void mayPayLifeToGainFlying() {

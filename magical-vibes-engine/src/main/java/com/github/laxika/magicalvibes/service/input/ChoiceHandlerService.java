@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -166,6 +167,7 @@ public class ChoiceHandlerService {
     private final org.springframework.beans.factory.ObjectProvider<MayCastHandlerService> mayCastHandlerServiceProvider;
 
     private final GameQueryService gameQueryService;
+    private final ResolutionCostPaymentService resolutionCostPaymentService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     @Autowired @Lazy
@@ -4770,8 +4772,7 @@ public class ChoiceHandlerService {
                 paid = true;
             }
         } else if (ctx.payLifeOption().equals(chosen)
-                && gameQueryService.canPlayerLifeChange(gameData, ctx.payerId())
-                && gameData.getLife(ctx.payerId()) >= ctx.lifeCost()) {
+                && resolutionCostPaymentService.canPayLife(gameData, ctx.payerId(), ctx.lifeCost())) {
             paysLife = true;
         } else if (!ChoiceContext.TargetPlayerManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
             throw new IllegalArgumentException("Invalid mana-or-life payment choice: " + chosen);
@@ -4811,15 +4812,15 @@ public class ChoiceHandlerService {
         boolean paid = false;
         boolean paysLife = false;
         if (ctx.payManaOption().equals(chosen)) {
-            ManaCost cost = new ManaCost(ctx.manaCost());
-            ManaPool pool = gameData.playerManaPools.get(ctx.affectedPlayerId());
-            if (pool != null && cost.canPayResolutionCost(pool)) {
-                cost.payResolutionCost(pool);
-                paid = true;
-            }
+            // The Aura's trigger is the resolution waiting on this answer; mana paid for it is a tax paid to its
+            // controller.
+            UUID auraControllerId = gameData.pendingEffectResolutionEntry != null
+                    ? gameData.pendingEffectResolutionEntry.getControllerId()
+                    : gameQueryService.findPermanentController(gameData, ctx.sourcePermanentId());
+            paid = resolutionCostPaymentService.payManaFromPool(
+                    gameData, ctx.affectedPlayerId(), new ManaCost(ctx.manaCost()), auraControllerId);
         } else if (ctx.payLifeOption().equals(chosen)
-                && gameQueryService.canPlayerLifeChange(gameData, ctx.affectedPlayerId())
-                && gameData.getLife(ctx.affectedPlayerId()) >= ctx.lifeCost()) {
+                && resolutionCostPaymentService.canPayLife(gameData, ctx.affectedPlayerId(), ctx.lifeCost())) {
             paysLife = true;
         } else if (!ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
             throw new IllegalArgumentException("Invalid enchanted-permanent payment choice: " + chosen);

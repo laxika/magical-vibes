@@ -25,6 +25,11 @@ A triggered ability's targets, its optional effect's included, are chosen by the
 Owner: `MayAbilityHandlerService.handleResolutionTimeMayChoice`.
 Why: targets are fixed on the stack; an ability with none resolves without one.
 
+### A cost an effect asks for as it resolves is paid through one service (CR 118.12, 118.3)
+"[Do X] unless [P pays]" / "P may pay; if they don't": ask `ResolutionCostPaymentService.canPay` (pool and makeable mana, K'rrik's life, `canPayLife`) and pay with `pay` (mana with the tax-paid event, life, the shared discard and sacrifice prompts), any player as payer; a hand-rolled pool payment uses `payManaFromPool`. A new ransom kind is a case there.
+Owner: `ResolutionCostPaymentService`.
+Why: hand-rolled payments forgot the tax-paid event (Tax Taker) and judged life by "can the life total change" (CR 119.8).
+
 ## Coin flips (Krark's Thumb)
 
 ### A marked handler changes nothing before its flip

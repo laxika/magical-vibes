@@ -1,6 +1,22 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AegisSculptor;
+import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.a.ArcumsWhistle;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.CrystalShard;
+import com.github.laxika.magicalvibes.cards.c.CutTheTethers;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.e.Erosion;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IsolationCell;
+import com.github.laxika.magicalvibes.cards.l.LanternKami;
+import com.github.laxika.magicalvibes.cards.l.LimDLsHex;
+import com.github.laxika.magicalvibes.cards.m.MindWhip;
+import com.github.laxika.magicalvibes.cards.o.Oasis;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SoulBarrier;
 import com.github.laxika.magicalvibes.cards.e.EsperSentinel;
 import com.github.laxika.magicalvibes.cards.i.IcefallRegent;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -8,9 +24,13 @@ import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.s.SmotheringTithe;
 import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +38,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TaxTaker.class, TitheTaker.class, DarkRitual.class, EsperSentinel.class,
-        MindStone.class, NornsAnnex.class, SmotheringTithe.class, IcefallRegent.class, UltimatePrice.class})
+        MindStone.class, NornsAnnex.class, SmotheringTithe.class, IcefallRegent.class, UltimatePrice.class,
+        AegisSculptor.class, GiantGrowth.class, SoulBarrier.class, GrizzlyBears.class, IsolationCell.class,
+        LimDLsHex.class, Erosion.class, Oasis.class, CutTheTethers.class, LanternKami.class, CrystalShard.class,
+        AlphaMyr.class, ArcumsWhistle.class, BalduvianBears.class, TitaniaRuggedRumbler.class, Shock.class,
+        MindWhip.class})
 class TaxTakerTest extends BaseCardTest {
 
     @Test
@@ -168,6 +192,178 @@ class TaxTakerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Icefall Regent");
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Nested
+    @DisplayName("Mana an opponent pays as an effect of a permanent you control resolves")
+    class ResolutionTimeTaxes {
+
+        @Test
+        @DisplayName("Paying a ward's {2} makes two Treasures")
+        void wardPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            Permanent sculptor = harness.addToBattlefieldAndReturn(player1, new AegisSculptor());
+            prepareOpponentTurn();
+            harness.setHand(player2, List.of(new GiantGrowth()));
+            harness.addMana(player2, ManaColor.GREEN, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+            harness.castInstant(player2, 0, sculptor.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Paying Soul Barrier's {2} makes two Treasures")
+        void soulBarrierPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player1, new SoulBarrier());
+            prepareOpponentTurn();
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+            harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Paying Isolation Cell's {2} makes two Treasures")
+        void isolationCellPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player1, new IsolationCell());
+            prepareOpponentTurn();
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+            harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Paying {B} for Lim-Dûl's Hex makes one Treasure, the mana paid")
+        void limDulsHexPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player1, new LimDLsHex());
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.addMana(player2, ManaColor.BLACK, 1);
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isOne();
+        }
+
+        @Test
+        @DisplayName("Paying Erosion's {1} makes one Treasure")
+        void erosionPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            Permanent land = harness.addToBattlefieldAndReturn(player2, new Oasis());
+            harness.addToBattlefieldAndReturn(player1, new Erosion()).setAttachedTo(land.getId());
+            advanceToUpkeep(player2);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+            harness.passBothPriorities();
+            harness.handleListChoice(player2, "Pay {1}");
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isOne();
+        }
+
+        @Test
+        @DisplayName("Paying Cut the Tethers' {3} makes three Treasures")
+        void cutTheTethersPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player2, new LanternKami());
+            harness.castFromHand(player1, new CutTheTethers(), "{2}{U}{U}");
+            harness.passBothPriorities();
+
+            harness.addMana(player2, ManaColor.COLORLESS, 3);
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Paying Crystal Shard's {1} makes one Treasure")
+        void crystalShardPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player1, new CrystalShard());
+            Permanent target = addCreatureReady(player2, new AlphaMyr());
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+            harness.activateAbility(player1, 1, 1, null, target.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isOne();
+        }
+
+        @Test
+        @DisplayName("Paying Arcum's Whistle's {X} makes X Treasures")
+        void arcumsWhistlePayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            addCreatureReady(player1, new ArcumsWhistle());
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            Permanent bears = addCreatureReady(player2, new BalduvianBears());
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+            harness.activateAbility(player1, 1, 0, null, bears.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Paying Titania, Rugged Rumbler's ward {2} makes two Treasures")
+        void titaniaWardPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            Permanent titania = harness.addToBattlefieldAndReturn(player1, new TitaniaRuggedRumbler());
+            prepareOpponentTurn();
+            harness.setHand(player2, List.of(new Shock(), new Oasis()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+            harness.castInstant(player2, 0, titania.getId());
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Paying Mind Whip's {3} makes three Treasures")
+        void mindWhipPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            Permanent creature = addCreatureReady(player2, new BalduvianBears());
+            harness.addToBattlefieldAndReturn(player1, new MindWhip()).setAttachedTo(creature.getId());
+            advanceToUpkeep(player2);
+            harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
+        }
     }
 
     private void prepareOpponentTurn() {

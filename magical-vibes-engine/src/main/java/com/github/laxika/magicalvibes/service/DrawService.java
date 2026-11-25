@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
@@ -1395,8 +1396,7 @@ public class DrawService {
 
     private boolean zursWeirdingPayable(GameData gameData, UUID drawingPlayerId) {
         UUID otherPlayerId = gameQueryService.getOpponentId(gameData, drawingPlayerId);
-        return gameData.getLife(otherPlayerId) >= 2
-                && gameQueryService.canPlayerLifeChange(gameData, otherPlayerId);
+        return ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, otherPlayerId, 2);
     }
 
     /** Whether Zur's Weirding has already been declined for the draw currently being resolved. */

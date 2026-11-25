@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -82,8 +83,7 @@ public class SylvanLibraryChoiceInteractionHandler
         gameData.interaction.clearAwaitingInput();
 
         int payments = interaction.resolveCount() - toppedIds.size();
-        boolean canPay = gameData.getLife(playerId) >= LIFE_PER_CARD
-                && gameQueryService.canPlayerLifeChange(gameData, playerId);
+        boolean canPay = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, playerId, LIFE_PER_CARD);
         if (permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData, () -> {
             lifeSupport.askBeforeRepeatedLifeLossesThatFollowAChange(
                     gameData, playerId, LIFE_PER_CARD, canPay ? payments : 0);
@@ -127,8 +127,7 @@ public class SylvanLibraryChoiceInteractionHandler
         // card on top instead (the "pay 4 life or put on top" option that can be performed).
         int remaining = interaction.resolveCount() - topped.size();
         for (int i = 0; i < remaining; i++) {
-            if (gameData.getLife(playerId) >= LIFE_PER_CARD
-                    && gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            if (ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, playerId, LIFE_PER_CARD)) {
                 lifeSupport.applyLifePayment(gameData, playerId, LIFE_PER_CARD, "Sylvan Library");
             } else {
                 Card forced = takeNextEligible(hand, interaction.drawnThisTurnCardIds());

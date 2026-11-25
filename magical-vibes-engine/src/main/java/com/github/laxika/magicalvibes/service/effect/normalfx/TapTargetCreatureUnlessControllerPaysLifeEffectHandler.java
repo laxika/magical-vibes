@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -49,8 +50,7 @@ public class TapTargetCreatureUnlessControllerPaysLifeEffectHandler implements N
 
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, targetPermanentId);
         boolean canPay = targetControllerId != null
-                && gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
-                && gameData.getLife(targetControllerId) >= e.lifeCost();
+                && ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, targetControllerId, e.lifeCost());
 
         if (!canPay) {
             // Can't pay the life — tap the creature.

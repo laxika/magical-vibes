@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -368,8 +369,7 @@ public class MayAbilityHandlerService {
                 if (!cost.canPayResolutionCost(pool) && ability.lifeCost() > 0) {
                     // "Pay {M} or N life" — mana that would empty at end of step is the cheaper
                     // resource, so life is only spent when the mana cost cannot be paid.
-                    boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, player.getId())
-                            && gameData.getLife(player.getId()) >= ability.lifeCost();
+                    boolean canPayLife = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, player.getId(), ability.lifeCost());
                     if (canPayLife) {
                         if (payLifeAskingDeathReplacementsFirst(gameData, player, ability, ability.lifeCost())) {
                             return;
@@ -380,8 +380,7 @@ public class MayAbilityHandlerService {
                 // "Pay {M} and N life" (Purgatory) — both halves are part of one cost, so neither is
                 // paid unless both can be.
                 boolean canPayAdditionalLife = ability.additionalLifeCost() == 0
-                        || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
-                                && gameData.getLife(player.getId()) >= ability.additionalLifeCost());
+                        || (ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, player.getId(), ability.additionalLifeCost()));
                 // K'rrik-style permission: each black symbol in the cost may be paid with 2 life instead.
                 ManaCost blackAsLifeCost = cost.withBlackManaAsPhyrexian();
                 if (!paidWithLife && ability.lifeCost() == 0 && ability.additionalLifeCost() == 0
@@ -389,8 +388,7 @@ public class MayAbilityHandlerService {
                         && gameQueryService.canPayBlackManaWithLife(gameData, player.getId())
                         && blackAsLifeCost.canPayResolutionCost(pool)) {
                     int lifeOwed = blackAsLifeCost.payPhyrexianManaAuto(new ManaPool(pool), 0);
-                    if (gameQueryService.canPlayerLifeChange(gameData, player.getId())
-                            && gameData.getLife(player.getId()) >= lifeOwed) {
+                    if (ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, player.getId(), lifeOwed)) {
                         if (lifeOwed > 0 && payLifeAskingDeathReplacementsFirst(gameData, player, ability, lifeOwed)) {
                             return;
                         }

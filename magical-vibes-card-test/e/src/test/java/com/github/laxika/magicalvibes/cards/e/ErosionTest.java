@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
@@ -22,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Erosion.class, Oasis.class, BogImp.class, Disenchant.class})
+@CardUsed({Erosion.class, Oasis.class, BogImp.class, Disenchant.class, CourageousResolve.class})
 class ErosionTest extends BaseCardTest {
 
     @Test
@@ -326,6 +327,27 @@ class ErosionTest extends BaseCardTest {
                 .extracting(permanent -> permanent.getCard().getName())
                 .doesNotContain("Zombie");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A controller who can't lose life (Courageous Resolve) and has no mana can't pay, and the land is destroyed (CR 119.8)")
+    void controllerWhoCantLoseLifeCantPayLife() {
+        Permanent land = addLand(player2);
+        attachErosion(land);
+        advanceToUpkeep(player2);
+        harness.setLife(player2, 5);
+        harness.setHand(player2, List.of(new CourageousResolve()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        assertThat(gqs.canPlayerLoseLife(gd, player2.getId())).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player2, "Oasis");
+        harness.assertLife(player2, 5);
     }
 
     private void attachErosion(Permanent land) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,8 +36,7 @@ public class MayPayLifeEffectResolutionHandler implements NormalEffectHandlerBea
         if (payer == null) {
             return;
         }
-        if (mayPayLife.lifeCost() > 0 && (!gameQueryService.canPlayerLifeChange(gameData, payer)
-                || gameData.getLife(payer) < mayPayLife.lifeCost())) {
+        if (!ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, payer, mayPayLife.lifeCost())) {
             if (mayPayLife.elseEffect() != null) {
                 entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(mayPayLife.elseEffect()));
             }

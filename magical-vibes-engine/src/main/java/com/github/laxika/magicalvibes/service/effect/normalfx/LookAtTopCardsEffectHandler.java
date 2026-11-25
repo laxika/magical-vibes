@@ -591,7 +591,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
             int max = Math.min(chooseCount, matchingCards.size());
             if (e.payLifePerSelectedCard() > 0) {
-                int affordable = gameQueryService.canPlayerLifeChange(gameData, controllerId)
+                int affordable = gameQueryService.canPlayerLoseLife(gameData, controllerId)
                         ? gameData.getLife(controllerId) / e.payLifePerSelectedCard()
                         : 0;
                 max = Math.min(max, affordable);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -48,8 +49,7 @@ public class TargetPlayerMayPayManaOrLifeEffectHandler implements NormalEffectHa
         }
 
         boolean canPayMana = new ManaCost(e.manaCost()).canPay(gameData.playerManaPools.get(payerId));
-        boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, payerId)
-                && gameData.getLife(payerId) >= e.lifeCost();
+        boolean canPayLife = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, payerId, e.lifeCost());
         if (!canPayMana && !canPayLife) {
             return;
         }

@@ -117,6 +117,31 @@ class TitaniaRuggedRumblerTest extends BaseCardTest {
         assertThat(titania.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Ward offers its mana payment when the mana can still be made, though the pool is empty (CR 118.3, 605.3a)")
+    void wardOffersManaThePayerCanStillMake() {
+        Permanent titania = addReadyTitania();
+        beginOpponentTurn();
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player2, List.of(new Shock(), new Forest()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, titania.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).manaCost())
+                .isEqualTo("{2}");
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(titania.getMarkedDamage()).isEqualTo(2);
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
     private void castTitania(Integer discardHandCardIndex) {
         if (discardHandCardIndex == null) {
             harness.castCreature(player1, 0);

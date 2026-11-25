@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -16,17 +16,13 @@ import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -39,8 +35,10 @@ import org.springframework.stereotype.Component;
  *
  * <p>What can pay: the payer's mana pool and the mana they could still make (they may activate mana abilities while
  * asked, CR 605.3a); mana that can be spent only on {X} for an announced-X ransom; 2 life for each {B} under K'rrik,
- * Son of Yawgmoth; life only while the payer can lose life (CR 119.4, 119.8). An amount read from the source reads the
- * source on the battlefield, else as it last existed (CR 608.2h).
+ * Son of Yawgmoth; life only while the payer can lose life (CR 119.4, 119.8); all of it judged and paid by
+ * {@link ResolutionCostPaymentService}, which also raises the tax-paid event for mana paid for another player's spell
+ * or permanent. An amount read from the source reads the source on the battlefield, else as it last existed
+ * (CR 608.2h).
  */
 @Slf4j
 @Component
@@ -50,23 +48,30 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final LifeSupport lifeSupport;
-    @Autowired
-    @Lazy
-    private PotentialManaService potentialManaService;
-    @Autowired
-    @Lazy
-    private PermanentChoiceHandlerService permanentChoiceHandlerService;
+    private final ResolutionCostPaymentService costPayment;
 
+    @Autowired
     public UnlessPaysEffectHandler(SubjectResolutionService subjectResolutionService,
                                    AmountEvaluationService amountEvaluationService,
                                    GameQueryService gameQueryService, GameLogService gameLogService,
-                                   LifeSupport lifeSupport) {
+                                   ResolutionCostPaymentService costPayment) {
         this.subjectResolutionService = subjectResolutionService;
         this.amountEvaluationService = amountEvaluationService;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
-        this.lifeSupport = lifeSupport;
+        this.costPayment = costPayment;
+    }
+
+    /**
+     * A handler outside a Spring context, paying through a {@link ResolutionCostPaymentService} of its own: that one
+     * counts only the mana in the payer's pool, as it has no mana abilities to look at.
+     */
+    public UnlessPaysEffectHandler(SubjectResolutionService subjectResolutionService,
+                                   AmountEvaluationService amountEvaluationService,
+                                   GameQueryService gameQueryService, GameLogService gameLogService,
+                                   LifeSupport lifeSupport) {
+        this(subjectResolutionService, amountEvaluationService, gameQueryService, gameLogService,
+                new ResolutionCostPaymentService(gameQueryService, lifeSupport));
     }
 
     /**
@@ -86,13 +91,12 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             return life > 0 ? manaCost + " and " + life + " life" : manaCost;
         }
 
-        /** The mana cost to pay, or {@code null}. */
-        public ManaCost mana() {
+        /** The ransom as the cost {@link ResolutionCostPaymentService} pays. */
+        public CostEffect cost() {
             if (manaCost == null) {
-                return null;
+                return new PayLifeCost(life);
             }
-            ManaCost cost = new ManaCost(manaCost);
-            return xCost ? cost.asAnnouncedXCost() : cost;
+            return new PayManaCost(manaCost, null, null, false, life, false, xCost);
         }
     }
 
@@ -189,29 +193,12 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
      * could make, {B} paid with 2 life under K'rrik included, and the life while they can lose life (CR 119.8).
      */
     private boolean canPay(GameData gameData, UUID payerId, Ransom ransom) {
-        int lifeForBlack = 0;
-        ManaCost cost = ransom.mana();
-        if (cost != null && !canPayMana(gameData, payerId, cost)) {
-            ManaCost blackAsLife = cost.withBlackManaAsPhyrexian();
-            if (blackAsLife == cost || !gameQueryService.canPayBlackManaWithLife(gameData, payerId)
-                    || !canPayMana(gameData, payerId, blackAsLife)) {
-                return false;
-            }
-            lifeForBlack = blackAsLife.payPhyrexianManaAuto(new ManaPool(gameData.playerManaPools.get(payerId)), 0);
-        }
-        return canPayLife(gameData, payerId, ransom.life() + lifeForBlack);
+        return costPayment.canPay(gameData, payerId, ransom.cost(), null);
     }
 
-    private boolean canPayMana(GameData gameData, UUID payerId, ManaCost cost) {
-        return cost.canPayResolutionCost(gameData.playerManaPools.get(payerId))
-                || potentialManaService != null
-                && cost.canPay(potentialManaService.buildVirtualManaPool(gameData, payerId));
-    }
-
-    /** Whether {@code playerId} could pay {@code amount} life: always 0; more needs that much and losing life (CR 119.4, 119.8). */
+    /** Whether {@code playerId} could pay {@code amount} life (CR 119.4, 119.8): {@link ResolutionCostPaymentService#canPayLife}. */
     public boolean canPayLife(GameData gameData, UUID playerId, int amount) {
-        return amount <= 0 || gameQueryService.canPlayerLoseLife(gameData, playerId)
-                && gameData.getLife(playerId) >= amount;
+        return costPayment.canPayLife(gameData, playerId, amount);
     }
 
     /**
@@ -228,46 +215,12 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 ability.additionalLifeCost());
         StackEntry spell = unless.counters() ? spellOnStack(gameData, ability.targetCardId()) : null;
         if (accepted) {
-            ManaPool pool = gameData.playerManaPools.get(payerId);
-            ManaCost cost = ransom.mana();
-            ManaCost toPay = cost;
-            int lifeForBlack = 0;
-            if (cost != null && !cost.canPayResolutionCost(pool)
-                    && gameQueryService.canPayBlackManaWithLife(gameData, payerId)) {
-                ManaCost blackAsLife = cost.withBlackManaAsPhyrexian();
-                if (blackAsLife != cost && blackAsLife.canPayResolutionCost(pool)) {
-                    toPay = blackAsLife;
-                    lifeForBlack = blackAsLife.payPhyrexianManaAuto(new ManaPool(pool), 0);
-                }
+            ResolutionCostPaymentService.Outcome outcome = costPayment.pay(gameData, player, ransom.cost(),
+                    new ResolutionCostPaymentService.Payment(ability.sourceCard(), ability.sourceControllerId(), ability));
+            if (outcome == ResolutionCostPaymentService.Outcome.ASKING) {
+                return null;
             }
-            int life = ransom.life() + lifeForBlack;
-            if ((toPay == null || toPay.canPayResolutionCost(pool)) && canPayLife(gameData, payerId, life)) {
-                ManaCost manaPaid = toPay;
-                boolean phyrexian = lifeForBlack > 0;
-                Runnable payment = () -> {
-                    if (manaPaid != null) {
-                        if (phyrexian) {
-                            manaPaid.payPhyrexianManaAuto(pool, 0);
-                        }
-                        manaPaid.payResolutionCost(pool);
-                        ActionEvents.taxPaid(gameData, payerId, ability.sourceControllerId(), cost.getManaValue());
-                    }
-                    if (life > 0) {
-                        lifeSupport.applyLifePayment(gameData, payerId, life, ability.sourceCard().getName());
-                    }
-                };
-                if (life > 0) {
-                    boolean stopped = permanentChoiceHandlerService.answerAskingDeathReplacementsFirst(
-                            gameData, player, ability, true, () -> {
-                                lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, Map.of(payerId, life));
-                                payment.run();
-                            });
-                    if (stopped) {
-                        return null;
-                    }
-                } else {
-                    payment.run();
-                }
+            if (outcome == ResolutionCostPaymentService.Outcome.PAID) {
                 if (spell != null) {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " pays " + ransom.text() + ". ", spell.getCard(), " is not countered."));

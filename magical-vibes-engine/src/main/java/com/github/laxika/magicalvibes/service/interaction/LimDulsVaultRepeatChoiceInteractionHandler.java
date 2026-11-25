@@ -56,7 +56,7 @@ public class LimDulsVaultRepeatChoiceInteractionHandler
         UUID controllerId = interaction.playerId();
         boolean accepted = ((InteractionAnswer.MayAbilityChosen) answer).accepted();
         if (accepted && (gameData.getLife(controllerId) < 1
-                || !gameQueryService.canPlayerLifeChange(gameData, controllerId))) {
+                || !gameQueryService.canPlayerLoseLife(gameData, controllerId))) {
             throw new IllegalStateException("Cannot pay 1 life");
         }
 

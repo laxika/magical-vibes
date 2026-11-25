@@ -4499,7 +4499,7 @@ public class LibraryChoiceHandlerService {
     private void requireControllerLifeAffordable(GameData gameData, int selectedCount,
                                                  UUID controllerId, int lifeCost) {
         int totalLifeCost = selectedCount * lifeCost;
-        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
             throw new IllegalStateException("Not enough life to pay for " + selectedCount
                     + " cards (need " + totalLifeCost + ", have " + gameData.getLife(controllerId) + ")");
         }

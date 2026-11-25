@@ -106,7 +106,7 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
             }
             UUID playerId = state.order.get(state.index);
             int life = gameData.getLife(playerId);
-            if (life <= 0 || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            if (life <= 0 || !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 state.playersActedThisRound++;
                 state.index = (state.index + 1) % state.order.size();
                 continue;

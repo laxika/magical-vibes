@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ForumNecroscribe.class, GrizzlyBears.class, HillGiant.class, Shock.class,
-        VolcanicHammer.class, ProdigalSorcerer.class})
+        VolcanicHammer.class, ProdigalSorcerer.class, FieryTemper.class})
 class ForumNecroscribeTest extends BaseCardTest {
 
     @Test
@@ -271,6 +272,24 @@ class ForumNecroscribeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Shock");
         assertThat(necroscribe.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A madness card discarded to pay ward is exiled and its madness ability triggers")
+    void madnessCardDiscardedForWardTriggersMadness() {
+        Permanent necroscribe = addReadyNecroscribe();
+        beginOpponentTurn();
+        FieryTemper temper = new FieryTemper();
+        harness.setHand(player2, List.of(new Shock(), temper));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, necroscribe.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getId().equals(temper.getId()));
+        assertThat(gd.stack).anyMatch(entry -> entry.getDescription().contains("madness"));
     }
 
     private Permanent addReadyNecroscribe() {

@@ -162,7 +162,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean, AsksDe
                 continue;
             }
             int lifeCost = kept * xValue;
-            if (lifeCost > 0 && (!gameQueryService.canPlayerLifeChange(gameData, playerId)
+            if (lifeCost > 0 && (!gameQueryService.canPlayerLoseLife(gameData, playerId)
                     || gameData.getLife(playerId) < lifeCost)) {
                 // Life became unpayable since the choice — treat as unpaid: drop keeps for this player.
                 if (battlefield != null) {
@@ -215,7 +215,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean, AsksDe
         if (xValue <= 0) {
             return creatureCount;
         }
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             return 0;
         }
         int life = gameData.getLife(playerId);

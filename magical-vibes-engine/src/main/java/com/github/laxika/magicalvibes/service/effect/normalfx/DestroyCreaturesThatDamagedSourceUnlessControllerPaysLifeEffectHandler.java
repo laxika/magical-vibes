@@ -89,7 +89,7 @@ public class DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHand
             }
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
             int committed = controllerId != null && controllerId.equals(payerId) ? effect.lifeCost() : 0;
-            if (controllerId != null && gameQueryService.canPlayerLifeChange(gameData, controllerId)
+            if (controllerId != null && gameQueryService.canPlayerLoseLife(gameData, controllerId)
                     && gameData.getLife(controllerId) - committed >= effect.lifeCost()) {
                 next = permanentId;
                 nextControllerId = controllerId;

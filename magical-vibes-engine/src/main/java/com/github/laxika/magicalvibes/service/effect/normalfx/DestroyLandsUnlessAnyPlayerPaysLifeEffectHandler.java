@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -78,9 +79,7 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
 
     public boolean canPayLife(GameData gameData, UUID playerId, int lifeCost) {
         return gameData.playerIds.contains(playerId)
-                && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                && gameQueryService.canPlayerLoseLife(gameData, playerId)
-                && gameData.getLife(playerId) >= lifeCost;
+                && ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, playerId, lifeCost);
     }
 
     /**

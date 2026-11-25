@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -52,8 +53,7 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffectHandler imp
     }
 
     public boolean canPay(GameData gameData, UUID playerId, int lifeCost) {
-        return gameQueryService.canPlayerLifeChange(gameData, playerId)
-                && gameData.getLife(playerId) >= lifeCost;
+        return ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, playerId, lifeCost);
     }
 
     /** Returns the dead card to its owner's hand, or fizzles if it has moved since the trigger. */

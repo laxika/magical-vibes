@@ -1681,7 +1681,7 @@ public class InteractionPromptProjectionRegistry {
         String names = interaction.lookedAt().stream().map(Card::getName).collect(Collectors.joining(", "));
         boolean canPayLife = gameData.getLife(interaction.playerId()) >= 1
                 && (gameQueryService == null
-                || gameQueryService.canPlayerLifeChange(gameData, interaction.playerId()));
+                || gameQueryService.canPlayerLoseLife(gameData, interaction.playerId()));
         return InteractionPromptMessage.acceptDecline(
                 "Top of your library: " + names + ". Pay 1 life to put them on the bottom and look at five more?",
                 canPayLife,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -59,8 +60,7 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implemen
         ManaCost cost = new ManaCost(e.manaCost());
         ManaPool pool = gameData.playerManaPools.get(payerId);
         boolean canPayMana = cost.canPayResolutionCost(pool);
-        boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, payerId)
-                && gameData.getLife(payerId) >= e.lifeCost();
+        boolean canPayLife = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, payerId, e.lifeCost());
 
         if (!canPayMana && !canPayLife) {
             // Can't pay either — destroy the enchanted permanent now.

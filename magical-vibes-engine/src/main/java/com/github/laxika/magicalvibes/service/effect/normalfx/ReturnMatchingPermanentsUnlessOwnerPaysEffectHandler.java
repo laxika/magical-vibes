@@ -62,7 +62,7 @@ public class ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler implements Nor
             return;
         }
         gameData.bounceUnlessPaysRemaining.addAll(matching.subList(1, matching.size()));
-        offerNext(gameData, e, entry.getCard(), matching.getFirst());
+        offerNext(gameData, e, entry.getCard(), entry.getControllerId(), matching.getFirst());
     }
 
     /**
@@ -77,15 +77,17 @@ public class ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler implements Nor
         if (gameData.bounceUnlessPaysRemaining.isEmpty()) {
             return;
         }
-        offerNext(gameData, effect, ability.sourceCard(), gameData.bounceUnlessPaysRemaining.removeFirst());
+        offerNext(gameData, effect, ability.sourceCard(), ability.sourceControllerId(),
+                gameData.bounceUnlessPaysRemaining.removeFirst());
     }
 
     /**
-     * Offers the pay-or-bounce prompt for {@code permanentId}, skipping ahead through the queue while
+     * Offers the pay-or-bounce prompt for {@code permanentId} (the mana paid is a tax paid to
+     * {@code sourceControllerId}, the spell's controller), skipping ahead through the queue while
      * a permanent has left the battlefield (or has no owner left to decide).
      */
     private void offerNext(GameData gameData, ReturnMatchingPermanentsUnlessOwnerPaysEffect effect,
-            Card sourceCard, UUID permanentId) {
+            Card sourceCard, UUID sourceControllerId, UUID permanentId) {
         UUID current = permanentId;
         while (true) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, current);
@@ -94,7 +96,8 @@ public class ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler implements Nor
                 String prompt = "Pay " + effect.manaCost() + "? If you don't, " + FaceDownVisibility.publicName(gameData, permanent)
                         + " is returned to its owner's hand. (" + sourceCard.getName() + ")";
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        sourceCard, ownerId, List.of(effect), prompt, current, effect.manaCost()));
+                        sourceCard, ownerId, List.of(effect), prompt, current, effect.manaCost(), null, null, 0, 0,
+                        null, null, null, null, sourceControllerId));
                 return;
             }
             if (gameData.bounceUnlessPaysRemaining.isEmpty()) {

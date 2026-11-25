@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -52,8 +53,7 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
             return;
         }
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
-                && gameData.getLife(payingPlayerId) >= e.lifeCost();
+        boolean canPay = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, payingPlayerId, e.lifeCost());
 
         if (!canPay) {
             // Can't pay — steal immediately.

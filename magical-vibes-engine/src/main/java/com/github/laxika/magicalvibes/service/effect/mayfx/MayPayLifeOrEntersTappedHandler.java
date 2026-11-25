@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -49,8 +50,7 @@ public class MayPayLifeOrEntersTappedHandler implements MayEffectHandlerBean {
                 .orElseThrow();
 
         UUID playerId = ability.controllerId();
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
-                && gameData.getLife(playerId) >= effect.lifeCost();
+        boolean canPay = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, playerId, effect.lifeCost());
         if (accepted && canPay) {
             // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
             if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(

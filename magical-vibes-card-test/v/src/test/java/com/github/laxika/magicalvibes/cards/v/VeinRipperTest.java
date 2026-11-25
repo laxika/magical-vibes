@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.AshadTheLoneCyberman;
 import com.github.laxika.magicalvibes.cards.d.DeadlyCoverUp;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -18,8 +19,29 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VeinRipper.class, GiantGrowth.class, GrizzlyBears.class, Shock.class, DeadlyCoverUp.class})
+@CardUsed({AshadTheLoneCyberman.class, VeinRipper.class, GiantGrowth.class, GrizzlyBears.class, Shock.class, DeadlyCoverUp.class})
 class VeinRipperTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Sacrificing a creature to pay ward triggers the payer's \"whenever you sacrifice\" ability")
+    void wardSacrificeTriggersSacrificeAbility() {
+        harness.addToBattlefield(player1, new VeinRipper());
+        harness.addToBattlefield(player2, new AshadTheLoneCyberman());
+        var fodder = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Vein Ripper"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, fodder.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Ashad, the Lone Cyberman"));
+    }
 
     @Test
     @DisplayName("When a creature dies, target opponent loses 2 life and you gain 2 life")

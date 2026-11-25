@@ -57,7 +57,8 @@ public class ReturnTargetCreatureUnlessControllerPaysEffectHandler implements No
                 + " is returned to its owner's hand. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,
-                targetPermanentId, e.manaCost(), entry.getSourcePermanentId()));
+                targetPermanentId, e.manaCost(), entry.getSourcePermanentId(), null, 0, 0, null, null, null, null,
+                entry.getControllerId()));
     }
 
     /** Returns the target creature to its owner's hand, attributing the action to the source. */

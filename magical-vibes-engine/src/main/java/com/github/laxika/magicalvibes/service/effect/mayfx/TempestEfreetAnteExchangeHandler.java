@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -50,8 +51,7 @@ public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
         UUID opponentId = ability.controllerId();     // the targeted opponent — the decision maker
         UUID controllerId = ability.targetCardId();   // the ability's controller who takes the card
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, opponentId)
-                && gameData.getLife(opponentId) >= effect.lifeCost();
+        boolean canPay = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, opponentId, effect.lifeCost());
 
         if (accepted && canPay) {
             // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.

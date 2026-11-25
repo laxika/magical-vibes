@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -127,9 +128,7 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler
     }
 
     public boolean canPayLife(GameData gameData, UUID playerId, int lifeCost) {
-        return gameQueryService.canPlayerLifeChange(gameData, playerId)
-                && gameQueryService.canPlayerLoseLife(gameData, playerId)
-                && gameData.getLife(playerId) >= lifeCost;
+        return ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, playerId, lifeCost);
     }
 
     public List<UUID> apnapOrder(GameData gameData) {
