@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
@@ -556,7 +557,8 @@ public class PermanentCounterSupport {
      */
     public int moveCounters(GameData gameData, StackEntry entry, Permanent from, Permanent to,
                             CounterType counterType, int amount) {
-        int moved = removeCountersForMove(gameData, from, to, counterType, amount);
+        int moved = removeCountersForMove(gameData, from, to, counterType, amount,
+                entry == null ? null : entry.getControllerId());
         if (moved > 0) {
             placeCounterOnPermanent(gameData, entry, to, counterType, moved);
         }
@@ -569,7 +571,7 @@ public class PermanentCounterSupport {
      * last time counter of a vanishing permanent). Returns how many were removed.
      */
     public int removeCountersForMove(GameData gameData, Permanent from, Permanent to,
-                                     CounterType counterType, int amount) {
+                                     CounterType counterType, int amount, UUID movingPlayerId) {
         if (from == null || to == null || from.getId().equals(to.getId()) || amount <= 0
                 || !canReceiveCounter(gameData, to, counterType)) {
             return 0;
@@ -584,6 +586,9 @@ public class PermanentCounterSupport {
             gameData.recordOilCounterRemoved(from, moved);
         }
         checkLastTimeCounterRemoved(gameData, from, counterType, current);
+        // Moving counters removes them from the first permanent (Scrounging Bandar's ruling): "when you remove the
+        // last [kind] counter" sees the mover remove them.
+        notifyLastCounterRemoved(gameData, from, counterType, moved, movingPlayerId);
         return moved;
     }
 
@@ -632,7 +637,7 @@ public class PermanentCounterSupport {
         ChoiceContext.CounterMoveSlot slot = ctx.slots().get(ctx.index());
         Permanent from = gameQueryService.findPermanentById(gameData, slot.fromPermanentId());
         Permanent to = gameQueryService.findPermanentById(gameData, slot.toPermanentId());
-        int removed = removeCountersForMove(gameData, from, to, slot.counterType(), chosen);
+        int removed = removeCountersForMove(gameData, from, to, slot.counterType(), chosen, controllerId);
         List<Integer> moved = new ArrayList<>(ctx.moved());
         moved.add(removed);
         return askNextCounterMove(gameData, entry, controllerId, ctx.slots(), ctx.index() + 1, moved,
@@ -759,6 +764,37 @@ public class PermanentCounterSupport {
                 : count + " " + counterName + " counters";
         gameLogService.append(gameData, GameLog.cardThen(
                 permanent.getCard(), " removes " + counterText + "."));
+    }
+
+    /**
+     * Removes every counter from {@code permanent} as {@code removingPlayerId} does ("remove all counters from"):
+     * the oil counters removed are recorded, the last counter of each kind raises its event ("when you remove the
+     * last intervention counter", Divine Intervention) and the last time counter triggers vanishing (CR 702.63a).
+     * Silver counters are no permanent's. A battle's defense counters are the caller's to check.
+     *
+     * @return how many counters were removed
+     */
+    public int removeAllCounters(GameData gameData, Permanent permanent, UUID removingPlayerId) {
+        int removed = 0;
+        int oilRemoved = permanent.getCounterCount(CounterType.OIL);
+        int timeCountersBefore = permanent.getCounterCount(CounterType.TIME);
+        Map<CounterType, Integer> removedByKind = new EnumMap<>(CounterType.class);
+        for (CounterType counterType : CounterType.values()) {
+            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+                continue;
+            }
+            int count = permanent.getCounterCount(counterType);
+            removed += count;
+            if (count > 0) {
+                removedByKind.put(counterType, count);
+            }
+            permanent.setCounterCount(counterType, 0);
+        }
+        gameData.recordOilCounterRemoved(permanent, oilRemoved);
+        removedByKind.forEach((counterType, count) ->
+                notifyLastCounterRemoved(gameData, permanent, counterType, count, removingPlayerId));
+        checkLastTimeCounterRemoved(gameData, permanent, CounterType.TIME, timeCountersBefore);
+        return removed;
     }
 
     /** Vanishing's sacrifice ability triggers whenever the last time counter is removed. */

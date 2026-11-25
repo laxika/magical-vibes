@@ -33,7 +33,7 @@ public class RollD12AndResolveIfGreaterThanEventValueEffectHandler implements No
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RollD12AndResolveIfGreaterThanEventValueEffect rollEffect =
                 (RollD12AndResolveIfGreaterThanEventValueEffect) effect;
-        int result = diceRollService.roll(12);
+        int result = diceRollService.rollDice(gameData, entry.getControllerId(), 12, 1).getFirst();
         String sourceName = entry.getCard() == null ? "the ability" : entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameLogService.append(gameData,

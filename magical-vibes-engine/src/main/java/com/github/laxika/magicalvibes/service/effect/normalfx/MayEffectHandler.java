@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.library.LibrarySearchRestrictions;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -355,6 +357,16 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && !drawThenDiscard
                 && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
             // The ability's controller is the one who would draw, whoever makes the choice.
+            gameData.resolvingMayEffectFromStack = false;
+            insertElseEffect(entry, e);
+            return;
+        }
+        if (optionalAction instanceof SearchLibraryEffect search
+                && choicePlayerId.equals(subjectResolutionService.player(gameData, entry, search, search.searchPlayer()))
+                && LibrarySearchRestrictions.find(gameData, gameQueryService, choicePlayerId, choicePlayerId,
+                        entry.getControllerId()) != null) {
+            // "You may search your library ..., then shuffle": a player who can't search can't choose to, so nothing
+            // is searched or shuffled (Leonin Arbiter's ruling, CR 608.2d).
             gameData.resolvingMayEffectFromStack = false;
             insertElseEffect(entry, e);
             return;

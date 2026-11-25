@@ -133,4 +133,17 @@ class CalcidermTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
+
+    @Test
+    @DisplayName("Removing its last time counter puts one vanishing sacrifice trigger on the stack")
+    void lastTimeCounterPutsOneSacrificeTrigger() {
+        Permanent calciderm = addCreatureReady(player1, new Calciderm());
+        calciderm.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(calciderm.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Calciderm")).hasSize(1);
+    }
 }

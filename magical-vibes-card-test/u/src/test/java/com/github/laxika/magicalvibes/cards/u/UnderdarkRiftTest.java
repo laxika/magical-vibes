@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import org.springframework.test.util.ReflectionTestUtils;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RollD10EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnderdarkRift.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({PixieGuide.class, UnderdarkRift.class, GrizzlyBears.class, MindStone.class})
 class UnderdarkRiftTest extends BaseCardTest {
 
     @Test
@@ -187,5 +192,46 @@ class UnderdarkRiftTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(5);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(rift.getCard());
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the d10 roll and the lower result is ignored")
+    void pixieGuideAddsADieAndTheLowerIsIgnored() {
+        RollD10EffectHandler rollHandler = GameTestEngineContext.get().getBean(RollD10EffectHandler.class);
+        Object original = ReflectionTestUtils.getField(rollHandler, "diceRollService");
+        try {
+            ReflectionTestUtils.setField(rollHandler, "diceRollService", new SequencedDiceRollService(1, 10));
+            harness.addToBattlefield(player1, new PixieGuide());
+            harness.addToBattlefield(player1, new UnderdarkRift());
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            var library = new ArrayList<GrizzlyBears>();
+            for (int i = 0; i < 11; i++) {
+                library.add(new GrizzlyBears());
+            }
+            harness.setLibrary(player2, library);
+            harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+            harness.activateAbility(player1, 1, null, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerDecks.get(player2.getId()).indexOf(target.getCard())).isEqualTo(10);
+        } finally {
+            ReflectionTestUtils.setField(rollHandler, "diceRollService", original);
+        }
+    }
+
+    private static final class SequencedDiceRollService extends DiceRollService {
+
+        private final int[] results;
+        private int index;
+
+        private SequencedDiceRollService(int... results) {
+            this.results = results;
+        }
+
+        @Override
+        public int roll(int sides) {
+            return results[index++];
+        }
     }
 }

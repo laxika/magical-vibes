@@ -47,8 +47,7 @@ public class RollDiceAndEnterWithCountersEffectHandler implements EntryReplaceme
 
         List<Integer> results = new ArrayList<>(diceCount);
         int total = 0;
-        for (int i = 0; i < diceCount; i++) {
-            int result = diceRollService.roll(rollEffect.sides());
+        for (int result : diceRollService.rollDice(gameData, controllerId, rollEffect.sides(), diceCount)) {
             results.add(result);
             total += result;
         }

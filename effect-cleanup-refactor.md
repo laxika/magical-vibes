@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs (one per group, D11 to D22; the defect queue table): D11, D12, D13 done. Running in parallel worktrees: D14, D15, D16, D17. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs (one per group, D11 to D22; the defect queue table): D11 to D14 done. Running in parallel worktrees: D15, D16, D17, D18. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,007 / 2,433 (after fold run 50c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,007 / 2,433 (after fold run D14) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,750 rows over 4,579 classes (after fold run 50c). Latest verdict per class: unique 1,196, absorbed 1,357, split 691, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,750 rows over 4,579 classes (after fold run D14). Latest verdict per class: unique 1,196, absorbed 1,357, split 691, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1165,6 +1165,9 @@ Files are in `/tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-867
 
 - `Subjects.targetGraveyardCards(filter, scope, n)` / `.fromASingleGraveyard()` (`CardSubject.TargetGraveyardCards`): "up to N target cards in graveyards / from a single graveyard / in your graveyard". Non-target; the card's target group declares them; found by `EffectResolution.targetGraveyardCards` for the cast path (`SpellCastingService.beginTargetGraveyardCardsChoice`, hand and flashback). A put, a choice and `except(...)` read the same targets (Serene Remembrance, Turn the Earth, Deliver Unto Evil; fold run 50c).
 - `PutCardsIntoLibraryEffect.shuffledIn(...)` directly before `ShuffleIntoLibraryEffect`: the spell owner's library is shuffled once by the latter ("shuffle this and up to three target cards into their owners' libraries", CR 701.24c; fold run 50c).
+
+- `PermanentCounterSupport.removeAllCounters(gameData, permanent, removingPlayerId)`: "remove all counters from [it]" with the oil record, the last-counter event and the vanishing check.
+- `MayEffect` over a leading `SearchLibraryEffect` whose searcher can't search is not asked (Leonin Arbiter ruling, CR 608.2d).
 
 ### Blocked causes still open
 
@@ -5495,6 +5498,21 @@ Seen, not changed:
 - The effects over the subject declare no `TargetSpec`, so resolution legality of these targets is "still in a targetable graveyard". That is equal for these three cards (no filters; a graveyard card can't change owner).
 
 For the next run: Bow of Nylea (`PutTargetCardsFromGraveyardOnBottomOfLibraryEffect`) and The Moonbase (Cybermen face-down return) wait in `blocked-other` for "a subject naming every target". They are abilities, so the activation path (`AbilityActivationService`'s `TargetedGraveyardCardsEffect` keying) needs the same subject branch. Then Viconia's faces; Wake to Slaughter onto the subject when its record is next reshaped.
+
+### Step 9, defect run D14 (2026-11-25, parallel worktree)
+Group 4: 13 fixed, 7 not a defect or already fixed, 11 left. Ratchet unchanged at 3,015 / 2,442. CR 508.1d, 608.2d, 614.1c, 614.6, 616.1, 701.23a, 701.23b, 702.63a, 705.2 and 705.3 checked with `get_rule`.
+- **Coin flips:** `FlipUntilLoseOrStopSupport.flip` raises the won or lost event. Mutalith's handler gates on `isActualCoinFlip`. Heads-or-tails handlers (Odds through `FlipCoinWinEffect`, Rakdos) raise "won" when `edgarApplied`.
+- **Dice:** every d6, d8, d10, d12 (Sword of Hours) and entry dice roll goes through `DiceRollService.rollDice`. Advantage dice ignored as never rolled, so they raise no die events (CR 706.6).
+- **Vanishing:** the keyword's own trigger (`PermanentCounterSupport.checkLastTimeCounterRemoved`) is the only sacrifice. Four cards dropped their duplicate trigger, which had doubled even the normal upkeep sacrifice.
+- **`PermanentCounterSupport.removeAllCounters`:** one "remove all counters" removal: oil record, last-counter event per kind, vanishing check.
+- **`removeCountersForMove(movingPlayerId)`:** raises the last-counter event.
+- **Sin's as-enters choice** skips `permanentsEnteringSimultaneously`.
+- **Parley (token form):** inserts `CreateTokenEffect` + `DrawCardEffect(1, eachPlayer())` as later steps.
+- **`MayEffect`** over a leading `SearchLibraryEffect` whose searcher can't search (`LibrarySearchRestrictions.find`) isn't asked; the else effect follows.
+
+Seen, not changed: L12 confirmed real by Pact Weapon's ruling. L13 and L31 need 3+ players.
+
+For the next run: L24 (seven guards); L30 (prevention shield); L21/L22 together with Journey's "then shuffle".
 
 ## Prompt
 

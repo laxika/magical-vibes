@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.g.GarruksCompanion;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DoublingChant.class, RuneclawBear.class, GarruksCompanion.class, Forest.class, PsychogenicProbe.class})
+@CardUsed({LeoninArbiter.class, DoublingChant.class, RuneclawBear.class, GarruksCompanion.class, Forest.class, PsychogenicProbe.class})
 class DoublingChantTest extends BaseCardTest {
 
     @Test
@@ -163,6 +164,21 @@ class DoublingChantTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(named("Runeclaw Bear")).containsExactly(faceDown);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A player who can't search can't choose to, so the library isn't shuffled")
+    void playerWhoCantSearchDoesNotShuffle() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.addToBattlefield(player1, new RuneclawBear());
+        harness.setLife(player1, 20);
+        setupLibrary();
+        castAndResolveChant();
+        harness.passBothPriorities();
+
+        assertThat(named("Runeclaw Bear")).hasSize(1);
+        harness.assertLife(player1, 20);
     }
 
     private void setupLibrary() {

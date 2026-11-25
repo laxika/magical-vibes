@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MagneticTheft;
@@ -24,7 +26,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwordOfHours.class, GrizzlyBears.class, MagneticTheft.class})
+@CardUsed({PixieGuide.class, SwordOfHours.class, GrizzlyBears.class, MagneticTheft.class})
 class SwordOfHoursTest extends BaseCardTest {
 
     private RollD12AndResolveIfGreaterThanEventValueEffectHandler rollHandler;
@@ -259,6 +261,34 @@ class SwordOfHoursTest extends BaseCardTest {
         @Override
         public int roll(int sides) {
             return result;
+        }
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the d12 roll and the lower result is ignored")
+    void pixieGuideAddsADieAndTheLowerIsIgnored() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        Permanent creature = prepareCombat(1);
+        ReflectionTestUtils.setField(rollHandler, "diceRollService", new SequencedDiceRollService(2, 5));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    private static final class SequencedDiceRollService extends DiceRollService {
+
+        private final int[] results;
+        private int index;
+
+        private SequencedDiceRollService(int... results) {
+            this.results = results;
+        }
+
+        @Override
+        public int roll(int sides) {
+            return results[index++];
         }
     }
 }

@@ -90,7 +90,7 @@ public class MoveCounterFromSourceToTargetCreatureEffectHandler implements Norma
         for (CounterType kind : kinds) {
             slots.add(new ChoiceContext.CounterMoveSlot(from.getId(), to.getId(), kind));
             moved.add(permanentCounterSupport.removeCountersForMove(gameData, from, to, kind,
-                    from.getCounterCount(kind)));
+                    from.getCounterCount(kind), entry.getControllerId()));
         }
         permanentCounterSupport.askNextCounterMove(gameData, entry, entry.getControllerId(), slots, slots.size(),
                 moved, entry.getCard().getName());

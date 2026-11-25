@@ -48,8 +48,7 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
         List<Integer> results = new ArrayList<>(diceCount);
         List<CardEffect> branchEffects = new ArrayList<>(diceCount);
         int trackedResultCount = 0;
-        for (int i = 0; i < diceCount; i++) {
-            int result = diceRollService.roll(6);
+        for (int result : diceRollService.rollDice(gameData, entry.getControllerId(), 6, diceCount)) {
             results.add(result);
             if (rollEffect.trackedResult() != null && result == rollEffect.trackedResult()) {
                 trackedResultCount++;

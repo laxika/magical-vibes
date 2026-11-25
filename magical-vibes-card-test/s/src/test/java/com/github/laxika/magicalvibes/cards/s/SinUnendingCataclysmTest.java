@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CommandTheDreadhorde;
+import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
+import com.github.laxika.magicalvibes.cards.k.KeldonMarauders;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoryosVengeance;
 import com.github.laxika.magicalvibes.cards.h.HardenedScales;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SinUnendingCataclysm.class, GrizzlyBears.class, GoryosVengeance.class, SolRing.class, HardenedScales.class})
+@CardUsed({AvenRiftwatcher.class, CommandTheDreadhorde.class, KeldonMarauders.class, SinUnendingCataclysm.class, GrizzlyBears.class, GoryosVengeance.class, SolRing.class, HardenedScales.class})
 class SinUnendingCataclysmTest extends BaseCardTest {
 
     @Test
@@ -197,5 +200,41 @@ class SinUnendingCataclysmTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(sin);
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(sin);
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter from a permanent with vanishing triggers its sacrifice")
+    void removingTheLastTimeCounterFromAVanishingPermanentTriggersItsSacrifice() {
+        Permanent marauders = harness.addToBattlefieldAndReturn(player2, new KeldonMarauders());
+        marauders.setCounterCount(CounterType.TIME, 1);
+
+        harness.castFromHand(player1, new SinUnendingCataclysm(), "{5}{G}{U}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(marauders.getId()));
+
+        assertThat(marauders.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Keldon Marauders")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A permanent entering at the same time isn't offered, as it wasn't on the battlefield yet")
+    void permanentEnteringAtTheSameTimeIsNotOffered() {
+        AvenRiftwatcher riftwatcher = new AvenRiftwatcher();
+        SinUnendingCataclysm sin = new SinUnendingCataclysm();
+        harness.setGraveyard(player1, List.of(riftwatcher, sin));
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(riftwatcher.getId(), sin.getId()));
+        harness.passBothPriorities();
+
+        Permanent entered = findPermanent(player1, "Aven Riftwatcher");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        if (choice != null) {
+            assertThat(choice.validIds()).doesNotContain(entered.getId());
+        }
+        assertThat(entered.getCounterCount(CounterType.TIME)).isEqualTo(3);
     }
 }

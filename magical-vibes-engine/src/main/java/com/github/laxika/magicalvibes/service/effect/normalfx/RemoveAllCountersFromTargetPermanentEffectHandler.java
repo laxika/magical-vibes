@@ -19,9 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -83,26 +81,8 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
     }
 
     private int removeAll(GameData gameData, StackEntry entry, Permanent target) {
-        int removed = 0;
-        int oilRemoved = target.getCounterCount(CounterType.OIL);
-        int timeCountersBefore = target.getCounterCount(CounterType.TIME);
         boolean hadDefenseCounters = target.getCounterCount(CounterType.DEFENSE) > 0;
-        Map<CounterType, Integer> removedByKind = new EnumMap<>(CounterType.class);
-        for (CounterType counterType : CounterType.values()) {
-            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
-                continue;
-            }
-            int count = target.getCounterCount(counterType);
-            removed += count;
-            if (count > 0) {
-                removedByKind.put(counterType, count);
-            }
-            target.setCounterCount(counterType, 0);
-        }
-        gameData.recordOilCounterRemoved(target, oilRemoved);
-        removedByKind.forEach((counterType, count) -> permanentCounterSupport.notifyLastCounterRemoved(
-                gameData, target, counterType, count, entry.getControllerId()));
-        permanentCounterSupport.checkLastTimeCounterRemoved(gameData, target, CounterType.TIME, timeCountersBefore);
+        int removed = permanentCounterSupport.removeAllCounters(gameData, target, entry.getControllerId());
         if (hadDefenseCounters) {
             battleDefeatSupport.checkAfterDefenseRemoved(gameData, target);
         }

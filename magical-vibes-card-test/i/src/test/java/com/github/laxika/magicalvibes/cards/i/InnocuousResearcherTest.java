@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -177,6 +178,29 @@ class InnocuousResearcherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
+    }
+
+    @Test
+    @CardUsed(EsixFractalBloom.class)
+    @DisplayName("Each player draws once when Esix's offer pauses the Clue creation")
+    void eachPlayerDrawsOnceWhenEsixPausesTheClues() {
+        Card player1Top = new GrizzlyBears();
+        Card player2Top = new GrizzlyBears();
+        Card player1Next = new Forest();
+        Card player2Next = new Forest();
+        harness.setLibrary(player1, List.of(player1Top, player1Next));
+        harness.setLibrary(player2, List.of(player2Top, player2Next));
+        addReadyResearcher();
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(player1Next);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(player2Next);
     }
 
     private Permanent addReadyResearcher() {

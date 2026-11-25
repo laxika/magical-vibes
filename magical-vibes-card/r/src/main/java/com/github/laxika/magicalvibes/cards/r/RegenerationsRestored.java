@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -31,15 +30,12 @@ public class RegenerationsRestored extends Card {
         // This enchantment enters with twelve time counters on it.
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(12)));
 
-        // Vanishing: the upkeep removal and the last-counter sacrifice are separate triggers. The
-        // sacrifice is added first so the card's own exile trigger sits above it on the stack and
-        // can exile the enchantment (and earn the extra turn) before it is sacrificed.
+        // Vanishing's "when the last is removed, sacrifice it" is the keyword's own trigger (CR 702.63a). It is put
+        // on the stack as the last counter is removed, so the card's own exile trigger sits above it and can exile
+        // the enchantment (and earn the extra turn) before it is sacrificed.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
-        addTrigger(Triggers.timeCountersRemovedFromThis(),
-                TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME))),
-                new SacrificeSelfEffect());
 
         // Whenever one or more time counters are removed from this enchantment, scry 1 and gain 1
         // life. Then, if it has no time counters, exile it and take an extra turn.

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
+import com.github.laxika.magicalvibes.cards.e.EmbermawHellion;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SonicShrieker.class, GrizzlyBears.class})
+@CardUsed({EmbermawHellion.class, FurnaceOfRath.class, SonicShrieker.class, GrizzlyBears.class})
 class SonicShriekerTest extends BaseCardTest {
 
     @Test
@@ -78,5 +81,27 @@ class SonicShriekerTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A player dealt the damage after choosing the order of its replacements still discards")
+    void playerDealtDamageAfterChoosingTheReplacementOrderDiscards() {
+        harness.addToBattlefield(player1, new EmbermawHellion());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new SonicShrieker(), "{2}{R}{W}{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        assertThat(order.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, order.options().stream()
+                .filter(option -> option.startsWith("Furnace of Rath")).findFirst().orElseThrow());
+
+        // Furnace of Rath first: 2 * 2 + 1 = 5.
+        harness.assertLife(player2, 15);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 }

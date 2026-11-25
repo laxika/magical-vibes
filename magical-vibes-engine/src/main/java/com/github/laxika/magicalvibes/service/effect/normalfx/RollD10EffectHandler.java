@@ -28,7 +28,7 @@ public class RollD10EffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RollD10Effect rollEffect = (RollD10Effect) effect;
-        int result = diceRollService.roll(10);
+        int result = diceRollService.rollDice(gameData, entry.getControllerId(), 10, 1).getFirst();
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls a d10 for " + entry.getCard().getName() + ": " + result + "."));
         entry.setEventValue(result);

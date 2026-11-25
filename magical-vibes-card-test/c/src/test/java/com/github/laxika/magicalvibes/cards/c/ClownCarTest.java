@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,7 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ClownCar.class})
+@CardUsed({PixieGuide.class, ClownCar.class})
 class ClownCarTest extends BaseCardTest {
 
     private RollD6EffectHandler rollD6EffectHandler;
@@ -138,5 +140,20 @@ class ClownCarTest extends BaseCardTest {
             assertThat(sides).isEqualTo(6);
             return results[index++];
         }
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the roll and the lowest result is ignored")
+    void pixieGuideAddsADieAndTheLowestIsIgnored() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        ReflectionTestUtils.setField(rollD6EffectHandler, "diceRollService", new FixedDiceRollService(1, 2, 4));
+        harness.setHand(player1, List.of(new ClownCar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0, 2);
+        resolveAllTriggers();
+
+        Permanent car = findPermanent(player1, "Clown Car");
+        assertThat(findPermanents(player1, "Clown Robot")).isEmpty();
+        assertThat(car.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

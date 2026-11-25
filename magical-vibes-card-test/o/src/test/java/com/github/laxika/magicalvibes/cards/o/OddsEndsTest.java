@@ -242,4 +242,28 @@ class OddsEndsTest extends BaseCardTest {
             assertThat(encounter.getCounterCount(CounterType.LUCK)).isZero();
         }
     }
+
+    @Test
+    @DisplayName("Odds's heads-or-tails flip is won when Edgar, King of Figaro makes it come up heads")
+    void edgarMakesTheOddsFlipAWonFlip() {
+        harness.addToBattlefield(player1, new EdgarKingOfFigaro());
+        Permanent encounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+        CacklingFlames cacklingFlames = new CacklingFlames();
+        harness.setHand(player2, List.of(cacklingFlames));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castInstant(player2, 0, player2.getId());
+
+        harness.setHand(player1, List.of(new OddsEnds()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, 0, cacklingFlames.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Cackling Flames");
+        assertThat(encounter.getCounterCount(CounterType.LUCK)).isEqualTo(1);
+    }
 }

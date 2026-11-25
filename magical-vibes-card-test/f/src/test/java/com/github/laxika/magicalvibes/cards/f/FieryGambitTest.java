@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.k.KarplusanMinotaur;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FieryGambit.class, AlphaMyr.class, Forest.class, Shatter.class})
+@CardUsed({FieryGambit.class, AlphaMyr.class, Forest.class, Shatter.class, KarplusanMinotaur.class})
 class FieryGambitTest extends BaseCardTest {
 
     @Test
@@ -200,6 +201,25 @@ class FieryGambitTest extends BaseCardTest {
         assertThat(opponentForest.isTapped()).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Fiery Gambit");
+    }
+
+    @Test
+    @DisplayName("Each flip is won or lost, so a won or a lost flip triggers Karplusan Minotaur")
+    void eachFlipRaisesTheWonOrLostEvent() {
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.setHand(player1, List.of(new FieryGambit()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        boolean won = coinFlipLogs().stream().anyMatch(log -> log.contains("wins the coin flip"));
+        if (won) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).as("Karplusan Minotaur's coin-flip trigger").isNotNull();
+        assertThat(choice.playerId()).isEqualTo(won ? player1.getId() : player2.getId());
     }
 
     private List<String> coinFlipLogs() {

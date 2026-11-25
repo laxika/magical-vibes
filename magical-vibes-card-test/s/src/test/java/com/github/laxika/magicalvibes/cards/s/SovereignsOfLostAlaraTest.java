@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
 import com.github.laxika.magicalvibes.cards.c.CursedLand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarkOfTheVampire;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SovereignsOfLostAlara.class, CursedLand.class, GrizzlyBears.class,
+@CardUsed({LeoninArbiter.class, PsychogenicProbe.class, SovereignsOfLostAlara.class, CursedLand.class, GrizzlyBears.class,
         MarkOfTheVampire.class, WhiteKnight.class})
 class SovereignsOfLostAlaraTest extends BaseCardTest {
 
@@ -200,6 +202,23 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
         assertThat(gameLogContains("shuffles their library.")).isTrue();
         assertThat(findPermanents(player1, "Mark of the Vampire")).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
+    }
+
+    @Test
+    @DisplayName("A player who can't search isn't asked, so the library isn't shuffled")
+    void playerWhoCantSearchIsNotAskedAndDoesNotShuffle() {
+        harness.addToBattlefield(player1, new SovereignsOfLostAlara());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLibrary(player1, List.of(new MarkOfTheVampire(), new GrizzlyBears()));
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(findPermanents(player1, "Mark of the Vampire")).isEmpty();
+        harness.assertLife(player1, 20);
     }
 
     private void resolveUntilMayPrompt() {

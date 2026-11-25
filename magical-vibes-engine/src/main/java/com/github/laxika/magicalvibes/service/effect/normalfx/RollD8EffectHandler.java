@@ -28,7 +28,7 @@ public class RollD8EffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RollD8Effect rollEffect = (RollD8Effect) effect;
-        int result = diceRollService.roll(8);
+        int result = diceRollService.rollDice(gameData, entry.getControllerId(), 8, 1).getFirst();
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls a d8 for " + entry.getCard().getName() + ": " + result + "."));
         entry.setEventValue(result);

@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,9 +23,6 @@ public class AvenRiftwatcher extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
-        addTrigger(Triggers.timeCountersRemovedFromThis(),
-                TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME))),
-                new SacrificeSelfEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new GainLifeEffect(2));
     }

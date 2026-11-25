@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.cards.b.BrazenDwarf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ClayGolem.class, BrazenDwarf.class})
+@CardUsed({PixieGuide.class, ClayGolem.class, BrazenDwarf.class})
 class ClayGolemTest extends BaseCardTest {
 
     private RollD8EffectHandler effectHandler;
@@ -160,6 +162,35 @@ class ClayGolemTest extends BaseCardTest {
             assertThat(sides).isEqualTo(8);
             rollCount++;
             return result;
+        }
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the d8 roll and the lower result is ignored")
+    void pixieGuideAddsADieAndTheLowerIsIgnored() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new SequencedDiceRollService(2, 5));
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new ClayGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityOfPermanent(player1, golem, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    private static final class SequencedDiceRollService extends DiceRollService {
+
+        private final int[] results;
+        private int index;
+
+        private SequencedDiceRollService(int... results) {
+            this.results = results;
+        }
+
+        @Override
+        public int roll(int sides) {
+            return results[index++];
         }
     }
 }

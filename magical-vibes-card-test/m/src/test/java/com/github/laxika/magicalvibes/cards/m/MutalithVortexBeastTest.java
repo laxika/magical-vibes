@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
+import com.github.laxika.magicalvibes.cards.k.KarplusanMinotaur;
+import com.github.laxika.magicalvibes.cards.p.PokeyTheScallywagg;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MutalithVortexBeast.class, Forest.class, GoForTheThroat.class})
+@CardUsed({MutalithVortexBeast.class, Forest.class, GoForTheThroat.class, PokeyTheScallywagg.class,
+        KarplusanMinotaur.class})
 class MutalithVortexBeastTest extends BaseCardTest {
 
     @Test
@@ -94,5 +98,21 @@ class MutalithVortexBeastTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize((int) wins);
         harness.assertLife(player1, wins == 1 ? 20 : 17);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A d20 Pokey rolls instead of the flip is no coin flip, so it is neither won nor lost")
+    void pokeyRollIsNotAWonOrLostFlip() {
+        harness.addToBattlefield(player1, new PokeyTheScallywagg());
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.castFromHand(player1, new MutalithVortexBeast(), "{4}{U}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gameLogContains("Pokey, the Scallywagg rolled a d20:")).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Karplusan Minotaur"));
     }
 }

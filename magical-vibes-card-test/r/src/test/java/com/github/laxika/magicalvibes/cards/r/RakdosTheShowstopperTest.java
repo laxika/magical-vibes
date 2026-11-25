@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.e.EdgarKingOfFigaro;
 import com.github.laxika.magicalvibes.cards.c.CatacombCrocodile;
 import com.github.laxika.magicalvibes.cards.c.ChanceEncounter;
 import com.github.laxika.magicalvibes.cards.f.FetidImp;
@@ -18,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RakdosTheShowstopper.class, FoulImp.class, ForgeDevil.class, FetidImp.class,
+@CardUsed({EdgarKingOfFigaro.class, RakdosTheShowstopper.class, FoulImp.class, ForgeDevil.class, FetidImp.class,
         GrizzlyBears.class, HillGiant.class, SpawnOfMayhem.class, ChanceEncounter.class,
         CatacombCrocodile.class, UnbreakableFormation.class})
 class RakdosTheShowstopperTest extends BaseCardTest {
@@ -136,5 +139,20 @@ class RakdosTheShowstopperTest extends BaseCardTest {
                 .noneMatch(log -> log.contains("wins the coin flip") || log.contains("loses the coin flip"))
                 .anyMatch(log -> log.matches(player1.getUsername()
                         + "'s coin flip for Rakdos, the Showstopper comes up (heads|tails) for Grizzly Bears\\."));
+    }
+
+    @Test
+    @DisplayName("Flips Edgar, King of Figaro makes come up heads are won flips")
+    void edgarMakesTheFlipsWonFlips() {
+        harness.addToBattlefield(player1, new EdgarKingOfFigaro());
+        Permanent encounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castRakdos();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Edgar, King of Figaro");
+        assertThat(encounter.getCounterCount(CounterType.LUCK)).isEqualTo(2);
     }
 }

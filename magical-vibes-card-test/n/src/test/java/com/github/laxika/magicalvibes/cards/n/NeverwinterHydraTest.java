@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +23,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NeverwinterHydra.class, Shock.class})
+@CardUsed({PixieGuide.class, NeverwinterHydra.class, Shock.class})
 class NeverwinterHydraTest extends BaseCardTest {
 
     private RollDiceAndEnterWithCountersEffectHandler handler;
@@ -184,5 +186,21 @@ class NeverwinterHydraTest extends BaseCardTest {
         public int roll(int sides) {
             return results[index++];
         }
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the entering roll and the lowest result is ignored")
+    void pixieGuideAddsADieAndTheLowestIsIgnored() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        ReflectionTestUtils.setField(handler, "diceRollService", new FixedDiceRollService(1, 4, 6));
+        harness.setHand(player1, List.of(new NeverwinterHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0, 2);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Neverwinter Hydra");
+        assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
     }
 }

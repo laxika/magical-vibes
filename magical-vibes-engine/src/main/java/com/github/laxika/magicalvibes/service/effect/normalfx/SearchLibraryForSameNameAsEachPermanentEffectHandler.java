@@ -56,7 +56,9 @@ public class SearchLibraryForSameNameAsEachPermanentEffectHandler implements Nor
                 names.add(name);
             }
         }
-        if (librarySearchSupport.isSearchPrevented(gameData, searcherId, ownerId, true, searcherId)) {
+        // "You may search ..., then shuffle": a player who can't search can't choose to, so nothing is shuffled
+        // (Leonin Arbiter's ruling); "search ..., then shuffle" still shuffles.
+        if (librarySearchSupport.isSearchPrevented(gameData, searcherId, ownerId, !search.optional(), searcherId)) {
             return;
         }
         boolean yourLibrary = ownerId.equals(searcherId);

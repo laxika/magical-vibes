@@ -53,8 +53,11 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean, Choose
                         + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
 
-        // Heads-or-tails flips are neither won nor lost (CR 705.2), so no coin-flip triggers fire.
-        if (e.countsAsWinOrLoss() && result.isActualCoinFlip()) {
+        // Heads-or-tails flips are neither won nor lost (CR 705.2), so no coin-flip triggers fire, unless Edgar, King of
+        // Figaro made it come up heads, which wins it (CR 705.3, its ruling).
+        if (result.isActualCoinFlip() && !e.countsAsWinOrLoss() && wonFlip && result.edgarApplied()) {
+            ActionEvents.coinFlipWon(gameData, controllerId);
+        } else if (e.countsAsWinOrLoss() && result.isActualCoinFlip()) {
             if (wonFlip) {
                 ActionEvents.coinFlipWon(gameData, controllerId);
             } else {

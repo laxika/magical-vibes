@@ -2700,15 +2700,7 @@ public class MultiPermanentChoiceHandlerService {
                     permanent, context.effect().filter(), filterContext)) {
                 continue;
             }
-            int oilRemoved = permanent.getCounterCount(CounterType.OIL);
-            for (CounterType counterType : CounterType.values()) {
-                if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
-                    continue;
-                }
-                removed += permanent.getCounterCount(counterType);
-                permanent.setCounterCount(counterType, 0);
-            }
-            gameData.recordOilCounterRemoved(permanent, oilRemoved);
+            removed += permanentCounterSupport.removeAllCounters(gameData, permanent, context.controllerId());
         }
 
         if (entering != null && removed > 0) {

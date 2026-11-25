@@ -48,20 +48,9 @@ public class RemoveAllCountersFromAllPermanentsThenEnterWithCountersEffectHandle
         int removed = 0;
         for (var battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
-                int oilRemoved = permanent.getCounterCount(CounterType.OIL);
-                int timeCountersBefore = permanent.getCounterCount(CounterType.TIME);
                 boolean hadDefenseCounters = permanent.getCounterCount(CounterType.DEFENSE) > 0;
-                int removedFromPermanent = 0;
-                for (CounterType counterType : CounterType.values()) {
-                    if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
-                        continue;
-                    }
-                    removedFromPermanent += permanent.getCounterCount(counterType);
-                    permanent.setCounterCount(counterType, 0);
-                }
-                gameData.recordOilCounterRemoved(permanent, oilRemoved);
-                permanentCounterSupport.checkLastTimeCounterRemoved(gameData, permanent, CounterType.TIME,
-                        timeCountersBefore);
+                // The entering permanent's controller removes them.
+                int removedFromPermanent = permanentCounterSupport.removeAllCounters(gameData, permanent, controllerId);
                 if (hadDefenseCounters) {
                     battleDefeatSupport.checkAfterDefenseRemoved(gameData, permanent);
                 }

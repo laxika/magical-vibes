@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,8 +20,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves independent coin flips for matching permanents and destroys the permanents whose flip comes
- * up tails. These flips only care about heads or tails, so no player wins or loses them and they never
- * trigger "win a coin flip" abilities (CR 705.2).
+ * up tails. These flips only care about heads or tails, so no player wins or loses them and they don't
+ * trigger "win a coin flip" abilities (CR 705.2), except that a flip Edgar, King of Figaro makes come up heads is won.
  */
 @Component
 @RequiredArgsConstructor
@@ -63,7 +64,7 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
         for (int i = 0; i < matchingPermanents.size(); i++) {
             Permanent permanent = matchingPermanents.get(i);
             CoinFlipResult result = results.get(i);
-            // Heads or tails, no player wins or loses these flips (CR 705.2).
+            // Heads or tails, no player wins or loses these flips (CR 705.2) unless Edgar wins them.
             gameLogService.append(gameData, GameLog.text(playerName + "'s coin flip for " + sourceName
                     + " comes up " + (result.heads() ? "heads" : "tails") + " for "
                     + FaceDownVisibility.publicName(gameData, permanent) + coinFlipService.replacementDetails(result)
@@ -71,6 +72,9 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
 
             if (!result.heads()) {
                 lostPermanents.add(permanent);
+            } else if (result.edgarApplied() && result.isActualCoinFlip()) {
+                // Edgar, King of Figaro makes the flip come up heads and wins it (CR 705.3, its ruling).
+                ActionEvents.coinFlipWon(gameData, entry.getControllerId());
             }
         }
 

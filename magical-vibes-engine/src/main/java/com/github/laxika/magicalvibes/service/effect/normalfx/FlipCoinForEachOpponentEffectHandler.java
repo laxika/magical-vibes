@@ -54,11 +54,16 @@ public class FlipCoinForEachOpponentEffectHandler implements NormalEffectHandler
                     + (won ? " wins" : " loses") + " the coin flip for " + entry.getCard().getName()
                     + coinFlipService.replacementDetails(result) + "."));
 
+            // A d20 Pokey, the Scallywagg rolled instead counts as rolling a die, not flipping a coin.
             if (won) {
-                ActionEvents.coinFlipWon(gameData, controllerId);
+                if (result.isActualCoinFlip()) {
+                    ActionEvents.coinFlipWon(gameData, controllerId);
+                }
                 dispatch(gameData, entry, flipEffect.winEffect());
             } else {
-                ActionEvents.coinFlipLost(gameData, controllerId);
+                if (result.isActualCoinFlip()) {
+                    ActionEvents.coinFlipLost(gameData, controllerId);
+                }
                 UUID previousTargetId = entry.getTargetId();
                 entry.setTargetIdForEffectResolution(opponentId);
                 try {

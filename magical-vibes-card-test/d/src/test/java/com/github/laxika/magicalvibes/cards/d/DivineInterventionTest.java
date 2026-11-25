@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NestingGrounds;
+import com.github.laxika.magicalvibes.cards.s.SinUnendingCataclysm;
+import com.github.laxika.magicalvibes.cards.t.ThiefOfBlood;
 import com.github.laxika.magicalvibes.cards.a.AetherSnap;
 import com.github.laxika.magicalvibes.cards.c.Clockspinning;
 import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
@@ -193,6 +198,59 @@ class DivineInterventionTest extends BaseCardTest {
 
         assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+    }
+
+    @Test
+    @CardUsed(ThiefOfBlood.class)
+    @DisplayName("Declares a draw when its controller's Thief of Blood removes its last counter as it enters")
+    void declaresDrawWhenControllersThiefOfBloodRemovesTheLastCounter() {
+        Permanent intervention = addIntervention();
+        intervention.setCounterCount(CounterType.INTERVENTION, 1);
+
+        harness.castFromHand(player1, new ThiefOfBlood(), "{4}{B}{B}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+    }
+
+    @Test
+    @CardUsed(SinUnendingCataclysm.class)
+    @DisplayName("Declares a draw when its controller's Sin removes its last counter as Sin enters")
+    void declaresDrawWhenControllersSinRemovesTheLastCounter() {
+        Permanent intervention = addIntervention();
+        intervention.setCounterCount(CounterType.INTERVENTION, 1);
+
+        harness.castFromHand(player1, new SinUnendingCataclysm(), "{5}{G}{U}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(intervention.getId()));
+        resolveAllTriggers();
+
+        assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+    }
+
+    @Test
+    @CardUsed({NestingGrounds.class, GrizzlyBears.class})
+    @DisplayName("Declares a draw when its controller moves its last counter onto another permanent")
+    void declaresDrawWhenControllerMovesTheLastCounterAway() {
+        addCreatureReady(player1, new NestingGrounds());
+        Permanent intervention = addIntervention();
+        intervention.setCounterCount(CounterType.INTERVENTION, 1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(intervention.getId(), bears.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
+        assertThat(bears.getCounterCount(CounterType.INTERVENTION)).isEqualTo(1);
         assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
     }
 

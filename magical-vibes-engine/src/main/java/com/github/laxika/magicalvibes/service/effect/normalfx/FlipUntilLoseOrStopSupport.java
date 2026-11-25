@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopContinuationEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +23,10 @@ public class FlipUntilLoseOrStopSupport {
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
 
-    /** Performs and logs one coin flip from the stack entry's controller's perspective. */
+    /**
+     * Performs and logs one coin flip from the stack entry's controller's perspective. The flip is won or lost
+     * (CR 705.2), so it raises the won or lost event; a d20 Pokey, the Scallywagg rolled instead is no coin flip.
+     */
     public boolean flip(GameData gameData, UUID controllerId, String sourceName) {
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
         boolean won = result.heads();
@@ -30,6 +34,13 @@ public class FlipUntilLoseOrStopSupport {
         gameLogService.append(gameData, GameLog.text(playerName
                 + (won ? " wins" : " loses") + " the coin flip for " + sourceName
                 + coinFlipService.replacementDetails(result) + "."));
+        if (result.isActualCoinFlip()) {
+            if (won) {
+                ActionEvents.coinFlipWon(gameData, controllerId);
+            } else {
+                ActionEvents.coinFlipLost(gameData, controllerId);
+            }
+        }
         return won;
     }
 

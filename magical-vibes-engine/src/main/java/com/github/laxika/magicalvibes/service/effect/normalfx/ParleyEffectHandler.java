@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -55,6 +58,19 @@ public class ParleyEffectHandler implements NormalEffectHandlerBean {
                     playerName + " reveals ", topCard, " from the top of their library (" + sourceName + ")."));
         }
 
+        if (effect instanceof ParleyEffect parley && parley.tokenReward() != null
+                && entry.getResolvingEffectIndex() >= 0) {
+            // The tokens and then the draws are the ability's next steps, so a token-creation replacement that asks
+            // first (Esix) resumes with them instead of resolving this reveal again.
+            List<CardEffect> next = new ArrayList<>();
+            if (nonlandCount > 0) {
+                next.add(parley.tokenReward().withAmount(nonlandCount));
+            }
+            next.add(new DrawCardEffect(1, Subjects.eachPlayer()));
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, next);
+            log.info("Game {} - {} resolves Parley for {} nonland cards", gameData.id, sourceName, nonlandCount);
+            return;
+        }
         if (nonlandCount > 0 && effect instanceof ParleyEffect parley && parley.tokenReward() != null) {
             createTokenEffectHandler.resolve(gameData, entry,
                     parley.tokenReward().withAmount(nonlandCount));

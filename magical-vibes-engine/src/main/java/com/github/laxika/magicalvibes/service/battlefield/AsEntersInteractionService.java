@@ -768,9 +768,11 @@ public class AsEntersInteractionService {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(card.getId())
                     .withSourceControllerId(controllerId);
+            // Permanents entering with it weren't on the battlefield yet (CR 614.1c).
             List<UUID> eligible = gameData.playerBattlefields.values().stream()
                     .flatMap(List::stream)
                     .filter(p -> p != justEntered)
+                    .filter(p -> !gameData.permanentsEnteringSimultaneously.contains(p.getId()))
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                             p, removeCountersForCounters.filter(), filterContext))
                     .map(Permanent::getId)

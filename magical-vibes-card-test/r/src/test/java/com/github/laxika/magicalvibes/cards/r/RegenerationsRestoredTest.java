@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DustOfMoments;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RegenerationsRestored.class)
+@CardUsed({RegenerationsRestored.class, DustOfMoments.class})
 class RegenerationsRestoredTest extends BaseCardTest {
 
     @Test
@@ -98,10 +100,15 @@ class RegenerationsRestoredTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         Permanent source = harness.addToBattlefieldAndReturn(player1, new RegenerationsRestored());
         source.setCounterCount(CounterType.TIME, 1);
+        harness.setHand(player2, List.of(new DustOfMoments()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player2);
 
-        source.setCounterCount(CounterType.TIME, 0);
-        harness.runStateBasedActions();
+        harness.castModalInstant(player2, 0, 0, List.of());
+        harness.passBothPriorities();
 
+        assertThat(source.getCounterCount(CounterType.TIME)).isZero();
         assertThat(gd.stack).hasSize(2);
         harness.assertOnBattlefield(player1, "Regenerations Restored");
         assertThat(gd.extraTurns).isEmpty();
