@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -589,7 +591,7 @@ public class TriggerIndex {
         for (UUID playerId : apnapOrder(gameData, event.activePlayerId())) {
             for (Permanent permanent : List.copyOf(gameData.permanentsAndFaceUpSchemes(playerId))) {
                 addStepCandidates(event, permanent.getCard(), permanent, playerId, Zone.BATTLEFIELD,
-                        permanentAbilities(gameData, permanent), candidates);
+                        textChangedPermanentAbilities(gameData, permanent), candidates);
             }
             for (Card card : List.copyOf(gameData.playerCommandZones.getOrDefault(playerId, List.of()))) {
                 if (!gameData.faceDownCommandZoneCards.contains(card.getId())) {
@@ -617,6 +619,24 @@ public class TriggerIndex {
             }
         }
         return candidates;
+    }
+
+    /**
+     * {@code permanent}'s triggered abilities with its card's own read through its text changes (layer 3, CR 612.1),
+     * as the event abilities are ({@code EventAbilitySupport}).
+     */
+    private List<TriggeredAbility> textChangedPermanentAbilities(GameData gameData, Permanent permanent) {
+        List<TriggeredAbility> abilities = permanentAbilities(gameData, permanent);
+        if (gameData.textReplacements(permanent.getId()).isEmpty()
+                && TextChangeTransformer.globalColorWordReplacements(gameData).isEmpty()) {
+            return abilities;
+        }
+        Set<TriggeredAbility> own = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        own.addAll(LayerSystemService.currentCard(gameData, permanent).getTriggeredAbilities());
+        return abilities.stream()
+                .map(ability -> own.contains(ability) ? EventAbilitySupport.textChanged(gameData, permanent, ability)
+                        : ability)
+                .toList();
     }
 
     /**

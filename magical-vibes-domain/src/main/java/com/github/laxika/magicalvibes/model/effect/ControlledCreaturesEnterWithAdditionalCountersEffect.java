@@ -28,15 +28,31 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 public record ControlledCreaturesEnterWithAdditionalCountersEffect(
         CardSubtype subtype,
         DynamicAmount count,
-        boolean allCreatures
+        boolean allCreatures,
+        boolean creaturesOfSubtypeOnly
 ) implements CardEffect {
 
+    public ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype subtype, DynamicAmount count,
+                                                                boolean allCreatures) {
+        this(subtype, count, allCreatures, false);
+    }
+
+    /** "Each other [subtype] you control": any permanent of the subtype, a noncreature Kindred one too. */
     public ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype subtype, DynamicAmount count) {
         this(subtype, count, false);
     }
 
+    /** "Each other [subtype] you control": any permanent of the subtype, a noncreature Kindred one too. */
     public ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype subtype, int count) {
         this(subtype, new Fixed(count), false);
+    }
+
+    /**
+     * "Each other [subtype] creature you control": only a permanent that is a creature as it would exist on the
+     * battlefield (CR 614.12), so a noncreature Kindred permanent of the subtype gets none.
+     */
+    public ControlledCreaturesEnterWithAdditionalCountersEffect creatures() {
+        return new ControlledCreaturesEnterWithAdditionalCountersEffect(subtype, count, allCreatures, true);
     }
 
     /**
@@ -44,7 +60,7 @@ public record ControlledCreaturesEnterWithAdditionalCountersEffect(
      * additional +1/+1 counters on it."
      */
     public static ControlledCreaturesEnterWithAdditionalCountersEffect ofChosenSubtype(int count) {
-        return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count);
+        return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count).creatures();
     }
 
     /**

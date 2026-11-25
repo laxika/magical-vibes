@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Restores a self-changing permanent to the card form it had when it entered the battlefield. */
+/** Restores a self-changing permanent to the card form its {@code BecomeCreatureEffect} replaced. */
 @Component
 @RequiredArgsConstructor
 public class BecomeEnchantmentEffectHandler implements NormalEffectHandlerBean {
@@ -37,7 +37,13 @@ public class BecomeEnchantmentEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        source.setCard(source.getOriginalCard());
+        // It returns to the form its "becomes a creature" effect replaced, which for a copy of the card is the copy, not
+        // the copier's own card (CR 707.2); one that isn't in that form already has it.
+        if (source.getBecomeCreatureBaseCard() != null && source.getBecomeCreatureResultCard() == source.getCard()) {
+            source.setCard(source.getBecomeCreatureBaseCard());
+            source.setBecomeCreatureBaseCard(null);
+            source.setBecomeCreatureResultCard(null);
+        }
         source.setTimestamp(gameData.nextTimestamp());
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " becomes an enchantment again."));

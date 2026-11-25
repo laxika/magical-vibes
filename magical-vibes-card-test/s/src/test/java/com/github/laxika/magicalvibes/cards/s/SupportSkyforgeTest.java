@@ -163,9 +163,42 @@ class SupportSkyforgeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(selected);
-        assertThat(selected.hasType(CardType.ARTIFACT)).isTrue();
-        assertThat(selected.hasType(CardType.CREATURE)).isTrue();
+        assertThat(gqs.cardHasType(selected, CardType.ARTIFACT, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(selected, CardType.CREATURE, gd, player1.getId())).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Clone of the drafted Vehicle copies its printed types, not the perpetual creature type (CR 707.2)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.c.Clone.class)
+    void cloneOfDraftedVehicleIsNoCreature() {
+        addCreatureReady(player1, new SupportSkyforge());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        Card selected = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)
+                .allCards().stream().filter(card -> !card.hasType(CardType.CREATURE)).findFirst().orElseThrow();
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        gd.playerHands.get(player1.getId()).remove(selected);
+        Permanent drafted = harness.addToBattlefieldAndReturn(player1, selected);
+        assertThat(gqs.isCreature(gd, drafted)).isTrue();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new com.github.laxika.magicalvibes.cards.c.Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, drafted.getId());
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof com.github.laxika.magicalvibes.cards.c.Clone)
+                .findFirst().orElseThrow();
+
+        assertThat(gqs.isArtifact(gd, copy)).isTrue();
+        assertThat(gqs.isCreature(gd, copy)).isFalse();
     }
 
     @Test

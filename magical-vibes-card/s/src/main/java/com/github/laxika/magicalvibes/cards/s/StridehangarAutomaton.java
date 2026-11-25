@@ -16,7 +16,7 @@ public class StridehangarAutomaton extends Card {
 
     public StridehangarAutomaton() {
         // Thopters you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.THOPTER))));
 
         // Artifact-token creation also creates one additional Thopter token.

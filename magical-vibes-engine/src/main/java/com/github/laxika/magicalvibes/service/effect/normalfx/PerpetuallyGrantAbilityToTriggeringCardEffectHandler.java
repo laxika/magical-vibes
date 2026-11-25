@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilityToTriggeringCardEffect;
@@ -29,6 +30,13 @@ public class PerpetuallyGrantAbilityToTriggeringCardEffectHandler implements Nor
         var grant = (PerpetuallyGrantAbilityToTriggeringCardEffect) effect;
         UUID grantedCardId = entry.getTriggeringCardId() != null
                 ? entry.getTriggeringCardId() : entry.getCard().getId();
+        // A permanent that entered as a copy of another card (Vesuva) names its copied card; the perpetual change is
+        // made to its own physical card, the one that keeps it in every zone.
+        Permanent entered = entry.getAttachedPermanentSnapshot();
+        if (entered != null && entered.getId().equals(entry.getTriggeringPermanentId())
+                && entered.getOriginalCard() != null && entered.getCard().getId().equals(grantedCardId)) {
+            grantedCardId = entered.getOriginalCard().getId();
+        }
         gameData.grantPerpetualAbility(grantedCardId, grant.grantedAbility());
     }
 }

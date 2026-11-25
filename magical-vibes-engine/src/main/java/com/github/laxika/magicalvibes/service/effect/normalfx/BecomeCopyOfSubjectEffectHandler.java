@@ -81,7 +81,10 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
     private void becomeCopy(GameData gameData, StackEntry entry, BecomeCopyOfSubjectEffect become, Permanent copier,
                             Card copied, String copiedName) {
         boolean lasting = !become.duration().equals(Duration.PERMANENT);
-        Card preCopyCard = lasting ? PermanentCopierService.preCopyCard(gameData, copier) : null;
+        // A copy effect with no duration over one that ends is recorded too, so the older one ending leaves this newer
+        // one in place (CR 613.7).
+        boolean recorded = lasting || !PermanentCopierService.resolvedCopies(gameData, copier.getId()).isEmpty();
+        Card preCopyCard = recorded ? PermanentCopierService.preCopyCard(gameData, copier) : null;
         // "Except it has this ability" keeps this one ability, wherever the permanent got it (printed, or copied from
         // another such permanent): read from the card before the copy replaces it, one instance however many equal
         // ones it had. A copied permanent that already has it gives the copy a second instance, each functioning
@@ -113,6 +116,8 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
         if (lasting) {
             // The copy has a new set of abilities, so a once-each-turn ability it now has has not triggered yet.
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(copier.getId());
+        }
+        if (recorded) {
             PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), copier, preCopyCard, become.duration());
         }

@@ -351,7 +351,7 @@ public class BattlefieldPlacementService {
             conditionalRevealEffect = findActiveConditionalRevealEffect(gameData, controllerId, permanent);
             conditionalRevealWithCountersEffect = findActiveConditionalRevealWithCountersEffect(
                     gameData, controllerId, permanent);
-            applyEnterTappedEffects(permanent, enterTappedTypes);
+            applyEnterTappedEffects(gameData, controllerId, permanent, enterTappedTypes);
             applySelfEnterTapped(gameData, controllerId, permanent);
             applyConditionalEnterTapped(gameData, controllerId, permanent, xValue);
             applyStaticEnterTappedEffects(gameData, controllerId, permanent);
@@ -737,7 +737,7 @@ public class BattlefieldPlacementService {
         Permanent preview = new Permanent(request.permanent());
         preview.enterUntapped();
         applyPerpetualEnterTapped(gameData, preview);
-        applyEnterTappedEffects(preview, request.enterTappedTypes());
+        applyEnterTappedEffects(gameData, controllerId, preview, request.enterTappedTypes());
         applySelfEnterTapped(gameData, controllerId, preview);
         applyConditionalEnterTapped(gameData, controllerId, preview, request.xValue());
         applyStaticEnterTappedEffects(gameData, controllerId, preview);
@@ -1567,13 +1567,25 @@ public class BattlefieldPlacementService {
         return enterTappedTypes;
     }
 
-    private void applyEnterTappedEffects(Permanent enteringPermanent, Set<CardType> enterTappedTypes) {
+    private void applyEnterTappedEffects(GameData gameData, UUID controllerId, Permanent enteringPermanent,
+                                         Set<CardType> enterTappedTypes) {
         if (enterTappedTypes == null || enterTappedTypes.isEmpty()) {
             return;
         }
-        if (matchesAnyType(enteringPermanent.getCard(), enterTappedTypes)) {
+        if (entersWithAnyType(gameData, controllerId, enteringPermanent, enterTappedTypes)) {
             enteringPermanent.tap();
         }
+    }
+
+    /**
+     * Whether the entering permanent has one of {@code types} as it would exist on the battlefield, the continuous
+     * effects that would apply to it counted (CR 614.12): a noncreature artifact under March of the Machines is a
+     * creature.
+     */
+    private boolean entersWithAnyType(GameData gameData, UUID controllerId, Permanent enteringPermanent,
+                                      Set<CardType> types) {
+        return types.stream().anyMatch(type ->
+                gameQueryService.entersWithCardType(gameData, controllerId, enteringPermanent, type));
     }
 
     /**
@@ -1620,7 +1632,7 @@ public class BattlefieldPlacementService {
             if (!enterTapped.everyPlayersByTypeAlone()
                     && SubjectResolutionService.namesPlayer(gameData, active.source(), active.controllerId(),
                     enteringControllerId, enterTapped.players())
-                    && matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped,
+                    && matchesEnterTappedEffect(gameData, enteringControllerId, enteringPermanent, enterTapped,
                     FilterContext.of(gameData).withSourcePermanentSnapshot(active.source())
                             .withSourcePermanentId(active.source().getId())
                             .withSourceCardId(active.source().getCard().getId())
@@ -1637,7 +1649,7 @@ public class BattlefieldPlacementService {
     private void applyFloatedEnterTappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
         for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(enteringControllerId,
                 EnterPermanentsOfTypesTappedEffect.class)) {
-            if (matchesEnterTappedEffect(gameData, enteringPermanent,
+            if (matchesEnterTappedEffect(gameData, enteringControllerId, enteringPermanent,
                     (EnterPermanentsOfTypesTappedEffect) floating.effect(), FilterContext.of(gameData))) {
                 enteringPermanent.tap();
                 return;
@@ -1645,7 +1657,7 @@ public class BattlefieldPlacementService {
         }
     }
 
-    private boolean matchesEnterTappedEffect(GameData gameData, Permanent enteringPermanent,
+    private boolean matchesEnterTappedEffect(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent,
                                              EnterPermanentsOfTypesTappedEffect enterTapped, FilterContext filterContext) {
         if (enterTapped.castOnly() && enteringPermanent.getCastFromZone() == null) {
             return false;
@@ -1658,7 +1670,7 @@ public class BattlefieldPlacementService {
             // A face-down permanent is a 2/2 creature with no other types (CR 708.2).
             return enterTapped.cardTypes().contains(CardType.CREATURE);
         }
-        return matchesAnyType(enteringPermanent.getCard(), enterTapped.cardTypes());
+        return entersWithAnyType(gameData, enteringControllerId, enteringPermanent, enterTapped.cardTypes());
     }
 
     private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, UUID controllerId, Permanent permanent) {
@@ -1906,18 +1918,6 @@ public class BattlefieldPlacementService {
                 }
             }
         }
-    }
-
-    private boolean matchesAnyType(Card card, Set<CardType> types) {
-        if (types.contains(card.getType())) {
-            return true;
-        }
-        for (CardType additionalType : card.getAdditionalTypes()) {
-            if (types.contains(additionalType)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -2510,7 +2510,7 @@ public class BattlefieldPlacementService {
         if (battlefield == null || battlefield.isEmpty()) return;
 
         record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count,
-                               boolean allCreatures) {}
+                               boolean allCreatures, boolean creaturesOnly) {}
         List<SourcedCounters> effects = gameQueryService.activeStaticEffects(gameData, controllerId,
                         ControlledCreaturesEnterWithAdditionalCountersEffect.class)
                 .stream()
@@ -2521,12 +2521,17 @@ public class BattlefieldPlacementService {
                         active.effect().subtype() != null
                                 ? active.effect().subtype() : active.source().getChosenSubtype(),
                         active.effect().count(),
-                        active.effect().allCreatures()))
+                        active.effect().allCreatures(),
+                        active.effect().allCreatures() || active.effect().creaturesOfSubtypeOnly()))
                 .filter(sourced -> sourced.allCreatures() ? !afterSubtypeChoice : sourced.subtype() != null)
                 .toList();
-        if (effects.stream().anyMatch(SourcedCounters::allCreatures)
-                && !isCreatureAsEntering(gameData, controllerId, permanent)) {
-            effects = effects.stream().filter(sourced -> !sourced.allCreatures()).toList();
+        // "Each other creature" and "each other [type] creature you control" count only a permanent that is a creature
+        // as it would exist on the battlefield (CR 614.12), so a noncreature Kindred permanent of the type gets none;
+        // "each other Vampire you control" counts it.
+        if (effects.stream().anyMatch(SourcedCounters::creaturesOnly)
+                && !(afterSubtypeChoice ? gameQueryService.isCreature(gameData, permanent)
+                : isCreatureAsEntering(gameData, controllerId, permanent))) {
+            effects = effects.stream().filter(sourced -> !sourced.creaturesOnly()).toList();
         }
         if (effects.isEmpty()) return;
 

@@ -58,6 +58,31 @@ class HighFaePranksterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, prankster)).isEqualTo(1);
     }
 
+    @Test
+    @org.junit.jupiter.api.DisplayName("A Clone of the 4/1 Prankster copies its printed 1/4, not the perpetual change (CR 707.2)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.c.Clone.class)
+    void cloneCopiesPrintedPowerAndToughness() {
+        castPrankster();
+        harness.handleListChoice(player1,
+                "High Fae Prankster perpetually has base power and toughness 4/1.");
+        harness.passBothPriorities();
+        Permanent prankster = findPermanent(player1, "High Fae Prankster");
+
+        harness.castFromHand(player1, new com.github.laxika.magicalvibes.cards.c.Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, prankster.getId());
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof com.github.laxika.magicalvibes.cards.c.Clone)
+                .findFirst().orElseThrow();
+
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, prankster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, prankster)).isEqualTo(1);
+    }
+
     private void castPrankster() {
         harness.castFromHand(player1, new HighFaePrankster(), "{2}{U}{B}");
         harness.passBothPriorities();

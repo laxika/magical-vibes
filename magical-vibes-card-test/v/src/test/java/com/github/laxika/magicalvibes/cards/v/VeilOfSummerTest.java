@@ -135,6 +135,26 @@ class VeilOfSummerTest extends BaseCardTest {
     }
 
     @Test
+    @org.junit.jupiter.api.DisplayName("A later \"loses all abilities\" removes the creature's hexproof from blue (CR 613.1f)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.h.Humility.class)
+    void laterAbilityLossRemovesTheHexproof() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CloudkinSeer());
+        harness.setHand(player1, List.of(new VeilOfSummer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.h.Humility());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Cloudkin Seer");
+    }
+
+    @Test
     void doesNotDrawForOwnBlueSpell() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new CloudkinSeer());
         harness.setLibrary(player1, List.of(new Forest()));

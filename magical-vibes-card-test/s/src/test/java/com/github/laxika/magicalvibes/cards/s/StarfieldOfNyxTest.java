@@ -87,6 +87,18 @@ class StarfieldOfNyxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A God entering after Starfield of Nyx without devotion isn't a creature (CR 613.7)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.h.HeliodGodOfTheSun.class)
+    void laterGodTypeRemovalWinsOverTheAnimation() {
+        addFiveEnchantments();
+        Permanent heliod = harness.addToBattlefieldAndReturn(player1,
+                new com.github.laxika.magicalvibes.cards.h.HeliodGodOfTheSun());
+
+        assertThat(gqs.isCreature(gd, heliod)).isFalse();
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Browse"))).isTrue();
+    }
+
+    @Test
     @DisplayName("Starfield of Nyx does not animate itself")
     void doesNotAnimateItself() {
         addFiveEnchantments();

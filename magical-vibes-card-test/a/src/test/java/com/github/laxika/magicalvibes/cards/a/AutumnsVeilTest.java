@@ -510,6 +510,20 @@ class AutumnsVeilTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
+    @Test
+    @DisplayName("Under Swirl the Mists naming red, its rules read red spells (CR 612.1)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.s.SwirlTheMists.class)
+    void colorWordChangeRewritesBothRules() {
+        Permanent swirl = harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.s.SwirlTheMists());
+        swirl.setChosenColor(CardColor.RED);
+        harness.setHand(player1, List.of(new AutumnsVeil()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(protectedColors(player1)).containsExactly(CardColor.RED);
+        assertThat(colorsOfSpellsThatCantTarget(player1)).containsExactly(CardColor.RED);
+    }
+
     private Permanent addCreature(Player player) {
         return addCreatureReady(player, new GrizzlyBears());
     }

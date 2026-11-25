@@ -40,6 +40,18 @@ class StridehangarAutomatonTest extends BaseCardTest {
     }
 
     @Test
+    @org.junit.jupiter.api.DisplayName("Boosts itself while it is a Thopter (\"Thopters you control\")")
+    @CardUsed(com.github.laxika.magicalvibes.cards.m.MaskwoodNexus.class)
+    void boostsItselfWhileAThopter() {
+        Permanent automaton = harness.addToBattlefieldAndReturn(player1, new StridehangarAutomaton());
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.m.MaskwoodNexus());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, automaton, CardSubtype.THOPTER)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, automaton)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, automaton)).isEqualTo(5);
+    }
+
+    @Test
     void doesNotAddThopterWhenANonartifactTokenIsCreated() {
         harness.addToBattlefield(player1, new StridehangarAutomaton());
         harness.setHand(player1, List.of(new HangedExecutioner()));

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
@@ -34,7 +35,11 @@ import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -424,6 +429,34 @@ public final class TextChangeTransformer {
                 yield condition == conditional.condition() && wrapped == conditional.wrapped() ? conditional
                         : new ConditionalEffect(condition, wrapped);
             }
+            // "Can't be countered by blue or black spells" (Autumn's Veil).
+            case GrantControllerSpellsCantBeCounteredByColorsEffect cantBeCountered -> {
+                Set<CardColor> colors = replaceColor(cantBeCountered.colors(), substitution);
+                yield colors == cantBeCountered.colors() ? cantBeCountered
+                        : new GrantControllerSpellsCantBeCounteredByColorsEffect(colors);
+            }
+            // "Can't be the targets of blue or black spells this turn" (Autumn's Veil).
+            case GrantTargetingRestrictionToTargetUntilEndOfTurnEffect grant -> {
+                TargetingRestrictionEffect restriction = grant.restriction();
+                Set<CardColor> colors = restriction.colors() == null ? null
+                        : replaceColor(restriction.colors(), substitution);
+                yield colors == restriction.colors() ? grant
+                        : new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(new TargetingRestrictionEffect(
+                        restriction.kind(), restriction.opponentOnly(), colors, restriction.mode(),
+                        restriction.hexproofLike(), restriction.sourceCardTypes(), restriction.opponentsOf()),
+                        grant.subject());
+            }
+            // Several steps: the words of each step.
+            case SequenceEffect sequence -> {
+                List<CardEffect> steps = new ArrayList<>(sequence.steps().size());
+                boolean changed = false;
+                for (CardEffect step : sequence.steps()) {
+                    CardEffect rewritten = apply(step, substitution);
+                    changed |= rewritten != step;
+                    steps.add(rewritten);
+                }
+                yield changed ? sequence.withSteps(steps) : sequence;
+            }
             // A "you may": the words of the effect it wraps.
             case MayEffect may -> {
                 CardEffect wrapped = apply(may.wrapped(), substitution);
@@ -483,6 +516,13 @@ public final class TextChangeTransformer {
             case NotCondition not -> {
                 Condition inner = apply(not.inner(), substitution);
                 yield inner == not.inner() ? not : new NotCondition(inner);
+            }
+            // "If you sacrifice an Island this way": the words of the permanent and card filters.
+            case HappenedThisWay happened -> {
+                PermanentPredicate filter = apply(happened.filter(), substitution);
+                CardPredicate cardFilter = apply(happened.cardFilter(), substitution);
+                yield filter == happened.filter() && cardFilter == happened.cardFilter() ? happened
+                        : new HappenedThisWay(happened.kind(), happened.minimum(), filter, cardFilter, happened.player());
             }
             default -> condition;
         };

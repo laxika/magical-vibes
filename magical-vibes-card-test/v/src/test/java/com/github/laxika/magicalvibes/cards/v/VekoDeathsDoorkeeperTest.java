@@ -32,11 +32,10 @@ class VekoDeathsDoorkeeperTest extends BaseCardTest {
         activate(veko, target);
 
         Card modified = gd.playerHands.get(player1.getId()).getFirst();
-        assertThat(modified).isNotSameAs(target);
         assertThat(modified.getId()).isEqualTo(target.getId());
-        assertThat(modified.getSubtypes()).contains(CardSubtype.SPIRIT);
-        assertThat(modified.getPower()).isEqualTo(1);
-        assertThat(modified.getToughness()).isEqualTo(1);
+        assertThat(gqs.getCardSubtypes(modified, gd, player1.getId())).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveCardPower(gd, modified)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, modified)).isEqualTo(1);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
@@ -46,9 +45,68 @@ class VekoDeathsDoorkeeperTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(target.getId())
-                        && permanent.getCard().getSubtypes().contains(CardSubtype.SPIRIT)
-                        && permanent.getCard().getPower() == 1
-                        && permanent.getCard().getToughness() == 1);
+                        && gqs.hasEffectiveSubtype(gd, permanent, CardSubtype.SPIRIT)
+                        && gqs.getEffectivePower(gd, permanent) == 1
+                        && gqs.getEffectiveToughness(gd, permanent) == 1);
+    }
+
+    @Test
+    @DisplayName("\"Perpetually becomes a Spirit\" replaces the card's creature types (CR 205.1a)")
+    void spiritReplacesTheCreatureTypes() {
+        Permanent veko = addReadyVeko();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+
+        activate(veko, target);
+
+        Card returned = gd.playerHands.get(player1.getId()).getFirst();
+        assertThat(gqs.getCardSubtypes(returned, gd, player1.getId())).containsExactly(CardSubtype.SPIRIT);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        Permanent spirit = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(target.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, spirit)).containsExactly(CardSubtype.SPIRIT);
+    }
+
+    @Test
+    @DisplayName("A Clone of the returned Spirit copies the printed Grizzly Bears, not the perpetual changes (CR 707.2)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.c.Clone.class)
+    void cloneCopiesPrintedValues() {
+        Permanent veko = addReadyVeko();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        activate(veko, target);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        Permanent spirit = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(target.getId()))
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(veko);
+
+        harness.castFromHand(player1, new com.github.laxika.magicalvibes.cards.c.Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, spirit.getId());
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof com.github.laxika.magicalvibes.cards.c.Clone)
+                .findFirst().orElseThrow();
+
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, copy)).containsExactly(CardSubtype.BEAR);
     }
 
     @Test

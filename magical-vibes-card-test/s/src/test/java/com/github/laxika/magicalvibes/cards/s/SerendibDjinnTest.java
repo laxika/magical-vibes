@@ -37,6 +37,27 @@ class SerendibDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("After Magical Hack changes Island to Swamp, sacrificing a Swamp deals the damage (CR 612.2)")
+    @CardUsed({com.github.laxika.magicalvibes.cards.m.MagicalHack.class, Swamp.class})
+    void textChangedLandTypeRewritesTheDamageCondition() {
+        var swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addToBattlefield(player1, new Island());
+        var djinn = harness.addToBattlefieldAndReturn(player1, new SerendibDjinn());
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MagicalHack()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, djinn.getId());
+        harness.handleListChoice(player1, "ISLAND");
+        harness.handleListChoice(player1, "SWAMP");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(swamp.getId()));
+
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Swamp");
+    }
+
+    @Test
     @DisplayName("Sacrificing a non-Island land deals no damage")
     void sacrificingNonIslandDealsNoDamage() {
         harness.addToBattlefield(player1, new Forest());

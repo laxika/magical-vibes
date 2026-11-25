@@ -17,7 +17,7 @@ public class SageOfFables extends Card {
 
     public SageOfFables() {
         // Each other Wizard creature you control enters with an additional +1/+1 counter on it.
-        addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
+        addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1).creatures());
 
         // {2}, Remove a +1/+1 counter from a creature you control: Draw a card.
         addActivatedAbility(new ActivatedAbility(

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs (one per group, D11 to D22; the defect queue table): D11 to D17 and D19 done. Running in parallel worktrees: D18, D20, D21, D22. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34) and set exchanges under CR 701.12a (D19 L22). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs (one per group, D11 to D22; the defect queue table): D11 to D19 done. Running in parallel worktrees: D21, D22; merge queue D20. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34) and set exchanges under CR 701.12a (D19 L22). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34) and set exchanges under CR 701.12a (D19 L22). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12) and MayPayManaEffect's unpayable prompt (D17 L34). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), Tribute's reduced-placement reading (CR 702.104b) and "if you do" after a replaced draw (D14 L17). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2), about 20 "counter unless" rows (option C, step 10), and Tribute's reduced-placement reading (CR 702.104b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,005 / 2,431 (after fold run D19) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,005 / 2,431 (after fold run D18) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,753 rows over 4,579 classes (after fold run D19). Latest verdict per class: unique 1,195, absorbed 1,359, split 691, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,758 rows over 4,580 classes (after fold run D18). Latest verdict per class: unique 1,195, absorbed 1,359, split 691, blocked-other 561, survivor 461, blocked-step-model 140, blocked-player-loop 95, dead 78. Waiting: 0 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1192,6 +1192,14 @@ No Gradle process of mine is running. The result is left uncommitted in `/tmp/cl
 Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/d19:
 - ledger-rows.csv
 - run3.log (the main test run)
+
+- The perpetual stores, not the card's printed fields: a perpetual change goes through `PerpetuallyGrantCardCharacteristicsEffectHandler.grant` plus `perpetualCardBasePowerToughness`, `grantPerpetualKeywords` and `grantPerpetualAlternateCast`, keyed by the physical card id.
+- `GameQueryService.entersWithCardType(gameData, controllerId, permanent, type)` (now public): a card type as the permanent would exist on the battlefield (CR 614.12).
+- `ControlledCreaturesEnterWithAdditionalCountersEffect.creatures()`: "each other [type] creature you control".
+
+Files are in `/tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/d18/`:
+- ledger-rows.csv
+- logs/big2.log
 
 ### Blocked causes still open
 
@@ -5641,6 +5649,37 @@ Oracle text and rulings checked: Biting Remark, Bad Wolf Bay, Cunning Azurescale
 - L5's Scrycast check, which needs `CastingPermissionService` in `ScryAiStrategy`'s context.
 - L27 together with any other conversion bump.
 - Then L9's Aura route for the dying-creature returns.
+
+### Step 9, defect run D18 (2026-11-25, parallel worktree)
+Group 7, 32 lines: 17 fixed (2 partly), 2 already fixed, 3 not a defect, 9 left, 1 not reached. Ratchet 3,009 unchanged. Ledger: 5 rows.
+
+- **Perpetual changes stay off the copiable values (CR 707.2).**
+  - Handlers no longer exchange the card. They write `perpetualCardBasePowerToughness`, `perpetualCardTypes` / `Subtypes` / `CreatureTypeReplacedCardIds` (through the now package-visible `PerpetuallyGrantCardCharacteristicsEffectHandler.grant`), `grantPerpetualKeywords` and `grantPerpetualAlternateCast`.
+  - Covered: Prankster, Little Pig, Muster, Wildgrove, Veko, Skyforge.
+  - Layer 7b reads the perpetual base from the card, then the physical card.
+  - `isCreatureWithBonus` counts a perpetual creature type off the battlefield (Volatile Rift's trigger filter).
+  - Source: mtg.wiki ("a copy uses the original card's characteristics"); no official ruling.
+- **Rules readings.** Veko's "becomes a Spirit" replaces the creature types (CR 205.1a). Skyforge's "becomes an artifact creature" keeps the other types (CR 205.1b); fold run 12e's ledger note had cited 205.1a.
+- **Type setting.** The CR 205.1a subtype cleanup is shared by `SetCardTypesEffect` and `SetCardTypesUntilEndOfTurnEffect`.
+- **Copies.**
+  - `BecomeEnchantmentEffect` restores `becomeCreatureBaseCard`.
+  - `BecomeCopyOfSubjectEffect` records a copy with no duration when older copies with a duration exist (CR 613.7).
+- **Text changes.**
+  - `TextChangeTransformer` gained cases for `SequenceEffect`, `HappenedThisWay` and Autumn's Veil's two records.
+  - `TriggerIndex.stepCandidates` reads a permanent's own step abilities through `EventAbilitySupport.textChanged`. Before this, upkeep and other step abilities ignored text changes.
+- **Readers.**
+  - Starfield's override was removed from `isCreatureWithBonus`; layer 4 already applies it.
+  - Enter-tapped by type uses `entersWithCardType` (CR 614.12).
+  - `printedProtectionEffects` skips protection granted to the host.
+  - The hexproof-from-colour grant checks `grantedAbilitySurvivesRemoval` (CR 613.1f).
+- **Entry counters.** `ControlledCreaturesEnterWithAdditionalCountersEffect.creatures()` for "[type] creature" wording; `ofChosenSubtype` sets it. Sage, Bramblewood, Oona's and Mimic use it; Giada, Globe and Socialite don't.
+- **Energybending** grants all five basic types, also ones the land already has.
+- **Seen, not changed:**
+  - `BecomeCreatureEffect` (24 cards) swaps the card, so a later copy effect drops its type change.
+  - These handlers still exchange cards: `PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler`, `PerpetuallyGrantStaticEffectToSourceEffectHandler`, `DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler`, `PerpetuallyBecomeCreatureEffectHandler`, and the card copy in `ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler`.
+  - A text-changed targeted trigger gets new effect instances, so its identity-keyed target group may be lost. This was already true for the `ConditionalEffect` / `MayEffect` cases.
+  - The enter-tapped filter path judges the entering permanent as it is now.
+- **For the next run:** the card-exchanging perpetual handlers above; L29's Ward component; L19's colour, mana-cost and supertype stores; L12's attach continuation.
 
 ## Prompt
 

@@ -3519,7 +3519,16 @@ public class GameQueryService {
                 && !gameData.anyPermanentMatches(p -> p.getId().equals(permanent.getId()))) {
             return true;
         }
-        if (isAnimatedByStarfield(gameData, permanent)) return true;
+        // A card off the battlefield (a card moving between other zones, judged as a permanent) has the card types it
+        // perpetually gained; on the battlefield the layered state above holds them.
+        if (!permanent.isFaceDown()
+                && gameData.perpetualCardTypes.getOrDefault(permanent.getCard().getId(), Set.of())
+                .contains(CardType.CREATURE)
+                && !gameData.anyPermanentMatches(p -> p.getId().equals(permanent.getId()))) {
+            return true;
+        }
+        // Starfield of Nyx animates in layer 4, where a later type removal (a God's) wins (CR 613.7): the bonus
+        // above already answers for it.
         if (hasEffectiveCardType(permanent, bonus, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent, enteringControllerId);
@@ -5912,7 +5921,7 @@ public class GameQueryService {
      * exist on the battlefield: the continuous effects that would apply to it counted (CR 614.12; Winding Constrictor's
      * Mycosynth Lattice ruling), face-down characteristics included. One already on the battlefield is read as it is.
      */
-    private boolean entersWithCardType(GameData gameData, UUID controllerId, Permanent entering, CardType type) {
+    public boolean entersWithCardType(GameData gameData, UUID controllerId, Permanent entering, CardType type) {
         if (entering == null) {
             return false;
         }
@@ -8609,9 +8618,16 @@ public class GameQueryService {
      * Protection granted by other permanents and effects is read separately from the computed static bonus.
      */
     private List<CardEffect> printedProtectionEffects(GameData gameData, Permanent target) {
-        return hasLostPrintedProtection(gameData, target)
-                ? List.of()
-                : target.getCard().getStaticEffects();
+        if (hasLostPrintedProtection(gameData, target)) {
+            return List.of();
+        }
+        // Protection an Aura or Equipment gives its host ("enchanted creature has protection from multicolored") is
+        // the host's, read from the computed bonus; the attachment itself doesn't have it (CR 702.16a).
+        return target.getCard().getStaticEffects().stream()
+                .filter(effect -> !(effect instanceof ProtectionGrantingEffect protection)
+                        || protection.protectionSubject() == null
+                        || protection.protectionSubject() instanceof PermanentSubject.Source)
+                .toList();
     }
 
     private boolean hasProtectionFromMulticoloredEffects(Iterable<CardEffect> effects) {
@@ -9784,8 +9800,10 @@ public class GameQueryService {
         }
         for (FloatingContinuousEffect turnGrant : gameData.floatingEffectsOnPermanent(target.getId(),
                 GrantControllerAndPermanentsHexproofFromColorsEffect.class)) {
+            // An ability a resolution granted; a later "loses all abilities" removes it (CR 613.1f, 613.7).
             if (((GrantControllerAndPermanentsHexproofFromColorsEffect) turnGrant.effect()).colors()
-                    .contains(sourceColor)) {
+                    .contains(sourceColor)
+                    && grantedAbilitySurvivesRemoval(gameData, target, turnGrant.timestamp())) {
                 return true;
             }
         }

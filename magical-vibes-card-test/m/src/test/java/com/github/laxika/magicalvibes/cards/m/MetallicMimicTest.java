@@ -58,6 +58,20 @@ class MetallicMimicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A noncreature Kindred permanent of the chosen type gets no counter (\"creature you control\")")
+    @CardUsed(com.github.laxika.magicalvibes.cards.b.Bitterblossom.class)
+    void noncreatureKindredOfChosenTypeGetsNoCounter() {
+        addMimic(player1, CardSubtype.FAERIE);
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.b.Bitterblossom()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bitterblossom").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("A creature of a different type gets no counter")
     void otherTypeGetsNoCounter() {
         addMimic(player1, CardSubtype.WIZARD);

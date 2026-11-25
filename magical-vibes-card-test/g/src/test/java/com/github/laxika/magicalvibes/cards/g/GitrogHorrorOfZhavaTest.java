@@ -84,6 +84,28 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A land that entered as a copy gets the ability on its own card, which keeps it after leaving")
+    @CardUsed(com.github.laxika.magicalvibes.cards.v.Vesuva.class)
+    void landCopyGetsTheAbilityOnItsOwnCard() {
+        harness.addToBattlefield(player1, new GitrogHorrorOfZhava());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        com.github.laxika.magicalvibes.cards.v.Vesuva vesuvaCard = new com.github.laxika.magicalvibes.cards.v.Vesuva();
+        harness.setHand(player1, List.of(vesuvaCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, forest.getId());
+        resolveAllTriggers();
+        Permanent vesuva = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() == vesuvaCard).findFirst().orElseThrow();
+
+        assertThat(gd.perpetualAbilities(vesuvaCard.getId())).hasSize(1);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, vesuva)).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Declining leaves Gitrog untapped and does not seek")
     void decliningLeavesGitrogUntappedAndDoesNotSeek() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());

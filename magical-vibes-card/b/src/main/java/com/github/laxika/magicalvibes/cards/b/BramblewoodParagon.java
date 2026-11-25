@@ -15,7 +15,7 @@ public class BramblewoodParagon extends Card {
 
     public BramblewoodParagon() {
         // Each other Warrior creature you control enters with an additional +1/+1 counter on it.
-        addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WARRIOR, 1));
+        addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WARRIOR, 1).creatures());
 
         // Each creature you control with a +1/+1 counter on it has trample.
         addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl(),

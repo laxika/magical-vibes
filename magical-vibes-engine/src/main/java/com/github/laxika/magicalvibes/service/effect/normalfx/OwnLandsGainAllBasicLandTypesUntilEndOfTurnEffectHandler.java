@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OwnLandsGainAllBasicLandTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,18 +27,6 @@ public class OwnLandsGainAllBasicLandTypesUntilEndOfTurnEffectHandler implements
 
     private final GameQueryService gameQueryService;
 
-    /**
-     * Whether the land already carries {@code subtype} from its own printed or floating-granted types.
-     * Types supplied by other continuous effects (e.g. Prismatic Omen) are deliberately ignored, so the
-     * grant is still recorded on the land and survives those effects leaving the battlefield.
-     */
-    private static boolean hasOwnBasicLandType(GameData gameData, Permanent permanent, CardSubtype subtype) {
-        return permanent.getCard().getSubtypes().contains(subtype)
-                || gameData.floatingEffectsOnPermanent(permanent.getId(), GrantSubtypeEffect.class).stream()
-                .anyMatch(fe -> ((GrantSubtypeEffect) fe.effect()).subtype() == subtype
-                && !((GrantSubtypeEffect) fe.effect()).overriding());
-    }
-
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return OwnLandsGainAllBasicLandTypesUntilEndOfTurnEffect.class;
@@ -56,12 +43,13 @@ public class OwnLandsGainAllBasicLandTypesUntilEndOfTurnEffectHandler implements
             if (!gameQueryService.isLand(gameData, permanent)) {
                 continue;
             }
+            // Every type, also one the land has now: an older effect that set its land types (Blood Moon on a Taiga)
+            // is overridden by this later grant in timestamp order (CR 613.7), and a type it gets from another effect
+            // stays granted when that effect ends.
             for (CardSubtype subtype : BASIC_LAND_TYPES) {
-                if (!hasOwnBasicLandType(gameData, permanent, subtype)) {
-                    GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(gameData, permanent, subtype,
-                            Duration.UNTIL_END_OF_TURN, false, entry.getCard().getName(),
-                            entry.getSourcePermanentId(), entry.getControllerId());
-                }
+                GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(gameData, permanent, subtype,
+                        Duration.UNTIL_END_OF_TURN, false, entry.getCard().getName(),
+                        entry.getSourcePermanentId(), entry.getControllerId());
             }
         }
     }

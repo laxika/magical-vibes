@@ -463,7 +463,7 @@ class EventAbilitySupport {
     }
 
     /** {@code ability} of {@code permanent} read through its text changes (Layer 3, CR 612.1). */
-    private static TriggeredAbility textChanged(GameData gameData, Permanent permanent, TriggeredAbility ability) {
+    static TriggeredAbility textChanged(GameData gameData, Permanent permanent, TriggeredAbility ability) {
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         if (gameData.textReplacements(permanent.getId()).isEmpty() && globalWordChange.isEmpty()) {
             return ability;

@@ -120,6 +120,33 @@ class TruePolymorphTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
+    @Test
+    @DisplayName("A permanent copy over a copy until end of turn stays when the older copy ends (CR 613.7)")
+    @CardUsed({com.github.laxika.magicalvibes.cards.c.Cytoshape.class,
+            com.github.laxika.magicalvibes.cards.m.MistralCharger.class})
+    void permanentCopyOutlastsAnOlderTemporaryCopy() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent charger = addCreatureReady(player1, new com.github.laxika.magicalvibes.cards.m.MistralCharger());
+        Permanent copySource = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.Cytoshape()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handlePermanentChosen(player1, charger.getId());
+        assertThat(target.getCard().getName()).isEqualTo("Mistral Charger");
+
+        castTruePolymorph(target, copySource);
+        assertThat(target.getCard().getName()).isEqualTo("Prodigal Pyromancer");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getCard().getName()).isEqualTo("Prodigal Pyromancer");
+    }
+
     private void castTruePolymorph(Permanent target, Permanent copySource) {
         harness.setHand(player1, List.of(new TruePolymorph()));
         addCastMana();

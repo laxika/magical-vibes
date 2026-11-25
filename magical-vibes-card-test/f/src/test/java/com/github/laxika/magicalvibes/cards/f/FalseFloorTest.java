@@ -17,6 +17,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FalseFloorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An artifact that would be a creature on the battlefield enters tapped (CR 614.12)")
+    @CardUsed({com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines.class, Fluctuator.class})
+    void artifactAnimatedByMarchEntersTapped() {
+        harness.addToBattlefield(player1, new FalseFloor());
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new Fluctuator(), "{2}");
+        harness.passBothPriorities();
+        Permanent fluctuator = findPermanent(player1, "Fluctuator");
+
+        assertThat(gqs.isCreature(gd, fluctuator)).isTrue();
+        assertThat(fluctuator.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("False Floor and all creatures enter tapped")
     void permanentsEnterTapped() {
         harness.castFromHand(player1, new FalseFloor(), "{4}");

@@ -117,6 +117,38 @@ class OpalAcrolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Clone of an animated Opal Acrolith stays a copy of it when its ability makes it an enchantment (CR 707.2)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.c.Clone.class)
+    void cloneCopyStaysOpalAcrolithWhenBecomingEnchantment() {
+        Permanent opal = addOpalAcrolith();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new com.github.laxika.magicalvibes.cards.c.Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, opal.getId());
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof com.github.laxika.magicalvibes.cards.c.Clone)
+                .findFirst().orElseThrow();
+        assertThat(gqs.isEnchantment(gd, copy)).isTrue();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(copy), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(copy);
+        assertThat(copy.getCard().getName()).isEqualTo("Opal Acrolith");
+        assertThat(gqs.isEnchantment(gd, copy)).isTrue();
+        assertThat(gqs.isCreature(gd, copy)).isFalse();
+    }
+
+    @Test
     @DisplayName("The zero-mana ability is usable while already an enchantment")
     void canActivateWhileAlreadyEnchantment() {
         Permanent opal = addOpalAcrolith();

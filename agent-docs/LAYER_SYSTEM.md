@@ -482,7 +482,8 @@ with no resolving entry at hand (a replacement as the permanent enters, a choice
 while the grants were seeded before every effect. Perpetual
 changes are not effects: the pass seeds them from `GameData.perpetualCardKeywords`, `perpetualCardTypes`,
 `perpetualCardSubtypes` and `perpetualCreatureTypeReplacedCardIds` by the permanent's own card, as part of its
-characteristics. Tests give and read these grants through `testutil.PermanentGrants`.
+characteristics; `perpetualCardBasePowerToughness` is a 7b entry read from its card, then its physical card. A
+perpetual change belongs in these stores, not in a card's printed fields, so a copy copies the printed values (CR 707.2). Tests give and read these grants through `testutil.PermanentGrants`.
 
 **Keyword and protection grants with a duration.** "Gains flying until end of turn", "loses flying", "gains hexproof
 until your next turn", "gains protection from red / from artifacts / from colorless / from each of your opponents /

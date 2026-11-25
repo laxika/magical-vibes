@@ -76,7 +76,11 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
                 + (perpetual.activatedAbilities().isEmpty() ? "" : " and gains an ability") + ".";
     }
 
-    private void grant(GameData gameData, UUID cardId, PerpetuallyGrantCardCharacteristicsEffect perpetual) {
+    /**
+     * Records {@code perpetual}'s card types, subtypes (replacing the creature types when it says so) and activated
+     * abilities on the physical card {@code cardId}, in the perpetual stores the layered pass and the card queries read.
+     */
+    static void grant(GameData gameData, UUID cardId, PerpetuallyGrantCardCharacteristicsEffect perpetual) {
         mergeCardTypes(gameData, cardId, perpetual.cardTypes());
         if (perpetual.replacesCreatureTypes()) {
             gameData.perpetualCreatureTypeReplacedCardIds.add(cardId);
@@ -91,7 +95,7 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
         perpetual.activatedAbilities().forEach(ability -> gameData.grantPerpetualAbilityOnce(cardId, ability));
     }
 
-    private void mergeCardTypes(GameData gameData, UUID cardId, Set<CardType> types) {
+    private static void mergeCardTypes(GameData gameData, UUID cardId, Set<CardType> types) {
         gameData.perpetualCardTypes.merge(cardId, Set.copyOf(types), (existing, added) -> {
             Set<CardType> merged = EnumSet.noneOf(CardType.class);
             merged.addAll(existing);
@@ -100,7 +104,7 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
         });
     }
 
-    private void mergeSubtypes(GameData gameData, UUID cardId, Set<CardSubtype> subtypes) {
+    private static void mergeSubtypes(GameData gameData, UUID cardId, Set<CardSubtype> subtypes) {
         gameData.perpetualCardSubtypes.merge(cardId, Set.copyOf(subtypes), (existing, added) -> {
             Set<CardSubtype> merged = EnumSet.noneOf(CardSubtype.class);
             merged.addAll(existing);

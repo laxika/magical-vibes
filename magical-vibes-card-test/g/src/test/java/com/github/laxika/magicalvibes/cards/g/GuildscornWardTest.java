@@ -155,6 +155,26 @@ class GuildscornWardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The Aura itself has no protection: a multicolored spell can destroy it")
+    @CardUsed(com.github.laxika.magicalvibes.cards.m.Mortify.class)
+    void auraItselfIsNotProtected() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ward = attachWard(bears);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.m.Mortify()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0, ward.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Guildscorn Ward");
+    }
+
     private Permanent castWard(Permanent host) {
         harness.setHand(player1, List.of(new GuildscornWard()));
         harness.addMana(player1, ManaColor.WHITE, 1);

@@ -35,7 +35,7 @@ class WildgroveSummonerTest extends BaseCardTest {
 
         for (Permanent forest : List.of(handForest, libraryForest)) {
             assertThat(gqs.getEffectiveCardTypes(gd, forest)).contains(CardType.LAND, CardType.CREATURE);
-            assertThat(forest.getCard().getSubtypes()).contains(CardSubtype.FOREST, CardSubtype.TREEFOLK);
+            assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.FOREST, CardSubtype.TREEFOLK);
             assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
             assertThat(gqs.hasKeyword(gd, forest, Keyword.REACH)).isTrue();
@@ -45,6 +45,32 @@ class WildgroveSummonerTest extends BaseCardTest {
         Card unchangedIsland = gd.playerDecks.get(player1.getId()).getLast();
         assertThat(unchangedIsland.getType()).isEqualTo(CardType.LAND);
         assertThat(unchangedIsland.getPower()).isNull();
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("A Clone of an animated Forest copies the printed Forest, not the perpetual Treefolk (CR 707.2)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.c.Clone.class)
+    void cloneOfAnimatedForestIsOnlyAForest() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.enterBattlefieldAndReturn(player1, new WildgroveSummoner());
+        resolveAllTriggers();
+        Permanent forest = harness.enterBattlefieldAndReturn(
+                player1, gd.playerHands.get(player1.getId()).removeFirst());
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+
+        harness.castFromHand(player1, new com.github.laxika.magicalvibes.cards.c.Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, forest.getId());
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof com.github.laxika.magicalvibes.cards.c.Clone)
+                .findFirst().orElseThrow();
+
+        assertThat(gqs.isLand(gd, copy)).isTrue();
+        assertThat(gqs.isCreature(gd, copy)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, copy, CardSubtype.TREEFOLK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isFalse();
     }
 
     @Test

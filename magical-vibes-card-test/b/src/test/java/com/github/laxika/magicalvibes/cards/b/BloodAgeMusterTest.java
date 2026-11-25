@@ -56,8 +56,8 @@ class BloodAgeMusterTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(muster.getId()))
                 .toList();
         assertThat(created).hasSize(1);
-        assertThat(created.getFirst().getCard().getPower()).isEqualTo(2);
-        assertThat(created.getFirst().getCard().getToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, created.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, created.getFirst())).isEqualTo(2);
     }
 
     @Test

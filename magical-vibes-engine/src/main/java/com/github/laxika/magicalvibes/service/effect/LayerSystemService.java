@@ -2237,25 +2237,7 @@ public class LayerSystemService {
                 for (PermanentSlot target : scopeTargets(gameData, instance, set.subject(), null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.overrideCardTypes(set.cardTypes());
-                    // CR 205.1a: the subtypes of a card type the permanent no longer has go with it.
-                    if (!state.hasCardType(CardType.CREATURE) && !state.hasCardType(CardType.KINDRED)) {
-                        state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-                    }
-                    if (!state.hasCardType(CardType.ARTIFACT)) {
-                        state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
-                    }
-                    if (!state.hasCardType(CardType.PLANESWALKER)) {
-                        state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
-                    }
-                    if (!state.hasCardType(CardType.LAND)) {
-                        state.removeSubtypesIf(LAND_SUBTYPES::contains);
-                    }
-                    if (!state.hasCardType(CardType.ENCHANTMENT)) {
-                        state.removeSubtypesIf(ENCHANTMENT_SUBTYPES::contains);
-                    }
-                    if (!state.hasCardType(CardType.BATTLE)) {
-                        state.removeSubtypesIf(BATTLE_SUBTYPES::contains);
-                    }
+                    removeSubtypesOfLostCardTypes(state);
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.copyOf(set.cardTypes())));
@@ -2339,7 +2321,9 @@ public class LayerSystemService {
             case SetCardTypesUntilEndOfTurnEffect setTypes -> {
                 if (instance.floating() == null) return;
                 for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.overrideCardTypes(setTypes.cardTypes());
+                    removeSubtypesOfLostCardTypes(state);
                 }
             }
             case GrantChosenSubtypeToOwnCreaturesEffect grant -> {
@@ -3075,6 +3059,31 @@ public class LayerSystemService {
     }
 
     /**
+     * After an effect set the card types: the subtypes correlated with a card type the permanent no longer has go with
+     * it (CR 205.1a).
+     */
+    private static void removeSubtypesOfLostCardTypes(CharacteristicState state) {
+        if (!state.hasCardType(CardType.CREATURE) && !state.hasCardType(CardType.KINDRED)) {
+            state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+        }
+        if (!state.hasCardType(CardType.ARTIFACT)) {
+            state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
+        }
+        if (!state.hasCardType(CardType.PLANESWALKER)) {
+            state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
+        }
+        if (!state.hasCardType(CardType.LAND)) {
+            state.removeSubtypesIf(LAND_SUBTYPES::contains);
+        }
+        if (!state.hasCardType(CardType.ENCHANTMENT)) {
+            state.removeSubtypesIf(ENCHANTMENT_SUBTYPES::contains);
+        }
+        if (!state.hasCardType(CardType.BATTLE)) {
+            state.removeSubtypesIf(BATTLE_SUBTYPES::contains);
+        }
+    }
+
+    /**
      * Seeds the card types and subtypes the permanent's card has perpetually gained, and drops its printed creature
      * types when it perpetually became a creature type. A perpetual change is made to the card, not an effect with a
      * duration (CR 611.2a), so it is part of the characteristics every layer starts from, as the card's printed ones
@@ -3742,7 +3751,12 @@ public class LayerSystemService {
                         permanent.getCounterTimestamp(CounterType.BASE_POWER_FOUR), slot.position(),
                         "base power 4 counter"));
             }
+            // A change made to the physical card stays with it while it is a copy of something else, as the 7c
+            // modifier does; a copy's own card is read first.
             var perpetualBase = gameData.perpetualCardBasePowerToughness.get(permanent.getCard().getId());
+            if (perpetualBase == null && permanent.getOriginalCard() != null) {
+                perpetualBase = gameData.perpetualCardBasePowerToughness.get(permanent.getOriginalCard().getId());
+            }
             if (perpetualBase != null && !permanent.isFaceDown()) {
                 entries.add(new BasePtEntry(permanent.getId(), perpetualBase.power(), perpetualBase.toughness(),
                         perpetualBase.timestamp(), slot.position(), "Perpetual base P/T"));

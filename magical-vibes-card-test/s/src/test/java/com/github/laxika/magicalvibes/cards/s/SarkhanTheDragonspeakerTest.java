@@ -44,6 +44,22 @@ class SarkhanTheDragonspeakerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("+1 removes the Sarkhan planeswalker type while Sarkhan is only a creature (CR 205.1a)")
+    void plusOneRemovesPlaneswalkerSubtype() {
+        Permanent sarkhan = addReadySarkhan(player1, 4);
+        assertThat(gqs.hasEffectiveSubtype(gd, sarkhan, com.github.laxika.magicalvibes.model.CardSubtype.SARKHAN))
+                .isTrue();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, sarkhan, com.github.laxika.magicalvibes.model.CardSubtype.SARKHAN))
+                .isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, sarkhan, com.github.laxika.magicalvibes.model.CardSubtype.DRAGON))
+                .isTrue();
+    }
+
+    @Test
     @DisplayName("-3 deals 4 damage to a target creature")
     void minusThreeDealsDamageToCreature() {
         Permanent sarkhan = addReadySarkhan(player1, 4);

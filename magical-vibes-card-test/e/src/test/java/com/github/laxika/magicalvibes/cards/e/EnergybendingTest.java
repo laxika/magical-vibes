@@ -101,6 +101,22 @@ class EnergybendingTest extends BaseCardTest {
                         ManaColor.RED, ManaColor.GREEN);
     }
 
+    @Test
+    @DisplayName("Under an older Blood Moon a Taiga gains Forest too (CR 613.7)")
+    @CardUsed({com.github.laxika.magicalvibes.cards.b.BloodMoon.class, com.github.laxika.magicalvibes.cards.t.Taiga.class})
+    void taigaUnderBloodMoonGainsForest() {
+        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.b.BloodMoon());
+        Permanent taiga = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.t.Taiga());
+        assertThat(gqs.effectiveBasicLandTypes(gd, taiga)).containsExactly(CardSubtype.MOUNTAIN);
+
+        castEnergybending();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, taiga))
+                .containsExactlyInAnyOrder(CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
+                        CardSubtype.MOUNTAIN, CardSubtype.FOREST);
+        assertThat(gqs.intrinsicBasicLandManaColors(gd, taiga)).contains(ManaColor.GREEN);
+    }
+
     private void castEnergybending() {
         harness.setHand(player1, List.of(new Energybending()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
