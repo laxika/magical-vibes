@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -161,5 +163,21 @@ class TopographyTrackerTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(map), 0,
                 null, target.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A face-down Topography Tracker has no text, so a creature explores once")
+    void faceDownTrackerDoesNotDoubleExplore() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card firstLand = new Forest();
+        Card secondLand = new Forest();
+        harness.setLibrary(player1, List.of(firstLand, secondLand));
+        Permanent map = createMap();
+        findPermanents(player1, "Topography Tracker").getFirst().setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        exploreWithMap(map, target);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondLand);
     }
 }

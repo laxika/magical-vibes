@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -210,5 +211,18 @@ class OverwhelmingSplendorTest extends BaseCardTest {
         Permanent cursePerm = harness.addToBattlefieldAndReturn(controller, new OverwhelmingSplendor());
         cursePerm.setAttachedTo(enchantedPlayer.getId());
         return cursePerm;
+    }
+
+    @Test
+    @DisplayName("A curse that lost its abilities no longer stops non-mana activations")
+    void lostAbilitiesEndActivationRestriction() {
+        harness.addToBattlefield(player2, new JayemdaeTome());
+        Permanent curse = placeCurseOnPlayer(player1, player2);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, curse);
+        harness.addMana(player2, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
     }
 }

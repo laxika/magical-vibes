@@ -634,7 +634,7 @@ public class DamagePreventionService {
                                                                            CounterType counterType) {
         Permanent permanent = context.permanent();
         Set<PreventDamageAndAddPlusCountersEffect.Kind> kinds = EnumSet.noneOf(PreventDamageAndAddPlusCountersEffect.Kind.class);
-        if (!gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+        if (!permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof PreventDamageAndAddPlusCountersEffect counters
                         && counters.counterType() == counterType) {

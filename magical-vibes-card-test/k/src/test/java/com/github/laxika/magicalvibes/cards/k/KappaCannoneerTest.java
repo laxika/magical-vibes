@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -190,5 +191,21 @@ class KappaCannoneerTest extends BaseCardTest {
 
         assertThat(gqs.hasCantBeBlocked(gd, kappa)).isFalse();
         assertThat(kappa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("\"It can't be blocked this turn\" is no ability, so losing all abilities afterwards keeps it")
+    void unblockabilitySurvivesLosingAllAbilities() {
+        Permanent kappa = harness.addToBattlefieldAndReturn(player1, new KappaCannoneer());
+        harness.setHand(player1, List.of(new SolRing()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gqs.hasCantBeBlocked(gd, kappa)).isTrue();
+
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, kappa);
+
+        assertThat(gqs.hasCantBeBlocked(gd, kappa)).isTrue();
     }
 }

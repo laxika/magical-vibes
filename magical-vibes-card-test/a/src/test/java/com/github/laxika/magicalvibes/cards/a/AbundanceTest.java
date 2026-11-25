@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -228,5 +230,21 @@ class AbundanceTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(island);
         assertThat(gd.findExiledCard(island.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("A face-down Abundance has no text, so it offers no replacement")
+    void faceDownAbundanceOffersNothing() {
+        harness.addToBattlefieldAndReturn(player1, new Abundance()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears, new Forest()));
+
+        harness.inMutationScope(() -> {
+            harness.getDrawService().resolveDrawCard(gd, player1.getId());
+            harness.getPlayerInputService().processNextMayAbility(gd);
+        });
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
     }
 }

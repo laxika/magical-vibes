@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -181,5 +183,19 @@ class LaboratoryManiacTest extends BaseCardTest {
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains(gd.playerIdToName.get(player2.getId())) && l.contains("wins the game"));
+    }
+
+    @Test
+    @DisplayName("A face-down Laboratory Maniac has no text, so an empty-library draw loses")
+    void faceDownManiacDoesNotWin() {
+        harness.addToBattlefieldAndReturn(player1, new LaboratoryManiac()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }

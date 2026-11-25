@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.u.UbaMask;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -261,5 +263,21 @@ class TomorrowAzamisFamiliarTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second, third);
+    }
+
+    @Test
+    @DisplayName("A face-down Tomorrow has no text, so a draw is not replaced")
+    void faceDownTomorrowDoesNotReplaceDraws() {
+        harness.addToBattlefieldAndReturn(player1, new TomorrowAzamisFamiliar())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card top = new BileUrchin();
+        Card second = new Frostling();
+        harness.setLibrary(player1, List.of(top, second));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).contains(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
     }
 }

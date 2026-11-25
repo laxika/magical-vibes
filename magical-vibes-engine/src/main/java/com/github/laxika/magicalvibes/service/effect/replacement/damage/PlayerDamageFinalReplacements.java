@@ -168,20 +168,20 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                             return ctx.event().withAmount(ctx.amount() - prevented);
                         }).whole(),
                 wholeEventReplacement("NefariousLich", "Nefarious Lich: exile that many cards from your graveyard instead",
-                        ctx -> printedOnBattlefield(ctx.gameData().playerBattlefields.getOrDefault(ctx.playerId(), List.of()),
+                        ctx -> activeOnBattlefield(ctx, ctx.gameData().playerBattlefields.getOrDefault(ctx.playerId(), List.of()),
                                 NefariousLichDamageReplacementEffect.class),
                         ctx -> damageSupport.getObject().applyNefariousLichReplacement(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()),
                         " is replaced by Nefarious Lich.").whole(),
                 wholeEventReplacement("CrumblingSanctuary", "Crumbling Sanctuary: exile cards from your library instead",
                         ctx -> ctx.gameData().playerBattlefields.values().stream().anyMatch(battlefield ->
-                                printedOnBattlefield(battlefield, CrumblingSanctuaryDamageReplacementEffect.class)),
+                                activeOnBattlefield(ctx, battlefield, CrumblingSanctuaryDamageReplacementEffect.class)),
                         ctx -> damageSupport.getObject().applyCrumblingSanctuaryReplacement(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()),
                         " is replaced by Crumbling Sanctuary.").whole(),
                 effect("PreventAndExileFromGraveyard", PREVENTION,
                         ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
-                                && printedOnBattlefield(ctx.gameData().playerBattlefields.getOrDefault(
+                                && activeOnBattlefield(ctx, ctx.gameData().playerBattlefields.getOrDefault(
                                 ctx.playerId(), List.of()), PreventAllDamageToControllerAndExileFromGraveyardEffect.class),
                         ctx -> "Immortal Coil: prevent the damage and exile that many cards from your graveyard",
                         ctx -> {
@@ -299,9 +299,10 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                 .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(ctx.gameData(), permanent, effectType));
     }
 
-    private static boolean printedOnBattlefield(List<Permanent> battlefield,
-                                                Class<? extends CardEffect> effectType) {
-        return battlefield.stream().anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
-                .anyMatch(effectType::isInstance));
+    /** Whether a permanent of {@code battlefield} has {@code effectType} among its active static abilities. */
+    private boolean activeOnBattlefield(PlayerDamageContext ctx, List<Permanent> battlefield,
+                                        Class<? extends CardEffect> effectType) {
+        return battlefield.stream()
+                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(ctx.gameData(), permanent, effectType));
     }
 }

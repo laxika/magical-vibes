@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -215,5 +217,20 @@ class SharedFateTest extends BaseCardTest {
     }
 
     private record CardSetup(Card drawerLibraryCard, Card remainingOpponentCard, Card exiledCard) {
+    }
+
+    @Test
+    @DisplayName("A face-down Shared Fate has no text, so its controller draws normally")
+    void faceDownSharedFateDoesNotReplaceDraws() {
+        harness.addToBattlefieldAndReturn(player1, new SharedFate()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card own = new AlphaMyr();
+        Card opponents = new Forest();
+        harness.setLibrary(player1, List.of(own));
+        harness.setLibrary(player2, List.of(opponents));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(own);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponents);
     }
 }

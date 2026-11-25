@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GerrardsIrregulars;
 import com.github.laxika.magicalvibes.cards.j.JhessianThief;
 import com.github.laxika.magicalvibes.cards.s.ShockTroops;
 import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -197,5 +199,21 @@ class CrumblingSanctuaryTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.assertLife(player2, 20);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A face-down Crumbling Sanctuary has no text, so damage is dealt normally")
+    void faceDownSanctuaryDoesNotReplaceDamage() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefieldAndReturn(player1, new CrumblingSanctuary())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addToBattlefield(player1, new ShockTroops());
+        harness.setLibrary(player1, List.of(new GerrardsIrregulars(), new CrumblingSanctuary()));
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BountyOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IntoTheVoid;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -133,5 +135,21 @@ class HinataDawnCrownedTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down Hinata has no text, so opponents pay no more for targets")
+    void faceDownHinataTaxesNothing() {
+        harness.addToBattlefieldAndReturn(player1, new HinataDawnCrowned()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(gd.currentStep);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
     }
 }

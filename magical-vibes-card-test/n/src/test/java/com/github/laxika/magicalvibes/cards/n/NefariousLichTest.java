@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FlameBurst;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -322,4 +324,23 @@ class NefariousLichTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("A face-down Nefarious Lich has no text, so damage is dealt normally")
+    void faceDownLichDoesNotReplaceDamage() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefieldAndReturn(player1, new NefariousLich()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setGraveyard(player1, List.of(new DuskImp(), new DuskImp(), new DuskImp()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new FlameBurst()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
 }

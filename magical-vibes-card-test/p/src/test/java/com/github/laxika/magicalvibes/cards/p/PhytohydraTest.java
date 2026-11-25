@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -190,5 +192,19 @@ class PhytohydraTest extends BaseCardTest {
         harness.handleListChoice(player2, choice.options().stream()
                 .filter(option -> option.startsWith(labelPrefix))
                 .findFirst().orElseThrow());
+    }
+
+    @Test
+    @DisplayName("A face-down Phytohydra has no text, so damage is dealt to it normally")
+    void faceDownPhytohydraTakesDamage() {
+        Permanent phytohydra = harness.addToBattlefieldAndReturn(player2, new Phytohydra());
+        phytohydra.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, phytohydra.getId());
+
+        assertThat(phytohydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(phytohydra);
     }
 }

@@ -249,4 +249,20 @@ class GhostlyFlameTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Red Ward");
         assertThat(redWard.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("A face-down Ghostly Flame has no text, so protection from red still prevents the damage")
+    void faceDownFlameLeavesDamageColored() {
+        Permanent attacker = addCreatureReady(player1, createCreature("Big Goblin", 3, 3, CardColor.RED));
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2,
+                createCreatureWithProtection("Red Ward", 1, 2, CardColor.WHITE, CardColor.RED));
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.addToBattlefieldAndReturn(player1, new GhostlyFlame()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        resolveCombat();
+
+        assertThat(countPermanents(player2, "Red Ward")).isEqualTo(1);
+    }
 }

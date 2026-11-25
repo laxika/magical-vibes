@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HelixPinnacle;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -235,5 +237,21 @@ class WardOfBonesTest extends BaseCardTest {
                 .isEmpty();
         assertThatThrownBy(() -> harness.playLand(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A face-down Ward of Bones has no text, so it restricts no land play")
+    void faceDownWardRestrictsNothing() {
+        var ward = harness.addToBattlefieldAndReturn(player2, new WardOfBones());
+        ward.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof Forest).hasSize(2);
     }
 }

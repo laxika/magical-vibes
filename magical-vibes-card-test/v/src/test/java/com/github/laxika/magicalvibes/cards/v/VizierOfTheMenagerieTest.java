@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.h.HazeOfPollen;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.ThoughtKnotSeer;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -234,5 +236,18 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A face-down Vizier has no text, so it grants no mana permission")
+    void faceDownVizierGrantsNoManaPermission() {
+        var vizier = harness.addToBattlefieldAndReturn(player1, new VizierOfTheMenagerie());
+        vizier.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new DuneBeetle()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

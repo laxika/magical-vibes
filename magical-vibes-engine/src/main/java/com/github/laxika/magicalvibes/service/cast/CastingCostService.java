@@ -1008,7 +1008,7 @@ public class CastingCostService {
         int increase = 0;
         for (UUID controllerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, controllerId)) {
                     if (effect instanceof ModifyCastCostPerTargetEffect perTarget && perTarget.amount() > 0
                             && perTarget.scope().names(controllerId, casterId)) {
                         increase += perTarget.amount() * countedTargets(gameData, casterId, card, perTarget, targets);
@@ -1049,7 +1049,7 @@ public class CastingCostService {
             GameData gameData, UUID playerId, boolean anyTarget) {
         return gameData.orderedPlayerIds.stream().flatMap(controllerId -> gameData.playerBattlefields
                 .getOrDefault(controllerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
+                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent, controllerId).stream())
                 .filter(ModifyCastCostPerTargetEffect.class::isInstance)
                 .map(ModifyCastCostPerTargetEffect.class::cast)
                 .filter(perTarget -> perTarget.amount() < 0 && perTarget.scope().names(controllerId, playerId)
@@ -1268,17 +1268,8 @@ public class CastingCostService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                    LoyaltyAbilityCostIncreasingEffect costEffect = null;
-                    if (effect instanceof LoyaltyAbilityCostIncreasingEffect direct) {
-                        costEffect = direct;
-                    } else if (effect instanceof ConditionalEffect conditional
-                            && conditional.wrapped() instanceof LoyaltyAbilityCostIncreasingEffect wrapped
-                            && conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forStaticEffect(permanent, pid))) {
-                        costEffect = wrapped;
-                    }
-                    if (costEffect != null
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, pid)) {
+                    if (effect instanceof LoyaltyAbilityCostIncreasingEffect costEffect
                             && costEffect.appliesTo(ability, activatingPlayerId, pid)
                             && predicateEvaluationService.matchesPermanentPredicate(
                             sourcePermanent, costEffect.affectedPermanents(),
@@ -2152,7 +2143,7 @@ public class CastingCostService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return null;
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, playerId)) {
                 if (effect instanceof WebSlingingEffect webSlinging
                         && predicateEvaluationService.matchesCardPredicate(card, webSlinging.filter(), null)) {
                     return webSlinging;
@@ -2570,7 +2561,7 @@ public class CastingCostService {
         }
 
         int battlefieldReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .mapToInt(permanent -> permanent.getCard().getStaticEffects().stream()
+                .mapToInt(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent, playerId).stream()
                         .flatMap(CastingCostService::targetingReductions)
                         .mapToInt(effect -> targetIds.stream()
                                 .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
@@ -2652,7 +2643,7 @@ public class CastingCostService {
 
     public boolean hasBattlefieldTargetBasedCastCostReduction(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
+                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent, playerId).stream())
                 .anyMatch(effect -> effect instanceof ReduceOwnCastCostIfTargetingPermanentEffect targeting
                         && !targeting.increase() || effect instanceof BattlefieldTargetCastCostReducingEffect);
     }
@@ -2664,7 +2655,7 @@ public class CastingCostService {
     public boolean hasPerTargetCastCostIncrease(GameData gameData, UUID playerId) {
         return gameData.orderedPlayerIds.stream().anyMatch(controllerId -> gameData.playerBattlefields
                 .getOrDefault(controllerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
+                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent, controllerId).stream())
                 .anyMatch(effect -> effect instanceof ModifyCastCostPerTargetEffect perTarget
                         && perTarget.amount() > 0 && perTarget.scope().names(controllerId, playerId)));
     }
@@ -2680,7 +2671,7 @@ public class CastingCostService {
         int increase = 0;
         for (UUID controllerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, controllerId)) {
                     if (effect instanceof ModifyCastCostPerTargetEffect perTarget && perTarget.amount() > 0
                             && perTarget.targetFilter() == null && perTarget.spellFilter() == null
                             && perTarget.scope().names(controllerId, playerId)) {

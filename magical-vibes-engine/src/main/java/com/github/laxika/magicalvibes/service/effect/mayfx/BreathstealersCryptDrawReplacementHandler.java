@@ -159,7 +159,7 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, pid)) {
                     if (effect instanceof BreathstealersCryptDrawReplacementEffect crypt) {
                         sources.add(new CryptSource(permanent.getCard(), permanent.getId(), pid, crypt));
                     }

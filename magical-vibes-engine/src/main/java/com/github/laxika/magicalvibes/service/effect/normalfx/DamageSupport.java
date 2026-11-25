@@ -2227,9 +2227,8 @@ public class DamageSupport {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
 
-        boolean hasEffect = battlefield.stream().anyMatch(p ->
-                p.getCard().getStaticEffects().stream()
-                        .anyMatch(e -> e instanceof PreventAllDamageToControllerAndExileFromGraveyardEffect));
+        boolean hasEffect = battlefield.stream().anyMatch(p -> gameQueryService.hasActiveStaticEffect(
+                gameData, p, PreventAllDamageToControllerAndExileFromGraveyardEffect.class));
         if (!hasEffect) return 0;
 
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -2292,9 +2291,8 @@ public class DamageSupport {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
 
-        boolean hasEffect = battlefield.stream().anyMatch(p ->
-                p.getCard().getStaticEffects().stream()
-                        .anyMatch(NefariousLichDamageReplacementEffect.class::isInstance));
+        boolean hasEffect = battlefield.stream().anyMatch(p -> gameQueryService.hasActiveStaticEffect(
+                gameData, p, NefariousLichDamageReplacementEffect.class));
         if (!hasEffect) return 0;
 
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -2354,8 +2352,8 @@ public class DamageSupport {
 
         boolean hasEffect = gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
-                .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(CrumblingSanctuaryDamageReplacementEffect.class::isInstance));
+                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, CrumblingSanctuaryDamageReplacementEffect.class));
         if (!hasEffect) return 0;
 
         List<Card> library = gameData.playerDecks.get(playerId);
@@ -2408,8 +2406,8 @@ public class DamageSupport {
     /** The permanents {@code playerId} controls that turn damage to them into counters on themselves. */
     public List<Permanent> damageToControllerCounterReplacementSources(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .filter(permanent -> permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(DamageToControllerCounterReplacementEffect.class::isInstance))
+                .filter(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, DamageToControllerCounterReplacementEffect.class))
                 .toList();
     }
 

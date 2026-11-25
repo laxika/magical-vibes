@@ -638,8 +638,8 @@ public class LifeSupport {
             return false;
         }
         for (Permanent angel : battlefield) {
-            boolean hasReplacement = angel.getCard().getStaticEffects().stream()
-                    .anyMatch(EnduringAngelLifeTotalReplacementEffect.class::isInstance);
+            boolean hasReplacement = gameQueryService.hasActiveStaticEffect(
+                    gameData, angel, EnduringAngelLifeTotalReplacementEffect.class);
             if (hasReplacement && animationSupport.transformToBackFace(gameData, angel)) {
                 return applySetLifeTotal(gameData, playerId, 3);
             }

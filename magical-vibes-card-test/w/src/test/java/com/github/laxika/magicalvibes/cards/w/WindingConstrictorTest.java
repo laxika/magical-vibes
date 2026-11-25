@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AetherPoisoner;
 import com.github.laxika.magicalvibes.cards.m.MerenOfClanNelToth;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.cards.n.NuclearFallout;
 import com.github.laxika.magicalvibes.cards.i.IchorRats;
 import com.github.laxika.magicalvibes.cards.p.PyramidOfThePantheon;
@@ -136,5 +138,20 @@ class WindingConstrictorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({AjaniGoldmane.class, MycosynthLattice.class})
+    @DisplayName("A planeswalker that will be an artifact under Mycosynth Lattice enters with one more loyalty (ruling)")
+    void judgesEnteringPermanentAsItWouldExist() {
+        harness.addToBattlefield(player1, new WindingConstrictor());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.setHand(player1, List.of(new AjaniGoldmane()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castPlaneswalker(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Ajani Goldmane").getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 }

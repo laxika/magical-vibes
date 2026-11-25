@@ -1054,8 +1054,8 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
-            boolean hasReplacement = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(CyclingDrawReplacementEffect.class::isInstance);
+            boolean hasReplacement = gameQueryService.hasActiveStaticEffect(
+                    gameData, permanent, CyclingDrawReplacementEffect.class);
             if (hasReplacement && !permanent.getCard().getId().equals(cycledCard.getId())) {
                 return permanent;
             }
@@ -1223,8 +1223,8 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof SharedFateDrawReplacement);
+                boolean hasEffect = gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, SharedFateDrawReplacement.class);
                 if (hasEffect) {
                     sources.add(permanent);
                 }
@@ -1359,9 +1359,8 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                boolean hasEffect = !gameData.losesAllAbilitiesByEffect(permanent)
-                        && permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
+                boolean hasEffect = gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, UbaMaskDrawReplacementEffect.class);
                 if (hasEffect) {
                     return permanent;
                 }
@@ -1745,10 +1744,8 @@ public class DrawService {
 
         for (Permanent permanent : battlefield) {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .filter(CounterDrawReplacementEffect.class::isInstance)
-                    .map(CounterDrawReplacementEffect.class::cast)
-                    .anyMatch(effect -> effect.counterType() == counterType);
+            boolean hasEffect = gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                    CounterDrawReplacementEffect.class, effect -> effect.counterType() == counterType);
             if (hasEffect) {
                 return permanent;
             }
@@ -1765,10 +1762,8 @@ public class DrawService {
 
         for (Permanent permanent : battlefield) {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
-            boolean active = permanent.getCard().getStaticEffects().stream()
-                    .filter(CounterThresholdDrawReplacementEffect.class::isInstance)
-                    .map(CounterThresholdDrawReplacementEffect.class::cast)
-                    .anyMatch(effect -> effect.counterType() == counterType
+            boolean active = gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                    CounterThresholdDrawReplacementEffect.class, effect -> effect.counterType() == counterType
                             && permanent.getCounterCount(effect.counterType()) >= effect.minimumCounters());
             if (active) {
                 return permanent;
@@ -1992,8 +1987,8 @@ public class DrawService {
 
         for (Permanent permanent : battlefield) {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
-            boolean hasAbundanceEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(effect -> effect instanceof AbundanceDrawReplacementEffect);
+            boolean hasAbundanceEffect = gameQueryService.hasActiveStaticEffect(
+                    gameData, permanent, AbundanceDrawReplacementEffect.class);
             if (hasAbundanceEffect) {
                 return permanent.getCard();
             }
@@ -2028,9 +2023,8 @@ public class DrawService {
 
         return gameQueryService.withQueryScope(gameData, () -> {
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof LookAtTopCardsChooseOneToHandDrawReplacementEffect);
+                boolean hasEffect = gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, LookAtTopCardsChooseOneToHandDrawReplacementEffect.class);
                 if (hasEffect) {
                     return permanent;
                 }
@@ -2114,8 +2108,8 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(effect -> effect instanceof RevealTopCreatureToGraveyardElseDrawReplacementEffect);
+            boolean hasEffect = gameQueryService.hasActiveStaticEffect(
+                    gameData, permanent, RevealTopCreatureToGraveyardElseDrawReplacementEffect.class);
             if (hasEffect) {
                 return permanent;
             }
@@ -2711,12 +2705,8 @@ public class DrawService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return null;
         for (Permanent perm : battlefield) {
-            if (gameData.losesAllAbilitiesByEffect(perm)
-                    || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
-                continue;
-            }
-            boolean hasEffect = perm.getCard().getStaticEffects().stream()
-                    .anyMatch(e -> e instanceof WinGameOnEmptyLibraryDrawEffect);
+            boolean hasEffect = gameQueryService.hasActiveStaticEffect(
+                    gameData, perm, WinGameOnEmptyLibraryDrawEffect.class);
             if (hasEffect) return perm;
         }
         return null;

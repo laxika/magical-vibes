@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.p.PlayWithFire;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -173,5 +175,20 @@ class EnduringAngelTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gd.lifeGainedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down Enduring Angel has no text, so a lethal life loss is not replaced")
+    void faceDownAngelDoesNotReplaceLifeLoss() {
+        Permanent angel = addReadyAngel(player1);
+        angel.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLife(player1, 1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 2, "life loss"));
+        harness.runStateBasedActions();
+
+        assertThat(angel.isTransformed()).isFalse();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
     }
 }

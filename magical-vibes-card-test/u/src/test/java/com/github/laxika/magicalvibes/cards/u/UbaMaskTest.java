@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GolgariThug;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MercurialTransformation;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -258,5 +260,18 @@ class UbaMaskTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveSorcery(player1, 0, mask.getId());
         harness.handleListChoice(player1, "Become a blue Frog creature with base power and toughness 1/1");
+    }
+
+    @Test
+    @DisplayName("A face-down Uba Mask has no text, so draws are not replaced")
+    void faceDownMaskDoesNotReplaceDraws() {
+        harness.addToBattlefieldAndReturn(player1, new UbaMask()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
     }
 }

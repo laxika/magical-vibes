@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.s.SwallowWhole;
 import com.github.laxika.magicalvibes.cards.i.ImposingVantasaur;
 import com.github.laxika.magicalvibes.cards.i.IrrigatedFarmland;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -213,6 +215,23 @@ class UnpredictableCycloneTest extends BaseCardTest {
     @Test
     void opponentsCycloneDoesNotReplaceYourCyclingDraw() {
         harness.addToBattlefield(player2, new UnpredictableCyclone());
+        Card drawn = new ImposingVantasaur();
+        harness.setHand(player1, List.of(new ImposingVantasaur()));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down Unpredictable Cyclone has no text, so a cycling draw is not replaced")
+    void faceDownCycloneDoesNotReplaceCyclingDraw() {
+        harness.addToBattlefieldAndReturn(player1, new UnpredictableCyclone())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
         Card drawn = new ImposingVantasaur();
         harness.setHand(player1, List.of(new ImposingVantasaur()));
         harness.setLibrary(player1, List.of(drawn));

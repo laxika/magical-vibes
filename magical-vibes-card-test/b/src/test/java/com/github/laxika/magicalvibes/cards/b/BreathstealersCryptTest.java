@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.cards.i.Impulse;
 import com.github.laxika.magicalvibes.cards.i.Inspiration;
 import com.github.laxika.magicalvibes.cards.m.ManOWar;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -202,5 +205,19 @@ class BreathstealersCryptTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Man-o'-War");
         harness.assertInGraveyard(player1, "Man-o'-War");
         harness.assertInHand(player1, "Impulse");
+    }
+
+    @Test
+    @DisplayName("A face-down Breathstealer's Crypt has no text, so a drawn creature is kept unasked")
+    void faceDownCryptDoesNothing() {
+        harness.addToBattlefieldAndReturn(player1, new BreathstealersCrypt()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card manOWar = new ManOWar();
+        harness.setLibrary(player1, List.of(manOWar));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(manOWar);
+        harness.assertLife(player1, 20);
     }
 }

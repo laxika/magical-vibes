@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.Blightning;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.r.ResoundingThunder;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -259,5 +261,23 @@ class ImmortalCoilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("A face-down Immortal Coil has no text, so damage to its controller is not prevented")
+    void faceDownCoilDoesNotPrevent() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefieldAndReturn(player1, new ImmortalCoil()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setGraveyard(player1, List.of(new CylianElf(), new CylianElf(), new CylianElf(), new CylianElf()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ResoundingThunder()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 }

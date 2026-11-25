@@ -1172,7 +1172,9 @@ class CastingPermissionServiceTest {
         private void addPermission(SpendAnyManaTypeToCastEffect permission) {
             Card source = new Card();
             source.addStaticEffect(permission);
-            gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+            Permanent permanent = new Permanent(source);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            when(gameQueryService.getActiveStaticEffects(gd, permanent, player1Id)).thenReturn(List.of(permission));
         }
 
         @Test

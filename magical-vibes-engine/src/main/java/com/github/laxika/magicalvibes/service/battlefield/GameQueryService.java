@@ -276,7 +276,6 @@ import com.github.laxika.magicalvibes.model.effect.TokenCreationReplacementEffec
 import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -2816,22 +2815,14 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the given card cannot be manifested from {@code zone}. A manifested card
-     * enters face down as a 2/2 creature, so a {@link CardsCantEnterBattlefieldFromZonesEffect} whose
-     * filter is creature-typed bars manifesting any card from that zone, noncreature cards included
-     * (Grafdigger's Cage).
+     * Returns {@code true} if the given card cannot be manifested or cloaked from {@code zone}: a
+     * {@link CardsCantEnterBattlefieldFromZonesEffect} stops the face-down object, a 2/2 creature card with no
+     * text, name, subtypes or mana cost (CR 701.40a, 701.40f, 701.58f), not the card. So Grafdigger's Cage bars
+     * manifesting a noncreature card, and Worms of the Earth doesn't bar manifesting a land card.
      */
     public boolean isManifestBlockedFromZone(GameData gameData, Card card, Zone zone) {
-        if (isCardBlockedFromEnteringFromZone(gameData, card, zone)) {
-            return true;
-        }
-        CardTypePredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);
-        return gameData.anyPermanentMatches(p ->
-                !p.isFaceDown() && !hasLostAllAbilities(gameData, p)
-                        && p.getCard().getStaticEffects().stream()
-                        .filter(CardsCantEnterBattlefieldFromZonesEffect.class::isInstance)
-                        .map(CardsCantEnterBattlefieldFromZonesEffect.class::cast)
-                        .anyMatch(e -> e.zones().contains(zone) && creatureFilter.equals(e.filter())));
+        return isCardBlockedFromEnteringFromZone(gameData,
+                CastingPermissionService.faceDownSpellCharacteristics(card), zone);
     }
 
     /**
@@ -5557,8 +5548,8 @@ public class GameQueryService {
     private List<CardEffect> ownEnteringPlacementReplacements(GameData gameData, Permanent enteringPermanent,
                                                               UUID controllerId, UUID placingPlayerId,
                                                               CounterType counterType) {
-        boolean creature = enteringPermanent.getCard().hasType(CardType.CREATURE);
-        boolean artifact = enteringPermanent.getCard().hasType(CardType.ARTIFACT);
+        boolean creature = entersWithCardType(gameData, controllerId, enteringPermanent, CardType.CREATURE);
+        boolean artifact = entersWithCardType(gameData, controllerId, enteringPermanent, CardType.ARTIFACT);
         List<CardEffect> own = new ArrayList<>();
         for (CardEffect effect : enteringPermanent.getCard().getStaticEffects()) {
             if (effect instanceof AddOnePlusOneCountersEffect placement && placement.affectsOnlyItsSource()
@@ -5750,8 +5741,8 @@ public class GameQueryService {
     public List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> enteringCounterReplacementsFor(
             GameData gameData, Permanent permanent, UUID controllerId, CounterType counterType,
             UUID placingPlayerId, boolean modularAbility) {
-        boolean creature = permanent.getCard().hasType(CardType.CREATURE);
-        boolean artifact = permanent.getCard().hasType(CardType.ARTIFACT);
+        boolean creature = entersWithCardType(gameData, controllerId, permanent, CardType.CREATURE);
+        boolean artifact = entersWithCardType(gameData, controllerId, permanent, CardType.ARTIFACT);
         List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> modifiers =
                 withQueryScope(gameData, () -> collectCounterReplacements(gameData, permanent, controllerId,
                         creature, artifact, counterType, placingPlayerId, modularAbility));
@@ -5908,17 +5899,33 @@ public class GameQueryService {
                 Objects.equals(planarControllerId, affectedControllerId), false, false);
     }
 
+    /**
+     * Whether {@code entering}, a permanent entering under {@code controllerId}, has card type {@code type} as it would
+     * exist on the battlefield: the continuous effects that would apply to it counted (CR 614.12; Winding Constrictor's
+     * Mycosynth Lattice ruling), face-down characteristics included. One already on the battlefield is read as it is.
+     */
+    private boolean entersWithCardType(GameData gameData, UUID controllerId, Permanent entering, CardType type) {
+        if (entering == null) {
+            return false;
+        }
+        if (controllerId == null || findPermanentById(gameData, entering.getId()) != null) {
+            return hasEffectiveCardType(gameData, entering, type);
+        }
+        return withEnteringPermanent(gameData, controllerId, entering,
+                () -> hasEffectiveCardType(gameData, entering, type));
+    }
+
     /** Applies all counter replacements for a permanent entering under {@code controllerId}. */
     public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
                                CounterType counterType, int count) {
-        boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
+        boolean creature = entersWithCardType(gameData, controllerId, permanent, CardType.CREATURE);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE && permanent != null && !creature
                 && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE)) {
             return recordEntryCounterPlacement(gameData, permanent, controllerId, counterType, count,
                     replacePlusOnePlusOneCounters(gameData, controllerId, count, true, permanent, true),
                     controllerId, false);
         }
-        boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
+        boolean artifact = entersWithCardType(gameData, controllerId, permanent, CardType.ARTIFACT);
         return recordEntryCounterPlacement(gameData, permanent, controllerId, counterType, count,
                 replaceCounters(gameData, controllerId, counterType, count, creature, artifact,
                         permanent, true), controllerId, false);
@@ -5933,8 +5940,8 @@ public class GameQueryService {
     public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
                                CounterType counterType, int count, UUID placingPlayerId,
                                boolean modularAbility) {
-        boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
-        boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
+        boolean creature = entersWithCardType(gameData, controllerId, permanent, CardType.CREATURE);
+        boolean artifact = entersWithCardType(gameData, controllerId, permanent, CardType.ARTIFACT);
         final int[] result = {count};
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
             boolean sourceControlsAffected = Objects.equals(sourceControllerId, controllerId);
@@ -10281,15 +10288,8 @@ public class GameQueryService {
             return false;
         }
         for (Permanent permanent : battlefield) {
-            if (hasLostPrintedAbilities(gameData, permanent)) {
-                continue;
-            }
-            GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect effect =
-                    permanent.getCard().getStaticEffects().stream()
-                            .filter(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class::isInstance)
-                            .map(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class::cast)
-                            .findFirst().orElse(null);
-            if (effect != null && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())
+            if (hasActiveStaticEffect(gameData, permanent,
+                    GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class)
                     && sourceTypes.contains(permanent.getChosenCardType())) {
                 return true;
             }
@@ -12138,7 +12138,7 @@ public class GameQueryService {
         if (bf == null) return List.of();
         List<Permanent> enchanted = new ArrayList<>();
         for (Permanent p : bf) {
-            if (p.isAttached() && p.getCard().getStaticEffects().stream().anyMatch(effectMatcher)) {
+            if (p.isAttached() && getActiveStaticEffects(gameData, p, playerId).stream().anyMatch(effectMatcher)) {
                 Permanent creature = findPermanentById(gameData, p.getAttachedTo());
                 if (creature != null) enchanted.add(creature);
             }
@@ -12543,8 +12543,7 @@ public class GameQueryService {
     public boolean playerCantActivateNonManaOrLoyaltyAbilities(GameData gameData, UUID playerId) {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && playerId.equals(p.getAttachedTo())
-                        && p.getCard().getStaticEffects().stream()
-                        .anyMatch(e -> e instanceof EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect));
+                        && hasActiveStaticEffect(gameData, p, EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect.class));
     }
 
     /**
@@ -13728,10 +13727,8 @@ public class GameQueryService {
 
     private boolean isDamageSourceColorNullified(GameData gameData, CardColor sourceColor) {
         if (sourceColor == null) return false;
-        return gameData.anyPermanentMatches(permanent ->
-                permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof DamageSourcesOfColorsAreColorlessEffect colorless
-                                && colorless.colors().contains(sourceColor)));
+        return activeStaticEffects(gameData, DamageSourcesOfColorsAreColorlessEffect.class).stream()
+                .anyMatch(active -> active.effect().colors().contains(sourceColor));
     }
 
     /**

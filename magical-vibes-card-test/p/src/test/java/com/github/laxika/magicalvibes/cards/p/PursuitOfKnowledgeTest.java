@@ -3,15 +3,18 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.e.EnduringRenewal;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -172,5 +175,21 @@ class PursuitOfKnowledgeTest extends BaseCardTest {
 
     private Permanent addPursuit() {
         return harness.addToBattlefieldAndReturn(player1, new PursuitOfKnowledge());
+    }
+
+    @Test
+    @DisplayName("A face-down Pursuit of Knowledge has no text, so it offers no study counter")
+    void faceDownPursuitOffersNothing() {
+        Permanent pursuit = addPursuit();
+        pursuit.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        YouthfulKnight card = new YouthfulKnight();
+        harness.setLibrary(player1, List.of(card));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(pursuit.getCounterCount(CounterType.STUDY)).isZero();
     }
 }

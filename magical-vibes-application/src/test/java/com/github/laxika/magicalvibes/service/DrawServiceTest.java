@@ -120,7 +120,10 @@ class DrawServiceTest {
     void anotherPlayersDrawInstructionWaitsBehindCurrentReplacement() {
         Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
         abundance.addStaticEffect(new AbundanceDrawReplacementEffect());
-        gd.playerBattlefields.get(player1Id).add(new Permanent(abundance));
+        Permanent abundancePermanent = new Permanent(abundance);
+        gd.playerBattlefields.get(player1Id).add(abundancePermanent);
+        when(gameQueryService.hasActiveStaticEffect(gd, abundancePermanent, AbundanceDrawReplacementEffect.class))
+                .thenReturn(true);
         Card first = createCard("First", CardType.CREATURE);
         Card second = createCard("Second", CardType.CREATURE);
         gd.playerDecks.put(player1Id, new ArrayList<>(List.of(first, second)));
@@ -137,7 +140,10 @@ class DrawServiceTest {
     void multipleDrawsWaitForEachReplacementChoice() {
         Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
         abundance.addStaticEffect(new AbundanceDrawReplacementEffect());
-        gd.playerBattlefields.get(player1Id).add(new Permanent(abundance));
+        Permanent abundancePermanent = new Permanent(abundance);
+        gd.playerBattlefields.get(player1Id).add(abundancePermanent);
+        when(gameQueryService.hasActiveStaticEffect(gd, abundancePermanent, AbundanceDrawReplacementEffect.class))
+                .thenReturn(true);
         Card first = createCard("First", CardType.CREATURE);
         Card second = createCard("Second", CardType.CREATURE);
         gd.playerDecks.put(player1Id, new ArrayList<>(List.of(first, second)));

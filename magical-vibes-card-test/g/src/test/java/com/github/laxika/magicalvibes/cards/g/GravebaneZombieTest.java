@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.cards.a.Abduction;
@@ -96,6 +98,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -2676,5 +2679,33 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
                 .doesNotContain("Zombie");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down Gravebane Zombie has no text, so it goes to the graveyard when destroyed")
+    void faceDownZombieDiesNormally() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player1, List.of(filler));
+        harness.addToBattlefieldAndReturn(player1, new GravebaneZombie()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        destroyWithWrathOfGod(player2);
+
+        harness.assertInGraveyard(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(filler);
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    @DisplayName("Under Humility Gravebane Zombie has no abilities, so it goes to the graveyard when destroyed")
+    void humilityZombieDiesNormally() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player1, List.of(filler));
+        harness.addToBattlefield(player1, new GravebaneZombie());
+        harness.addToBattlefield(player2, new Humility());
+
+        destroyWithWrathOfGod(player2);
+
+        harness.assertInGraveyard(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(filler);
     }
 }

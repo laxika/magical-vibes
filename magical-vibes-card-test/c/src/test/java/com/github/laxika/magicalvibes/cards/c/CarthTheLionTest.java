@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -270,5 +272,22 @@ class CarthTheLionTest extends BaseCardTest {
 
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(8);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A face-down Carth has no text, so loyalty abilities cost no more")
+    void faceDownCarthAddsNoLoyaltyCost() {
+        harness.addToBattlefieldAndReturn(player1, new CarthTheLion()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent ajani = harness.addToBattlefieldAndReturn(player1, new AjaniGoldmane());
+        ajani.setCounterCount(CounterType.LOYALTY, 4);
+        ajani.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 }

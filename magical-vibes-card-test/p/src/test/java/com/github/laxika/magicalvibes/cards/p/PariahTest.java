@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -425,5 +426,21 @@ class PariahTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A Pariah that lost its abilities no longer redirects its controller's damage")
+    void lostAbilitiesStopRedirection() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
+        pariah.setAttachedTo(bears.getId());
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, pariah);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(bears.getMarkedDamage()).isZero();
     }
 }

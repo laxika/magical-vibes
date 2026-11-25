@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -170,5 +171,21 @@ class SerrasEmissaryTest extends BaseCardTest {
         Permanent emissary = addCreatureReady(controller, new SerrasEmissary());
         emissary.setChosenCardType(chosenType);
         return emissary;
+    }
+
+    @Test
+    @DisplayName("A face-down Serra's Emissary has no text, so its controller has no protection")
+    void faceDownEmissaryProtectsNobody() {
+        addReadyEmissary(player1, CardType.INSTANT).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
     }
 }

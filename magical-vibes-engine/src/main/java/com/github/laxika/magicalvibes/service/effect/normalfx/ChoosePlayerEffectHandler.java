@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -47,7 +48,7 @@ public class ChoosePlayerEffectHandler implements NormalEffectHandlerBean {
         } else if (players.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.RecordChosenPlayer(players));
             playerInputService.beginPlayerChoice(gameData, chooserId, players,
-                    entry.getCard().getName() + " — choose " + choose.label() + ".");
+                    FaceDownVisibility.nameShownTo(gameData, entry, chooserId) + " — choose " + choose.label() + ".");
         }
     }
 

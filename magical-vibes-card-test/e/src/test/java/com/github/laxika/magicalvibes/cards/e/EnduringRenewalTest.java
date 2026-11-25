@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -248,5 +250,18 @@ class EnduringRenewalTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Balduvian Bears");
         harness.assertNotInHand(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("A face-down Enduring Renewal has no text, so a creature on top is drawn")
+    void faceDownRenewalDoesNotReplaceDraws() {
+        harness.addToBattlefieldAndReturn(player1, new EnduringRenewal()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, new ArrayList<>());
+        harness.setLibrary(player1, new ArrayList<>(List.of(new BalduvianBears(), new Forest())));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        harness.assertInHand(player1, "Balduvian Bears");
+        harness.assertNotInGraveyard(player1, "Balduvian Bears");
     }
 }

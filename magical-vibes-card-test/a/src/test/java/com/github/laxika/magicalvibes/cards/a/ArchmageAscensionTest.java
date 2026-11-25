@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.s.StoneworkPuma;
 import com.github.laxika.magicalvibes.cards.s.SagesOfTheAnima;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -214,5 +216,21 @@ class ArchmageAscensionTest extends BaseCardTest {
         if (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
+    }
+
+    @Test
+    @DisplayName("A face-down Archmage Ascension has no text, so six quest counters offer no search")
+    void faceDownAscensionOffersNoSearch() {
+        Permanent ascension = addAscension();
+        ascension.setCounterCount(CounterType.QUEST, 6);
+        ascension.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of());
+        StoneworkPuma puma = new StoneworkPuma();
+        harness.setLibrary(player1, List.of(puma, new Island()));
+
+        draw(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(puma);
     }
 }

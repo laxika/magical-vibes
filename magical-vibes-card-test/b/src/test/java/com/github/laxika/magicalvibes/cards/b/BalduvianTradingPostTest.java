@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AlpineMoon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -206,5 +207,20 @@ class BalduvianTradingPostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(AlpineMoon.class)
+    @DisplayName("Under an opponent's Alpine Moon naming it, it has no abilities as it enters, so it enters without the sacrifice")
+    void alpineMoonRemovesTheEntryCost() {
+        harness.addToBattlefieldAndReturn(player2, new AlpineMoon()).setChosenName("Balduvian Trading Post");
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new BalduvianTradingPost()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Balduvian Trading Post");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mountain);
     }
 }

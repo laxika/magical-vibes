@@ -75,9 +75,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntryCostReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
@@ -1668,24 +1665,7 @@ public class BattlefieldPlacementService {
         if (!permanent.getCard().hasType(CardType.LAND)) {
             return false;
         }
-        boolean[] losesAbilities = {false};
-        gameData.forEachPermanent((sourceControllerId, source) -> {
-            if (losesAbilities[0] || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
-                return;
-            }
-            losesAbilities[0] = source.getCard().getStaticEffects().stream()
-                    .filter(LosesAllAbilitiesEffect.class::isInstance)
-                    .map(LosesAllAbilitiesEffect.class::cast)
-                    .anyMatch(effect -> effect.exceptManaAbilities()
-                            && effect.subject() instanceof PermanentSubject.ControlledBy
-                            && gameQueryService.staticSubjectNames(gameData, source, sourceControllerId,
-                            controllerId, permanent, effect.subject(),
-                            SubjectResolutionService.StaticReads.knownLand()))
-                    || (!permanent.getCard().getSupertypes().contains(CardSupertype.BASIC)
-                    && source.getCard().getStaticEffects().stream()
-                    .anyMatch(NonbasicLandsBecomeTypeEffect.class::isInstance));
-        });
-        return losesAbilities[0];
+        return gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent);
     }
 
     /**

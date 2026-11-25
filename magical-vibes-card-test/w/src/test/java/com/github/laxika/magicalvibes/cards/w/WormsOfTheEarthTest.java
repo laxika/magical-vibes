@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GaeasTouch;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.cards.s.SoulSummons;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -295,5 +298,26 @@ class WormsOfTheEarthTest extends BaseCardTest {
                 .extracting(permanent -> permanent.getCard().getName())
                 .doesNotContain("Zombie");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed(SoulSummons.class)
+    @DisplayName("A land card can be manifested: the face-down object entering is a creature, not a land")
+    void landCardCanBeManifested() {
+        harness.addToBattlefield(player2, new WormsOfTheEarth());
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new SoulSummons()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isFaceDown() && permanent.getCard() == forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }

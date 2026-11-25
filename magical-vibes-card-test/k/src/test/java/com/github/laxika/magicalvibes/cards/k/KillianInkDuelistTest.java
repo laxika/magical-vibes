@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeamingDefiance;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -132,5 +134,18 @@ class KillianInkDuelistTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pillardrop Warden");
         harness.assertNotOnBattlefield(player2, "Pillardrop Warden");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down Killian has no text, so a creature-targeting spell costs full price")
+    void faceDownKillianReducesNothing() {
+        harness.addToBattlefieldAndReturn(player1, new KillianInkDuelist()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IntoTheVoid()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

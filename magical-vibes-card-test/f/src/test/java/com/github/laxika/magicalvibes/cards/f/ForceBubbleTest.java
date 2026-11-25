@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.cards.s.SparkSpray;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -134,6 +136,22 @@ class ForceBubbleTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(bubble.getCounterCount(CounterType.DEPLETION)).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down Force Bubble has no text, so damage is dealt normally")
+    void faceDownBubbleDoesNotReplaceDamage() {
+        Permanent bubble = harness.addToBattlefieldAndReturn(player1, new ForceBubble());
+        bubble.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
         assertThat(bubble.getCounterCount(CounterType.DEPLETION)).isZero();
     }
 }

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: D11, D12, D13; next 50c (Serene / Turn the Earth, Viconia). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                               |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b (each in Findings; the fold queue marks its rows). Defect runs (one per group, D11 to D22; the defect queue table): D11 done. Running in parallel worktrees: D12, D13, D14, 50c (the last step-9 leftovers). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                                |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,009 / 2,435 (after fold run 50b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,009 / 2,435 (after fold run D11) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,741 rows over 4,578 classes (after fold run 50b). Latest verdict per class: `step-9` 2, unique 1,196, absorbed 1,356, split 690, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 2 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,741 rows over 4,578 classes (after fold run D11). Latest verdict per class: `step-9` 2, unique 1,196, absorbed 1,356, split 690, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 2 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1148,6 +1148,9 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 
 - `Subjects.exiledWithSourceUnlinked(filter)` / `CardSubject.ExiledWithSource.UNLINKED`: the cards exiled with the source under no ability link ("the exiled card" of an imprint; Dermotaxi's ruling, CR 607.2a), static and resolving (fold run 50b).
 - `LibrarySearchFollowUp.ToHandPick.of(CardPredicate, label)` and `SearchLibraryForOneCardOfEachSubtypeEffect.ofEach(ChooseCardEffect.Each...)`: one revealed to-hand pick per quality within one search, judged by `PredicateEvaluationService`; colour and subtype picks are filters too (fold run 50b).
+
+- `GameQueryService.entersWithCardType` (private): an entering permanent's card type as it would exist on the battlefield (CR 614.12); the counter-placement paths use it.
+- `isManifestBlockedFromZone` now judges the face-down 2/2 (`faceDownSpellCharacteristics`) for manifest and cloak.
 
 ### Blocked causes still open
 
@@ -5374,6 +5377,27 @@ Seen, not changed:
 - A Valki ability gained by another permanent still reads that permanent's unlinked exiled cards, not a link of its own (line 705 stays). Sure of the code.
 
 For the next run: Serene Remembrance / Turn the Earth with Deliver Unto Evil and Wake to Slaughter (a CardSubject naming every target card, SpellCastingService's record-keyed branches), then Viconia's faces (card data, a target group per `TargetExiledCard`).
+
+### Step 9, defect run D11 (2026-11-25, parallel worktree)
+Group 1, 34 lines: 18 fixed (2 partly), 10 already fixed, 4 not a defect, 4 left. No record added or removed; ratchet unchanged.
+
+- **Pattern.** Printed-static readers now use `GameQueryService.getActiveStaticEffects(gd, permanent, controller)` / `hasActiveStaticEffect` / `activeStaticEffects(gd, type)`. These return nothing while the permanent is face down or has lost its abilities, and they unwrap conditional statics.
+- **Readers fixed:**
+  - `CastingPermissionService` (`controlsStatic`, the battlefield spend permission, Uba Mask's permission).
+  - `DrawService` (cycling, Shared Fate, Uba Mask, counter and threshold, Abundance, Tomorrow, Enduring Renewal, win-on-empty).
+  - The Crypt handler, explore counts, `PlayerDamageFinalReplacements`, `DamageSupport` (Lich, Coil, Sanctuary, counter replacements), Enduring Angel.
+  - `CastingCostService` (loyalty tax, per-target changes, battlefield targeting reductions, web-slinging).
+  - `GameQueryService` (Ghostly Flame, Overwhelming Splendor, Aura absorbers, Serra's Emissary), Phytohydra's damage-to-counters step.
+- **Entering permanents.** `GameQueryService.entersWithCardType` judges an entering permanent's creature/artifact type inside `withEnteringPermanent` (CR 614.12). `losesNonManaAbilitiesAsLandEnters` is now `hasLostPrintedAbilitiesAsEntering`, so full loss (Alpine Moon), Blood Sun and Blood Moon all count.
+- **Manifest and cloak.** `isManifestBlockedFromZone` tests `CastingPermissionService.faceDownSpellCharacteristics(card)` (CR 701.40f, 701.58f).
+- **Kappa Cannoneer.** Its "it can't be blocked this turn" is a rule (`MakeCreatureUnblockableEffect`), which ability loss doesn't remove (CR 611.2c).
+- **Seen, not changed:**
+  - The other `CastingPermissionService` readers (spell limits, Ethersworn Canonist, most-recent-spell, global land restriction) skip lost abilities but not face-down sources.
+  - `DamagePreventionService` per-source preventions (around lines 1284 and 1315) have no guard at all; the cleric, all-but-one and spell-token preventions ask only `hasLostAllAbilities`; `grantedAttachedPreventionSurvives` reads the Aura's printed statics.
+  - `getEffectiveCardColors`' off-battlefield scan (Celestial Dawn, Painter's Servant) asks only the floating flag.
+  - `areCreatureDeathTriggersSuppressed`' simultaneous-death scan asks only the floating flag and skips no face-down source.
+  - `findAlmsCollectorSource`, `findReturnFromGraveyardInsteadOfDrawSourceCard` and Quantum Riddler's reader skip no face-down source.
+- **For the next run:** a "rule, not ability" mode for `GrantEffectToTargetUntilEndOfTurnEffect` / `GrantTargetingRestrictionToTargetUntilEndOfTurnEffect` (floated on the permanent, like `makeUnblockableThisTurn`) would close Lockjaw, Slicer and Vines. A sweep of the remaining printed readers above onto active statics.
 
 ## Prompt
 

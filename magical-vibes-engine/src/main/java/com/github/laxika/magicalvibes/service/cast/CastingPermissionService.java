@@ -519,9 +519,7 @@ public class CastingPermissionService {
     private boolean controlsStatic(GameData gameData, UUID playerId, Class<? extends CardEffect> effectType) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
-        return bf.stream().filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
-                .anyMatch(perm -> perm.getCard().getStaticEffects().stream()
-                .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
+        return bf.stream().anyMatch(perm -> gameQueryService.getActiveStaticEffects(gameData, perm, playerId).stream()
                 .anyMatch(effectType::isInstance));
     }
 
@@ -2737,9 +2735,7 @@ public class CastingPermissionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getStaticEffects()) {
-                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+            for (CardEffect resolved : gameQueryService.getActiveStaticEffects(gameData, perm, playerId)) {
                 if (resolved instanceof SpendAnyManaTypeToCastEffect anyMana
                         && anyMana.asThoughAnyColor() == asThoughAnyColor
                         && predicateEvaluationService.matchesCardPredicate(card, anyMana.spellFilter(),
@@ -2858,9 +2854,8 @@ public class CastingPermissionService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (sourcePermanentId.equals(permanent.getId())) {
-                    return !gameData.losesAllAbilitiesByEffect(permanent)
-                            && permanent.getCard().getStaticEffects().stream()
-                            .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
+                    return gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                            UbaMaskDrawReplacementEffect.class);
                 }
             }
         }

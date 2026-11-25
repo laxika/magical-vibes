@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -176,5 +177,23 @@ class PeterParkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    @DisplayName("Amazing Spider-Man that lost its abilities gives no web-slinging")
+    void lostAbilitiesRemoveWebSlinging() {
+        Permanent spiderMan = harness.addToBattlefieldAndReturn(player1, new PeterParker().getBackFaceCard());
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, spiderMan);
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new DailyBugleReporters());
+        tappedCreature.tap();
+        harness.setHand(player1, List.of(new PeterParker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(tappedCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tappedCreature.isTapped()).isTrue();
     }
 }
