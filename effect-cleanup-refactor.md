@@ -27,7 +27,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C as a generic "unless" record in step 10, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs D11 to D22 (one per group) and D23 (the owner's perpetual "it" decision) done 2026-11-25; the defect queue keeps the lines left, each with what it needs. Next: step 10 (needs the owner's sign-off per verb). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source.  |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Next: remove counters, then Damage, then "unless" (owner's order) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Run Remove counters done 2026-11-25 (`RemoveCountersEffect`, the source record renamed, absorbs the target, plural-target and two mass records). Next: Damage, then "unless" (owner's order) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,000 / 2,426 (after step 10 run Counters) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,996 / 2,422 (after step 10 run Remove counters) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -526,7 +526,7 @@ Delayed and global triggers:
 - `TemporaryGlobalTriggeredAbility.keepingNotedAmount` carries the noted amount.
 
 - `CantBlockThisTurnEffect(source())`: "this creature can't block this turn" in its own ability (Ydwen Efreet, fold run 8).
-- "Remove all [kind] counters from this. If no counters were removed / Otherwise": `RemoveCounterFromSourceEffect(kind,
+- "Remove all [kind] counters from this. If no counters were removed / Otherwise": `RemoveCountersEffect.fromSelf(kind,
   MAX_VALUE)` (records REMOVE_COUNTERS) + `ConditionalEffect(NotCondition(HappenedThisWay.removedCounters()), …)` /
   `ConditionalEffect(HappenedThisWay.removedCounters(), …)` (Bounty of the Luxa, fold run 8).
 - "Choose a number … equal to that number": `ChooseNumberAtResolutionEffect(0, MAX_VALUE)` (sets X) + the `…EqualsXPredicate`
@@ -760,6 +760,13 @@ Delayed and global triggers:
   one placement: counter events, the CR 616.1 order, PUT_COUNTERS, the source snapshot refreshed. A `MayEffect` over it asks nothing when
   the source can't have the counters, or is gone and an else follows (CR 608.2d); gone with no else, it still asks (Kresh). The mana-ability
   path places it inline (Pyramid of the Pantheon) (step 10 run Counters).
+- `RemoveCountersEffect.fromSelf(kind, int | DynamicAmount)`, `.fromSelfCountingTargetPlayer(kind, amount)`, `.fromTarget()` (any one
+  kind), `.fromTarget(kind, int | DynamicAmount[, targetPredicate])`, `.fromTarget(kind, targetPredicate)`, `new RemoveCountersEffect(subject,
+  kind[, int])` (`attached`, `granter`, `thisWay(CHOOSE)`, `controlledBy(...)` sets): "remove N [kind] counters from this / target / each
+  ...". One removal path (`PermanentCounterSupport.removeCounterFromPermanent`): vanishing's last time counter (CR 702.63a), oil, the
+  controller's LAST_REMOVED event per permanent (CR 603.2c), a Siege's defeat after its last defense counter (CR 310.12b), REMOVE_COUNTERS
+  recorded after the kind is chosen (`ANY`: a spliced mode choice). "Up to N from target" is `RemoveUpToCountersFromAllPermanentsEffect(kind,
+  N, target())` (Gremlin Mine) (step 10 run Remove counters).
 
 - `AddOnePlusOneCountersEffect(counterType, permanents, players, placedBy, Change)`, with `plusOne` / `twice` / `halfRoundedDown` / `plusOneForYou`, `.placedByYou()` / `.placedByAnOpponent()` / `.alsoOnPlayers()`, and `youControl([filter])` / `anyPermanent()` / `creatureOr(subtypes…)`: every static counter-placement replacement. A placement naming no placer is put by the affected controller; "this permanent" applies to its own entering counters (CR 614.12) (fold run 22).
 - `GameQueryService.placementReplacementApplies` / `placementAffects`: the one applicability judge for counter-placement replacements on every placement path, planes and player grants included (fold run 22).
@@ -852,7 +859,7 @@ Delayed and global triggers:
 
 - `RemoveUpToCountersFromAllPermanentsEffect(kind, maxAmount, PermanentSubject)` / `.anyNumber(kind, permanents)`: "remove up to N / any number of [kind | ANY] counters from among [permanents]", one how-many question per permanent and kind, counters removed together, records REMOVE_COUNTERS (fold run 23c).
 - `ChoiceContext.MoveCountersAmountChoice.totalLimit` and removal slots (`CounterMoveSlot.toPermanentId == null`), answered by `RemoveUpToCountersFromAllPermanentsEffectHandler.answer` (fold run 23c).
-- "Remove a [kind] counter from each of any number of [permanents]": `ChoosePermanentsEffect.anyNumber(set, label)` + `RemoveCounterFromSourceEffect(thisWay(CHOOSE), kind)` + `AmountThisWay(REMOVE_COUNTERS)` (Chandra, Legacy of Fire; Garnet; fold run 23c).
+- "Remove a [kind] counter from each of any number of [permanents]": `ChoosePermanentsEffect.anyNumber(set, label)` + `new RemoveCountersEffect(thisWay(CHOOSE), kind)` + `AmountThisWay(REMOVE_COUNTERS)` (Chandra, Legacy of Fire; Garnet; fold run 23c).
 
 - `ReplaceLandManaWithColorEffect` (`colorOfYourChoice()`, `.forLands` `.youControl` `.whenYouTap` `.replacing` `.producing` `.on(subject)` `.lasting(Duration)`): every "if a land is tapped for mana, it produces X instead" replacement, static or floated, read by `GameQueryService.landManaColorReplacements` (fold run 33).
 - `TwistBasicLandManaColorsEffect(Map<CardSubtype, ManaColor>)`: the basic-land type to colour twist (fold run 33).
@@ -1142,7 +1149,7 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 - `AmountsFixedWhenFloatedEffect.withAmountsFixed(fix)`: a static rule whose amounts `GrantStaticEffectToPlayerEffect` evaluates once as it floats it (CR 608.2h). Implemented by `RequirePaymentToAttackEffect` and `RequirePaymentToBlockEffect`; "this turn, creatures can't attack / block unless their controller pays {X}" (War Tax, War Cadence) (fold run 48b).
 - `RequirePaymentToAttackEffect` floated on players (`eachPlayer()` for "creatures can't attack", `you()` for "can't attack you"). It is judged for the attacked player or the attacked planeswalker's controller (CR 506.2a, 508.5). A target-relative amount reads the attacker: `CountersOnTargetPermanent(null)` is "the number of counters on that creature" (Nils) (fold run 48b).
 - `RequirePaymentToBlockEffect(DynamicAmount[, Condition])`, floated and read board-wide by `getGlobalBlockManaTax` (fold run 48b).
-- `MayEffect` over a leading `RemoveCounterFromSourceEffect` isn't asked when the source is gone or lacks the counters; the else effect follows (CR 608.2d) (fold run 48b).
+- `MayEffect` over a leading `source()` `RemoveCountersEffect` isn't asked when the source is gone or lacks the counters; the else effect follows (CR 608.2d) (fold run 48b).
 - `PermanentRemovalService` refreshes `resolvingEntry` / `pendingEffectResolutionEntry`'s source snapshot as the source leaves, and last known information keeps lifelink, deathtouch, infect and wither, so "sacrifice it and it deals damage" after `SacrificeSelfEffect` reads it as it last existed (CR 608.2h) (fold run 48b).
 
 Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-48b:
@@ -1285,6 +1292,11 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
   (madness, discard / sacrifice / life-paid triggers), and pin today's behaviour (flashback, ward countering an ability, one
   test per ransom kind). Order: Counters, then Damage, then "unless"; Boost where it fits. The gift opponent stays deferred.
 
+- **2026-11-25, step 10 run Remove counters** (the plan's four questions): the survivor `RemoveCounterFromSourceEffect` is renamed
+  `RemoveCountersEffect` (handler `RemoveCountersEffectHandler`) with `fromSelf` / `fromSelfCountingTargetPlayer` / `fromTarget`
+  factories, all 128 card files moved to them; the 4 mass cards come in as `controlledBy(...)` subjects (their summary log goes); Gremlin
+  Mine moves to `RemoveUpToCountersFromAllPermanentsEffect(CHARGE, 4, target())`; AI polarity of a removal from a target is by kind
+  (-1/-1 beneficial, any other harmful, the `RemoveUpTo…` rule), NEUTRAL only for a kind picked at resolution (`ANY`).
 - **2026-11-25, step 10 run Counters**: the survivor is renamed `PutCountersEffect` (step 10 survivors may take a neutral verb
   name), its 1,137 cards keep their constructors; every `source()` counter `MayEffect` follows the source rule (CR 608.2d; Kresh still
   asks); the 5-card target-player mass record waits for a mass-counters run; remove counters is the next run.
@@ -1321,8 +1333,9 @@ there and updates them when it lands.
 - **Boost**: `BoostSelfEffect`, `BoostTargetCreatureEffect` (now with a subject), `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesEffect`;
   `BoostSelfEffect` reads amounts against the boosted permanent, `BoostTargetCreatureEffect` against the source, so the merged record
   needs that as a property of the subject or an explicit choice (5i). `BoostTargetPermanentEffect` (harmful, Vehicles) (5i).
-- **Counters**: the put pair is done (run Counters, `PutCountersEffect`); left: `RemoveCounterFromTargetPermanentEffect` with
-  `RemoveCounterFromSourceEffect` (5f), and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
+- **Counters**: the put pair is done (run Counters, `PutCountersEffect`), the remove family too (run Remove counters,
+  `RemoveCountersEffect`); left: the remove-all records (`RemoveAllCountersEffect`, `RemoveAllCountersFromTargetPermanentEffect`, the
+  matching / of-type / fusion forms) for a later "remove all" run, and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
   `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a
   batched path in `PutCountersEffect` first (owner's decision 2026-11-25).
 - **Damage**: `DealDamageToTargetPermanentEffect` with the creature-or-planeswalker damage records (5g).
@@ -5872,6 +5885,67 @@ may); `EffectResolutionService` (fabricate check on the merged record); `Activat
 `RemoveCounterFromSourceEffect` (`sourceHasCountersToRemove`, fold run 48b) and the source record already takes a subject
 (`RemoveCounterFromSourceEffect(thisWay(CHOOSE), kind)`, Chandra, Legacy of Fire), so whether they differ only in subject needs a read
 of both handlers. The mass placements wait for a batched path in `PutCountersEffect`.
+
+### Step 10, run Remove counters (2026-11-25)
+
+Remove N counters from permanents, signed off by the owner on 2026-11-25 (decisions under Standing knowledge). The source record is
+renamed `RemoveCountersEffect` (handler `RemoveCountersEffectHandler`) and absorbs `RemoveCounterFromTargetPermanentEffect`,
+`RemoveCountersFromTargetPermanentEffect` (no ledger row before), `RemoveCounterFromEachMatchingPermanentEffect` and
+`RemoveCounterFromEachControlledPermanentEffect` as `target()` / `controlledBy(...)` subjects: `fromSelf`, `fromSelfCountingTargetPlayer`,
+`fromTarget()` / `fromTarget(kind, int | DynamicAmount[, predicate])` / `fromTarget(kind, predicate)`, `new RemoveCountersEffect(subject,
+kind[, int])`. Ledger: 4 absorbed, 1 survivor (the rename). Ratchet 3,000 / 2,426 → 2,996 / 2,422. Nothing persists effect class names
+(no `@JsonTypeInfo`; networking, frontend, scripts name none). No `CONVERSION_VERSION` bump (no mapper or enum change).
+
+**Premise checked.** Every difference beyond the subject was a defect of the non-source paths (below) or presentation. The mass
+records remove per permanent on both paths (one `setCounterCount` per permanent, so the removal events and the new LAST_REMOVED are per
+permanent, CR 603.2c): no batched trigger to keep, so they are in. Gremlin Mine (Oracle; no rulings) moved to `RemoveUpTo…(CHARGE, 4,
+target())`. The target spec base widened from creature to permanent for the 5
+predicate cards; each predicate includes `PermanentIsCreaturePredicate` and no `declaredTarget()` reader branches on a creature base.
+
+**Card rewrite.** 128 card files, 135 calls, by a scratch script (balanced parentheses, a table of shapes, loud failure on any other
+shape or leftover name; deleted): `fromSelf` 111, `fromSelfCountingTargetPlayer` 1, `fromTarget` 14, subject constructor 8 (4 named,
+4 mass), Gremlin Mine 1. Oracle text checked for all 128 files (135 calls) with the MCP `get_card` implementation, back faces through their
+front card (Temple of Cyclical Time via Ojer Pakpatiq; Omenpath to Naya via MB2 616, 379 is in no feed): 100 calls matched kind, count and
+"this / it" automatically, 35 by hand. Engine and AI sites (10) and 7 test files by hand.
+
+**Behaviour changes** (old behaviour rules-wrong; failing-first tests, all seen failing on the old code):
+- A target removal now goes through the shared removal: the last time counter triggers vanishing (CR 702.63a; `ThrullParasiteTest`
+  Waning Wurm), the controller's last-counter event fires (Divine Intervention's ruling: the controller's own Thrull Parasite or Medicine
+  Runner removing the last intervention counter draws the game; `DivineInterventionTest`, both paths), and a Siege that loses its last
+  defense counter on the kind-choice path waits for its defeat (CR 310.12b, 704.5v; `MedicineRunnerTest`). `DistributeCountersAmongTargets`'
+  delayed removals get the same path.
+- The kind among several is a spliced mode choice, and REMOVE_COUNTERS holds the chosen removal, not the pre-choice result (CR 608.2c);
+  the plural and both mass records now record the step (`StepResultsTest` Counters, 4 cases); a mass removal raises the last-counter
+  event once per permanent (CR 603.2c; `LastCounterRemovedTriggerTest`).
+- Presentation: the survivor's log line per permanent replaces the target and mass lines; Gremlin Mine asks a how-many list (0 to 4).
+- AI (owner's decision 4, `TargetPolarityGuardTest`): a removal from a target scores by kind through the `RemoveUpTo…` rule, now one
+  helper (`removedCountersPolarity`): -1/-1 beneficial (Defiant Greatmaw, Chainbreaker, Shed Weakness, Woeleecher), any other kind harmful
+  (Bloodcrazed Hoplite; Etched Host, Portent Tracker; Clash of the Eikons, Lonely End, Sigurd, Confront the Past, formerly unclassified);
+  `fromTarget()` (Medicine Runner, Spinal and Thrull Parasite) NEUTRAL as before; non-target forms null as before.
+
+**Pins added first** (passed on the old code and after): Thrull Parasite answering the kind choice; Medicine Runner removing a lone
+defense counter defeats the Siege; Portent Tracker's last defense counter defeats the Siege. Etched Host, Clash and Sigurd (the mode's
+target), Gremlin Mine and Confront the Past (2X) were pinned already. `@DisplayName` added to Etched Host's and Portent Tracker's 20 methods.
+
+**Tests changed.** `GremlinMineTest` answers the how-many list, not an X value (owner's decision 3; same counts); the application tests
+use the factories (`RemoveCountersEffectTest` renamed).
+
+**Shared engine files that changed meaning.** `RemoveCountersEffect`, `RemoveCountersEffectHandler` (amount against the source for a
+target, defense check), `TargetPolarityClassifier`, `DistributeCountersAmongTargetsEffectHandler`. Renamed only: the MayEffect, ChooseOne,
+mode-prompt, activation, clone, combat (paralyzation constant still `equals` `fromSelf`) and AI chosen-permanents readers.
+
+**Tests run** (after the merge, XML of this run): 344 classes (328 card classes: the rewritten cards' incl. Temple under Ojer Pakpatiq, the
+pins, Dread Wight, the Distribute and remove-up-to cards, and every class matching `Vanishing|Fading|Suspend|DivineIntervention|Defense|Battle|Siege`
+or naming vanishing; 13 application, 3 AI), 3,502 tests, 1 failure (my new guard case asserting a modal card, rewritten to a non-modal
+one, rerun: 17 / 0). Compiled every module's main, test and fixture sources and all card-test modules.
+
+**Seen, not changed** (defect queue): by-kind polarity reads HARMFUL where the target is the AI's own (lore off "a Saga you control",
+defense off a battle an opponent protects); the Distribute delayed removals declare a target where `named(id)` would do (unverified).
+
+**For the next run.** Damage, as the owner ordered, then "unless". Not surveyed here; what this run saw: `DamageSupport` and
+`CombatDamageService` subtract defense counters inline and call `BattleDefeatSupport.checkAfterDefenseRemoved` themselves, as the
+removal path now does; the hand-off pairs are `DealDamageToTargetPermanentEffect` with the creature-or-planeswalker damage records (5g).
+The remove-all records (`RemoveAllCountersEffect` 31 and its forms) wait for a "remove all" run.
 
 ## Prompt
 

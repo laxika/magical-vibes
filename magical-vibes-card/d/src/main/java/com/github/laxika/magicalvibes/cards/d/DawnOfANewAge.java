@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class DawnOfANewAge extends Card {
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.HOPE),
                         SequenceEffect.of(
-                                new RemoveCounterFromSourceEffect(CounterType.HOPE, 1),
+                                RemoveCountersEffect.fromSelf(CounterType.HOPE, 1),
                                 new DrawCardEffect())),
                 new ConditionalEffect(
                         new NotCondition(new SourceCounterThreshold(1, CounterType.HOPE)),

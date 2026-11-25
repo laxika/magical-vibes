@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -39,8 +39,7 @@ public class ConfrontThePast extends Card {
                                 .build()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove twice X loyalty counters from target planeswalker an opponent controls",
-                        new RemoveCountersFromTargetPermanentEffect(
-                                CounterType.LOYALTY, new Scaled(new XValue(), 2), opponentPlaneswalker),
+                        RemoveCountersEffect.fromTarget(CounterType.LOYALTY, new Scaled(new XValue(), 2), opponentPlaneswalker),
                         new PermanentPredicateTargetFilter(
                                 opponentPlaneswalker,
                                 "Target must be a planeswalker an opponent controls."))

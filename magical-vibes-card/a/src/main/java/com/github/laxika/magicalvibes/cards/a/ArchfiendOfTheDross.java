@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class ArchfiendOfTheDross extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(4)));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new RemoveCounterFromSourceEffect(CounterType.OIL, 1),
+                RemoveCountersEffect.fromSelf(CounterType.OIL, 1),
                 new ConditionalEffect(
                         new NotCondition(new SourceCounterThreshold(1, CounterType.OIL)),
                         new ControllerLosesGameEffect())));

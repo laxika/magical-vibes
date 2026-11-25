@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -64,7 +64,7 @@ public class OverlordOfTheHauntwoods extends Card {
                         new AllOf(List.of(
                                 new CastForAlternateCost(),
                                 new SourceCounterThreshold(1, CounterType.TIME)))),
-                new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
+                RemoveCountersEffect.fromSelf(CounterType.TIME, 1));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new CastForAlternateCost(),

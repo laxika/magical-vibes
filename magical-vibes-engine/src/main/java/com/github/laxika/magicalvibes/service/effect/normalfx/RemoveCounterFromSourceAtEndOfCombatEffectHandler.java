@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -48,7 +48,7 @@ public class RemoveCounterFromSourceAtEndOfCombatEffectHandler implements Normal
         }
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), self.getId(), null,
-                new RemoveCounterFromSourceEffect(e.counterType(), 1)));
+                RemoveCountersEffect.fromSelf(e.counterType(), 1)));
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(
                 ), " will have a counter removed at end of combat."));    }
 }

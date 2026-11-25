@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -41,7 +41,7 @@ public class ImmardTheStormcleaver extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove a charge counter from Immard",
                         List.of(
-                                new RemoveCounterFromSourceEffect(CounterType.CHARGE, 1),
+                                RemoveCountersEffect.fromSelf(CounterType.CHARGE, 1),
                                 new ConditionalEffect(HappenedThisWay.removedCounters(),
                                         new QueueReflexiveAbilityEffect(removalMode))))));
 

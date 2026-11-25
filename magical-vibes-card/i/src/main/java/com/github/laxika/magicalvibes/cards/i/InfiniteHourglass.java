@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -26,7 +26,7 @@ public class InfiniteHourglass extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new RemoveCounterFromSourceEffect(CounterType.TIME, 1)),
+                List.of(RemoveCountersEffect.fromSelf(CounterType.TIME, 1)),
                 "{3}: Remove a time counter from Infinite Hourglass. Any player may activate this ability but only during any upkeep step.",
                 ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP
         ).withActivatableByAnyPlayer());

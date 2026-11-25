@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,12 +29,9 @@ public class DefiantGreatmaw extends Card {
         // another target creature you control." The target ("another creature you control") is carried
         // by the effect's own targetSpec predicate and chosen as the ability goes on the stack.
         addTrigger(Triggers.youPutMinusOneCountersOnThis(),
-                new RemoveCounterFromTargetPermanentEffect(
-                        CounterType.MINUS_ONE_MINUS_ONE,
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentControlledBySourceControllerPredicate(),
-                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                        ))));
+                RemoveCountersEffect.fromTarget(CounterType.MINUS_ONE_MINUS_ONE, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentControlledBySourceControllerPredicate(),
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -54,7 +54,7 @@ public class LurkerInTheDeep extends Card {
                         new AllOf(List.of(
                                 new CastForAlternateCost(),
                                 new SourceCounterThreshold(1, CounterType.TIME)))),
-                new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
+                RemoveCountersEffect.fromSelf(CounterType.TIME, 1));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new CastForAlternateCost(),

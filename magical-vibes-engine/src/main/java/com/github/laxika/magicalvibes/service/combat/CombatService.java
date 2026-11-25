@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -46,8 +46,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CombatService {
 
-    private static final RemoveCounterFromSourceEffect REMOVE_PARALYZATION_COUNTER_EFFECT =
-            new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 1);
+    private static final RemoveCountersEffect REMOVE_PARALYZATION_COUNTER_EFFECT =
+            RemoveCountersEffect.fromSelf(CounterType.PARALYZATION, 1);
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy

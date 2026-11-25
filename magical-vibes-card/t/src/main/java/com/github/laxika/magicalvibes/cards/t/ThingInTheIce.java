@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.a.AwokenHorror;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -47,7 +47,7 @@ public class ThingInTheIce extends Card {
                                 new CardTypePredicate(CardType.SORCERY)
                         ))),
                 SequenceEffect.of(
-                        new RemoveCounterFromSourceEffect(CounterType.ICE, 1),
+                        RemoveCountersEffect.fromSelf(CounterType.ICE, 1),
                         new ConditionalEffect(
                                 new NotCondition(new SourceCounterThreshold(1, CounterType.ICE)),
                                 new TransformSelfEffect())));

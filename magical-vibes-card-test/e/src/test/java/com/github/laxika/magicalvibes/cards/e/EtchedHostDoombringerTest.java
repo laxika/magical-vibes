@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
             "Choose target battle. If an opponent protects it, remove three defense counters from it. Otherwise, put three defense counters on it";
 
     @Test
+    @DisplayName("The life mode drains target opponent for 2")
     void lifeModeMakesTargetOpponentLoseLifeAndControllerGainLife() {
         cast(LIFE_MODE, player2.getId());
         harness.passBothPriorities();
@@ -30,6 +32,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The battle mode removes three defense counters from a battle an opponent protects")
     void battleModeRemovesDefenseCountersWhenAnOpponentProtectsTheBattle() {
         Permanent battle = addBattle(player1, player2.getId(), 5);
 
@@ -40,6 +43,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The battle mode puts three defense counters on a battle its controller protects")
     void battleModePutsDefenseCountersOnABattleProtectedByTheController() {
         Permanent battle = addBattle(player2, player1.getId(), 2);
 
@@ -50,6 +54,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing the last defense counters defeats the Siege")
     void removingTheLastDefenseCountersDefeatsTheSiege() {
         Permanent battle = addBattle(player1, player2.getId(), 2);
 
@@ -68,6 +73,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The battle mode can be chosen when the Doombringer enters without being cast")
     void battleModeCanBeChosenWhenDoombringerEntersWithoutBeingCast() {
         Permanent battle = addBattle(player1, player2.getId(), 5);
 
@@ -83,6 +89,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The battle mode reads the protector as it resolves")
     void battleModeChecksTheProtectorAtResolution() {
         Permanent battle = addBattle(player2, player1.getId(), 5);
         cast(BATTLE_MODE, battle.getId());
@@ -96,6 +103,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The battle mode does nothing when its target left before it resolves")
     void battleModeDoesNothingWhenTheTargetLeavesBeforeResolution() {
         Permanent battle = addBattle(player1, player2.getId(), 5);
         cast(BATTLE_MODE, battle.getId());
@@ -110,6 +118,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The life mode resolves after the Doombringer left")
     void lifeModeStillResolvesWhenDoombringerLeavesBeforeItsTrigger() {
         cast(LIFE_MODE, player2.getId());
 

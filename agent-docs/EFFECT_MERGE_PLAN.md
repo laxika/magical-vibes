@@ -1132,10 +1132,8 @@ public record RemoveAllCountersEffect(CounterType counterType, CounterRemovalSub
         implements CombatDamageTriggerContextEffect
 // sugar: (CounterType) -> subject = SOURCE
 
-public record RemoveCounterFromTargetPermanentEffect(CounterType counterType,
-                                                     PermanentPredicate targetPredicate,
-                                                     int amount) implements CardEffect
-// sugar: () -> (null, null, 1); (CounterType, PermanentPredicate) -> amount 1
+// the target counter removal; since effect cleanup step 10 it is RemoveCountersEffect.fromTarget(...)
+// sugar: fromTarget() (any one kind, 1); fromTarget(CounterType, PermanentPredicate) -> amount 1
 
 public record RemoveCounterFromSourceCost(int count, CounterType counterType) implements CostEffect
 // now overrides sourceCountersRemoved() -> count
@@ -1193,9 +1191,9 @@ the survivor rather than against it:
 **Deliberate deltas** (all log-only or inert)
 - The gain-life `TARGET` form now logs "A -1/-1 counter removed from X." instead of
   "A MINUS_ONE_MINUS_ONE counter removed from X.". Same unification applied to
-  `RemoveCounterFromTargetPermanentEffectHandler`, which had the same raw-enum bug. No test asserted
+  the target counter-removal handler (now `RemoveCountersEffectHandler`), which had the same raw-enum bug. No test asserted
   either string.
-- `RemoveCounterFromTargetPermanentEffect` gained an `amount` upper bound, so Gremlin Mine's log
+- The target counter-removal record (now `RemoveCountersEffect.fromTarget`) gained an `amount` upper bound, so Gremlin Mine's log
   loses the charge handler's "(N remaining)" suffix and reads "4 charge counters removed from X.".
   `Math.min(amount, present)` is identical to the old "remove 1 if > 0" at `amount == 1`; both
   amount-1 branches stay pinned by existing tests that stack more than one counter on the target
@@ -1231,7 +1229,7 @@ already pinned by `AmmitEternalTest.combatDamageRemovesCounters`, the event-valu
 bound by `GremlinMineTest`'s up-to-four pair.
 
 **Kept separate**: `RemoveAllCountersAsCostEffect` (paid at activation, snapshots into xValue, no
-`subject`), `RemoveCounterFromSourceEffect` (a *resolved* self-effect, not a cost, with
+`subject`), `RemoveCountersEffect.fromSelf` (a *resolved* self-effect, not a cost, with
 `selfTargeting()`), `RemoveCounterFromControlledCreatureCost` / `RemoveOneOrMoreCountersFrom*` /
 `RemoveXCountersFromSourceCost` (different payment mechanics), and
 `RemoveCountersInsteadOfUntappingEffect` (a static replacement).

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapGrantingEquipmentCost;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -42,7 +42,7 @@ public class FishingPole extends Card {
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.BAIT),
                         SequenceEffect.of(
-                                new RemoveCounterFromSourceEffect(CounterType.BAIT, 1),
+                                RemoveCountersEffect.fromSelf(CounterType.BAIT, 1),
                                 new CreateTokenEffect("Fish", 1, 1, CardColor.BLUE,
                                         List.of(CardSubtype.FISH), Set.of(), Set.of())
                         )));

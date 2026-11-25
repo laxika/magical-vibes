@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class EncumberedReejerey extends Card {
                         .withFilter(new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE)),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new SourceCounterThreshold(1, CounterType.MINUS_ONE_MINUS_ONE)),
-                new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+                RemoveCountersEffect.fromSelf(CounterType.MINUS_ONE_MINUS_ONE, 1));
     }
 }

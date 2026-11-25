@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 
 import java.util.List;
@@ -21,11 +21,9 @@ public class PestilentHaze extends Card {
                         new BoostAllCreaturesEffect(-2, -2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove two loyalty counters from each planeswalker",
-                        new RemoveCounterFromEachMatchingPermanentEffect(
-                                CounterType.LOYALTY,
-                                2,
-                                new PermanentIsPlaneswalkerPredicate(),
-                                EachPermanentScope.ALL_PLAYERS))
+                        new RemoveCountersEffect(
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsPlaneswalkerPredicate()),
+                                CounterType.LOYALTY, 2))
         )));
     }
 }

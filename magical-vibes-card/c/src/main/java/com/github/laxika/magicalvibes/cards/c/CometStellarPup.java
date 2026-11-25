@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -33,7 +33,7 @@ public class CometStellarPup extends Card {
                         Set.of(CardColor.GREEN), List.of(CardSubtype.SQUIRREL), Set.of(), Set.of(Keyword.HASTE)));
 
         CardEffect returnCard = SequenceEffect.of(
-                new RemoveCounterFromSourceEffect(CounterType.LOYALTY, 1),
+                RemoveCountersEffect.fromSelf(CounterType.LOYALTY, 1),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardMaxManaValuePredicate(2))
@@ -42,7 +42,7 @@ public class CometStellarPup extends Card {
 
         CardEffect damage = SequenceEffect.of(
                 DealDamageToTargetCreatureOrPlayerEffect.chooseDuringResolution(new CountersOnSource(CounterType.LOYALTY)),
-                new RemoveCounterFromSourceEffect(CounterType.LOYALTY, 2));
+                RemoveCountersEffect.fromSelf(CounterType.LOYALTY, 2));
 
         CardEffect extraActivations = SequenceEffect.of(
                 PutCountersEffect.onSelf(CounterType.LOYALTY, 1),

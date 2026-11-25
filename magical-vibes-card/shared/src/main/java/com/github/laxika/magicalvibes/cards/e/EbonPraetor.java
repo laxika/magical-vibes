@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceIfSacrificedCardHasSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class EbonPraetor extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(),
-                        new RemoveCounterFromSourceEffect(CounterType.MINUS_TWO_MINUS_TWO, 1),
+                        RemoveCountersEffect.fromSelf(CounterType.MINUS_TWO_MINUS_TWO, 1),
                         new PutCounterOnSourceIfSacrificedCardHasSubtypeEffect(
                                 CardSubtype.THRULL, CounterType.PLUS_ONE_PLUS_ZERO, 1)
                 ),

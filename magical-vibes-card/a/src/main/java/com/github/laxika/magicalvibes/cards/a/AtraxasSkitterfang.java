@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -28,7 +28,7 @@ public class AtraxasSkitterfang extends Card {
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
-                        new RemoveCounterFromSourceEffect(CounterType.OIL, 1),
+                        RemoveCountersEffect.fromSelf(CounterType.OIL, 1),
                         new ConditionalEffect(HappenedThisWay.removedCounters(), new QueueReflexiveAbilityEffect(
                                 new GrantChosenKeywordEffect(
                                         List.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.DEATHTOUCH, Keyword.LIFELINK),

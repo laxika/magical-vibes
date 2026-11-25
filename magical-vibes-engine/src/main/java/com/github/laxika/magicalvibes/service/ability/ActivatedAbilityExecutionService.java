@@ -82,7 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
@@ -1296,7 +1296,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof DestroyGrantingPermanentIfNoCountersEffect destroy) {
                 snapshotEffects.add(new DestroyGrantingPermanentIfNoCountersEffect(
                         destroy.counterType(), ability.getGrantSourcePermanentId()));
-            } else if (effect instanceof RemoveCounterFromSourceEffect remove
+            } else if (effect instanceof RemoveCountersEffect remove
                     && remove.subject() instanceof PermanentSubject.Granter) {
                 // Bind the granting Aura now (Heliod's Punishment): the enchanted creature is the
                 // ability's source, and the Aura may be unattached in response.
@@ -1512,7 +1512,7 @@ public class ActivatedAbilityExecutionService {
                         gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + amount + " " + award.color().getCode() + " from ").card(permanent.getCard()).text(".").build());
                     }
                 }
-            } else if (effect instanceof RemoveCounterFromSourceEffect remove) {
+            } else if (effect instanceof RemoveCountersEffect remove) {
                 if (!(remove.subject() instanceof PermanentSubject.Source)) {
                     // A mana ability doesn't go on the stack (CR 605.3b), so it has no entry to name another permanent.
                     throw new IllegalStateException("A mana ability removes counters from its source only: "

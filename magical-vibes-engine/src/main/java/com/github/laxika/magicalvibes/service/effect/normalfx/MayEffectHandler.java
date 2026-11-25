@@ -42,7 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -367,7 +367,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             insertElseEffect(entry, e);
             return;
         }
-        if (optionalAction instanceof RemoveCounterFromSourceEffect removal
+        if (optionalAction instanceof RemoveCountersEffect removal
                 && removal.subject() instanceof PermanentSubject.Source
                 && removal.dynamicAmount() == null && !removal.targetsPlayer() && removal.amount() > 0
                 && !sourceHasCountersToRemove(gameData, entry, removal)) {
@@ -470,7 +470,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     }
 
     /** Whether the resolving entry's source permanent has the counters {@code removal} would remove. */
-    private boolean sourceHasCountersToRemove(GameData gameData, StackEntry entry, RemoveCounterFromSourceEffect removal) {
+    private boolean sourceHasCountersToRemove(GameData gameData, StackEntry entry, RemoveCountersEffect removal) {
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {

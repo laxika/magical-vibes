@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
@@ -545,13 +546,22 @@ public class TargetPolarityClassifier {
         }
 
         // Removing some counters from a target: stripping -1/-1 counters helps it, any other kind (loyalty, +1/+1,
-        // lore, time) is aimed at the opponent's permanent or the opponent; the non-target forms have no polarity.
+        // lore, time, defense) is aimed at the opponent's permanent or the opponent; the non-target forms have no
+        // polarity.
         if (effect instanceof RemoveUpToCountersFromAllPermanentsEffect removeSome) {
             if (removeSome.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
                 return null;
             }
-            return removeSome.counterType() == CounterType.MINUS_ONE_MINUS_ONE
-                    ? TargetPolarity.BENEFICIAL : TargetPolarity.HARMFUL;
+            return removedCountersPolarity(removeSome.counterType());
+        }
+        // The same for "remove N [kind] counters from target permanent"; a counter of any kind, whose kind its
+        // controller picks as it resolves, has no direction. From this permanent or a named one: no polarity.
+        if (effect instanceof RemoveCountersEffect remove) {
+            if (!(remove.subject() instanceof PermanentSubject.Target)) {
+                return null;
+            }
+            return remove.counterType() == CounterType.ANY
+                    ? TargetPolarity.NEUTRAL : removedCountersPolarity(remove.counterType());
         }
 
         // A move between two targets or from a set onto a target swings both ways; one to or from this permanent
@@ -705,6 +715,11 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL;
         }
         return null;
+    }
+
+    /** Removing counters of {@code kind} from a target: -1/-1 counters help it, any other kind hurts it. */
+    private static TargetPolarity removedCountersPolarity(CounterType kind) {
+        return kind == CounterType.MINUS_ONE_MINUS_ONE ? TargetPolarity.BENEFICIAL : TargetPolarity.HARMFUL;
     }
 
     /**
@@ -883,7 +898,6 @@ public class TargetPolarityClassifier {
             entry("GrantSubtypeEffect", TargetPolarity.NEUTRAL),
             entry("GrantSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantSubtypeToTargetCreatureEffect", TargetPolarity.HARMFUL),
-            entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),
             // Reality Scramble: a permanent its caster owns, traded for a random one sharing a card type.

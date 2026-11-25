@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -102,14 +102,14 @@ public class ChooseOneAtResolutionEffectHandler implements NormalEffectHandlerBe
                 default -> gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).isEmpty();
             };
         }
-        return !effects.isEmpty() && effects.getFirst() instanceof RemoveCounterFromSourceEffect removal
+        return !effects.isEmpty() && effects.getFirst() instanceof RemoveCountersEffect removal
                 && removal.subject() instanceof PermanentSubject.Source
                 && removal.dynamicAmount() == null
                 && entry.getSourcePermanentId() != null
                 && lacksCounters(gameData, entry, removal);
     }
 
-    private boolean lacksCounters(GameData gameData, StackEntry entry, RemoveCounterFromSourceEffect removal) {
+    private boolean lacksCounters(GameData gameData, StackEntry entry, RemoveCountersEffect removal) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         return source == null
                 || !PermanentCounterSupport.hasCountersToRemove(source, removal.counterType(), removal.amount());

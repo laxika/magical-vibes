@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -35,7 +35,7 @@ public class LeatherheadSwampStalker extends Card {
                 new PermanentControlledByDefendingPlayerPredicate()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 SequenceEffect.of(
-                        new RemoveCounterFromSourceEffect(CounterType.ANY, 1),
+                        RemoveCountersEffect.fromSelf(CounterType.ANY, 1),
                         new ConditionalEffect(HappenedThisWay.removedCounters(), new QueueReflexiveAbilityEffect(
                                 new DestroyTargetPermanentEffect(artifactOrEnchantmentControlledByDefendingPlayer)))),
                 "Remove a counter from Leatherhead?"));

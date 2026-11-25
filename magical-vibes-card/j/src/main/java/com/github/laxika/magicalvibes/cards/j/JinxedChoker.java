@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -44,7 +44,7 @@ public class JinxedChoker extends Card {
                                 PutCountersEffect.onSelf(CounterType.CHARGE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Remove a charge counter from Jinxed Choker",
-                                new RemoveCounterFromSourceEffect(CounterType.CHARGE, 1))))),
+                                RemoveCountersEffect.fromSelf(CounterType.CHARGE, 1))))),
                 "{3}: Put a charge counter on Jinxed Choker or remove one from it."
         ));
     }

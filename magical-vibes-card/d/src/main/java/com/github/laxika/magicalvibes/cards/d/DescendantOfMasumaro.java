@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,7 +23,6 @@ public class DescendantOfMasumaro extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CardsInHand(CountScope.CONTROLLER)),
-                new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                        new CardsInHand(CountScope.TARGET_PLAYER), true)));
+                RemoveCountersEffect.fromSelfCountingTargetPlayer(CounterType.PLUS_ONE_PLUS_ONE, new CardsInHand(CountScope.TARGET_PLAYER))));
     }
 }

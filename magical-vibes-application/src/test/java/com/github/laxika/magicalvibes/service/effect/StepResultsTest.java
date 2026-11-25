@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.d.DelverOfSecrets;
@@ -49,7 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.VoteEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -1141,13 +1142,77 @@ class StepResultsTest extends BaseCardTest {
         void gainsOnlyWhenACounterCameOff() {
             Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
             bears.setCounterCount(CounterType.VITALITY, 1);
-            CardEffect remove = new RemoveCounterFromTargetPermanentEffect(CounterType.VITALITY, null);
+            CardEffect remove = RemoveCountersEffect.fromTarget(CounterType.VITALITY, 1);
 
             resolve(player1, bears.getId(), null, remove, ifDone(StepKind.REMOVE_COUNTERS, new GainLifeEffect(1)));
             resolve(player1, bears.getId(), null, remove, ifDone(StepKind.REMOVE_COUNTERS, new GainLifeEffect(1)));
 
             assertThat(bears.getCounterCount(CounterType.VITALITY)).isZero();
             assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        }
+
+        @Test
+        @DisplayName("Removing a counter of the kind chosen among several records that removal, not the step before the choice")
+        void aChosenKindsRemovalIsTheStep() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            bears.setCounterCount(CounterType.CHARGE, 1);
+
+            resolve(player1, bears.getId(), null, RemoveCountersEffect.fromTarget(),
+                    new GainLifeEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS)));
+            String charge = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options().stream()
+                    .filter(option -> option.contains("charge")).findFirst().orElseThrow();
+            harness.handleListChoice(player1, charge);
+
+            assertThat(bears.getCounterCount(CounterType.CHARGE)).isZero();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        }
+
+        @Test
+        @DisplayName("Removing several counters of one kind from target permanent records how many came off")
+        void removingSeveralFromATargetIsTheStep() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            bears.setCounterCount(CounterType.LORE, 3);
+
+            resolve(player1, bears.getId(), null, RemoveCountersEffect.fromTarget(CounterType.LORE, 2),
+                    new GainLifeEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS)));
+
+            assertThat(bears.getCounterCount(CounterType.LORE)).isEqualTo(1);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        }
+
+        @Test
+        @DisplayName("Removing counters from each matching permanent records how many came off in all")
+        void removingFromEachMatchingPermanentIsTheStep() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+            bears.setCounterCount(CounterType.TIME, 3);
+            forest.setCounterCount(CounterType.TIME, 1);
+
+            resolve(player1, null, null, new RemoveCountersEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                            new PermanentHasCountersPredicate(CounterType.TIME)), CounterType.TIME, 2),
+                    new GainLifeEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS)));
+
+            assertThat(bears.getCounterCount(CounterType.TIME)).isEqualTo(1);
+            assertThat(forest.getCounterCount(CounterType.TIME)).isZero();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        }
+
+        @Test
+        @DisplayName("Removing a counter from each creature you control records how many came off")
+        void removingFromEachOwnCreatureIsTheStep() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+            otherBears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+            resolve(player1, null, null, new RemoveCountersEffect(Subjects.controlledBy(Subjects.you(),
+                            new PermanentIsCreaturePredicate()), CounterType.PLUS_ONE_PLUS_ONE, 1),
+                    new GainLifeEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS)));
+
+            assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(otherBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(22);
         }
     }
 

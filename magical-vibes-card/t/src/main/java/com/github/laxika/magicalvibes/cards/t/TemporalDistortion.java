@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,10 +34,11 @@ public class TemporalDistortion extends Card {
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentHasCountersPredicate(CounterType.HOURGLASS)));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new RemoveCounterFromEachMatchingPermanentEffect(
-                CounterType.HOURGLASS,
-                Integer.MAX_VALUE,
-                new PermanentHasCountersPredicate(CounterType.HOURGLASS),
-                EachPermanentScope.TARGET_PLAYER));
+        // "Remove all hourglass counters from permanents that player controls": the upkeep's player, which the
+        // step-trigger collection puts on the entry without targeting.
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new RemoveCountersEffect(
+                Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(),
+                        new PermanentHasCountersPredicate(CounterType.HOURGLASS)),
+                CounterType.HOURGLASS, Integer.MAX_VALUE));
     }
 }

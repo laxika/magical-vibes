@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class RiverDelta extends Card {
         addStaticEffect(new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
 
         // At the beginning of your upkeep, remove a depletion counter from this land.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCounterFromSourceEffect(CounterType.DEPLETION, 1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), RemoveCountersEffect.fromSelf(CounterType.DEPLETION, 1));
 
         // {T}: Add {U} or {B}. Put a depletion counter on this land.
         addActivatedAbility(new ActivatedAbility(

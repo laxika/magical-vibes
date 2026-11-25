@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.a.AshmouthDragon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -36,9 +36,7 @@ public class SmolderingEgg extends Card {
                 new ConditionalEffect(
                         new SourceCounterThreshold(7, CounterType.EMBER),
                         SequenceEffect.of(
-                                new RemoveCounterFromSourceEffect(
-                                        CounterType.EMBER,
-                                        new CountersOnSource(CounterType.EMBER)),
+                                RemoveCountersEffect.fromSelf(CounterType.EMBER, new CountersOnSource(CounterType.EMBER)),
                                 new TransformSelfEffect())));
     }
 

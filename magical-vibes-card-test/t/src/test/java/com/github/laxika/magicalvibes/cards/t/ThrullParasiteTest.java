@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DutifulThrull;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WaningWurm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThrullParasite.class, GrizzlyBears.class, Forest.class, DutifulThrull.class, TowerDefense.class})
+@CardUsed({ThrullParasite.class, GrizzlyBears.class, Forest.class, DutifulThrull.class, TowerDefense.class,
+        WaningWurm.class})
 class ThrullParasiteTest extends BaseCardTest {
 
     @BeforeEach
@@ -251,5 +253,39 @@ class ThrullParasiteTest extends BaseCardTest {
             remaining += gd.playerManaPools.get(player1.getId()).get(color);
         }
         assertThat(remaining).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Answering the kind choice removes one counter of the chosen kind only")
+    void removesTheChosenKind() {
+        addReadyParasite();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DutifulThrull());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        target.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        String charge = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options().stream()
+                .filter(option -> option.contains("charge")).findFirst().orElseThrow();
+        harness.handleListChoice(player1, charge);
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter from a vanishing creature makes its controller sacrifice it")
+    void removingTheLastTimeCounterTriggersVanishing() {
+        addReadyParasite();
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new WaningWurm());
+        wurm.setCounterCount(CounterType.TIME, 1);
+
+        harness.activateAbility(player1, 0, null, wurm.getId());
+        resolveAllTriggers();
+
+        assertThat(wurm.getCounterCount(CounterType.TIME)).isZero();
+        harness.assertNotOnBattlefield(player2, "Waning Wurm");
+        harness.assertInGraveyard(player2, "Waning Wurm");
     }
 }

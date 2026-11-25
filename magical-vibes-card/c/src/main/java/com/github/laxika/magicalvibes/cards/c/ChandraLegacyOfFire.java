@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -43,7 +43,7 @@ public class ChandraLegacyOfFire extends Card {
                 List.of(
                         ChoosePermanentsEffect.anyNumber(Subjects.permanentsYouControl(),
                                 "any number of permanents you control"),
-                        new RemoveCounterFromSourceEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.LOYALTY),
+                        new RemoveCountersEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.LOYALTY),
                         new ExileTopCardMayPlayThisTurnEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS), false)
                 ),
                 "0: Remove a loyalty counter from each of any number of permanents you control. "

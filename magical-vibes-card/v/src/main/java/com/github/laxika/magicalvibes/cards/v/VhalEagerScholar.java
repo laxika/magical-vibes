@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -30,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -172,7 +172,7 @@ public class VhalEagerScholar extends Card {
         if (!face.getTargetGroups().isEmpty()) {
             face.registerEffectTargetIndex(next, 0);
         }
-        CardEffect removeStudyCounters = new RemoveCounterFromSourceEffect(CounterType.STUDY, Integer.MAX_VALUE);
+        CardEffect removeStudyCounters = RemoveCountersEffect.fromSelf(CounterType.STUDY, Integer.MAX_VALUE);
         return switch (color) {
             case BLUE, GREEN -> List.of(removeStudyCounters, next);
             default -> List.of(removeStudyCounters, new ConditionalEffect(HappenedThisWay.removedCounters(),

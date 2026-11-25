@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1070,7 +1070,7 @@ public class PlayerInputService {
         List<String> disabledLabels = effect.options().stream()
                 .filter(option -> optionLabels.contains(option.label()))
                 .filter(option -> option.effects().stream().anyMatch(
-                        e -> e instanceof RemoveCounterFromSourceEffect removal
+                        e -> e instanceof RemoveCountersEffect removal
                                 && removal.subject() instanceof PermanentSubject.Source
                                 && !canRemoveCountersFromSource(gameData, sourcePermanentId, removal)))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
@@ -1094,7 +1094,7 @@ public class PlayerInputService {
      * gone or has too few counters greys the mode out; a dynamic amount is left available.
      */
     private boolean canRemoveCountersFromSource(GameData gameData, UUID sourcePermanentId,
-                                                RemoveCounterFromSourceEffect removal) {
+                                                RemoveCountersEffect removal) {
         if (removal.dynamicAmount() != null || sourcePermanentId == null) {
             return true;
         }

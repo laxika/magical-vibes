@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MedicineRunner;
+import com.github.laxika.magicalvibes.cards.t.ThrullParasite;
 import com.github.laxika.magicalvibes.cards.n.NestingGrounds;
 import com.github.laxika.magicalvibes.cards.s.SinUnendingCataclysm;
 import com.github.laxika.magicalvibes.cards.t.ThiefOfBlood;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -251,6 +254,52 @@ class DivineInterventionTest extends BaseCardTest {
 
         assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
         assertThat(bears.getCounterCount(CounterType.INTERVENTION)).isEqualTo(1);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+    }
+
+    @Test
+    @CardUsed(ThrullParasite.class)
+    @DisplayName("Declares a draw when its controller's Thrull Parasite removes its last counter")
+    void declaresDrawWhenControllersThrullParasiteRemovesTheLastCounter() {
+        Permanent intervention = addIntervention();
+        intervention.setCounterCount(CounterType.INTERVENTION, 1);
+        addCreatureReady(player1, new ThrullParasite());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 1, null, intervention.getId());
+        resolveAllTriggers();
+
+        assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+    }
+
+    @Test
+    @CardUsed(MedicineRunner.class)
+    @DisplayName("Declares a draw when its controller's Medicine Runner removes its last counter of the chosen kind")
+    void declaresDrawWhenControllersMedicineRunnerRemovesTheLastCounterOfTheChosenKind() {
+        Permanent intervention = addIntervention();
+        intervention.setCounterCount(CounterType.INTERVENTION, 1);
+        intervention.setCounterCount(CounterType.CHARGE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new MedicineRunner()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, intervention.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        String kind = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options().stream()
+                .filter(option -> option.contains("intervention")).findFirst().orElseThrow();
+        harness.handleListChoice(player1, kind);
+        resolveAllTriggers();
+
+        assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
+        assertThat(intervention.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
     }
 

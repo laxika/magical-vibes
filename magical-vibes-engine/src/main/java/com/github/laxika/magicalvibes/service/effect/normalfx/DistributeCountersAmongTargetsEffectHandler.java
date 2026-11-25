@@ -18,7 +18,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -104,7 +104,7 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
             if (e.removeAtNextCleanup() && placed > 0) {
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.cleanup(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
-                        target.getId(), new RemoveCounterFromTargetPermanentEffect(e.counterType(), null, placed)));
+                        target.getId(), RemoveCountersEffect.fromTarget(e.counterType(), placed)));
             }
             if (e.removeAtNextEndStep() && placed > 0) {
                 // The removal amount is the amount assigned to this target, not the number placed, so a
@@ -112,7 +112,7 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
                         entry.getSourcePermanentId(), target.getId(),
-                        new RemoveCounterFromTargetPermanentEffect(e.counterType(), null, assignment.getValue())));
+                        RemoveCountersEffect.fromTarget(e.counterType(), assignment.getValue())));
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -34,7 +34,7 @@ public class ClockworkHydra extends Card {
         var attackOrBlockEffect = new ConditionalEffect(
                 new AllOf(List.of(new SourceIsOnBattlefield(),
                         new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE))),
-                SequenceEffect.of(new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                SequenceEffect.of(RemoveCountersEffect.fromSelf(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new DealDamageToAnyTargetEffect(1)));
         target(new AnyTargetPredicateTargetFilter(
                 TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),

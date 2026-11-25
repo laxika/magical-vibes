@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,7 +27,7 @@ public class LonelyEnd extends Card {
                         new BoostTargetCreatureEffect(-3, -3), TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove three loyalty counters from target planeswalker",
-                        new RemoveCountersFromTargetPermanentEffect(CounterType.LOYALTY, 3, planeswalker),
+                        RemoveCountersEffect.fromTarget(CounterType.LOYALTY, 3, planeswalker),
                         new PermanentPredicateTargetFilter(
                                 planeswalker, "Target must be a planeswalker."))
         )));

@@ -71,7 +71,7 @@ class GremlinMineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handleXValueChosen(player1, 3);
+        harness.handleListChoice(player1, "3");
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isZero();
     }
 
@@ -88,7 +88,7 @@ class GremlinMineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handleXValueChosen(player1, 4);
+        harness.handleListChoice(player1, "4");
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
@@ -126,7 +126,7 @@ class GremlinMineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
@@ -142,7 +142,7 @@ class GremlinMineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handleXValueChosen(player1, 0);
+        harness.handleListChoice(player1, "0");
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Gremlin Mine");
     }

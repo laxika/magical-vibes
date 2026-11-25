@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -41,7 +41,7 @@ public class EtchedHostDoombringer extends Card {
                         "Choose target battle. If an opponent protects it, remove three defense counters from it. Otherwise, put three defense counters on it",
                         List.of(
                                 new ConditionalEffect(new TargetPermanentMatches(protectedByOpponent),
-                                        new RemoveCounterFromTargetPermanentEffect(CounterType.DEFENSE, null, 3)),
+                                        RemoveCountersEffect.fromTarget(CounterType.DEFENSE, 3)),
                                 new ConditionalEffect(new NotCondition(new TargetPermanentMatches(protectedByOpponent)),
                                         new PutCountersEffect(CounterType.DEFENSE, 3))),
                         new PermanentPredicateTargetFilter(

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -41,7 +41,7 @@ public class PlagueBoiler extends Card {
                                 PutCountersEffect.onSelf(CounterType.PLAGUE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Remove a plague counter from Plague Boiler",
-                                new RemoveCounterFromSourceEffect(CounterType.PLAGUE, 1))))),
+                                RemoveCountersEffect.fromSelf(CounterType.PLAGUE, 1))))),
                 "{1}{B}{G}: Put a plague counter on Plague Boiler or remove a plague counter from it."
         ));
     }

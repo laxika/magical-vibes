@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,6 +28,6 @@ public class GlisteningExtractor extends Card {
                         new SeekLibraryEffect(
                                 new Fixed(1), null, LibrarySearchDestination.HAND,
                                 new ManaValueBound(new CountersOnSource(CounterType.OIL), true, 0)),
-                        new RemoveCounterFromSourceEffect(CounterType.OIL, 1)));
+                        RemoveCountersEffect.fromSelf(CounterType.OIL, 1)));
     }
 }

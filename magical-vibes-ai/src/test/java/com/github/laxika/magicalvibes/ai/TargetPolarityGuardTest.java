@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTarge
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
@@ -151,6 +152,29 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classifyCard(gd,
                 new com.github.laxika.magicalvibes.cards.t.ThievingSkydiver(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
+    }
+
+    @Test
+    @DisplayName("Removing counters of a fixed kind from a target is scored by the kind; a kind picked at resolution is neutral")
+    void classifiesTargetCounterRemovalByKind() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classify(gd, RemoveCountersEffect.fromTarget(CounterType.MINUS_ONE_MINUS_ONE, 1),
+                aiPlayerId)).isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd, RemoveCountersEffect.fromTarget(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                aiPlayerId)).isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd, RemoveCountersEffect.fromTarget(CounterType.LOYALTY, 3, null),
+                aiPlayerId)).isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd, RemoveCountersEffect.fromTarget(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd, RemoveCountersEffect.fromSelf(CounterType.TIME, 1), aiPlayerId))
+                .isNull();
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.m.MedicineRunner(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
     }
 
     @Test

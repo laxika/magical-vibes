@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -36,7 +36,7 @@ public class ArixmethesSlumberingIsle extends Card {
                 new SourceCounterThreshold(1, CounterType.SLUMBER),
                 new SetCardTypesEffect(Set.of(CardType.LAND), Subjects.source())));
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new MayEffect(new RemoveCounterFromSourceEffect(CounterType.SLUMBER, 1), "Remove a slumber counter from Arixmethes?"));
+                new MayEffect(RemoveCountersEffect.fromSelf(CounterType.SLUMBER, 1), "Remove a slumber counter from Arixmethes?"));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

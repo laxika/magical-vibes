@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -39,8 +39,7 @@ public class SigurdJarlOfRavensthorpe extends Card {
                                 sagaYouControl),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Remove a lore counter from target Saga you control",
-                                new RemoveCountersFromTargetPermanentEffect(
-                                        CounterType.LORE, 1, new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
+                                RemoveCountersEffect.fromTarget(CounterType.LORE, 1, new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
                                 sagaYouControl)
                 ))),
                 "Boast — {1}: Put a lore counter on target Saga you control or remove one from it. "

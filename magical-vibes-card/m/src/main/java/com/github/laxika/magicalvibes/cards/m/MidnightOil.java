@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class MidnightOil extends Card {
                 new CountersOnSource(CounterType.HOUR)));
         addTrigger(Triggers.drawStep(ActivePlayer.YOU), SequenceEffect.of(
                 new DrawCardEffect(1),
-                new RemoveCounterFromSourceEffect(CounterType.HOUR, 2)));
+                RemoveCountersEffect.fromSelf(CounterType.HOUR, 2)));
         addTrigger(Triggers.youDiscardCard(), new LoseLifeEffect(1));
     }
 }

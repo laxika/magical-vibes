@@ -6777,3 +6777,8 @@ AllowCastTargetCardFromGraveyardThisTurnEffect,survivor,9,"defect run D23: absor
 PutCountersOnSelfEffect,absorbed,10,"step 10 run Counters: into PutCountersEffect.onSelf(...)"
 PutCountersOnSourceEffect,absorbed,10,"step 10 run Counters: into PutCountersEffect.onSelf(...)"
 PutCountersEffect,survivor,10,"step 10 run Counters: was PutCounterOnTargetPermanentEffect, renamed (owner's decision 2026-11-25); absorbs the two self records as source() with onSelf / onSelfCountingTargetPlayer / onSelfWithTargetPermanent"
+RemoveCounterFromTargetPermanentEffect,absorbed,10,"step 10 run Remove counters: into RemoveCountersEffect.fromTarget(...) (Gremlin Mine's up-to form onto RemoveUpToCountersFromAllPermanentsEffect(CHARGE, 4, target()))"
+RemoveCountersFromTargetPermanentEffect,absorbed,10,"step 10 run Remove counters: into RemoveCountersEffect.fromTarget(kind, int | DynamicAmount, predicate)"
+RemoveCounterFromEachMatchingPermanentEffect,absorbed,10,"step 10 run Remove counters: into new RemoveCountersEffect(controlledBy(eachPlayer() | targetPlayerDeclaredElsewhere(), filter), kind, n)"
+RemoveCounterFromEachControlledPermanentEffect,absorbed,10,"step 10 run Remove counters: into new RemoveCountersEffect(controlledBy(you(), filter), kind, n)"
+RemoveCountersEffect,survivor,10,"step 10 run Remove counters: was RemoveCounterFromSourceEffect, renamed (owner's decision 2026-11-25); absorbs the target, plural-target and two mass records as target() / controlledBy(...) subjects with fromSelf / fromSelfCountingTargetPlayer / fromTarget"

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "185")
@@ -18,8 +18,7 @@ public class ShedWeakness extends Card {
         // Both effects share the single spell target; the may-remove uses the spell's target id ("it").
         addSpellEffect(new BoostTargetCreatureEffect(2, 2));
         addSpellEffect(new MayEffect(
-                new RemoveCounterFromTargetPermanentEffect(
-                        CounterType.MINUS_ONE_MINUS_ONE, new PermanentIsCreaturePredicate()),
+                RemoveCountersEffect.fromTarget(CounterType.MINUS_ONE_MINUS_ONE, new PermanentIsCreaturePredicate()),
                 "Remove a -1/-1 counter from it?"));
     }
 }

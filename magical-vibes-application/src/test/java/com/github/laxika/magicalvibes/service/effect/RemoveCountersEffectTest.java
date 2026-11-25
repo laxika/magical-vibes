@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,18 +19,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@link RemoveCounterFromSourceEffect} with a subject other than its source, resolved through the engine: "remove a
+ * {@link RemoveCountersEffect} with a subject other than its source, resolved through the engine: "remove a
  * counter from enchanted creature" on an Aura whose activation cost takes it off the battlefield.
  */
 @CardUsed({GrizzlyBears.class, Pacifism.class})
-class RemoveCounterFromSourceEffectTest extends BaseCardTest {
+class RemoveCountersEffectTest extends BaseCardTest {
 
     /** An Aura with "Sacrifice this Aura: Remove a +1/+1 counter from enchanted creature." */
     private static Card auraWithSacrificeRemoval() {
         Card aura = new Pacifism();
         aura.addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new SacrificeSelfCost(false, false),
-                        new RemoveCounterFromSourceEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE)),
+                        new RemoveCountersEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE)),
                 "Sacrifice this Aura: Remove a +1/+1 counter from enchanted creature."));
         return aura;
     }

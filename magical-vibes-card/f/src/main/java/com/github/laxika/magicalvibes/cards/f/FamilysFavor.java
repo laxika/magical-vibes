@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,7 @@ public class FamilysFavor extends Card {
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.SHIELD),
                                         SequenceEffect.of(
-                                                new RemoveCounterFromSourceEffect(CounterType.SHIELD, 1),
+                                                RemoveCountersEffect.fromSelf(CounterType.SHIELD, 1),
                                                 new DrawCardEffect())))));
     }
 }

@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfKamigawa;
+import com.github.laxika.magicalvibes.cards.r.RooftopSaboteurs;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MedicineRunner.class, GrizzlyBears.class, Forest.class})
+@CardUsed({MedicineRunner.class, GrizzlyBears.class, Forest.class, InvasionOfKamigawa.class, RooftopSaboteurs.class})
 class MedicineRunnerTest extends BaseCardTest {
 
     /**
@@ -149,5 +152,51 @@ class MedicineRunnerTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(forest.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Medicine Runner");
+    }
+
+    @Test
+    @DisplayName("Removing a Siege's last defense counter defeats it")
+    void removingTheLastDefenseCounterDefeatsTheSiege() {
+        Permanent battle = addSiege(1);
+
+        castAcceptAndResolve(battle);
+
+        assertDefeated(battle);
+    }
+
+    @Test
+    @DisplayName("Choosing defense among several kinds and removing the last defense counter defeats the Siege")
+    void choosingDefenseAndRemovingTheLastDefenseCounterDefeatsTheSiege() {
+        Permanent battle = addSiege(1);
+        battle.setCounterCount(CounterType.CHARGE, 1);
+
+        castAcceptAndResolve(battle);
+        String defense = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options().stream()
+                .filter(option -> option.contains("defense")).findFirst().orElseThrow();
+        harness.handleListChoice(player1, defense);
+
+        assertThat(battle.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertDefeated(battle);
+    }
+
+    /** An Invasion of Kamigawa of player 1's that player 2 protects, with {@code defense} defense counters. */
+    private Permanent addSiege(int defense) {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfKamigawa());
+        battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, defense);
+        return battle;
+    }
+
+    /** The Siege at 0 defense waits for its defeat trigger (CR 704.5v), which exiles it and casts it transformed. */
+    private void assertDefeated(Permanent battle) {
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isZero();
+        harness.assertOnBattlefield(player1, "Invasion of Kamigawa");
+        harness.assertNotInGraveyard(player1, "Invasion of Kamigawa");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rooftop Saboteurs");
+        harness.assertNotOnBattlefield(player1, "Invasion of Kamigawa");
     }
 }

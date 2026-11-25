@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.c.CipherboundSpirit;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -53,7 +53,7 @@ public class SoulcipherBoard extends Card {
         // from this artifact. Then if it has no omen counters on it, transform it.
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_OWN),
                 SequenceEffect.of(
-                new RemoveCounterFromSourceEffect(CounterType.OMEN, 1),
+                RemoveCountersEffect.fromSelf(CounterType.OMEN, 1),
                 new ConditionalEffect(
                         new NotCondition(new SourceCounterThreshold(1, CounterType.OMEN)),
                         new TransformSelfEffect())));

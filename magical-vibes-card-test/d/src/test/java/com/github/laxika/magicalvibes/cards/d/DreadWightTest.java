@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialWall;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -178,7 +178,7 @@ class DreadWightTest extends BaseCardTest {
         PermanentGrants.ability(gd, spider, new ActivatedAbility(
                 false,
                 "{8}",
-                List.of(new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 2)),
+                List.of(RemoveCountersEffect.fromSelf(CounterType.PARALYZATION, 2)),
                 "{8}: Remove two paralyzation counters from this creature."));
 
         prepareDeclareBlockers();
