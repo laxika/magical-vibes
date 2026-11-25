@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +15,7 @@ public class StalwartSuccessor extends Card {
     public StalwartSuccessor() {
         addTrigger(Triggers.countersPutOnCreatureYouControl(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE),
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                         Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

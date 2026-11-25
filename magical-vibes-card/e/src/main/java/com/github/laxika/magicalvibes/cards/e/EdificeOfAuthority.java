@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class EdificeOfAuthority extends Card {
                 "{1}",
                 List.of(
                         new LockTargetPermanentEffect(true, false, false, Duration.UNTIL_END_OF_TURN),
-                        new PutCountersOnSelfEffect(CounterType.BRICK)
+                        PutCountersEffect.onSelf(CounterType.BRICK)
                 ),
                 "{1}, {T}: Target creature can't attack this turn. Put a brick counter on Edifice of Authority."
         ));

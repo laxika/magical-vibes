@@ -48,7 +48,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
@@ -588,7 +588,7 @@ class AbilityActivationServiceTest {
                     false,
                     "{3}",
                     List.of(new ReduceActivationCostEffect(new Fixed(2)),
-                            new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                            PutCountersEffect.onSelf(CounterType.CHARGE)),
                     "Pay less mana to add a counter"
             ));
             Permanent perm = addReadyPermanent(player1Id, artifact);
@@ -642,7 +642,7 @@ class AbilityActivationServiceTest {
                     "{3}",
                     List.of(new ReduceActivationCostEffect(new FixedIfTargetMatches(
                                     new PermanentIsColorlessPredicate(), 2, 0)),
-                            new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                            PutCountersEffect.onSelf(CounterType.CHARGE)),
                     "Pay less mana to add a counter"
             ));
             Permanent perm = addReadyPermanent(player1Id, artifact);
@@ -1031,7 +1031,7 @@ class AbilityActivationServiceTest {
         void upkeepOnlyWrongStepThrows() {
             Card card = createGenericArtifact("Test Hand Artifact");
             card.addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
-                    false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                    false, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                     "Test hand ability", ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
             gameData.playerHands.get(player1Id).add(card);
 
@@ -1048,7 +1048,7 @@ class AbilityActivationServiceTest {
         void upkeepOnlyOpponentTurnThrows() {
             Card card = createGenericArtifact("Test Hand Artifact");
             card.addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
-                    false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                    false, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                     "Test hand ability", ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
             gameData.playerHands.get(player1Id).add(card);
 
@@ -1429,7 +1429,7 @@ class AbilityActivationServiceTest {
             card.addActivatedAbility(new ActivatedAbility(
                     false, "{2}", List.of(
                             new RemoveCounterFromSourceCost(1, CounterType.BRICK),
-                            new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                            PutCountersEffect.onSelf(CounterType.CHARGE)),
                     "Remove a brick counter"
             ));
             Permanent perm = addReadyPermanent(player1Id, card);
@@ -2032,7 +2032,7 @@ class AbilityActivationServiceTest {
             card.setType(CardType.ARTIFACT);
             card.setManaCost("{0}");
             card.addActivatedAbility(new ActivatedAbility(
-                    true, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "{T}: Put a charge counter."
+                    true, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)), "{T}: Put a charge counter."
             ));
             Permanent perm = addReadyPermanent(player1Id, card);
 
@@ -2105,7 +2105,7 @@ class AbilityActivationServiceTest {
             card.setManaCost("{0}");
             // Ability 0: non-mana
             card.addActivatedAbility(new ActivatedAbility(
-                    true, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "{T}: Put a charge counter."
+                    true, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)), "{T}: Put a charge counter."
             ));
             // Ability 1: mana
             card.addActivatedAbility(new ActivatedAbility(
@@ -2208,7 +2208,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{4}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "Tap to add counter"
+                true, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)), "Tap to add counter"
         ));
         return card;
     }
@@ -2234,7 +2234,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, manaCost, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "Pay mana to add counter"
+                false, manaCost, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)), "Pay mana to add counter"
         ));
         return card;
     }
@@ -2270,7 +2270,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new DiscardRandomCardCost(count), new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                false, null, List.of(new DiscardRandomCardCost(count), PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "Discard cards at random"
         ));
         return card;
@@ -2283,7 +2283,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                false, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "Test ability", restriction
         ));
         return card;
@@ -2336,7 +2336,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new RemoveCounterFromSourceCost(requiredCount, CounterType.CHARGE), new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                true, null, List.of(new RemoveCounterFromSourceCost(requiredCount, CounterType.CHARGE), PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "Remove charge counters"
         ));
         return card;
@@ -2349,7 +2349,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new RemoveCounterFromSourceCost(), new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                false, null, List.of(new RemoveCounterFromSourceCost(), PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "Remove counter, add charge counter"
         ));
         return card;
@@ -2362,7 +2362,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                false, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "Limited ability", maxPerTurn
         ));
         return card;
@@ -2375,7 +2375,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                false, null, List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "Once-only ability"
         ).withMaxActivationsPerGame(1));
         return card;

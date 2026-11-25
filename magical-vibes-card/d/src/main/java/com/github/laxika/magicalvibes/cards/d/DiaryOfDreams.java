@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,7 +24,7 @@ public class DiaryOfDreams extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)))),
-                new PutCountersOnSelfEffect(CounterType.PAGE));
+                PutCountersEffect.onSelf(CounterType.PAGE));
 
         // {5}, {T}: Draw a card. This ability costs {1} less to activate for each page counter on Diary of Dreams.
         addActivatedAbility(new ActivatedAbility(

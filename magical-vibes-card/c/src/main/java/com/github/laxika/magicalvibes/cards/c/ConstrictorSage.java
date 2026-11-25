@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +23,7 @@ public class ConstrictorSage extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.target()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+                        new PutCountersEffect(CounterType.STUN));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
@@ -31,7 +31,7 @@ public class ConstrictorSage extends Card {
                 List.of(
                         new ExileSelfFromGraveyardCost(),
                         new TapPermanentsEffect(Subjects.target()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN)
+                        new PutCountersEffect(CounterType.STUN)
                 ),
                 "Renew — {2}{U}, Exile this card from your graveyard: Tap target creature an opponent controls "
                         + "and put a stun counter on it. Activate only as a sorcery.",

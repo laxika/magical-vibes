@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -37,6 +37,6 @@ public class SecretArcadeDustyParlor extends Card {
         target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(1)),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetSpellManaValue()));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetSpellManaValue()));
     }
 }

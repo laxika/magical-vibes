@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,7 +33,7 @@ public class ZygonInfiltrator extends Card {
                 "{2}{U}",
                 List.of(
                         new TapPermanentsEffect(Subjects.target()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN),
+                        new PutCountersEffect(CounterType.STUN),
                         new BecomeCopyOfTargetCreatureWhileTargetTappedEffect()
                 ),
                 "Body-print — {2}{U}: Tap another target creature and put a stun counter on it. "

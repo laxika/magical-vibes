@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class CrystallineCrawler extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PutCountersOnSourceEffect(1, 1, 1)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{T}: Put a +1/+1 counter on this creature."
         ));
     }

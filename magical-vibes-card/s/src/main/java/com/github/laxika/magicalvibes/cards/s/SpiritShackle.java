@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,6 +17,6 @@ public class SpiritShackle extends Card {
         target(TargetFilters.creature());
         // Whenever enchanted creature becomes tapped, put a -0/-2 counter on it.
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.MINUS_ZERO_MINUS_TWO));
+                new PutCountersEffect(Subjects.triggering(), CounterType.MINUS_ZERO_MINUS_TWO));
     }
 }

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLegendarySpellFromAnyZoneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -68,7 +68,7 @@ public class KayaTheInexorable extends Card {
                 false,
                 null,
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.GHOSTFORM),
+                        new PutCountersEffect(CounterType.GHOSTFORM),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnFromGraveyard), Duration.PERMANENT, false),
                         new GrantEffectToTargetEffect(

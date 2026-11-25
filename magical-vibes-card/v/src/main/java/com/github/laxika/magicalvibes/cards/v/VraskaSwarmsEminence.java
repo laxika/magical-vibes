@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -26,7 +26,7 @@ import java.util.Set;
 public class VraskaSwarmsEminence extends Card {
 
     public VraskaSwarmsEminence() {
-        CardEffect putCounterOnDealer = new PutCounterOnTargetPermanentEffect(
+        CardEffect putCounterOnDealer = new PutCountersEffect(
                 Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE);
         addTrigger(List.of(
                         Triggers.sourceYouControlDealsDamageToPlayer()

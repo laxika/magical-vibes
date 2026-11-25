@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class ExcaliburII extends Card {
 
     public ExcaliburII() {
         addTrigger(Triggers.youGainLife(),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.CHARGE),
                 new CountersOnSource(CounterType.CHARGE),

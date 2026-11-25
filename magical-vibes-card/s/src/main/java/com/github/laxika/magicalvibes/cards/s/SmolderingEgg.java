@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -32,7 +32,7 @@ public class SmolderingEgg extends Card {
         ));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
-                new PutCountersOnSelfEffect(CounterType.EMBER, new ManaSpentToCast()),
+                PutCountersEffect.onSelf(CounterType.EMBER, new ManaSpentToCast()),
                 new ConditionalEffect(
                         new SourceCounterThreshold(7, CounterType.EMBER),
                         SequenceEffect.of(

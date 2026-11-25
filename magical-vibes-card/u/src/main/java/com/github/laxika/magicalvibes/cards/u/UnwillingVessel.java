@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ import java.util.Set;
 public class UnwillingVessel extends Card {
 
     public UnwillingVessel() {
-        PutCountersOnSelfEffect possessionCounter = new PutCountersOnSelfEffect(CounterType.POSSESSION);
+        PutCountersEffect possessionCounter = PutCountersEffect.onSelf(CounterType.POSSESSION);
         addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 Triggers.youFullyUnlockRoom()), possessionCounter);
 

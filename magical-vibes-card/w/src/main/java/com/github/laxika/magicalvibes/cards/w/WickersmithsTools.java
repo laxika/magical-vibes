@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class WickersmithsTools extends Card {
 
     public WickersmithsTools() {
         addTrigger(Triggers.minusOneCountersPutOnCreature(),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersByAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -21,7 +21,7 @@ public class GormaTheGullet extends Card {
 
     public GormaTheGullet() {
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
                 new PermanentAllOfPredicate(List.of(

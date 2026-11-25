@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantBaseStatsToCounterBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,7 +25,7 @@ public class AvenMimeomancer extends Card {
                 "Target must be a creature."
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.FEATHER),
+                        new PutCountersEffect(CounterType.FEATHER),
                         new GrantBaseStatsToCounterBearersEffect(CounterType.FEATHER, 3, 1, Set.of(Keyword.FLYING))),
                 "Put a feather counter on target creature?"
         ));

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -49,7 +49,7 @@ public class ArchangelElspeth extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.ANGEL),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.target(),
                                 Duration.PERMANENT)

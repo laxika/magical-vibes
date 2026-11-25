@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -29,7 +29,7 @@ public class NickFuryAgentOfSHIELD extends Card {
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(
                                 7, heroEquipmentOrVehicle, LibrarySelectionFollowUp.inResolution(new MayEffect(
                                         new TransformSelfEffect(Subjects.picked(new PermanentIsDoubleFacedPredicate())),

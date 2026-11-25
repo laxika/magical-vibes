@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class RotCurseRakshasa extends Card {
                 "{X}{B}{B}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.DECAYED)
+                        new PutCountersEffect(CounterType.DECAYED)
                 ),
                 "{X}{B}{B}, Exile this card from your graveyard: Put a decayed counter on each of X "
                         + "target creatures. Activate only as a sorcery.",

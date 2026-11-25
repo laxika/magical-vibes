@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,6 +18,6 @@ public class StrengthOfTheTajuru extends Card {
         setAdditionalCostPerExtraTarget(1);
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}")));
         target(TargetFilters.creature(), 1, Integer.MAX_VALUE)
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+                .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }
 }

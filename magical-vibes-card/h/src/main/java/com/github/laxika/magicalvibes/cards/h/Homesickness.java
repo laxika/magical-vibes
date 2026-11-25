@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,6 +25,6 @@ public class Homesickness extends Card {
         // Tap up to two target creatures. Put a stun counter on each of them.
         target(TargetFilters.creature(), 0, 2)
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+                .addSpellEffect(new PutCountersEffect(CounterType.STUN));
     }
 }

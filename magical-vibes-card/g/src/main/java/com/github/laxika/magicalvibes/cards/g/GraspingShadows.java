@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -27,7 +27,7 @@ public class GraspingShadows extends Card {
                 SequenceEffect.of(
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()),
                         new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()),
-                        new PutCountersOnSelfEffect(CounterType.DREAD),
+                        PutCountersEffect.onSelf(CounterType.DREAD),
                         new ConditionalEffect(
                                 new SourceCounterThreshold(3, CounterType.DREAD),
                                 new TransformSelfEffect())));

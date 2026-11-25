@@ -22,7 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
@@ -504,8 +505,15 @@ public class BoardEvaluator {
         double bonus = 0;
         for (CardEffect effect : WatchedAbilities.rawEffects(
                 WatchedAbilities.printed(perm.getCard(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD))) {
-            if (effect instanceof PutCountersOnSourceEffect counters) {
-                bonus += counters.amount() * (counters.powerModifier() + counters.toughnessModifier()) * 3.0;
+            if (effect instanceof PutCountersEffect counters
+                    && counters.subject() instanceof PermanentSubject.Source
+                    && counters.amount() instanceof Fixed fixed) {
+                int sign = switch (counters.counterType()) {
+                    case PLUS_ONE_PLUS_ONE -> 1;
+                    case MINUS_ONE_MINUS_ONE -> -1;
+                    default -> 0;
+                };
+                bonus += fixed.value() * sign * 2 * 3.0;
             }
         }
         return bonus;

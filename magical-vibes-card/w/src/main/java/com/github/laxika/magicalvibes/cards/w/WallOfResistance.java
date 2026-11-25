@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +17,6 @@ public class WallOfResistance extends Card {
         // put a +0/+1 counter on it.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new SelfWasDealtDamageThisTurn()),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ZERO_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE));
     }
 }

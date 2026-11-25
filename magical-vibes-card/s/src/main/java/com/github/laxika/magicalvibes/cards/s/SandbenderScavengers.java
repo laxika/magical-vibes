@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +27,7 @@ public class SandbenderScavengers extends Card {
         addTrigger(Triggers.sacrificed(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(new ExileSourceCardFromGraveyardEffect(),
                         new ConditionalEffect(HappenedThisWay.exiled(),

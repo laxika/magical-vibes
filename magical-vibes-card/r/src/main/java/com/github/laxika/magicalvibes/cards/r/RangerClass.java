@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -35,7 +35,7 @@ public class RangerClass extends Card {
 
         target(TargetFilters.attackingCreature()).addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

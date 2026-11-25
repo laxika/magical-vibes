@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CastSpellFromGraveyardOncePerYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
@@ -33,7 +33,7 @@ public class ArcadeGannon extends Card {
                 List.of(
                         new DrawCardEffect(),
                         new DiscardEffect(1, Subjects.you()),
-                        new PutCountersOnSelfEffect(CounterType.QUEST)),
+                        PutCountersEffect.onSelf(CounterType.QUEST)),
                 "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon."));
 
         addStaticEffect(new CastSpellFromGraveyardOncePerYourTurnEffect(

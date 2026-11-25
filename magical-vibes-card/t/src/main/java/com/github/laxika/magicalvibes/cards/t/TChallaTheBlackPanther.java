@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -59,6 +59,6 @@ public class TChallaTheBlackPanther extends Card {
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardMinManaValuePredicate(4, true)
                         ))),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

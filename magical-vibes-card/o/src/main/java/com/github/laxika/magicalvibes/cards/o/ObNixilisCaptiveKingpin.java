@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class ObNixilisCaptiveKingpin extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new AllOf(List.of(
                         new EventValueAtLeast(1), new NotCondition(new EventValueAtLeast(2))))),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new ExileTopCardMayPlayThisTurnEffect(1, false)
                                 .until(Duration.UNTIL_YOUR_NEXT_END_STEP)));
     }

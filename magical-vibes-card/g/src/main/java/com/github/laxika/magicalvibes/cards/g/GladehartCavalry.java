@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class GladehartCavalry extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 6)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addTrigger(Triggers.creatureDies(
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),

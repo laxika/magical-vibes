@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class IronFistHeroForHire extends Card {
                 List.of(
                         new DealDividedDamageEffect(
                                 new Fixed(5), null, DivisionMode.CHOSEN, null, 5, true, false, false),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 5)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 5)
                 ),
                 "Power-up — {7}{R}: Iron Fist deals 5 damage divided as you choose among up to five targets. "
                         + "Put five +1/+1 counters on Iron Fist. Activate each power-up ability only once. "

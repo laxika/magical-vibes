@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class MoltenHydra extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}{R}",
-                List.of(new PutCountersOnSourceEffect(1, 1, 1)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{1}{R}{R}: Put a +1/+1 counter on Molten Hydra."
         ));
 

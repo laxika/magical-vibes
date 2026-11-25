@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,7 +30,7 @@ public class HuatliRadiantChampion extends Card {
         // +1: Put a loyalty counter on Huatli for each creature you control.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new PutCountersOnSelfEffect(CounterType.LOYALTY, creaturesYouControl)),
+                List.of(PutCountersEffect.onSelf(CounterType.LOYALTY, creaturesYouControl)),
                 "+1: Put a loyalty counter on Huatli for each creature you control."
         ));
 

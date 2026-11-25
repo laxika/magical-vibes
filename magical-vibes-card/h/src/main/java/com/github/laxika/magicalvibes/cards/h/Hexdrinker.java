@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -27,7 +27,7 @@ public class Hexdrinker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(PutCountersEffect.onSelf(CounterType.LEVEL)),
                 "Level up {1} ({1}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

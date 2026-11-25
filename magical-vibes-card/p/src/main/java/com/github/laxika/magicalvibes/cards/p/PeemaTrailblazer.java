@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class PeemaTrailblazer extends Card {
                 null,
                 List.of(
                         new PayEnergyCost(6),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new DrawCardEffect(new GreatestPowerAmongControlled())
                 ),
                 "Exhaust — Pay six {E}: Put two +1/+1 counters on this creature. Then draw cards "

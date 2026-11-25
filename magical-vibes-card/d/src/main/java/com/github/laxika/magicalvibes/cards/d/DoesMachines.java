@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -73,7 +73,7 @@ public class DoesMachines extends Card {
                 "Target must be an artifact you control"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(3)),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                         new ConditionalEffect(
                                 new NotCondition(new TargetPermanentMatches(new PermanentIsCreaturePredicate())),
                                 new AnimatePermanentsEffect(

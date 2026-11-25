@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,11 +22,11 @@ public class ScavengedBrawler extends Card {
                 "{5}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLYING),
-                        new PutCounterOnTargetPermanentEffect(CounterType.VIGILANCE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.TRAMPLE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK)),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
+                        new PutCountersEffect(CounterType.FLYING),
+                        new PutCountersEffect(CounterType.VIGILANCE),
+                        new PutCountersEffect(CounterType.TRAMPLE),
+                        new PutCountersEffect(CounterType.LIFELINK)),
                 "{5}, Exile this card from your graveyard: Put four +1/+1 counters, a flying counter, "
                         + "a vigilance counter, a trample counter, and a lifelink counter on target creature. "
                         + "Activate only as a sorcery.",

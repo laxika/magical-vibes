@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -31,7 +31,7 @@ public class LeavesFromTheVine extends Card {
         addTrigger(Triggers.chapter(1), new MillEffect(3, Subjects.you()), foodToken());
 
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
         setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 0, 2)));
 

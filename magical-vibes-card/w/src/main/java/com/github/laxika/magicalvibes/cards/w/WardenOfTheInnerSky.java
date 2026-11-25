@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -36,7 +36,7 @@ public class WardenOfTheInnerSky extends Card {
                         new TapMultiplePermanentsCost(3, new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate()))),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new ScryEffect(1)
                 ),
                 "Tap three untapped artifacts and/or creatures you control: Put a +1/+1 counter on this creature. Scry 1. Activate only as a sorcery.",

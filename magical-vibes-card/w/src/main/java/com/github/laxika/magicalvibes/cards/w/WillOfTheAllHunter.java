@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +20,7 @@ public class WillOfTheAllHunter extends Card {
                 .addSpellEffect(new ConditionalEffect(
                         new NotCondition(blocking),
                         new BoostTargetCreatureEffect(2, 2)))
-                .addSpellEffect(PutCounterOnTargetPermanentEffect.withResolutionCondition(
+                .addSpellEffect(PutCountersEffect.withResolutionCondition(
                                 CounterType.PLUS_ONE_PLUS_ONE, 2, blocking.filter()));
 
         addCycling("{2}");

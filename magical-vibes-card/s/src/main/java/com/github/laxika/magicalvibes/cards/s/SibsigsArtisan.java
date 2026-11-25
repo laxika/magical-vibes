@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class SibsigsArtisan extends Card {
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED);
         effects.add(new ExileSelfFromGraveyardCost());
-        effects.add(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
+        effects.add(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
         effects.add(new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(ability,
                 new PermanentControlledBySourceControllerPredicate()));
         return ability;

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class VishKalBloodArbiter extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, true),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
                 ),
                 "Sacrifice a creature: Put X +1/+1 counters on Vish Kal, where X is the sacrificed creature's power."
         ));

@@ -69,7 +69,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPred
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 @Slf4j
 @Component
@@ -829,7 +829,7 @@ public class CloneService {
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentAttacksPlayerWithMostLifePredicate(),
                                         new PermanentHasKeywordPredicate(Keyword.DETHRONE))))),
-                        new PutCountersOnSourceEffect(1, 1, 1));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
             }
             EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             keywords.addAll(copy.getKeywords());

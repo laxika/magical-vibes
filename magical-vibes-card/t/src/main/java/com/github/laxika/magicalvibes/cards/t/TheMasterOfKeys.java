@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GrantEscapeToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,7 +19,7 @@ public class TheMasterOfKeys extends Card {
 
     public TheMasterOfKeys() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
                 new MillEffect(new Scaled(new XValue(), 2), Subjects.you()));
         addStaticEffect(new GrantEscapeToGraveyardCardsEffect(new CardTypePredicate(CardType.ENCHANTMENT)));
     }

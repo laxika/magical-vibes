@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +35,7 @@ public class SigurdJarlOfRavensthorpe extends Card {
                 List.of(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a lore counter on target Saga you control",
-                                new PutCounterOnTargetPermanentEffect(CounterType.LORE),
+                                new PutCountersEffect(CounterType.LORE),
                                 sagaYouControl),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Remove a lore counter from target Saga you control",
@@ -61,7 +61,7 @@ public class SigurdJarlOfRavensthorpe extends Card {
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                 "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.youPutLoreCounterOnSagaYouControl(),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
     }
 }

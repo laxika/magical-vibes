@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -47,7 +48,7 @@ public class ThunderingMightmare extends Card {
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.opponentCastsSpell().anySpell(),
-                        new PutCountersOnSourceEffect(1, 1, 1)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         Subjects.sourceAndPaired())));
     }
 }

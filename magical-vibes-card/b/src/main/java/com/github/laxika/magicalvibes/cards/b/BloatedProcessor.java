@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,7 +31,7 @@ public class BloatedProcessor extends Card {
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN),
                                 "another Phyrexian"),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Sacrifice another Phyrexian: Put a +1/+1 counter on this creature."
         ));

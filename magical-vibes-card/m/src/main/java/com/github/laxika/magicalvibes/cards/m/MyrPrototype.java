@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ public class MyrPrototype extends Card {
 
     public MyrPrototype() {
         // At the beginning of your upkeep, put a +1/+1 counter on this creature.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         // This creature can't attack or block unless you pay {1} for each +1/+1 counter on it.
         addStaticEffect(new CantAttackOrBlockUnlessPaysEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));

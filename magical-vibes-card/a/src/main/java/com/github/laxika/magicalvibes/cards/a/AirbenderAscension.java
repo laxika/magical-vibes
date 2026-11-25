@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,7 +21,7 @@ public class AirbenderAscension extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new AirbendTargetPermanentEffect());
 
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.QUEST));
+                PutCountersEffect.onSelf(CounterType.QUEST));
 
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),

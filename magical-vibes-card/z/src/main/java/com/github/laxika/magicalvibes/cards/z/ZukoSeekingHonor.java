@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,6 +23,6 @@ public class ZukoSeekingHonor extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

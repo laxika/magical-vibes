@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,7 +26,7 @@ public class CharnelTroll extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new ExileCardFromGraveyardCost(CardType.CREATURE),
                 List.of(new SacrificeSelfEffect()), false,
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))));
 
         // {B}{G}, Discard a creature card: Put a +1/+1 counter on this creature.
         addActivatedAbility(new ActivatedAbility(
@@ -34,7 +34,7 @@ public class CharnelTroll extends Card {
                 "{B}{G}",
                 List.of(
                         new DiscardCardTypeCost(new CardTypePredicate(CardType.CREATURE), "creature"),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{B}{G}, Discard a creature card: Put a +1/+1 counter on Charnel Troll."
         ));

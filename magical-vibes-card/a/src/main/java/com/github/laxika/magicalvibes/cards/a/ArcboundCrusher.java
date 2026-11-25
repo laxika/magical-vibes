@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -29,7 +29,7 @@ public class ArcboundCrusher extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                         ObjectRelation.ANY),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),

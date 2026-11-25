@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -41,6 +41,6 @@ public class HonoredDreyleader extends Card {
                                 squirrelOrFood,
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                         ObjectRelation.YOU_CONTROL),
-                new PutCountersOnSourceEffect(1, 1, 1));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

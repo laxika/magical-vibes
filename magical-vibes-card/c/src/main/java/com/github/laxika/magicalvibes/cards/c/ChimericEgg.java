@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,7 +23,7 @@ public class ChimericEgg extends Card {
     public ChimericEgg() {
         addTrigger(Triggers.opponentCastsSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.ARTIFACT))),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

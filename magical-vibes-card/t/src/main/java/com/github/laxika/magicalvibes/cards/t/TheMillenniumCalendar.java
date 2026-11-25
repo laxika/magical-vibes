@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class TheMillenniumCalendar extends Card {
 
     public TheMillenniumCalendar() {
         addTrigger(Triggers.youUntapPermanentsDuringUntapStep(),
-                new PutCountersOnSelfEffect(CounterType.TIME, new EventValue()));
+                PutCountersEffect.onSelf(CounterType.TIME, new EventValue()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",

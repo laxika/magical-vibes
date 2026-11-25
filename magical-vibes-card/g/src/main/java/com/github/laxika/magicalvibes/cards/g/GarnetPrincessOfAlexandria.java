@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,8 +26,7 @@ public class GarnetPrincessOfAlexandria extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
                                 "any number of Sagas you control"),
                         new RemoveCounterFromSourceEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.LORE),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                                new AmountThisWay(StepKind.REMOVE_COUNTERS))),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new AmountThisWay(StepKind.REMOVE_COUNTERS))),
                 "Remove lore counters from any number of Sagas you control?"));
     }
 }

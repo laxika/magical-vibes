@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,7 +37,7 @@ public class WickTheWhorledMind extends Card {
                         new ControlsPermanent(snail),
                         new CreateTokenEffect("Snail", 1, 1, CardColor.BLACK,
                                 List.of(CardSubtype.SNAIL), Set.of(), Set.of()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, snail)));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, snail)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

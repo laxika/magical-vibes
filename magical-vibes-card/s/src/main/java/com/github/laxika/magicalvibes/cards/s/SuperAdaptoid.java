@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -73,6 +73,6 @@ public class SuperAdaptoid extends Card {
         return new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentHasKeywordPredicate(keyword)),
                 new ConditionalEffect(new NotCondition(new SelfHasKeyword(keyword)),
-                        PutCountersOnSelfEffect.targeted(counterType)));
+                        PutCountersEffect.onSelfWithTargetPermanent(counterType)));
     }
 }

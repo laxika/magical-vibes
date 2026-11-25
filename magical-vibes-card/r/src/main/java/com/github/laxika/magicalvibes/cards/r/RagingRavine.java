@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -48,7 +48,7 @@ public class RagingRavine extends Card {
                                 Set.of(CardColor.RED, CardColor.GREEN)),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)), Subjects.source())
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)), Subjects.source())
                 ),
                 "{2}{R}{G}: Until end of turn, this land becomes a 3/3 red and green Elemental creature "
                         + "with \"Whenever this creature attacks, put a +1/+1 counter on it.\" It's still a land."

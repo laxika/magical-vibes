@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -40,7 +40,7 @@ public class ButchDeLoriaTunnelSnake extends Card {
                 false,
                 "{1}{B}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.MENACE),
+                        new PutCountersEffect(CounterType.MENACE),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.ROGUE)
                 ),
                 "{1}{B}: Put a menace counter on another target creature. It becomes a Rogue in addition to its other types.",

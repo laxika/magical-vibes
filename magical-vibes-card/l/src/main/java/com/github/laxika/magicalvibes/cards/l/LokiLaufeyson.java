@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,7 +31,7 @@ public class LokiLaufeyson extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{R}",
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "Power-up — {4}{R}: Put two +1/+1 counters on Loki. Activate each power-up ability only once. Reduce the cost by his mana cost if he entered this turn."
         ).withPowerUp());
     }

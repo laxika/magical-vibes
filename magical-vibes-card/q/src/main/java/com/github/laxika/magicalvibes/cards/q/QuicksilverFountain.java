@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersOfTypeFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
@@ -33,7 +33,7 @@ public class QuicksilverFountain extends Card {
         target(new PermanentPredicateTargetFilter(targetLand,
                 "Target must be a non-Island land controlled by the active player", true))
                 .addTrigger(Triggers.upkeep(ActivePlayer.ANY), SequenceEffect.of(
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.FLOOD, 1, targetLand),
+                PutCountersEffect.withTargetRestriction(CounterType.FLOOD, 1, targetLand),
                 new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD, true)));
 
         var nonIslandLand = new PermanentAllOfPredicate(List.of(

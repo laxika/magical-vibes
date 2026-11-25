@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DoubleProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -32,7 +32,7 @@ public class TekuthalInquiryDominus extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentIsPlaneswalkerPredicate())),
                                 true),
-                        new PutCountersOnSelfEffect(CounterType.INDESTRUCTIBLE)
+                        PutCountersEffect.onSelf(CounterType.INDESTRUCTIBLE)
                 ),
                 "{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control: Put an indestructible counter on Tekuthal."
         ));

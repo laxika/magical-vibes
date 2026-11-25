@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,13 +19,13 @@ public class Aretopolis extends Card {
 
     public Aretopolis() {
         addTrigger(Triggers.planeswalkToThis(), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.SCROLL),
+                PutCountersEffect.onSelf(CounterType.SCROLL),
                 new GainLifeEffect(new CountersOnSource(CounterType.SCROLL))));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.SCROLL),
+                PutCountersEffect.onSelf(CounterType.SCROLL),
                 new GainLifeEffect(new CountersOnSource(CounterType.SCROLL))));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.SCROLL),
+                PutCountersEffect.onSelf(CounterType.SCROLL),
                 new DrawCardEffect(new CountersOnSource(CounterType.SCROLL))));
         addTrigger(Triggers.sourceState(new PermanentCounterCountAtLeastPredicate(CounterType.SCROLL, 10)),
                 new PlaneswalkEffect());

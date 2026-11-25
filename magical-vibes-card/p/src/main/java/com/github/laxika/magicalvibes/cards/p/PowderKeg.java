@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -24,7 +24,7 @@ public class PowderKeg extends Card {
     public PowderKeg() {
         // At the beginning of your upkeep, you may put a fuse counter on this artifact.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.FUSE),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.FUSE),
                         "Put a fuse counter on Powder Keg?"));
 
         // {T}, Sacrifice this artifact: Destroy each artifact and creature with mana value equal to

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -48,6 +48,6 @@ public class CostumeCloset extends Card {
         addTriggeredAbility(new TriggeredAbility(List.of(
                 new TriggerCondition(Triggers.leavesBattlefield(modifiedCreature, ObjectRelation.THIS)),
                 new TriggerCondition(Triggers.leavesBattlefield(modifiedCreature, ObjectRelation.ANOTHER_YOU_CONTROL))),
-                TriggerOptions.DEFAULT, List.of(new EffectRegistration(new PutCountersOnSourceEffect(1, 1, 1)))));
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)))));
     }
 }

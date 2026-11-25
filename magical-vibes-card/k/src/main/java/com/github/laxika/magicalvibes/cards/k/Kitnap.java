@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,6 +30,6 @@ public class Kitnap extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.target()),
                         new ConditionalEffect(new NotCondition(new GiftPromised()),
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 3)));
+                                new PutCountersEffect(CounterType.STUN, 3)));
     }
 }

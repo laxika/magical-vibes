@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -37,7 +37,7 @@ public class MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffectHandler
                 : Math.max(0, gameQueryService.getEffectivePower(gameData, enteringPermanent));
         MayPayLifeEffect mayPayLife = new MayPayLifeEffect(
                 power,
-                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, power),
+                PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, power),
                 "Pay " + power + " life to put " + power + " +1/+1 counter(s) on it?");
         mayPayLifeEffectResolutionHandler.resolve(gameData, entry, mayPayLife);
     }

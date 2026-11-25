@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,7 +28,7 @@ public class AetherVial extends Card {
 
     public AetherVial() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.CHARGE),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.CHARGE),
                         "Put a charge counter on Aether Vial?"));
 
         addActivatedAbility(new ActivatedAbility(

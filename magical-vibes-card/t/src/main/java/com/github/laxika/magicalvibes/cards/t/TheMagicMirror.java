@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -30,7 +30,7 @@ public class TheMagicMirror extends Card {
                         new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER)));
         addStaticEffect(new NoMaximumHandSizeEffect());
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.KNOWLEDGE),
+                PutCountersEffect.onSelf(CounterType.KNOWLEDGE),
                 new DrawCardEffect(new CountersOnSource(CounterType.KNOWLEDGE))));
     }
 }

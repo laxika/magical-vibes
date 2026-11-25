@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -24,7 +24,7 @@ public class NightDealings extends Card {
         // Whenever a source you control deals damage to another player, put that many theft
         // counters on this enchantment.
         addTrigger(Triggers.sourceYouControlDealsDamageToOpponent(),
-                new PutCountersOnSelfEffect(CounterType.THEFT, new EventValue()));
+                PutCountersEffect.onSelf(CounterType.THEFT, new EventValue()));
 
         // {2}{B}{B}, Remove X theft counters from this enchantment: Search your library for a
         // nonland card with mana value X, reveal it, put it into your hand, then shuffle.

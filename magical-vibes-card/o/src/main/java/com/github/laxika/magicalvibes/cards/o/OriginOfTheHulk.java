@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class OriginOfTheHulk extends Card {
 
         // Chapter II: Put two +1/+1 counters on target creature you control.
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
         setSagaChapterTargetRequired(2);
 

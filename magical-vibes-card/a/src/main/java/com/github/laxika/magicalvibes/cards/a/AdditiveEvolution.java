@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,7 +32,7 @@ public class AdditiveEvolution extends Card {
                 "Fractal", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                 List.of(CardSubtype.FRACTAL), 0),
-                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                new PutCountersEffect(Subjects.createdThisResolution(),
                         CounterType.PLUS_ONE_PLUS_ONE, 3));
 
         // At the beginning of combat on your turn, put a +1/+1 counter on target creature
@@ -45,7 +45,7 @@ public class AdditiveEvolution extends Card {
                 "Target must be a creature you control"
         ))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
     }
 }

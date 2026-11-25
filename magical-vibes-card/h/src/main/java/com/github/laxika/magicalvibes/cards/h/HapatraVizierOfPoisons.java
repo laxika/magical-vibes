@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class HapatraVizierOfPoisons extends Card {
         // creature. The target (any creature) is chosen at resolution via the combat-damage may flow.
         target(TargetFilters.creature()).addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
                         "Put a -1/-1 counter on target creature?"
                 ));
 

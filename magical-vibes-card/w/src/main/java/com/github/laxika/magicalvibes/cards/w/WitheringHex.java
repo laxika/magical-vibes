@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,6 +15,6 @@ public class WitheringHex extends Card {
     public WitheringHex() {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.attachedCreature(), CounterType.PLAGUE));
-        addTrigger(Triggers.playerCyclesCard(), new PutCountersOnSelfEffect(CounterType.PLAGUE));
+        addTrigger(Triggers.playerCyclesCard(), PutCountersEffect.onSelf(CounterType.PLAGUE));
     }
 }

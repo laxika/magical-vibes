@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class FiveAlarmFire extends Card {
 
     public FiveAlarmFire() {
         // Whenever a creature you control deals combat damage, put a blaze counter on this enchantment.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamage(), new PutCountersOnSelfEffect(CounterType.BLAZE));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamage(), PutCountersEffect.onSelf(CounterType.BLAZE));
 
         // Remove five blaze counters from this enchantment: It deals 5 damage to any target.
         addActivatedAbility(new ActivatedAbility(

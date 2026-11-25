@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSourcePowerBranchEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +15,7 @@ public class ShelindaYevonAcolyte extends Card {
     public ShelindaYevonAcolyte() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new EnteringCreatureSourcePowerBranchEffect(
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1)));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +24,7 @@ public class PiousKitsune extends Card {
 
     public PiousKitsune() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.DEVOTION),
+                PutCountersEffect.onSelf(CounterType.DEVOTION),
                 new ConditionalEffect(
                         new AnyPlayerControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

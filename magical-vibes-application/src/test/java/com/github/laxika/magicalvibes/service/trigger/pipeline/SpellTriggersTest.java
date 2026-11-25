@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAbilityToNextSpellThisTurnEffect;
@@ -525,7 +524,7 @@ class SpellTriggersTest {
         @DisplayName("puts triggered ability on stack when spell matches filter")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Shrine of Burning Rage");
-            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var innerEffect = PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -574,7 +573,7 @@ class SpellTriggersTest {
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Shrine of Burning Rage");
             CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var innerEffect = PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE);
             var effect = authored(SpellFilter.ANY.withSpell(filter), List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -639,7 +638,7 @@ class SpellTriggersTest {
             Permanent aura = createPermanent("Predatory Hunger");
             Permanent host = createPermanent("Enchanted Creature");
             aura.setAttachedTo(host.getId());
-            var innerEffect = new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, 1);
+            var innerEffect = new PutCountersEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, 1);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
@@ -701,7 +700,7 @@ class SpellTriggersTest {
         @DisplayName("puts an optional trigger on the stack, its choice made as it resolves (CR 603.5)")
         void putsOptionalTriggerOnStackWhenMayEffect() {
             Permanent perm = createPermanent("Angel's Feather");
-            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var innerEffect = PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE);
             var mayEffect = new MayEffect(innerEffect, "Gain 1 life?");
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -900,7 +899,7 @@ class SpellTriggersTest {
         @DisplayName("puts triggered ability on stack when spell matches filter (non-targeting)")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Cabal Paladin");
-            var innerEffect = new PutCountersOnSourceEffect(1, 1, 1);
+            var innerEffect = PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -922,7 +921,7 @@ class SpellTriggersTest {
         void firesOnlyOnNthMatchingSpell() {
             Permanent perm = createPermanent("Vengevine");
             CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
-            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var innerEffect = PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE);
             var effect = authored(SpellFilter.ANY.withSpell(filter).withNthThisTurn(2), List.of(innerEffect));
             Card noncreatureSpell = createInstant("Spellbook");
             Card firstCreatureSpell = createCard("Grizzly Bears");
@@ -951,7 +950,7 @@ class SpellTriggersTest {
         @DisplayName("fires on the second and every later matching spell during the controller's turn")
         void firesOnSecondAndLaterMatchingSpells() {
             Permanent perm = createPermanent("Geralf, the Fleshwright");
-            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var innerEffect = PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE);
             var effect = authored(SpellFilter.ANY.withNthOrLaterThisTurn(2).withTurn(SpellFilter.Turn.YOURS), List.of(innerEffect));
             Card firstSpell = createInstant("Opt");
             Card secondSpell = createInstant("Consider");
@@ -982,7 +981,7 @@ class SpellTriggersTest {
         @DisplayName("does not fire the own-turn minimum spell trigger during an opponent's turn")
         void doesNotFireDuringOpponentsTurn() {
             Permanent perm = createPermanent("Geralf, the Fleshwright");
-            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var innerEffect = PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE);
             var effect = authored(SpellFilter.ANY.withNthOrLaterThisTurn(2).withTurn(SpellFilter.Turn.YOURS), List.of(innerEffect));
             Card firstSpell = createInstant("Opt");
             Card secondSpell = createInstant("Consider");
@@ -1020,7 +1019,7 @@ class SpellTriggersTest {
         void queuesModalTriggeredAbility() {
             Permanent perm = createPermanent("Kykar, Zephyr Awakener");
             var modal = new ChooseOneEffect(List.of(
-                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
+                    new ChooseOneEffect.ChooseOneOption("First mode", PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE)),
                     new ChooseOneEffect.ChooseOneOption("Second mode", new CreateTokenEffect("Spirit", 1, 1,
                             CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))
             ));
@@ -1050,7 +1049,7 @@ class SpellTriggersTest {
         void queuesTurnScopedModalSpellCastTrigger() {
             Permanent perm = createPermanent("The Vision");
             var modal = ChooseOneEffect.notYetChosenThisTurn(List.of(
-                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
+                    new ChooseOneEffect.ChooseOneOption("First mode", PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE)),
                     new ChooseOneEffect.ChooseOneOption("Second mode", new CreateTokenEffect("Spirit", 1, 1,
                             CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))));
             var effect = authored(SpellFilter.ANY, List.of(modal));
@@ -1082,8 +1081,8 @@ class SpellTriggersTest {
         void queuesUpToXModalWithMaximumFromTriggeringSpell() {
             Permanent perm = createPermanent("Riku of Many Paths");
             var modal = new ChooseOneEffect(List.of(
-                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
-                    new ChooseOneEffect.ChooseOneOption("Second mode", new PutCountersOnSourceEffect(1, 1, 1)),
+                    new ChooseOneEffect.ChooseOneOption("First mode", PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE)),
+                    new ChooseOneEffect.ChooseOneOption("Second mode", PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                     new ChooseOneEffect.ChooseOneOption("Third mode", new CreateTokenEffect("Spirit", 1, 1,
                             CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))), true, 0, 3);
             var effect = authored(SpellFilter.ANY,
@@ -1122,8 +1121,8 @@ class SpellTriggersTest {
         void upToZeroModalQueuesNoModeChoice() {
             Permanent perm = createPermanent("Riku of Many Paths");
             var modal = new ChooseOneEffect(List.of(
-                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
-                    new ChooseOneEffect.ChooseOneOption("Second mode", new PutCountersOnSourceEffect(1, 1, 1))),
+                    new ChooseOneEffect.ChooseOneOption("First mode", PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE)),
+                    new ChooseOneEffect.ChooseOneOption("Second mode", PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                     true, 0, 2);
             var effect = authored(SpellFilter.ANY,
                     List.of(new ChooseOneAtTriggerTimeEffect(modal, new TriggeringSpellModeCount())));

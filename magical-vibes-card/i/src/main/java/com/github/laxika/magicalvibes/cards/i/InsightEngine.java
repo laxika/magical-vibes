@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class InsightEngine extends Card {
                 true,
                 "{2}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.CHARGE),
+                        PutCountersEffect.onSelf(CounterType.CHARGE),
                         new DrawCardEffect(new CountersOnSource(CounterType.CHARGE))
                 ),
                 "{2}, {T}: Put a charge counter on this artifact, then draw a card for each charge counter on it."

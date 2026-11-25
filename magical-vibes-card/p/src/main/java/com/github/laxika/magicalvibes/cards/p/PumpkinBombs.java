@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -27,7 +27,7 @@ public class PumpkinBombs extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null, 2),
                         new DrawCardEffect(3),
-                        new PutCountersOnSelfEffect(CounterType.FUSE),
+                        PutCountersEffect.onSelf(CounterType.FUSE),
                         new DealDamageToPlayersEffect(
                                 new CountersOnSource(CounterType.FUSE), Subjects.targetPlayer()),
                         new TargetPlayerGainsControlOfSourceCreatureEffect()

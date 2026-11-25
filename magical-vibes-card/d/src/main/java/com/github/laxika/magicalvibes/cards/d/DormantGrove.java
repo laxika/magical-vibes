@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
@@ -23,7 +23,7 @@ public class DormantGrove extends Card {
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentToughnessAtLeastPredicate(6)),
                                 new TransformSelfEffect())));

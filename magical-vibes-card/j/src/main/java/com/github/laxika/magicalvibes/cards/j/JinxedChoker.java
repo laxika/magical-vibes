@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -30,7 +30,7 @@ public class JinxedChoker extends Card {
         ));
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new TargetPlayerGainsControlOfSourceCreatureEffect(),
-                new PutCountersOnSelfEffect(CounterType.CHARGE)));
+                PutCountersEffect.onSelf(CounterType.CHARGE)));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new DealDamageToPlayersEffect(new CountersOnSource(CounterType.CHARGE), Subjects.you()));
@@ -41,7 +41,7 @@ public class JinxedChoker extends Card {
                 List.of(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a charge counter on Jinxed Choker",
-                                new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                                PutCountersEffect.onSelf(CounterType.CHARGE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Remove a charge counter from Jinxed Choker",
                                 new RemoveCounterFromSourceEffect(CounterType.CHARGE, 1))))),

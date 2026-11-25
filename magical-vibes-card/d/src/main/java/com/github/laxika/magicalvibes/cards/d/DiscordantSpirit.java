@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -19,7 +19,7 @@ public class DiscordantSpirit extends Card {
         // creature for each 1 damage dealt to you this turn.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new NotControllerTurn()),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new DamageDealtToControllerThisTurn()));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new DamageDealtToControllerThisTurn()));
 
         // At the beginning of your end step, remove all +1/+1 counters from this creature.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

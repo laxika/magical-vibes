@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
@@ -27,7 +27,7 @@ public class TwentyToedToad extends Card {
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new DrawCardEffect(1)));
         addTrigger(Triggers.attacks(),
                 new ConditionalEffect(

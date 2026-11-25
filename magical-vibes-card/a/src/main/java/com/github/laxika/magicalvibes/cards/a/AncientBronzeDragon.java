@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AncientBronzeDragon extends Card {
 
     public AncientBronzeDragon() {
-        PutCounterOnTargetPermanentEffect putCounters = new PutCounterOnTargetPermanentEffect(
+        PutCountersEffect putCounters = new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
         QueueReflexiveAbilityEffect putCountersAfterRoll =
                 new QueueReflexiveAbilityEffect(putCounters);

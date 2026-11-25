@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class CloudboundMoogle extends Card {
 
     public CloudboundMoogle() {
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS))),
                 "Plainscycling {2} ({2}, Discard this card: Search your library for a Plains card, "

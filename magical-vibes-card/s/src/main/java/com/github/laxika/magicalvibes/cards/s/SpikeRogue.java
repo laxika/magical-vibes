@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,7 +26,7 @@ public class SpikeRogue extends Card {
                 "{2}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 "{2}, Remove a +1/+1 counter from Spike Rogue: Put a +1/+1 counter on target creature.",
                 TargetFilters.creature()
         ));
@@ -38,7 +37,7 @@ public class SpikeRogue extends Card {
                 "{2}",
                 List.of(
                         new RemoveCounterFromControlledCreatureCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCountersOnSourceEffect(1, 1, 1)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{2}, Remove a +1/+1 counter from a creature you control: Put a +1/+1 counter on Spike Rogue."
         ));
     }

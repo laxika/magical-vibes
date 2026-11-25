@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,7 +34,7 @@ public class FireNationSalvagers extends Card {
                 creatureOrVehicle,
                 "Target must be a creature or Vehicle you control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         var creatureOrVehicleCard = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class FontOfAgonies extends Card {
 
     public FontOfAgonies() {
         addTrigger(Triggers.youPayLife(),
-                new PutCountersOnSelfEffect(CounterType.BLOOD, new EventValue()));
+                PutCountersEffect.onSelf(CounterType.BLOOD, new EventValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -41,7 +41,7 @@ public class BenevolentHydra extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{T}, Remove a +1/+1 counter from this creature: Put a +1/+1 counter on another target creature you control.",
                 otherCreatureTarget

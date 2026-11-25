@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class SenseiGoldenTail extends Card {
                 true,
                 "{1}{W}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.TRAINING),
+                        new PutCountersEffect(CounterType.TRAINING),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
                                 new BushidoEffect(1)),

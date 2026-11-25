@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -37,7 +37,7 @@ public class ShaukuEndbringer extends Card {
                 "",
                 List.of(
                         new ExileTargetPermanentEffect(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{T}: Exile target creature and put a +1/+1 counter on Shauku, Endbringer.",
                 new PermanentPredicateTargetFilter(

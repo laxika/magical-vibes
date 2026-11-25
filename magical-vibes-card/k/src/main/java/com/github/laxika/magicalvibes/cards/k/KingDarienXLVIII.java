@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +28,7 @@ public class KingDarienXLVIII extends Card {
                 false,
                 "{3}{G}{W}",
                 List.of(
-                        new PutCountersOnSourceEffect(1, 1, 1),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         CreateTokenEffect.whiteSoldier(1)
                 ),
                 "{3}{G}{W}: Put a +1/+1 counter on King Darien XLVIII and create a 1/1 white Soldier creature token."

@@ -1357,8 +1357,9 @@ public class GraveyardService {
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
                 riderControllerId(gameData, perm, used),
                 FaceDownVisibility.publicName(gameData, perm) + "'s regeneration ability",
-                List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(
-                        modifier, modifier, 1)),
+                List.of(com.github.laxika.magicalvibes.model.effect.PutCountersEffect.onSelf(modifier > 0
+                        ? com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE
+                        : com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE)),
                 perm.getId(), perm.getId());
         trigger.setNonTargeting(true);
         triggeredAbilityStackService.putDelayed(gameData, trigger);

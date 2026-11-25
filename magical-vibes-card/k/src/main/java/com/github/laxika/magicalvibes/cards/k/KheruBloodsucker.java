@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
@@ -33,7 +34,7 @@ public class KheruBloodsucker extends Card {
                 "{2}{B}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new PutCountersOnSourceEffect(1, 1, 1)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{2}{B}, Sacrifice another creature: Put a +1/+1 counter on Kheru Bloodsucker."
         ));

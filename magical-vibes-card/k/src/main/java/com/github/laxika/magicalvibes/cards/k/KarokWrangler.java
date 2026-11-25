@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -22,7 +22,7 @@ public class KarokWrangler extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
         List<CardEffect> magecraft = List.of(
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
         TargetFilter targetCreatureYouControl = TargetFilters.creatureYouControl();
 
         target(targetCreatureYouControl).addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),

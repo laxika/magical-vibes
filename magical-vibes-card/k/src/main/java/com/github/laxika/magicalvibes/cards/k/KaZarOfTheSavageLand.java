@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +28,7 @@ public class KaZarOfTheSavageLand extends Card {
                 CardColor.GREEN, null, List.of(CardSubtype.CAT), Set.of(), Set.of(),
                 false, false,
                 List.of(new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 List.of(), false, false, true, 0, Set.of()));
     }
 }

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -45,7 +45,7 @@ public class SorinImperiousBloodlord extends Card {
                         new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), Subjects.target()),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
                 ),
                 "+1: Target creature you control gains deathtouch and lifelink until end of turn. "
                         + "If it's a Vampire, put a +1/+1 counter on it.",

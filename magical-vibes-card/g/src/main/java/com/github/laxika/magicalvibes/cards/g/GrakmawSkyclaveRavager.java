@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class GrakmawSkyclaveRavager extends Card {
         addTrigger(Triggers.creatureDies(
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         var counters = new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE);
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(

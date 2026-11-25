@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,12 +42,12 @@ public class GrimInitiate extends Card {
                                 false, false, List.of(), List.of(), false, false, false, 0, Set.of()),
                         ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), army),
                                 "an Army you control"),
-                        new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                        new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                 CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 SequenceEffect.of(
                         ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), army),
                                 "an Army you control"),
-                        new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                        new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                 CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new GrantSubtypeEffect(CardSubtype.ZOMBIE, Subjects.thisWay(StepKind.CHOOSE)))));
     }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -32,11 +32,7 @@ public class GideonChampionOfJustice extends Card {
     public GideonChampionOfJustice() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new PutCountersOnSelfEffect(
-                        CounterType.LOYALTY,
-                        new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER),
-                        true
-                )),
+                List.of(PutCountersEffect.onSelfCountingTargetPlayer(CounterType.LOYALTY, new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER))),
                 "+1: Put a loyalty counter on Gideon, Champion of Justice for each creature target opponent controls.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

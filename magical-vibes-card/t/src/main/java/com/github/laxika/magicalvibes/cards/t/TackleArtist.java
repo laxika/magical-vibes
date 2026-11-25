@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,8 +28,8 @@ public class TackleArtist extends Card {
                         ))),
                 new ConditionalReplacementEffect(
                         new SpellManaSpentAtLeast(5),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ));
     }
 }

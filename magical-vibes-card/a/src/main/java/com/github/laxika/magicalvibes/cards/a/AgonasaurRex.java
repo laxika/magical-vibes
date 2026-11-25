@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +32,7 @@ public class AgonasaurRex extends Card {
         addTrigger(Triggers.youCycleThisCard(),
                 new com.github.laxika.magicalvibes.model.effect.MayEffect(
                         com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(
-                                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                PutCountersEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 2, creatureOrVehicle),
                                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
                                         Subjects.target(), creatureOrVehicle)),

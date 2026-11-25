@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -31,14 +31,14 @@ public class CaseOfThePilferedProof extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addTrigger(Triggers.turnedFaceUp(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE))),
                         ObjectRelation.YOU_CONTROL),
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                         Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

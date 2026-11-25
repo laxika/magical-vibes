@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class Bloodtracker extends Card {
                 "{B}",
                 List.of(
                         new PayLifeCost(2),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{B}, Pay 2 life: Put a +1/+1 counter on this creature."
         ));

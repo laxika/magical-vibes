@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class ExplodingBarrel extends Card {
                 null,
                 List.of(
                         new AwardAnyColorManaEffect(),
-                        new PutCountersOnSelfEffect(CounterType.PRESSURE)
+                        PutCountersEffect.onSelf(CounterType.PRESSURE)
                 ),
                 "{T}: Add one mana of any color. Put a pressure counter on this artifact."
         ));

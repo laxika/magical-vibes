@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class BoonOfTheSpiritRealm extends Card {
                         new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
                                 ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                        new PutCountersOnSelfEffect(CounterType.BLESSING)))));
+                        PutCountersEffect.onSelf(CounterType.BLESSING)))));
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(), CounterType.BLESSING));
     }
 }

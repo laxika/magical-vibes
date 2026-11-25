@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class UrgeToFeed extends Card {
                                 new PermanentCanBecomeTappedPredicate()))),
                 "any number of untapped Vampires you control to tap"));
         addSpellEffect(new TapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)));
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.TAP),
+        addSpellEffect(new PutCountersEffect(Subjects.thisWay(StepKind.TAP),
                 CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,7 +23,7 @@ public class IroncladRevolutionary extends Card {
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                                 new LoseLifeEffect(2, Subjects.eachOpponent())))),
                 "Sacrifice an artifact?"));
     }

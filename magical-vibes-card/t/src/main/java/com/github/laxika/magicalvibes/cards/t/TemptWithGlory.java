@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TemptingOfferEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class TemptWithGlory extends Card {
 
     /** "[players] put a +1/+1 counter on each creature they control". */
     private static CardEffect counters(PlayerSubject players) {
-        return new PutCounterOnTargetPermanentEffect(
+        return new PutCountersEffect(
                 Subjects.controlledBy(players, new PermanentIsCreaturePredicate()), CounterType.PLUS_ONE_PLUS_ONE)
                 .placedByEachController();
     }

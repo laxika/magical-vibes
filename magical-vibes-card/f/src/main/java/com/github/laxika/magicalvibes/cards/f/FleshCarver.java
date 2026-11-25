@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class FleshCarver extends Card {
                 "{1}{B}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ),
                 "{1}{B}, Sacrifice another creature: Put two +1/+1 counters on this creature."
         ));

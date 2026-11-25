@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class LuluSternGuardian extends Card {
         target(new PermanentPredicateTargetFilter(new PermanentIsAttackingSourceControllerPredicate(),
                 "Target must be a creature attacking you"))
                 .addTrigger(Triggers.creaturesAttackYou(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+                        new PutCountersEffect(CounterType.STUN));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

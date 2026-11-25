@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class QuestForPureFlame extends Card {
 
     public QuestForPureFlame() {
         addTrigger(Triggers.sourceYouControlDealsDamageToOpponent(),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.QUEST),
                         "Put a quest counter on Quest for Pure Flame?"));
 
         addActivatedAbility(new ActivatedAbility(

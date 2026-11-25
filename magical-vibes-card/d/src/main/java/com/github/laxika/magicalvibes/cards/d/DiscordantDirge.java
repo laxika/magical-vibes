@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,7 +23,7 @@ public class DiscordantDirge extends Card {
 
     public DiscordantDirge() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.VERSE),
+                PutCountersEffect.onSelf(CounterType.VERSE),
                 "Put a verse counter on Discordant Dirge?"));
 
         addActivatedAbility(new ActivatedAbility(

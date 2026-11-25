@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -38,7 +38,7 @@ public class KavaronMemorialWorld extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate(), true, true),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE, new ChosenPermanentPower())
+                        PutCountersEffect.onSelf(CounterType.CHARGE, new ChosenPermanentPower())
                 ),
                 "Tap another creature you control: Put charge counters equal to its power on Kavaron, Memorial World.",
                 ActivationTimingRestriction.SORCERY_SPEED

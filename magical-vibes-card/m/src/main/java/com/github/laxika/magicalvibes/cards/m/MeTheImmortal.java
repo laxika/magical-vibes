@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PreserveCountersOnZoneChangeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,13 +22,13 @@ public class MeTheImmortal extends Card {
     public MeTheImmortal() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
-                        "+1/+1 counter", new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        "+1/+1 counter", PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 new ChooseOneEffect.ChooseOneOption(
-                        "first strike counter", new PutCountersOnSelfEffect(CounterType.FIRST_STRIKE)),
+                        "first strike counter", PutCountersEffect.onSelf(CounterType.FIRST_STRIKE)),
                 new ChooseOneEffect.ChooseOneOption(
-                        "vigilance counter", new PutCountersOnSelfEffect(CounterType.VIGILANCE)),
+                        "vigilance counter", PutCountersEffect.onSelf(CounterType.VIGILANCE)),
                 new ChooseOneEffect.ChooseOneOption(
-                        "menace counter", new PutCountersOnSelfEffect(CounterType.MENACE))
+                        "menace counter", PutCountersEffect.onSelf(CounterType.MENACE))
         )));
         addStaticEffect(new PreserveCountersOnZoneChangeEffect());
         addCastingOption(new GraveyardCast(List.of(new DiscardCardCastingCost(null, null, 2))));

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -36,7 +36,7 @@ public class WurmwallSweeper extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate(), true, true),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE, new ChosenPermanentPower())
+                        PutCountersEffect.onSelf(CounterType.CHARGE, new ChosenPermanentPower())
                 ),
                 "Tap another creature you control: Put charge counters equal to its power on Wurmwall Sweeper.",
                 ActivationTimingRestriction.SORCERY_SPEED

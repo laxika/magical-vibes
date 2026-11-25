@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class GreenManaBattery extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "{2}, {T}: Put a charge counter on this artifact."
         ));
 

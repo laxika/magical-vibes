@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class PhyrexianDevourer extends Card {
                 "{0}",
                 List.of(
                         new ExileTopCardOfLibraryCost(1, true),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new ImprintedCardManaValue())
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new ImprintedCardManaValue())
                 ),
                 "Exile the top card of your library: Put X +1/+1 counters on this creature, "
                         + "where X is the exiled card's mana value."

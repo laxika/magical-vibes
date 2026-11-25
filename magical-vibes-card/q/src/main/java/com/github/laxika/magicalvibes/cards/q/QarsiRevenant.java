@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,9 +21,9 @@ public class QarsiRevenant extends Card {
                 "{2}{B}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLYING),
-                        new PutCounterOnTargetPermanentEffect(CounterType.DEATHTOUCH),
-                        new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK)),
+                        new PutCountersEffect(CounterType.FLYING),
+                        new PutCountersEffect(CounterType.DEATHTOUCH),
+                        new PutCountersEffect(CounterType.LIFELINK)),
                 "Renew {2}{B} ({2}{B}, Exile this card from your graveyard: Put a flying counter, "
                         + "a deathtouch counter, and a lifelink counter on target creature. Activate only "
                         + "as a sorcery.)",

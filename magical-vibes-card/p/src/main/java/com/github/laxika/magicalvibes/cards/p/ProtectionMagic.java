@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FIC", collectorNumber = "24")
@@ -12,6 +12,6 @@ public class ProtectionMagic extends Card {
 
     public ProtectionMagic() {
         target(TargetFilters.creature(), 0, 3)
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.SHIELD));
+                .addSpellEffect(new PutCountersEffect(CounterType.SHIELD));
     }
 }

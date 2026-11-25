@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,12 +25,12 @@ public class SimicAscendancy extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}{U}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{1}{G}{U}: Put a +1/+1 counter on target creature you control.",
                 TargetFilters.creatureYouControl()));
 
         addTrigger(Triggers.plusOneCountersPutOnCreatureYouControl(),
-                new PutCountersOnSelfEffect(CounterType.GROWTH, new EventValue()));
+                PutCountersEffect.onSelf(CounterType.GROWTH, new EventValue()));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(20, CounterType.GROWTH)),
                 new WinGameEffect());

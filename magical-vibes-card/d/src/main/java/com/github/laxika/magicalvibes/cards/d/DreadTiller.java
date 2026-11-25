@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOrGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -20,7 +20,7 @@ public class DreadTiller extends Card {
     public DreadTiller() {
         // When this creature enters, put a -1/-1 counter on target creature.
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+                new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // Whenever a creature with a -1/-1 counter on it dies, you may put a land card from your
         // hand or graveyard onto the battlefield tapped.

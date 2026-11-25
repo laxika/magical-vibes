@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class GavelOfTheRighteous extends Card {
 
     public GavelOfTheRighteous() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
 
         CountersOnSource counters = new CountersOnSource(CounterType.ANY);
         addStaticEffect(new AttachedBoostEffect(counters, counters, Subjects.attachedCreature()));

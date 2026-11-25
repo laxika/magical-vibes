@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class BreakTies extends Card {
         )));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{W}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 "Reinforce 1—{W} ({W}, Discard this card: Put a +1/+1 counter on target creature.)",
                 TargetFilters.creature()));
     }

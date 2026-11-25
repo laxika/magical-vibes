@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -48,6 +48,6 @@ public class MoiraBrownGuideAuthor extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent you control"))
                 .addTrigger(Triggers.youAttack(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.QUEST));
+                        new PutCountersEffect(CounterType.QUEST));
     }
 }

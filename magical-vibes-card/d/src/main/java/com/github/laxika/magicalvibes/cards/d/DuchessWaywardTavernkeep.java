@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -24,7 +24,7 @@ public class DuchessWaywardTavernkeep extends Card {
 
     public DuchessWaywardTavernkeep() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.QUEST));
+                new PutCountersEffect(Subjects.triggering(), CounterType.QUEST));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -27,7 +27,7 @@ public class HarvesterTroll extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsLandPredicate())), Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))),
+                                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2))),
                 "Sacrifice a creature or land?"));
     }
 }

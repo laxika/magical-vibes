@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -34,7 +34,7 @@ public class TheOneRing extends Card {
                 true,
                 null,
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.BURDEN),
+                        PutCountersEffect.onSelf(CounterType.BURDEN),
                         new DrawCardEffect(new CountersOnSource(CounterType.BURDEN))
                 ),
                 "{T}: Put a burden counter on The One Ring, then draw a card for each burden counter on The One Ring."

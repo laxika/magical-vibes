@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -34,7 +34,7 @@ public class AjaniWiseCounselor extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -9,
-                List.of(new PutCounterOnTargetPermanentEffect(
+                List.of(new PutCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, new ControllerLifeTotal())),
                 "−9: Put X +1/+1 counters on target creature, where X is your life total.",
                 TargetFilters.creature()

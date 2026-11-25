@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -49,7 +49,7 @@ public class Pentavus extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.PENTAVITE),
                                 "Sacrifice a Pentavite", false),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{1}, Sacrifice a Pentavite: Put a +1/+1 counter on Pentavus."
         ));

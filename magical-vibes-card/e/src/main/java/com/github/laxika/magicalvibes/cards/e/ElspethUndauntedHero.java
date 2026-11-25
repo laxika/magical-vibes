@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -25,7 +25,7 @@ public class ElspethUndauntedHero extends Card {
     public ElspethUndauntedHero() {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 "+2: Put a +1/+1 counter on each of up to two target creatures.",
                 null, +2, null, null,
                 List.<TargetFilter>of(TargetFilters.creature(), TargetFilters.creature()), 0, 2));

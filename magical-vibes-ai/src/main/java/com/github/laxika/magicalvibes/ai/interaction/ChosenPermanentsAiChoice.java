@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -87,7 +87,7 @@ final class ChosenPermanentsAiChoice {
                         && chosen.equals(except.excluded());
                 case GrantKeywordEffect grant -> chosen.equals(grant.subject());
                 case CreateTokenCopyOfTargetPermanentEffect copy -> chosen.equals(copy.subject());
-                case PutCounterOnTargetPermanentEffect counters -> chosen.equals(counters.subject())
+                case PutCountersEffect counters -> chosen.equals(counters.subject())
                         && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE;
                 case AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect attach ->
                         chosen.equals(attach.subject());

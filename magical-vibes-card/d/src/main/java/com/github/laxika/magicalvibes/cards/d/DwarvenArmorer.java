@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -22,9 +22,9 @@ public class DwarvenArmorer extends Card {
                         new DiscardCardTypeCost(null, null),
                         new ChooseOneForTargetCreatureEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption("Put a +0/+1 counter on it",
-                                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ZERO_PLUS_ONE)),
+                                        new PutCountersEffect(CounterType.PLUS_ZERO_PLUS_ONE)),
                                 new ChooseOneEffect.ChooseOneOption("Put a +1/+0 counter on it",
-                                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ZERO))))),
+                                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO))))),
                 "{R}, {T}, Discard a card: Put a +0/+1 counter or a +1/+0 counter on target creature."
         ));
     }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class DrakeHatcher extends Card {
 
     public DrakeHatcher() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new PutCountersOnSelfEffect(CounterType.INCUBATION, new EventValue()));
+                PutCountersEffect.onSelf(CounterType.INCUBATION, new EventValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

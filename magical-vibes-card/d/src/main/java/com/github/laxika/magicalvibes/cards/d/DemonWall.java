@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class DemonWall extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{B}",
-                List.of(new PutCountersOnSourceEffect(1, 1, 2)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "{5}{B}: Put two +1/+1 counters on Demon Wall."
         ));
     }

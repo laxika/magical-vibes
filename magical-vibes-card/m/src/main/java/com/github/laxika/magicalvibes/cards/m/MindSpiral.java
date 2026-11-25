@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
@@ -39,7 +39,7 @@ public class MindSpiral extends Card {
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new TapPermanentsEffect(Subjects.target())))
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN)));
+                        new PutCountersEffect(CounterType.STUN)));
     }
 
     private static CreateTokenEffect fishToken() {

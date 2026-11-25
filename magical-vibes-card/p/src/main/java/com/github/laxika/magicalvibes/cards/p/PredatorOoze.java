@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PredatorOoze extends Card {
 
     public PredatorOoze() {
-        addTrigger(Triggers.attacks(), new PutCountersOnSourceEffect(1, 1, 1));
-        addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS), new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.attacks(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
+        addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

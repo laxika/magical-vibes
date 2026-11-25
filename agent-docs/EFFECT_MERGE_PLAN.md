@@ -605,7 +605,7 @@ ctor, no `targetSpec()` and no other members, and all three handlers really do r
 `PermanentReference.ATTACHED` exactly as the Step 8 note directed. The forcing function fired as
 predicted: adding `SOURCE` broke `PutCounterOnReferencedPermanentEffectHandler`'s exhaustive
 `switch`, and the answer is that a source-counter case does **not** belong in that family
-(`PutCountersOnSourceEffect` owns it, and the engine materialises that record at runtime for several
+(the source-counter record owns it, today `PutCountersEffect.onSelf`, and the engine materialises it at runtime for several
 other effects). Rather than only throwing from the handler arm, the record's **compact constructor**
 rejects `SOURCE`, so the mistake fails at card-construction time; the switch arm throws as documented
 dead code.
@@ -1941,7 +1941,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 |---|---|---|
 | `BoostAllOwnCreaturesEffect` → `BoostAllCreaturesEffect` + `EachPermanentScope.CONTROLLER` | **81** | Handlers are the most literal copies in the codebase (byte-identical log format string); purely mechanical, but 81 card-file edits plus `CombatAttackService` and `InnerFlameIgniterEffectHandler`. Schedule alone so it can't hide a real diff |
 | `TransformSelfEffect` → `TransformPermanentEffect(scope)` | **81** | 81 import edits to delete 1 class. Poor ratio. Do **not** fold in `TransformToBackFaceEffect` — it deliberately skips `isTransformPrevented` |
-| `PutCountersOnSourceEffect` → `PutCountersOnSelfEffect` | **~215** | Genuinely duplicative, but `PutCountersOnSourceEffect` is constructed at runtime by six engine services and is the trigger-materialisation target for several other effects. Needs its own project |
+| The two source-counter records → `PutCountersEffect.onSelf` | **~215** | **DONE** (effect-cleanup step 10, run Counters, 2026-11-25): both records and the target record are one `PutCountersEffect`; the engine sites build `PutCountersEffect.onSelf(...)` |
 
 ---
 

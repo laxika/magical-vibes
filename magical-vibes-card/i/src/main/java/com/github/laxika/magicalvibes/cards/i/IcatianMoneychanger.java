@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,7 +30,7 @@ public class IcatianMoneychanger extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.CREDIT, new Fixed(3)));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToPlayersEffect(3, Subjects.you()));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.CREDIT));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.CREDIT));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

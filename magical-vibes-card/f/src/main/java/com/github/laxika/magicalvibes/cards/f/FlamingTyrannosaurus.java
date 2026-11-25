@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,7 @@ public class FlamingTyrannosaurus extends Card {
         // deals 3 damage to any target. Then put a +1/+1 counter on this creature.
         List<CardEffect> paradox = List.of(
                 new DealDamageToAnyTargetEffect(3),
-                new PutCountersOnSourceEffect(1, 1, 1));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND), paradox.toArray(CardEffect[]::new));
 
         // When this creature dies, it deals damage equal to its power to each opponent.

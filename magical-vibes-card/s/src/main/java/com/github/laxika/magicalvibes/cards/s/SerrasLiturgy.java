@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -22,7 +22,7 @@ public class SerrasLiturgy extends Card {
 
     public SerrasLiturgy() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.VERSE),
+                PutCountersEffect.onSelf(CounterType.VERSE),
                 "Put a verse counter on Serra's Liturgy?"));
 
         PermanentPredicateTargetFilter artifactOrEnchantment = new PermanentPredicateTargetFilter(

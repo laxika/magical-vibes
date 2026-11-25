@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,7 +20,7 @@ import java.util.List;
 public class ExuberantFuseling extends Card {
 
     public ExuberantFuseling() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(CounterType.OIL));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onSelf(CounterType.OIL));
         addStaticEffect(new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
                         new Fixed(0), Subjects.source()));
         addTrigger(Triggers.dies(
@@ -28,6 +28,6 @@ public class ExuberantFuseling extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsArtifactPredicate())),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.OIL));
+                PutCountersEffect.onSelf(CounterType.OIL));
     }
 }

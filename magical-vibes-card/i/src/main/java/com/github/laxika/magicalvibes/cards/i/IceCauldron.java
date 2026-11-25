@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCard
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteManaSpentForActivationEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,7 +32,7 @@ public class IceCauldron extends Card {
                         new MayEffect(new ExileFromHandToImprintEffect(
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), "a nonland card", true),
                                 "You may exile a nonland card from your hand."),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE),
+                        PutCountersEffect.onSelf(CounterType.CHARGE),
                         new NoteManaSpentForActivationEffect()
                 ),
                 "{X}, {T}: You may exile a nonland card from your hand. You may cast that card for as long as it remains exiled. Put a charge counter on Ice Cauldron and note the type and amount of mana spent to pay this activation cost. Activate only if there are no charge counters on Ice Cauldron.")

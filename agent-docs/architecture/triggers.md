@@ -818,7 +818,7 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
 - About a departing permanent it records the card it became (CR 400.7) and the controller it left with
   (`triggeringPermanentControllerId`, CR 603.10a); "dies under your control" (Desperate Measures) is judged on that
   controller (`TriggerMatcher.lastKnownMatches`, CR 603.10a). "It" is the event's object, never the source: Okoye's
-  `Subjects.triggering()`, Basri's `PutCounterOnTargetPermanentEffect`, The Sea Devils'
+  `Subjects.triggering()`, Basri's `PutCountersEffect`, The Sea Devils'
   `byTriggeringPermanent`, an unblocked attacker's `UntapPermanentsEffect(Subjects.triggering())`, `AssignNoCombatDamageEffect` /
   `RemoveTargetFromCombatEffect` `.ofTriggeringPermanent()` (Gaze of Pain still chooses its target on the stack).
 - Damage families read them via `delayedWatching` of the dealer, for "a creature you control deals combat damage to a

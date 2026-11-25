@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -43,11 +42,11 @@ public class InspiritFlagshipVessel extends Card {
                         new ChooseOneForTargetPermanentEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Put a +1/+1 counter on it",
-                                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                         artifactYouControl),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Put two charge counters on it",
-                                        new PutCounterOnTargetPermanentEffect(CounterType.CHARGE, 2),
+                                        new PutCountersEffect(CounterType.CHARGE, 2),
                                         artifactYouControl)
                         )));
 
@@ -56,7 +55,7 @@ public class InspiritFlagshipVessel extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate(), true, true, false, true),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE, new ChosenPermanentPower())
+                        PutCountersEffect.onSelf(CounterType.CHARGE, new ChosenPermanentPower())
                 ),
                 "Tap another creature you control: Put charge counters equal to its power on Inspirit, Flagship Vessel.",
                 ActivationTimingRestriction.SORCERY_SPEED

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -46,7 +46,7 @@ public class InfiniteGuidelineStation extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate(), true, true),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE, new ChosenPermanentPower())
+                        PutCountersEffect.onSelf(CounterType.CHARGE, new ChosenPermanentPower())
                 ),
                 "Tap another creature you control: Put charge counters equal to its power on Infinite Guideline Station.",
                 ActivationTimingRestriction.SORCERY_SPEED

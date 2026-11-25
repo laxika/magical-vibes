@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class JeongJeongTheDeserter extends Card {
                 false,
                 "{3}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
                                 new CardSubtypePredicate(CardSubtype.LESSON),
                                 List.of(new CopyTriggeringSpellEffect().permanentSpellCopiesAreTokens()))

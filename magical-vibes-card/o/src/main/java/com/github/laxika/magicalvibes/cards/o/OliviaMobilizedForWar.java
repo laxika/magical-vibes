@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,7 +30,7 @@ public class OliviaMobilizedForWar extends Card {
                                 new DiscardEffect(1, Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.discarded(),
                                         SequenceEffect.of(
-                                                new PutCounterOnTargetPermanentEffect(
+                                                new PutCountersEffect(
                                                         Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
                                                 new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering()),
                                                 new GrantSubtypeEffect(CardSubtype.VAMPIRE, Subjects.triggering())))),

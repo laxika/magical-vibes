@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -26,7 +26,7 @@ public class VolrathTheShapestealer extends Card {
                 new PermanentIsCreaturePredicate(), "Target must be a creature.");
         target(creatureTarget, 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE));
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

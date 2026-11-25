@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsAndDiscardAtNextTurnEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KardumPatronOfFlames extends Card {
 
     public KardumPatronOfFlames() {
-        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.FLAME),
+        addTrigger(Triggers.attacks(), PutCountersEffect.onSelf(CounterType.FLAME),
                 new SeekLibraryEffect(
                 new Fixed(1), new CardTruePredicate(), LibrarySearchDestination.EXILE_WITH_SOURCE,
                 new ManaValueBound(new CountersOnSource(CounterType.FLAME), true, 0), true));

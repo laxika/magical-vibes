@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -22,7 +22,7 @@ public class GoliathMassManipulator extends Card {
                 false,
                 "{4}{G}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new DrawCardEffect(new PermanentCount(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

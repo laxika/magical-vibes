@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.s.SnappingCreeper;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GraypeltHunter.class, SnappingCreeper.class, Conspiracy.class})
+@CardUsed({GraypeltHunter.class, SnappingCreeper.class, Conspiracy.class, Solemnity.class})
 class GraypeltHunterTest extends BaseCardTest {
 
     @Test
@@ -138,5 +139,21 @@ class GraypeltHunterTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Graypelt Hunter");
         assertThat(findPermanent(player1, "Graypelt Hunter")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("No question is asked while it can't have counters put on it")
+    void noQuestionWhileItCantHaveCounters() {
+        harness.addToBattlefield(player1, new Solemnity());
+        harness.setHand(player1, List.of(new GraypeltHunter()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent hunter = findPermanent(player1, "Graypelt Hunter");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

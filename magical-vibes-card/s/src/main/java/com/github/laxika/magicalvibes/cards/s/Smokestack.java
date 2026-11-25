@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -21,7 +21,7 @@ public class Smokestack extends Card {
 
     public Smokestack() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.SOOT),
+                PutCountersEffect.onSelf(CounterType.SOOT),
                 "Put a soot counter on Smokestack?"));
 
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new SacrificePermanentsEffect(

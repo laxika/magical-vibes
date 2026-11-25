@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class TheDukeRebelSentry extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())
                 ),
                 "{T}, Remove a counter from The Duke: Put a +1/+1 counter on another target creature you control. "

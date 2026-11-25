@@ -521,7 +521,7 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
    - Werewolf: `addTrigger(Triggers.upkeep(ActivePlayer.ANY), TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()), wrapped)` (front) / `withInterveningIf(new TwoOrMoreSpellsCastLastTurn())` (back)
    - Life threshold: `ConditionalEffect(new ControllerLifeAtLeast(N), TransformSelfEffect())` or `ConditionalEffect(new ControllerLifeAtMost(N), MayEffect(TransformSelfEffect(), "..."))`; on an "At the beginning of …, if …" ability the condition is the option `TriggerOptions.DEFAULT.withInterveningIf(condition)` instead (Arguel's Blood Fast)
    - Every player's life: `addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new EachPlayerLifeAtMost(N)), TransformSelfEffect())` (Cryptolith Fragment)
-   - Counter threshold: `PutCountersOnSelfEffect(type)` then `ConditionalEffect(new SourceCounterThreshold(N, type), SequenceEffect.of(new RemoveAllCountersEffect(type), new TransformSelfEffect()))` (a `MayEffect` around the sequence for "you may"; Treasure Map)
+   - Counter threshold: `PutCountersEffect.onSelf(type)` then `ConditionalEffect(new SourceCounterThreshold(N, type), SequenceEffect.of(new RemoveAllCountersEffect(type), new TransformSelfEffect()))` (a `MayEffect` around the sequence for "you may"; Treasure Map)
    - Creature count: `ConditionalEffect(new ControlsPermanentCount(N, PermanentIsCreaturePredicate), TransformSelfEffect())`
    - Activated ability: `ActivatedAbility(tap, null, List.of(TransformSelfEffect()), "...")` with optional subtype restriction
    - Inline conditional: chain effects in activated ability list, e.g. `[GainLifeEffect(1), ConditionalEffect(new ControllerLifeAtLeast(30), TransformSelfEffect())]`

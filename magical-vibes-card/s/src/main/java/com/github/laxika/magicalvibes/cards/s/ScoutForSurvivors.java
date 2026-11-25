@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,6 +15,6 @@ public class ScoutForSurvivors extends Card {
     public ScoutForSurvivors() {
         addSpellEffect(new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 new CardTypePredicate(CardType.CREATURE), 3, 3));
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(Subjects.returnedThisResolution(), CounterType.PLUS_ONE_PLUS_ONE, 1));
+        addSpellEffect(new PutCountersEffect(Subjects.returnedThisResolution(), CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

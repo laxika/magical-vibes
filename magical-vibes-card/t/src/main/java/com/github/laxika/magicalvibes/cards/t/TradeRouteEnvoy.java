@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -29,6 +29,6 @@ public class TradeRouteEnvoy extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DrawCardEffect(new FixedIfCondition(controlsCreatureWithCounter, 1, 0)),
                 new ConditionalEffect(new NotCondition(HappenedThisWay.drew()),
-                        new PutCountersOnSourceEffect(1, 1, 1))));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))));
     }
 }

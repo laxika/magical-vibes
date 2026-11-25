@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,7 +40,7 @@ public class KirinTouchedOrochi extends Card {
                 ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
                         1, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)), false),
                 new ConditionalEffect(HappenedThisWay.exiled(), new QueueReflexiveAbilityEffect(
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                        PutCountersEffect.withTargetRestriction(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, creatureYouControl))));
 
         addTrigger(Triggers.attacks(), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(

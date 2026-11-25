@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public class BloodHost extends Card {
                 "{1}{B}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new PutCountersOnSourceEffect(1, 1, 1),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new GainLifeEffect(2)
                 ),
                 "{1}{B}, Sacrifice another creature: Put a +1/+1 counter on Blood Host and you gain 2 life."

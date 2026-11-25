@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -16,7 +16,7 @@ public class ChanceEncounter extends Card {
 
     public ChanceEncounter() {
         addTrigger(Triggers.youWinCoinFlip(),
-                new PutCountersOnSelfEffect(CounterType.LUCK));
+                PutCountersEffect.onSelf(CounterType.LUCK));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(10, CounterType.LUCK)),
                 new WinGameEffect());

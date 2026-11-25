@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -32,7 +32,7 @@ public class OverseerOfVault76 extends Card {
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentPowerAtMostPredicate(3))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.QUEST));
+                PutCountersEffect.onSelf(CounterType.QUEST));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(

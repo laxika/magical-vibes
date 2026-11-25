@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +29,7 @@ public class KjeldoranHomeGuard extends Card {
         // this creature and create a 0/1 white Deserter creature token.
         addTrigger(Triggers.endOfCombat(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedOrBlockedThisCombat()),
-                new PutCountersOnSelfEffect(CounterType.MINUS_ZERO_MINUS_ONE),
+                PutCountersEffect.onSelf(CounterType.MINUS_ZERO_MINUS_ONE),
                 DESERTER_TOKEN);
     }
 }

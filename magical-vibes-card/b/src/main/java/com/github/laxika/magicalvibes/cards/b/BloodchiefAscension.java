@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -24,7 +24,7 @@ public class BloodchiefAscension extends Card {
     public BloodchiefAscension() {
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new OpponentLostLifeThisTurn(2)),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.QUEST),
                         "Put a quest counter on Bloodchief Ascension?"));
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.OPPONENT_OWNS),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(3, CounterType.QUEST)),

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -27,7 +27,7 @@ public class DraconauticsEngineer extends Card {
                 List.of(
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Exhaust — {R}: Other creatures you control gain haste until end of turn. Put a +1/+1 counter on this creature."
                         + " (Activate each exhaust ability only once.)"

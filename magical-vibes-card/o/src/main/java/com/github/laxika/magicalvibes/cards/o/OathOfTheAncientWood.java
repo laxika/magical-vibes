@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -28,7 +28,7 @@ public class OathOfTheAncientWood extends Card {
                                 new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
                                         ObjectRelation.ANOTHER_YOU_CONTROL))),
                         TriggerOptions.DEFAULT, List.of(new EffectRegistration(new MayEffect(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1), PROMPT)))));
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1), PROMPT)))));
 
     }
 }

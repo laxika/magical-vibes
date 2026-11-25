@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -22,7 +22,7 @@ public class SkyserpentSeeker extends Card {
                 List.of(
                         RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect
                                 .allMatchingOntoBattlefieldTapped(new Fixed(2), new CardTypePredicate(CardType.LAND)),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Exhaust — {4}: Reveal cards from the top of your library until you reveal two land cards. "
                         + "Put those land cards onto the battlefield tapped and the rest on the bottom of your library "

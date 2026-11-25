@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongPermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class KorvoldGleefulGlutton extends Card {
 
         PermanentTypesAmongCardsInGraveyard permanentTypes = new PermanentTypesAmongCardsInGraveyard();
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, permanentTypes),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, permanentTypes),
                 new DrawCardEffect(permanentTypes)));
     }
 }

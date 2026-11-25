@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class OriginOfThor extends Card {
         var creatureYouControl = TargetFilters.creatureYouControl();
         addTrigger(Triggers.chapter(2),
                 RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
-                        null, List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)))
+                        null, List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)))
                 .withTargetFilter(creatureYouControl));
 
         addTrigger(Triggers.chapter(3), new TargetCreatureDealsDamageToControllerEffect(new SourcePower(), Subjects.target(), Subjects.eachOpponent()));

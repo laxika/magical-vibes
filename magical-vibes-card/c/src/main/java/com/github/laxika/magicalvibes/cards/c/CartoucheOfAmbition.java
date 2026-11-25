@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -39,7 +39,7 @@ public class CartoucheOfAmbition extends Card {
         // When this Aura enters, you may put a -1/-1 counter on target creature.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
                         "Put a -1/-1 counter on target creature?"
                 ));
     }

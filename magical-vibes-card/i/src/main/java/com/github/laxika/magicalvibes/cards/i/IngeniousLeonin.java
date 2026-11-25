@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,7 +38,7 @@ public class IngeniousLeonin extends Card {
                 false,
                 "{3}{W}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.CAT)),
                                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())

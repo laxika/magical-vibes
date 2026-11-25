@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,10 +16,10 @@ public class WanShiTongLibrarian extends Card {
 
     public WanShiTongLibrarian() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
                 new DrawCardEffect(new Divided(new XValue(), 2))));
         addTrigger(Triggers.opponentSearchesTheirLibrary(), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect()));
     }
 }

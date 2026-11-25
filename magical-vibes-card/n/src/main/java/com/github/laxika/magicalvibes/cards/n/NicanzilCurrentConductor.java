@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +22,6 @@ public class NicanzilCurrentConductor extends Card {
                         "Put a land card from your hand onto the battlefield tapped?"));
         addTrigger(Triggers.creatureYouControlExplores()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                new PutCountersOnSourceEffect(1, 1, 1));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

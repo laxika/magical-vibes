@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,7 +32,7 @@ public class SkeletonShip extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
+                List.of(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
                 "{T}: Put a -1/-1 counter on target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ public class Grindclock extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "{T}: Put a charge counter on Grindclock."
         ));
 

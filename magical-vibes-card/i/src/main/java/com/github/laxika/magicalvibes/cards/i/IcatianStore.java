@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -29,7 +29,7 @@ public class IcatianStore extends Card {
         // At the beginning of your upkeep, if this land is tapped, put a storage counter on it.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
-                new PutCountersOnSelfEffect(CounterType.STORAGE));
+                PutCountersEffect.onSelf(CounterType.STORAGE));
 
         // {T}, Remove any number of storage counters from this land: Add {W} for each removed.
         addActivatedAbility(new ActivatedAbility(

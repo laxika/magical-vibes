@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -50,7 +50,7 @@ public class CalixGuidedByFate extends Card {
                                 new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
                                         ObjectRelation.ANOTHER_YOU_CONTROL))),
                         TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))));
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(CALIX_OR_ENCHANTED_CREATURE),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),

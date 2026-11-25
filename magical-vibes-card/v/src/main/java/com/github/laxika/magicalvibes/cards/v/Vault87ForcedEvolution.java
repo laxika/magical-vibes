@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class Vault87ForcedEvolution extends Card {
         setSagaChapterTargetFilter(1, Set.of(TargetFilters.creature()));
 
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.MUTANT));
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
 

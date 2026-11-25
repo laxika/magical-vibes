@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
@@ -84,9 +83,9 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
                     // entered): the ability targets nothing and records what the resolving entry was about, with
                     // the X paid as its X.
                     CardEffect putCounters = e.useTriggeringPermanent() && entry.getTriggeringPermanentId() != null
-                            ? new PutCounterOnTargetPermanentEffect(
+                            ? new PutCountersEffect(
                                     Subjects.triggering(), e.counterType(), new XValue())
-                            : new PutCountersOnSelfEffect(e.counterType(), new XValue());
+                            : PutCountersEffect.onSelf(e.counterType(), new XValue());
                     StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry, List.of(putCounters));
                     reflexive.setXValue(chosenValue);
                     triggeredAbilityStackService.putMade(gameData, reflexive);

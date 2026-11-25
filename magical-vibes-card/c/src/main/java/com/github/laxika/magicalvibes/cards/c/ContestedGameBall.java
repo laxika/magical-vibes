@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +33,7 @@ public class ContestedGameBall extends Card {
                 "{2}",
                 List.of(
                         new DrawCardEffect(),
-                        new PutCountersOnSelfEffect(CounterType.POINT),
+                        PutCountersEffect.onSelf(CounterType.POINT),
                         new ConditionalEffect(
                                 new SourceCounterThreshold(5, CounterType.POINT),
                                 new SequenceEffect(List.of(new SacrificeSelfEffect(), CreateTokenEffect.ofTreasureToken(1))))

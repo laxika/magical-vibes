@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -21,7 +20,7 @@ public class GideonsCompany extends Card {
 
     public GideonsCompany() {
         addTrigger(Triggers.youGainLife(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
 
         PermanentPredicate gideonPlaneswalker = new PermanentAllOfPredicate(List.of(
                 new PermanentIsPlaneswalkerPredicate(),
@@ -29,7 +28,7 @@ public class GideonsCompany extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}",
-                List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                List.of(PutCountersEffect.withTargetRestriction(
                         CounterType.LOYALTY, 1, gideonPlaneswalker)),
                 "{3}{W}: Put a loyalty counter on target Gideon planeswalker.",
                 new PermanentPredicateTargetFilter(gideonPlaneswalker,

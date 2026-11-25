@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,6 +15,6 @@ public class RiteOfPassage extends Card {
     public RiteOfPassage() {
         // Whenever a creature you control is dealt damage, put a +1/+1 counter on it.
         addTrigger(Triggers.creatureDealtDamage().withFilter(new PermanentControlledBySourceControllerPredicate()),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersEffect(Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

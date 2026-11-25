@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -61,7 +61,7 @@ public final class KeywordTriggers {
             TriggerOptions.DEFAULT.withInterveningIf(new AllOf(List.of(new SourceIsCreature(),
                     new AnyOf(List.of(new SpellManaSpentGreaterThanSourcePower(),
                             new SpellManaSpentGreaterThanSourceToughness()))))),
-            new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+            PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
     /**
      * Echo: "At the beginning of your upkeep, if this permanent came under your control since the beginning of your

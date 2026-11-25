@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -42,7 +42,7 @@ public class PhylathWorldSculptor extends Card {
         target(new PermanentPredicateTargetFilter(plantYouControl,
                 "Target must be a Plant you control"))
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                        PutCountersEffect.withTargetRestriction(
                                 CounterType.PLUS_ONE_PLUS_ONE, 4, plantYouControl));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -41,7 +41,7 @@ public class BoomScholar extends Card {
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)))),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ),
                 "Exhaust — {4}{R}{G}: Creatures and Vehicles you control gain trample until end of turn. "
                         + "Put two +1/+1 counters on this creature. (Activate each exhaust ability only once.)"

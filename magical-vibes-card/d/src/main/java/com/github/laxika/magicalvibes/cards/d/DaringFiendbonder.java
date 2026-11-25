@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class DaringFiendbonder extends Card {
                 "{1}{B}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.INDESTRUCTIBLE, 1)),
+                        new PutCountersEffect(CounterType.INDESTRUCTIBLE, 1)),
                 "{1}{B}, Exile this card from your graveyard: Put an indestructible counter on target creature. "
                         + "Activate only as a sorcery.",
                 TargetFilters.creature(),

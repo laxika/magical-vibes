@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -42,7 +42,7 @@ public class EmergentSequence extends Card {
                         Duration.PERMANENT,
                         null,
                         Set.of(CardColor.GREEN, CardColor.BLUE))));
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(
+        addSpellEffect(new PutCountersEffect(
                 Subjects.searched(), CounterType.PLUS_ONE_PLUS_ONE, new LandsEnteredBattlefieldThisTurn()));
     }
 }

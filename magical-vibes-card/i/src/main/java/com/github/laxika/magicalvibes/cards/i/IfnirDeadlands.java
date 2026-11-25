@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -44,7 +44,7 @@ public class IfnirDeadlands extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.DESERT),
                                 "Sacrifice a Desert",
                                 false),
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 2)),
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 2)),
                 "{2}{B}{B}, {T}, Sacrifice a Desert: Put two -1/-1 counters on target creature an "
                         + "opponent controls. Activate only as a sorcery.",
                 TargetFilters.creatureAnOpponentControls(),

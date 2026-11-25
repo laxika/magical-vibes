@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectsToCounterBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class MathasFiendSeeker extends Card {
     public MathasFiendSeeker() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY),
+                        new PutCountersEffect(CounterType.BOUNTY),
                         new GrantEffectsToCounterBearersEffect(CounterType.BOUNTY, List.of(
                                 new GrantTriggeredAbilityEffect(
                                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),

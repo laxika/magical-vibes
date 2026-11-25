@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class DancingFromDarkToDawn extends Card {
     public DancingFromDarkToDawn() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardTypePredicate(CardType.CREATURE)),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetSpellManaValue()));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetSpellManaValue()));
 
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new CreateTokenEffect(
                 "Bear", 2, 2, CardColor.GREEN,

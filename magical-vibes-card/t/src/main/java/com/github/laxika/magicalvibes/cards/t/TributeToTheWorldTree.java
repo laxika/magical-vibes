@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreaturePowerBranchEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class TributeToTheWorldTree extends Card {
                 new EnteringCreaturePowerBranchEffect(
                         3,
                         new DrawCardEffect(1),
-                        PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 2)));
+                        PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 2)));
     }
 }

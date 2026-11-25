@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -34,7 +34,7 @@ public class HostileHostel extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new PutCountersOnSelfEffect(CounterType.SOUL),
+                        PutCountersEffect.onSelf(CounterType.SOUL),
                         new ConditionalEffect(
                                 new SourceCounterThreshold(3, CounterType.SOUL),
                                 SequenceEffect.of(

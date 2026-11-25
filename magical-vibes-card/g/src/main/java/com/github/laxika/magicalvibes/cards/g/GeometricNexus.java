@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +28,7 @@ public class GeometricNexus extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)))),
-                new PutCountersOnSelfEffect(CounterType.CHARGE, new TargetSpellManaValue()));
+                PutCountersEffect.onSelf(CounterType.CHARGE, new TargetSpellManaValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -40,7 +39,7 @@ public class GeometricNexus extends Card {
                                 "Fractal", 0, 0,
                                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                                 List.of(CardSubtype.FRACTAL)),
-                        new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), CounterType.PLUS_ONE_PLUS_ONE, new XValue())
+                        new PutCountersEffect(Subjects.createdThisResolution(), CounterType.PLUS_ONE_PLUS_ONE, new XValue())
                 ),
                 "{6}, {T}, Remove all charge counters from this artifact: Create a 0/0 green and blue Fractal creature token. Put X +1/+1 counters on it, where X is the number of charge counters removed this way."
         ));

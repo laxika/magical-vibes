@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -42,7 +42,7 @@ public class MiresMalice extends Card {
         target(TargetFilters.landYouControl(), 0, 1)
                 .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)))
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)))
                 .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(

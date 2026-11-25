@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -33,13 +33,13 @@ public class AssaultronDominator extends Card {
         ChooseOneEffect counterChoice = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on that creature",
-                        PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1)),
+                        PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a first strike counter on that creature",
-                        PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.FIRST_STRIKE, 1)),
+                        PutCountersEffect.onTriggeringPermanent(CounterType.FIRST_STRIKE, 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a trample counter on that creature",
-                        PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.TRAMPLE, 1))));
+                        PutCountersEffect.onTriggeringPermanent(CounterType.TRAMPLE, 1))));
 
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(artifactCreature),
                 new MayEffect(

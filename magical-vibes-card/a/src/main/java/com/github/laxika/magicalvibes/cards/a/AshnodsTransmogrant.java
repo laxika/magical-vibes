@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -30,7 +30,7 @@ public class AshnodsTransmogrant extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true)
                 ),
                 "{T}, Sacrifice this artifact: Put a +1/+1 counter on target nonartifact creature. "

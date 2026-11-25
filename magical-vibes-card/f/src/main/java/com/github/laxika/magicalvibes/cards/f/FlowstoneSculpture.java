@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class FlowstoneSculpture extends Card {
                 "{2}",
                 List.of(new DiscardCardTypeCost(null, null), new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on this creature.",
-                                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                         new ChooseOneEffect.ChooseOneOption("This creature gains flying.",
                                 List.of(new SetSelfKeywordIndefinitelyEffect(Keyword.FLYING, true))),
                         new ChooseOneEffect.ChooseOneOption("This creature gains first strike.",

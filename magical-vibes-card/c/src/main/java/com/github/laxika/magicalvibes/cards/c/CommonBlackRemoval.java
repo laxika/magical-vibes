@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,7 +38,7 @@ public class CommonBlackRemoval extends Card {
                         "Destroy target creature, then put a menace counter on a creature you control",
                         destroyThen(SequenceEffect.of(
                                 ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
-                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                         CounterType.MENACE, new Fixed(1)))),
                         creatureTargetFilter()),
                 new ChooseOneEffect.ChooseOneOption(

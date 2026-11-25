@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -24,7 +24,7 @@ public class BakuAltar extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.KI), "Put a ki counter on Baku Altar?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.KI), "Put a ki counter on Baku Altar?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

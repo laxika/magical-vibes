@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class DoorOfDestinies extends Card {
 
         // Whenever you cast a spell of the chosen type, put a charge counter on Door of Destinies.
         addTrigger(Triggers.youCastSpell().withFilter(new CardHasSourceChosenSubtypePredicate(false)),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
 
         // Creatures you control of the chosen type get +1/+1 for each charge counter on Door of Destinies.
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1, CounterType.CHARGE));

@@ -29,7 +29,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // move to upkeep, trigger fires
-        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
+        harness.passBothPriorities(); // resolve PutCountersEffect.onSelf
 
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }

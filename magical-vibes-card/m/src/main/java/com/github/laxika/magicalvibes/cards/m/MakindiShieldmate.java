@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,6 +24,6 @@ public class MakindiShieldmate extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new MayEffect(new PutCountersOnSourceEffect(1, 1, 1), "Put a +1/+1 counter on Makindi Shieldmate?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE), "Put a +1/+1 counter on Makindi Shieldmate?"));
     }
 }

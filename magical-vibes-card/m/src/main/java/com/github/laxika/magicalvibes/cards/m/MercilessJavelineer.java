@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class MercilessJavelineer extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
                         new CantBlockThisTurnEffect(Subjects.target())),
                 "{2}, Discard a card: Put a -1/-1 counter on target creature. That creature can't block this turn.",
                 TargetFilters.creature()));

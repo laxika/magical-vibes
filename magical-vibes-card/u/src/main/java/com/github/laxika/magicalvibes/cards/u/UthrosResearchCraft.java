@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -39,14 +39,14 @@ public class UthrosResearchCraft extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(3, CounterType.CHARGE)),
                 new DrawCardEffect(1),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate(), true, true, false, true),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE, new ChosenPermanentPower())
+                        PutCountersEffect.onSelf(CounterType.CHARGE, new ChosenPermanentPower())
                 ),
                 "Tap another creature you control: Put charge counters equal to its power on this Spacecraft.",
                 ActivationTimingRestriction.SORCERY_SPEED

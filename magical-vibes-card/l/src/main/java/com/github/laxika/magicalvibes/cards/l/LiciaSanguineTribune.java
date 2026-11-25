@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class LiciaSanguineTribune extends Card {
                 null,
                 List.of(
                         new PayLifeCost(5),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 3)),
                 "Pay 5 life: Put three +1/+1 counters on Licia. Activate only during your turn and only once each turn.",
                 null,
                 null,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,7 +22,7 @@ public class GraveStrength extends Card {
         // your graveyard.
         target(TargetFilters.creature()).addSpellEffect(SequenceEffect.of(
                 new MillEffect(3, Subjects.you()),
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))));
     }

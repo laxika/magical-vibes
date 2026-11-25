@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DevotionToChosenColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,7 +38,7 @@ public class HotelOfFears extends Card {
                         new ExileTopCardMayPlayThisTurnEffect(1, false),
                         new LoseLifeEffect(AmountThisWay.exiledManaValue(), Subjects.you())));
 
-        PutCounterOnTargetPermanentEffect counterEffect = new PutCounterOnTargetPermanentEffect(
+        PutCountersEffect counterEffect = new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new DevotionToChosenColor(),
                 null,

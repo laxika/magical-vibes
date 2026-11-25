@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -39,7 +39,7 @@ public class GearbaneOrangutan extends Card {
                         SequenceEffect.of(
                                 new SacrificePermanentsEffect(1, artifactPredicate, Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))))
+                                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2))))
         ))));
     }
 }

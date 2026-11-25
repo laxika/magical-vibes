@@ -23,7 +23,7 @@ THE TWO INVARIANTS
    isSelfTargeting / requiredPlayerTargetCount / isDamageOrDestruction. Matched
    as `public <boolean|int|PermanentPredicate> <name>() {` — a method with a
    body. Record COMPONENTS named `canTargetSpell` / `targetPredicate` (on the
-   two duals ChangeColorTextEffect / PutCounterOnTargetPermanentEffect) are NOT
+   two duals ChangeColorTextEffect / PutCountersEffect) are NOT
    method declarations with a body and do not match. The return-type alternation
    is load-bearing for `targetPredicate`: the deleted legacy method returned
    PermanentPredicate, while TargetSpec.targetPredicate() legitimately returns a

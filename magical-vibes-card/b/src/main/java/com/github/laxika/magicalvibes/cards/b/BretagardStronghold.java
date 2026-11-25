@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -36,7 +36,7 @@ public class BretagardStronghold extends Card {
                 "{G}{W}{W}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.LIFELINK), Subjects.target())
                 ),
                 "{G}{W}{W}, {T}, Sacrifice this land: Put a +1/+1 counter on each of up to two target "

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -26,7 +26,7 @@ public class NornsInquisitor extends Card {
         addTrigger(Triggers.transforms(
                         new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN),
                         ObjectRelation.YOU_CONTROL),
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                         Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 

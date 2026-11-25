@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -41,7 +41,7 @@ public class DeadlyComplication extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on target suspected creature you control. You may have it become no longer suspected",
                         List.of(
-                                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                PutCountersEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class PalantirOfOrthanc extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.INFLUENCE),
+                PutCountersEffect.onSelf(CounterType.INFLUENCE),
                 new ScryEffect(2),
                 new MayEffect(
                         new DrawCardEffect(),

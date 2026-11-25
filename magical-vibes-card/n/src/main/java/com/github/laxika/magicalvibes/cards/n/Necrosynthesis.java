@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class Necrosynthesis extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANOTHER),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         Subjects.attachedCreature()))
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new LookAtTopCardsEffect(

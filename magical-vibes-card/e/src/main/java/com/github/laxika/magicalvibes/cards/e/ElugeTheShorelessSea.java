@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsByAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -49,11 +49,11 @@ public class ElugeTheShorelessSea extends Card {
 
         target(TargetFilters.land())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLOOD),
+                        new PutCountersEffect(CounterType.FLOOD),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
         target(TargetFilters.land())
                 .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLOOD),
+                        new PutCountersEffect(CounterType.FLOOD),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
 
         addStaticEffect(new ConditionalEffect(

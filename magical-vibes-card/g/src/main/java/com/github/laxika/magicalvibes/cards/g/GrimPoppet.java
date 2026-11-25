@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class GrimPoppet extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.MINUS_ONE_MINUS_ONE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)
                 ),
                 "Remove a -1/-1 counter from Grim Poppet: Put a -1/-1 counter on another target creature.",
                 new PermanentPredicateTargetFilter(

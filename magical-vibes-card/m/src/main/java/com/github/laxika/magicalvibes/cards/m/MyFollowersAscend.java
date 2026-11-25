@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +33,7 @@ public class MyFollowersAscend extends Card {
                         SequenceEffect.of(
                                 ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), creature),
                                         "a creature you control"),
-                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                         CounterType.PLUS_ONE_PLUS_ONE, 5),
                                 new GrantKeywordEffect(Keyword.FLYING, Subjects.thisWay(StepKind.CHOOSE),
                                         Duration.UNTIL_END_OF_TURN),

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -23,7 +23,7 @@ public class TalonOfPain extends Card {
         addTrigger(Triggers.sourceYouControlDealsDamageToOpponent(),
                 TriggerOptions.DEFAULT.withEventCondition(new NotCondition(
                         new TriggeringPermanentMatches(new PermanentIsSourcePermanentPredicate()))),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

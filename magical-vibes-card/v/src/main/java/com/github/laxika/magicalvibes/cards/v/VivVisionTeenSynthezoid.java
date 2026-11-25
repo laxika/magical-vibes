@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class VivVisionTeenSynthezoid extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{7}",
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "Power-up — {7}: Put two +1/+1 counters on Viv Vision. Activate each power-up ability only once. "
                         + "Reduce the cost by her mana cost if she entered this turn."
         ).withPowerUp());

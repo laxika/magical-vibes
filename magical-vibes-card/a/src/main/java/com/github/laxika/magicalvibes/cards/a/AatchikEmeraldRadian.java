@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -41,7 +41,7 @@ public class AatchikEmeraldRadian extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.INSECT),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new PutCountersOnSourceEffect(1, 1, 1),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new LoseLifeEffect(1, Subjects.eachOpponent())));
     }
 }

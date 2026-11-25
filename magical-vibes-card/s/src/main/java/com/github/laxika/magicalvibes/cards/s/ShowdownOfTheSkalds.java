@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -26,7 +26,7 @@ public class ShowdownOfTheSkalds extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
         var targetFilter = TargetFilters.creatureYouControl();
-        var counterEffect = PutCounterOnTargetPermanentEffect.withTargetRestriction(
+        var counterEffect = PutCountersEffect.withTargetRestriction(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, targetCreatureYouControl);
         addTrigger(Triggers.chapter(2),
                 RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(null, List.of(counterEffect))

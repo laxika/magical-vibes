@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class SolphimMayhemDominus extends Card {
                 "{1}{R/P}{R/P}",
                 List.of(
                         new DiscardCardTypeCost(null, null, 2),
-                        new PutCountersOnSelfEffect(CounterType.INDESTRUCTIBLE)
+                        PutCountersEffect.onSelf(CounterType.INDESTRUCTIBLE)
                 ),
                 "{1}{R/P}{R/P}, Discard two cards: Put an indestructible counter on Solphim."
         ));

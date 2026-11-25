@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,7 +20,7 @@ public class WarDance extends Card {
 
     public WarDance() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.VERSE),
+                PutCountersEffect.onSelf(CounterType.VERSE),
                 "Put a verse counter on War Dance?"
         ));
 

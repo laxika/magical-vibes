@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -39,7 +39,7 @@ public class SlimeAgainstHumanity extends Card {
         addSpellEffect(new CreateTokenEffect(
                 1, "Ooze", 0, 0, CardColor.GREEN, List.of(CardSubtype.OOZE),
                 Set.of(Keyword.TRAMPLE), Set.of()));
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+        addSpellEffect(new PutCountersEffect(Subjects.createdThisResolution(),
                 CounterType.PLUS_ONE_PLUS_ONE, counterAmount));
     }
 }

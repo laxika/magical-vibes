@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -47,6 +47,6 @@ public class AnimPakalThousandthMoon extends Card {
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GNOME)))),
-                SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), gnome));
+                SequenceEffect.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE), gnome));
     }
 }

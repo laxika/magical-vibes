@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class OathOfEorl extends Card {
                 Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()));
 
         addTrigger(Triggers.chapter(3),
-                new PutCounterOnTargetPermanentEffect(CounterType.INDESTRUCTIBLE),
+                new PutCountersEffect(CounterType.INDESTRUCTIBLE),
                 new BecomeMonarchEffect());
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(

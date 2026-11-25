@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,7 +19,7 @@ public class VedalkenInfuser extends Card {
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact."
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new PutCounterOnTargetPermanentEffect(CounterType.CHARGE),
+                new PutCountersEffect(CounterType.CHARGE),
                 "Put a charge counter on target artifact?"
         ));
     }

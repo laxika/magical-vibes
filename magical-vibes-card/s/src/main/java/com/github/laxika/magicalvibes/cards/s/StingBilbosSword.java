@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,7 +23,7 @@ public class StingBilbosSword extends Card {
         PermanentCount creaturesTargetOpponentControls = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER);
 
-        var putCountersOnSelf = new PutCountersOnSelfEffect(CounterType.HONE, creaturesTargetOpponentControls, true);
+        var putCountersOnSelf = PutCountersEffect.onSelfCountingTargetPlayer(CounterType.HONE, creaturesTargetOpponentControls);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

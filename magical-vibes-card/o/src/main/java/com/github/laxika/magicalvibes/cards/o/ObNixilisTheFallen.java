@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -29,7 +29,7 @@ public class ObNixilisTheFallen extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new LoseLifeEffect(3, Subjects.targetPlayer()),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 3)
                         ),
                         "Have target player lose 3 life and put three +1/+1 counters on Ob Nixilis?"
                 ));

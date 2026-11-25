@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +31,7 @@ public class PropellerPioneer extends Card {
                         "Put a +1/+1 counter on Propeller Pioneer",
                         List.of(
                                 new ConditionalEffect(new SourceIsOnBattlefield(),
-                                        new PutCountersOnSourceEffect(1, 1, 1)),
+                                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                                 new ConditionalEffect(new NotCondition(new SourceIsOnBattlefield()),
                                         SERVO)
                         )

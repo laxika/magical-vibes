@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class KrenkoTinStreetKingpin extends Card {
 
     public KrenkoTinStreetKingpin() {
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new CreateTokenEffect(new SourcePower(), "Goblin", 1, 1, CardColor.RED,
                         List.of(CardSubtype.GOBLIN), Set.of(), Set.of())));
     }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -28,7 +28,7 @@ public class WilfredMott extends Card {
 
     public WilfredMott() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.TIME),
+                PutCountersEffect.onSelf(CounterType.TIME),
                 new LookAtTopCardsEffect(
                         new CountersOnSource(CounterType.TIME),
                         new Fixed(1),

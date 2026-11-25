@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,7 +33,7 @@ public class PrimevalBounty extends Card {
         // Whenever you cast a noncreature spell, put three +1/+1 counters on target creature you control.
         target(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentControlledBySourceControllerPredicate())), "Target must be a creature you control")).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
 
         // Landfall — Whenever a land you control enters, you gain 3 life.
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new GainLifeEffect(3));

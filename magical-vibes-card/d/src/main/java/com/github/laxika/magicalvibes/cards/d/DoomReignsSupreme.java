@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +35,7 @@ public class DoomReignsSupreme extends Card {
                 SequenceEffect.of(
                         new LoseLifeEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1),
-                        new PutCountersOnSelfEffect(CounterType.PLAN)));
+                        PutCountersEffect.onSelf(CounterType.PLAN)));
 
         addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(5, CounterType.PLAN)),

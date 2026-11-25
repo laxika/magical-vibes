@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnUnderOpponentControlEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -22,7 +22,7 @@ public class ZukoConflicted extends Card {
                 new ChooseOneEffect.ChooseOneOption("Draw a card",
                         List.of(new DrawCardEffect(), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on Zuko",
-                        List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), new LoseLifeEffect(2))),
+                        List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption("Add {R}",
                         List.of(new AwardManaEffect(ManaColor.RED), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption(

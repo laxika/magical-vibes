@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +33,7 @@ public class OriginOfSpiderMan extends Card {
                 List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of()));
 
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true),
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.SPIDER),
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.HERO));

@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -32,7 +31,7 @@ public class OvergrowthElemental extends Card {
                 )),
                 "Target must be another Elemental creature you control"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         // One triggered ability: the Elemental check on the dying creature is a conditional inside its
         // effect, not a separate trigger, so both parts share one stack entry.
@@ -40,6 +39,6 @@ public class OvergrowthElemental extends Card {
                 new GainLifeEffect(1),
                 new ConditionalEffect(new TriggeringCardMatches(
                         new CardSubtypePredicate(CardSubtype.ELEMENTAL)),
-                        new PutCountersOnSourceEffect(1, 1, 1))));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))));
     }
 }

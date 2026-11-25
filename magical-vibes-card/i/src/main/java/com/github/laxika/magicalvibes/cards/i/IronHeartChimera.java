@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,7 +33,7 @@ public class IronHeartChimera extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_TWO_PLUS_TWO, 1),
+                        new PutCountersEffect(CounterType.PLUS_TWO_PLUS_TWO, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target(), Duration.PERMANENT)),
                 "Sacrifice this creature: Put a +2/+2 counter on target Chimera creature. It gains vigilance.",
                 new PermanentPredicateTargetFilter(chimeraCreature, "Target must be a Chimera creature")));

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +25,7 @@ public class SpellSatchel extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
         List<CardEffect> addBookCounter =
-                List.of(new PutCountersOnSelfEffect(CounterType.BOOK));
+                List.of(PutCountersEffect.onSelf(CounterType.BOOK));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), addBookCounter.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery), addBookCounter.toArray(CardEffect[]::new));

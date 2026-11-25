@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -38,7 +38,7 @@ public class TheBookOfExaltedDeeds extends Card {
                 "{W}{W}{W}",
                 List.of(
                         new ExileSelfCost(),
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.ENLIGHTENED, 1, angel),
+                        PutCountersEffect.withTargetRestriction(CounterType.ENLIGHTENED, 1, angel),
                         new GrantStaticEffectToTargetEffect(new CantLoseGameEffect())
                 ),
                 "{W}{W}{W}, {T}, Exile The Book of Exalted Deeds: Put an enlightened counter on target Angel. "

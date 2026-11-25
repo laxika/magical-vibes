@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,7 +17,7 @@ public class MomentOfGlory extends Card {
 
     public MomentOfGlory() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addSpellEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
                 new PutCounterOnEachControlledPermanentEffect(

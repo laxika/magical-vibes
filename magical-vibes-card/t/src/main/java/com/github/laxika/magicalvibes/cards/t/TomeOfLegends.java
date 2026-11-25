@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class TomeOfLegends extends Card {
     public TomeOfLegends() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PAGE, new Fixed(1)));
 
-        PutCountersOnSelfEffect addPageCounter = new PutCountersOnSelfEffect(CounterType.PAGE);
+        PutCountersEffect addPageCounter = PutCountersEffect.onSelf(CounterType.PAGE);
         PermanentIsCommanderPredicate yourCommander = new PermanentIsCommanderPredicate(true);
         addTrigger(Triggers.enters(yourCommander, ObjectRelation.ANY), addPageCounter);
         addTrigger(Triggers.creatureAttacks().withFilter(yourCommander), addPageCounter);

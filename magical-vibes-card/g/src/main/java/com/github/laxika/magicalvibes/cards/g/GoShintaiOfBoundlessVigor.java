@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,7 +19,7 @@ public class GoShintaiOfBoundlessVigor extends Card {
     public GoShintaiOfBoundlessVigor() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayPayManaEffect("{1}",
-                        new QueueReflexiveAbilityEffect(new PutCounterOnTargetPermanentEffect(
+                        new QueueReflexiveAbilityEffect(new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new PermanentCount(
                                         new PermanentHasSubtypePredicate(CardSubtype.SHRINE),

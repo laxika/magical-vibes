@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePer
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class SilentHallcreeper extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), ChooseOneEffect.notYetChosen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on Silent Hallcreeper",
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Silent Hallcreeper becomes a copy of another target creature you control",

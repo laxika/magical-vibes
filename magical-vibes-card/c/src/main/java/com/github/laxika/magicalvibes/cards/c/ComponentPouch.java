@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 
@@ -28,8 +28,8 @@ public class ComponentPouch extends Card {
                 true,
                 null,
                 List.of(new RollD20Effect(
-                        new PutCountersOnSelfEffect(CounterType.COMPONENT),
-                        new PutCountersOnSelfEffect(CounterType.COMPONENT, 2))),
+                        PutCountersEffect.onSelf(CounterType.COMPONENT),
+                        PutCountersEffect.onSelf(CounterType.COMPONENT, 2))),
                 "{T}: Roll a d20."
         ));
     }

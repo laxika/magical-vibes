@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOR", collectorNumber = "109")
@@ -23,6 +24,6 @@ public class TaureanMauler extends Card {
         // Changeling is auto-loaded from Scryfall.
         // Whenever an opponent casts a spell, you may put a +1/+1 counter on this creature.
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
-                new MayEffect(new PutCountersOnSourceEffect(1, 1, 1), "Put a +1/+1 counter on Taurean Mauler?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE), "Put a +1/+1 counter on Taurean Mauler?"));
     }
 }

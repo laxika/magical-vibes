@@ -88,7 +88,7 @@ class AsForetoldTest extends BaseCardTest {
         Permanent asForetold = harness.addToBattlefieldAndReturn(player1, new AsForetold());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
+        harness.passBothPriorities(); // resolve PutCountersEffect.onSelf
 
         assertThat(asForetold.getCounterCount(CounterType.TIME)).isEqualTo(1);
     }

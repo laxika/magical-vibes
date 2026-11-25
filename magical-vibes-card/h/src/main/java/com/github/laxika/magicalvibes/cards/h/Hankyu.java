@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,7 +24,7 @@ public class Hankyu extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new PutCounterOnTargetPermanentEffect(Subjects.granter(), CounterType.AIM)),
+                        List.of(new PutCountersEffect(Subjects.granter(), CounterType.AIM)),
                         "{T}: Put an aim counter on Hankyu."
                 ),
                 Subjects.attachedCreature()

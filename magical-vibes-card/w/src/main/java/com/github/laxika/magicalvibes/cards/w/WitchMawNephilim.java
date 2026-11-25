@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class WitchMawNephilim extends Card {
 
     public WitchMawNephilim() {
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2), "Put two +1/+1 counters on this creature?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2), "Put two +1/+1 counters on this creature?"));
         addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new SourcePowerAtLeast(10),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));

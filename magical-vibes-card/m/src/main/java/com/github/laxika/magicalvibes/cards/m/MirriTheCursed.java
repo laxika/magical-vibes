@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "75")
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MirriTheCursed extends Card {
 
     public MirriTheCursed() {
-        addTrigger(Triggers.dealsCombatDamageToCreature(), new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.dealsCombatDamageToCreature(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

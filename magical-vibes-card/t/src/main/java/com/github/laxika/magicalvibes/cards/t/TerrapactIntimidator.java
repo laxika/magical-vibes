@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForSourceControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -48,7 +48,7 @@ public class TerrapactIntimidator extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new CreateTokenForSourceControllerEffect(LANDER),
                 "Have this creature's controller create two Lander tokens?",
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                 MayChoicePlayer.TARGET_PLAYER
         ));
     }

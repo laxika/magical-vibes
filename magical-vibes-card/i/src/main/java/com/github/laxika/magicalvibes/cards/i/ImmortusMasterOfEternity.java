@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public class ImmortusMasterOfEternity extends Card {
                 List.of(
                         new EachPlayerShufflesZonesIntoLibraryEffect(),
                         new EachPlayerDrawsCardEffect(7),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Power-up — {5}{U}{U}: Each player shuffles their hand and graveyard into their library, then draws seven cards. "
                         + "Put a +1/+1 counter on Immortus. Activate each power-up ability only once. Reduce the cost by his mana cost if he entered this turn."

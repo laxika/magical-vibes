@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,7 +23,7 @@ public class EshkiTemursRoar extends Card {
 
     public EshkiTemursRoar() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new ConditionalEffect(new TriggeringCardMatches(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

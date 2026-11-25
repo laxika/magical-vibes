@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class LuminarchAscension extends Card {
         // you may put a quest counter on this enchantment.
         addTrigger(Triggers.endStep(ActivePlayer.OPPONENT),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerDidntLoseLifeThisTurn()),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.QUEST),
                         "Put a quest counter on Luminarch Ascension?"));
 
         // {1}{W}: Create a 4/4 white Angel creature token with flying. Activate only if this

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -42,7 +42,7 @@ public class ConsumingFerocity extends Card {
         // has three or more +1/+0 counters on it, it deals damage equal to its power to its controller,
         // then destroy that creature and it can't be regenerated.
         .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCounterOnTargetPermanentEffect(Subjects.attachedCreature(), CounterType.PLUS_ONE_PLUS_ZERO, 1),
+                new PutCountersEffect(Subjects.attachedCreature(), CounterType.PLUS_ONE_PLUS_ZERO, 1),
                 new ConditionalEffect(
                         new EnchantedPermanentMatches(
                                 new PermanentCounterCountAtLeastPredicate(CounterType.PLUS_ONE_PLUS_ZERO, 3),

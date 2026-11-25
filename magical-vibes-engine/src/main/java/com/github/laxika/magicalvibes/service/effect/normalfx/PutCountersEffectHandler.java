@@ -15,8 +15,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -34,7 +35,9 @@ import org.springframework.stereotype.Component;
 /**
  * Puts counters on a permanent. Handles the full counter-placement family:
  * <ul>
- *   <li>a non-target subject → the permanents {@code SubjectResolutionService} names (non-targeting);</li>
+ *   <li>{@code source()} → the ability's own source permanent, or its face-up planar object for a planar ability;
+ *       the entry's source snapshot is refreshed after the placement;</li>
+ *   <li>another non-target subject → the permanents {@code SubjectResolutionService} names (non-targeting);</li>
  *   <li>a non-null {@code predicate} → resolution-time choice among the controller's matching
  *       permanents (non-targeting);</li>
  *   <li>otherwise a targeting effect, resolving {@code StackEntry.targetsForEffect} — the
@@ -50,7 +53,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHandlerBean {
+public class PutCountersEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -64,12 +67,12 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return PutCounterOnTargetPermanentEffect.class;
+        return PutCountersEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (PutCounterOnTargetPermanentEffect) effect;
+        var e = (PutCountersEffect) effect;
         Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData,
                 candidates(gameData, entry, e), e.counterType());
         putCounters(gameData, entry, e);
@@ -81,7 +84,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
      * Every permanent the effect may put counters on: its subject's, its targets, or (for a predicate choice) every
      * permanent its controller controls; the step's result is read from their counts.
      */
-    private List<UUID> candidates(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e) {
+    private List<UUID> candidates(GameData gameData, StackEntry entry, PutCountersEffect e) {
         if (!(e.subject() instanceof PermanentSubject.Target)) {
             return subjectResolutionService.permanents(gameData, entry, e, e.subject()).stream()
                     .map(Permanent::getId).toList();
@@ -97,8 +100,12 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         return entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
     }
 
-    private void putCounters(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e) {
+    private void putCounters(GameData gameData, StackEntry entry, PutCountersEffect e) {
         CardEffect effect = e;
+        if (e.subject() instanceof PermanentSubject.Source) {
+            resolveSource(gameData, entry, e);
+            return;
+        }
         if (!(e.subject() instanceof PermanentSubject.Target)) {
             resolveNamedPermanents(gameData, entry, e);
             return;
@@ -146,26 +153,69 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
      * creature"): each named permanent still on the battlefield gets the counters, the count evaluated against that
      * permanent ("equal to its power"), wherever it is now, even if control changed before resolution.
      */
-    private void resolveNamedPermanents(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e) {
+    private void resolveNamedPermanents(GameData gameData, StackEntry entry, PutCountersEffect e) {
         placeOnNamed(gameData, entry, e, subjectResolutionService.permanents(gameData, entry, e, e.subject()));
     }
 
-    /** Places on each of {@code named} still on the battlefield, the count evaluated against that permanent. */
-    private void placeOnNamed(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e,
-                              List<Permanent> named) {
+    /**
+     * "Put N counters on this [permanent]": the source permanent, else a planar ability's face-up planar object. After
+     * the placement the entry's source snapshot shows the new counters, unless the permanent has transformed since
+     * the ability was put on the stack (later steps can then still tell it transformed).
+     */
+    private void resolveSource(GameData gameData, StackEntry entry, PutCountersEffect e) {
+        if (entry.getSourcePlanarObject() != null && entry.getSourcePermanentId() == null) {
+            resolvePlanarSource(gameData, entry, e);
+            return;
+        }
+        List<Permanent> self = subjectResolutionService.permanents(gameData, entry, e, e.subject());
+        if (placeOnNamed(gameData, entry, e, self) || self.isEmpty()) {
+            return;
+        }
+        Permanent source = self.getFirst();
+        Permanent previousSnapshot = entry.getSourcePermanentSnapshot();
+        if (previousSnapshot == null || !previousSnapshot.getId().equals(source.getId())
+                || previousSnapshot.getTransformationSequence() == source.getTransformationSequence()) {
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+        }
+    }
+
+    private void resolvePlanarSource(GameData gameData, StackEntry entry, PutCountersEffect e) {
+        PlanarObject source = gameData.planechase == null ? null
+                : gameData.planechase.faceUp.stream()
+                .filter(object -> object.getId().equals(entry.getSourcePlanarObject().getId()))
+                .findFirst()
+                .orElse(null);
+        if (source == null) {
+            return;
+        }
+        int count = amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, null));
+        if (count <= 0) {
+            return;
+        }
+        source.getCounters().merge(e.counterType(), count, Integer::sum);
+        entry.setSourcePlanarObject(source.copy());
+    }
+
+    /**
+     * Places on each of {@code named} still on the battlefield, the count evaluated against that permanent. Returns
+     * {@code true} when a placement waits for its controller to order counter replacements.
+     */
+    private boolean placeOnNamed(GameData gameData, StackEntry entry, PutCountersEffect e,
+                                 List<Permanent> named) {
         for (int i = 0; i < named.size(); i++) {
             Permanent permanent = named.get(i);
             int count = amountEvaluationService.evaluate(gameData, e.amount(),
                     AmountContext.forStackEntry(entry, permanent));
             List<UUID> later = named.subList(i + 1, named.size()).stream().map(Permanent::getId).toList();
             if (placeOnTarget(gameData, entry, permanent.getId(), e, count, later, false)) {
-                return;
+                return true;
             }
         }
+        return false;
     }
 
     private void resolveTargets(GameData gameData, StackEntry entry, List<UUID> targets,
-                                PutCounterOnTargetPermanentEffect effect, int count) {
+                                PutCountersEffect effect, int count) {
         for (int i = 0; i < targets.size(); i++) {
             if (placeOnTarget(gameData, entry, targets.get(i), effect, count,
                     targets.subList(i + 1, targets.size()), false)) {
@@ -175,7 +225,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
     }
 
     private boolean placeOnTarget(GameData gameData, StackEntry entry, UUID targetId,
-                                   PutCounterOnTargetPermanentEffect e, int count,
+                                   PutCountersEffect e, int count,
                                    List<UUID> subsequentTargets, boolean replacementsApplied) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
@@ -234,7 +284,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
      * The player who puts the counters on {@code target}: the effect's controller, or the permanent's controller when
      * each controller puts them on their own permanents.
      */
-    private UUID placerOf(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e,
+    private UUID placerOf(GameData gameData, StackEntry entry, PutCountersEffect e,
                           Permanent target) {
         if (e.eachControllerPlaces()) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
@@ -243,29 +293,6 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             }
         }
         return entry.getControllerId();
-    }
-
-    /**
-     * For counter placements that are not themselves {@code PutCounterOnTargetPermanentEffect}
-     * (e.g. "put a +1/+1 counter on this creature"): when two or more counter replacement effects
-     * apply and the order changes the result, asks the permanent's controller to order them
-     * (CR 616.1) and resumes the placement from the answer. Returns {@code true} when that choice
-     * was started (the caller must stop; the placement completes when it is answered).
-     */
-    public boolean beginReplacementOrderIfNeeded(GameData gameData, StackEntry entry, Permanent target,
-                                                 CounterType counterType, int count) {
-        if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
-            return false;
-        }
-        var modifiers = gameQueryService.counterReplacementsFor(gameData, target, counterType,
-                entry.getControllerId(), false);
-        if (!gameQueryService.counterReplacementOrderMatters(gameData, counterType, count, modifiers)) {
-            return false;
-        }
-        beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(
-                entry, target.getId(), count, modifiers,
-                new PutCounterOnTargetPermanentEffect(counterType, count), List.of(), count));
-        return true;
     }
 
     private void beginReplacementChoice(GameData gameData, ChoiceContext.CounterReplacementOrder order) {

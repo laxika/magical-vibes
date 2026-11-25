@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,7 +38,7 @@ public class ObsessivePursuit extends Card {
                 new PermanentIsAttackingPredicate()));
         target(new PermanentPredicateTargetFilter(attackingCreature,
                 "Target must be an attacking creature"))
-                .addTrigger(Triggers.youAttack(), new PutCounterOnTargetPermanentEffect(
+                .addTrigger(Triggers.youAttack(), new PutCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentsSacrificedThisTurn(),
                         null,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -27,7 +27,7 @@ public class BrainInAJar extends Card {
                 true,
                 "{1}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.CHARGE),
+                        PutCountersEffect.onSelf(CounterType.CHARGE),
                         new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new CardAllOfPredicate(List.of(
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.INSTANT),

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -42,7 +42,7 @@ class CounterReplacementOrderTest extends BaseCardTest {
         Card spell = new Card();
         spell.setName("Growth Surge");
         spell.setType(CardType.SORCERY);
-        List<CardEffect> effects = new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(
+        List<CardEffect> effects = new ArrayList<>(List.of(new PutCountersEffect(
                 Subjects.creaturesYouControl(), CounterType.PLUS_ONE_PLUS_ONE, new SourcePower())));
         gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Growth Surge", effects));
 

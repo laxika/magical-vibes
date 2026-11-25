@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class CityOfShadows extends Card {
                 null,
                 List.of(
                         new ExilePermanentCost(new PermanentIsCreaturePredicate(), "a creature", false),
-                        new PutCountersOnSelfEffect(CounterType.STORAGE)),
+                        PutCountersEffect.onSelf(CounterType.STORAGE)),
                 "{T}, Exile a creature you control: Put a storage counter on this land."
         ));
 

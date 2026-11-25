@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -30,7 +30,7 @@ public class PhantasmalSphere extends Card {
         // this creature unless you pay {1} for each +1/+1 counter on it. One sequence, so the
         // counter lands before the payment is sized.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSourceEffect(1, 1, 1),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new DestroyUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, "{1}", true)
         ));
 

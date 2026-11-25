@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +33,7 @@ public class QuestForUlasTemple extends Card {
                 LookAtTopCardsOfTargetLibraryEffect.lookingAt(1, Subjects.you()),
                 new ConditionalEffect(new TopCardOfLibraryType(CardType.CREATURE), new MayEffect(SequenceEffect.of(
                         new RevealTopCardOfLibraryEffect(Subjects.you()),
-                        new PutCountersOnSelfEffect(CounterType.QUEST)),
+                        PutCountersEffect.onSelf(CounterType.QUEST)),
                         "Reveal the creature card and put a quest counter on Quest for Ula's Temple?"))),
                 "Look at the top card of your library?"));
 

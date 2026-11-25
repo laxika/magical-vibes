@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,7 +28,7 @@ public class CazurRuthlessStalker extends Card {
         // Whenever a creature you control deals combat damage to a player, put a +1/+1 counter on that creature.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCreaturePredicate()),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
+                new PutCountersEffect(Subjects.triggering(),
                         CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,6 +34,6 @@ public class AlignedHeart extends Card {
                 CardColor.WHITE, null, List.of(CardSubtype.MONK), Set.of(Keyword.PROWESS), Set.of(),
                 false, false, monkTokenEffects, List.of(), false, false, false, 0, Set.of());
 
-        addTrigger(Triggers.youCastSpell().nthThisTurn(2), new PutCountersOnSelfEffect(CounterType.RALLY), monkTokens);
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2), PutCountersEffect.onSelf(CounterType.RALLY), monkTokens);
     }
 }

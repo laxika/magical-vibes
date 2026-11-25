@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSourceChosenSubtypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -53,7 +53,7 @@ public class AKillerAmongUs extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new RevealSourceChosenSubtypeCost(),
-                        PutCounterOnTargetPermanentEffect.withResolutionCondition(
+                        PutCountersEffect.withResolutionCondition(
                                 CounterType.PLUS_ONE_PLUS_ONE, 3,
                                 new PermanentHasSourceChosenSubtypePredicate()),
                         GrantKeywordEffect.toTargetIf(Keyword.DEATHTOUCH,

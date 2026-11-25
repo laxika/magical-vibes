@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class EmeriaCaptain extends Card {
 
     public EmeriaCaptain() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, new PartySize()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new PartySize()));
     }
 }

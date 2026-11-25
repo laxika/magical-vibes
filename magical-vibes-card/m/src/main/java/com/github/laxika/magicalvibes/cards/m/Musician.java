@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class Musician extends Card {
                 true,
                 null,
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.MUSIC, 1),
+                        new PutCountersEffect(CounterType.MUSIC, 1),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 new DestroyUnlessPaysPerCounterEffect(CounterType.MUSIC, "{1}")))

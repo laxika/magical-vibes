@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +27,7 @@ public class AplanMortarium extends Card {
 
     public AplanMortarium() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.EXPOSURE),
+                PutCountersEffect.onSelf(CounterType.EXPOSURE),
                 new LoseLifeEffect(new CountersOnSource(CounterType.EXPOSURE), Subjects.you())));
 
         CreateTokenEffect alienAngel = new CreateTokenEffect(

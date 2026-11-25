@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class ShangChiAndTheTenRings extends Card {
     public ShangChiAndTheTenRings() {
         // Whenever you draw a card, put a +1/+1 counter on Shang-Chi.
         addTrigger(Triggers.youDrawCard(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         // When the tenth +1/+1 counter is put on Shang-Chi, draw five cards and gain 5 life.
         addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(

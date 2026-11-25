@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class TenWizardsMountain extends Card {
     public TenWizardsMountain() {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.youRollOneOrMoreDice(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.chaosEnsues(),
                 new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl()));
     }

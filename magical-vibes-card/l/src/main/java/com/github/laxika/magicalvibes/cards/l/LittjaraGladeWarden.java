@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class LittjaraGladeWarden extends Card {
                 "{2}{G}",
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.CREATURE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ),
                 "{2}{G}, {T}, Exile a creature card from your graveyard: Put two +1/+1 counters on target creature. "
                         + "Activate only as a sorcery.",

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,13 +28,13 @@ public class TimberlineRidge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.RED), new PutCountersOnSelfEffect(CounterType.DEPLETION)),
+                List.of(new AwardManaEffect(ManaColor.RED), PutCountersEffect.onSelf(CounterType.DEPLETION)),
                 "{T}: Add {R}. Put a depletion counter on Timberline Ridge."
         ));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.GREEN), new PutCountersOnSelfEffect(CounterType.DEPLETION)),
+                List.of(new AwardManaEffect(ManaColor.GREEN), PutCountersEffect.onSelf(CounterType.DEPLETION)),
                 "{T}: Add {G}. Put a depletion counter on Timberline Ridge."
         ));
     }

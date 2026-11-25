@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -27,10 +27,10 @@ public class YorvoLordOfGarenbrig extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         CardEffect counterSequence = SequenceEffect.of(
-                new PutCountersOnSourceEffect(1, 1, 1),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new ConditionalEffect(
                         new TriggeringPermanentPowerGreaterThanSourcePower(),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,

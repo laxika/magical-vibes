@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
@@ -24,7 +24,7 @@ public class SpawningPit extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE)
+                        PutCountersEffect.onSelf(CounterType.CHARGE)
                 ),
                 "Sacrifice a creature: Put a charge counter on this artifact."
         ));

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -44,7 +44,7 @@ public class MarathWillOfTheWild extends Card {
                 false,
                 "{X}",
                 List.of(new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
                 costText + "Put X +1/+1 counters on target creature." + xCantBeZero,
                 TargetFilters.creature()
         ).withMinimumXValue(1));

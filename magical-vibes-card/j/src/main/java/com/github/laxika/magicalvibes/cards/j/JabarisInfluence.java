@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -37,6 +37,6 @@ public class JabarisInfluence extends Card {
                 "Target must be a nonartifact, nonblack creature that attacked you this turn"
         ))
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.PERMANENT))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ZERO, 1));
+                .addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ZERO, 1));
     }
 }

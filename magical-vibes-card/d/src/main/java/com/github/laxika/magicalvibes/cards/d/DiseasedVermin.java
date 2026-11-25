@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.OpponentPreviouslyDamagedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -17,7 +17,7 @@ public class DiseasedVermin extends Card {
 
     public DiseasedVermin() {
         // Whenever this creature deals combat damage to a player, put an infection counter on it.
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new PutCountersOnSelfEffect(CounterType.INFECTION));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), PutCountersEffect.onSelf(CounterType.INFECTION));
 
         // At the beginning of your upkeep, this creature deals X damage to target opponent
         // previously dealt damage by it, where X is the number of infection counters on it.

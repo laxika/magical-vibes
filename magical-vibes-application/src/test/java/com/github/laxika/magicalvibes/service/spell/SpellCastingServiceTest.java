@@ -45,7 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHand
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
@@ -222,7 +222,7 @@ class SpellCastingServiceTest {
     void preparingRoomDoorPreservesTheUnlockAbilityTargetGroup() {
         Card room = new Card();
         room.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
-        var counter = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        var counter = new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE);
         room.target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.doorUnlocked(1), counter);
         List<CardEffect> spellEffects = new ArrayList<>(List.of(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("First door", List.of()).withManaCost("{1}{W}"),
@@ -408,7 +408,7 @@ class SpellCastingServiceTest {
         spell.addCastingCost(new SacrificePermanentCost(
                 new PermanentIsArtifactPredicate(), "an artifact", false, false, true, false));
         spell.target(TargetFilters.creature())
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(
+                .addSpellEffect(new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new XValue()));
         Permanent artifact = new Permanent(createArtifact("Test Ingot", "{3}"));

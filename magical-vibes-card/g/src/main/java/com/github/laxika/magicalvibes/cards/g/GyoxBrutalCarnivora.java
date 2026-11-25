@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,7 +31,7 @@ public class GyoxBrutalCarnivora extends Card {
     public GyoxBrutalCarnivora() {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(CounterType.OIL));
+                        new PutCountersEffect(CounterType.OIL));
 
         // X is the number of oil counters on the creature as it last existed on the battlefield (CR 603.10a).
         var oilCounters = new CountersOnTriggeringPermanent(CounterType.OIL);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -7,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +22,7 @@ public class BushyBodyguard extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ForageEffect(new PutCountersOnSourceEffect(1, 1, 2)),
+                new ForageEffect(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "Forage and put two +1/+1 counters on this creature?"));
     }
 }

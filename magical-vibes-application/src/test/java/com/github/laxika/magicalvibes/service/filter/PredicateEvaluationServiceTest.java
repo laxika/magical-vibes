@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -1514,7 +1514,7 @@ class PredicateEvaluationServiceTest {
         void levelUpAbilityPredicateMatchesLevelUpAbilitiesOnly() {
             Card levelUpCreature = createCreature("Leveler", 1, 1, CardColor.BLUE);
             levelUpCreature.addActivatedAbility(new ActivatedAbility(false, "{2}",
-                    List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                    List.of(PutCountersEffect.onSelf(CounterType.LEVEL)),
                     "Level up {2} ({2}: Put a level counter on this.)"));
             Permanent levelUpPermanent = addPermanent(player1Id, levelUpCreature);
 

@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,11 +28,11 @@ public class SerratedBiskelion extends Card {
                 null,
                 List.of(
                         new ConditionalEffect(otherCreatureTarget,
-                                new PutCountersOnSourceEffect(-1, -1, 1)),
+                                PutCountersEffect.onSelf(CounterType.MINUS_ONE_MINUS_ONE)),
                         new ConditionalEffect(otherCreatureTarget,
-                                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
+                                new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
                         new ConditionalEffect(selfTarget,
-                                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 2))
+                                new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 2))
                 ),
                 "{T}: Put a -1/-1 counter on this creature and a -1/-1 counter on target creature.",
                 TargetFilters.creature()

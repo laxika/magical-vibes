@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -29,7 +29,7 @@ public class GlyphOfDelusion extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WALL),
                 "First target must be a Wall"));
         target(TargetFilters.creature())
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.GLYPH, new TargetPower()))
+                .addSpellEffect(new PutCountersEffect(CounterType.GLYPH, new TargetPower()))
                 .addSpellEffect(new GrantEffectToTargetEffect(StaticAbility.of(new DoesntUntapWithCounterEffect(CounterType.GLYPH))))
                 .addSpellEffect(new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 new RemoveCounterFromSourceEffect(CounterType.GLYPH, 1)),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterMustBlockTriggeringAttackerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class MagneticWeb extends Card {
 
         // {1}, {T}: Put a magnet counter on target creature.
         addActivatedAbility(new ActivatedAbility(true, "{1}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.MAGNET, 1)),
+                List.of(new PutCountersEffect(CounterType.MAGNET, 1)),
                 "{1}, {T}: Put a magnet counter on target creature.",
                 TargetFilters.creature()));
     }

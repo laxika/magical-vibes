@@ -162,7 +162,7 @@ public sealed interface ChoiceContext {
     /** Retains counter placement while the affected permanent's controller orders replacements. */
     record CounterReplacementOrder(StackEntry entry, UUID targetId, int count,
                                    List<CounterReplacement> remaining,
-                                   com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect effect,
+                                   com.github.laxika.magicalvibes.model.effect.PutCountersEffect effect,
                                    List<UUID> subsequentTargets, int originalCount) implements ChoiceContext {
         public CounterReplacementOrder {
             remaining = List.copyOf(remaining);

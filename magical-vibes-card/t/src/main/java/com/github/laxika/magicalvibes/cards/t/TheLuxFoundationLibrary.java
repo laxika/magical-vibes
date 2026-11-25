@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class TheLuxFoundationLibrary extends Card {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new MayEffect(new DrawCardEffect(1), "Draw a card?"));
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
-                new PutCounterOnTargetPermanentEffect(CounterType.SHADOW));
+                new PutCountersEffect(CounterType.SHADOW));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellXValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -23,6 +23,6 @@ public class NevThePracticalDean extends Card {
                 new PermanentHasCountersPredicate(CounterType.ANY)));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardHasXInManaCostPredicate()).nthThisTurn(1),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringSpellXValue()));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringSpellXValue()));
     }
 }

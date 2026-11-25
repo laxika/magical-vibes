@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -22,7 +22,7 @@ public class CullingDais extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeCreatureCost(), new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                List.of(new SacrificeCreatureCost(), PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "{T}, Sacrifice a creature: Put a charge counter on Culling Dais."
         ));
 

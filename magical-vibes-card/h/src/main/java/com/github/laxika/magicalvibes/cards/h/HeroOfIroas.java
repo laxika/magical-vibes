@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
@@ -20,6 +20,6 @@ public class HeroOfIroas extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.AURA), 1, CostModificationScope.SELF));
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

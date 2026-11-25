@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -36,7 +36,7 @@ public class AjaniAdversaryOfTyrants extends Card {
         // target slots (0–2); the counter effect applies to every chosen target.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 "+1: Put a +1/+1 counter on each of up to two target creatures.",
                 null, +1, null, null,
                 List.<TargetFilter>of(TargetFilters.creature(), TargetFilters.creature()), 0, 2));

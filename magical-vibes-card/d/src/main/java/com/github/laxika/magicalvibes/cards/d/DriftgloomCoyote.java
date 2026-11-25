@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,6 +25,6 @@ public class DriftgloomCoyote extends Card {
                         new ExileTargetPermanentUntilSourceLeavesEffect(),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentPowerAtMostPredicate(2)),
-                                new PutCountersOnSourceEffect(1, 1, 1))));
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))));
     }
 }

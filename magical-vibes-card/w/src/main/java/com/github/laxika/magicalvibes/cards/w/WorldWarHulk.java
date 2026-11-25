@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -33,7 +33,7 @@ public class WorldWarHulk extends Card {
                                 new CardColorPredicate(CardColor.GREEN)))))));
 
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
 
         addTrigger(Triggers.chapter(3),

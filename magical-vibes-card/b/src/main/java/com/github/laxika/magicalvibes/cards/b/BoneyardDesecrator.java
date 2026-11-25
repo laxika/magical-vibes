@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -32,7 +32,7 @@ public class BoneyardDesecrator extends Card {
                 "{1}{B}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new PutCountersOnSourceEffect(1, 1, 1),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new SacrificedCardMatches(outlaw, "an outlaw"),
                                 CreateTokenEffect.ofTreasureToken(1)

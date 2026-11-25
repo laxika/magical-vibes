@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -28,7 +29,7 @@ public class MarionetteMaster extends Card {
     public MarionetteMaster() {
         // Fabricate 3 (CR 702.123a): the choice is made as the trigger resolves.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new PutCountersOnSourceEffect(1, 1, 3),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 3),
                 "Put three +1/+1 counters on Marionette Master?",
                 new CreateTokenEffect(3, "Servo", 1, 1, null,
                         List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))));

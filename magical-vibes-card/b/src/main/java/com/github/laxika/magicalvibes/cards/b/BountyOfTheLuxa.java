@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -27,7 +27,7 @@ public class BountyOfTheLuxa extends Card {
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), SequenceEffect.of(
                 new RemoveCounterFromSourceEffect(CounterType.FLOOD, Integer.MAX_VALUE),
                 new ConditionalEffect(new NotCondition(HappenedThisWay.removedCounters()), SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.FLOOD, 1),
+                        PutCountersEffect.onSelf(CounterType.FLOOD, 1),
                         new DrawCardEffect(1))),
                 new ConditionalEffect(HappenedThisWay.removedCounters(), SequenceEffect.of(
                         new AwardManaEffect(ManaColor.COLORLESS),

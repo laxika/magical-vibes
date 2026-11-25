@@ -76,8 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
@@ -1278,7 +1277,7 @@ public class ActivatedAbilityExecutionService {
                 Card imprintedCard = gameData.getImprintedCard(permanent.getCard());
                 snapshotEffects.add(referenceEffect.bindToCard(imprintedCard != null ? imprintedCard.getId() : null));
                 gameData.setImprintedCard(permanent.getCard(), null);
-            } else if (effect instanceof PutCounterOnTargetPermanentEffect grantCounters
+            } else if (effect instanceof PutCountersEffect grantCounters
                     && grantCounters.subject() instanceof PermanentSubject.Granter) {
                 // Bind the granting Equipment now (Hankyu): at resolution the ability's source is the
                 // equipped creature, and the Equipment may no longer be attached to it.
@@ -1851,15 +1850,14 @@ public class ActivatedAbilityExecutionService {
                 int amount = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
                 playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
-            } else if (effect instanceof PutCountersOnSelfEffect counters
+            } else if (effect instanceof PutCountersEffect counters
+                    && counters.subject() instanceof PermanentSubject.Source
                     && !gameQueryService.cantHaveCounters(gameData, permanent)) {
                 // "Add one mana of any color. Put a brick counter on this artifact." (Pyramid of the
                 // Pantheon). A mana ability resolves without the stack, so the counter is placed
                 // inline here rather than through the normal effect-handler path.
-                int count = counters.amount() != null
-                        ? amountEvaluationService.evaluate(gameData, counters.amount(),
-                                AmountContext.forManaAbility(permanent, playerId))
-                        : counters.count();
+                int count = amountEvaluationService.evaluate(gameData, counters.amount(),
+                        AmountContext.forManaAbility(permanent, playerId));
                 count = gameQueryService.replaceCounters(
                         gameData, permanent, counters.counterType(), count);
                 if (count > 0) {

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class ManticoreOfTheGauntlet extends Card {
 
     public ManticoreOfTheGauntlet() {
         // "When this creature enters, put a -1/-1 counter on target creature you control."
-        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        var putCounterOnTargetPermanent = new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1);
         target(TargetFilters.creatureYouControl()).bindEffect(putCounterOnTargetPermanent);
 
         // "This creature deals 3 damage to target opponent or planeswalker."

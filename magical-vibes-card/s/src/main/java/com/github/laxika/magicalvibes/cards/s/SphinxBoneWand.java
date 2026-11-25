@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -30,7 +30,7 @@ public class SphinxBoneWand extends Card {
         // "If you do": with the Wand gone no counter is put on it, so there is no damage.
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY),
                 new MayEffect(SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.CHARGE),
+                        PutCountersEffect.onSelf(CounterType.CHARGE),
                         new ConditionalEffect(new SourceIsOnBattlefield(),
                                 new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE)))
                 ), "Put a charge counter on Sphinx-Bone Wand?"));

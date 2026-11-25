@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -35,7 +35,7 @@ public class MolderingGymWeightRoom extends Card {
         addTrigger(Triggers.doorUnlocked(1),
                 SequenceEffect.of(
                         ManifestDreadEffect.forController(),
-                        new PutCounterOnTargetPermanentEffect(
+                        new PutCountersEffect(
                                 Subjects.thisWay(StepKind.MANIFEST), CounterType.PLUS_ONE_PLUS_ONE, 3)));
     }
 }

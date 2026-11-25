@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BecomeDayAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,6 +28,6 @@ public class VadrikAstralArchmage extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 instantOrSorcery, new SourcePower(), CostModificationScope.SELF));
 
-        addTrigger(Triggers.dayBecomesNightOrNightBecomesDay(), new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.dayBecomesNightOrNightBecomesDay(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

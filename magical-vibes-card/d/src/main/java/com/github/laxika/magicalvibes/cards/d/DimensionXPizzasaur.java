@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -34,7 +34,7 @@ public class DimensionXPizzasaur extends Card {
 
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new ConditionalEffect(new HappenedThisWay(StepKind.PUT_COUNTERS), QueueReflexiveAbilityEffect.of(
                                 new DestroyTargetPermanentEffect(eligibleDestructionTarget), true))));
 

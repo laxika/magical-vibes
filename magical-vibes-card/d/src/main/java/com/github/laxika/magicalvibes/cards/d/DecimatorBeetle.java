@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,14 +25,14 @@ public class DecimatorBeetle extends Card {
     public DecimatorBeetle() {
         // "When this creature enters, put a -1/-1 counter on target creature you control."
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+                new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // "Whenever this creature attacks, remove a -1/-1 counter from target creature you control and put a -1/-1
         // counter on up to one target creature defending player controls." Each half acts on its own target, so one
         // still happens when the other's target is illegal.
         CardEffect removeCounter = RemoveUpToCountersFromAllPermanentsEffect.exactly(
                 CounterType.MINUS_ONE_MINUS_ONE, new Fixed(1), Subjects.target());
-        CardEffect putCounter = new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        CardEffect putCounter = new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1);
         SpellTarget yourCreature = target(TargetFilters.creatureYouControl());
         SpellTarget defendingCreature = target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

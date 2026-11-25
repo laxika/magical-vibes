@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,7 +25,7 @@ public class AncientAnimus extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addSpellEffect(PutCounterOnTargetPermanentEffect.withResolutionCondition(
+        )).addSpellEffect(PutCountersEffect.withResolutionCondition(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
 
         target(new PermanentPredicateTargetFilter(

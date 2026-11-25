@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -23,7 +23,7 @@ public class OsaiVultures extends Card {
         // At the beginning of each end step, if a creature died this turn, put a carrion counter on it.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
-                new PutCountersOnSelfEffect(CounterType.CARRION));
+                PutCountersEffect.onSelf(CounterType.CARRION));
 
         // Remove two carrion counters from this creature: This creature gets +1/+1 until end of turn.
         addActivatedAbility(new ActivatedAbility(

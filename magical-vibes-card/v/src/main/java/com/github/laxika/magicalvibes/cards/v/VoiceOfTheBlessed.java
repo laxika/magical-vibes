@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class VoiceOfTheBlessed extends Card {
 
     public VoiceOfTheBlessed() {
         // Whenever you gain life, put a +1/+1 counter on this creature.
-        addTrigger(Triggers.youGainLife(), new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.youGainLife(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         // As long as this creature has four or more +1/+1 counters on it, it has flying and vigilance.
         addStaticEffect(new ConditionalEffect(

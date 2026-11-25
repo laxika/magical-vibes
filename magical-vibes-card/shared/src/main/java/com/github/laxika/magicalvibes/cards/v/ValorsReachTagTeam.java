@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
@@ -34,7 +34,7 @@ public class ValorsReachTagTeam extends Card {
                                         new MinimumMatchingAttackers(2, new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),
                                                 new PermanentIsTokenPredicate())))))),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class MagistratesScepter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "{4}, {T}: Put a charge counter on this artifact."
         ));
 

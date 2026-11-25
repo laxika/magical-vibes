@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -32,7 +32,7 @@ public class AyarasOathsworn extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(fourCounters)),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new AllConditions(List.of(fourCounters, new NotCondition(fiveCounters))),
                                 new SearchLibraryEffect())));

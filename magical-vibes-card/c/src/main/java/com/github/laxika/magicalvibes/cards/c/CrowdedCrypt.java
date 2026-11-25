@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class CrowdedCrypt extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
 
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.CORPSE));
+                PutCountersEffect.onSelf(CounterType.CORPSE));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

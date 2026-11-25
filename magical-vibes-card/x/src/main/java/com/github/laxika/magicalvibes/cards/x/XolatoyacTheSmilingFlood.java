@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class XolatoyacTheSmilingFlood extends Card {
 
     public XolatoyacTheSmilingFlood() {
-        var putFloodCounter = new PutCounterOnTargetPermanentEffect(CounterType.FLOOD);
+        var putFloodCounter = new PutCountersEffect(CounterType.FLOOD);
         var grantIsland = new GrantSubtypeToTargetWhileHasCounterEffect(
                 CardSubtype.ISLAND, CounterType.FLOOD);
 

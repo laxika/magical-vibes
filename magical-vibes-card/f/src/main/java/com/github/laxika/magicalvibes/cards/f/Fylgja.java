@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -39,7 +39,7 @@ public class Fylgja extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}",
-                List.of(new PutCountersOnSelfEffect(CounterType.HEALING)),
+                List.of(PutCountersEffect.onSelf(CounterType.HEALING)),
                 "{2}{W}: Put a healing counter on this Aura."
         ));
     }

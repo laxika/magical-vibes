@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -30,7 +30,7 @@ public class ObsidianFireheart extends Card {
                 false,
                 "{1}{R}{R}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.BLAZE, 1),
+                        new PutCountersEffect(CounterType.BLAZE, 1),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 TriggerOptions.DEFAULT.withEventCondition(

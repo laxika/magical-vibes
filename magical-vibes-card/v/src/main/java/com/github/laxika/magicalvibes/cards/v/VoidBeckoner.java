@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,6 +31,6 @@ public class VoidBeckoner extends Card {
         ).withCyclingTriggerTargetsChosenOnTriggerIfOmitted());
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.youCycleThisCard(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.DEATHTOUCH, 1));
+                        new PutCountersEffect(CounterType.DEATHTOUCH, 1));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -28,7 +28,7 @@ public class HellionCrucible extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}",
-                List.of(new PutCountersOnSelfEffect(CounterType.PRESSURE)),
+                List.of(PutCountersEffect.onSelf(CounterType.PRESSURE)),
                 "{1}{R}, {T}: Put a pressure counter on Hellion Crucible."
         ));
 

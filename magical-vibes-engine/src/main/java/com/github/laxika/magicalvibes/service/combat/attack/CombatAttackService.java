@@ -39,7 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TrainEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -111,7 +111,7 @@ public class CombatAttackService {
      * counter on this creature" (CR 702.105a); its collector judges the attacked player.
      */
     private static final TriggeredAbility DETHRONE_ABILITY = new TriggeredAbility(Triggers.attacks(),
-            new PutCountersOnSourceEffect(1, 1, 1));
+            PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
     /**
      * Training: "Whenever this creature and at least one other creature with power greater than this creature's power

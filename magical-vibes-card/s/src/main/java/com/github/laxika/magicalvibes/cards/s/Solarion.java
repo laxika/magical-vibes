@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -19,9 +19,7 @@ public class Solarion extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PutCountersOnSelfEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
                 "{T}: Double the number of +1/+1 counters on this creature."));
     }
 }

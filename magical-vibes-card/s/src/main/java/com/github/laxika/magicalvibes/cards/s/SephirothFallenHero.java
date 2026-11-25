@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
@@ -32,7 +32,7 @@ public class SephirothFallenHero extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(),
                         new MayEffect(
-                        new PutCounterOnTargetPermanentEffect(CounterType.CELL),
+                        new PutCountersEffect(CounterType.CELL),
                         "Put a cell counter on target creature?"),
                         new SetAllOwnCreaturesBasePowerToughnessEffect(7, 5,
                                 new PermanentIsModifiedPredicate()));

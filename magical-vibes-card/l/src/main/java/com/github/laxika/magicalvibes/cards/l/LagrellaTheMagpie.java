@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +36,7 @@ public class LagrellaTheMagpie extends Card {
                                 new ExileTargetPermanentUntilSourceLeavesEffect(
                                         false, new PermanentIsCreaturePredicate()),
                                 RegisterDelayedEventTriggerEffect.whenExiledCardReturns(
-                                        new PutCounterOnTargetPermanentEffect(
+                                        new PutCountersEffect(
                                                 Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE, 2))));
     }
 }

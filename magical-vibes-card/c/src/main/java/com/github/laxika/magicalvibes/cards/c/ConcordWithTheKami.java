@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -46,7 +46,7 @@ public class ConcordWithTheKami extends Card {
                 ChooseOneEffect.oneOrMore(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on target creature with a counter on it.",
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 targetCreatureWithCounter),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Draw a card if you control an enchanted creature.",

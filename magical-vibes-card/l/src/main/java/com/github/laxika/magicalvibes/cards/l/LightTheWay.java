@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -30,7 +30,7 @@ public class LightTheWay extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on target creature or Vehicle. Untap it",
                         List.of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 new UntapPermanentsEffect(Subjects.target())),
                         new PermanentPredicateTargetFilter(
                                 creatureOrVehicle,

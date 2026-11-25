@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenParityPredicate;
@@ -22,7 +22,7 @@ public class ThanosTheMadTitan extends Card {
                 false,
                 "{C}{W}{U}{B}{R}{G}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new ChooseManaValueParityAtResolutionEffect(),
                         new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

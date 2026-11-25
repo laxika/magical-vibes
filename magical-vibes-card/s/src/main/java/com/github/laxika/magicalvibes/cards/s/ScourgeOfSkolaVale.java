@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class ScourgeOfSkolaVale extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, false, true, true),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
                 ),
                 "{T}, Sacrifice another creature: Put a number of +1/+1 counters on this creature equal to the sacrificed creature's toughness."
         ));

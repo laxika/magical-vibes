@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DTK", collectorNumber = "41")
@@ -17,7 +17,7 @@ public class SunscorchRegent extends Card {
 
     public SunscorchRegent() {
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new GainLifeEffect(1));
     }
 }

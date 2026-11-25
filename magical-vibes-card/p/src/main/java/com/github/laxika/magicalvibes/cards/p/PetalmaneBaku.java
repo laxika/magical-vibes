@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -24,7 +24,7 @@ public class PetalmaneBaku extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.KI), "Put a ki counter on Petalmane Baku?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.KI), "Put a ki counter on Petalmane Baku?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

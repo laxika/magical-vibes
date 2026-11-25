@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,7 +31,7 @@ public class LilianasScrounger extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
                 new MayEffect(
-                        new PutCounterOnTargetPermanentEffect(CounterType.LOYALTY, 1, lilianaPlaneswalker),
+                        new PutCountersEffect(CounterType.LOYALTY, 1, lilianaPlaneswalker),
                         "Put a loyalty counter on a Liliana planeswalker you control?"));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,7 +22,7 @@ public class SunDroplet extends Card {
 
     public SunDroplet() {
         addTrigger(Triggers.youAreDealtDamage(),
-                new PutCountersOnSelfEffect(CounterType.CHARGE, new EventValue()));
+                PutCountersEffect.onSelf(CounterType.CHARGE, new EventValue()));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new MayEffect(
                         SequenceEffect.of(

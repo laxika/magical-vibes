@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
@@ -26,7 +26,7 @@ public class MagosiTheWaterveil extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.EON), new SkipNextEffect(SkipKind.TURN)),
+                List.of(PutCountersEffect.onSelf(CounterType.EON), new SkipNextEffect(SkipKind.TURN)),
                 "{U}, {T}: Put an eon counter on this land. Skip your next turn."
         ));
 

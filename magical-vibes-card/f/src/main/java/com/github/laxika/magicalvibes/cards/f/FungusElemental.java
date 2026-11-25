@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -26,7 +26,7 @@ public class FungusElemental extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                                 "Sacrifice a Forest"
                         ),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_TWO_PLUS_TWO)
+                        PutCountersEffect.onSelf(CounterType.PLUS_TWO_PLUS_TWO)
                 ),
                 "{G}, Sacrifice a Forest: Put a +2/+2 counter on this creature. "
                         + "Activate only if this creature entered this turn."

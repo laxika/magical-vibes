@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -33,9 +33,7 @@ public class ConformerShuriken extends Card {
                         new TapPermanentsEffect(Subjects.target(),
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                         new PermanentControlledByDefendingPlayerPredicate()))),
-                        new PutCountersOnSelfEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE,
-                                new Max(new Fixed(0),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new Max(new Fixed(0),
                                         new Sum(new TargetPower(true), new Scaled(new SourcePower(true), -1)))))),
                 Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

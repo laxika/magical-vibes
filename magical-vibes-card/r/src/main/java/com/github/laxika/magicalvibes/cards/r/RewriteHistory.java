@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -31,7 +31,7 @@ public class RewriteHistory extends Card {
         CardEffect loot = SequenceEffect.of(
                 new DrawCardEffect(),
                 new DiscardEffect(1, Subjects.you()),
-                new PutCountersOnSelfEffect(CounterType.PLAN));
+                PutCountersEffect.onSelf(CounterType.PLAN));
         addTrigger(Triggers.permanentYouControlBecomesTapped()
                         .withFilter(new PermanentIsCreaturePredicate()),
                 TriggerOptions.ONE_OR_MORE,

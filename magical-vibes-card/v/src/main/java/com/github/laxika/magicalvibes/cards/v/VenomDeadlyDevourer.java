@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class VenomDeadlyDevourer extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 GraveyardSearchScope.ALL_GRAVEYARDS);
         var symbiote = new PermanentHasSubtypePredicate(CardSubtype.SYMBIOTE);
-        var counterEffect = new PutCounterOnTargetPermanentEffect(
+        var counterEffect = new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, AmountThisWay.exiledToughness(), null, symbiote, false, null);
 
         addActivatedAbility(new ActivatedAbility(

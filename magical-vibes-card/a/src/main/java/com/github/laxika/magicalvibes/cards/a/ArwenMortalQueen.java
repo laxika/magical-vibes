@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -39,10 +38,10 @@ public class ArwenMortalQueen extends Card {
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.INDESTRUCTIBLE),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCountersOnSelfEffect(CounterType.LIFELINK)
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new PutCountersEffect(CounterType.LIFELINK),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onSelf(CounterType.LIFELINK)
                 ),
                 "{1}, Remove an indestructible counter from Arwen: Another target creature gains "
                         + "indestructible until end of turn. Put a +1/+1 counter and a lifelink counter "

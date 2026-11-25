@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,9 +17,9 @@ public class FreyalisesWinds extends Card {
         // permanent, so both the ally- and opponent-scoped tap slots are used; both carry the
         // tapped permanent as the trigger's non-target reference.
         addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.WIND));
+                new PutCountersEffect(Subjects.triggering(), CounterType.WIND));
         addTrigger(Triggers.permanentOpponentControlsBecomesTapped(),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.WIND));
+                new PutCountersEffect(Subjects.triggering(), CounterType.WIND));
 
         // If a permanent with a wind counter on it would untap during its controller's untap step,
         // remove all wind counters from it instead.

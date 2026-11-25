@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -35,7 +35,7 @@ public class FractalTender extends Card {
                                         Set.of(CardColor.GREEN, CardColor.BLUE),
                                         List.of(CardSubtype.FRACTAL)
                                 ),
-                                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))
+                                new PutCountersEffect(Subjects.createdThisResolution(), CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))
                         ));
     }
 }

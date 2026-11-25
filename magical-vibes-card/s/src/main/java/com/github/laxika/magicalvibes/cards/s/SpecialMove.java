@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
@@ -57,7 +57,7 @@ public class SpecialMove extends Card {
                                 "Target must be an artifact.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Dash Attack — Put two +1/+1 counters on target attacking or blocking creature you control",
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         attackingOrBlockingCreature),
                 new ChooseOneEffect.ChooseOneOption(
                         "Foot Toss — Target creature you control deals damage equal to its power to any other target, then sacrifice it",

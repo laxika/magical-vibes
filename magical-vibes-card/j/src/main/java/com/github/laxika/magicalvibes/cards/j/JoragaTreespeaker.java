@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class JoragaTreespeaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(PutCountersEffect.onSelf(CounterType.LEVEL)),
                 "Level up {1}{G} ({1}{G}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

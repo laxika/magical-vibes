@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class BarrinsCodex extends Card {
 
     public BarrinsCodex() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.PAGE),
+                PutCountersEffect.onSelf(CounterType.PAGE),
                 "Put a page counter on Barrin's Codex?"));
 
         addActivatedAbility(new ActivatedAbility(

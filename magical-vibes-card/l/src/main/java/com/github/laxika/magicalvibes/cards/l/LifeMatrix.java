@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +33,7 @@ public class LifeMatrix extends Card {
                 true,
                 "{4}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.MATRIX, 1),
+                        new PutCountersEffect(CounterType.MATRIX, 1),
                         new GrantActivatedAbilityEffect(
                                 regenerationAbility,
                                 Subjects.target(),

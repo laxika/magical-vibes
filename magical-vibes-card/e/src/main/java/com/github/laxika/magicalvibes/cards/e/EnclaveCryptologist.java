@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class EnclaveCryptologist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(PutCountersEffect.onSelf(CounterType.LEVEL)),
                 "Level up {1}{U} ({1}{U}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

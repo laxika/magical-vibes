@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class CryogenRelic extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}",
-                List.of(new SacrificeSelfCost(), new PutCounterOnTargetPermanentEffect(CounterType.STUN)),
+                List.of(new SacrificeSelfCost(), new PutCountersEffect(CounterType.STUN)),
                 "{1}{U}, Sacrifice Cryogen Relic: Put a stun counter on up to one target tapped creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

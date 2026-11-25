@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -29,7 +29,7 @@ public class ThatWhichWasTaken extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.DIVINITY)),
+                List.of(new PutCountersEffect(CounterType.DIVINITY)),
                 "{4}, {T}: Put a divinity counter on target permanent other than That Which Was Taken.",
                 new PermanentPredicateTargetFilter(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),

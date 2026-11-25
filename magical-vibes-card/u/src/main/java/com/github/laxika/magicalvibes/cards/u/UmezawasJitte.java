@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class UmezawasJitte extends Card {
 
     public UmezawasJitte() {
         addTrigger(Triggers.equippedCreatureDealsCombatDamage(),
-                new PutCountersOnSelfEffect(CounterType.CHARGE, 2));
+                PutCountersEffect.onSelf(CounterType.CHARGE, 2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

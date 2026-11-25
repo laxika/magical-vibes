@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -37,7 +37,7 @@ public class ImmardTheStormcleaver extends Card {
         var counterMode = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a charge counter on Immard",
-                        new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                        PutCountersEffect.onSelf(CounterType.CHARGE)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove a charge counter from Immard",
                         List.of(

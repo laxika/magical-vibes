@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -102,7 +102,7 @@ class TargetPolarityGuardTest {
                 CounterType.CHARGE, TargetPolarity.NEUTRAL);
         expected.forEach((counterType, polarity) ->
                 assertThat(classifier.classify(gd, SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(counterType, 2),
+                        new PutCountersEffect(counterType, 2),
                         new ConditionalEffect(new HappenedThisWay(StepKind.PUT_COUNTERS),
                                 new QueueReflexiveAbilityEffect(ReturnToHandEffect.target()))), aiPlayerId))
                         .as("initial %s counters, independently targeted reflexive removal", counterType)

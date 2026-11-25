@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -22,7 +23,7 @@ public class KorvoldFaeCursedKing extends Card {
             new SacrificePermanentsEffect(1, new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()), Subjects.you());
 
     private static final SequenceEffect SACRIFICE_TRIGGER = SequenceEffect.of(
-            new PutCountersOnSourceEffect(1, 1, 1),
+            PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
             new DrawCardEffect());
 
     public KorvoldFaeCursedKing() {

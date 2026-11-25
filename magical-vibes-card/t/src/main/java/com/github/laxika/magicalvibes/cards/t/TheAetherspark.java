@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeAttackedWhileAttachedToCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,13 +24,13 @@ public class TheAetherspark extends Card {
         addStaticEffect(new CantBeAttackedWhileAttachedToCreatureEffect());
         addTrigger(Triggers.equippedCreatureDealsCombatDamage(),
                 TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
-                new PutCountersOnSelfEffect(CounterType.LOYALTY, new EventValue()));
+                PutCountersEffect.onSelf(CounterType.LOYALTY, new EventValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(
                         new AttachSourceEquipmentToTargetCreatureEffect(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)
                 ),
                 "+1: Attach The Aetherspark to up to one target creature you control. Put a +1/+1 counter on that creature.",
                 TargetFilters.creatureYouControl(),

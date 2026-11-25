@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ public class BeornTheFierce extends Card {
 
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.TRAMPLE),
+                        new PutCountersEffect(CounterType.TRAMPLE),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.BEAR),
                         new ConditionalEffect(
                                 new ControlsPermanentCount(3,

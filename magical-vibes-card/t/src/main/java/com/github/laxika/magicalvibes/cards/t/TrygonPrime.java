@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +20,7 @@ public class TrygonPrime extends Card {
 
     public TrygonPrime() {
 
-        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        var putCounterOnTargetPermanent = new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE);
         var makeCreatureUnblockable = new MakeCreatureUnblockableEffect();
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -34,7 +33,7 @@ public class TrygonPrime extends Card {
                 .bindEffect(putCounterOnTargetPermanent)
                 .bindEffect(makeCreatureUnblockable);
         addTrigger(Triggers.attacks(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 putCounterOnTargetPermanent,
                 makeCreatureUnblockable);
     }

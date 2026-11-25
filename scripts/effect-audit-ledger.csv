@@ -6774,3 +6774,6 @@ PerpetuallyBoostCardEffect,survivor,9,"defect run D23: absorbs PerpetuallyBoostT
 PerpetuallyGrantKeywordsToTriggeringCardEffect,survivor,9,"defect run D23: the triggering-card-id path (any zone) removed, cards required: Emperor Apatzec Intli IV cardsOf(triggering()); Jaheira, Lulu, Sworn to the Legion cardsOf(triggeringSpell()) (CR 400.7)"
 PerpetuallyGrantAbilitiesEffect,survivor,9,"defect run D23: absorbs PerpetuallyGrantAbilityToTriggeringCardEffect (Forgeborn Phoenix, Gitrog, Oglor)"
 AllowCastTargetCardFromGraveyardThisTurnEffect,survivor,9,"defect run D23: absorbs AllowCastSourceCardFromGraveyardThisTurnEffect (Skyclave Shade, Ichor Aberration)"
+PutCountersOnSelfEffect,absorbed,10,"step 10 run Counters: into PutCountersEffect.onSelf(...)"
+PutCountersOnSourceEffect,absorbed,10,"step 10 run Counters: into PutCountersEffect.onSelf(...)"
+PutCountersEffect,survivor,10,"step 10 run Counters: was PutCounterOnTargetPermanentEffect, renamed (owner's decision 2026-11-25); absorbs the two self records as source() with onSelf / onSelfCountingTargetPlayer / onSelfWithTargetPermanent"

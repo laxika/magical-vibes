@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class VulshokFactory extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.RED),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE)
+                        PutCountersEffect.onSelf(CounterType.CHARGE)
                 ),
                 "{T}: Add {R}. Put a charge counter on this artifact."
         ));

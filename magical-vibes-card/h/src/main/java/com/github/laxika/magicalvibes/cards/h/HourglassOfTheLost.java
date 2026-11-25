@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -30,7 +30,7 @@ public class HourglassOfTheLost extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.WHITE),
-                        new PutCountersOnSelfEffect(CounterType.TIME)
+                        PutCountersEffect.onSelf(CounterType.TIME)
                 ),
                 "{T}: Add {W}. Put a time counter on this artifact."
         ));

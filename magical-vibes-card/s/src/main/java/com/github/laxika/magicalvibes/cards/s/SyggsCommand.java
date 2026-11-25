@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -52,7 +52,7 @@ public class SyggsCommand extends Card {
                         "Tap target creature. Put a stun counter on it",
                         List.of(
                                 new TapPermanentsEffect(Subjects.target()),
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN)),
+                                new PutCountersEffect(CounterType.STUN)),
                         TargetFilters.creature())
         ), 2));
     }

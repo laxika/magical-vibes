@@ -29,7 +29,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // upkeep trigger goes on stack
-        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
+        harness.passBothPriorities(); // resolve PutCountersEffect.onSelf
 
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }

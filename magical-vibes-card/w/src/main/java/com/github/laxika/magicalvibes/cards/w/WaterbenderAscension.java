@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +22,7 @@ public class WaterbenderAscension extends Card {
     public WaterbenderAscension() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.QUEST),
+                        PutCountersEffect.onSelf(CounterType.QUEST),
                         new ConditionalEffect(new SourceCounterThreshold(4, CounterType.QUEST),
                                 new DrawCardEffect(1))));
 

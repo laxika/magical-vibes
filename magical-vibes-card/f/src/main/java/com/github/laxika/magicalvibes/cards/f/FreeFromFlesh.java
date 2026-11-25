@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONE", collectorNumber = "131")
@@ -13,6 +13,6 @@ public class FreeFromFlesh extends Card {
     public FreeFromFlesh() {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.OIL, 2));
+                .addSpellEffect(new PutCountersEffect(CounterType.OIL, 2));
     }
 }

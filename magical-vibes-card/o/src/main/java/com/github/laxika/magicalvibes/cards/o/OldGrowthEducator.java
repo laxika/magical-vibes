@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +17,6 @@ public class OldGrowthEducator extends Card {
         // Infusion — When this creature enters, put two +1/+1 counters on it if you gained life this turn.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new GainedLifeThisTurn(),
-                new PutCountersOnSourceEffect(1, 1, 2)));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)));
     }
 }

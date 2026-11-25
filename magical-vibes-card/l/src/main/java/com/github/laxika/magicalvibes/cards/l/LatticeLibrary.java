@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -45,7 +45,7 @@ public class LatticeLibrary extends Card {
                         Set.of(CardColor.GREEN, CardColor.BLUE),
                         List.of(CardSubtype.FRACTAL)),
                 new NoteAmountEffect(new CountersOnSource(CounterType.STUDY)),
-                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                new PutCountersEffect(Subjects.createdThisResolution(),
                         CounterType.PLUS_ONE_PLUS_ONE, AmountThisWay.noted()));
     }
 }

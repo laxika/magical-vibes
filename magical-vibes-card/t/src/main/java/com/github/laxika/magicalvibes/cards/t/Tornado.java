@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,7 +30,7 @@ public class Tornado extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}{G}",
                 List.of(PayLifeCost.perSourceCounter(3, CounterType.VELOCITY),
                         new DestroyTargetPermanentEffect(false),
-                        new PutCountersOnSelfEffect(CounterType.VELOCITY)),
+                        PutCountersEffect.onSelf(CounterType.VELOCITY)),
                 "{2}{G}, Pay 3 life for each velocity counter on this enchantment: Destroy target "
                         + "permanent and put a velocity counter on this enchantment. "
                         + "Activate only once each turn.",

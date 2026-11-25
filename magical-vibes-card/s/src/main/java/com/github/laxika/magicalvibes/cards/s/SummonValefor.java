@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +23,7 @@ public class SummonValefor extends Card {
         for (int chapter : Set.of(2, 3, 4)) {
             addTrigger(Triggers.chapter(chapter),
                     new TapPermanentsEffect(Subjects.target()),
-                    new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+                    new PutCountersEffect(CounterType.STUN));
             setSagaChapterTargetFilter(chapter, Set.of(TargetFilters.creature()));
         }
     }

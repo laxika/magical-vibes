@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -35,7 +35,7 @@ public class InscriptionOfAbundance extends Card {
         addSpellEffect(ChooseOneEffect.anyNumberWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on target creature",
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player gains X life, where X is the greatest power among creatures they control",

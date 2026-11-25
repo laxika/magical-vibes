@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -27,11 +27,11 @@ public class ReluctantRoleModel extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
                 new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption("Put a flying counter on this creature",
-                                        new PutCountersOnSelfEffect(CounterType.FLYING)),
+                                        PutCountersEffect.onSelf(CounterType.FLYING)),
                                 new ChooseOneEffect.ChooseOneOption("Put a lifelink counter on this creature",
-                                        new PutCountersOnSelfEffect(CounterType.LIFELINK)),
+                                        PutCountersEffect.onSelf(CounterType.LIFELINK)),
                                 new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on this creature",
-                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
+                                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))
                         )));
 
         var deathTrigger = target(TargetFilters.creature(), 0, 1);

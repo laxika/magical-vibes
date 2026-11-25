@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class MarkovDreadknight extends Card {
                 "{2}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ),
                 "{2}{B}, Discard a card: Put two +1/+1 counters on this creature."
         ));

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class JenaraAsuraOfWar extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",
-                List.of(new PutCountersOnSourceEffect(1, 1, 1)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{1}{W}: Put a +1/+1 counter on Jenara, Asura of War."
         ));
     }

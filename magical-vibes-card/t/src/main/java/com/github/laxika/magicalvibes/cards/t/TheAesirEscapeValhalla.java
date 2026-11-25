@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWi
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -25,7 +25,7 @@ public class TheAesirEscapeValhalla extends Card {
                 ExileGraveyardCardsEffect.fromOwnGraveyardWithSource(1, new CardIsPermanentPredicate()),
                 new GainLifeEffect(AmountThisWay.exiledManaValue())));
 
-        addTrigger(Triggers.chapter(2), new PutCounterOnTargetPermanentEffect(
+        addTrigger(Triggers.chapter(2), new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new TotalManaValueOfCardsExiledWithSource()));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));

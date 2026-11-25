@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class NadirKraken extends Card {
         addTrigger(Triggers.youDrawCard(),
                 new MayPayManaEffect("{1}",
                         SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                 new CreateTokenEffect("Tentacle", 1, 1, CardColor.BLUE,
                                         List.of(CardSubtype.TENTACLE), Set.of(), Set.of())),
                         "Pay {1} to put a +1/+1 counter on Nadir Kraken and create a 1/1 blue Tentacle creature token?"));

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -42,7 +42,7 @@ public class FaridEnterprisingSalvager extends Card {
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Put a +1/+1 counter on Farid. It gains menace until end of turn.",
                                         List.of(
-                                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                                 new GrantKeywordEffect(Keyword.MENACE, Subjects.source()))),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Goad target creature",

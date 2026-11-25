@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -26,7 +26,7 @@ public class AssureAssemble extends Card {
     public AssureAssemble() {
         TargetFilter creature = TargetFilters.creature();
         CardEffect assure = SequenceEffect.of(
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
         CardEffect assemble = new CreateTokenEffect(
                 3,

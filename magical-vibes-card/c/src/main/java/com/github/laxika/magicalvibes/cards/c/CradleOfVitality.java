@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class CradleOfVitality extends Card {
         // Whenever you gain life, you may pay {1}{W}. If you do, put a +1/+1 counter on target
         // creature for each 1 life you gained.
         addTrigger(Triggers.youGainLife(), new MayPayManaEffect("{1}{W}",
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE,
+                PutCountersEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE,
                         new EventValue(), new PermanentIsCreaturePredicate()),
                 "Pay {1}{W} to put a +1/+1 counter on target creature for each 1 life you gained?"));
     }

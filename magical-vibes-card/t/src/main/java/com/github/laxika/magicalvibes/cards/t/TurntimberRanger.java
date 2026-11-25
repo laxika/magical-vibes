@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +33,7 @@ public class TurntimberRanger extends Card {
                                 new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
                                         List.of(CardSubtype.WOLF), Set.of(), Set.of()),
                                 new ConditionalEffect(HappenedThisWay.created(),
-                                        new PutCountersOnSourceEffect(1, 1, 1))),
+                                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                         "Create a 2/2 green Wolf creature token?"));
     }
 }

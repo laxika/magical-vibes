@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -34,9 +34,9 @@ public class ExperimentalLabStaffRoom extends Card {
         addTrigger(Triggers.doorUnlocked(0),
                 SequenceEffect.of(
                         ManifestDreadEffect.forController(),
-                        new PutCounterOnTargetPermanentEffect(
+                        new PutCountersEffect(
                                 Subjects.thisWay(StepKind.MANIFEST), CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        new PutCounterOnTargetPermanentEffect(
+                        new PutCountersEffect(
                                 Subjects.thisWay(StepKind.MANIFEST), CounterType.TRAMPLE, 1)));
 
         addStaticEffect(new ConditionalEffect(
@@ -47,7 +47,7 @@ public class ExperimentalLabStaffRoom extends Card {
                                         new ChooseOneEffect.ChooseOneOption("Turn that creature face up",
                                                 TurnSourceFaceUpEffect.ofTriggeringPermanent()),
                                         new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on it",
-                                                new PutCounterOnTargetPermanentEffect(
+                                                new PutCountersEffect(
                                                         Subjects.triggering(),
                                                         CounterType.PLUS_ONE_PLUS_ONE))))),
                         Subjects.source())));

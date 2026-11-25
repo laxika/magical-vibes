@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * Puts counter(s) of the specified type on the permanents {@code subject} names: by default the targeted permanent
  * ("put a +1/+1 counter on target creature"), or a permanent named without targeting it:
+ * {@link Subjects#source()} ("put a +1/+1 counter on this creature": {@link #onSelf(CounterType)} and its overloads),
  * {@link Subjects#triggering()} ("put a +1/+1 counter on it", the permanent the trigger event was about),
  * {@link Subjects#attached()} ("put a +1/+1 counter on enchanted creature", "on equipped creature"),
  * {@link Subjects#returned()} ("put a +1/+1 counter on that creature" after returning it to the battlefield) or
@@ -44,32 +45,55 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * each creature they control", "each opponent may put a +1/+1 counter on each creature they control"), so the
  * replacements and triggers that ask who puts them ("if you would put", "if an opponent would put") see that
  * player.</p>
+ *
+ * <p>On {@link Subjects#source()} the effect keeps the self-targeting marker of an ability about its own source
+ * (an activated ability's target is its source), unless the ability declares a target the counters don't go on:
+ * {@code targetsPlayer} (a target player the amount counts for, {@link #onSelfCountingTargetPlayer}) or
+ * {@code declaresPermanentTarget} (a target permanent another part of the ability reads,
+ * {@link #onSelfWithTargetPermanent}). On a planar ability the source is the face-up plane or phenomenon.</p>
  */
-public record PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount,
+public record PutCountersEffect(CounterType counterType, DynamicAmount amount,
                                                 PermanentPredicate predicate,
                                                 PermanentPredicate targetPredicate,
                                                 boolean regenerateIfSurvives,
                                                 PermanentPredicate resolutionCondition,
                                                 boolean optionalTarget,
                                                 PermanentSubject subject,
-                                                boolean eachControllerPlaces)
+                                                boolean eachControllerPlaces,
+                                                boolean targetsPlayer,
+                                                boolean declaresPermanentTarget)
         implements CardEffect {
 
-    public PutCounterOnTargetPermanentEffect {
+    public PutCountersEffect {
         if (subject == null) {
             subject = Subjects.target();
-        } else if (subject instanceof PermanentSubject.Source) {
-            throw new IllegalArgumentException(
-                    "Counters on the ability's own source are PutCountersOnSelfEffect / PutCountersOnSourceEffect");
-        } else if (!(subject instanceof PermanentSubject.Target)
+        }
+        if ((targetsPlayer || declaresPermanentTarget) && !(subject instanceof PermanentSubject.Source)) {
+            throw new IllegalArgumentException("Only counters on the source declare a target they don't go on: "
+                    + subject);
+        }
+        if (!(subject instanceof PermanentSubject.Target)
                 && (predicate != null || targetPredicate != null || regenerateIfSurvives || optionalTarget)) {
             throw new IllegalArgumentException("A resolution-time choice, a target restriction, regeneration and an "
                     + "optional target need the target subject: " + subject);
         }
     }
 
+    /** A counter effect that declares no target besides its subject's. */
+    public PutCountersEffect(CounterType counterType, DynamicAmount amount,
+                             PermanentPredicate predicate,
+                             PermanentPredicate targetPredicate,
+                             boolean regenerateIfSurvives,
+                             PermanentPredicate resolutionCondition,
+                             boolean optionalTarget,
+                             PermanentSubject subject,
+                             boolean eachControllerPlaces) {
+        this(counterType, amount, predicate, targetPredicate, regenerateIfSurvives, resolutionCondition,
+                optionalTarget, subject, eachControllerPlaces, false, false);
+    }
+
     /** A counter effect whose counters the effect's controller puts. */
-    public PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount,
+    public PutCountersEffect(CounterType counterType, DynamicAmount amount,
                                              PermanentPredicate predicate,
                                              PermanentPredicate targetPredicate,
                                              boolean regenerateIfSurvives,
@@ -81,7 +105,7 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
     }
 
     /** The full constructor of a target or resolution-time-choice counter effect. */
-    public PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount,
+    public PutCountersEffect(CounterType counterType, DynamicAmount amount,
                                              PermanentPredicate predicate,
                                              PermanentPredicate targetPredicate,
                                              boolean regenerateIfSurvives,
@@ -92,17 +116,17 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
     }
 
     /** One counter of {@code counterType} on the permanent {@code subject} names. */
-    public PutCounterOnTargetPermanentEffect(PermanentSubject subject, CounterType counterType) {
+    public PutCountersEffect(PermanentSubject subject, CounterType counterType) {
         this(subject, counterType, new Fixed(1));
     }
 
     /** {@code count} counters of {@code counterType} on the permanent {@code subject} names. */
-    public PutCounterOnTargetPermanentEffect(PermanentSubject subject, CounterType counterType, int count) {
+    public PutCountersEffect(PermanentSubject subject, CounterType counterType, int count) {
         this(subject, counterType, new Fixed(count));
     }
 
     /** {@code amount} counters of {@code counterType} on the permanent {@code subject} names. */
-    public PutCounterOnTargetPermanentEffect(PermanentSubject subject, CounterType counterType, DynamicAmount amount) {
+    public PutCountersEffect(PermanentSubject subject, CounterType counterType, DynamicAmount amount) {
         this(subject, counterType, amount, null);
     }
 
@@ -110,25 +134,25 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
      * {@code amount} counters of {@code counterType} on the permanent {@code subject} names, only if it matches
      * {@code condition} as the effect resolves ("put a +1/+1 counter on equipped creature if it's blue").
      */
-    public PutCounterOnTargetPermanentEffect(PermanentSubject subject, CounterType counterType, DynamicAmount amount,
+    public PutCountersEffect(PermanentSubject subject, CounterType counterType, DynamicAmount amount,
                                              PermanentPredicate condition) {
         this(counterType, amount, null, null, false, condition, false, subject);
     }
 
-    public PutCounterOnTargetPermanentEffect(CounterType counterType) {
+    public PutCountersEffect(CounterType counterType) {
         this(counterType, new Fixed(1), null, null, false, null, false);
     }
 
-    public PutCounterOnTargetPermanentEffect(CounterType counterType, int count) {
+    public PutCountersEffect(CounterType counterType, int count) {
         this(counterType, new Fixed(count), null, null, false, null, false);
     }
 
-    public PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount) {
+    public PutCountersEffect(CounterType counterType, DynamicAmount amount) {
         this(counterType, amount, null, null, false, null, false);
     }
 
     /** Backward-compatible full constructor for a mandatory targeted counter effect. */
-    public PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount,
+    public PutCountersEffect(CounterType counterType, DynamicAmount amount,
                                               PermanentPredicate predicate,
                                               PermanentPredicate targetPredicate,
                                               boolean regenerateIfSurvives,
@@ -137,18 +161,54 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
                 resolutionCondition, false);
     }
 
-    public PutCounterOnTargetPermanentEffect(CounterType counterType, int count, PermanentPredicate predicate) {
+    public PutCountersEffect(CounterType counterType, int count, PermanentPredicate predicate) {
         this(counterType, new Fixed(count), predicate, null, false, null, false);
     }
 
-    public PutCounterOnTargetPermanentEffect(CounterType counterType, int count, boolean regenerateIfSurvives) {
+    public PutCountersEffect(CounterType counterType, int count, boolean regenerateIfSurvives) {
         this(counterType, new Fixed(count), null, null, regenerateIfSurvives, null, false);
     }
 
+    /** "Put a [kind] counter on this [permanent]": one counter on the ability's source. */
+    public static PutCountersEffect onSelf(CounterType counterType) {
+        return onSelf(counterType, new Fixed(1));
+    }
+
+    /** "Put N [kind] counters on this [permanent]". */
+    public static PutCountersEffect onSelf(CounterType counterType, int count) {
+        return onSelf(counterType, new Fixed(count));
+    }
+
+    /**
+     * "Put X [kind] counters on this [permanent]", {@code amount} evaluated as it resolves against the source
+     * ({@code XValue()} for "{X}: put X tower counters on this").
+     */
+    public static PutCountersEffect onSelf(CounterType counterType, DynamicAmount amount) {
+        return new PutCountersEffect(Subjects.source(), counterType, amount);
+    }
+
+    /**
+     * {@link #onSelf(CounterType, DynamicAmount)} in an ability that targets a player the amount counts for ("put a
+     * loyalty counter on this for each card in target opponent's hand").
+     */
+    public static PutCountersEffect onSelfCountingTargetPlayer(CounterType counterType, DynamicAmount amount) {
+        return new PutCountersEffect(counterType, amount, null, null, false, null, false, Subjects.source(), false,
+                true, false);
+    }
+
+    /**
+     * {@link #onSelf(CounterType)} in an ability that targets a permanent another part of it reads ("if target
+     * [permanent] has [quality], put a counter on this").
+     */
+    public static PutCountersEffect onSelfWithTargetPermanent(CounterType counterType) {
+        return new PutCountersEffect(counterType, new Fixed(1), null, null, false, null, false, Subjects.source(),
+                false, false, true);
+    }
+
     /** Targeting effect for "put counters on up to one target permanent" triggered abilities. */
-    public static PutCounterOnTargetPermanentEffect upToOneTarget(CounterType counterType,
+    public static PutCountersEffect upToOneTarget(CounterType counterType,
                                                                     DynamicAmount amount) {
-        return new PutCounterOnTargetPermanentEffect(counterType, amount, null, null, false, null, true);
+        return new PutCountersEffect(counterType, amount, null, null, false, null, true);
     }
 
     /**
@@ -156,26 +216,26 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
      * entered): not targeted, and placed wherever that permanent is as the ability resolves. Its controller orders
      * the counter replacements as for a target.
      */
-    public static PutCounterOnTargetPermanentEffect onTriggeringPermanent(CounterType counterType,
+    public static PutCountersEffect onTriggeringPermanent(CounterType counterType,
                                                                           DynamicAmount amount) {
-        return new PutCounterOnTargetPermanentEffect(Subjects.triggering(), counterType, amount);
+        return new PutCountersEffect(Subjects.triggering(), counterType, amount);
     }
 
     /** {@link #onTriggeringPermanent(CounterType, DynamicAmount)} with a fixed count. */
-    public static PutCounterOnTargetPermanentEffect onTriggeringPermanent(CounterType counterType, int count) {
+    public static PutCountersEffect onTriggeringPermanent(CounterType counterType, int count) {
         return onTriggeringPermanent(counterType, new Fixed(count));
     }
 
     /** Targeting effect whose legal targets are restricted to permanents matching {@code targetPredicate}. */
-    public static PutCounterOnTargetPermanentEffect withTargetRestriction(CounterType counterType, int count,
+    public static PutCountersEffect withTargetRestriction(CounterType counterType, int count,
                                                                           PermanentPredicate targetPredicate) {
-        return new PutCounterOnTargetPermanentEffect(counterType, new Fixed(count), null, targetPredicate, false, null, false);
+        return new PutCountersEffect(counterType, new Fixed(count), null, targetPredicate, false, null, false);
     }
 
     /** As {@link #withTargetRestriction(CounterType, int, PermanentPredicate)}, with a count evaluated as it resolves. */
-    public static PutCounterOnTargetPermanentEffect withTargetRestriction(CounterType counterType, DynamicAmount amount,
+    public static PutCountersEffect withTargetRestriction(CounterType counterType, DynamicAmount amount,
                                                                           PermanentPredicate targetPredicate) {
-        return new PutCounterOnTargetPermanentEffect(counterType, amount, null, targetPredicate, false, null, false);
+        return new PutCountersEffect(counterType, amount, null, targetPredicate, false, null, false);
     }
 
     /**
@@ -183,31 +243,40 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
      * at resolution ("put a +1/+1 counter on target creature you control if it's legendary" — Ancient
      * Animus). A non-matching permanent is still a legal target; the counters are simply not placed.
      */
-    public static PutCounterOnTargetPermanentEffect withResolutionCondition(CounterType counterType, int count,
+    public static PutCountersEffect withResolutionCondition(CounterType counterType, int count,
                                                                             PermanentPredicate resolutionCondition) {
-        return new PutCounterOnTargetPermanentEffect(counterType, new Fixed(count), null, null, false, resolutionCondition, false);
+        return new PutCountersEffect(counterType, new Fixed(count), null, null, false, resolutionCondition, false);
     }
 
     /** This effect on the permanent {@code subject} names, everything else kept. */
-    public PutCounterOnTargetPermanentEffect withSubject(PermanentSubject subject) {
-        return new PutCounterOnTargetPermanentEffect(counterType, amount, predicate, targetPredicate,
-                regenerateIfSurvives, resolutionCondition, optionalTarget, subject, eachControllerPlaces);
+    public PutCountersEffect withSubject(PermanentSubject subject) {
+        return new PutCountersEffect(counterType, amount, predicate, targetPredicate,
+                regenerateIfSurvives, resolutionCondition, optionalTarget, subject, eachControllerPlaces,
+                targetsPlayer, declaresPermanentTarget);
     }
 
     /**
      * This effect with each permanent's controller putting the counters on it ("target player puts a +1/+1 counter on
      * each creature they control"), for a non-target subject.
      */
-    public PutCounterOnTargetPermanentEffect placedByEachController() {
+    public PutCountersEffect placedByEachController() {
         if (subject instanceof PermanentSubject.Target) {
             throw new IllegalArgumentException("Counters put by each controller name their permanents without a target");
         }
-        return new PutCounterOnTargetPermanentEffect(counterType, amount, predicate, targetPredicate,
-                regenerateIfSurvives, resolutionCondition, optionalTarget, subject, true);
+        return new PutCountersEffect(counterType, amount, predicate, targetPredicate,
+                regenerateIfSurvives, resolutionCondition, optionalTarget, subject, true, targetsPlayer,
+                declaresPermanentTarget);
     }
 
     @Override
     public TargetSpec targetSpec() {
+        if (subject instanceof PermanentSubject.Source) {
+            if (targetsPlayer) {
+                return TargetSpec.benign(TargetPredicates.player());
+            }
+            return declaresPermanentTarget ? TargetSpec.benign(TargetPredicates.permanent())
+                    : new TargetSpec(null, false, null, true, 1);
+        }
         return predicate == null && subject.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate) : TargetSpec.NONE;
     }

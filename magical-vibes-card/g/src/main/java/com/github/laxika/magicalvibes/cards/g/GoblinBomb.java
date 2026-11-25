@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -25,7 +25,7 @@ public class GoblinBomb extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(
                         new FlipCoinWinEffect(
-                                new PutCountersOnSelfEffect(CounterType.FUSE),
+                                PutCountersEffect.onSelf(CounterType.FUSE),
                                 new RemoveCounterFromSourceEffect(CounterType.FUSE, 1)
                         ),
                         "Flip a coin for Goblin Bomb?"

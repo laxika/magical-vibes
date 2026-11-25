@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +22,7 @@ public class GreenGoblinNemesis extends Card {
     public GreenGoblinNemesis() {
         addTrigger(Triggers.youDiscardCard()
                 .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),

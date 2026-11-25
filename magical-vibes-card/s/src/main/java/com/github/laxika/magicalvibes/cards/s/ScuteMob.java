@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -20,6 +20,6 @@ public class ScuteMob extends Card {
     public ScuteMob() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(5, new PermanentIsLandPredicate())),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 4));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 4));
     }
 }

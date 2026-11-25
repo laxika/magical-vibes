@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class KrosDefenseContractor extends Card {
     public KrosDefenseContractor() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(CounterType.SHIELD, 1));
+                        new PutCountersEffect(CounterType.SHIELD, 1));
 
         addTrigger(Triggers.youPutCountersOnCreatureYouDontControl(),
                 new TapPermanentsEffect(Subjects.triggering()),

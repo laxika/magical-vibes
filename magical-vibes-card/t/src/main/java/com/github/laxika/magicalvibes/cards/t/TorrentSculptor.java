@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -34,8 +34,7 @@ public class TorrentSculptor extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
                         ExileUpToOneCardFromGraveyardEffect.oneMatching(instantOrSorcery()).from(Subjects.you()),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                                new HalvedRoundedUp(AmountThisWay.exiledManaValue()))));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new HalvedRoundedUp(AmountThisWay.exiledManaValue()))));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Torrent Sculptor", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Flamethrower Sonata",

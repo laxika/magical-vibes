@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class ZimoneInfiniteAnalyst extends Card {
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardHasXInManaCostPredicate()).nthThisTurn(1),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

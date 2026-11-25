@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,6 +28,6 @@ public class FinFangFoom extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsLandPredicate())))),
                 new CopyTriggeringSpellEffect(),
-                new PutCountersOnSourceEffect(1, 1, 2));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,8 +24,7 @@ public class ParadoxZone extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.GROWTH, new Fixed(1)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.GROWTH,
-                        new CountersOnSource(CounterType.GROWTH)),
+                PutCountersEffect.onSelf(CounterType.GROWTH, new CountersOnSource(CounterType.GROWTH)),
                 new CreateXTokenWithXCountersEffect(
                         "Fractal", 0, 0,
                         CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),

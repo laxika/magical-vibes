@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -35,7 +35,7 @@ public class KenkuArtificer extends Card {
         target(new PermanentPredicateTargetFilter(noncreatureArtifact,
                 "Target must be a noncreature artifact"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                        PutCountersEffect.withTargetRestriction(
                                 CounterType.PLUS_ONE_PLUS_ONE, 3, noncreatureArtifact),
                         new AnimatePermanentsEffect(
                                 new Fixed(0), new Fixed(0), List.of(CardSubtype.HOMUNCULUS),

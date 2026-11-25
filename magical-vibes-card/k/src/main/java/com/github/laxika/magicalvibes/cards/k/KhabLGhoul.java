@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KhabLGhoul extends Card {
 
     public KhabLGhoul() {
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new PutCountersOnSelfEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
     }
 }

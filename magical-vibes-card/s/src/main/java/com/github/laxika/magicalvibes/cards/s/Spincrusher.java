@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ import java.util.List;
 public class Spincrusher extends Card {
 
     public Spincrusher() {
-        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

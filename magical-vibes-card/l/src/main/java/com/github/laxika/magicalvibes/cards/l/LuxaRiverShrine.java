@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class LuxaRiverShrine extends Card {
                 "{1}",
                 List.of(
                         new GainLifeEffect(1),
-                        new PutCountersOnSelfEffect(CounterType.BRICK)
+                        PutCountersEffect.onSelf(CounterType.BRICK)
                 ),
                 "{1}, {T}: You gain 1 life. Put a brick counter on Luxa River Shrine."
         ));

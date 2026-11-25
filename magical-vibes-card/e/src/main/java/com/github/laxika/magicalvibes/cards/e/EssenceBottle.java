@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class EssenceBottle extends Card {
         // {3}, {T}: Put an elixir counter on Essence Bottle.
         addActivatedAbility(new ActivatedAbility(
                 true, "{3}",
-                List.of(new PutCountersOnSelfEffect(CounterType.ELIXIR, 1)),
+                List.of(PutCountersEffect.onSelf(CounterType.ELIXIR, 1)),
                 "{3}, {T}: Put an elixir counter on Essence Bottle."
         ));
 

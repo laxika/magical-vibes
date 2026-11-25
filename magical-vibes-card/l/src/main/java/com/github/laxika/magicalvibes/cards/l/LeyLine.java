@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,7 +20,7 @@ public class LeyLine extends Card {
                 "Target must be a creature.",
                 true
         )).addTrigger(Triggers.upkeep(ActivePlayer.ANY), new MayEffect(
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 "Put a +1/+1 counter on target creature?",
                 null,
                 MayChoicePlayer.ACTIVE_PLAYER

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,7 +32,7 @@ public class AscendantSpirit extends Card {
 
         addActivatedAbility(new ActivatedAbility(false, "{S}{S}{S}", List.of(
                 new ConditionalEffect(new SourceHasSubtype(CardSubtype.WARRIOR), SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.FLYING),
+                        PutCountersEffect.onSelf(CounterType.FLYING),
                         new BecomeCreatureTypeWithBasePowerToughnessEffect(4, 4, CardSubtype.ANGEL),
                         new GrantSubtypeEffect(CardSubtype.SPIRIT, Subjects.source(), true),
                         new GrantSubtypeEffect(CardSubtype.WARRIOR, Subjects.source()),
@@ -42,7 +42,7 @@ public class AscendantSpirit extends Card {
 
         addActivatedAbility(new ActivatedAbility(false, "{S}{S}{S}{S}", List.of(
                 new ConditionalEffect(new SourceHasSubtype(CardSubtype.ANGEL), SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new DrawCardEffect()), com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT,
                                 false, Subjects.source())

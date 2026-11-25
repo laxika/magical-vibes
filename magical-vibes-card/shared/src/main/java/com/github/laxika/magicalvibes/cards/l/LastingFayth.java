@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -19,7 +19,7 @@ public class LastingFayth extends Card {
     public LastingFayth() {
         addSpellEffect(SequenceEffect.of(
                 new CreateTokenEffect("Hero", 1, 1, null, List.of(CardSubtype.HERO), Set.of(), Set.of()),
-                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                new PutCountersEffect(Subjects.createdThisResolution(),
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER))));
     }

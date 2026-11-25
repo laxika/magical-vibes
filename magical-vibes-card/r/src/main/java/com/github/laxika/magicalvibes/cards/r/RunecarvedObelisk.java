@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SeekHighestManaValueCardEffect;
 
@@ -23,7 +23,7 @@ public class RunecarvedObelisk extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.COLORLESS, 2),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE, 2)
+                        PutCountersEffect.onSelf(CounterType.CHARGE, 2)
                 ),
                 "{T}: Add {C}{C}. Put two charge counters on Runecarved Obelisk."
         ));

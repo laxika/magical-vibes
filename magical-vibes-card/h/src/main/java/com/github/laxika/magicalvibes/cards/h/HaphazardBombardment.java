@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -34,7 +34,7 @@ public class HaphazardBombardment extends Card {
                         Subjects.controlledBy(Subjects.eachOpponent(),
                                 new PermanentNotPredicate(new PermanentIsEnchantmentPredicate())),
                         "four nonenchantment permanents you don't control"),
-                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.AIM));
+                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.AIM));
 
         // "At the beginning of your end step, if two or more permanents you don't control
         // have an aim counter on them, destroy one of those permanents at random."

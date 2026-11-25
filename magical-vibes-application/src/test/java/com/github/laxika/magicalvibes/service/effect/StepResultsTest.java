@@ -47,8 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -829,7 +828,7 @@ class StepResultsTest extends BaseCardTest {
 
             StackEntry entry = resolve(player1, null, null,
                     new ManifestTopCardEffect(),
-                    new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.MANIFEST),
+                    new PutCountersEffect(Subjects.thisWay(StepKind.MANIFEST),
                             CounterType.PLUS_ONE_PLUS_ONE));
 
             UUID manifestedId = entry.getResolutionResults().outcome(StepKind.MANIFEST).objectIds().getFirst();
@@ -849,7 +848,7 @@ class StepResultsTest extends BaseCardTest {
 
             StackEntry entry = resolve(player1, null, null,
                     new ManifestTopCardEffect(),
-                    new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.MANIFEST),
+                    new PutCountersEffect(Subjects.thisWay(StepKind.MANIFEST),
                             CounterType.PLUS_ONE_PLUS_ONE));
 
             assertThat(entry.getResolutionResults().outcome(StepKind.MANIFEST).happened()).isFalse();
@@ -994,7 +993,7 @@ class StepResultsTest extends BaseCardTest {
 
             StackEntry entry = resolve(player1, null, ranger.getId(),
                     new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN, List.of(CardSubtype.WOLF), Set.of(), Set.of()),
-                    ifDone(StepKind.CREATE_TOKEN, new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                    ifDone(StepKind.CREATE_TOKEN, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
 
             assertThat(entry.getResolutionResults().outcome(StepKind.CREATE_TOKEN).amount()).isEqualTo(1);
             assertThat(ranger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -1129,7 +1128,7 @@ class StepResultsTest extends BaseCardTest {
             Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
             StackEntry entry = resolve(player1, bears.getId(), null,
-                    new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                    new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                     new GainLifeEffect(new AmountThisWay(StepKind.PUT_COUNTERS)));
 
             assertThat(entry.getResolutionResults().outcome(StepKind.PUT_COUNTERS).objectIds())

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -23,7 +23,7 @@ public class MaelstromDjinn extends Card {
     public MaelstromDjinn() {
         addMorph("{2}{U}");
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                new PutCountersOnSelfEffect(CounterType.TIME, 2),
+                PutCountersEffect.onSelf(CounterType.TIME, 2),
                 new GrantKeywordEffect(Keyword.VANISHING, Subjects.source(), Duration.PERMANENT),
                 new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),

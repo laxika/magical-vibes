@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -47,7 +47,7 @@ public class PrimalAmulet extends Card {
         // and transform it.
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.CHARGE),
+                        PutCountersEffect.onSelf(CounterType.CHARGE),
                         new ConditionalEffect(new SourceCounterThreshold(4, CounterType.CHARGE), new MayEffect(
                                 SequenceEffect.of(
                                         new RemoveAllCountersEffect(CounterType.CHARGE),

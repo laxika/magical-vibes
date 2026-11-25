@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -19,8 +19,8 @@ public class DonaldBlakeGuiseOfThor extends Card {
                 false,
                 "{4}{W}{W}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        new PutCountersOnSelfEffect(CounterType.FLYING),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        PutCountersEffect.onSelf(CounterType.FLYING),
                         new GrantSubtypeEffect(CardSubtype.GOD, Subjects.source(), true),
                         new GrantSubtypeEffect(CardSubtype.WARRIOR, Subjects.source()),
                         new GrantSubtypeEffect(CardSubtype.HERO, Subjects.source())

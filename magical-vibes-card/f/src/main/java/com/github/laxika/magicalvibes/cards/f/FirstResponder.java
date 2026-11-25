@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -31,8 +31,7 @@ public class FirstResponder extends Card {
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                         )), "another creature"),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                                new AmountThisWay(StepKind.RETURN, AmountThisWay.Stat.POWER))),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new AmountThisWay(StepKind.RETURN, AmountThisWay.Stat.POWER))),
                 "Return another creature you control to its owner's hand?"));
     }
 }

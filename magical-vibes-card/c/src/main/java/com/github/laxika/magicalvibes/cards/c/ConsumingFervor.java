@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,6 +22,6 @@ public class ConsumingFervor extends Card {
 
         // ...and has "At the beginning of your upkeep, put a -1/-1 counter on this creature."
         .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                new PutCountersOnSelfEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)), Subjects.attachedCreature()));
+                PutCountersEffect.onSelf(CounterType.MINUS_ONE_MINUS_ONE, 1)), Subjects.attachedCreature()));
     }
 }

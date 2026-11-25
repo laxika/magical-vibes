@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +17,7 @@ public class LightningReaver extends Card {
         // Haste and fear are keywords auto-loaded from Scryfall.
 
         // Whenever this creature deals combat damage to a player, put a charge counter on it.
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new PutCountersOnSelfEffect(CounterType.CHARGE));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), PutCountersEffect.onSelf(CounterType.CHARGE));
 
         // At the beginning of your end step, this creature deals damage equal to the number of
         // charge counters on it to each opponent.

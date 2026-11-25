@@ -882,6 +882,8 @@ entwine with two modes (P09).
 - ~~`PermanentIsDoubleFacedPredicate` counts meld cards, which aren't double-faced cards (CR 712.1, 713.1c). Fold run 15b. Sure, low.~~ Fixed in defect run D22.
 - ~~`PutCardToBattlefieldThenEffect`'s then-effect path sets the entry's target id to the put permanent (Spelunking, Strefan, Iron Man). Fold run 15b. Sure of the code, harmless today.~~ Not a defect today (defect run D22): Strefan reads target(); no user's entry has a target of its own.
 - ~~`BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` (Absorbing Man, Crystalline Resonance, Volrath; unaudited) duplicates `CopyExceptions`: a fold candidate. Fold run 17b. Fairly sure.~~ Folded in fold run 17c.
+- The spore-counter cards (the Thallids, Sporoloth Ancient, Fungal Bloom, Thelon of Havenwood, Propagator Primordium) use `CounterType.FUNGUS`, also the real fungus counters of Sporogenesis and Mindbender Spores, while Thallid Shell-Dweller uses `SPORE`: Thelon counts fungus counters as spore counters and Sporoloth's granted "remove two spore counters" can't use Shell-Dweller's (CR 122.1). Step 10 run Counters. Sure of the code.
+- Voracious Brood: "whenever one or more creature cards are put into your graveyard from anywhere, put that many +1/+1 counters" is one trigger per card outside the library path, not one per event (CR 603.2c). Step 10 run Counters. Fairly sure, minor.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

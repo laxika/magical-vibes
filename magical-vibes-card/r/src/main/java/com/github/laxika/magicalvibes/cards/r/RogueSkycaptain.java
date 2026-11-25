@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PayPerCounterOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -24,7 +24,7 @@ public class RogueSkycaptain extends Card {
         // and an opponent gains control of it. One sequence, so the new counter lands before the
         // payment is sized.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.WAGE),
+                PutCountersEffect.onSelf(CounterType.WAGE),
                 new PayPerCounterOrElseEffect(CounterType.WAGE, "{2}", List.of(
                         new RemoveAllCountersEffect(CounterType.WAGE),
                         new OpponentGainsControlOfSourceCreatureEffect(Duration.PERMANENT)

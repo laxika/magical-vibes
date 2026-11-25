@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDrawStepTriggerWhileSourceTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -36,7 +36,7 @@ public class GiantOyster extends Card {
                         new TapPermanentsEffect(Subjects.target()),
                         DoesntUntapEffect.targetWhileSourceTapped(),
                         new RegisterDelayedDrawStepTriggerWhileSourceTappedEffect(
-                                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
+                                new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
                         RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesOrUntaps(Subjects.target(),
                                 new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE,
                                         Subjects.triggering()))

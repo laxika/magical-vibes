@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,7 +32,7 @@ public class TeoSpiritedGlider extends Card {
                         new DrawCardEffect(1),
                         new DiscardCardThenEffect(
                                 null,
-                                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                PutCountersEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),

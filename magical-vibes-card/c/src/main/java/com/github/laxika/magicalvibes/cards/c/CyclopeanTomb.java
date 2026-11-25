@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterCyclopeanTombUpkeepCleanupEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberMireCounterLandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,7 +36,7 @@ public class CyclopeanTomb extends Card {
                 true,
                 "{2}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.MIRE),
+                        new PutCountersEffect(CounterType.MIRE),
                         new RememberMireCounterLandEffect(),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.SWAMP, CounterType.MIRE, true)
                 ),

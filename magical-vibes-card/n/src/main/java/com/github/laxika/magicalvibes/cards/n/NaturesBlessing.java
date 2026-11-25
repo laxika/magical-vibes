@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -29,7 +29,7 @@ public class NaturesBlessing extends Card {
                 List.of(new DiscardCardTypeCost(null, null),
                         new ChooseOneForTargetCreatureEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on it",
-                                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                                 new ChooseOneEffect.ChooseOneOption("It gains banding",
                                         grant(Keyword.BANDING)),
                                 new ChooseOneEffect.ChooseOneOption("It gains first strike",

@@ -59,7 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -283,7 +283,7 @@ class TriggeredAbilityStackServiceTest {
     void powerCountersCarryTheDyingCreature() {
         Card card = createCreature("Galuf's target", 3, 2);
         Permanent perm = new Permanent(card);
-        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourcePower(), null,
+        var effect = new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourcePower(), null,
                 new PermanentIsCreaturePredicate(), false, null, true);
         var ctx = dies(card, PLAYER1_ID, perm);
 
@@ -477,7 +477,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Optional death trigger", 2, 2);
         CardEffect effect = SequenceEffect.of(
                 new MayEffect(new DrawCardEffect(1), "Draw?"),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
         card.target(0, 1).addTrigger(Triggers.dies(ObjectRelation.THIS), effect);
         Permanent permanent = new Permanent(card);
 
@@ -507,7 +507,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("Targeting effect waits at the door for its target")
     void targetingWaitsForItsTarget() {
         Card card = createCreature("Targeting Dude", 3, 3);
-        var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
+        var effect = new PutCountersEffect(CounterType.CHARGE);
         Permanent perm = new Permanent(card);
         var ctx = dies(card, PLAYER1_ID, perm);
 
@@ -612,7 +612,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Counter Captain", 1, 1);
         Permanent perm = new Permanent(card);
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
+        var effect = new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                 new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE));
         var ctx = leaves(perm, PLAYER1_ID);
 
@@ -987,7 +987,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Erithizon", 4, 4);
         card.setCombatTriggerTargetChosenByDefendingPlayer(true);
         Permanent creature = new Permanent(card);
-        var ability = new TriggeredAbility(Triggers.attacks(), new PutCounterOnTargetPermanentEffect(
+        var ability = new TriggeredAbility(Triggers.attacks(), new PutCountersEffect(
                 com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE));
 
         stackService.put(gd, new TriggeredAbilityRequest(ability, card, creature, PLAYER1_ID, "attack",
@@ -1025,7 +1025,7 @@ class TriggeredAbilityStackServiceTest {
     void groupsDecideHowTargetsAreChosen() {
         Card twoGroups = createCreature("Two groups", 2, 2);
         CardEffect destroy = new DealDamageToTargetCreatureEffect(1);
-        CardEffect boost = new PutCounterOnTargetPermanentEffect(
+        CardEffect boost = new PutCountersEffect(
                 com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE);
         twoGroups.target(1, 1).bindEffect(destroy);
         twoGroups.target(1, 1).bindEffect(boost);
@@ -1379,7 +1379,7 @@ class TriggeredAbilityStackServiceTest {
     void chapterTargetFilterParksForTheChapterChoice() {
         Card card = createCreature("Saga", 0, 0);
         Permanent saga = new Permanent(card);
-        var counter = new PutCounterOnTargetPermanentEffect(CounterType.SHIELD);
+        var counter = new PutCountersEffect(CounterType.SHIELD);
         var filter = com.github.laxika.magicalvibes.model.filter.TargetFilters.creatureYouControl();
         var chapter = new TriggeredAbility(List.of(new com.github.laxika.magicalvibes.model.trigger.TriggerCondition(
                 Triggers.chapter(2))), TriggerOptions.DEFAULT,

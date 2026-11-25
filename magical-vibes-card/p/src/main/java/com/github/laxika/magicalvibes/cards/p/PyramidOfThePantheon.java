@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class PyramidOfThePantheon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new AwardAnyColorManaEffect(), new PutCountersOnSelfEffect(CounterType.BRICK)),
+                List.of(new AwardAnyColorManaEffect(), PutCountersEffect.onSelf(CounterType.BRICK)),
                 "{2}, {T}: Add one mana of any color. Put a brick counter on this artifact."
         ));
 

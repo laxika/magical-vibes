@@ -27,7 +27,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C as a generic "unless" record in step 10, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b, 50c (each in Findings; the fold queue marks its rows). Step-9 fold queue closed with fold run 50c (no step-9 rows left; blocked-other rows stay for their missing pieces). Defect runs D11 to D22 (one per group) and D23 (the owner's perpetual "it" decision) done 2026-11-25; the defect queue keeps the lines left, each with what it needs. Next: step 10 (needs the owner's sign-off per verb). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), MayPayManaEffect's unpayable prompt (D17 L34), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source.  |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Run Counters done 2026-11-25 (`PutCountersEffect`, the target record renamed, absorbs the two self records). Next: remove counters, then Damage, then "unless" (owner's order) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,002 / 2,428 (after fold run D23) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,000 / 2,426 (after step 10 run Counters) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -158,8 +158,9 @@ first's result. Rules:
 
 ### Survivors keep their names
 
-Until step 10 a family folds into its most used record, which gains a component and keeps its existing constructors as overloads,
-so a fold touches the absorbed classes' cards and not the survivor's. Card call sites of a deleted class or enum are rewritten by a
+A family folds into its most used record, which gains a component and keeps its existing constructors as overloads,
+so a fold touches the absorbed classes' cards and not the survivor's. In step 10 the survivor may take a neutral verb name instead
+(owner's decision 2026-11-25: `PutCountersEffect`); its own cards then change only the class name. Card call sites of a deleted class or enum are rewritten by a
 scratch script the run writes, runs and deletes.
 
 ### Not in this plan
@@ -293,8 +294,7 @@ High churn, low behaviour risk. After steps 5 and 6 the high-use siblings of a v
 their subject component and constructor shapes: `BoostSelfEffect` (1,079 cards),
 `BoostTargetCreatureEffect` (1,356), `BoostAllOwnCreaturesEffect` (418), `BoostAllCreaturesEffect`
 (195); `DealDamageToAnyTargetEffect` (740), `DealDamageToTargetCreatureEffect` (569),
-`DealDamageToTargetPlayerOrPlaneswalkerEffect` (148); `PutCountersOnSelfEffect` (988),
-`PutCounterOnTargetPermanentEffect` (973). One run merges one verb into one record with static
+`DealDamageToTargetPlayerOrPlaneswalkerEffect` (148); the counters pair (done: run Counters, `PutCountersEffect`). One run merges one verb into one record with static
 factories that read like the old names, rewrites every card with a script, and deletes the others.
 
 Before each run, state the verb, the card-file count and the factory names, and ask. After each run,
@@ -754,7 +754,12 @@ Delayed and global triggers:
 
 - `TemptingOfferEffect.of(prompt, players -> payload)`: "each opponent may [X]. For each opponent who does, [X for you]": all decide in turn order, then the payload over `acceptedPlayers()`, then `RepeatEffect(n)` over `you()` (fold run 19c).
 - `CreateTokenCopyOfTargetPermanentEffect.forController(PlayerSubject)`: each named player creates, owns and controls the copies (CR 111.2), with no Esix-style offer for them (Glimmervoid Basin, Echocasting Symposium, Fractured Identity, Tempt with Reflections; fold run 19c).
-- `PutCounterOnTargetPermanentEffect.placedByEachController()`: "target player puts / each opponent may put a counter on each creature they control"; the permanent's controller is the placer (Shadrix, Tempt with Glory; fold run 19c).
+- `PutCountersEffect.placedByEachController()`: "target player puts / each opponent may put a counter on each creature they control"; the permanent's controller is the placer (Shadrix, Tempt with Glory; fold run 19c).
+- `PutCountersEffect.onSelf(kind[, int | DynamicAmount])`, `.onSelfCountingTargetPlayer(kind, amount)`, `.onSelfWithTargetPermanent(kind)`:
+  "put N [kind] counters on this" (`Subjects.source()`, the self-targeting marker kept; a planar ability's face-up plane), through the
+  one placement: counter events, the CR 616.1 order, PUT_COUNTERS, the source snapshot refreshed. A `MayEffect` over it asks nothing when
+  the source can't have the counters, or is gone and an else follows (CR 608.2d); gone with no else, it still asks (Kresh). The mana-ability
+  path places it inline (Pyramid of the Pantheon) (step 10 run Counters).
 
 - `AddOnePlusOneCountersEffect(counterType, permanents, players, placedBy, Change)`, with `plusOne` / `twice` / `halfRoundedDown` / `plusOneForYou`, `.placedByYou()` / `.placedByAnOpponent()` / `.alsoOnPlayers()`, and `youControl([filter])` / `anyPermanent()` / `creatureOr(subtypes…)`: every static counter-placement replacement. A placement naming no placer is put by the affected controller; "this permanent" applies to its own entering counters (CR 614.12) (fold run 22).
 - `GameQueryService.placementReplacementApplies` / `placementAffects`: the one applicability judge for counter-placement replacements on every placement path, planes and player grants included (fold run 22).
@@ -1058,7 +1063,7 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `CantHaveCountersEffect(subject, counterType)` / `.ofKind(type)`: "can't have [kind] counters put on it" (null is every kind); read by `cantHaveCounters`, `cantHavePlusOnePlusOneCounters` and `cantHaveMinusOneMinusOneCounters` (fold run 24).
 - `DoubleCountersOnTargetPermanentEffect(type, controlledBy(...) | creaturesYouControl())`: "double the counters on each [permanent] you control", each placement through the shared pipeline (fold run 24).
 - `ControlledPermanentsEnterUntappedEffect(filter, PlayerSubject players)`, `.lands()`, `.forEveryPlayer(filter)`: every "[permanents] enter untapped", printed or as the upgrade of a `ConditionalReplacementEffect` (fold run 24).
-- `PutCounterOnTargetPermanentEffect(createdThisResolution() | returnedThisResolution(), …)`: "put counters on it / each of them" after a token or return step; a source-relative amount is noted first (`NoteAmountEffect` + `AmountThisWay.noted()`) (fold run 24).
+- `PutCountersEffect(createdThisResolution() | returnedThisResolution(), …)`: "put counters on it / each of them" after a token or return step; a source-relative amount is noted first (`NoteAmountEffect` + `AmountThisWay.noted()`) (fold run 24).
 
 - `RegisterDelayedStepTriggerEffect.aboutCardAtNext(...).ofThatPlayer(player)`: "at the beginning of their next upkeep" with `Triggers.upkeep(CHOSEN_PLAYER)`, that player's next step in any turn (Phytotitan: `Subjects.ownersOf(Subjects.sourceCard())`) (fold run 7b).
 - `ReturnTriggeringCardFromGraveyardToBattlefieldEffect(tapped, underController, counterType, DynamicAmount)`: a counter amount evaluated as it resolves; "with one fewer revival counter" is `NoteAmountEffect` then `AmountThisWay.noted()` in the delayed return (Nine-Lives Familiar, fold run 7b).
@@ -1091,7 +1096,7 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - Manifest dread is a MANIFEST step: the choice's answer records the manifested permanent, so "that creature" is `Subjects.thisWay(StepKind.MANIFEST)`.
 - `paidAsCost()` covers a spell's tap-cost permanents (`chosenCostPermanentIds`), and every copy carries them (`CopySupport.createCopyStackEntry`, CR 707.10).
 - `GrantSubtypeEffect(subtype, thisWay(kind))` as a one-shot: "it becomes a [subtype] in addition to its other types" after a choice (amass).
-- Amass = `ChoosePermanentsEffect.exactly(1, controlledBy(you(), Army), "an Army you control")` + `PutCounterOnTargetPermanentEffect(thisWay(CHOOSE), +1/+1, N)` + `GrantSubtypeEffect(subtype, thisWay(CHOOSE))`.
+- Amass = `ChoosePermanentsEffect.exactly(1, controlledBy(you(), Army), "an Army you control")` + `PutCountersEffect(thisWay(CHOOSE), +1/+1, N)` + `GrantSubtypeEffect(subtype, thisWay(CHOOSE))`.
 
 Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-24b/ledger-rows.csv.
 
@@ -1280,6 +1285,10 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
   (madness, discard / sacrifice / life-paid triggers), and pin today's behaviour (flashback, ward countering an ability, one
   test per ransom kind). Order: Counters, then Damage, then "unless"; Boost where it fits. The gift opponent stays deferred.
 
+- **2026-11-25, step 10 run Counters**: the survivor is renamed `PutCountersEffect` (step 10 survivors may take a neutral verb
+  name), its 1,137 cards keep their constructors; every `source()` counter `MayEffect` follows the source rule (CR 608.2d; Kresh still
+  asks); the 5-card target-player mass record waits for a mass-counters run; remove counters is the next run.
+
 ### The owner's open questions
 
 - **The gift opponent** (deferred by the owner 2026-11-25; CR 702.174a, `missing-features-to-do.md` entry 80): no gift opponent is recorded; every gift handler
@@ -1312,8 +1321,10 @@ there and updates them when it lands.
 - **Boost**: `BoostSelfEffect`, `BoostTargetCreatureEffect` (now with a subject), `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesEffect`;
   `BoostSelfEffect` reads amounts against the boosted permanent, `BoostTargetCreatureEffect` against the source, so the merged record
   needs that as a property of the subject or an explicit choice (5i). `BoostTargetPermanentEffect` (harmful, Vehicles) (5i).
-- **Counters**: `PutCountersOnSelfEffect` (988 cards) with `PutCountersOnSourceEffect` (370, its own P/T-modifier placement) (5e);
-  `RemoveCounterFromTargetPermanentEffect` with `RemoveCounterFromSourceEffect` (5f).
+- **Counters**: the put pair is done (run Counters, `PutCountersEffect`); left: `RemoveCounterFromTargetPermanentEffect` with
+  `RemoveCounterFromSourceEffect` (5f), and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
+  `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a
+  batched path in `PutCountersEffect` first (owner's decision 2026-11-25).
 - **Damage**: `DealDamageToTargetPermanentEffect` with the creature-or-planeswalker damage records (5g).
 - **Destroy**: `DestroyEachTargetPermanentEffect` and `DestroyAllPermanentsEffect` (5a).
 - **Tokens and conjure**: `CreateTokenCopyOfSourceEffect` (5l); the two multi-card battlefield conjure records kept apart in run 30
@@ -5801,6 +5812,66 @@ zone. `PerpetuallyRemoveKeywordEffect` has no card users.
 
 **For the next run.** The two card-swapping source grants onto the perpetual stores and `sourceObjectCard`; then step 10 can
 fold `PerpetuallyBoostSourceEffect` onto `toCards(sourceObjectCard())`.
+
+### Step 10, run Counters (2026-11-25)
+
+Put counters on one permanent, signed off by the owner on 2026-11-25 (decisions under Standing knowledge). The target record is
+renamed `PutCountersEffect` (handler `PutCountersEffectHandler`) and absorbs `PutCountersOnSelfEffect` and `PutCountersOnSourceEffect`
+as `Subjects.source()`: `onSelf(kind[, int | DynamicAmount])`, `onSelfCountingTargetPlayer` (Gideon, Champion of Justice; Sting),
+`onSelfWithTargetPermanent` (Super-Adaptoid). Ledger: 2 absorbed, 1 survivor (the rename). Ratchet 3,002 / 2,428 → 3,000 / 2,426.
+Nothing persists or serialises effect class names (no `@JsonTypeInfo`; frontend, networking, the inventory script name none).
+
+**Card rewrite.** 1,391 card files, 1,451 calls, by a scratch script (balanced parentheses, a table of shapes, loud failure on any
+other shape or leftover name; deleted): `onSelf` 1,448, `onSelfCountingTargetPlayer` 2, `onSelfWithTargetPermanent` 1; 7 local
+variable types, 1 unused import (Cool but Rude). The 1,137 survivor files changed only the name. Oracle text checked for all 1,391
+files (1,451 calls) with the card-info server's `get-card` (the MCP `get_card` implementation), back faces through their front card:
+1,366 calls matched kind, count and "this / it / its name" automatically, 85 by hand, the 155 "it"-only matches screened for another
+referent (23 read, all the source). Not checked: Experiment Five (MB1 73 is in no data feed; checked against its ability text) and
+Shadowheart's green specialize face (no Oracle data). Engine and AI sites (17) and 12 test files by hand; agent-docs and both skills
+name no deleted class.
+
+**Probe.** The self handler's `entry.getTargetId()` fallback made to throw, then 1,036 classes run (every self card, the Pay-X /
+pay-any-times / exile-sacrificed / end-of-combat / increment cards, the application and AI tests that build it): 12,267 tests, nobody
+hit it. `source()` stays strict.
+
+**Behaviour changes** (the old self-counter path was rules-wrong; failing-first tests, all seen failing on the old code):
+- The 382 former `PutCountersOnSourceEffect` cards now place through the shared placement: Knight of Wundagore sees the counter
+  (`JenaraAsuraOfWarTest`), "whenever counters are put on this creature" triggers (Danny Pink's grant, same class), the controller
+  orders Hardened Scales and Doubling Season (CR 616.1; Jenara, `ParagonOfModernityTest`), a later "that many" reads PUT_COUNTERS
+  (CR 608.2c) and a per-counter trigger sees each of two counters (CR 603.2c) (`SelfCounterPlacementTest`). Their log line is now
+  the shared one ("X puts a +1/+1 counter on Y").
+- A `MayEffect` over a source placement asks nothing when the source can't have the counters, or is gone and an else follows
+  (CR 608.2d), now for the former self record too: Kresh under Solemnity (`KreshTheBloodbraidedTest`). Fabricate's departed-source
+  check reads the merged record.
+- Dethrone (attack and the cloned second instance), the regeneration counters (Matopi Golem, Skeleton Scavengers), endure, increment,
+  Pyramid of the Pantheon's mana-ability counter and Black Widow build `onSelf`; Black Widow places through
+  `PermanentCounterSupport.placeCounterOnPermanent` (no prompt inside its may handler, the shared events now fire).
+- AI: `BoardEvaluator.growthThreatBonus` reads `source()` +1/+1 and -1/-1 with a fixed amount (the former self sliths now count);
+  `TargetPolarityClassifier` classifies a `source()` placement NEUTRAL (its name-table entry is gone).
+
+**Pins added first** (passed on the old code and after): Graypelt Hunter under Solemnity asks nothing. The plan's other pins
+existed (Kresh after Kresh left still asks; fabricate after the source left creates Servos; the 7 planes; Gideon; Sting; Super-
+Adaptoid; Oft-Nabbed Goat; Pyramid; Dack's Duplicate's second dethrone; Matopi Golem; Skeleton Scavengers; endure; increment).
+
+**Shared engine files that changed meaning.** `PutCountersEffect` (accepts `source()`, two target-declaring booleans valid only with
+it, `onSelf*` factories, self marker spec); `PutCountersEffectHandler` (source path: planar object, snapshot refresh;
+`beginReplacementOrderIfNeeded` deleted, its only caller gone); `MayEffectHandler` (one source rule for every `source()` counter
+may); `EffectResolutionService` (fabricate check on the merged record); `ActivatedAbilityExecutionService` (mana-ability path on
+`source()`); `BoardEvaluator`, `TargetPolarityClassifier`.
+
+**Tests run** (after the merge, XML of this run): 1,469 classes (1,389 rewritten-card classes incl. back faces under their front card, 40 survivor sample, the pins, the services, readers, AI, both ratchets), 16,066 tests, 0 failures. Compiled every module's main and test sources.
+
+**Seen, not changed** (in the defect queue):
+- The spore-counter cards use `CounterType.FUNGUS`, also Sporogenesis' and Mindbender Spores' real fungus counters; Thallid
+  Shell-Dweller uses `SPORE` (CR 122.1: Thelon counts fungus as spore, Sporoloth can't remove Shell-Dweller's). Sure of the code.
+- Voracious Brood's "whenever one or more creature cards are put into your graveyard from anywhere, put that many" is one trigger per
+  card outside the library path (CR 603.2c). Fairly sure, minor.
+
+**For the next run.** Remove counters, as the owner ordered: `RemoveCounterFromTargetPermanentEffect` and
+`RemoveCounterFromSourceEffect`. Not surveyed here; what this run saw: `MayEffectHandler` already pre-checks a leading
+`RemoveCounterFromSourceEffect` (`sourceHasCountersToRemove`, fold run 48b) and the source record already takes a subject
+(`RemoveCounterFromSourceEffect(thisWay(CHOOSE), kind)`, Chandra, Legacy of Fire), so whether they differ only in subject needs a read
+of both handlers. The mass placements wait for a batched path in `PutCountersEffect`.
 
 ## Prompt
 

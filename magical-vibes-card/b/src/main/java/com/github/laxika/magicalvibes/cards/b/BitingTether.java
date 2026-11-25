@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,6 +20,6 @@ public class BitingTether extends Card {
 
                 // At the beginning of your upkeep, put a -1/-1 counter on enchanted creature.
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.MINUS_ONE_MINUS_ONE));
+                        new PutCountersEffect(Subjects.attached(), CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

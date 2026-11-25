@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -31,7 +31,7 @@ public class SummonersSending extends Card {
                         new ConditionalEffect(HappenedThisWay.exiled(), CreateTokenEffect.whiteSpirit(1)),
                         new ConditionalEffect(
                                 HappenedThisWay.toACard(StepKind.EXILE, new CardMinManaValuePredicate(4)),
-                                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                                new PutCountersEffect(Subjects.createdThisResolution(),
                                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)))),
                 "Exile target creature card from a graveyard?"));
     }

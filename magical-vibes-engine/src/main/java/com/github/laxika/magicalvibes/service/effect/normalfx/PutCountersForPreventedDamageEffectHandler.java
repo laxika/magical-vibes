@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersForPreventedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PutCountersForPreventedDamageEffectHandler implements NormalEffectHandlerBean {
 
-    private final PutCounterOnTargetPermanentEffectHandler putCounterOnTargetPermanentEffectHandler;
+    private final PutCountersEffectHandler putCountersEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -25,8 +25,8 @@ public class PutCountersForPreventedDamageEffectHandler implements NormalEffectH
         var e = (PutCountersForPreventedDamageEffect) effect;
         int counters = gameData.takeSacredBoonTally(e.shieldId());
         if (counters > 0) {
-            putCounterOnTargetPermanentEffectHandler.resolve(gameData, entry,
-                    new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ZERO_PLUS_ONE, counters));
+            putCountersEffectHandler.resolve(gameData, entry,
+                    new PutCountersEffect(CounterType.PLUS_ZERO_PLUS_ONE, counters));
         }
     }
 }

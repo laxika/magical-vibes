@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -40,7 +40,7 @@ public class TurfWar extends Card {
         // the stack; with a player who controls no land it can target, the ability is removed (CR 603.3d).
         setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_PLAYER);
         target(TargetFilters.land(), 0, 99).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.CONTESTED));
+                new PutCountersEffect(CounterType.CONTESTED));
         addTrigger(Triggers.creatureDealsCombatDamageToYou(),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanent(CONTESTED_LAND)),
                 gainControlOfAContestedLandOf(Subjects.you()));

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
@@ -42,7 +42,7 @@ public class InvasionSubmersible extends Card {
                         new WaterbendCost(3),
                         new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
                                 Set.of(CardType.CREATURE), Subjects.source(), Duration.PERMANENT, null),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 3)
                 ),
                 "Waterbend {3}: This Vehicle becomes an artifact creature. Put three +1/+1 counters on it."
         ).withMaxActivationsPerGame(1).withExhaust());

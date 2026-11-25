@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,13 +31,13 @@ public class TaboraxHopesDemise extends Card {
         var cleric = new PermanentHasSubtypePredicate(CardSubtype.CLERIC);
         addTrigger(Triggers.nontokenCreatureDies(cleric, ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new PutCountersOnSourceEffect(1, 1, 1),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         new MayEffect(
                                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)),
                                 "Draw a card?")));
         addTrigger(Triggers.nontokenCreatureDies(
                         new PermanentNotPredicate(cleric),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSourceEffect(1, 1, 1));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

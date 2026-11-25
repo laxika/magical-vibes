@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.StormReading;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -22,7 +22,7 @@ public class GalvanicGiant extends Card {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardMinManaValuePredicate(5)),
                 new TapPermanentsEffect(Subjects.target()),
-                new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+                new PutCountersEffect(CounterType.STUN));
     }
 
     @Override

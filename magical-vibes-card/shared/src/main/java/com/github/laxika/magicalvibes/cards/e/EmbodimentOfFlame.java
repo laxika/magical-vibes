@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +15,7 @@ public class EmbodimentOfFlame extends Card {
 
     public EmbodimentOfFlame() {
         addTrigger(Triggers.instantOrSorceryYouControlDealsDamage(),
-                new PutCountersOnSelfEffect(CounterType.FLAME));
+                PutCountersEffect.onSelf(CounterType.FLAME));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

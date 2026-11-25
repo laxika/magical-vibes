@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -53,14 +52,14 @@ public class TezzeretCruelCaptain extends Card {
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate())));
 
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.LOYALTY));
+                PutCountersEffect.onSelf(CounterType.LOYALTY));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
                         new UntapPermanentsEffect(Subjects.target()),
-                        PutCounterOnTargetPermanentEffect.withResolutionCondition(
+                        PutCountersEffect.withResolutionCondition(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreature)),
                 "0: Untap target artifact or creature. If it's an artifact creature, put a +1/+1 counter on it.",
                 new PermanentPredicateTargetFilter(
@@ -90,7 +89,7 @@ public class TezzeretCruelCaptain extends Card {
                 -7,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                PutCountersEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 3, artifactYouControl),
                                 new ConditionalEffect(
                                         new TargetPermanentMatches(noncreatureArtifact),

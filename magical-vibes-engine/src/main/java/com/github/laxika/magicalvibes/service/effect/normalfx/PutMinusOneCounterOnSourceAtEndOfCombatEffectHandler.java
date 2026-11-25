@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneCounterOnSourceAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -40,7 +40,7 @@ public class PutMinusOneCounterOnSourceAtEndOfCombatEffectHandler implements Nor
         }
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), self.getId(), null,
-                new PutCountersOnSelfEffect(CounterType.MINUS_ONE_MINUS_ONE)));
+                PutCountersEffect.onSelf(CounterType.MINUS_ONE_MINUS_ONE)));
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " will get a -1/-1 counter at end of combat."));
     }
 }

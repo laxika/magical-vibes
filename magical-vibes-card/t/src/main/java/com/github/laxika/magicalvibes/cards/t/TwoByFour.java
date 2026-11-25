@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,12 +19,12 @@ public class TwoByFour extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a base power 4 counter on target creature",
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                        PutCountersEffect.withTargetRestriction(
                                 CounterType.BASE_POWER_FOUR, 1, new PermanentIsCreaturePredicate()),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a base toughness 4 counter on target creature",
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                        PutCountersEffect.withTargetRestriction(
                                 CounterType.BASE_TOUGHNESS_FOUR, 1, new PermanentIsCreaturePredicate()),
                         TargetFilters.creature())
         )));

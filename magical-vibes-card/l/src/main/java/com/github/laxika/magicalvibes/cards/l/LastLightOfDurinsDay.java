@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -39,7 +39,7 @@ public class LastLightOfDurinsDay extends Card {
                                 Triggers.LAND,
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
                         ObjectRelation.YOU_CONTROL),
-                SequenceEffect.of(new PutCountersOnSelfEffect(CounterType.QUEST), summonDragon));
+                SequenceEffect.of(PutCountersEffect.onSelf(CounterType.QUEST), summonDragon));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN))),

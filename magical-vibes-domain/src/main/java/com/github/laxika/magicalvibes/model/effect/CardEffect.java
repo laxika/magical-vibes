@@ -39,7 +39,7 @@ public interface CardEffect {
      *
      * <p>Two effects expose a targeting capability that a single {@link TargetSpec} cannot encode and
      * keep it on a dedicated record component instead: {@code ChangeColorTextEffect.canTargetSpell}
-     * (spell OR permanent) and {@code PutCounterOnTargetPermanentEffect.targetPredicate} (a targeting
+     * (spell OR permanent) and {@code PutCountersEffect.targetPredicate} (a targeting
      * restriction with no cast-time gate). Read those through
      * {@code EffectResolution.targetsSpellOnStack(effect)} / {@code EffectResolution.targetPredicateOf(effect)}
      * so the component is honoured.</p>

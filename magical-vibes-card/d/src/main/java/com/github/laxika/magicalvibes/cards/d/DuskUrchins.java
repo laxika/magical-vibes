@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class DuskUrchins extends Card {
         // Whenever this creature attacks or blocks, put a -1/-1 counter on it.
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
                 TriggerOptions.ONE_OR_MORE,
-                new PutCountersOnSourceEffect(-1, -1, 1));
+                PutCountersEffect.onSelf(CounterType.MINUS_ONE_MINUS_ONE));
 
         // When this creature dies, draw a card for each -1/-1 counter on it.
         addTrigger(Triggers.dies(ObjectRelation.THIS),

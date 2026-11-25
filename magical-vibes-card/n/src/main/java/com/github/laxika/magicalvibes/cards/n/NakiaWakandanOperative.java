@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
@@ -33,7 +33,7 @@ public class NakiaWakandanOperative extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "{2}, {T}: Put two +1/+1 counters on target creature or Vehicle. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(creatureOrVehicle,
                         "Target must be a creature or Vehicle"),

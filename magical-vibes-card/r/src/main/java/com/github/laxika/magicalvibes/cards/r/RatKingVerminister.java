@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureAndSameNameCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +30,7 @@ public class RatKingVerminister extends Card {
                 SequenceEffect.of(
                         new CreateTokenEffect(1, "Rat", 1, 1, CardColor.BLACK,
                                 List.of(CardSubtype.RAT), Set.of(), Set.of()),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

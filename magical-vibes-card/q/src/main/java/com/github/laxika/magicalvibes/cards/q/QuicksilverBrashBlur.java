@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -22,8 +22,8 @@ public class QuicksilverBrashBlur extends Card {
                 false,
                 "{4}{R}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCountersOnSelfEffect(CounterType.DOUBLE_STRIKE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
+                        PutCountersEffect.onSelf(CounterType.DOUBLE_STRIKE)
                 ),
                 "Power-up — {4}{R}: Put a +1/+1 counter and a double strike counter on Quicksilver."
                         + " (Activate each power-up ability only once. Reduce the cost by his mana cost if he entered this turn.)"

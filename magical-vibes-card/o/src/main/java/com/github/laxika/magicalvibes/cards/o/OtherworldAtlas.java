@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class OtherworldAtlas extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "{T}: Put a charge counter on Otherworld Atlas."
         ));
 

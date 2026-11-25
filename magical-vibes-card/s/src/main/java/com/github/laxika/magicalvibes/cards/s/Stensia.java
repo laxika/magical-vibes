@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +21,7 @@ import java.util.List;
 public class Stensia extends Card {
 
     public Stensia() {
-        var putCounterOnDamagingCreature = new PutCounterOnTargetPermanentEffect(
+        var putCounterOnDamagingCreature = new PutCountersEffect(
                 Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE);
         addTrigger(List.of(
                         Triggers.sourceYouControlDealsDamageToOpponent(),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,7 +16,7 @@ public class SylvanSmite extends Card {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new ConditionalEffect(
                         new ControllerWasNotStartingPlayer(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)))
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)))
                 .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
         target(TargetFilters.creatureAnOpponentControls());
     }

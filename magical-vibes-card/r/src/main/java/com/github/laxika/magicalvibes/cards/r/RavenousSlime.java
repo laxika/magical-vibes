@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "C18", collectorNumber = "34")
@@ -17,6 +17,6 @@ public class RavenousSlime extends Card {
                 new PermanentPowerAtMostPredicate(2)));
         addStaticEffect(new ExileOpponentCreaturesInsteadOfDyingEffect(
                 false,
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +20,7 @@ public class VedalkenAnatomist extends Card {
                 true,
                 "{2}{U}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE),
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE),
                         new MayEffect(new TapOrUntapTargetPermanentEffect(), "You may tap or untap that creature?")
                 ),
                 "{2}{U}, {T}: Put a -1/-1 counter on target creature. You may tap or untap that creature.",

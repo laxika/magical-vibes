@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +29,7 @@ public class ReapersScythe extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new PutCountersOnSelfEffect(CounterType.SOUL, new PlayersWhoLostLifeThisTurn()));
+                PutCountersEffect.onSelf(CounterType.SOUL, new PlayersWhoLostLifeThisTurn()));
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.SOUL),
                 new CountersOnSource(CounterType.SOUL),

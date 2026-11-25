@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,7 @@ public class StatureSizeShifter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}{U}{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
                 "Power-up — {X}{U}{U}: Put X +1/+1 counters on Stature. Activate each power-up ability only "
                         + "once. Reduce the cost by her mana cost if she entered this turn."
         ).withPowerUp());

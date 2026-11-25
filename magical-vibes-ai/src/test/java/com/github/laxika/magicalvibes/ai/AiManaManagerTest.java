@@ -31,7 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -377,7 +377,7 @@ class AiManaManagerTest {
         // Pyramid of the Pantheon: the free-tap ability only works with three brick counters
         card.addActivatedAbility(new ActivatedAbility(
                 true, "{2}",
-                List.of(new AwardAnyColorManaEffect(), new PutCountersOnSelfEffect(CounterType.BRICK)),
+                List.of(new AwardAnyColorManaEffect(), PutCountersEffect.onSelf(CounterType.BRICK)),
                 "{2}, {T}: Add one mana of any color. Put a brick counter on this artifact."));
         card.addActivatedAbility(new ActivatedAbility(
                 true, null, List.of(new AwardAnyColorManaEffect(3)),

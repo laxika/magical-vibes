@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,8 +28,7 @@ public class KutzilsFlanker extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on this creature for each creature that left the battlefield under your control this turn",
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                                new CreaturesLeftBattlefieldThisTurn(CountScope.CONTROLLER))),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CreaturesLeftBattlefieldThisTurn(CountScope.CONTROLLER))),
                 new ChooseOneEffect.ChooseOneOption(
                         "You gain 2 life and scry 2",
                         List.of(new GainLifeEffect(2), new ScryEffect(2))),

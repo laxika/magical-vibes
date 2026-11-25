@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -17,7 +17,7 @@ public class AmblingStormshell extends Card {
 
     public AmblingStormshell() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
-        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.STUN, 3), new DrawCardEffect(3));
+        addTrigger(Triggers.attacks(), PutCountersEffect.onSelf(CounterType.STUN, 3), new DrawCardEffect(3));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.TURTLE)),
                 new UntapPermanentsEffect(Subjects.source()));

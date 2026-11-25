@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOrMoreOfYo
 import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -33,7 +33,7 @@ public class JoleneThePlunderQueen extends Card {
                 List.of(
                         new SacrificeMultiplePermanentsCost(
                                 5, new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 5)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 5)
                 ),
                 "Sacrifice five Treasures: Put five +1/+1 counters on Jolene."
         ));

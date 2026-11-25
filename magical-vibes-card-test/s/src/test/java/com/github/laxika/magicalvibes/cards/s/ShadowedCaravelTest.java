@@ -31,7 +31,7 @@ class ShadowedCaravelTest extends BaseCardTest {
 
         castExplorerAndResolveExplore();
 
-        // Explore trigger resolves automatically (no target needed for PutCountersOnSelfEffect)
+        // Explore trigger resolves automatically (no target needed for PutCountersEffect.onSelf)
         harness.passBothPriorities();
 
         assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

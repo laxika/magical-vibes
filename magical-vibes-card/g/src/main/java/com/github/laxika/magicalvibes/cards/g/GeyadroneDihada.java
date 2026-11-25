@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -49,7 +49,7 @@ public class GeyadroneDihada extends Card {
                 List.of(
                         new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2),
-                        new PutCounterOnTargetPermanentEffect(CounterType.CORRUPTION)
+                        new PutCountersEffect(CounterType.CORRUPTION)
                 ),
                 "+1: Each opponent loses 2 life and you gain 2 life. Put a corruption counter on up to one "
                         + "other target creature or planeswalker.",
@@ -61,7 +61,7 @@ public class GeyadroneDihada extends Card {
                 List.of(
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.target()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.CORRUPTION),
+                        new PutCountersEffect(CounterType.CORRUPTION),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target())
                 ),
                 "-3: Gain control of target creature or planeswalker until end of turn. Untap it and put a "

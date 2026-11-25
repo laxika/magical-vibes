@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +18,7 @@ public class QuestForTheGemblades extends Card {
 
     public QuestForTheGemblades() {
         addTrigger(Triggers.creatureYouControlDealsDamageToCreature().withCombatDamageOnly(),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.QUEST),
                         "Put a quest counter on Quest for the Gemblades?"));
 
         addActivatedAbility(new ActivatedAbility(
@@ -28,7 +27,7 @@ public class QuestForTheGemblades extends Card {
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.QUEST),
                         new SacrificeSelfCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)
                 ),
                 "Remove a quest counter from Quest for the Gemblades and sacrifice it: Put four +1/+1 counters on target creature.",
                 TargetFilters.creature()

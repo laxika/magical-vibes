@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -32,9 +32,9 @@ public class TheWarDoctor extends Card {
 
     public TheWarDoctor() {
         addTrigger(new TriggerCondition(Triggers.phasesOut(null, ObjectRelation.ANOTHER)), TriggerOptions.ONE_OR_MORE,
-                new PutCountersOnSelfEffect(CounterType.TIME));
+                PutCountersEffect.onSelf(CounterType.TIME));
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANOTHER)),
-                TriggerOptions.ONE_OR_MORE, new PutCountersOnSelfEffect(CounterType.TIME));
+                TriggerOptions.ONE_OR_MORE, PutCountersEffect.onSelf(CounterType.TIME));
 
         TargetFilter anyTarget = new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

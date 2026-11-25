@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,7 +28,7 @@ public class AegisSculptor extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         "Exile two cards from your graveyard?")));
     }
 }

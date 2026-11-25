@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
@@ -24,7 +24,7 @@ public class Cryptex extends Card {
                 List.of(
                         new CollectEvidenceCost(3),
                         new AwardAnyColorManaEffect(),
-                        new PutCountersOnSelfEffect(CounterType.UNLOCK)
+                        PutCountersEffect.onSelf(CounterType.UNLOCK)
                 ),
                 "{T}, Collect evidence 3: Add one mana of any color. Put an unlock counter on this artifact."
         ));

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -36,7 +36,7 @@ public class CitadelSiege extends Card {
                 new PermanentIsCreaturePredicate(), "Target must be a creature"));
         target.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 2,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

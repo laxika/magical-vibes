@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +20,7 @@ public class ThickestInTheThicket extends Card {
 
     public ThickestInTheThicket() {
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetPower()));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetPower()));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsCreatureWithGreatestPower(), new DrawCardEffect(2)));

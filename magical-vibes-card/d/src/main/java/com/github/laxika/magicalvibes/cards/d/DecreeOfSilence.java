@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class DecreeOfSilence extends Card {
     public DecreeOfSilence() {
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
                 new CounterSpellEffect(),
-                new PutCountersOnSelfEffect(CounterType.DEPLETION),
+                PutCountersEffect.onSelf(CounterType.DEPLETION),
                 new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.DEPLETION),
                         new SacrificeSelfEffect()));

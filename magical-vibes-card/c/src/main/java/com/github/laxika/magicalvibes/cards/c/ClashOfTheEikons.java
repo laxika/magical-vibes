@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -36,7 +36,7 @@ public class ClashOfTheEikons extends Card {
                         sagaFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a lore counter on target Saga you control",
-                        new PutCounterOnTargetPermanentEffect(CounterType.LORE, 1),
+                        new PutCountersEffect(CounterType.LORE, 1),
                         sagaFilter)
         )));
     }

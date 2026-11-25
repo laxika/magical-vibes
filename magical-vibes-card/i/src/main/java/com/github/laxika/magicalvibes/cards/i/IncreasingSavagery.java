@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "120")
@@ -17,8 +17,8 @@ public class IncreasingSavagery extends Card {
     public IncreasingSavagery() {
         target(TargetFilters.creature(), 1, 1)
                 .addSpellEffect(new ConditionalReplacementEffect(new CastFromZone(Zone.GRAVEYARD),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 5),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 10)));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 5),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 10)));
         addCastingOption(new FlashbackCast("{5}{G}{G}"));
     }
 }

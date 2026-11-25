@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -42,7 +42,7 @@ public class HauntedScreen extends Card {
                 false,
                 "{7}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 7),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 7),
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(CardSubtype.SPIRIT), Set.of(), null,
                                 Set.of(CardType.CREATURE), Subjects.source(), Duration.PERMANENT)

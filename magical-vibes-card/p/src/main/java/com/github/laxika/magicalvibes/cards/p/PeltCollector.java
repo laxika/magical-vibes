@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -24,7 +24,7 @@ import java.util.List;
 public class PeltCollector extends Card {
 
     public PeltCollector() {
-        CardEffect growWhenLarger = new PutCountersOnSourceEffect(1, 1, 1);
+        CardEffect growWhenLarger = PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE);
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
@@ -34,7 +34,7 @@ public class PeltCollector extends Card {
                 growWhenLarger);
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentPowerGreaterThanSourcePower()),
-                new PutCountersOnSourceEffect(1, 1, 1));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         addStaticEffect(new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -17,7 +17,7 @@ public class DarksteelReactor extends Card {
 
     public DarksteelReactor() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.CHARGE),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.CHARGE),
                         "Put a charge counter on Darksteel Reactor?"));
 
         addTrigger(Triggers.sourceState(new PermanentHasAtLeastCountersPredicate(CounterType.CHARGE, 20)),

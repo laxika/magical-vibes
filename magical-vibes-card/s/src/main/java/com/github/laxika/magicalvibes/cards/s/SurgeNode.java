@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -27,7 +27,7 @@ public class SurgeNode extends Card {
                 "{1}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.CHARGE)
+                        new PutCountersEffect(CounterType.CHARGE)
                 ),
                 "{1}, {T}, Remove a charge counter from Surge Node: Put a charge counter on target artifact.",
                 new PermanentPredicateTargetFilter(

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -43,7 +43,7 @@ public class TourachsGate extends Card {
                                 "Sacrifice a Thrull",
                                 false
                         ),
-                        new PutCountersOnSelfEffect(CounterType.TIME, 3)
+                        PutCountersEffect.onSelf(CounterType.TIME, 3)
                 ),
                 "Sacrifice a Thrull: Put three time counters on this Aura."
         ));

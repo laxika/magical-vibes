@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -29,7 +29,7 @@ public class Humiliate extends Card {
                 .addSpellEffect(new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
         addSpellEffect(SequenceEffect.of(
                 ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
-                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,7 +21,7 @@ public class QuestForTheGoblinLord extends Card {
         addTrigger(Triggers.enters(
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.QUEST),
                         "Put a quest counter on Quest for the Goblin Lord?"));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.QUEST),

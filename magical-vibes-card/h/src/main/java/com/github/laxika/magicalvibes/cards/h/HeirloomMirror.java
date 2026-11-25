@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,7 +38,7 @@ public class HeirloomMirror extends Card {
                         new DiscardCardTypeCost(null, null),
                         new DrawCardEffect(1),
                         new MillEffect(1, Subjects.you()),
-                        new PutCountersOnSelfEffect(CounterType.RITUAL),
+                        PutCountersEffect.onSelf(CounterType.RITUAL),
                         new ConditionalEffect(new SourceCounterThreshold(3, CounterType.RITUAL), SequenceEffect.of(
                                 new RemoveAllCountersEffect(CounterType.RITUAL),
                                 new TransformSelfEffect()))

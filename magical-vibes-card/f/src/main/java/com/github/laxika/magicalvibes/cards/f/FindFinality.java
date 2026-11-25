@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,7 +28,7 @@ public class FindFinality extends Card {
                 new CardTypePredicate(CardType.CREATURE), 2);
         List<CardEffect> finality = List.of(
                 new MayEffect(
-                        new PutCounterOnTargetPermanentEffect(
+                        new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate()),
                         "Put two +1/+1 counters on a creature you control?"),
                 new BoostAllCreaturesEffect(-4, -4));

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -26,6 +26,6 @@ public class InventiveWingsmith extends Card {
                         new AllOf(List.of(
                                 new NotCondition(new ControllerCastSpellThisTurn(new CardTruePredicate(), true)),
                                 new NotCondition(new SourceCounterThreshold(1, CounterType.FLYING))))),
-                new PutCountersOnSelfEffect(CounterType.FLYING));
+                PutCountersEffect.onSelf(CounterType.FLYING));
     }
 }

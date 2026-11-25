@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,7 +38,7 @@ public class YesManPersonalSecuritron extends Card {
                 null,
                 List.of(new TargetPlayerGainsControlOfSourceCreatureEffect(true,
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
-                                new DrawCardEffect(2), new PutCountersOnSelfEffect(CounterType.QUEST))))),
+                                new DrawCardEffect(2), PutCountersEffect.onSelf(CounterType.QUEST))))),
                 "{T}: Target opponent gains control of Yes Man. When they do, you draw two cards and put a quest counter on Yes Man. Activate only during your turn.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

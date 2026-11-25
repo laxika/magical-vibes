@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class StrixhavenStadium extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.COLORLESS),
-                        new PutCountersOnSelfEffect(CounterType.POINT)),
+                        PutCountersEffect.onSelf(CounterType.POINT)),
                 "{T}: Add {C}. Put a point counter on this artifact."
         ));
 
@@ -36,7 +36,7 @@ public class StrixhavenStadium extends Card {
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.POINT),
+                        PutCountersEffect.onSelf(CounterType.POINT),
                         new ConditionalEffect(
                                 new SourceCounterThreshold(10, CounterType.POINT),
                                 SequenceEffect.of(

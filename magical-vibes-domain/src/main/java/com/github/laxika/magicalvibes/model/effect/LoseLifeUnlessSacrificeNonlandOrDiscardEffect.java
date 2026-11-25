@@ -12,7 +12,7 @@ import java.util.Objects;
  * (Thornplate Intimidator, Tergrid's Lantern), or "its controller" of a permanent another effect targets
  * ({@code controllerOf(target())}, Torment of Venom); that permanent itself is then excluded from the sacrifice options
  * ("sacrifice <em>another</em> nonland permanent"). Pair the last with a sibling targeting effect that owns the
- * permanent target (e.g. {@link PutCounterOnTargetPermanentEffect}), listed first so the creature is still present.
+ * permanent target (e.g. {@link PutCountersEffect}), listed first so the creature is still present.
  *
  * <p>The single-pass, single-player slice of Torment of Hailfire ({@link TormentOfHailfireEffect}), reusing the same
  * penalty-choice plumbing ({@code ChoiceContext.TormentPenaltyChoice} / {@code PermanentChoiceContext.TormentSacrifice}).

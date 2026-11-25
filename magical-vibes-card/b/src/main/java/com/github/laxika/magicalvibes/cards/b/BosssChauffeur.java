@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class BosssChauffeur extends Card {
         addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Sum(new Fixed(1), otherCreatures)));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCountersOnSourceEffect(1, 1, 1));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Citizen", 1, 1, CardColor.GREEN,
                         Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN))
                                 .withAmount(new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)));

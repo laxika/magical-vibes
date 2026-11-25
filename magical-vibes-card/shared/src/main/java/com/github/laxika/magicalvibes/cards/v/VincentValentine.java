@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class VincentValentine extends Card {
         setBackFaceCard(new GalianBeast());
 
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringPermanentPower()));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringPermanentPower()));
         addTrigger(Triggers.attacks(),
                 new MayEffect(new TransformSelfEffect(), "Transform Vincent Valentine?"));
     }

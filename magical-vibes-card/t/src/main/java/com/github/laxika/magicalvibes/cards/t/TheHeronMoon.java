@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCardCopyAndCastWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardOfTargetPlayerLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -72,7 +72,7 @@ public class TheHeronMoon extends Card {
 
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.OPPONENT_OWNS)),
                 TriggerOptions.ONE_OR_MORE, SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.RELEASE),
+                PutCountersEffect.onSelf(CounterType.RELEASE),
                 new ConditionalEffect(
                         new SourceCounterThreshold(13, CounterType.RELEASE),
                         SequenceEffect.of(

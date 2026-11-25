@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class MagmaMine extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}",
-                List.of(new PutCountersOnSelfEffect(CounterType.PRESSURE)),
+                List.of(PutCountersEffect.onSelf(CounterType.PRESSURE)),
                 "{4}: Put a pressure counter on this artifact."
         ));
 

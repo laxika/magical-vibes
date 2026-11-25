@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,13 +24,13 @@ public class NecklaceOfGirion extends Card {
         // Both abilities target a creature you control: one target group, each ability choosing its own target.
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
                 .addTrigger(Triggers.enters(
                                 new PermanentAllOfPredicate(List.of(
                                         Triggers.LAND,
                                         new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
                                 ObjectRelation.YOU_CONTROL),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }

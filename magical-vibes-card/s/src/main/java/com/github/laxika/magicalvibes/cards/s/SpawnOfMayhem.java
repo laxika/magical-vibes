@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -33,6 +33,6 @@ public class SpawnOfMayhem extends Card {
                 new DealDamageToPlayersEffect(1, Subjects.eachPlayer()),
                 new ConditionalEffect(
                         new ControllerLifeAtMost(10),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))));
     }
 }

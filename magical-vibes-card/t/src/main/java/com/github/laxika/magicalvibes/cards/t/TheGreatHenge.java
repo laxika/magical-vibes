@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -38,7 +38,7 @@ public class TheGreatHenge extends Card {
         ));
 
         addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_CONTROL), SequenceEffect.of(
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                         Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect()
         ));

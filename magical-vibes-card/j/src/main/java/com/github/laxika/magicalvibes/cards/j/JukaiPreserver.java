@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,12 +18,12 @@ public class JukaiPreserver extends Card {
 
     public JukaiPreserver() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{G}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 "Channel — {2}{G}, Discard this card: Put a +1/+1 counter on each of up to two target creatures you control.",
                 List.<TargetFilter>of(TargetFilters.creatureYouControl(), TargetFilters.creatureYouControl()),
                 0,

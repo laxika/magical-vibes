@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -22,7 +22,7 @@ public class WarBalloon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new PutCountersOnSelfEffect(CounterType.FIRE)),
+                List.of(PutCountersEffect.onSelf(CounterType.FIRE)),
                 "{1}: Put a fire counter on this Vehicle."
         ));
 

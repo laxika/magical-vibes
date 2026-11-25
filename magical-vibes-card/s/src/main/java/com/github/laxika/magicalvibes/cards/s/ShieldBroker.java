@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,7 +32,7 @@ public class ShieldBroker extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter, "Target must be a noncommander creature you don't control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.SHIELD),
+                        new PutCountersEffect(CounterType.SHIELD),
                         GainControlOfTargetEffect.whileMatches(Subjects.targetDeclaredElsewhere(),
                                 new PermanentHasCountersPredicate(CounterType.SHIELD)));
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,11 +29,11 @@ public class TriumphOfGerrard extends Card {
     public TriumphOfGerrard() {
         // Chapter I: Put a +1/+1 counter on target creature you control with the greatest power
         addTrigger(Triggers.chapter(1),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE, 1, GREATEST_POWER));
+                PutCountersEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE, 1, GREATEST_POWER));
 
         // Chapter II: Put a +1/+1 counter on target creature you control with the greatest power
         addTrigger(Triggers.chapter(2),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE, 1, GREATEST_POWER));
+                PutCountersEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE, 1, GREATEST_POWER));
 
         // Chapter III: Target creature you control with the greatest power gains
         // flying, first strike, and lifelink until end of turn

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DoubleAllOwnCreaturesPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -36,7 +36,7 @@ public class ZopandrelHungerDominus extends Card {
                                 List.of(otherCreature, otherCreature),
                                 List.of("another creature", "another creature")
                         ),
-                        new PutCountersOnSelfEffect(CounterType.INDESTRUCTIBLE)
+                        PutCountersEffect.onSelf(CounterType.INDESTRUCTIBLE)
                 ),
                 "{G/P}{G/P}, Sacrifice two other creatures: Put an indestructible counter on Zopandrel."
         ));

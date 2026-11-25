@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -55,7 +55,7 @@ public class EverythingPizza extends Card {
         DrawCardEffect draw = new DrawCardEffect(1, Subjects.targetPlayer());
         DealDamageToAnyTargetEffect damage = DealDamageToAnyTargetEffect.forTargetGroup(3,
                 damageTarget.getIndex());
-        PutCounterOnTargetPermanentEffect counters = new PutCounterOnTargetPermanentEffect(
+        PutCountersEffect counters = new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 3);
         registerEffectTargetIndex(gainLife, playerTarget.getIndex());
         registerEffectTargetIndex(draw, playerTarget.getIndex());

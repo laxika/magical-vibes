@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -20,7 +20,7 @@ public class CopperLeafAngel extends Card {
                 null,
                 List.of(
                         new SacrificeXPermanentsCost(new PermanentIsLandPredicate()),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
                 ),
                 "{T}, Sacrifice X lands: Put X +1/+1 counters on this creature."
         ));

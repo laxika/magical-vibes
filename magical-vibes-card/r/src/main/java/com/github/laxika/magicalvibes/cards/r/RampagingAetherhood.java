@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
@@ -30,6 +30,6 @@ public class RampagingAetherhood extends Card {
                 new EnergyCountersEffect(new SourcePower()),
                 EachPlayerPaysAnyManaEffect.byYou(Resource.ENERGY),
                 new ConditionalEffect(new HappenedThisWay(StepKind.PAY_ENERGY),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, AmountThisWay.energyPaid()))));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, AmountThisWay.energyPaid()))));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -61,7 +61,7 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
             // amount is noted first, so it is counted against this ability's source rather than the token.
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
                     new NoteAmountEffect(e.counterAmount()),
-                    new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), e.counterType(),
+                    new PutCountersEffect(Subjects.createdThisResolution(), e.counterType(),
                             AmountThisWay.noted())));
             return;
         }

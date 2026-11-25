@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -41,7 +41,7 @@ public class AgathasSoulCauldron extends Card {
                         ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true),
                         new ConditionalEffect(
                                 HappenedThisWay.toACard(StepKind.EXILE, new CardTypePredicate(CardType.CREATURE)),
-                                new QueueReflexiveAbilityEffect(PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                new QueueReflexiveAbilityEffect(PutCountersEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),

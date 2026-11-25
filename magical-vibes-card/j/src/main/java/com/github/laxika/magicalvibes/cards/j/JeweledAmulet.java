@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteManaSpentForActivationEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class JeweledAmulet extends Card {
         // activation cost. Activate only if there are no charge counters on this artifact.
         addActivatedAbility(new ActivatedAbility(true, "{1}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.CHARGE),
+                        PutCountersEffect.onSelf(CounterType.CHARGE),
                         new NoteManaSpentForActivationEffect()
                 ),
                 "{1}, {T}: Put a charge counter on this artifact. Note the type of mana spent to pay this activation cost. Activate only if there are no charge counters on this artifact.")

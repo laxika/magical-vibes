@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraPowerUpActivationEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class WonderManHollywoodHero extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{R}{R}",
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "Power-up — {5}{R}{R}: Put two +1/+1 counters on Wonder Man. Activate each power-up ability only once. Reduce the cost by his mana cost if he entered this turn."
         ).withPowerUp());
     }

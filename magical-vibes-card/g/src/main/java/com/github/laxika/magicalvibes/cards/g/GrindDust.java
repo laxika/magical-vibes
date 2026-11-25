@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.Dust;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 /**
@@ -21,7 +21,7 @@ public class GrindDust extends Card {
 
         // Put a -1/-1 counter on each of up to two target creatures.
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+                .addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
     }
 
     @Override

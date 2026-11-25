@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class TreebeardGraciousHost extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.HALFLING, CardSubtype.TREEFOLK)),
                 "Target must be a Halfling or Treefolk"
         )).addTrigger(Triggers.youGainLife(),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
     }
 
     private static CreateTokenEffect foodTokens() {

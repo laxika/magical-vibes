@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +20,7 @@ public class GalufsFinalAct extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new PutCounterOnTargetPermanentEffect(
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, new SourcePower(), null,
                                 new PermanentIsCreaturePredicate(), false, null, true))));
     }

@@ -1429,8 +1429,8 @@ public class AbilityActivationService {
             }
             Integer sourcePower = gameQueryService.getEffectiveCardPower(gameData, card);
             List<CardEffect> scavengedEffects = ability.getEffects().stream().map(effect -> {
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counter) {
-                    return (CardEffect) new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(
+                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PutCountersEffect counter) {
+                    return (CardEffect) new com.github.laxika.magicalvibes.model.effect.PutCountersEffect(
                             counter.counterType(), new Fixed(sourcePower == null ? 0 : Math.max(0, sourcePower)));
                 }
                 return effect;

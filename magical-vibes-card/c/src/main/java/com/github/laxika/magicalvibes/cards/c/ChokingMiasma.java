@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class ChokingMiasma extends Card {
         addStaticEffect(new KickerEffect("{G}"));
         addSpellEffect(new ConditionalEffect(
                 new Kicked(),
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
                         new PermanentAllOfPredicate(List.of(

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -22,7 +22,7 @@ public class SpectacleOfDestruction extends Card {
 
     public SpectacleOfDestruction() {
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY)), TriggerOptions.ONE_OR_MORE,
-                new PutCountersOnSelfEffect(CounterType.WRECK));
+                PutCountersEffect.onSelf(CounterType.WRECK));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.WRECK)),

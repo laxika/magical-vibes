@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class ShadowedCaravel extends Card {
 
     public ShadowedCaravel() {
         // Whenever a creature you control explores, put a +1/+1 counter on Shadowed Caravel.
-        addTrigger(Triggers.creatureYouControlExplores(), new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        addTrigger(Triggers.creatureYouControlExplores(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         // Crew 2
         addActivatedAbility(new ActivatedAbility(

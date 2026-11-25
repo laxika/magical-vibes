@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
@@ -17,7 +17,7 @@ public class AzorsElocutors extends Card {
 
     public AzorsElocutors() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.FILIBUSTER),
+                PutCountersEffect.onSelf(CounterType.FILIBUSTER),
                 new ConditionalEffect(new SourceCounterThreshold(5, CounterType.FILIBUSTER), new WinGameEffect())));
 
         addTrigger(Triggers.youAreDealtDamage(),

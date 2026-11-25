@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CrescendoOfWar extends Card {
 
     public CrescendoOfWar() {
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new PutCountersOnSelfEffect(CounterType.STRIFE));
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), PutCountersEffect.onSelf(CounterType.STRIFE));
 
         addStaticEffect(new StaticBoostEffect(
                 1, 0, Subjects.allCreatures(), new PermanentIsAttackingPredicate(), CounterType.STRIFE, false));

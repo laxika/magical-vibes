@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class ArgothianUprooting extends Card {
         // Put two +1/+1 counters on each of X target lands you control. They become 0/0 Elemental
         // creatures with reach, haste, and a leaves-the-battlefield Forest trigger. They remain lands.
         targetExactlyX(TargetFilters.landYouControl(), 100)
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
+                .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
                 .addSpellEffect(new AnimatePermanentsEffect(
                         0, 0,
                         List.of(CardSubtype.ELEMENTAL),

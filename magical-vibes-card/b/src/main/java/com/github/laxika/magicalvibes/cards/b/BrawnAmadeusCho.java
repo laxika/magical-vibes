@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +22,7 @@ public class BrawnAmadeusCho extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{G/U}",
-                List.of(new PutCountersOnSelfEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        new CardsInHand(CountScope.CONTROLLER))),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CardsInHand(CountScope.CONTROLLER))),
                 "Power-up — {4}{G/U}: Put a +1/+1 counter on Brawn for each card in your hand. Activate each power-up "
                         + "ability only once. Reduce the cost by his mana cost if he entered this turn."
         ).withPowerUp());

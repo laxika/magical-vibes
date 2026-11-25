@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -45,7 +45,7 @@ public class OviyaAutomechArtisan extends Card {
                                 new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE)),
                                 new ConditionalEffect(
                                         HappenedThisWay.toA(StepKind.RETURN, new PermanentIsArtifactPredicate()),
-                                        new PutCounterOnTargetPermanentEffect(Subjects.returnedThisResolution(),
+                                        new PutCountersEffect(Subjects.returnedThisResolution(),
                                                 CounterType.PLUS_ONE_PLUS_ONE, 2))),
                         "Put a creature or Vehicle card from your hand onto the battlefield?"
                 )),

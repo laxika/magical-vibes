@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -48,7 +48,7 @@ public class RootcastApprenticeship extends Card {
         addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Put two +1/+1 counters on target creature",
-                        () -> new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        () -> new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         TargetFilters.creature()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Create a token that's a copy of target token you control",

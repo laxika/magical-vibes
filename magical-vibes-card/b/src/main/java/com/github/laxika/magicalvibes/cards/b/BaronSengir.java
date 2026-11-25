@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +24,7 @@ public class BaronSengir extends Card {
     public BaronSengir() {
         // Whenever a creature dealt damage by this creature this turn dies, put a +2/+2 counter on it.
         addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS),
-                new PutCountersOnSelfEffect(CounterType.PLUS_TWO_PLUS_TWO));
+                PutCountersEffect.onSelf(CounterType.PLUS_TWO_PLUS_TWO));
 
         // {T}: Regenerate another target Vampire.
         addActivatedAbility(new ActivatedAbility(

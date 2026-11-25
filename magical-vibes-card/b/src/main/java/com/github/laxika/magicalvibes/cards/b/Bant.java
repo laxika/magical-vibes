@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +35,7 @@ public class Bant extends Card {
                 eligibleCreature,
                 "Target must be a green, white, or blue creature"));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
-                new PutCounterOnTargetPermanentEffect(CounterType.DIVINITY),
+                new PutCountersEffect(CounterType.DIVINITY),
                 new GrantStaticEffectToTargetEffect(new GrantKeywordEffect(
                         Keyword.INDESTRUCTIBLE,
                         Subjects.source(),

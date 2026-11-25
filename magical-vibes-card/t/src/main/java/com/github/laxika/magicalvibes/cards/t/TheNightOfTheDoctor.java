@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -39,15 +39,15 @@ public class TheNightOfTheDoctor extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a first strike counter on it",
-                                new PutCounterOnTargetPermanentEffect(
+                                new PutCountersEffect(
                                         Subjects.returned(), CounterType.FIRST_STRIKE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a vigilance counter on it",
-                                new PutCounterOnTargetPermanentEffect(
+                                new PutCountersEffect(
                                         Subjects.returned(), CounterType.VIGILANCE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a lifelink counter on it",
-                                new PutCounterOnTargetPermanentEffect(
+                                new PutCountersEffect(
                                         Subjects.returned(), CounterType.LIFELINK))
                 ))
         ));

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ import java.util.Set;
 public class TeferiTemporalPilgrim extends Card {
 
     public TeferiTemporalPilgrim() {
-        addTrigger(Triggers.youDrawCard(), new PutCountersOnSelfEffect(CounterType.LOYALTY));
+        addTrigger(Triggers.youDrawCard(), PutCountersEffect.onSelf(CounterType.LOYALTY));
 
         addActivatedAbility(new ActivatedAbility(
                 0,
@@ -43,7 +43,7 @@ public class TeferiTemporalPilgrim extends Card {
                         1, "Spirit", 2, 2, CardColor.BLUE,
                         List.of(CardSubtype.SPIRIT), Set.of(Keyword.VIGILANCE), Set.of(),
                         List.of(new TriggeredAbility(Triggers.youDrawCard(),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))))),
                 "\u22122: Create a 2/2 blue Spirit creature token with vigilance and \"Whenever you draw a card, put a +1/+1 counter on this token.\""
         ));
 

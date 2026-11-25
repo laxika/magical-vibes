@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,7 +21,7 @@ public class JhoiraAgelessInnovator extends Card {
                 true,
                 null,
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.INGENUITY, 2),
+                        PutCountersEffect.onSelf(CounterType.INGENUITY, 2),
                         new PutCardToBattlefieldEffect(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardManaValueAtMostSourceCountersPredicate(CounterType.INGENUITY))), "artifact")

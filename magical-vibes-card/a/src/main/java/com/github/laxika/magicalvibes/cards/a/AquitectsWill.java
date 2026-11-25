@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AquitectsWill extends Card {
 
     public AquitectsWill() {
-        target(TargetFilters.land()).addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.FLOOD, 1));
+        target(TargetFilters.land()).addSpellEffect(new PutCountersEffect(CounterType.FLOOD, 1));
         addSpellEffect(new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
         // If you control a Merfolk, draw a card.
         addSpellEffect(new ConditionalEffect(

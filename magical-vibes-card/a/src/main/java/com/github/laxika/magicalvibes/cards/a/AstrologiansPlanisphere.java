@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,11 +34,11 @@ public class AstrologiansPlanisphere extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youCastSpell()
                                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youDrawNthCardEachTurn(3),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

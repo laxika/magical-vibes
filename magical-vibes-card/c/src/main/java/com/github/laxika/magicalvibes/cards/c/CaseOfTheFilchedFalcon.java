@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -50,7 +50,7 @@ public class CaseOfTheFilchedFalcon extends Card {
                 "{2}{U}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
                         new AnimatePermanentsEffect(
                                 0, 0,
                                 List.of(CardSubtype.BIRD),

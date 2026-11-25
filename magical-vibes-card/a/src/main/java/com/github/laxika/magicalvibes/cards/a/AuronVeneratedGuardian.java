@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,7 +30,7 @@ public class AuronVeneratedGuardian extends Card {
                 new PermanentPowerLessThanSourcePowerPredicate()));
 
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new ConditionalEffect(new HappenedThisWay(StepKind.PUT_COUNTERS), new QueueReflexiveAbilityEffect(
                         new ExileTargetPermanentUntilSourceLeavesEffect(false, targetFilter)))));
     }

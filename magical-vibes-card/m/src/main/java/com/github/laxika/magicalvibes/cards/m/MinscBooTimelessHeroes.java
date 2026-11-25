@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -60,7 +60,7 @@ public class MinscBooTimelessHeroes extends Card {
                         new PermanentHasKeywordPredicate(Keyword.HASTE)))));
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                List.of(PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 3, creatureWithTrampleOrHaste)),
                 "+1: Put three +1/+1 counters on up to one target creature with trample or haste.",
                 null, 1, null, null,

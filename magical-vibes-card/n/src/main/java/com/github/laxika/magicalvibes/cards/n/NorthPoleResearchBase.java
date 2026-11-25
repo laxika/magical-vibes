@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -51,6 +51,6 @@ public class NorthPoleResearchBase extends Card {
                 alien,
                 SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.target(), nontokenCreatureOpponent),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN))));
+                        new PutCountersEffect(CounterType.STUN))));
     }
 }

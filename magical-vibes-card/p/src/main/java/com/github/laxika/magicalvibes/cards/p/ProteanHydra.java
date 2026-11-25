@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,6 +19,6 @@ public class ProteanHydra extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect());
         addTrigger(Triggers.plusOneCounterRemovedFromThis(), RegisterDelayedStepTriggerEffect.aboutSourceAtNext(
-                Triggers.endStep(ActivePlayer.ANY), new PutCountersOnSourceEffect(1, 1, 2)));
+                Triggers.endStep(ActivePlayer.ANY), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)));
     }
 }

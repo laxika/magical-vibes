@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -49,7 +49,7 @@ public class ArchdruidsCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on target creature you control. It deals damage equal to its power to target creature you don't control",
                         List.of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 new TargetDealsPowerDamageToTargetEffect()),
                         List.of(
                                 new ControlledPermanentPredicateTargetFilter(

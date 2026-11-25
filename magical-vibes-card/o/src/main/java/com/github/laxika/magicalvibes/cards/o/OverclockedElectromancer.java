@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,7 +27,7 @@ public class OverclockedElectromancer extends Card {
                 new ConditionalEffect(new ControllerEnergyAtLeast(3),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-3),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1)
                         )),
                 "Pay {E}{E}{E} to put a +1/+1 counter on Overclocked Electromancer?"
         ));

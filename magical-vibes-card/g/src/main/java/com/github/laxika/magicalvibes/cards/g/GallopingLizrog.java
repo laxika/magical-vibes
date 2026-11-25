@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,6 @@ public class GallopingLizrog extends Card {
                 RemoveUpToCountersFromAllPermanentsEffect.anyNumber(CounterType.PLUS_ONE_PLUS_ONE,
                         Subjects.creaturesYouControl()),
                 new ConditionalEffect(HappenedThisWay.removedCounters(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                                new Scaled(new AmountThisWay(StepKind.REMOVE_COUNTERS), 2)))));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new Scaled(new AmountThisWay(StepKind.REMOVE_COUNTERS), 2)))));
     }
 }

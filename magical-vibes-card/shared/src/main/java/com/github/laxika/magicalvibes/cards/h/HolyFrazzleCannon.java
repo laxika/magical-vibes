@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
@@ -21,7 +21,7 @@ import java.util.List;
 public class HolyFrazzleCannon extends Card {
 
     public HolyFrazzleCannon() {
-        addTrigger(Triggers.attacks(), new PutCounterOnTargetPermanentEffect(
+        addTrigger(Triggers.attacks(), new PutCountersEffect(
                         Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
                 new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.b.BindSpirit;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -18,7 +18,7 @@ public class GhostLantern extends Card {
         setBackFaceCard(new BindSpirit());
         addCastingOption(new AdventureCast("{1}{B}"));
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 

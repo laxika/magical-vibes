@@ -150,7 +150,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 @ExtendWith(MockitoExtension.class)
 class StepTriggerServiceTest {
@@ -2397,7 +2397,7 @@ class StepTriggerServiceTest {
             for (int i = 0; i < 2; i++) {
                 gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.endStep(ActivePlayer.ANY), player1Id, card, perm.getId(), null,
-                        new PutCountersOnSourceEffect(1, 1, 2)));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)));
             }
 
             sut.handleEndStepTriggers(gd);

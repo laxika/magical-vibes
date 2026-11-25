@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -37,7 +37,7 @@ public class DeathToOurEnemies extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 SequenceEffect.of(
                         CreateTokenEffect.ofTappedTreasureToken(1),
-                        new PutCountersOnSelfEffect(CounterType.PLAN)));
+                        PutCountersEffect.onSelf(CounterType.PLAN)));
 
         PermanentPredicate anyTargetPermanent = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

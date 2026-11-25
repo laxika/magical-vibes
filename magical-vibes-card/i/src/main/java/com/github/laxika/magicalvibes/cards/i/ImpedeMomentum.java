@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -15,7 +15,7 @@ public class ImpedeMomentum extends Card {
     public ImpedeMomentum() {
         target(TargetFilters.creature())
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.STUN, 3));
+                .addSpellEffect(new PutCountersEffect(CounterType.STUN, 3));
         addSpellEffect(new ScryEffect(1));
     }
 }

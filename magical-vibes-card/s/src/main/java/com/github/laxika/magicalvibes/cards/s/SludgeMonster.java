@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,9 +32,9 @@ public class SludgeMonster extends Card {
         ));
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.SLIME, 1))
+                        new PutCountersEffect(CounterType.SLIME, 1))
                 .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.SLIME, 1));
+                        new PutCountersEffect(CounterType.SLIME, 1));
 
         PermanentPredicate affectedCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentHasCountersPredicate(CounterType.SLIME),

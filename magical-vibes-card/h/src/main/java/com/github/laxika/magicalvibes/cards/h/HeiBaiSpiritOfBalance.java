@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -37,7 +37,7 @@ public class HeiBaiSpiritOfBalance extends Card {
         var sacrificeTrigger = new MayEffect(
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, anotherCreatureOrArtifact, Subjects.you()),
-                        new ConditionalEffect(HappenedThisWay.sacrificed(), new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2))),
                 "Sacrifice another creature or artifact?");
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeTrigger);

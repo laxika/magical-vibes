@@ -29,7 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -346,10 +347,11 @@ public class EffectResolutionService {
             }
 
             // Fabricate (CR 702.123a): "you may put N +1/+1 counters on it. If you don't, create
-            // Servos." With the permanent gone the counters can't be put on it, so you don't.
+            // Servos." With the permanent gone the counters can't be put on it, so you don't (CR 608.2d).
             if (effectToResolve instanceof MayEffect may && gameData.resolvedMayAccepted == null
                     && may.elseEffect() != null
-                    && may.wrapped() instanceof PutCountersOnSourceEffect
+                    && may.wrapped() instanceof PutCountersEffect counters
+                    && counters.subject() instanceof PermanentSubject.Source
                     && entry.getSourcePermanentId() != null
                     && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null) {
                 effectToResolve = may.elseEffect();

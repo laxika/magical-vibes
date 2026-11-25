@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -71,14 +71,14 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
 
             if (e.thenEffect() != null) {
                 CardEffect reflexive = SequenceEffect.of(
-                        new PutCountersOnSelfEffect(e.counterType(), new XValue()), e.thenEffect());
+                        PutCountersEffect.onSelf(e.counterType(), new XValue()), e.thenEffect());
                 queueReflexiveTargetedAbility(gameData, entry, reflexive, chosenPayments);
             } else {
                 // "When you pay this cost one or more times, put that many counters on it" is a
                 // reflexive triggered ability (CR 603.12): it goes on the stack separately, with the number of
                 // payments as its X.
                 StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry,
-                        List.of(new PutCountersOnSelfEffect(e.counterType(), new XValue())));
+                        List.of(PutCountersEffect.onSelf(e.counterType(), new XValue())));
                 reflexive.setXValue(chosenPayments);
                 triggeredAbilityStackService.putMade(gameData, reflexive);
             }

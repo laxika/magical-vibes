@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,7 +12,7 @@ public class VenomBlast extends Card {
 
     public VenomBlast() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(
+                .addSpellEffect(new PutCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 2));
         target(TargetFilters.creature(), 0, 1)
                 .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());

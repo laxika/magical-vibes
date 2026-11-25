@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +33,7 @@ public class WelcomeToSweettooth extends Card {
 
         PermanentCount foodsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD), CountScope.CONTROLLER);
-        addTrigger(Triggers.chapter(3), new PutCounterOnTargetPermanentEffect(
+        addTrigger(Triggers.chapter(3), new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Sum(new Fixed(1), foodsYouControl)));
         setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
         setSagaChapterTargetRequired(3);

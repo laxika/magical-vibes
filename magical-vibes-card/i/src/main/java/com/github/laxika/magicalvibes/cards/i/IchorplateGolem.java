@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -21,7 +21,7 @@ public class IchorplateGolem extends Card {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentMatches(
                         new PermanentHasCountersPredicate(CounterType.OIL))),
-                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.OIL, 1));
+                PutCountersEffect.onTriggeringPermanent(CounterType.OIL, 1));
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                         new PermanentHasCountersPredicate(CounterType.OIL)));
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -29,6 +29,6 @@ public class BaneOfProgress extends Card {
                 new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate()))),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new AmountThisWay(StepKind.DESTROY))));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new AmountThisWay(StepKind.DESTROY))));
     }
 }

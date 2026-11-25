@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersOfTypeFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,7 +33,7 @@ public class NornsDominion extends Card {
                 new RemoveAllCountersOfTypeFromAllPermanentsEffect(CounterType.FATE)));
 
         target(TargetFilters.permanent()).addTrigger(Triggers.chaosEnsues(),
-                new MayEffect(new PutCounterOnTargetPermanentEffect(CounterType.FATE),
+                new MayEffect(new PutCountersEffect(CounterType.FATE),
                         "Put a fate counter on target permanent?"));
     }
 }

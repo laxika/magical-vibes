@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -40,7 +40,7 @@ public class CosmiumConfluence extends Card {
                         SequenceEffect.of(
                                 ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
                                         new PermanentHasSubtypePredicate(CardSubtype.CAVE)), "a Cave you control"),
-                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                         CounterType.PLUS_ONE_PLUS_ONE, 3),
                                 new AnimatePermanentsEffect(new Fixed(0), new Fixed(0), List.of(CardSubtype.ELEMENTAL),
                                         Set.of(Keyword.HASTE), null, Set.of(), Subjects.thisWay(StepKind.CHOOSE),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -24,6 +24,6 @@ public class CrimestopperSprite extends Card {
                         new TapPermanentsEffect(Subjects.target()),
                         new ConditionalEffect(
                                 new CollectEvidenceCostPaid(),
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN))));
+                                new PutCountersEffect(CounterType.STUN))));
     }
 }

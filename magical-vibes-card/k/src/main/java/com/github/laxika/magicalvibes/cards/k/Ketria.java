@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -50,6 +50,6 @@ public class Ketria extends Card {
 
     private static ChooseOneEffect.ChooseOneOption counterMode(String label, CounterType counterType) {
         return new ChooseOneEffect.ChooseOneOption(label,
-                new PutCounterOnTargetPermanentEffect(counterType));
+                new PutCountersEffect(counterType));
     }
 }

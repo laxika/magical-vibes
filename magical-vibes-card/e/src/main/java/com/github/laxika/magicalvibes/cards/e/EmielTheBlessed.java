@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -46,7 +46,7 @@ public class EmielTheBlessed extends Card {
         // "Put two counters instead" for a Unicorn is a single placement of two counters, not two placements.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new MayPayManaEffect(
                 "{G/W}",
-                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE,
+                PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE,
                         new FixedIfCondition(new TriggeringPermanentHasSubtype(CardSubtype.UNICORN), 2, 1)),
                 "Pay {G/W} to put a +1/+1 counter on the entering creature?"
         ));

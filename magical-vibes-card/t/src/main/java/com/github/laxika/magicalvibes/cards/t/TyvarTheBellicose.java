@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -29,7 +29,7 @@ public class TyvarTheBellicose extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.thisManaAbilityResolves(),
                         TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())),
                 Subjects.creaturesYouControl()));
     }
 }

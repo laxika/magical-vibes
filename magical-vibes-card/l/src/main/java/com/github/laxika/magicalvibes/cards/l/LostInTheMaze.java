@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,7 +24,7 @@ public class LostInTheMaze extends Card {
         targetWithDynamicCount(new XValue(), TargetFilters.creature(), Integer.MAX_VALUE)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.target()),
-                        PutCounterOnTargetPermanentEffect.withResolutionCondition(
+                        PutCountersEffect.withResolutionCondition(
                                 CounterType.STUN, 1,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 

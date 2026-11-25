@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +27,7 @@ public class StallOut extends Card {
         target(new PermanentPredicateTargetFilter(creatureOrVehicle,
                 "Target must be a creature or Vehicle"))
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.STUN, 3));
+                .addSpellEffect(new PutCountersEffect(CounterType.STUN, 3));
 
         addCycling("{2}");
     }

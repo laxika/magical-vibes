@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class GollumRiddleMaster extends Card {
                 ChooseOneEffect.notYetChosen(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on Gollum",
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Each opponent loses 2 life and you gain 2 life",
                                 List.of(

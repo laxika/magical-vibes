@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -30,7 +30,7 @@ public class MoxiteRefinery extends Card {
                 List.of(
                         RemoveOneOrMoreCountersFromControlledPermanentsCost.xFromOnePermanent(CounterType.ANY,
                                 ARTIFACT_OR_CREATURE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.CHARGE, new XValue())
+                        new PutCountersEffect(CounterType.CHARGE, new XValue())
                 ),
                 "{2}, {T}, Remove X counters from an artifact or creature you control: Put X charge counters on target artifact. "
                         + "Activate only as a sorcery.",
@@ -47,7 +47,7 @@ public class MoxiteRefinery extends Card {
                 List.of(
                         RemoveOneOrMoreCountersFromControlledPermanentsCost.xFromOnePermanent(CounterType.ANY,
                                 ARTIFACT_OR_CREATURE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
                 ),
                 "{2}, {T}, Remove X counters from an artifact or creature you control: Put X +1/+1 counters on target creature. "
                         + "Activate only as a sorcery.",

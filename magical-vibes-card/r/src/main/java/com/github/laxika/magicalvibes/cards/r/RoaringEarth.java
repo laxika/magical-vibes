@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -42,13 +42,13 @@ public class RoaringEarth extends Card {
                 creatureOrVehicleYouControl,
                 "Target must be a creature or Vehicle you control"))
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{X}{G}{G}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
                         new AnimatePermanentsEffect(
                                 0, 0,
                                 List.of(CardSubtype.SPIRIT),

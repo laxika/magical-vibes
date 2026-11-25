@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,6 +27,6 @@ public class AriusFlybyTrawler extends Card {
                         RegisterDelayedStepTriggerEffect.aboutSought(Triggers.endStep(ActivePlayer.ANY),
                                 DiscardSpecificCardEffect.of(Subjects.cardsThisWay(StepKind.SEEK)))));
         addTrigger(Triggers.youDiscardOneOrMoreCards(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

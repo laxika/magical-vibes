@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,6 @@ public class HavocEater extends Card {
                 .bindEffect(goadTargetCreatureUntilNextTurn);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 goadTargetCreatureUntilNextTurn,
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                        new TotalPowerOfTargetGroup(0)));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new TotalPowerOfTargetGroup(0)));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class MoltenSlagheap extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new PutCountersOnSelfEffect(CounterType.STORAGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.STORAGE)),
                 "{1}, {T}: Put a storage counter on this land."
         ));
 

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,7 +37,7 @@ public class MukotaiSoulripper extends Card {
                                 )),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                         )), Subjects.you()), new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                 new GrantKeywordEffect(Keyword.MENACE, Subjects.source())))),
                 "Sacrifice another artifact or creature?"));
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class BigBertha extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{G}",
-                List.of(new PutCountersOnSourceEffect(1, 1, 1)),
+                List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{1}{G}, {T}: Put a +1/+1 counter on Big Bertha."
         ));
     }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -41,7 +41,7 @@ public class PortentTracker extends Card {
                                 new RemoveCounterFromTargetPermanentEffect(CounterType.DEFENSE, null, 1)),
                         new ConditionalEffect(
                                 new NotCondition(new TargetPermanentMatches(protectedByOpponent)),
-                                new PutCounterOnTargetPermanentEffect(CounterType.DEFENSE, 1))),
+                                new PutCountersEffect(CounterType.DEFENSE, 1))),
                 "{T}: Choose target battle. If an opponent protects it, remove a defense counter from it. Otherwise, put a defense counter on it. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(new PermanentIsBattlePredicate(), "Target must be a battle"),
                 null,

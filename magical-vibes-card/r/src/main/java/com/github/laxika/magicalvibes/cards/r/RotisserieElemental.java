@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
@@ -19,7 +19,7 @@ public class RotisserieElemental extends Card {
 
     public RotisserieElemental() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.SKEWER),
+                PutCountersEffect.onSelf(CounterType.SKEWER),
                 new MayEffect(
                         SequenceEffect.of(new SacrificeSelfEffect(),
                                 new ConditionalEffect(HappenedThisWay.sacrificed(), new ExileTopCardMayPlayThisTurnEffect(

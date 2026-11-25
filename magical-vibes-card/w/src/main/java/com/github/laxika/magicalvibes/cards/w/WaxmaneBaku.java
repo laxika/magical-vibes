@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -27,7 +27,7 @@ public class WaxmaneBaku extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.KI), "Put a ki counter on this creature?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.KI), "Put a ki counter on this creature?"));
 
         // {1}, Remove X ki counters from this creature: Tap X target creatures. X is announced at
         // activation (capped by the ki counters present) and requires exactly X targets;

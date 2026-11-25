@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HuntingMoa extends Card {
 
     public HuntingMoa() {
-        PutCounterOnTargetPermanentEffect counter =
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        PutCountersEffect counter =
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), counter)
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), counter);

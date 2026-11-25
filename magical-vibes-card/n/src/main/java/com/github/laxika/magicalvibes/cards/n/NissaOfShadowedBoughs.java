@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOrGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
@@ -29,7 +29,7 @@ public class NissaOfShadowedBoughs extends Card {
 
     public NissaOfShadowedBoughs() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new PutCountersOnSelfEffect(CounterType.LOYALTY));
+                PutCountersEffect.onSelf(CounterType.LOYALTY));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

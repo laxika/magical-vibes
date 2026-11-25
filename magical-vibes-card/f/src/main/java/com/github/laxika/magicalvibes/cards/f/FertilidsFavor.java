@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSearchesLibraryForBasicLandToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -30,6 +30,6 @@ public class FertilidsFavor extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature"
-        ), 0, 1).addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+        ), 0, 1).addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

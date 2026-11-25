@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,7 +40,7 @@ public class TheScorpionGod extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}{R}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
+                List.of(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
                 "{1}{B}{R}: Put a -1/-1 counter on another target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -48,7 +48,7 @@ public record AddTokenCreationEffect(List<CreateTokenEffect> tokens, TokenKind w
     public static final CreateTokenEffect MUTAGEN = CreateTokenEffect.ofArtifactToken(1, "Mutagen",
             List.of(CardSubtype.MUTAGEN),
             List.of(new ActivatedAbility(true, "{1}",
-                    List.of(new SacrificeSelfCost(), new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                    List.of(new SacrificeSelfCost(), new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                     "{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. "
                             + "Activate only as a sorcery.",
                     TargetFilters.creature(), null, null, ActivationTimingRestriction.SORCERY_SPEED)));

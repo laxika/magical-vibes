@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class CrucibleOfTheSpiritDragon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new PutCountersOnSelfEffect(CounterType.STORAGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.STORAGE)),
                 "{1}, {T}: Put a storage counter on this land."
         ));
 

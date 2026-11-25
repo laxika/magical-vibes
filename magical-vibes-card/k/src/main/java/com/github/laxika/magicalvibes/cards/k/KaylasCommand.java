@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,7 +39,7 @@ public class KaylasCommand extends Card {
                         "Put a +1/+1 counter on a creature you control. It gains double strike until end of turn",
                         List.of(
                                 ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
-                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)),
                                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.thisWay(StepKind.CHOOSE),
                                         Duration.UNTIL_END_OF_TURN)

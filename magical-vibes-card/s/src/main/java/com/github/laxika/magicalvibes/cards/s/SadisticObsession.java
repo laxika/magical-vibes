@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +19,7 @@ public class SadisticObsession extends Card {
                 new ActivatedAbility(
                         true,
                         "{B}",
-                        List.of(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE)),
+                        List.of(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE)),
                         "{B}, {T}: Put a -1/-1 counter on target creature.",
                         TargetFilters.creature()
                 ),

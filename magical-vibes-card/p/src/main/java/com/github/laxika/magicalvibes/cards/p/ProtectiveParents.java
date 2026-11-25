@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
@@ -51,7 +51,7 @@ public class ProtectiveParents extends Card {
                         new TriggeredAbility(Triggers.attacks(),
                                 TriggerOptions.DEFAULT.withInterveningIf(
                                         new SourceMatchesPermanentPredicate(new PermanentToughnessAtMostPredicate(3))),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         Subjects.attachedCreature()))),
                 List.of(),
                 false,

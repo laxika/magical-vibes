@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,8 +26,7 @@ public class VoraciousHydra extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Double the number of +1/+1 counters on this creature",
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))),
                 new ChooseOneEffect.ChooseOneOption(
                         "This creature fights target creature you don't control",
                         new EnteringCreatureFightsTargetCreatureEffect(),

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,7 +31,7 @@ public class TheMonumentalFacade extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.OIL),
-                        new PutCounterOnTargetPermanentEffect(CounterType.OIL)
+                        new PutCountersEffect(CounterType.OIL)
                 ),
                 "{T}, Remove an oil counter from this land: Put an oil counter on target artifact or creature you control. Activate only as a sorcery.",
                 new ControlledPermanentPredicateTargetFilter(

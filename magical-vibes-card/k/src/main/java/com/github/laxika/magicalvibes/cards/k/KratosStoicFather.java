@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,7 +28,7 @@ public class KratosStoicFather extends Card {
                 new ExperienceCountersEffect(1));
 
         target(TargetFilters.creature()).addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, new ControllerExperienceCounters()));
     }
 }

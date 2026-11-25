@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -42,7 +42,7 @@ public class BaylenTheHaymaker extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(4, new PermanentIsTokenPredicate()),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 3),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())
                 ),
                 "Tap four untapped tokens you control: Put three +1/+1 counters on Baylen. It gains trample until end of turn."

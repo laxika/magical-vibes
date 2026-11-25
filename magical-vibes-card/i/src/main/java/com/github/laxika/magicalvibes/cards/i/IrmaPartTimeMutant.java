@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePermanentlyEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -27,6 +27,6 @@ public class IrmaPartTimeMutant extends Card {
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         ))),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

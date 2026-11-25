@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class SinnersJudgment extends Card {
 
     public SinnersJudgment() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.JUDGMENT),
+                PutCountersEffect.onSelf(CounterType.JUDGMENT),
                 new ConditionalEffect(new SourceCounterThreshold(3, CounterType.JUDGMENT),
                         new ControllerLosesGameEffect(Subjects.enchantedPlayer()))));
         addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());

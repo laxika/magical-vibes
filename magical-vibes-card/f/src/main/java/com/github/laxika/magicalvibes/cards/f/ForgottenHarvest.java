@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +25,7 @@ public class ForgottenHarvest extends Card {
                         ExileUpToOneCardFromGraveyardEffect.oneMatching(new CardTypePredicate(CardType.LAND))
                                 .from(Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.exiled(),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE))),
                 "Exile a land card from your graveyard?"));
     }
 }

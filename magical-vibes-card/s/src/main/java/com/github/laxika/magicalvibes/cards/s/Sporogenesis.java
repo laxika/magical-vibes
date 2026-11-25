@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +34,7 @@ public class Sporogenesis extends Card {
 
         target(new PermanentPredicateTargetFilter(nontokenCreature, "Target must be a nontoken creature"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.FUNGUS, 1,
+                        PutCountersEffect.withTargetRestriction(CounterType.FUNGUS, 1,
                                 nontokenCreature),
                         "Put a fungus counter on the target creature?"));
 

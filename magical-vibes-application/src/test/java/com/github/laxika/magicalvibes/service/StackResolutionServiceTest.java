@@ -108,7 +108,7 @@ class StackResolutionServiceTest {
         Card physical = createEnchantment("Room");
         physical.setSubtypes(List.of(CardSubtype.ROOM));
         physical.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
-        var effect = new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(
+        var effect = new com.github.laxika.magicalvibes.model.effect.PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE);
         physical.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 2)
                 .addTrigger(Triggers.doorUnlocked(1), effect);

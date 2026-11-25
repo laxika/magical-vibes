@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -34,7 +33,7 @@ public class CoralReef extends Card {
                 false, null,
                 List.of(
                         new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Sacrifice an Island"),
-                        new PutCountersOnSelfEffect(CounterType.POLYP, 2)
+                        PutCountersEffect.onSelf(CounterType.POLYP, 2)
                 ),
                 "Sacrifice an Island: Put two polyp counters on this enchantment."
         ));
@@ -49,7 +48,7 @@ public class CoralReef extends Card {
                                 new PermanentColorInPredicate(Set.of(CardColor.BLUE))
                         ))),
                         new RemoveCounterFromSourceCost(1, CounterType.POLYP),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ZERO_PLUS_ONE, 1)
+                        new PutCountersEffect(CounterType.PLUS_ZERO_PLUS_ONE, 1)
                 ),
                 "{U}, Tap an untapped blue creature you control, Remove a polyp counter from this enchantment: Put a +0/+1 counter on target creature.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature")

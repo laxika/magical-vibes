@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,6 +33,6 @@ public class NurturingPixie extends Card {
                 "Target must be a non-Faerie, nonland permanent you control"
         ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(ReturnToHandEffect.target(),
-                        new ConditionalEffect(HappenedThisWay.returned(), new PutCountersOnSourceEffect(1, 1, 1))));
+                        new ConditionalEffect(HappenedThisWay.returned(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))));
     }
 }

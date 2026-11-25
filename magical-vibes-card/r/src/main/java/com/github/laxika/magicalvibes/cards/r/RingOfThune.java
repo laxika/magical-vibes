@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -25,7 +25,7 @@ public class RingOfThune extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature()));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's white.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnTargetPermanentEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersEffect(
                 Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
         // Equip {1}

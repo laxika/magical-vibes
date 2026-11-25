@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -22,7 +22,7 @@ public class HeraldOfWar extends Card {
     public HeraldOfWar() {
         // Flying — loaded from Scryfall
         // Whenever this creature attacks, put a +1/+1 counter on it
-        addTrigger(Triggers.attacks(), new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.attacks(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         // Angel spells and Human spells you cast cost {1} less to cast for each +1/+1 counter on this creature
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAnyOfPredicate(List.of(

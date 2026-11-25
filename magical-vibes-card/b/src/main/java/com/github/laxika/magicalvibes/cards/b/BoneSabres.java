@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +15,7 @@ public class BoneSabres extends Card {
     public BoneSabres() {
         // Whenever equipped creature attacks, put four +1/+1 counters on it.
         addTrigger(Triggers.attacks(),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
+                new PutCountersEffect(Subjects.triggering(),
                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         // Equip {3}

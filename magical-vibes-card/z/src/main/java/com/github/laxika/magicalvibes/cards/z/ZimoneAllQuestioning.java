@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -43,7 +43,7 @@ public class ZimoneAllQuestioning extends Card {
                                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                                 List.of(CardSubtype.FRACTAL), Set.of(), Set.of(),
                                 false, false, List.of(), List.of(), false, false, true, 0, Set.of()),
-                        new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                        new PutCountersEffect(Subjects.createdThisResolution(),
                                 CounterType.PLUS_ONE_PLUS_ONE, landsYouControl)));
     }
 }

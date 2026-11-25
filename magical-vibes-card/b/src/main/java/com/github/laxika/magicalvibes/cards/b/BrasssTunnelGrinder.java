@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -29,7 +29,7 @@ public class BrasssTunnelGrinder extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new DescendedThisTurn()),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.BORE),
+                        PutCountersEffect.onSelf(CounterType.BORE),
                         new ConditionalEffect(new SourceCounterThreshold(3, CounterType.BORE), SequenceEffect.of(
                                 new RemoveAllCountersEffect(CounterType.BORE),
                                 new TransformSelfEffect()))));

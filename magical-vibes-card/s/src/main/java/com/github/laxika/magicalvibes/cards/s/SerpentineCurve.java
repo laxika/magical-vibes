@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -39,7 +39,7 @@ public class SerpentineCurve extends Card {
                 1, "Fractal", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                 List.of(CardSubtype.FRACTAL)));
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+        addSpellEffect(new PutCountersEffect(Subjects.createdThisResolution(),
                 CounterType.PLUS_ONE_PLUS_ONE, counterAmount));
     }
 }

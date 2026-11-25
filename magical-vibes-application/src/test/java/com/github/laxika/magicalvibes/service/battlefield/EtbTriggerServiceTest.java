@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -177,7 +177,7 @@ class EtbTriggerServiceTest {
                 new MayPayManaEffect("{2}",
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new TapPermanentsEffect(Subjects.target()),
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN))),
+                                new PutCountersEffect(CounterType.STUN))),
                         "Pay {2} to tap and stun a creature?"));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
 
@@ -197,7 +197,7 @@ class EtbTriggerServiceTest {
         creature.target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(
                         new SacrificePermanentThenEffect(new PermanentIsCreaturePredicate(),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 "a creature"),
                         "Sacrifice a creature?"));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));

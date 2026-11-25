@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -15,7 +15,7 @@ public class SettleTheScore extends Card {
         // Exile target creature. Put two loyalty counters on a planeswalker you control.
         target(TargetFilters.creature())
                 .addSpellEffect(new ExileTargetPermanentEffect())
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(
+                .addSpellEffect(new PutCountersEffect(
                         CounterType.LOYALTY, 2, new PermanentIsPlaneswalkerPredicate()));
     }
 }

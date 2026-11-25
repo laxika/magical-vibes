@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -46,7 +46,7 @@ public class TheRevelationsOfEzio extends Card {
                 new TriggeredAbility(Triggers.creatureAttacks().withFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)))),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE))));
 
         addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

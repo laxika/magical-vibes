@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class ChaoticGoo extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(
                         new FlipCoinWinEffect(
-                                new PutCountersOnSourceEffect(1, 1, 1),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                 new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                         "Flip a coin for Chaotic Goo?"));
     }

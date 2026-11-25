@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -10,8 +11,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PutCountersOnSourceEffectHandler;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import java.util.UUID;
@@ -24,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastHandler implements MayEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final PutCountersOnSourceEffectHandler putCountersOnSourceEffectHandler;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -38,14 +39,15 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastHandler implemen
                 : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
         if (accepted && source != null
                 && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
-            PutCountersOnSourceEffect counterEffect = new PutCountersOnSourceEffect(1, 1, 1);
+            PutCountersEffect counterEffect = PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE);
             StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     List.of(counterEffect),
                     null,
                     ability.sourcePermanentId());
-            putCountersOnSourceEffectHandler.resolve(gameData, counterEntry, counterEffect);
+            permanentCounterSupport.placeCounterOnPermanent(gameData, counterEntry, source,
+                    CounterType.PLUS_ONE_PLUS_ONE, 1);
         } else {
             ExiledCardEntry exiled = ability.targetCardId() == null
                     ? null

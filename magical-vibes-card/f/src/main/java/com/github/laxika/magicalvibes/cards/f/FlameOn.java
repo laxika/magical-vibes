@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -29,7 +29,7 @@ public class FlameOn extends Card {
                 )), CountScope.CONTROLLER);
 
         target(TargetFilters.creature())
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(
+                .addSpellEffect(new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, noncreatureNonlandCards))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
     }

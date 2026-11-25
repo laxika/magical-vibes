@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -27,7 +27,7 @@ public class BlademaneBaku extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.KI), "Put a ki counter on this creature?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.KI), "Put a ki counter on this creature?"));
 
         // {1}, Remove X ki counters from this creature: For each counter removed, this creature gets
         // +2/+0 until end of turn. X is announced at activation (capped by the ki counters present)

@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,13 +18,13 @@ public class Chlorophant extends Card {
 
     public Chlorophant() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 "Put a +1/+1 counter on Chlorophant?"));
 
         addStaticEffect(new ConditionalEffect(new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                        new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
+                        new MayEffect(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                 "Put another +1/+1 counter on Chlorophant?")),
                         Subjects.source())));
     }

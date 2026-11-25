@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -19,18 +19,18 @@ public class IncrementalBlight extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature"
-        )).addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+        )).addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // ... two -1/-1 counters on another target creature, ...
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Second target must be another creature"
-        )).addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 2));
+        )).addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 2));
 
         // ... and three -1/-1 counters on a third target creature.
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Third target must be another creature"
-        )).addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 3));
+        )).addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 3));
     }
 }

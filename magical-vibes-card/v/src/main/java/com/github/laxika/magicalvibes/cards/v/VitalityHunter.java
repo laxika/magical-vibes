@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,6 +25,6 @@ public class VitalityHunter extends Card {
 
         targetUpTo(new XValue(), TargetFilters.creature(), 99)
                 .addTrigger(Triggers.becomesMonstrous(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK));
+                        new PutCountersEffect(CounterType.LIFELINK));
     }
 }

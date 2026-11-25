@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -35,7 +35,7 @@ public class LavabrinkFloodgates extends Card {
         ChooseOneEffect putOrRemove = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a doom counter on Lavabrink Floodgates",
-                        List.of(new PutCountersOnSelfEffect(CounterType.DOOM))),
+                        List.of(PutCountersEffect.onSelf(CounterType.DOOM))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove a doom counter from Lavabrink Floodgates",
                         List.of(new RemoveCounterFromSourceEffect(CounterType.DOOM, 1)))

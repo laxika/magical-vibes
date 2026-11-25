@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class AangMasterOfElements extends Card {
                         new ConditionalEffect(HappenedThisWay.transformed(), SequenceEffect.of(
                                 new GainLifeEffect(4),
                                 new DrawCardEffect(4),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 4),
                                 new DealDamageToPlayersEffect(4, Subjects.eachOpponent())))),
                 "Transform Aang, Master of Elements?"));
     }

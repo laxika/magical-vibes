@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -25,6 +25,6 @@ public class InvoluntaryCooldown extends Card {
                 "Target must be an artifact or creature"
         ), 0, 2)
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.STUN, 2));
+                .addSpellEffect(new PutCountersEffect(CounterType.STUN, 2));
     }
 }

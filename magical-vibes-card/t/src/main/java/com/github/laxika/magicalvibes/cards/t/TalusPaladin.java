@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPred
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,7 +38,7 @@ public class TalusPaladin extends Card {
                                                 new PermanentControlledBySourceControllerPredicate()))),
                                         new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source()))
                         ), "Have Ally creatures you control gain lifelink until end of turn?"),
-                        new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
+                        new MayEffect(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                 "Put a +1/+1 counter on Talus Paladin?")));
     }
 }

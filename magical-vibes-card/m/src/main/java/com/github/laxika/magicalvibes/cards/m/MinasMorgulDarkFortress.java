@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class MinasMorgulDarkFortress extends Card {
                 true,
                 "{3}{B}",
                 List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.SHADOW),
+                        new PutCountersEffect(CounterType.SHADOW),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.WRAITH, CounterType.SHADOW)),
                 "{3}{B}, {T}: Put a shadow counter on target creature. For as long as that creature has a shadow counter on it, it's a Wraith in addition to its other types.",
                 TargetFilters.creature()));

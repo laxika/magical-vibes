@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class InheritedFiend extends Card {
                 List.of(
                         ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
                                 1, new CardTypePredicate(CardType.CREATURE), false),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{2}{B}: Exile target creature card from a graveyard. Put a +1/+1 counter on this creature."
         ));
     }

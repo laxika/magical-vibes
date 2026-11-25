@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -35,7 +35,7 @@ public class ConstructACosmicCube extends Card {
                         List.of(CardSubtype.VILLAIN),
                         Set.of(Keyword.MENACE),
                         Set.of()),
-                new PutCountersOnSelfEffect(CounterType.PLAN)));
+                PutCountersEffect.onSelf(CounterType.PLAN)));
 
         addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(7, CounterType.PLAN)),

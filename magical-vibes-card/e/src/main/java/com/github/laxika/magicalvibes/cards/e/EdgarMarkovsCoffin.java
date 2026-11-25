@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -26,7 +26,7 @@ public class EdgarMarkovsCoffin extends Card {
                         1, "Vampire", 1, 1, CardColor.WHITE,
                         Set.of(CardColor.WHITE, CardColor.BLACK),
                         List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of()),
-                new PutCountersOnSelfEffect(CounterType.BLOODLINE),
+                PutCountersEffect.onSelf(CounterType.BLOODLINE),
                 new ConditionalEffect(new SourceCounterThreshold(3, CounterType.BLOODLINE), SequenceEffect.of(
                         new RemoveAllCountersEffect(CounterType.BLOODLINE),
                         new TransformSelfEffect()))));

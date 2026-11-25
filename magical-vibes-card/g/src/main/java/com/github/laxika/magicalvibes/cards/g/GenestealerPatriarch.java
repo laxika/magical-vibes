@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -30,7 +30,7 @@ public class GenestealerPatriarch extends Card {
                 defendingPlayerCreature,
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.INFECTION));
+                        new PutCountersEffect(CounterType.INFECTION));
 
         CardEffect childrenOfTheCult = new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(CardSubtype.TYRANID), Set.of(), null, null, Map.of()).ofTriggeringPermanent();

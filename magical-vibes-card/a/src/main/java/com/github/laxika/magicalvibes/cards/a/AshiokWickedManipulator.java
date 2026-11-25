@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromLibraryInsteadOfLifePaymentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -62,7 +62,7 @@ public class AshiokWickedManipulator extends Card {
                         List.of(
                                 new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
                                         TriggerOptions.DEFAULT.withInterveningIf(new CardPutIntoExileThisTurn()),
-                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                         List.of(),
                         false,
                         false,

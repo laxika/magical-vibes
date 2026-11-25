@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -48,7 +48,7 @@ public class BrotherhoodOutcast extends Card {
                                 eligibleCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a shield counter on target creature",
-                        new PutCounterOnTargetPermanentEffect(CounterType.SHIELD),
+                        new PutCountersEffect(CounterType.SHIELD),
                         TargetFilters.creature())
         ))));
     }

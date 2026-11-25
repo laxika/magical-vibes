@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -24,6 +24,6 @@ public class ProtocolKnight extends Card {
                         new TapPermanentsEffect(Subjects.target()),
                         new ConditionalEffect(
                                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN))));
+                                new PutCountersEffect(CounterType.STUN))));
     }
 }

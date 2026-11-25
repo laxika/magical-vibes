@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -40,7 +40,7 @@ public class EnergyVortex extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}",
-                List.of(new PutCountersOnSelfEffect(CounterType.VORTEX, new XValue())),
+                List.of(PutCountersEffect.onSelf(CounterType.VORTEX, new XValue())),
                 "{X}: Put X vortex counters on Energy Vortex. Activate only during your upkeep.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP
         ));

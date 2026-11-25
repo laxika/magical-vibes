@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -35,7 +35,7 @@ public class BetorAncestorsVoice extends Card {
 
         // One ability of two target groups: the counters on up to one other target creature you control, the return
         // of up to one target creature card from your graveyard.
-        CardEffect counters = new PutCounterOnTargetPermanentEffect(
+        CardEffect counters = new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new LifeGainedThisTurn(CountScope.CONTROLLER));
         CardEffect returnCreature = ReturnCardFromGraveyardEffect.builder()

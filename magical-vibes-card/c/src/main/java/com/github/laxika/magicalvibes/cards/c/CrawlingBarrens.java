@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -25,7 +25,7 @@ public class CrawlingBarrens extends Card {
                 false,
                 "{4}",
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new MayEffect(
                                 new AnimatePermanentsEffect(
                                         0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(), null,

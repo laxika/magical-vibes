@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -36,7 +36,7 @@ public class VillainousSyndication extends Card {
                 List.of(
                         new TapCreatureCost(new PermanentHasSubtypePredicate(CardSubtype.VILLAIN)),
                         new MillEffect(1, Subjects.you()),
-                        new PutCountersOnSelfEffect(CounterType.PLAN)
+                        PutCountersEffect.onSelf(CounterType.PLAN)
                 ),
                 "Tap an untapped Villain you control: Mill a card. Put a plan counter on this enchantment. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED

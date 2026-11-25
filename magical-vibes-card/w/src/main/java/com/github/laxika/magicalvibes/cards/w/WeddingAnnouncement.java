@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -43,7 +43,7 @@ public class WeddingAnnouncement extends Card {
         // invitation counters on it, transform it.
         // Counters are kept on transform (ruling).
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.INVITATION),
+                PutCountersEffect.onSelf(CounterType.INVITATION),
                 new ConditionalReplacementEffect(
                         new AttackedWithCreaturesThisTurn(2),
                         new CreateTokenEffect("Human", 1, 1,

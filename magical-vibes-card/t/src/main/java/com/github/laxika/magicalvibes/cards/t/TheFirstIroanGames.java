@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class TheFirstIroanGames extends Card {
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
 
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
 
         addTrigger(Triggers.chapter(3), new ConditionalEffect(

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -29,7 +29,7 @@ public class ForebodingStatue extends Card {
                 null,
                 List.of(
                         new AwardAnyColorManaEffect(),
-                        new PutCountersOnSelfEffect(CounterType.OMEN)
+                        PutCountersEffect.onSelf(CounterType.OMEN)
                 ),
                 "{T}: Add one mana of any color. Put an omen counter on this creature."
         ));

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +30,7 @@ public class ArniSlaysTheTroll extends Card {
 
         addTrigger(Triggers.chapter(2),
                 new AwardManaEffect(ManaColor.RED),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 2,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

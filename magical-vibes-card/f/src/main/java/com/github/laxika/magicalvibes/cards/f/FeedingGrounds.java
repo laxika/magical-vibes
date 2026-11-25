@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,6 +22,6 @@ public class FeedingGrounds extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.GREEN), 1, CostModificationScope.ALL));
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetManaValue()));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetManaValue()));
     }
 }

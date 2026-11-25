@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class VentifactBottle extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}{1}",
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE, new XValue())),
+                List.of(PutCountersEffect.onSelf(CounterType.CHARGE, new XValue())),
                 "{X}{1}, {T}: Put X charge counters on this artifact. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

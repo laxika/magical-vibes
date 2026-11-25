@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -28,7 +28,7 @@ public class BrighthearthBanneret extends Card {
 
         // Reinforce 1—{1}{R} ({1}{R}, Discard this card: Put a +1/+1 counter on target creature.)
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{R}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 "Reinforce 1—{1}{R} ({1}{R}, Discard this card: Put a +1/+1 counter on target creature.)",
                 TargetFilters.creature()));
     }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControl
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -38,7 +38,7 @@ public class DodgyJalopy extends Card {
                 "{2}{G}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new PutCounterOnTargetPermanentEffect(
+                        new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, greatestCreatureManaValue)),
                 "Scavenge {2}{G} ({2}{G}, Exile this card from your graveyard: Put a number of +1/+1 "
                         + "counters equal to this card's power on target creature. Scavenge only as a sorcery.)",

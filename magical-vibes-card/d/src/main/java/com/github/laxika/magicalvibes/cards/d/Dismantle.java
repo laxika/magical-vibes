@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -42,7 +42,7 @@ public class Dismantle extends Card {
                 ChoosePermanentsEffect.exactly(1,
                         Subjects.controlledBy(Subjects.you(), new PermanentIsArtifactPredicate()),
                         "an artifact you control"),
-                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE), counterType,
+                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE), counterType,
                         AmountThisWay.noted()));
     }
 }

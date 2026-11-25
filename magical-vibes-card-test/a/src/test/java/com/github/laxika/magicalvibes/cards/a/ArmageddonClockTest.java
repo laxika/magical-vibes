@@ -26,7 +26,7 @@ class ArmageddonClockTest extends BaseCardTest {
         Permanent clock = addClock(player1);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
+        harness.passBothPriorities(); // resolve PutCountersEffect.onSelf
 
         assertThat(clock.getCounterCount(CounterType.DOOM)).isEqualTo(1);
     }

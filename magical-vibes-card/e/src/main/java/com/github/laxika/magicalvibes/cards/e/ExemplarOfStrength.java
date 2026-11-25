@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class ExemplarOfStrength extends Card {
     public ExemplarOfStrength() {
         // "When this creature enters, put three -1/-1 counters on target creature you control."
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 3));
+                new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 3));
 
         // "Whenever this creature attacks, remove a -1/-1 counter from it. If you do, you gain 1 life."
         addTrigger(Triggers.attacks(),

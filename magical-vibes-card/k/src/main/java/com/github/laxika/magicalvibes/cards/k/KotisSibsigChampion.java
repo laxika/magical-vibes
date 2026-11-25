@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CastSpellFromGraveyardOncePerYourTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredOrCastFromZonePredicate;
@@ -30,6 +31,6 @@ public class KotisSibsigChampion extends Card {
                                         new PermanentEnteredOrCastFromZonePredicate(Zone.GRAVEYARD))),
                                 ObjectRelation.YOU_CONTROL)),
                 TriggerOptions.ONE_OR_MORE,
-                new PutCountersOnSourceEffect(1, 1, 2));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

@@ -51,7 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatur
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCreatureThisTurnEffect;
@@ -511,8 +511,12 @@ public class TargetPolarityClassifier {
             };
         }
 
-        // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction.
-        if (effect instanceof PutCounterOnTargetPermanentEffect counter) {
+        // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction. Counters on the source go on no
+        // target: a target such an ability declares (a player it counts for, a permanent it reads) has no direction.
+        if (effect instanceof PutCountersEffect counter) {
+            if (counter.subject() instanceof PermanentSubject.Source) {
+                return TargetPolarity.NEUTRAL;
+            }
             if (counter.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 return TargetPolarity.HARMFUL;
             }
@@ -715,7 +719,6 @@ public class TargetPolarityClassifier {
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DisorientingChoiceEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PhaseOutTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("PutCountersOnSelfEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndImprintEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndTrackWithSourceEffect", TargetPolarity.HARMFUL_REMOVAL),

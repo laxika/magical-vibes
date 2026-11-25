@@ -50,7 +50,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -759,11 +759,11 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("PutCountersOnSelfEffect auto-targets source permanent")
+        @DisplayName("PutCountersEffect.onSelf auto-targets source permanent")
         void putChargeCounterAutoTargets() {
             Card card = createCard("Test Artifact", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new PutCountersOnSelfEffect(CounterType.CHARGE));
+            List<CardEffect> effects = List.of(PutCountersEffect.onSelf(CounterType.CHARGE));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Put a charge counter.");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -857,7 +857,7 @@ class ActivatedAbilityExecutionServiceTest {
         void tapAbilityTapsPermanent() {
             Card card = createCard("Test Artifact", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new PutCountersOnSelfEffect(CounterType.CHARGE));
+            List<CardEffect> effects = List.of(PutCountersEffect.onSelf(CounterType.CHARGE));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Put a charge counter.");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);

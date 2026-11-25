@@ -38,7 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -180,29 +180,25 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         CardEffect firstEffect = e.wrapped() instanceof SequenceEffect sequence && !sequence.steps().isEmpty()
                 ? sequence.steps().getFirst() : e.wrapped();
-        if (firstEffect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counters
+        if (firstEffect instanceof PutCountersEffect counters
                 && counters.predicate() == null
                 && counters.subject() instanceof com.github.laxika.magicalvibes.model.effect.PermanentSubject.Target) {
             var target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-            if (target == null || gameQueryService.cantHaveCounters(gameData, target)
-                    || counters.counterType() == com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE
-                    && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)
-                    || counters.counterType() == com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE
-                    && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
+            if (target == null || !canHaveCounters(gameData, target, counters.counterType())) {
                 insertElseEffect(entry, e);
                 return;
             }
         }
-        if (e.wrapped() instanceof PutCountersOnSourceEffect counters) {
+        if (e.wrapped() instanceof PutCountersEffect counters
+                && counters.subject() instanceof com.github.laxika.magicalvibes.model.effect.PermanentSubject.Source) {
+            // "You may put a counter on this": no choice when the source can't have the counters, or is gone and an
+            // "if you don't" follows (CR 608.2d). Gone with nothing else to do, the controller still makes it (Kresh's
+            // trigger after Kresh left the battlefield).
             var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source == null && e.elseEffect() == null) {
-                // Nothing replaces the counters and nothing observable depends on the choice, but the
-                // controller still makes it (Kresh's trigger after Kresh left the battlefield).
-            } else if (source == null || gameQueryService.cantHaveCounters(gameData, source)
-                    || counters.powerModifier() > 0
-                    && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)
-                    || counters.powerModifier() < 0
-                    && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) {
+                // Nothing replaces the counters and nothing observable depends on the choice.
+            } else if (source == null
+                    || !canHaveCounters(gameData, source, counters.counterType())) {
                 insertElseEffect(entry, e);
                 return;
             }
@@ -459,6 +455,18 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         ).withGrantingPermanentId(entry.getGrantingPermanentId())
                 .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
                 .withSourceGraveyardEntryVersion(entry.getSourceGraveyardEntryVersion()));
+    }
+
+    /** Whether counters of {@code type} could be put on {@code permanent} (CR 608.2d: else there is no choice). */
+    private boolean canHaveCounters(GameData gameData, Permanent permanent, CounterType type) {
+        if (gameQueryService.cantHaveCounters(gameData, permanent)) {
+            return false;
+        }
+        return switch (type) {
+            case PLUS_ONE_PLUS_ONE -> !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent);
+            case MINUS_ONE_MINUS_ONE -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent);
+            default -> true;
+        };
     }
 
     /** Whether the resolving entry's source permanent has the counters {@code removal} would remove. */

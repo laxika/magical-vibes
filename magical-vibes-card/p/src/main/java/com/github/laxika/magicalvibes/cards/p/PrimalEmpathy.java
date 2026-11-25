@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,7 +28,7 @@ public class PrimalEmpathy extends Card {
                 new ConditionalEffect(new NotCondition(greatestPower),
                         SequenceEffect.of(
                                 ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
-                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))))));
     }
 }

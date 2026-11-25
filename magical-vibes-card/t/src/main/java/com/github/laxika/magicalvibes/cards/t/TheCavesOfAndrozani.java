@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +32,7 @@ public class TheCavesOfAndrozani extends Card {
 
     public TheCavesOfAndrozani() {
         addTrigger(Triggers.chapter(1),
-                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 2));
+                new PutCountersEffect(CounterType.STUN, 2));
         setSagaChapterTargetGroups(1, List.of(new SagaChapterTargetGroup(
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

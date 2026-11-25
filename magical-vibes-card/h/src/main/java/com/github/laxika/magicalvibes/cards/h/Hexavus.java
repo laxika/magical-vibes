@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +34,7 @@ public class Hexavus extends Card {
                 "{1}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLYING)
+                        new PutCountersEffect(CounterType.FLYING)
                 ),
                 "{1}, Remove a +1/+1 counter from this creature: Put a flying counter on another target creature.",
                 new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature")
@@ -47,7 +46,7 @@ public class Hexavus extends Card {
                 List.of(
                         new RemoveCounterFromControlledPermanentCost(
                                 1, new PermanentIsCreaturePredicate(), true),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{1}, Remove a counter from another creature you control: Put a +1/+1 counter on this creature."
         ));

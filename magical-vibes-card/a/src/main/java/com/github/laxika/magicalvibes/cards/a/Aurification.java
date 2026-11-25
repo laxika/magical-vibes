@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -27,7 +27,7 @@ public class Aurification extends Card {
                 new PermanentHasCountersPredicate(CounterType.GOLD)));
 
         addTrigger(Triggers.permanentDealsDamageToYou().withFilter(new PermanentIsCreaturePredicate()),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.GOLD));
+                new PutCountersEffect(Subjects.triggering(), CounterType.GOLD));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.WALL, Subjects.allCreatures(), false,
                         goldCounterBearer));
         addStaticEffect(new GrantKeywordEffect(Keyword.DEFENDER, Subjects.allCreatures(),

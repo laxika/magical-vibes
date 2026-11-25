@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +29,7 @@ public class InstrumentOfTheBards extends Card {
 
     public InstrumentOfTheBards() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.HARMONY),
+                new MayEffect(PutCountersEffect.onSelf(CounterType.HARMONY),
                         "Put a harmony counter on Instrument of the Bards?"));
 
         addActivatedAbility(new ActivatedAbility(

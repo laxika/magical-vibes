@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -25,8 +24,8 @@ public class SanctuaryWall extends Card {
                         new TapPermanentsEffect(Subjects.target()),
                         new MayEffect(
                                 SequenceEffect.of(
-                                        new PutCounterOnTargetPermanentEffect(CounterType.STUN),
-                                        new PutCountersOnSelfEffect(CounterType.STUN)
+                                        new PutCountersEffect(CounterType.STUN),
+                                        PutCountersEffect.onSelf(CounterType.STUN)
                                 ),
                                 "Put a stun counter on it?"
                         )

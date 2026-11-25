@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,7 +36,7 @@ public class TriadOfFates extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.FATE, 1, anotherCreature)),
+                List.of(PutCountersEffect.withTargetRestriction(CounterType.FATE, 1, anotherCreature)),
                 "{1}, {T}: Put a fate counter on another target creature.",
                 new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature")));
 

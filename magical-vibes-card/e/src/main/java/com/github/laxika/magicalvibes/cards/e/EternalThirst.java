@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +23,7 @@ public class EternalThirst extends Card {
                 .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                                new PutCountersOnSourceEffect(1, 1, 1)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                                 Subjects.attachedCreature()));
     }
 }

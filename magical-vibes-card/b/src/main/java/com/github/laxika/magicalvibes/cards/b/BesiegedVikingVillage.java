@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
@@ -28,7 +27,7 @@ public class BesiegedVikingVillage extends Card {
                 new ActivatedAbility(
                         false,
                         "{1}",
-                        List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                         "Boast — {1}: Put a +1/+1 counter on this creature. Activate only if this creature "
                                 + "attacked this turn and only once each turn.",
                         1
@@ -48,7 +47,7 @@ public class BesiegedVikingVillage extends Card {
                 targetCreatureYouControlThatAttacked,
                 "Target must be a creature you control that attacked this turn"
         )).addTrigger(Triggers.chaosEnsues(),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.INDESTRUCTIBLE, 1, targetCreatureYouControlThatAttacked));
     }
 }

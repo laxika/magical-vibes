@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -43,7 +43,7 @@ public class EtchedHostDoombringer extends Card {
                                 new ConditionalEffect(new TargetPermanentMatches(protectedByOpponent),
                                         new RemoveCounterFromTargetPermanentEffect(CounterType.DEFENSE, null, 3)),
                                 new ConditionalEffect(new NotCondition(new TargetPermanentMatches(protectedByOpponent)),
-                                        new PutCounterOnTargetPermanentEffect(CounterType.DEFENSE, 3))),
+                                        new PutCountersEffect(CounterType.DEFENSE, 3))),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsBattlePredicate(),
                                 "Target must be a battle"))

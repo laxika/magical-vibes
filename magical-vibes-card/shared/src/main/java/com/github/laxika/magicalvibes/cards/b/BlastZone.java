@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class BlastZone extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}{X}",
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE, new XValue())),
+                List.of(PutCountersEffect.onSelf(CounterType.CHARGE, new XValue())),
                 "{X}{X}, {T}: Put X charge counters on Blast Zone."
         ));
 

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Pompeii extends Card {
 
     public Pompeii() {
-        PutCountersOnSelfEffect eruptionCounter = new PutCountersOnSelfEffect(CounterType.ERUPTION);
+        PutCountersEffect eruptionCounter = PutCountersEffect.onSelf(CounterType.ERUPTION);
         addTrigger(Triggers.planeswalkToThis(), eruptionCounter);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), eruptionCounter);
 

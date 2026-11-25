@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -32,6 +32,6 @@ public class MirelurkQueen extends Card {
 
         addTrigger(new TriggerCondition(Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY)),
                 TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                SequenceEffect.of(new DrawCardEffect(1), new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                SequenceEffect.of(new DrawCardEffect(1), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

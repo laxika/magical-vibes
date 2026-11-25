@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -45,7 +45,7 @@ public class GhaveGuruOfSpores extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{1}, Sacrifice a creature: Put a +1/+1 counter on target creature.",
                 TargetFilters.creature()

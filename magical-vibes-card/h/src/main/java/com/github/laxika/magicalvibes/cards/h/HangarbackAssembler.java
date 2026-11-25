@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -31,7 +31,7 @@ public class HangarbackAssembler extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
                         new ConjureCardToBattlefieldEffect("ORI", "229"),
-                        new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                        new PutCountersEffect(Subjects.createdThisResolution(),
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
 
         PermanentPredicate artifactCreatureOrVehicle = new PermanentAnyOfPredicate(List.of(

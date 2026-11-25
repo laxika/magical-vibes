@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
@@ -34,7 +34,7 @@ public class PyromancerAscension extends Card {
         ));
 
         addTrigger(Triggers.youCastSpell().withFilter(matchingSpell),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST), "Put a quest counter on Pyromancer Ascension?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.QUEST), "Put a quest counter on Pyromancer Ascension?"));
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(2, CounterType.QUEST)),
                 new MayEffect(new CopyTriggeringSpellEffect(), "Copy that spell?"));

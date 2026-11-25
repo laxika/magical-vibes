@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +27,7 @@ public class Incendiary extends Card {
     public Incendiary() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                        new PutCountersOnSelfEffect(CounterType.FUSE),
+                        PutCountersEffect.onSelf(CounterType.FUSE),
                         "Put a fuse counter on this Aura?"));
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

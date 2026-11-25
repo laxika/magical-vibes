@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +25,7 @@ public class CycloneSire extends Card {
         target(TargetFilters.landYouControl()).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(
                         SequenceEffect.of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                                 new AnimatePermanentsEffect(
                                         0, 0,
                                         List.of(CardSubtype.ELEMENTAL),

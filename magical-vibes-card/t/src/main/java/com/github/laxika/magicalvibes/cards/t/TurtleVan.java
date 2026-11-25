@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -33,7 +33,7 @@ public class TurtleVan extends Card {
                                 new PermanentCrewedBySourceThisTurnPredicate())),
                         "Target must be a creature that crewed this Vehicle this turn"))
                 .addTrigger(Triggers.attacks(), SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentAnyOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.MUTANT),

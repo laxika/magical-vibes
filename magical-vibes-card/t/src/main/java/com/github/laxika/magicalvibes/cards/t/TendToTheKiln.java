@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -45,7 +45,7 @@ public class TendToTheKiln extends Card {
                                 new CardNotPredicate(new CardSubtypePredicate(CardSubtype.ELEMENTAL)))))));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELEMENTAL)),
-                new PutCountersOnSelfEffect(CounterType.FLAME),
+                PutCountersEffect.onSelf(CounterType.FLAME),
                 new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.FLAME),
                         SequenceEffect.of(

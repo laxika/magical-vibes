@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "102")
@@ -13,6 +13,6 @@ public class PunctureBolt extends Card {
     public PunctureBolt() {
         // Puncture Bolt deals 1 damage to target creature. Put a -1/-1 counter on that creature.
         target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(1))
-          .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE));
+          .addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

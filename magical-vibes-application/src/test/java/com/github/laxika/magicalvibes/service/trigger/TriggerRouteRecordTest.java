@@ -61,9 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
@@ -457,7 +455,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         TriggerRouteRecordTest::countersArePutOnFixtures),
                 watch("counters put on a creature you control", "countersPutOnCreatureYouControl", Triggers::countersPutOnCreatureYouControl,
                         CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 watch("becomes tapped", "becomesTapped", Triggers::becomesTapped, CardType.CREATURE,
                         TriggerRouteRecordTest::fixturesAttack),
                 watch("becomes untapped", "becomesUntapped", Triggers::becomesUntapped, CardType.CREATURE,
@@ -657,10 +655,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
                 watch("a +1/+1 counter put on this", "plusOneCounterPutOnThis", Triggers::plusOneCounterPutOnThis, CardType.CREATURE,
                         TriggerRouteRecordTest::countersArePutOnFixtures),
                 watch("you put counters on a creature", "youPutCountersOnCreature", Triggers::youPutCountersOnCreature, CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 watch("you put counters on a permanent or player", "youPutCountersOnPermanentOrPlayer", Triggers::youPutCountersOnPermanentOrPlayer,
                         CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 watch("a permanent you control becomes untapped", "permanentYouControlBecomesUntapped", Triggers::permanentYouControlBecomesUntapped,
                         CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherPermanentUntaps),
                 watch("a permanent becomes untapped", "permanentBecomesUntapped", Triggers::permanentBecomesUntapped, CardType.ENCHANTMENT,
@@ -766,13 +764,13 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
                 watch("you put counters on a creature you control", "youPutCountersOnCreatureYouControl", Triggers::youPutCountersOnCreatureYouControl,
                         CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 watch("+1/+1 counters put on another creature you control", "plusOneCountersPutOnAnotherCreatureYouControl",
                         Triggers::plusOneCountersPutOnAnotherCreatureYouControl, CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 watch("you put counters on another creature", "youPutCountersOnAnotherCreature", Triggers::youPutCountersOnAnotherCreature,
                         CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 watch("you put +1/+1 counters on this", "youPutPlusOneCountersOnThis", Triggers::youPutPlusOneCountersOnThis, CardType.CREATURE,
                         TriggerRouteRecordTest::countersArePutOnFixtures),
                 watch("becomes tapped for the first time during your turn", "becomesTappedForFirstTimeDuringYourTurn",
@@ -1383,33 +1381,33 @@ class TriggerRouteRecordTest extends BaseCardTest {
                 watch("+1/+1 counters put on another non-Hydra creature you control",
                         "plusOneCountersPutOnAnotherNonHydraCreatureYouControl",
                         Triggers::plusOneCountersPutOnAnotherNonHydraCreatureYouControl, CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 watch("+1/+1 counters put on another permanent you control for the first time each turn", "plusOneCountersPutOnAnotherPermanentYouControlFirstTimeEachTurn", Triggers::plusOneCountersPutOnAnotherPermanentYouControlFirstTimeEachTurn, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1))),
                 watch("you put +1/+1 counters on a permanent you control", "youPutPlusOneCountersOnPermanentYouControl", Triggers::youPutPlusOneCountersOnPermanentYouControl, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1))),
                 watch("you put +1/+1 counters on a creature you control", "youPutPlusOneCountersOnCreatureYouControl", Triggers::youPutPlusOneCountersOnCreatureYouControl, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1))),
                 watch("+1/+1 counters put on a creature you control", "plusOneCountersPutOnCreatureYouControl", Triggers::plusOneCountersPutOnCreatureYouControl, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1))),
                 watch("you put +1/+1 counters on a creature", "youPutPlusOneCountersOnCreature", Triggers::youPutPlusOneCountersOnCreature, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1))),
                 watch("you put +1/+1 counters on another Hero you control",
                         "youPutPlusOneCountersOnAnotherHeroYouControl",
                         Triggers::youPutPlusOneCountersOnAnotherHeroYouControl, CardType.ENCHANTMENT,
                         (test, cards) -> test.countersArePutOnHelper(cards, CardSubtype.HERO)),
                 watch("you put +1/+1 counters on another creature", "youPutPlusOneCountersOnAnotherCreature", Triggers::youPutPlusOneCountersOnAnotherCreature, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1))),
                 watch("you put time counters on a permanent you control", "youPutTimeCountersOnPermanentYouControl",
                         Triggers::youPutTimeCountersOnPermanentYouControl, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new PutCountersOnSelfEffect(CounterType.TIME, 1))),
+                                PutCountersEffect.onSelf(CounterType.TIME, 1))),
                 watch("an opponent puts counters on a creature they control",
                         "opponentPutsCountersOnCreatureTheyControl",
                         Triggers::opponentPutsCountersOnCreatureTheyControl, CardType.ENCHANTMENT,
@@ -2513,7 +2511,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private void countersArePutOnHelper(List<Card> cards, CardSubtype subtype) {
         fixturePermanents(cards);
         Card helper = card("Helper", CardType.CREATURE, subtype);
-        helper.addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSourceEffect(1, 1, 1));
+        helper.addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         mainPhaseOf(player1);
         harness.enterBattlefieldAndReturn(player1, helper);
         harness.passBothPriorities();
@@ -2600,7 +2598,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
         Card backup = card("Backup", CardType.CREATURE);
         backup.setKeywords(Set.of(Keyword.BACKUP));
         backup.target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
         mainPhaseOf(player1);
         harness.castFromHand(player1, backup, "{1}");
         harness.passBothPriorities();

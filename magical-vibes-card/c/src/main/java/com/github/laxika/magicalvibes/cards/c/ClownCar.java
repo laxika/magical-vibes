@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class ClownCar extends Card {
         CreateTokenEffect clownRobot = new CreateTokenEffect(
                 1, "Clown Robot", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.CLOWN, CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT));
-        PutCountersOnSelfEffect counter = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        PutCountersEffect counter = PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE);
         // A Clown Robot for each odd result, a +1/+1 counter for each even one.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new RollD6Effect(new XValue(),
                 List.of(clownRobot, counter, clownRobot, counter, clownRobot, counter)));

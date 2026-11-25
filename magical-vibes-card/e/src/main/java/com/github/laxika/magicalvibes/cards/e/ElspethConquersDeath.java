@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -57,12 +57,12 @@ public class ElspethConquersDeath extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on it",
-                                new PutCounterOnTargetPermanentEffect(
+                                new PutCountersEffect(
                                         Subjects.returned(),
                                         CounterType.PLUS_ONE_PLUS_ONE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a loyalty counter on it",
-                                new PutCounterOnTargetPermanentEffect(
+                                new PutCountersEffect(
                                         Subjects.returned(),
                                         CounterType.LOYALTY))
                 ))

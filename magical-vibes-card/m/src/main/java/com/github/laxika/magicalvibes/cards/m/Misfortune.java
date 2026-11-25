@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOpti
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -25,7 +25,7 @@ public class Misfortune extends Card {
                                 new GainLifeEffect(4))),
                 new ChooseOneOption("You put a -1/-1 counter on each creature that player controls and"
                         + " Misfortune deals 4 damage to that player",
-                        List.of(new PutCounterOnTargetPermanentEffect(
+                        List.of(new PutCountersEffect(
                                         Subjects.controlledBy(Subjects.modeChooser(), new PermanentIsCreaturePredicate()),
                                         CounterType.MINUS_ONE_MINUS_ONE),
                                 new DealDamageToPlayersEffect(4, Subjects.modeChooser()))))));

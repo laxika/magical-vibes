@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -40,7 +41,7 @@ public class AetherstormRoc extends Card {
                         new ConditionalEffect(new ControllerEnergyAtLeast(2),
                                 SequenceEffect.of(
                                         new EnergyCountersEffect(-2),
-                                        new PutCountersOnSourceEffect(1, 1, 1),
+                                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                         new TapPermanentsEffect(Subjects.target(), DEFENDING_PLAYER_CREATURE))),
                         "Pay {E}{E} to put a +1/+1 counter on Aetherstorm Roc and tap up to one target creature?"));
     }

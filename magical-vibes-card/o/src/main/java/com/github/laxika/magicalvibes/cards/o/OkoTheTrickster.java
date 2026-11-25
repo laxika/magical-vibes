@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +29,7 @@ public class OkoTheTrickster extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "+1: Put two +1/+1 counters on up to one target creature you control.",
                 null,
                 +1,

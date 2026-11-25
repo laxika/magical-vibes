@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +39,7 @@ public class ProftsEideticMemory extends Card {
         );
         target(targetCreatureYouControl).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerDrewAtLeastCardsThisTurn(2)),
-                new PutCounterOnTargetPermanentEffect(
+                new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new Sum(new CardsDrawnThisTurn(CountScope.CONTROLLER), new Fixed(-1))
                         ));

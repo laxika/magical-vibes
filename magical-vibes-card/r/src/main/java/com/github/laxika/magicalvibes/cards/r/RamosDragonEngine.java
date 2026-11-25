@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class RamosDragonEngine extends Card {
 
     public RamosDragonEngine() {
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringSpellColorCount()));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringSpellColorCount()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

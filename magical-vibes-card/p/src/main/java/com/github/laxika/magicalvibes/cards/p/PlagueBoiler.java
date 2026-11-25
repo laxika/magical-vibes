@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -25,7 +25,7 @@ import java.util.List;
 public class PlagueBoiler extends Card {
 
     public PlagueBoiler() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.PLAGUE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.PLAGUE));
 
         addTrigger(Triggers.sourceState(new PermanentHasAtLeastCountersPredicate(CounterType.PLAGUE, 3)),
                 SequenceEffect.of(new SacrificeSelfEffect(),
@@ -38,7 +38,7 @@ public class PlagueBoiler extends Card {
                 List.of(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a plague counter on Plague Boiler",
-                                new PutCountersOnSelfEffect(CounterType.PLAGUE)),
+                                PutCountersEffect.onSelf(CounterType.PLAGUE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Remove a plague counter from Plague Boiler",
                                 new RemoveCounterFromSourceEffect(CounterType.PLAGUE, 1))))),

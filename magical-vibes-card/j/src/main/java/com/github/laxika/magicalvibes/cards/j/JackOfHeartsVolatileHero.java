@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class JackOfHeartsVolatileHero extends Card {
                 List.of(
                         new DiscardHandEffect(),
                         new DrawCardEffect(3),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ),
                 "Power-up — {4}{R}{R}: Discard your hand, then draw three cards. Put two +1/+1 counters on Jack of Hearts. "
                         + "Activate each power-up ability only once. Reduce the cost by his mana cost if he entered this turn."

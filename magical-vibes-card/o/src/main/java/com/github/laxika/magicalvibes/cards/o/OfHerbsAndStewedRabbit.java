@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,7 +33,7 @@ public class OfHerbsAndStewedRabbit extends Card {
     public OfHerbsAndStewedRabbit() {
         // Chapter I: Put a +1/+1 counter on up to one target creature, then create a Food token.
         addTrigger(Triggers.chapter(1),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 CreateTokenEffect.ofFoodToken(1));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));

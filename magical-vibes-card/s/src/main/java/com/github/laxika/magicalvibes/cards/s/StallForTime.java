@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class StallForTime extends Card {
         target(TargetFilters.creature(), 0, 2)
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN)))
+                        new PutCountersEffect(CounterType.STUN)))
                 .addSpellEffect(new DrawCardEffect());
     }
 }

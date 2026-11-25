@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellboo
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsMustAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -29,7 +29,7 @@ public class TajicLegionsValor extends Card {
 
     public TajicLegionsValor() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect(
                         SPELLBOOK, new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
                 new GrantKeywordEffect(Keyword.HASTE, Subjects.createdThisResolution()),

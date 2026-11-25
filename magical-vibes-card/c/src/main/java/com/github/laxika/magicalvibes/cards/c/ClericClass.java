@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AdditionalLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class ClericClass extends Card {
         addStaticEffect(new AdditionalLifeGainEffect(1));
         addTrigger(Triggers.youGainLife(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(2)),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
                         new PermanentAllOfPredicate(List.of(

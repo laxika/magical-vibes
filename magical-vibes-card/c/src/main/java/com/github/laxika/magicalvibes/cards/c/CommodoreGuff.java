@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -44,7 +44,7 @@ public class CommodoreGuff extends Card {
                 )),
                 "Target must be another planeswalker you control"
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new PutCounterOnTargetPermanentEffect(CounterType.LOYALTY));
+                new PutCountersEffect(CounterType.LOYALTY));
 
         // +1: Create a 1/1 red Wizard creature token with "{T}: Add {R}. Spend this mana only to
         // cast a planeswalker spell."

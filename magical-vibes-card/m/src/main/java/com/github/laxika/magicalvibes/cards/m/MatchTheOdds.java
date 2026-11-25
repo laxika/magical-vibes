@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -23,7 +23,7 @@ public class MatchTheOdds extends Card {
         addSpellEffect(SequenceEffect.of(
                 new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.ALLY), Set.of(), Set.of()),
-                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                new PutCountersEffect(Subjects.createdThisResolution(),
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS))));
     }

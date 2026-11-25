@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -32,12 +32,12 @@ public class EarthenArms extends Card {
         setAllowSharedTargets(true);
 
         target(TargetFilters.permanent())
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
 
         target(TargetFilters.landYouControl(), 0, 1)
                 .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)))
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)))
                 .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(

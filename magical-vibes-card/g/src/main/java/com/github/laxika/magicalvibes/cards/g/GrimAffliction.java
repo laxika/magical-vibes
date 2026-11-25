@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "NPH", collectorNumber = "63")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GrimAffliction extends Card {
 
     public GrimAffliction() {
-        target(TargetFilters.creature()).addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE))
+        target(TargetFilters.creature()).addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE))
           .addSpellEffect(new ProliferateEffect());
     }
 }

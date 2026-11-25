@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,13 +28,13 @@ public class LandCap extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.WHITE), new PutCountersOnSelfEffect(CounterType.DEPLETION)),
+                List.of(new AwardManaEffect(ManaColor.WHITE), PutCountersEffect.onSelf(CounterType.DEPLETION)),
                 "{T}: Add {W}. Put a depletion counter on Land Cap."
         ));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLUE), new PutCountersOnSelfEffect(CounterType.DEPLETION)),
+                List.of(new AwardManaEffect(ManaColor.BLUE), PutCountersEffect.onSelf(CounterType.DEPLETION)),
                 "{T}: Add {U}. Put a depletion counter on Land Cap."
         ));
     }

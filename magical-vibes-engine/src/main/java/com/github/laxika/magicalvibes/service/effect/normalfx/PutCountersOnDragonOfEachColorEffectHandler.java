@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnDragonOfEachColorEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
@@ -56,7 +56,7 @@ public class PutCountersOnDragonOfEachColorEffectHandler implements NormalEffect
                                     new PermanentHasSubtypePredicate(CardSubtype.DRAGON),
                                     new PermanentColorInPredicate(Set.of(color))))),
                     "a " + color.name().toLowerCase(Locale.ROOT) + " Dragon you control"));
-            next.add(new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+            next.add(new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                     CounterType.PLUS_ONE_PLUS_ONE));
             next.add(new PutCountersOnDragonOfEachColorEffect(tally.nextColor() + 1, List.copyOf(countered)));
         } else if (countered.size() >= colors.length) {

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,7 +20,7 @@ import java.util.List;
 public class ThunderingRaiju extends Card {
 
     public ThunderingRaiju() {
-        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        var putCounterOnTargetPermanent = new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE);
         target(TargetFilters.creatureYouControl())
                 .bindEffect(putCounterOnTargetPermanent);
 

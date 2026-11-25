@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
@@ -366,13 +366,13 @@ public final class EffectResolution {
     /**
      * The permanent-target predicate for the effect — the successor to the deleted
      * {@code CardEffect.targetPredicate()}. Almost every effect carries it on its
-     * {@link CardEffect#targetSpec()} predicate. {@link PutCounterOnTargetPermanentEffect} is the one
+     * {@link CardEffect#targetSpec()} predicate. {@link PutCountersEffect} is the one
      * case that keeps its targeting restriction on a dedicated {@code targetPredicate} record
      * component (its spec predicate stays {@code null} to avoid a cast-time gate); the saga-chapter
      * and end-step targeting pipelines read the restriction through this component.
      */
     public static PermanentPredicate targetPredicateOf(CardEffect e) {
-        return e instanceof PutCounterOnTargetPermanentEffect p
+        return e instanceof PutCountersEffect p
                 ? p.targetPredicate()
                 : e.targetSpec().predicate();
     }
@@ -394,7 +394,7 @@ public final class EffectResolution {
     public static Optional<PermanentPredicate> declaredPermanentRestriction(List<CardEffect> effects) {
         List<PermanentPredicate> declared = new ArrayList<>();
         for (CardEffect e : effects) {
-            if (e instanceof PutCounterOnTargetPermanentEffect putCounter
+            if (e instanceof PutCountersEffect putCounter
                     && putCounter.targetPredicate() != null) {
                 declared.add(putCounter.targetPredicate());
                 continue;
@@ -645,7 +645,7 @@ public final class EffectResolution {
         if (effect instanceof EnterWithCountersEffect enter) {
             return amountUsesColorManaPairsSpentToCast(enter.count());
         }
-        if (effect instanceof PutCounterOnTargetPermanentEffect putCounter) {
+        if (effect instanceof PutCountersEffect putCounter) {
             return amountUsesColorManaPairsSpentToCast(putCounter.amount());
         }
         if (effect instanceof ConditionalEffect conditional) {

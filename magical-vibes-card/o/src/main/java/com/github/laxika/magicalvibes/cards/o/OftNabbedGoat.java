@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -32,7 +32,7 @@ public class OftNabbedGoat extends Card {
                 List.of(
                         new DrawCardEffect(),
                         new TargetPlayerGainsControlOfSourceCreatureEffect(Subjects.you()),
-                        new PutCountersOnSelfEffect(counterType)
+                        PutCountersEffect.onSelf(counterType)
                 ),
                 "{1}: Draw a card. Gain control of this creature and put a -1/-1 counter on it. "
                         + "Only your opponents may activate this ability and only as a sorcery.",

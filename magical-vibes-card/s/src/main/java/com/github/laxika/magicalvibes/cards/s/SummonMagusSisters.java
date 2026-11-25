@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,12 +25,12 @@ public class SummonMagusSisters extends Card {
             addTrigger(Triggers.chapter(chapter), new ChooseOneAtRandomEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption(
                             "Combine Powers! — Put three +1/+1 counters on target creature",
-                            new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                            new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                             targetCreature),
                     new ChooseOneEffect.ChooseOneOption(
                             "Defense! — Put a shield counter on target creature. You gain 3 life",
                             List.of(
-                                    new PutCounterOnTargetPermanentEffect(CounterType.SHIELD),
+                                    new PutCountersEffect(CounterType.SHIELD),
                                     new GainLifeEffect(3)),
                             targetCreature),
                     new ChooseOneEffect.ChooseOneOption(

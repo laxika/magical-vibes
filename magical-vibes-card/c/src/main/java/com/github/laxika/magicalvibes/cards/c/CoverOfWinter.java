@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamagePerSourceToControllerAndCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class CoverOfWinter extends Card {
                 new CountersOnSource(CounterType.AGE), true, true));
 
         addActivatedAbility(new ActivatedAbility(false, "{S}",
-                List.of(new PutCountersOnSelfEffect(CounterType.AGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.AGE)),
                 "{S}: Put an age counter on this enchantment."));
     }
 }

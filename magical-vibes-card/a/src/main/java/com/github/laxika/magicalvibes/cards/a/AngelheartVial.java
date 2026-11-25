@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class AngelheartVial extends Card {
     public AngelheartVial() {
         addTrigger(Triggers.youAreDealtDamage(),
                 new MayEffect(
-                        new PutCountersOnSelfEffect(CounterType.CHARGE, new EventValue()),
+                        PutCountersEffect.onSelf(CounterType.CHARGE, new EventValue()),
                         "Put that many charge counters on Angelheart Vial?"));
 
         addActivatedAbility(new ActivatedAbility(

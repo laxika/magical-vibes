@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +29,7 @@ public class RocketeerBoostbuggy extends Card {
                         new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
                                 Set.of(CardType.CREATURE), Subjects.source(), Duration.PERMANENT, null,
                                 Set.of(), false, false),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Exhaust — {3}: This Vehicle becomes an artifact creature. Put a +1/+1 counter on it."
                         + " (Activate each exhaust ability only once.)"

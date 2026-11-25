@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +29,7 @@ public class MineLayer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.MINE)),
+                List.of(new PutCountersEffect(CounterType.MINE)),
                 "{1}{R}, {T}: Put a mine counter on target land.",
                 TargetFilters.land()));
 

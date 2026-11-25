@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.CreatureLeftBattlefieldUnd
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TLE", collectorNumber = "87")
@@ -17,10 +17,10 @@ public class ThatsRoughBuddy extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new ConditionalEffect(
                         new CreatureLeftBattlefieldUnderYourControlThisTurn(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)))
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)))
                 .addSpellEffect(new ConditionalEffect(
                         new NotCondition(new CreatureLeftBattlefieldUnderYourControlThisTurn()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))
                 .addSpellEffect(new DrawCardEffect(1));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,10 +27,7 @@ public class CattiBrieOfMithralHall extends Card {
 
     public CattiBrieOfMithralHall() {
         // Whenever Catti-brie attacks, put a +1/+1 counter on it for each Equipment attached to it.
-        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                new AttachmentsOnSource(false, true)
-        ));
+        addTrigger(Triggers.attacks(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new AttachmentsOnSource(false, true)));
 
         // {1}, Remove all +1/+1 counters from Catti-brie: It deals X damage to target attacking or
         // blocking creature an opponent controls, where X is the number of counters removed this way.

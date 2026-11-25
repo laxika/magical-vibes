@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantOrSorcerySpellCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class NivmagusElemental extends Card {
     public NivmagusElemental() {
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new ExileInstantOrSorcerySpellCost(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "Exile an instant or sorcery spell you control: Put two +1/+1 counters on this creature."));
     }
 }

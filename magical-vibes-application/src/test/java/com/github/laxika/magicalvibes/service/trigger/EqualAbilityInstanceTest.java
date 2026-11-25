@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -96,7 +96,7 @@ class EqualAbilityInstanceTest extends BaseCardTest {
     @DisplayName("\"Whenever counters are put on this, if it has two or more\" triggers for the third counter too")
     void counterInterveningIfIsTheStateNotTheCrossing() {
         Card card = creature("Patient Collector");
-        card.addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.CHARGE));
+        card.addTrigger(Triggers.attacks(), PutCountersEffect.onSelf(CounterType.CHARGE));
         card.addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withInterveningIf(
                 new SourceCounterThreshold(2, CounterType.CHARGE)), new GainLifeEffect(1));
         Permanent collector = addCreatureReady(player1, card);

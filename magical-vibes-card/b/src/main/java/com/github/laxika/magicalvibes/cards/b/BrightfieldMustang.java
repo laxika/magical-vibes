@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -25,7 +25,7 @@ public class BrightfieldMustang extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(Subjects.source()),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

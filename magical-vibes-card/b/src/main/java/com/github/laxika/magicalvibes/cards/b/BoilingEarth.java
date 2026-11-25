@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -39,7 +39,7 @@ public class BoilingEarth extends Card {
         target(TargetFilters.landYouControl(), 0, 1)
                 .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)))
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)))
                 .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(

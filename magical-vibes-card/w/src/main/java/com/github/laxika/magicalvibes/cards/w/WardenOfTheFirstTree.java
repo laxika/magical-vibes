@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePow
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -37,7 +37,7 @@ public class WardenOfTheFirstTree extends Card {
 
         addActivatedAbility(new ActivatedAbility(false, "{3}{W/B}{W/B}{W/B}",
                 List.of(new ConditionalEffect(new SourceHasSubtype(CardSubtype.SPIRIT),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 5))),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 5))),
                 "{3}{W/B}{W/B}{W/B}: If this creature is a Spirit, put five +1/+1 counters on it."));
     }
 }

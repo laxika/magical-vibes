@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class SyrVondamSunstarExemplar extends Card {
 
     public SyrVondamSunstarExemplar() {
         CardEffect counterAndLife = SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                 new GainLifeEffect(1));
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), counterAndLife);
         addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),

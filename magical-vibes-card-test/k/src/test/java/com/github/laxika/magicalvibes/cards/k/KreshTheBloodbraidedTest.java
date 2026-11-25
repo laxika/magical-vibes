@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.MagmaSpray;
 import com.github.laxika.magicalvibes.cards.s.SavageHunger;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KreshTheBloodbraided.class, RuneclawBear.class, Shock.class, DoomBlade.class,
-        SavageHunger.class, MagmaSpray.class, DayOfJudgment.class})
+        SavageHunger.class, MagmaSpray.class, DayOfJudgment.class, Solemnity.class})
 class KreshTheBloodbraidedTest extends BaseCardTest {
 
     private Permanent kresh() {
@@ -180,5 +181,22 @@ class KreshTheBloodbraidedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No question is asked while Kresh can't have counters put on it")
+    void noQuestionWhileKreshCantHaveCounters() {
+        harness.addToBattlefield(player1, new KreshTheBloodbraided());
+        harness.addToBattlefield(player1, new Solemnity());
+        Permanent bears = addCreature(player2);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(kresh().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

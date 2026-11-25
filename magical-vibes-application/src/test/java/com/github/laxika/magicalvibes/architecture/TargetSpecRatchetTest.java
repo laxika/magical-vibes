@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       quietly bringing back the per-effect targeting booleans the program deleted. (Record
  *       COMPONENTS named {@code canTargetSpell} / {@code targetPredicate} are NOT method
  *       declarations with a body and do not match — the two documented duals
- *       {@code ChangeColorTextEffect} / {@code PutCounterOnTargetPermanentEffect} keep theirs.
+ *       {@code ChangeColorTextEffect} / {@code PutCountersEffect} keep theirs.
  *       The return-type alternation is load-bearing for {@code targetPredicate}: the deleted legacy
  *       method returned {@code PermanentPredicate}, while {@code TargetSpec.targetPredicate()}
  *       legitimately returns a {@code TargetPredicate}. Do not widen it.)</li>

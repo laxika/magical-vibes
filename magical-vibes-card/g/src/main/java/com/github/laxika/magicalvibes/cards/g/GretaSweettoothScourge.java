@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -34,7 +34,7 @@ public class GretaSweettoothScourge extends Card {
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                                 "Sacrifice a Food"),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{G}, Sacrifice a Food: Put a +1/+1 counter on target creature. Activate only as a sorcery.",
                 TargetFilters.creature(),
                 null,

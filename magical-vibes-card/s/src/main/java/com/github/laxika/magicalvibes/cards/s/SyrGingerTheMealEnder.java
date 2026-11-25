@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -31,7 +32,7 @@ public class SyrGingerTheMealEnder extends Card {
                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.HASTE), Subjects.source())));
 
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1)));
+                SequenceEffect.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE), new ScryEffect(1)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

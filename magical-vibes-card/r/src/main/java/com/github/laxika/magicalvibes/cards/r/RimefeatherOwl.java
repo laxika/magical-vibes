@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -30,7 +30,7 @@ public class RimefeatherOwl extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{S}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.ICE)),
+                List.of(new PutCountersEffect(CounterType.ICE)),
                 "{1}{S}: Put an ice counter on target permanent.",
                 TargetFilters.permanent()
         ));

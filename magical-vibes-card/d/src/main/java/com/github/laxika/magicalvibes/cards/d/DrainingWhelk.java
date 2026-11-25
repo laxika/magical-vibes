@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class DrainingWhelk extends Card {
         target(1, 1)
                 // Capture the mana value before countering moves the spell off the stack.
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetSpellManaValue()),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new TargetSpellManaValue()),
                         new CounterSpellEffect()));
     }
 }

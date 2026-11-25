@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -55,6 +55,6 @@ public class OwenGradyRaptorTrainer extends Card {
 
     private static ChooseOneEffect.ChooseOneOption counterMode(String label, CounterType counterType) {
         return new ChooseOneEffect.ChooseOneOption(label,
-                new PutCounterOnTargetPermanentEffect(counterType));
+                new PutCountersEffect(counterType));
     }
 }

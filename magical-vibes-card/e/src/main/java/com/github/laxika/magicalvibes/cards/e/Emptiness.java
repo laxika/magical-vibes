@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -40,7 +40,7 @@ public class Emptiness extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.BLACK, 2)),
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 3));
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 3));
 
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W/B}{W/B}"))));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());

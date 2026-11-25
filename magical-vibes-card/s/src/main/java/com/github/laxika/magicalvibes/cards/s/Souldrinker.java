@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class Souldrinker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new PayLifeCost(3), new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(new PayLifeCost(3), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 "Pay 3 life: Put a +1/+1 counter on this creature."
         ));
     }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,7 +31,7 @@ public class CursedRecording extends Card {
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.TIME),
+                        PutCountersEffect.onSelf(CounterType.TIME),
                         new ConditionalEffect(
                                 new SourceCounterThreshold(7, CounterType.TIME),
                                 SequenceEffect.of(

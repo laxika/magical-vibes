@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleControllerHandAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -36,12 +36,12 @@ public class MidnightClock extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.HOUR)),
+                List.of(PutCountersEffect.onSelf(CounterType.HOUR)),
                 "{2}{U}: Put an hour counter on this artifact."
         ));
 
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new PutCountersOnSelfEffect(CounterType.HOUR));
+                PutCountersEffect.onSelf(CounterType.HOUR));
 
         addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(12, CounterType.HOUR)),

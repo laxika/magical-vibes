@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
@@ -35,10 +35,10 @@ public class ForgeOfHeroes extends Card {
                 List.of(
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentIsPlaneswalkerPredicate()),
-                                new PutCounterOnTargetPermanentEffect(CounterType.LOYALTY))
+                                new PutCountersEffect(CounterType.LOYALTY))
                 ),
                 "{T}: Choose target commander that entered the battlefield this turn. Put a +1/+1 counter on it if it's a creature and a loyalty counter on it if it's a planeswalker.",
                 new PermanentPredicateTargetFilter(

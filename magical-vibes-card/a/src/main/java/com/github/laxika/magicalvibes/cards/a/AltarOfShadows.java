@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -26,7 +26,7 @@ public class AltarOfShadows extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{7}",
-                List.of(new DestroyTargetPermanentEffect(), new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                List.of(new DestroyTargetPermanentEffect(), PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "{7}, {T}: Destroy target creature. Then put a charge counter on Altar of Shadows.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature")
         ));

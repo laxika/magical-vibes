@@ -254,7 +254,7 @@ public class ChoiceHandlerService {
             splitCardCastSupport;
 
     @Autowired @Lazy
-    private com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnTargetPermanentEffectHandler
+    private com.github.laxika.magicalvibes.service.effect.normalfx.PutCountersEffectHandler
             counterPlacementHandler;
 
     @Autowired @Lazy

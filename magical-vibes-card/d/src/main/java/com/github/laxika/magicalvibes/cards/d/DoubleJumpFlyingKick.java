@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
@@ -31,7 +31,7 @@ public class DoubleJumpFlyingKick extends Card {
         TargetFilter opponentCreature = TargetFilters.creatureAnOpponentControls();
 
         CardEffect doubleJump = SequenceEffect.of(
-                new PutCounterOnTargetPermanentEffect(CounterType.FLYING),
+                new PutCountersEffect(CounterType.FLYING),
                 new SetBasePowerToughnessEffect(5, 5));
         CardEffect flyingKick = new TargetCreatureDealsPowerDamageToAnyTargetEffect(0, 1, false);
         CardEffect fusedFlyingKick = new TargetCreatureDealsPowerDamageToAnyTargetEffect(1, 2, false);

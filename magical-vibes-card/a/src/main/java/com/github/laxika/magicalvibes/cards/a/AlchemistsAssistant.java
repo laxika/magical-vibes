@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class AlchemistsAssistant extends Card {
                 "{1}{B}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK, 1)),
+                        new PutCountersEffect(CounterType.LIFELINK, 1)),
                 "Renew {1}{B} ({1}{B}, Exile this card from your graveyard: Put a lifelink counter on target creature. Renew only as a sorcery.)",
                 creature(),
                 null,

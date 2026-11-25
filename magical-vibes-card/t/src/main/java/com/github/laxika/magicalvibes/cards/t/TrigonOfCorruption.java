@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +23,7 @@ public class TrigonOfCorruption extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}{B}",
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                List.of(PutCountersEffect.onSelf(CounterType.CHARGE)),
                 "{B}{B}, {T}: Put a charge counter on Trigon of Corruption."
         ));
 
@@ -34,7 +33,7 @@ public class TrigonOfCorruption extends Card {
                 "{2}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE)
+                        new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE)
                 ),
                 "{2}, {T}, Remove a charge counter from Trigon of Corruption: Put a -1/-1 counter on target creature.",
                 TargetFilters.creature()

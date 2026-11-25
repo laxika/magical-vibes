@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,7 +31,7 @@ public class ChromaticArmor extends Card {
         // per-counter increase supplies the generic mana, read at activation time.
         addActivatedAbility(new ActivatedAbility(false, "{0}",
                 List.of(new IncreaseActivationCostEffect(new CountersOnSource(CounterType.SLEIGHT)),
-                        new PutCountersOnSelfEffect(CounterType.SLEIGHT),
+                        PutCountersEffect.onSelf(CounterType.SLEIGHT),
                         new ChooseColorForSourceEffect()),
                 "{X}: Put a sleight counter on this Aura and choose a color. X is the number of sleight counters on this Aura."));
     }

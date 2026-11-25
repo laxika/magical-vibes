@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ParagonOfModernity.class)
+@CardUsed({ParagonOfModernity.class, HardenedScales.class, DoublingSeason.class})
 class ParagonOfModernityTest extends BaseCardTest {
 
     @Test
@@ -99,6 +102,28 @@ class ParagonOfModernityTest extends BaseCardTest {
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isZero();
         assertThat(PermanentGrants.toughnessBoostOf(gd, paragon)).isZero();
+    }
+
+    @Test
+    @DisplayName("Its controller orders Hardened Scales and Doubling Season for the three-color counter")
+    void controllerOrdersCounterReplacements() {
+        Permanent paragon = addCreatureReady(player1, new ParagonOfModernity());
+        harness.addToBattlefield(player1, new HardenedScales());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        activateAndResolve();
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.contains("Hardened Scales")).findFirst().orElseThrow());
+
+        assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void activateAndResolve() {

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
@@ -31,6 +31,6 @@ public class PersistentConstrictor extends Card {
                 "Target must be a creature controlled by the active player"
         ), 0, 1).addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), SequenceEffect.of(
                 new LoseLifeEffect(1, Subjects.activePlayer()),
-                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE)));
+                new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE)));
     }
 }

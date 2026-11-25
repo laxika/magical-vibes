@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class YunasWhistle extends Card {
                 RevealUntilCardPredicateRestOnBottomRandomEffect.toHandRecordingManaValue(
                         new CardTypePredicate(CardType.CREATURE)),
                 new ConditionalEffect(new EventValueAtLeast(1), new QueueReflexiveAbilityEffect(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue(),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue(),
                                 null,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

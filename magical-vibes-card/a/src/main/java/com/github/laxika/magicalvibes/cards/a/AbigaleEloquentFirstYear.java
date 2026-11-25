@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,8 +30,8 @@ public class AbigaleEloquentFirstYear extends Card {
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLYING),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FIRST_STRIKE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK));
+                        new PutCountersEffect(CounterType.FLYING),
+                        new PutCountersEffect(CounterType.FIRST_STRIKE),
+                        new PutCountersEffect(CounterType.LIFELINK));
     }
 }

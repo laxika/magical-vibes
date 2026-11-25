@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,10 +21,10 @@ public class FiligreeVector extends Card {
     public FiligreeVector() {
         setAllowSharedTargets(true);
 
-        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        var putCounterOnTargetPermanent = new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE);
         target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .bindEffect(putCounterOnTargetPermanent);
-        var putCounterOnTargetPermanent2 = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
+        var putCounterOnTargetPermanent2 = new PutCountersEffect(CounterType.CHARGE);
         target(TargetFilters.artifact(), 0, Integer.MAX_VALUE)
                 .bindEffect(putCounterOnTargetPermanent2);
         addTrigger(Triggers.enters(ObjectRelation.THIS), putCounterOnTargetPermanent, putCounterOnTargetPermanent2);

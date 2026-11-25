@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleControllerHandAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class TrenzaloreClocktower extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.BLUE),
-                        new PutCountersOnSelfEffect(CounterType.TIME)
+                        PutCountersEffect.onSelf(CounterType.TIME)
                 ),
                 "{T}: Add {U}. Put a time counter on Trenzalore Clocktower."
         ));

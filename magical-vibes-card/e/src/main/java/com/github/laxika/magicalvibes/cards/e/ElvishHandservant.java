@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +15,6 @@ public class ElvishHandservant extends Card {
     public ElvishHandservant() {
         // Whenever a player casts a Giant spell, you may put a +1/+1 counter on this creature.
         addTrigger(Triggers.playerCastsSpell().withFilter(new CardSubtypePredicate(CardSubtype.GIANT)),
-                new MayEffect(new PutCountersOnSourceEffect(1, 1, 1), "Put a +1/+1 counter on Elvish Handservant?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE), "Put a +1/+1 counter on Elvish Handservant?"));
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -48,7 +48,7 @@ public class KenrithTheReturnedKing extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                List.of(PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())),
                 "{1}{G}: Put a +1/+1 counter on target creature.",
                 new PermanentPredicateTargetFilter(

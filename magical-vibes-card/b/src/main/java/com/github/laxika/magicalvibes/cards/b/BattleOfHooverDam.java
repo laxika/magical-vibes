@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -49,6 +49,6 @@ public class BattleOfHooverDam extends Card {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                         TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(LEGION)),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

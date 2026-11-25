@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,8 +18,8 @@ import java.util.List;
 public class HoardersOverflow extends Card {
 
     public HoardersOverflow() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(CounterType.STASH));
-        addTrigger(Triggers.youCastSpell().expend(4), new PutCountersOnSelfEffect(CounterType.STASH));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onSelf(CounterType.STASH));
+        addTrigger(Triggers.youCastSpell().expend(4), PutCountersEffect.onSelf(CounterType.STASH));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

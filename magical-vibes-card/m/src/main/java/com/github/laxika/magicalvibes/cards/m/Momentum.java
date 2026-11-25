@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -18,7 +18,7 @@ public class Momentum extends Card {
     public Momentum() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                        new PutCountersOnSelfEffect(CounterType.GROWTH),
+                        PutCountersEffect.onSelf(CounterType.GROWTH),
                         "Put a growth counter on Momentum?"))
                 .addStaticEffect(new AttachedBoostEffect(
                         new CountersOnSource(CounterType.GROWTH),

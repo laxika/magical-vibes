@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,7 +31,7 @@ public class SensationalSpiderMan extends Card {
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(), SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.target()),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN),
+                        new PutCountersEffect(CounterType.STUN),
                         new MayEffect(
                                 SequenceEffect.of(
                                         new RemoveUpToCountersFromAllPermanentsEffect(CounterType.STUN, 3),

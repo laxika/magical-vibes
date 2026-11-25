@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
@@ -9,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -43,7 +44,7 @@ public class GrimgrinCorpseBorn extends Card {
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
                         new UntapPermanentsEffect(Subjects.source()),
-                        new PutCountersOnSourceEffect(1, 1, 1)
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Sacrifice another creature: Untap Grimgrin and put a +1/+1 counter on it."
         ));
@@ -57,6 +58,6 @@ public class GrimgrinCorpseBorn extends Card {
                 )),
                 "Target must be a creature defending player controls"
         ))
-          .addTrigger(Triggers.attacks(), new DestroyTargetPermanentEffect(), new PutCountersOnSourceEffect(1, 1, 1));
+          .addTrigger(Triggers.attacks(), new DestroyTargetPermanentEffect(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

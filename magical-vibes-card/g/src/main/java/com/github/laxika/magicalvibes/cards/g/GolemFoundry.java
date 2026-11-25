@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class GolemFoundry extends Card {
     public GolemFoundry() {
         // Whenever you cast an artifact spell, you may put a charge counter on Golem Foundry.
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
-                new MayEffect(new PutCountersOnSelfEffect(CounterType.CHARGE), "Put a charge counter on Golem Foundry?"));
+                new MayEffect(PutCountersEffect.onSelf(CounterType.CHARGE), "Put a charge counter on Golem Foundry?"));
 
         // Remove three charge counters from Golem Foundry: Create a 3/3 colorless Golem artifact creature token.
         addActivatedAbility(new ActivatedAbility(

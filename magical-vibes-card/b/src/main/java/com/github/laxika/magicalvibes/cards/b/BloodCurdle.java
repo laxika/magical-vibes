@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class BloodCurdle extends Card {
                 .addSpellEffect(new DestroyTargetPermanentEffect())
                 .addSpellEffect(SequenceEffect.of(
                         ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
-                        new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                        new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                 CounterType.MENACE, new Fixed(1))));
     }
 }

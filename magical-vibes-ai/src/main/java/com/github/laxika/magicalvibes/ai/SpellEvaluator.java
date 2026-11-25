@@ -60,7 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -305,7 +305,7 @@ public class SpellEvaluator {
             return creatureCount * per * 3.5;
         }
         // +1/+1 counter on target creature, a chosen creature or the triggering creature
-        if (effect instanceof PutCounterOnTargetPermanentEffect counters
+        if (effect instanceof PutCountersEffect counters
                 && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE
                 && (counters.subject().declaresTarget()
                 || counters.subject() instanceof PermanentSubject.Triggering)) {

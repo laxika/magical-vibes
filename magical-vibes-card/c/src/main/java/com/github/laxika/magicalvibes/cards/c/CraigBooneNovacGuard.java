@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class CraigBooneNovacGuard extends Card {
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.QUEST, 2),
+                        PutCountersEffect.onSelf(CounterType.QUEST, 2),
                         new ConditionalEffect(new HappenedThisWay(StepKind.PUT_COUNTERS), QueueReflexiveAbilityEffect.of(
                                 new DealDamageToTargetCreatureUnlessControllerTakesDamageEffect(
                                         new CountersOnSource(CounterType.QUEST),

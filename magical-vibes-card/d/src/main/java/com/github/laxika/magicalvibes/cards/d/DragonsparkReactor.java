@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class DragonsparkReactor extends Card {
                         new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
                         new TriggerCondition(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                        new PutCountersOnSelfEffect(CounterType.CHARGE)))));
+                        PutCountersEffect.onSelf(CounterType.CHARGE)))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

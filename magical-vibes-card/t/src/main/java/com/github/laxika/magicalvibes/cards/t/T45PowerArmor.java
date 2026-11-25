@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -52,12 +52,12 @@ public class T45PowerArmor extends Card {
         return new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a menace counter on equipped creature",
-                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.MENACE)),
+                        new PutCountersEffect(Subjects.attached(), CounterType.MENACE)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a trample counter on equipped creature",
-                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.TRAMPLE)),
+                        new PutCountersEffect(Subjects.attached(), CounterType.TRAMPLE)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a lifelink counter on equipped creature",
-                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.LIFELINK))));
+                        new PutCountersEffect(Subjects.attached(), CounterType.LIFELINK))));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,7 +35,7 @@ public class GixsCommand extends Card {
                         SequenceEffect.of(
                                 ChoosePermanentsEffect.upTo(1, Subjects.allCreatures(),
                                         "up to one creature to get two +1/+1 counters and lifelink"),
-                                new PutCounterOnTargetPermanentEffect(
+                                new PutCountersEffect(
                                         Subjects.thisWay(StepKind.CHOOSE), CounterType.PLUS_ONE_PLUS_ONE, 2),
                                 new GrantKeywordEffect(Keyword.LIFELINK, Subjects.thisWay(StepKind.CHOOSE),
                                         Duration.UNTIL_END_OF_TURN))),

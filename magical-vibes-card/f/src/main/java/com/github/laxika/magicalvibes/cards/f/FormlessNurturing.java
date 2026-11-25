@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FRF", collectorNumber = "129")
@@ -13,7 +13,7 @@ public class FormlessNurturing extends Card {
 
     public FormlessNurturing() {
         addSpellEffect(new ManifestTopCardEffect());
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(
+        addSpellEffect(new PutCountersEffect(
                 Subjects.thisWay(StepKind.MANIFEST), CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

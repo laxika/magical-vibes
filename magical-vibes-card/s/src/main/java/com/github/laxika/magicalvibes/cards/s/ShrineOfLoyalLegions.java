@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -24,11 +24,11 @@ public class ShrineOfLoyalLegions extends Card {
 
     public ShrineOfLoyalLegions() {
         // At the beginning of your upkeep, put a charge counter on Shrine of Loyal Legions.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.CHARGE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.CHARGE));
 
         // Whenever you cast a white spell, put a charge counter on Shrine of Loyal Legions.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)),
-                new PutCountersOnSelfEffect(CounterType.CHARGE));
+                PutCountersEffect.onSelf(CounterType.CHARGE));
 
         // {3}, {T}, Sacrifice Shrine of Loyal Legions: Create a 1/1 colorless Phyrexian Myr
         // artifact creature token for each charge counter on Shrine of Loyal Legions.

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class FaithboundJudge extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new NotCondition(new SourceCounterThreshold(3, CounterType.JUDGMENT))),
-                new PutCountersOnSelfEffect(CounterType.JUDGMENT));
+                PutCountersEffect.onSelf(CounterType.JUDGMENT));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.JUDGMENT),
                 new CanAttackAsThoughNoDefenderEffect()));

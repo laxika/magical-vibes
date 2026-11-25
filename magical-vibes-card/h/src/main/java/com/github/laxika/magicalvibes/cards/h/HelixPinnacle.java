@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -24,7 +24,7 @@ public class HelixPinnacle extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}",
-                List.of(new PutCountersOnSelfEffect(CounterType.TOWER, new XValue())),
+                List.of(PutCountersEffect.onSelf(CounterType.TOWER, new XValue())),
                 "{X}: Put X tower counters on Helix Pinnacle."
         ));
 

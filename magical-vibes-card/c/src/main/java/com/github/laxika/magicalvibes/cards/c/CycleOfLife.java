@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -31,7 +31,7 @@ public class CycleOfLife extends Card {
                                 Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP),
                         RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.upkeep(ActivePlayer.YOU),
                                 Subjects.target(),
-                                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(
+                                PutCountersEffect.onTriggeringPermanent(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1))),
                 "Return Cycle of Life to its owner's hand: Target creature you cast this turn has base "
                         + "power and toughness 0/1 until your next upkeep. At the beginning of your next "

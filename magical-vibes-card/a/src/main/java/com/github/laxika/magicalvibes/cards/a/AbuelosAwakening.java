@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -46,7 +46,7 @@ public class AbuelosAwakening extends Card {
                         SetBasePowerToughnessEffect.indefinitely(1, 1),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), Duration.PERMANENT)))
                 .build());
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(
+        addSpellEffect(new PutCountersEffect(
                 Subjects.returned(), CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class DrivnodCarnageDominus extends Card {
                 "{B/P}{B/P}",
                 List.of(
                         new ExileNCardsFromGraveyardCost(3, CardType.CREATURE),
-                        new PutCountersOnSelfEffect(CounterType.INDESTRUCTIBLE)
+                        PutCountersEffect.onSelf(CounterType.INDESTRUCTIBLE)
                 ),
                 "{B/P}{B/P}, Exile three creature cards from your graveyard: Put an indestructible counter on Drivnod."
         ));

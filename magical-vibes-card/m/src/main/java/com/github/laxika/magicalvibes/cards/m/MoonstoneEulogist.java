@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,6 +19,6 @@ public class MoonstoneEulogist extends Card {
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), CreateTokenEffect.ofBloodToken(1));
 
         addTrigger(Triggers.sacrificed(new PermanentIsArtifactPredicate(), ObjectRelation.YOU_CONTROL),
-                SequenceEffect.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), new GainLifeEffect(1)));
+                SequenceEffect.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE), new GainLifeEffect(1)));
     }
 }

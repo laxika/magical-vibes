@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectsToCounterBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -44,7 +44,7 @@ public class SauronDinoDevotee extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Turn People into Dinosaurs — Put a saurian counter on another target creature. It's a green Dinosaur with base power and toughness 5/5 for as long as it has a saurian counter on it.",
                         List.of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.SAURIAN),
+                                new PutCountersEffect(CounterType.SAURIAN),
                                 new GrantEffectsToCounterBearersEffect(CounterType.SAURIAN, List.of(
                                         new GrantColorEffect(CardColor.GREEN, Subjects.otherPermanents(), true),
                                         new GrantSubtypeEffect(CardSubtype.DINOSAUR, Subjects.otherPermanents(), true),

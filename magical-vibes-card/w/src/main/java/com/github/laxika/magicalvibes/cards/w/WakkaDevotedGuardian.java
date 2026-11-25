@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnSourceThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
@@ -32,7 +32,7 @@ public class WakkaDevotedGuardian extends Card {
                 new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentControlledByTriggeringPlayerPredicate()))),
-                new PutCountersOnSourceEffect(1, 1, 1)));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
 
         // At the beginning of your end step, if a counter was put on Wakka this turn, put a
         // +1/+1 counter on each other creature you control.

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -48,7 +48,7 @@ public class TheLastRonin extends Card {
                         Triggers.creatureAttacks().withFilter(new PermanentControlledBySourceControllerPredicate()),
                         TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         SequenceEffect.of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                                 new GrantKeywordEffect(Set.of(
                                         Keyword.TRAMPLE,
                                         Keyword.LIFELINK,

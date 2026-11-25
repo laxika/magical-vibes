@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,14 +29,14 @@ public class Vault112SadisticSimulation extends Card {
     public Vault112SadisticSimulation() {
         addTrigger(Triggers.chapter(1),
                 new TapPermanentsEffect(Subjects.target()),
-                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1),
+                new PutCountersEffect(CounterType.STUN, 1),
                 new EnergyCountersEffect(2));
         setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 
         addTrigger(Triggers.chapter(2),
                 new TapPermanentsEffect(Subjects.target()),
-                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1),
+                new PutCountersEffect(CounterType.STUN, 1),
                 new EnergyCountersEffect(2));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));

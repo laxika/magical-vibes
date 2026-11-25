@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -20,12 +19,12 @@ public class JacesProjection extends Card {
 
     public JacesProjection() {
         addTrigger(Triggers.youDrawCard(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{U}",
-                List.of(new PutCounterOnTargetPermanentEffect(CounterType.LOYALTY)),
+                List.of(new PutCountersEffect(CounterType.LOYALTY)),
                 "{3}{U}: Put a loyalty counter on target Jace planeswalker.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

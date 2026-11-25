@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
@@ -20,7 +21,7 @@ public class MountainTitan extends Card {
                 "{1}{R}{R}",
                 List.of(RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
                         new CardColorPredicate(CardColor.BLACK),
-                        List.of(new PutCountersOnSourceEffect(1, 1, 1)))),
+                        List.of(PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)))),
                 "{1}{R}{R}: Until end of turn, whenever you cast a black spell, put a +1/+1 counter on this creature."));
     }
 }

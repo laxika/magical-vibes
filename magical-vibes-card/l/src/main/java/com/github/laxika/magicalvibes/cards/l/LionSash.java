@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
@@ -36,7 +36,7 @@ public class LionSash extends Card {
                 "{W}",
                 List.of(ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false),
                         new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE, new CardIsPermanentPredicate()),
-                                new PutCountersOnSourceEffect(1, 1, 1))),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))),
                 "{W}: Exile target card from a graveyard. If it was a permanent card, put a +1/+1 counter on Lion Sash."));
 
         addStaticEffect(new AttachedBoostEffect(

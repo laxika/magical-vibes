@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +19,7 @@ public class RapierWit extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(new ControllerTurn(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN)));
+                        new PutCountersEffect(CounterType.STUN)));
         // Draw a card.
         addSpellEffect(new DrawCardEffect());
     }

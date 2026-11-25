@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
@@ -21,7 +21,7 @@ public class RottenmouthViper extends Card {
                 1, new PermanentNotPredicate(new PermanentIsLandPredicate())));
 
         SequenceEffect blightTrigger = SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.BLIGHT),
+                PutCountersEffect.onSelf(CounterType.BLIGHT),
                 new TormentOfHailfireEffect(4, null, new CountersOnSource(CounterType.BLIGHT)).deferringChoices());
         addTrigger(Triggers.enters(ObjectRelation.THIS), blightTrigger);
         addTrigger(Triggers.attacks(), blightTrigger);

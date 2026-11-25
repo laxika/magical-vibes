@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -27,7 +27,7 @@ public class MomoPlayfulPet extends Card {
                         new ChooseOneEffect.ChooseOneOption("Create a Food token.", foodToken()),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on target creature you control.",
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 TargetFilters.creatureYouControl()),
                         new ChooseOneEffect.ChooseOneOption("Scry 2.", new ScryEffect(2))
                 ))));

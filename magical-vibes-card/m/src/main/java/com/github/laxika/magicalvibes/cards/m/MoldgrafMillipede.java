@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,8 +26,6 @@ public class MoldgrafMillipede extends Card {
         // before the count (milled creatures are included).
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new MillEffect(3, Subjects.you()),
-                new PutCountersOnSelfEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))));
     }
 }

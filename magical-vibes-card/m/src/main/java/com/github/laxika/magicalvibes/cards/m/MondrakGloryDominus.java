@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -38,7 +38,7 @@ public class MondrakGloryDominus extends Card {
                                 List.of(otherArtifactOrCreature, otherArtifactOrCreature),
                                 List.of("an artifact and/or creature", "an artifact and/or creature")
                         ),
-                        new PutCountersOnSelfEffect(CounterType.INDESTRUCTIBLE)
+                        PutCountersEffect.onSelf(CounterType.INDESTRUCTIBLE)
                 ),
                 "{1}{W/P}{W/P}, Sacrifice two other artifacts and/or creatures: Put an indestructible counter on Mondrak."
         ));

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.SuspendedCards;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -23,9 +23,7 @@ public class RoseTyler extends Card {
 
     public RoseTyler() {
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.source(), CounterType.TIME));
-        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(
-                CounterType.TIME,
-                new Sum(
+        addTrigger(Triggers.attacks(), PutCountersEffect.onSelf(CounterType.TIME, new Sum(
                         new SuspendedCards(CountScope.CONTROLLER),
                         new PermanentCount(
                                 new PermanentHasCountersPredicate(CounterType.TIME),

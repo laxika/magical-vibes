@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,7 +29,7 @@ public class LivingArtifact extends Card {
         target(TargetFilters.artifact())
                 // Whenever you're dealt damage, put that many vitality counters on this Aura.
                 .addTrigger(Triggers.youAreDealtDamage(),
-                        new PutCountersOnSelfEffect(CounterType.VITALITY, new EventValue()))
+                        PutCountersEffect.onSelf(CounterType.VITALITY, new EventValue()))
                 // At the beginning of your upkeep, you may remove a vitality counter from this Aura.
                 // If you do, you gain 1 life.
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),

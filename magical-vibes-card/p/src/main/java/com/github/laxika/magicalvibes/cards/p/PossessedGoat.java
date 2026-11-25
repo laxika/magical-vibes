@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -23,7 +23,7 @@ public class PossessedGoat extends Card {
                 "{3}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 3),
                         new GrantColorEffect(CardColor.BLACK, Subjects.source()),
                         new GrantSubtypeEffect(CardSubtype.DEMON, Subjects.source())
                 ),

@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -76,7 +76,7 @@ public class VhalEagerScholar extends Card {
                 true,
                 null,
                 List.of(new DrawCardEffect(), new DiscardEffect(1, Subjects.you()),
-                        new PutCountersOnSelfEffect(CounterType.STUDY)),
+                        PutCountersEffect.onSelf(CounterType.STUDY)),
                 "{T}: Draw a card, then discard a card. Put a study counter on Vhal, Eager Scholar."));
     }
 

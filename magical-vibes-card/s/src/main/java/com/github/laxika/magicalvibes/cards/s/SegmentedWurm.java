@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMP", collectorNumber = "269")
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SegmentedWurm extends Card {
 
     public SegmentedWurm() {
-        addTrigger(Triggers.becomesTargetOfSpellOrAbility(), new PutCountersOnSourceEffect(-1, -1, 1));
+        addTrigger(Triggers.becomesTargetOfSpellOrAbility(), PutCountersEffect.onSelf(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

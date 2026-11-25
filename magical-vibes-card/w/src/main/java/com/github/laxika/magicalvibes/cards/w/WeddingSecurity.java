@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +29,7 @@ public class WeddingSecurity extends Card {
                                 new PermanentIsTokenPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.BLOOD))), Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                 new DrawCardEffect()))),
                 "Sacrifice a Blood token?"));
     }

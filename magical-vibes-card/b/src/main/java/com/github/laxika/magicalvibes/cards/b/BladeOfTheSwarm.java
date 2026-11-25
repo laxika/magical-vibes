@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +23,7 @@ public class BladeOfTheSwarm extends Card {
                 new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put two +1/+1 counters on this creature.",
-                                new PutCountersOnSourceEffect(1, 1, 2)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put target exiled card with warp on the bottom of its owner's library.",
                                 PutCardsIntoLibraryEffect.onBottom(

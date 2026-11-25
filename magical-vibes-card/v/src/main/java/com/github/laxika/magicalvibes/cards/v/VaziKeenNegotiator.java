@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivat
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class VaziKeenNegotiator extends Card {
 
     private static CardEffect counterAndDraw() {
         return SequenceEffect.of(
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                 new DrawCardEffect());
     }
@@ -38,7 +38,7 @@ public class VaziKeenNegotiator extends Card {
                 "{T}: Target opponent creates X Treasure tokens, where X is the number of Treasure tokens you created this turn."));
 
         addTrigger(Triggers.opponentCastsSpell().paidWithTreasureMana(),
-                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                PutCountersEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                 new DrawCardEffect());
         addTrigger(Triggers.opponentActivatesAbility(),

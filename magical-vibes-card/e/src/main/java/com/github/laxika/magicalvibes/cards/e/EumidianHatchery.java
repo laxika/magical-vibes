@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +31,7 @@ public class EumidianHatchery extends Card {
                 List.of(
                         new PayLifeCost(1),
                         new AwardManaEffect(ManaColor.BLACK),
-                        new PutCountersOnSelfEffect(CounterType.HATCHLING)
+                        PutCountersEffect.onSelf(CounterType.HATCHLING)
                 ),
                 "{T}, Pay 1 life: Add {B}. Put a hatchling counter on this land."
         ));

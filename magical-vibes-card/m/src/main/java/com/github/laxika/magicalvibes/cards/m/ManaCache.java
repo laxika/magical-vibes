@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -33,7 +33,7 @@ public class ManaCache extends Card {
         );
 
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new PutCountersOnSelfEffect(CounterType.CHARGE, untappedLands));
+                PutCountersEffect.onSelf(CounterType.CHARGE, untappedLands));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

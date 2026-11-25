@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -82,7 +82,7 @@ public class ShadowheartSharranCleric extends Card {
             case BLUE -> new DrawCardEffect();
             case BLACK -> null;
             case RED -> new DealDamageToPlayersEffect(new EventValue(), Subjects.eachOpponent());
-            case GREEN -> new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE);
+            case GREEN -> PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE);
         };
         return effect == null ? null : new TriggeredAbility(Triggers.youLoseLife(),
                 TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()), effect);

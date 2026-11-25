@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -41,7 +41,7 @@ public class AthreosShroudVeiled extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"))
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                        PutCountersEffect.withTargetRestriction(
                                 CounterType.COIN, 1, anotherCreature));
 
         PermanentPredicate coinCounter = new PermanentHasCountersPredicate(CounterType.COIN);

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,7 +31,7 @@ public class TyriteSanctum extends Card {
                 "{2}",
                 List.of(
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.GOD),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{2}, {T}: Target legendary creature becomes a God in addition to its other types. Put a +1/+1 counter on it.",
                 new PermanentPredicateTargetFilter(
@@ -46,7 +46,7 @@ public class TyriteSanctum extends Card {
                 "{4}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.INDESTRUCTIBLE)
+                        new PutCountersEffect(CounterType.INDESTRUCTIBLE)
                 ),
                 "{4}, {T}, Sacrifice this land: Put an indestructible counter on target God.",
                 new PermanentPredicateTargetFilter(

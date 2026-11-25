@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
@@ -23,7 +23,7 @@ public class NullChampion extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(PutCountersEffect.onSelf(CounterType.LEVEL)),
                 "Level up {3} ({3}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

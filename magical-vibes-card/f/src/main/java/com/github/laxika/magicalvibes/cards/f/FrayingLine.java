@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -28,7 +28,7 @@ public class FrayingLine extends Card {
         // When this artifact enters, put a rope counter on target creature you control.
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.ROPE));
+                        new PutCountersEffect(CounterType.ROPE));
 
         // Each upkeep, the active player may pay {2} to put a rope counter on one of their
         // creatures. Otherwise, exile this artifact and every creature without a rope counter,
@@ -46,7 +46,7 @@ public class FrayingLine extends Card {
                 false,
                 true,
                 false,
-                List.of(new PutCounterOnTargetPermanentEffect(
+                List.of(new PutCountersEffect(
                         CounterType.ROPE, 1, new PermanentIsCreaturePredicate()))));
     }
 }

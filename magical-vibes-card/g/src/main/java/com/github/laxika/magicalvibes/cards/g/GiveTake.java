@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -49,7 +49,7 @@ public class GiveTake extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Give — Put three +1/+1 counters on target creature",
-                        List.<CardEffect>of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)),
+                        List.<CardEffect>of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)),
                         List.of(creature)
                 ).withManaCost("{2}{G}"),
                 new ChooseOneEffect.ChooseOneOption(
@@ -62,7 +62,7 @@ public class GiveTake extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Fuse — Give and then Take",
                         List.<CardEffect>of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                                 new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.target()),
                                 new DrawCardEffect(new EventValue())),
                         List.of(creature, controlledCreature)

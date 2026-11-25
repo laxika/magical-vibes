@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class Retribution extends Card {
                         .chosenBy(Subjects.controllerOf(Subjects.allTargets())))
                 .addSpellEffect(new SacrificeSelfEffect(Subjects.thisWay(StepKind.CHOOSE),
                         Subjects.controllerOf(Subjects.thisWay(StepKind.CHOOSE))))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(
+                .addSpellEffect(new PutCountersEffect(
                         Subjects.except(Subjects.allTargets(), Subjects.thisWay(StepKind.CHOOSE)),
                         CounterType.MINUS_ONE_MINUS_ONE));
         target(TargetFilters.creatureAnOpponentControls());

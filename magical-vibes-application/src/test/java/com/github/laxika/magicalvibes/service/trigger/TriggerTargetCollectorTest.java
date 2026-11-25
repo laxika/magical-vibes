@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -371,7 +371,7 @@ class TriggerTargetCollectorTest {
                         eq(opponentCreature), anySet(), any(FilterContext.class)))
                 .thenReturn(false);
 
-        List<CardEffect> effects = List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        List<CardEffect> effects = List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, TargetFilters.creatureYouControl(), player1Id, sourceCard,

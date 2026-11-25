@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +28,7 @@ public class HoofprintsOfTheStag extends Card {
     public HoofprintsOfTheStag() {
         // Whenever you draw a card, you may put a hoofprint counter on this enchantment.
         addTrigger(Triggers.youDrawCard(), new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.HOOFPRINT),
+                PutCountersEffect.onSelf(CounterType.HOOFPRINT),
                 "Put a hoofprint counter on Hoofprints of the Stag?"
         ));
 

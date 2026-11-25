@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,6 @@ public class AsmiraHolyAvenger extends Card {
     public AsmiraHolyAvenger() {
         // At the beginning of each end step, put a +1/+1 counter on Asmira for each creature
         // put into your graveyard from the battlefield this turn.
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new PutCountersOnSelfEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, new CreaturesPutIntoOwnGraveyardThisTurn()));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CreaturesPutIntoOwnGraveyardThisTurn()));
     }
 }

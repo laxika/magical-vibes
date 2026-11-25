@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,7 +28,7 @@ public class DesecrationDemon extends Card {
                                 Subjects.acceptedPlayers()),
                         "Sacrifice a creature? If a player does, it becomes tapped and gets a +1/+1 counter.",
                         SequenceEffect.of(new TapPermanentsEffect(Subjects.source()),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                         null));
     }
 }

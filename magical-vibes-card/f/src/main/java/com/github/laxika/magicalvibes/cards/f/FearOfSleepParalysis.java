@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StunCountersCantBeRemovedFromOpponentsPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class FearOfSleepParalysis extends Card {
     public FearOfSleepParalysis() {
         SequenceEffect eerie = SequenceEffect.upToOneTarget(
                 new TapPermanentsEffect(Subjects.target()),
-                new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+                new PutCountersEffect(CounterType.STUN));
         target(TargetFilters.creature(), 0, 1)
                 .addTriggeredAbility(new TriggeredAbility(List.of(
                                 new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -23,7 +23,7 @@ public class SheHulkWallbreaker extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.HERO)));
         addTrigger(Triggers.creatureYouControlBecomesBlocked()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.HERO)),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE,
+                new PutCountersEffect(Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE,
                         new CreaturesBlockingSource(true)));
     }
 }

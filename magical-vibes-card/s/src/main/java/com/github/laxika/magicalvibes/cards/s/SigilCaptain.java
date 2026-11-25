@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -30,7 +30,7 @@ public class SigilCaptain extends Card {
                 new PermanentToughnessAtLeastPredicate(1), new PermanentToughnessAtMostPredicate(1))));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(oneOne),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
+                new PutCountersEffect(Subjects.triggering(),
                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
     }
 }

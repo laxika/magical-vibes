@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -2640,7 +2640,7 @@ public class Card {
     public static ActivatedAbility scavengeAbility(String cost) {
         return new ActivatedAbility(false, cost,
                 List.of(new ExileSelfFromGraveyardCost(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourceCardPower())),
+                        new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourceCardPower())),
                 "Scavenge " + cost + " (" + cost + ", Exile this card from your graveyard: Put a number of "
                         + "+1/+1 counters equal to this card's power on target creature. Scavenge only as a sorcery.)",
                 TargetFilters.creature(), null, null, ActivationTimingRestriction.SORCERY_SPEED)

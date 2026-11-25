@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class OranRiefHydra extends Card {
         // ability resolves, as it last existed on the battlefield once it has left (CR 608.2h).
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new ConditionalReplacementEffect(new TriggeringPermanentHasSubtype(CardSubtype.FOREST),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)));
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2)));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -25,7 +25,7 @@ public class ZulaportEnforcer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(PutCountersEffect.onSelf(CounterType.LEVEL)),
                 "Level up {4} ({4}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

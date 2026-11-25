@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,7 +42,7 @@ public class RedcapGutterDweller extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                         )), Subjects.you()), new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
                                 new ExileTopCardMayPlayThisTurnEffect(false)))),
                 "Sacrifice another creature?"));
     }

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -39,7 +39,7 @@ public class AssembleTheEntmoot extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         treefolk,
-                        new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), CounterType.REACH, new Fixed(1))
+                        new PutCountersEffect(Subjects.createdThisResolution(), CounterType.REACH, new Fixed(1))
                 ),
                 "Sacrifice this enchantment: Create three tapped X/X green Treefolk creature tokens, where X is the amount of life you gained this turn. Put a reach counter on each of them."
         ));

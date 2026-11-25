@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -23,7 +23,7 @@ public class RepeatOffender extends Card {
                 List.of(
                         new ConditionalEffect(
                                 new SourceIsSuspected(),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                         ),
                         new ConditionalEffect(
                                 new NotCondition(new SourceIsSuspected()),

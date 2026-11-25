@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -25,9 +25,7 @@ public class OozePatrol extends Card {
         // creature for each artifact and/or creature card in your graveyard.
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new MillEffect(2, Subjects.you()),
-                new PutCountersOnSelfEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        new CardsInGraveyard(new CardAnyOfPredicate(List.of(
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new CardsInGraveyard(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.CREATURE)
                         )), CountScope.CONTROLLER))));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -22,7 +22,7 @@ public class ArcaneSpyglass extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land", false),
                         new DrawCardEffect(1),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE)
+                        PutCountersEffect.onSelf(CounterType.CHARGE)
                 ),
                 "{2}, {T}, Sacrifice a land: Draw a card and put a charge counter on this artifact."
         ));

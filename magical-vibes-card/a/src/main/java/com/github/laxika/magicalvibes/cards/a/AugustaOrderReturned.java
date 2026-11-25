@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesCardFromGraveyardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class AugustaOrderReturned extends Card {
     public AugustaOrderReturned() {
         // When one or more nonland cards are exiled by the attack trigger, put that many +1/+1
         // counters on target attacking creature.
-        var counterEffect = new PutCounterOnTargetPermanentEffect(
+        var counterEffect = new PutCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new EventValue(), null,
                 new PermanentIsAttackingPredicate(), false, null);
         addTrigger(Triggers.attacks(),

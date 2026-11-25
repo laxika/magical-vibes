@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +22,7 @@ public class GraspingDunes extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,  // requiresTap
                 "{1}",
-                List.of(new SacrificeSelfCost(), new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
+                List.of(new SacrificeSelfCost(), new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
                 "{1}, {T}, Sacrifice Grasping Dunes: Put a -1/-1 counter on target creature. Activate only as a sorcery.",
                 TargetFilters.creature(),
                 null,  // loyaltyCost

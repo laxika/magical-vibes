@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -42,7 +42,7 @@ public class WeatherlightCompleated extends Card {
         ));
 
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PHYRESIS),
+                PutCountersEffect.onSelf(CounterType.PHYRESIS),
                 new ConditionalReplacementEffect(
                         new SourceCounterThreshold(7, CounterType.PHYRESIS),
                         new ScryEffect(1),

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class Necropolis extends Card {
                 "{0}",
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.CREATURE, false, true),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ZERO_PLUS_ONE, new ImprintedCardManaValue())
+                        PutCountersEffect.onSelf(CounterType.PLUS_ZERO_PLUS_ONE, new ImprintedCardManaValue())
                 ),
                 "Exile a creature card from your graveyard: Put X +0/+1 counters on this creature, where X is the exiled card's mana value."
         ));

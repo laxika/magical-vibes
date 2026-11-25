@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -40,6 +40,6 @@ public class TeferisTalent extends Card {
         ));
 
         addTrigger(Triggers.youDrawCard(),
-                new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.LOYALTY));
+                new PutCountersEffect(Subjects.attached(), CounterType.LOYALTY));
     }
 }

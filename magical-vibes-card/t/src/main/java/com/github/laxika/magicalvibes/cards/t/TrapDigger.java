@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -28,7 +28,7 @@ public class TrapDigger extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{W}",
-                List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                List.of(PutCountersEffect.withTargetRestriction(
                         CounterType.TRAP, 1, new PermanentIsLandPredicate())),
                 "{2}{W}, {T}: Put a trap counter on target land you control.",
                 TargetFilters.landYouControl()

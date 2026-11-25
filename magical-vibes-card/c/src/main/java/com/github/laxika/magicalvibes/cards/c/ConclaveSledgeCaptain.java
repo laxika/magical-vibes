@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,8 +32,7 @@ public class ConclaveSledgeCaptain extends Card {
     public ConclaveSledgeCaptain() {
         setAllowSharedTargets(true);
 
-        CardEffect combatDamageTrigger = new PutCountersOnSelfEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
+        CardEffect combatDamageTrigger = PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
         addTrigger(Triggers.dealsCombatDamageToPlayer(), combatDamageTrigger);
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
@@ -46,7 +44,7 @@ public class ConclaveSledgeCaptain extends Card {
         for (int i = 0; i < 3; i++) {
             target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                     SequenceEffect.of(
-                            new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                            new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                             new ConditionalEffect(
                                     new TargetPermanentMatches(anotherCreature),
                                     SequenceEffect.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),

@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EndureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -98,9 +97,9 @@ public class EndureEffectHandler implements NormalEffectHandlerBean {
         ChooseOneEffect tokenChoice = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(counterLabel,
                         endure.target() == EndureEffect.Target.TRIGGERING_PERMANENT
-                                ? PutCounterOnTargetPermanentEffect.onTriggeringPermanent(
+                                ? PutCountersEffect.onTriggeringPermanent(
                                         CounterType.PLUS_ONE_PLUS_ONE, amount)
-                                : new PutCountersOnSourceEffect(1, 1, amount)),
+                                : PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, amount)),
                 new ChooseOneEffect.ChooseOneOption(tokenLabel,
                         new CreateTokenForPlayerEffect(tokenControllerId, spirit))
         ));

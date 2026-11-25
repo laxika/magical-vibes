@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -24,10 +24,10 @@ public class ShardOfTheVoidDragon extends Card {
 
         // Whenever an artifact is put into a graveyard from the battlefield, put two +1/+1 counters on this creature.
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
 
         // Whenever an artifact is put into exile from the battlefield, put two +1/+1 counters on this creature.
         addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.ARTIFACT, ObjectRelation.ANOTHER),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

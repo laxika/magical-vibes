@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -41,13 +41,13 @@ public class OmoQueenOfVesuva extends Card {
     public OmoQueenOfVesuva() {
         setAllowSharedTargets(true);
 
-        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
-        var putCounterOnTargetPermanent3 = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
+        var putCounterOnTargetPermanent = new PutCountersEffect(CounterType.EVERYTHING);
+        var putCounterOnTargetPermanent3 = new PutCountersEffect(CounterType.EVERYTHING);
         target(TargetFilters.land(), 0, 1)
                 .bindEffect(putCounterOnTargetPermanent)
                 .bindEffect(putCounterOnTargetPermanent3);
-        var putCounterOnTargetPermanent2 = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
-        var putCounterOnTargetPermanent4 = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
+        var putCounterOnTargetPermanent2 = new PutCountersEffect(CounterType.EVERYTHING);
+        var putCounterOnTargetPermanent4 = new PutCountersEffect(CounterType.EVERYTHING);
         target(TargetFilters.creature(), 0, 1)
                 .bindEffect(putCounterOnTargetPermanent2)
                 .bindEffect(putCounterOnTargetPermanent4);

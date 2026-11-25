@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +15,7 @@ public class SwordOfHours extends Card {
 
     public SwordOfHours() {
         addTrigger(Triggers.attacks(),
-                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersEffect(Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.equippedCreatureDealsCombatDamage(),
                 new RollD12AndResolveIfGreaterThanEventValueEffect(
                         new DoublePlusOneCountersOnTargetCreatureEffect(Subjects.triggering())));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -22,6 +22,6 @@ public class LaeliaTheBladeReforged extends Card {
         addTrigger(Triggers.attacks(), new ExileTopCardMayPlayThisTurnEffect(false));
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.LIBRARY, Zone.GRAVEYARD),
                 null, ObjectRelation.YOU_OWN)), TriggerOptions.ONE_OR_MORE,
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

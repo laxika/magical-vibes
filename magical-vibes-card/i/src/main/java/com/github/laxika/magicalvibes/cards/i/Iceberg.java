@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class Iceberg extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new PutCountersOnSelfEffect(CounterType.ICE)),
+                List.of(PutCountersEffect.onSelf(CounterType.ICE)),
                 "{3}: Put an ice counter on this enchantment."
         ));
 

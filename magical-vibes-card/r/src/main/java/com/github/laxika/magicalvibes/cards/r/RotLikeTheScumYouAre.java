@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -23,7 +23,7 @@ public class RotLikeTheScumYouAre extends Card {
         addSpellEffect(SequenceEffect.of(
                 new CreateTokenEffect("Ooze", 2, 2, CardColor.GREEN, List.of(CardSubtype.OOZE),
                         Set.of(), Set.of()),
-                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
+                new PutCountersEffect(Subjects.createdThisResolution(),
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(new PermanentIsLandPredicate(), CountScope.OPPONENTS))));
     }

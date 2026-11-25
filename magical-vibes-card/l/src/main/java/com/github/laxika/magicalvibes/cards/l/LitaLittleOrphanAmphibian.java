@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class LitaLittleOrphanAmphibian extends Card {
                 ChooseOneEffect.notYetChosenThisTurn(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on Lita",
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)),
                 new ChooseOneEffect.ChooseOneOption("Create a Food token", foodToken()),
                 new ChooseOneEffect.ChooseOneOption("Scry 1", new ScryEffect(1)))));
     }

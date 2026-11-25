@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,7 +14,7 @@ public class BlurOfBlades extends Card {
 
     public BlurOfBlades() {
         target(TargetFilters.creature());
-        addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+        addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
         addSpellEffect(new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())));
     }
 }

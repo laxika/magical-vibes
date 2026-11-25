@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -43,10 +42,10 @@ public class EarthbenderAscension extends Card {
         SourceCounterThreshold fourQuestCounters = new SourceCounterThreshold(4, CounterType.QUEST);
         SequenceEffect counterAndTrample = SequenceEffect.of(
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target(), creatureYouControl),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.QUEST),
+                        PutCountersEffect.onSelf(CounterType.QUEST),
                         new ConditionalEffect(
                                 new AllOf(List.of(new HappenedThisWay(StepKind.PUT_COUNTERS), fourQuestCounters)),
                                 new QueueReflexiveAbilityEffect(

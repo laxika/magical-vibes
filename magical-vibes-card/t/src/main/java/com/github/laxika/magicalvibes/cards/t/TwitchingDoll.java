@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class TwitchingDoll extends Card {
                 null,
                 List.of(
                         new AwardAnyColorManaEffect(),
-                        new PutCountersOnSelfEffect(CounterType.NEST)
+                        PutCountersEffect.onSelf(CounterType.NEST)
                 ),
                 "{T}: Add one mana of any color. Put a nest counter on this creature."
         ));

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class ChasmSkulker extends Card {
 
     public ChasmSkulker() {
         addTrigger(Triggers.youDrawCard(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Squid", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.SQUID), Set.of(Keyword.ISLANDWALK), Set.of())
                                 .withAmount(new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)));

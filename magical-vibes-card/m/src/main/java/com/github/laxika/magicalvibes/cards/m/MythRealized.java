@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,12 +22,12 @@ public class MythRealized extends Card {
 
     public MythRealized() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new PutCountersOnSelfEffect(CounterType.LORE));
+                PutCountersEffect.onSelf(CounterType.LORE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LORE)),
+                List.of(PutCountersEffect.onSelf(CounterType.LORE)),
                 "{2}{W}: Put a lore counter on this enchantment."
         ));
 

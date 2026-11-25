@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -66,8 +66,8 @@ public class ElspethResplendent extends Card {
 
     private static ChooseOneEffect.ChooseOneOption counterMode(String label, CounterType counterType) {
         return new ChooseOneEffect.ChooseOneOption(label, List.of(
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                new PutCounterOnTargetPermanentEffect(counterType)
+                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new PutCountersEffect(counterType)
         ));
     }
 }

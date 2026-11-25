@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
@@ -25,8 +25,7 @@ import java.util.Set;
 public class HeroOfBretagard extends Card {
 
     public HeroOfBretagard() {
-        PutCountersOnSelfEffect counters = new PutCountersOnSelfEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
+        PutCountersEffect counters = PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.HAND),
                 null, ObjectRelation.YOU_OWN)), TriggerOptions.ONE_OR_MORE, counters);
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),

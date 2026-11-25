@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class AssembleTheLegion extends Card {
         // "Then" — the token count reads the muster counter this same trigger just added,
         // so both halves must resolve inside one stack entry.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.MUSTER),
+                PutCountersEffect.onSelf(CounterType.MUSTER),
                 new CreateTokenEffect(CardType.CREATURE, new CountersOnSource(CounterType.MUSTER),
                         "Soldier", 1, 1, CardColor.RED, Set.of(CardColor.RED, CardColor.WHITE),
                         List.of(CardSubtype.SOLDIER), Set.of(Keyword.HASTE), Set.of(),

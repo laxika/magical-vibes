@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
 import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -21,7 +21,7 @@ public class ContractualSafeguard extends Card {
                 new CastDuringMainPhase(),
                 SequenceEffect.of(
                         ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
-                        new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                        new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE),
                                 CounterType.SHIELD, 1))));
         addSpellEffect(new ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffect());
     }

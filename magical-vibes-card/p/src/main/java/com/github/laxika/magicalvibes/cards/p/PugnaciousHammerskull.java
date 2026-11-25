@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class PugnaciousHammerskull extends Card {
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new NotCondition(new ControlsAnotherPermanent(
                         new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)))),
-                new PutCountersOnSelfEffect(CounterType.STUN));
+                PutCountersEffect.onSelf(CounterType.STUN));
     }
 }

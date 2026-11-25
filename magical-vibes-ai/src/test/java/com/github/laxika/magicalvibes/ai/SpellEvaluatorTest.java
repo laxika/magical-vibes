@@ -56,7 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -487,7 +487,7 @@ class SpellEvaluatorTest {
     @DisplayName("+1/+1 counter on target creature scores count * 3.5")
     void counterOnTargetCreatureScoring() {
         double value = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)), player1.getId());
+                gd, List.of(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)), player1.getId());
         assertThat(value).isEqualTo(7.0); // 2 * 3.5
     }
 

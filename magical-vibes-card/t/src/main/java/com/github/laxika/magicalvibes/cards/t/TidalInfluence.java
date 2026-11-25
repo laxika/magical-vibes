@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +33,7 @@ public class TidalInfluence extends Card {
         setCastCondition(new NotCondition(new AnyPlayerControlsPermanent(
                 new PermanentNamedPredicate("Tidal Influence"))));
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIDE, new Fixed(1)));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.TIDE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.TIDE));
 
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(

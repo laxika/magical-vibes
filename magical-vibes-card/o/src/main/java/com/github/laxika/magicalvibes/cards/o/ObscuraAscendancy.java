@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,7 +28,7 @@ public class ObscuraAscendancy extends Card {
         addTrigger(Triggers.youCastSpell().anySpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SpellManaValueEqualsSourceCounters(CounterType.SOUL, 1)),
                 SequenceEffect.of(
-                        new PutCountersOnSelfEffect(CounterType.SOUL),
+                        PutCountersEffect.onSelf(CounterType.SOUL),
                         new CreateTokenEffect("Spirit", 2, 2, CardColor.WHITE,
                                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of())));
 

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +27,7 @@ public class LifecraftAwakening extends Card {
     public LifecraftAwakening() {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(), "Target must be an artifact you control"))
-                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()))
+                .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()))
                 .addSpellEffect(new ConditionalEffect(
                         new NotCondition(new TargetPermanentMatches(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

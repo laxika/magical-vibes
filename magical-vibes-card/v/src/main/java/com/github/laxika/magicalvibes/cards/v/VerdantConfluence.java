@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -29,7 +29,7 @@ public class VerdantConfluence extends Card {
         addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Put two +1/+1 counters on target creature",
-                        () -> new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        () -> new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         TargetFilters.creature()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Return target permanent card from your graveyard to your hand",

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -50,7 +50,7 @@ public class WillOfTheSultai extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put X +1/+1 counters on target creature, where X is the number of lands you control. It gains trample until end of turn",
                         List.of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, landsYouControl),
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, landsYouControl),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         TargetFilters.creature())
         ), new ControlledCommanderAsCast()));

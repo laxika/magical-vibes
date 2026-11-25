@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,7 +31,7 @@ public class ZhaoTheMoonSlayer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{7}",
-                List.of(new PutCountersOnSelfEffect(CounterType.CONQUEROR)),
+                List.of(PutCountersEffect.onSelf(CounterType.CONQUEROR)),
                 "{7}: Put a conqueror counter on Zhao."
         ));
         addStaticEffect(new ConditionalEffect(
