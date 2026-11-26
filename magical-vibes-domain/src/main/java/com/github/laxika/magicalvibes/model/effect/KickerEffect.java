@@ -36,7 +36,7 @@ public record KickerEffect(String cost, PermanentPredicate sacrificePredicate, S
                            CardPredicate discardPredicate, String discardDescription,
                            int sacrificeCount, PayLifeCost lifeCost,
                            Set<ManaColor> xColorRestrictions, boolean xUsesEachColorAtMostOnce,
-                           ForageOrPayManaCost forageCost, boolean countsAsKicker) implements CardEffect {
+                           ForageCost forageCost, boolean countsAsKicker) implements CardEffect {
 
     /** Kicker functions while the spell with kicker is on the stack (CR 702.33a). */
     @Override
@@ -50,7 +50,7 @@ public record KickerEffect(String cost, PermanentPredicate sacrificePredicate, S
                         CardPredicate discardPredicate, String discardDescription,
                         int sacrificeCount, PayLifeCost lifeCost,
                         Set<ManaColor> xColorRestrictions, boolean xUsesEachColorAtMostOnce,
-                        ForageOrPayManaCost forageCost) {
+                        ForageCost forageCost) {
         this(cost, sacrificePredicate, sacrificeDescription, tapPredicate, tapDescription,
                 returnPredicate, returnDescription, discardPredicate, discardDescription, sacrificeCount,
                 lifeCost, xColorRestrictions, xUsesEachColorAtMostOnce, forageCost, true);
@@ -137,7 +137,7 @@ public record KickerEffect(String cost, PermanentPredicate sacrificePredicate, S
     /** Convenience factory for a kicker paid by foraging. */
     public static KickerEffect forage() {
         return new KickerEffect(null, null, null, null, null, null, null, null, null, 0, null, null, false,
-                ForageOrPayManaCost.forageOnly());
+                new ForageCost());
     }
 
     public boolean hasSacrificeCost() {

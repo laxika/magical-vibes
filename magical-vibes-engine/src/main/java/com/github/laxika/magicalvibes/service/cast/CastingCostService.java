@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreature
 import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -66,7 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.GlobalAttackLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoyaltyAbilityCostIncreasingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -3117,12 +3117,10 @@ public class CastingCostService {
         }
     }
 
-    /** Checks the alternate mana option of a graveyard-exile-or-pay spell against a given pool. */
-    public boolean canPayExileNCardsOrPayManaOption(GameData gameData, UUID playerId, Card card,
-                                                    ExileNCardsFromGraveyardOrPayManaCost cost,
-                                                    ManaPool pool) {
-        return additionalSpellCostService.canAffordExileNCardsOrPayManaOption(
-                gameData, playerId, card, cost, pool);
+    /** Checks the mana alternative of an "[A] or [B]" additional cast cost, with the spell's mana cost, against a pool. */
+    public boolean canPayManaAlternative(GameData gameData, UUID playerId, Card card, PayManaCost alternative,
+                                         ManaPool pool) {
+        return additionalSpellCostService.canAffordManaAlternative(gameData, playerId, card, alternative, pool);
     }
 
     /** Checks additional costs for a spell being cast from a graveyard zone. */

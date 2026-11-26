@@ -97,7 +97,6 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -112,10 +111,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToKickedSpellEffect;
@@ -128,10 +126,10 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeInsteadOfCommanderTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForCostReductionEffect;
@@ -155,7 +153,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCos
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
@@ -165,7 +162,6 @@ import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesForManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -502,21 +498,16 @@ public class SpellCastingService {
         putCountersAsCost(gameData, player, card, creature, cost.counterType(), count);
     }
 
-    private void payPutCountersOnControlledCreatureOrPayManaCost(
-            GameData gameData, Player player, Card card,
-            PutCountersOnControlledCreatureOrPayManaCost cost, UUID creatureId,
-            ManaPool preManaPaymentPool) {
-        if (cost == null) return;
-        if (creatureId != null) {
-            Permanent creature = additionalSpellCostService.validatePutCountersOnControlledCreatureOrPayManaCost(
-                    gameData, player, card, cost, creatureId);
-            putCountersAsCost(gameData, player, card, creature, cost.counterType(), cost.count());
-            return;
-        }
+    /**
+     * Pays the mana alternative of an "[A] or [B]" additional cost that was not paid with the spell's total cost (a
+     * free cast, or a cast paying an alternative cost), from the mana left in the pool; any generic reduction the
+     * spell's own mana cost could not absorb reduces it (CR 601.2f). Restores {@code preManaPaymentPool} if it cannot be
+     * paid (CR 601.2h).
+     */
+    private void payAdditionalManaAfterBase(GameData gameData, Player player, Card card, PayManaCost cost,
+                                            ManaPool preManaPaymentPool) {
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
-            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
-            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
             int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
             int unusedReduction = Math.max(0,
                     -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
@@ -532,17 +523,33 @@ public class SpellCastingService {
             }
             extra.pay(pool);
             gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
-                    .card(card)
-                    .text(".")
-                    .build());
+            logAdditionalManaPayment(gameData, player, card, cost);
         } catch (IllegalStateException e) {
             if (preManaPaymentPool != null) {
                 gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
             }
             throw e;
         }
+    }
+
+    private void logAdditionalManaPayment(GameData gameData, Player player, Card card, PayManaCost cost) {
+        gameLogService.append(gameData, GameLog.builder()
+                .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
+                .card(card)
+                .text(".")
+                .build());
+    }
+
+    /**
+     * Whether paying {@code costs}' chosen mana alternative with the spell's total cost logs "P pays {m} for C.": the
+     * discard, counter and graveyard-exile alternatives logged it before they were paid with the total cost, the
+     * sacrifice and tap alternatives didn't (orchestrator's decision U7 Q2: the line stays where it was logged).
+     */
+    private static boolean logsManaAlternativePaidWithBase(AdditionalSpellCostService.ExtractedCosts costs) {
+        return costs.chosenFrom() != null && costs.chosenFrom().alternatives().stream()
+                .noneMatch(alternative -> alternative instanceof SacrificePermanentCost
+                        || alternative instanceof SacrificeCreatureCost
+                        || alternative instanceof TapMultiplePermanentsCost);
     }
 
     private void putCountersAsCost(GameData gameData, Player player, Card card, Permanent creature,
@@ -5974,7 +5981,7 @@ public class SpellCastingService {
                 additionalSpellCostService.validatePayLifeCost(gameData, player, card, kickerEffect.lifeCost());
             }
             if (kicked && kickerEffect != null && kickerEffect.hasForageCost()) {
-                additionalSpellCostService.validateForageOrPayManaCost(
+                additionalSpellCostService.validateForageCost(
                         gameData, player, card, kickerEffect.forageCost(),
                         new AdditionalSpellCostService.CostSelection(
                                 sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
@@ -6062,13 +6069,7 @@ public class SpellCastingService {
                     && (exileGraveyardCardIndices == null || exileGraveyardCardIndices.isEmpty()))
                     || (buyback && buybackEffect != null)
                     || additionalCosts.payLifeOrPayManaCost() != null
-                    || (additionalCosts.sacrificePermanentOrPayManaCost() != null && sacrificePermanentId == null)
-                    || (additionalCosts.tapPermanentOrPayManaCost() != null
-                    && (additionalCostSacrificePermanentIds == null || additionalCostSacrificePermanentIds.isEmpty()))
-                    || (additionalCosts.forageOrPayManaCost() != null && sacrificePermanentId == null
-                    && (exileGraveyardCardIndices == null || exileGraveyardCardIndices.isEmpty()))
-                    || (additionalCosts.putCountersOrPayManaCost() != null && sacrificePermanentId == null)
-                    || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
+                    || additionalCosts.additionalManaCost() != null
                     ? new ManaPool(gameData.playerManaPools.get(playerId)) : null;
             // Converge or Sunburst on a permanent: snapshot the pool before payment so the number
             // of distinct colors spent can be counted after it, then carry that count as the stack
@@ -6424,7 +6425,7 @@ public class SpellCastingService {
                 additionalSpellCostService.validatePayLifeCost(gameData, player, card, kickerEffect.lifeCost());
             }
             if (kicked && kickerEffect != null && kickerEffect.hasForageCost()) {
-                additionalSpellCostService.validateForageOrPayManaCost(
+                additionalSpellCostService.validateForageCost(
                         gameData, player, card, kickerEffect.forageCost(),
                         new AdditionalSpellCostService.CostSelection(
                                 sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
@@ -6497,13 +6498,7 @@ public class SpellCastingService {
                     || (buyback && buybackEffect != null)
                     || !pendingSpliceCosts.isEmpty()
                     || additionalCosts.payLifeOrPayManaCost() != null
-                    || (additionalCosts.sacrificePermanentOrPayManaCost() != null && sacrificePermanentId == null)
-                    || (additionalCosts.tapPermanentOrPayManaCost() != null
-                    && (additionalCostSacrificePermanentIds == null || additionalCostSacrificePermanentIds.isEmpty()))
-                    || (additionalCosts.forageOrPayManaCost() != null && sacrificePermanentId == null
-                    && (exileGraveyardCardIndices == null || exileGraveyardCardIndices.isEmpty()))
-                    || (additionalCosts.putCountersOrPayManaCost() != null && sacrificePermanentId == null)
-                    || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
+                    || additionalCosts.additionalManaCost() != null
                     ? new ManaPool(gameData.playerManaPools.get(playerId)) : null;
             String spliceManaCost = usingAlternateCost ? "" : spliceManaCostSuffix(pendingSpliceCosts);
             boolean spliceManaPaidWithSpellCost = false;
@@ -7864,7 +7859,7 @@ public class SpellCastingService {
         if (sharedColorDiscardHandCardIndex == null) {
             return;
         }
-        if ((costs.discardCardOrPayManaCost() != null || costs.discardCost() != null)
+        if (costs.discardCost() != null
                 && sharedColorDiscardHandCardIndex.equals(selection.discardHandCardIndex())) {
             throw new IllegalStateException("The same card cannot pay Dream Halls and an additional discard cost for "
                     + card.getName());
@@ -8120,15 +8115,12 @@ public class SpellCastingService {
         Player player = new Player(entry.getControllerId(), gameData.playerIdToName.get(entry.getControllerId()));
         List<CardEffect> effects = new ArrayList<>(entry.getEffectsToResolve());
         AdditionalSpellCostService.ExtractedCosts costs = additionalSpellCostService.extractAndRemove(effects);
-        if (costs.discardCardOrPayManaCost() != null && selection.discardHandCardIndex() == null
+        AdditionalSpellCostService.ExtractedCosts chosen =
+                additionalSpellCostService.withChosenAlternative(costs, selection, entry.getCard());
+        if (chosen.additionalManaCost() != null
                 && entry.getEffectsToResolve().stream().filter(CostEffect.class::isInstance).count() == 1) {
-            if (!new ManaCost(costs.discardCardOrPayManaCost().manaCost())
-                    .canPay(gameData.playerManaPools.get(entry.getControllerId()))) {
-                throw new IllegalStateException("Not enough mana to pay the additional cost");
-            }
-        } else if (costs.putCountersOrPayManaCost() != null && selection.sacrificePermanentId() == null
-                && entry.getEffectsToResolve().stream().filter(CostEffect.class::isInstance).count() == 1) {
-            if (!new ManaCost(costs.putCountersOrPayManaCost().manaCost())
+            // The spell's mana cost isn't paid, so only the alternative's own mana is spent (CR 601.2f).
+            if (!new ManaCost(chosen.additionalManaCost().manaCost())
                     .canPay(gameData.playerManaPools.get(entry.getControllerId()))) {
                 throw new IllegalStateException("Not enough mana to pay the additional cost");
             }
@@ -8178,15 +8170,13 @@ public class SpellCastingService {
                 preManaPaymentPool, announcedXValue, collectEvidenceMinimumManaValue, false);
     }
 
+    /**
+     * The chosen mana alternative of an "[A] or [B]" additional cost, paid as part of the total cost (CR 601.2f);
+     * {@code costs} have their alternative chosen ({@code AdditionalSpellCostService.withChosenAlternative}).
+     */
     private static String alternativeAdditionalManaSuffix(AdditionalSpellCostService.ExtractedCosts costs,
                                                            AdditionalSpellCostService.CostSelection selection) {
-        String suffix = costs.sacrificePermanentOrPayManaCost() != null && selection.sacrificePermanentId() == null
-                ? costs.sacrificePermanentOrPayManaCost().manaCost() : "";
-        if (costs.tapPermanentOrPayManaCost() != null
-                && (selection.sacrificePermanentIds() == null || selection.sacrificePermanentIds().isEmpty())) {
-            suffix += costs.tapPermanentOrPayManaCost().manaCost();
-        }
-        return suffix;
+        return costs.additionalManaCost() != null ? costs.additionalManaCost().manaCost() : "";
     }
 
     private AdditionalCostPayment payAdditionalCosts(GameData gameData, Player player, Card card,
@@ -8254,15 +8244,6 @@ public class SpellCastingService {
             tappedPermanentIds = payTapMultiplePermanentsCost(gameData, player, card, costs.tapMultipleCost(),
                     selection.sacrificePermanentIds(), announcedXValue);
         }
-        if (costs.tapPermanentOrPayManaCost() != null
-                && (!alternativeManaPaidWithBase
-                || selection.sacrificePermanentIds() != null && !selection.sacrificePermanentIds().isEmpty())) {
-            UUID selectedTapPermanentId = payTapPermanentOrPayManaCost(gameData, player, card,
-                    costs.tapPermanentOrPayManaCost(), selection.sacrificePermanentIds(), preManaPaymentPool);
-            if (selectedTapPermanentId != null) {
-                tappedPermanentIds = List.of(selectedTapPermanentId);
-            }
-        }
         if (costs.teamworkCost() != null && selection.sacrificePermanentIds() != null
                 && !selection.sacrificePermanentIds().isEmpty()) {
             payTeamworkCost(gameData, player, card, costs.teamworkCost(), selection.sacrificePermanentIds());
@@ -8275,19 +8256,19 @@ public class SpellCastingService {
             payReturnPermanentToHandCost(gameData, player, card, costs.returnPermanentToHand(),
                     selection.sacrificePermanentId());
         }
-        if (!alternativeManaPaidWithBase || selection.sacrificePermanentId() != null) {
-            paySacrificePermanentOrPayManaCost(gameData, player, card, costs.sacrificePermanentOrPayManaCost(),
-                    selection.sacrificePermanentId(), preManaPaymentPool);
+        if (costs.additionalManaCost() != null) {
+            if (!alternativeManaPaidWithBase) {
+                payAdditionalManaAfterBase(gameData, player, card, costs.additionalManaCost(), preManaPaymentPool);
+            } else if (logsManaAlternativePaidWithBase(costs)) {
+                logAdditionalManaPayment(gameData, player, card, costs.additionalManaCost());
+            }
         }
-        payForageOrPayManaCost(gameData, player, card, costs.forageOrPayManaCost(), selection,
-                preManaPaymentPool);
+        payForageCost(gameData, player, card, costs.forageCost(), selection);
         if (costs.returnCreatureToHand()) {
             payReturnCreatureToHandCost(gameData, player, card, selection.sacrificePermanentId());
         }
         payPutCounterOnControlledCreatureCost(gameData, player, card, costs.putCounterCost(), selection.sacrificePermanentId(),
                 announcedXValue);
-        payPutCountersOnControlledCreatureOrPayManaCost(gameData, player, card,
-                costs.putCountersOrPayManaCost(), selection.sacrificePermanentId(), preManaPaymentPool);
         if (costs.exileGraveyardCost() != null && costs.exileGraveyardCost().trackExiledPower()) {
             Card exiled = additionalSpellCostService.validateExileGraveyardCost(
                     gameData, player, card, costs.exileGraveyardCost(), selection.exileGraveyardCardIndex());
@@ -8300,8 +8281,6 @@ public class SpellCastingService {
         payCollectEvidenceCost(gameData, player, card, costs.collectEvidenceCost(),
                 selection.exileGraveyardCardIndices(), collectEvidenceMinimumManaValue);
         payExileNCardsFromGraveyardCost(gameData, player, card, costs.exileNCardsCost(), selection.exileGraveyardCardIndices());
-        payExileNCardsFromGraveyardOrPayManaCost(gameData, player, card, costs.exileNCardsOrPayManaCost(),
-                selection.exileGraveyardCardIndices(), preManaPaymentPool);
         List<UUID> delvedCardIds = payDelveCost(
                 gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
         payExileAnyNumberOfCardsFromHandCost(gameData, player, card,
@@ -8309,8 +8288,6 @@ public class SpellCastingService {
                 selection.spellCardIndex());
         payExileAnyNumberOfCardsFromGraveyardCost(gameData, player, card,
                 costs.exileAnyNumberOfCardsFromGraveyardCost(), selection.exileGraveyardCardIndices());
-        payDiscardCardOrPayManaCost(gameData, player, card, costs.discardCardOrPayManaCost(),
-                selection.discardHandCardIndex(), selection.spellCardIndex(), preManaPaymentPool);
         if (costs.chooseCreatureOrRevealCreatureCardCost() != null) {
             resolvedXValue = payChooseCreatureOrRevealCreatureCardCost(
                     gameData, player, card, costs.chooseCreatureOrRevealCreatureCardCost(), selection);
@@ -8877,49 +8854,6 @@ public class SpellCastingService {
         return toTap.stream().map(Permanent::getId).toList();
     }
 
-    private UUID payTapPermanentOrPayManaCost(GameData gameData, Player player, Card card,
-                                              TapPermanentOrPayManaCost cost, List<UUID> tapPermanentIds,
-                                              ManaPool preManaPaymentPool) {
-        List<UUID> ids = tapPermanentIds != null ? tapPermanentIds : List.of();
-        if (!ids.isEmpty()) {
-            List<UUID> tapped = payTapMultiplePermanentsCost(gameData, player, card,
-                    new TapMultiplePermanentsCost(1, cost.filter()), ids, 0);
-            return tapped.isEmpty() ? null : tapped.getFirst();
-        }
-        try {
-            ManaCost extra = new ManaCost(cost.manaCost());
-            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
-            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
-            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
-            int unusedReduction = Math.max(0,
-                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
-            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
-                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
-                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
-                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
-            }
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            int before = pool.getTotalAllMana();
-            if (!extra.canPay(pool)) {
-                throw new IllegalStateException("Not enough mana to pay " + cost.manaCost()
-                        + " for " + card.getName());
-            }
-            extra.pay(pool);
-            gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
-                    .card(card)
-                    .text(".")
-                    .build());
-            return null;
-        } catch (IllegalStateException e) {
-            if (preManaPaymentPool != null) {
-                gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
-            }
-            throw e;
-        }
-    }
-
     private void payTeamworkCost(GameData gameData, Player player, Card card,
                                  TeamworkCost cost, List<UUID> teamworkPermanentIds) {
         List<Permanent> toTap = additionalSpellCostService.validateTeamworkCost(
@@ -9333,8 +9267,7 @@ public class SpellCastingService {
         Set<UUID> ids = new java.util.LinkedHashSet<>();
         UUID chosenId = selection.sacrificePermanentId();
         List<UUID> chosenIds = selection.sacrificePermanentIds() != null ? selection.sacrificePermanentIds() : List.of();
-        if (chosenId != null && (chosenCosts.casualtyCost() != null || chosenCosts.forageOrPayManaCost() != null
-                || chosenCosts.sacrificePermanentOrPayManaCost() != null)) {
+        if (chosenId != null && (chosenCosts.casualtyCost() != null || chosenCosts.forageCost() != null)) {
             ids.add(chosenId);
         }
         if (chosenId != null && (chosenCosts.sacrificeCreature() || chosenCosts.sacrificePermanentCost() != null)) {
@@ -9407,7 +9340,7 @@ public class SpellCastingService {
      * the permission it is cast with ({@code permissionCosts}).
      */
     private Set<UUID> graveyardCastCostSacrificeIds(AdditionalSpellCostService.ExtractedCosts costs,
-                                                    ForageOrPayManaCost forageCost, FlashbackCast flashbackPaid,
+                                                    ForageCost forageCost, FlashbackCast flashbackPaid,
                                                     GraveyardCast graveyardCastPaid,
                                                     List<CastingCost> permissionCosts, int xValue,
                                                     UUID sacrificePermanentId, List<UUID> additionalIds,
@@ -9614,59 +9547,9 @@ public class SpellCastingService {
                         + sourceCard.getName() + "."));
     }
 
-    /**
-     * Pays "sacrifice a permanent or pay {mana}". Sacrifice when an id is supplied; otherwise
-     * pays the alternate mana from the remaining pool (base mana already paid). Restores
-     * {@code preManaPaymentPool} if the alternate mana cannot be paid (CR 601.2h).
-     */
-    private void paySacrificePermanentOrPayManaCost(GameData gameData, Player player, Card card,
-                                                   SacrificePermanentOrPayManaCost cost, UUID sacrificePermanentId,
-                                                   ManaPool preManaPaymentPool) {
-        if (cost == null) {
-            return;
-        }
-        if (sacrificePermanentId != null) {
-            paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
-                    cost.description(), p -> predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, p, cost.filter()));
-            return;
-        }
-        try {
-            ManaCost extra = new ManaCost(cost.manaCost());
-            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
-            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
-            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
-            int unusedReduction = Math.max(0,
-                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
-            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
-                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
-                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
-                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
-            }
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            int before = pool.getTotalAllMana();
-            if (!extra.canPay(pool)) {
-                throw new IllegalStateException("Not enough mana to pay " + cost.manaCost() + " for " + card.getName());
-            }
-            extra.pay(pool);
-            gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
-                    .card(card)
-                    .text(".")
-                    .build());
-        } catch (IllegalStateException e) {
-            if (preManaPaymentPool != null) {
-                gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
-            }
-            throw e;
-        }
-    }
-
-    private void payForageOrPayManaCost(GameData gameData, Player player, Card card,
-                                         ForageOrPayManaCost cost,
-                                         AdditionalSpellCostService.CostSelection selection,
-                                         ManaPool preManaPaymentPool) {
+    /** Pays a forage (CR 701.61a): the Food the selection names, else the three graveyard cards it names. */
+    private void payForageCost(GameData gameData, Player player, Card card, ForageCost cost,
+                               AdditionalSpellCostService.CostSelection selection) {
         if (cost == null) {
             return;
         }
@@ -9685,133 +9568,7 @@ public class SpellCastingService {
             ActionEvents.foraged(gameData, player.getId());
             return;
         }
-        if (cost.manaCost() == null) {
-            throw new IllegalStateException("Must forage to cast " + card.getName());
-        }
-        try {
-            ManaCost extra = new ManaCost(cost.manaCost());
-            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
-            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
-            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
-            int unusedReduction = Math.max(0,
-                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
-            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
-                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
-                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
-                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
-            }
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            int before = pool.getTotalAllMana();
-            if (!extra.canPay(pool)) {
-                throw new IllegalStateException(
-                        "Not enough mana to pay " + cost.manaCost() + " for " + card.getName());
-            }
-            extra.pay(pool);
-            gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
-                    .card(card)
-                    .text(".")
-                    .build());
-        } catch (IllegalStateException e) {
-            if (preManaPaymentPool != null) {
-                gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
-            }
-            throw e;
-        }
-    }
-
-    /**
-     * Pays "discard a card or pay {mana}". Discards when a hand index is supplied; otherwise pays
-     * the alternate mana from the remaining pool (base mana already paid). Restores
-     * {@code preManaPaymentPool} if the alternate mana cannot be paid (CR 601.2h).
-     */
-    private void payDiscardCardOrPayManaCost(GameData gameData, Player player, Card card,
-                                             DiscardCardOrPayManaCost cost, Integer discardHandCardIndex,
-                                             int spellCardIndex, ManaPool preManaPaymentPool) {
-        if (cost == null) {
-            return;
-        }
-        if (discardHandCardIndex != null) {
-            payDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
-                    discardHandCardIndex, spellCardIndex);
-            return;
-        }
-        try {
-            ManaCost extra = new ManaCost(cost.manaCost());
-            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
-            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
-            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
-            int unusedReduction = Math.max(0,
-                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
-            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
-                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
-                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
-                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
-            }
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            int before = pool.getTotalAllMana();
-            if (!extra.canPay(pool)) {
-                throw new IllegalStateException("Not enough mana to pay " + cost.manaCost() + " for " + card.getName());
-            }
-            extra.pay(pool);
-            gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
-                    .card(card)
-                    .text(".")
-                    .build());
-        } catch (IllegalStateException e) {
-            if (preManaPaymentPool != null) {
-                gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
-            }
-            throw e;
-        }
-    }
-
-    private void payExileNCardsFromGraveyardOrPayManaCost(
-            GameData gameData, Player player, Card card,
-            ExileNCardsFromGraveyardOrPayManaCost cost,
-            List<Integer> exileGraveyardCardIndices, ManaPool preManaPaymentPool) {
-        if (cost == null) {
-            return;
-        }
-        if (exileGraveyardCardIndices != null) {
-            payExileNCardsFromGraveyardCost(gameData, player, card,
-                    new ExileNCardsFromGraveyardCost(cost.count(), cost.requiredType(), cost.predicate()),
-                    exileGraveyardCardIndices);
-            return;
-        }
-        try {
-            ManaCost extra = new ManaCost(cost.manaCost());
-            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
-            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
-            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
-            int unusedReduction = Math.max(0,
-                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
-            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
-                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
-                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
-                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
-            }
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            int before = pool.getTotalAllMana();
-            if (!extra.canPay(pool)) {
-                throw new IllegalStateException("Not enough mana to pay " + cost.manaCost() + " for " + card.getName());
-            }
-            extra.pay(pool);
-            gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
-                    .card(card)
-                    .text(".")
-                    .build());
-        } catch (IllegalStateException e) {
-            if (preManaPaymentPool != null) {
-                gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
-            }
-            throw e;
-        }
+        throw new IllegalStateException("Must forage to cast " + card.getName());
     }
 
     private int paySacrificeCreaturesForCostReduction(GameData gameData, Player player, Card card,
@@ -10995,8 +10752,18 @@ public class SpellCastingService {
             effectiveXValue = unwrapChooseOneEffect(gameData, playerId, castHalf.createRuntimeCopy(),
                     spellEffects, effectiveXValue);
         }
-        ForageOrPayManaCost effectiveForageCost = additionalCosts.forageOrPayManaCost() != null
-                ? additionalCosts.forageOrPayManaCost()
+        // "Forage or pay {B}" (Feed the Cycle): the forage when the cast names a Food or graveyard cards, else the mana,
+        // paid from what the spell's mana cost leaves (CR 601.2b).
+        AnyOfCost graveyardForageOrMana = isForageOrManaCost(additionalCosts.anyOfCost())
+                ? additionalCosts.anyOfCost() : null;
+        CostEffect graveyardChosenAlternative = graveyardForageOrMana == null ? null
+                : additionalSpellCostService.chosenAlternative(graveyardForageOrMana,
+                        new AdditionalSpellCostService.CostSelection(sacrificePermanentId, null,
+                                exileGraveyardCardIndices, null, -1), castHalf);
+        PayManaCost graveyardManaAlternative = graveyardChosenAlternative instanceof PayManaCost mana ? mana : null;
+        ForageCost effectiveForageCost = additionalCosts.forageCost() != null
+                ? additionalCosts.forageCost()
+                : graveyardChosenAlternative instanceof ForageCost forage ? forage
                 : grantedFilterPermission.map(GameData.GraveyardCastFilterPermission::additionalCost)
                         .orElse(null);
         PreventDividedDamageEffect dividedPreventionEffect = spellEffects.stream()
@@ -11027,19 +10794,16 @@ public class SpellCastingService {
         // Exile-N, fixed tap-multiple, and sacrifice-a-creature costs are handled below; reject
         // unsupported costs rather than silently skipping them.
         boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCost() != null
-                || additionalCosts.anyOfCost() != null
-                || additionalCosts.sacrificePermanentOrPayManaCost() != null
+                || additionalCosts.anyOfCost() != null && graveyardForageOrMana == null
                 || additionalCosts.returnPermanentToHand() != null
                 || additionalCosts.returnCreatureToHand()
                 || additionalCosts.putCounterCost() != null
-                || additionalCosts.putCountersOrPayManaCost() != null
                 || additionalCosts.exileAnyNumberOfCardsFromHandCost() != null
                 || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null
                 || additionalCosts.putOpponentOwnedExiledCardIntoGraveyardCost() != null
-                || additionalCosts.exileNCardsOrPayManaCost() != null
                 || additionalCosts.discardRandomCost() != null
-                || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
+                || additionalCosts.discardHand()
                 || escalatePaymentsOwed > 0 && !additionalCosts.escalateCost().taps()
                 || additionalCosts.sacrificeFractionRoundedUpCost() != null
                 || additionalCosts.tieredManaCost() != null
@@ -11119,10 +10883,15 @@ public class SpellCastingService {
                 sacrificePermanentId, null, exileGraveyardCardIndices, retraceDiscardHandCardIndex, null, 0, -1,
                 List.of(), null, null,
                 beholdPermanentIds, beholdHandCardIndices);
+        if (graveyardManaAlternative != null && !additionalSpellCostService.canAffordManaAlternative(
+                gameData, playerId, card, graveyardManaAlternative, gameData.playerManaPools.get(playerId))) {
+            throw new IllegalStateException("Must forage or pay " + graveyardManaAlternative.manaCost()
+                    + " to cast " + card.getName());
+        }
         if (effectiveForageCost != null) {
             int excludedGraveyardIndex = graveyard == gameData.playerGraveyards.get(playerId)
                     ? graveyardCardIndex : -1;
-            additionalSpellCostService.validateForageOrPayManaCost(
+            additionalSpellCostService.validateForageCost(
                     gameData, player, card, effectiveForageCost,
                     graveyardCostSelection, excludedGraveyardIndex);
         }
@@ -11390,8 +11159,10 @@ public class SpellCastingService {
         } else {
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
         }
-        payForageOrPayManaCost(gameData, player, card, effectiveForageCost,
-                graveyardCostSelection, null);
+        payForageCost(gameData, player, card, effectiveForageCost, graveyardCostSelection);
+        if (graveyardManaAlternative != null) {
+            payAdditionalManaAfterBase(gameData, player, card, graveyardManaAlternative, null);
+        }
         if (convergeSnapshot != null) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int converge = ManaPool.countDistinctColoredManaSpent(
@@ -12539,13 +12310,31 @@ public class SpellCastingService {
         boolean playWithoutPaying = !flashforwardCast && !waterbendCast
                 && !sourceManaValueLifeAlternative
                 && (gameData.exilePlayWithoutPayingManaCost(exileCardId) || sourceFreeCast);
-        boolean supportedAdditionalManaCost = additionalCosts.discardCardOrPayManaCost() != null
+        // A sole "[A] or [B]" cost with a mana alternative: the caster announces the alternative (CR 601.2b), a
+        // sacrifice through the cast's permanent ids, else the mana alternative, paid with the total cost (CR 601.2f).
+        AnyOfCost exileAnyOfCost = additionalCosts.anyOfCost() != null
                 && card.getCastingCosts().stream()
-                .allMatch(effect -> effect instanceof DiscardCardOrPayManaCost || effect instanceof ChooseXValueCost);
-        boolean supportedSacrificeOrPayManaCost = additionalCosts.sacrificePermanentOrPayManaCost() != null
-                && card.getCastingCosts().stream()
-                .allMatch(effect -> effect instanceof SacrificePermanentOrPayManaCost
-                        || effect instanceof ChooseXValueCost);
+                .allMatch(effect -> effect instanceof AnyOfCost || effect instanceof ChooseXValueCost)
+                && additionalCosts.anyOfCost().alternatives().stream().anyMatch(PayManaCost.class::isInstance)
+                && additionalCosts.anyOfCost().alternatives().stream()
+                .allMatch(alternative -> alternative instanceof PayManaCost
+                        || alternative instanceof DiscardCardTypeCost
+                        || alternative instanceof SacrificePermanentCost
+                        || alternative instanceof SacrificeCreatureCost)
+                ? additionalCosts.anyOfCost() : null;
+        if (exileAnyOfCost != null && !waterbendCast && waterbendPermanentIds.size() > 1) {
+            throw new IllegalStateException("Choose only one permanent to sacrifice to cast " + card.getName());
+        }
+        AdditionalSpellCostService.CostSelection exileCostSelection = new AdditionalSpellCostService.CostSelection(
+                exileAnyOfCost != null && !waterbendCast && waterbendPermanentIds.size() == 1
+                        ? waterbendPermanentIds.getFirst() : null, null, null, null, -1);
+        CostEffect exileChosenAlternative = exileAnyOfCost == null ? null
+                : additionalSpellCostService.chosenAlternative(exileAnyOfCost, exileCostSelection, card);
+        PayManaCost exileManaAlternative = exileChosenAlternative instanceof PayManaCost mana ? mana : null;
+        boolean exilePaysOtherAlternative = exileChosenAlternative != null && exileManaAlternative == null;
+        if (exilePaysOtherAlternative) {
+            additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, exileCostSelection);
+        }
         boolean supportedAdditionalDiscardCost = additionalCosts.discardCost() != null
                 && !EffectResolution.needsTarget(card)
                 && !EffectResolution.needsSpellTarget(card.getCastingCostsAndSpellEffects())
@@ -12612,8 +12401,7 @@ public class SpellCastingService {
         if ((additionalCosts.any() && !freeCastSkipsDelve && !delveWithoutExilingCards
                 && !onlyOptionalCasualtyCost
                 && additionalCosts.chooseXValueCost() == null
-                && !supportedAdditionalManaCost && !supportedAdditionalDiscardCost
-                && !supportedSacrificeOrPayManaCost
+                && exileAnyOfCost == null && !supportedAdditionalDiscardCost
                 && !supportedDeclinedExileFromHandCost
                 && !supportedOptionalTeamworkCost && !supportedBeholdCost && !supportedOptionalEvidenceCost
                 && !supportedSacrificePermanentCost && !supportedSacrificeCreatureCost
@@ -12713,16 +12501,10 @@ public class SpellCastingService {
                 && !card.hasType(CardType.LAND)) {
             flashforwardManaCost = spectacleManaCostFromExile(gameData, playerId, card);
         }
-        if (supportedAdditionalManaCost && !playWithoutPaying) {
+        if (exileManaAlternative != null && !playWithoutPaying) {
             flashforwardManaCost = (flashforwardManaCost != null ? flashforwardManaCost
                     : card.getManaCost() != null ? card.getManaCost() : "{0}")
-                    + additionalCosts.discardCardOrPayManaCost().manaCost();
-        }
-        if (supportedSacrificeOrPayManaCost && !playWithoutPaying) {
-            // The exile cast offers no sacrifice selection, so the additional cost is paid with its mana alternative.
-            flashforwardManaCost = (flashforwardManaCost != null ? flashforwardManaCost
-                    : card.getManaCost() != null ? card.getManaCost() : "{0}")
-                    + additionalCosts.sacrificePermanentOrPayManaCost().manaCost();
+                    + exileManaAlternative.manaCost();
         }
 
         if (useManaValueLifeAlternative
@@ -12786,7 +12568,9 @@ public class SpellCastingService {
                 : !flashforwardCast && castForForetell ? gameData.foretoldCardCosts.get(exileCardId)
                 : flashforwardManaCost != null ? new ManaCost(flashforwardManaCost)
                 : card.getManaCost() != null ? new ManaCost(card.getManaCost()) : null;
-        askCastCostSacrificesFirst(gameData, player, resolutionCast, castStart, Set.of(),
+        askCastCostSacrificesFirst(gameData, player, resolutionCast, castStart,
+                exilePaysOtherAlternative && exileCostSelection.sacrificePermanentId() != null
+                        ? Set.of(exileCostSelection.sacrificePermanentId()) : Set.of(),
                 (paysExileManaValueLife && card.getManaValue() > 0 ? 1 : 0)
                         + (exileManaCost != null && phyrexianLifePayment(gameData, playerId, exileManaCost, null,
                         effectiveXValue, castingCostService.getCastCostModifier(gameData, playerId, card)) > 0
@@ -12810,13 +12594,8 @@ public class SpellCastingService {
                 waterbendPaymentService.pay(gameData, playerId, waterbendAmount, card, waterbendPermanentIds);
             } else if (playWithoutPaying) {
                 payFreeExileCastCostIncrease(gameData, playerId, card, effectiveXValue);
-                if (supportedAdditionalManaCost) {
-                    payDiscardCardOrPayManaCost(gameData, player, card,
-                            additionalCosts.discardCardOrPayManaCost(), null, -1, null);
-                }
-                if (supportedSacrificeOrPayManaCost) {
-                    paySacrificePermanentOrPayManaCost(gameData, player, card,
-                            additionalCosts.sacrificePermanentOrPayManaCost(), null, null);
+                if (exileManaAlternative != null) {
+                    payAdditionalManaAfterBase(gameData, player, card, exileManaAlternative, null);
                 }
                 // Cast without paying its mana cost — no payment.
             } else if (manaValueLifeAlternative || useManaValueLifeAlternative || sourceManaValueLifeAlternative) {
@@ -12895,6 +12674,9 @@ public class SpellCastingService {
 
         payExileCounterCost(gameData, player, card, additionalCounterCost, exileCounterCostPermanentIds,
                 chosenCounterTypes);
+        if (exilePaysOtherAlternative) {
+            payAdditionalCosts(gameData, player, card, additionalCosts, exileCostSelection, effectiveXValue);
+        }
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
 
@@ -13599,6 +13381,21 @@ public class SpellCastingService {
                 replay.castFaceDown(), replay.castAsAdventure(), libraryOwnerId);
     }
 
+    /** Whether {@code effect} is "forage or pay {m}", the "[A] or [B]" cost a graveyard cast pays. */
+    private static boolean isForageOrManaCost(CardEffect effect) {
+        return effect instanceof AnyOfCost anyOf && anyOf.alternatives().size() == 2
+                && anyOf.alternatives().stream().anyMatch(PayManaCost.class::isInstance)
+                && anyOf.alternatives().stream().anyMatch(ForageCost.class::isInstance);
+    }
+
+    /** Whether {@code effect} is "sacrifice [a permanent] or pay {m}", the "[A] or [B]" cost a library-top cast pays. */
+    private static boolean isSacrificeOrManaCost(CardEffect effect) {
+        return effect instanceof AnyOfCost anyOf && anyOf.alternatives().size() == 2
+                && anyOf.alternatives().stream().anyMatch(PayManaCost.class::isInstance)
+                && anyOf.alternatives().stream().anyMatch(alternative -> alternative instanceof SacrificePermanentCost
+                        || alternative instanceof SacrificeCreatureCost);
+    }
+
     private void playCardFromLibraryTopOnce(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
@@ -13795,8 +13592,8 @@ public class SpellCastingService {
                 additionalSpellCostService.peek(gameData, playerId, card);
         List<CardEffect> otherAdditionalEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         otherAdditionalEffects.removeIf(effect -> effect instanceof SacrificeCreatureCost
-                || effect instanceof SacrificePermanentOrPayManaCost
-                || effect instanceof SacrificePermanentCost);
+                || effect instanceof SacrificePermanentCost
+                || isSacrificeOrManaCost(effect));
         boolean hasOnlySupportedAdditionalCosts = !additionalSpellCostService
                 .extractAndRemove(gameData, playerId, card, otherAdditionalEffects).any();
         boolean hasPlainSacrificeCreatureCost = new SacrificeCreatureCost().equals(additionalCosts.sacrificeCreatureCost())
@@ -13809,7 +13606,7 @@ public class SpellCastingService {
                 && !additionalCosts.sacrificePermanentCost().recordSacrificedPermanentSnapshot()
                 && hasOnlySupportedAdditionalCosts
                 ? additionalCosts.sacrificePermanentCost() : null;
-        boolean hasSacrificeOrManaCost = additionalCosts.sacrificePermanentOrPayManaCost() != null
+        boolean hasSacrificeOrManaCost = isSacrificeOrManaCost(additionalCosts.anyOfCost())
                 && hasOnlySupportedAdditionalCosts;
         List<CardEffect> effectsWithoutCasualty = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         effectsWithoutCasualty.removeIf(effect -> effect instanceof CasualtyCost);
@@ -13857,11 +13654,14 @@ public class SpellCastingService {
         }
         String additionalLibraryManaCost = "";
         if (hasSacrificeOrManaCost) {
-            SacrificePermanentOrPayManaCost sacrificeOrMana = additionalCosts.sacrificePermanentOrPayManaCost();
+            List<CostEffect> sacrificeOrMana = additionalCosts.anyOfCost().alternatives();
             if (!topLibrarySacrificeIds.isEmpty()) {
-                topLibraryAdditionalCosts.add(new SacrificePermanentsCost(1, sacrificeOrMana.filter()));
+                topLibraryAdditionalCosts.add(new SacrificePermanentsCost(1, sacrificeOrMana.stream()
+                        .filter(alternative -> !(alternative instanceof PayManaCost))
+                        .map(CostEffect::consumedPermanentFilter).findFirst().orElseThrow()));
             } else {
-                additionalLibraryManaCost = sacrificeOrMana.manaCost();
+                additionalLibraryManaCost = sacrificeOrMana.stream().filter(PayManaCost.class::isInstance)
+                        .map(PayManaCost.class::cast).findFirst().orElseThrow().manaCost();
             }
         }
         castingCostService.validateTopLibraryAdditionalCosts(
@@ -16525,10 +16325,10 @@ public class SpellCastingService {
                     discardHandCardIndex, spellCardIndex);
         }
         if (kickerEffect.hasForageCost()) {
-            payForageOrPayManaCost(gameData, player, card, kickerEffect.forageCost(),
+            payForageCost(gameData, player, card, kickerEffect.forageCost(),
                     new AdditionalSpellCostService.CostSelection(
                             sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
-                            0, spellCardIndex, sacrificePermanentIds), null);
+                            0, spellCardIndex, sacrificePermanentIds));
         }
         return manaSpent;
     }

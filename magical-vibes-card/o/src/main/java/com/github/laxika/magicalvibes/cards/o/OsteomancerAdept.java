@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class OsteomancerAdept extends Card {
                 null,
                 List.of(new AllowCastMatchingCardsFromGraveyardThisTurnEffect(
                         new CardTypePredicate(CardType.CREATURE),
-                        ForageOrPayManaCost.forageOnly(),
+                        new ForageCost(),
                         CounterType.FINALITY,
                         1)),
                 "{T}: Until end of turn, you may cast creature spells from your graveyard by foraging in addition "

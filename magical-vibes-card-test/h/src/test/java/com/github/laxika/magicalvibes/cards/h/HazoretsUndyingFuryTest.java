@@ -2,20 +2,25 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.b.BitterTriumph;
+import com.github.laxika.magicalvibes.cards.b.BogslithersEmbrace;
 import com.github.laxika.magicalvibes.cards.b.BoneShards;
 import com.github.laxika.magicalvibes.cards.b.BorrowedGrace;
 import com.github.laxika.magicalvibes.cards.c.CollectiveBrutality;
 import com.github.laxika.magicalvibes.cards.c.CollectiveEffort;
+import com.github.laxika.magicalvibes.cards.e.EatenAlive;
+import com.github.laxika.magicalvibes.cards.f.FeedTheCycle;
 import com.github.laxika.magicalvibes.cards.f.FinalPayment;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.l.LightningAxe;
 import com.github.laxika.magicalvibes.cards.m.MinionMissile;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,14 +40,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
         CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class,
         InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class,
-        FinalPayment.class, BitterTriumph.class})
+        FinalPayment.class, BitterTriumph.class, EatenAlive.class, LightningAxe.class, BogslithersEmbrace.class, FeedTheCycle.class})
 class HazoretsUndyingFuryTest extends BaseCardTest {
 
     @Nested
     @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
             CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Shock.class,
             InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class,
-        FinalPayment.class, BitterTriumph.class})
+        FinalPayment.class, BitterTriumph.class, EatenAlive.class, LightningAxe.class, BogslithersEmbrace.class, FeedTheCycle.class})
     @DisplayName("Shuffle, exile the top four, may cast spells with mana value 5 or less")
     class ExileAndCast {
 
@@ -268,6 +273,94 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.ColorChoice.class);
             harness.handlePermanentChosen(player1, player2.getId());
             assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Collective Brutality"));
+        }
+
+        @Test
+        @DisplayName("A free Eaten Alive asks whether to sacrifice a creature or pay {3}{B}, then pays the sacrifice chosen")
+        void freeEatenAliveOffersBothAlternatives() {
+            EatenAlive eaten = new EatenAlive();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            cast(List.of(eaten));
+            harness.addMana(player1, ManaColor.BLACK, 4);
+
+            harness.handleMultipleCardsChosen(player1, List.of(eaten.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            PendingInteraction.ColorChoice choice =
+                    (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+            assertThat(choice.options()).containsExactly("Sacrifice a creature", "Pay {3}{B}");
+            harness.handleListChoice(player1, "Sacrifice a creature");
+            harness.handlePermanentChosen(player1, fodder.getId());
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == eaten);
+            harness.passBothPriorities();
+            assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        }
+
+        @Test
+        @DisplayName("A free Lightning Axe asks whether to discard or pay {5}, then pays the mana chosen from the pool")
+        void freeLightningAxePaysTheChosenMana() {
+            LightningAxe axe = new LightningAxe();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            cast(List.of(axe));
+            Forest kept = new Forest();
+            harness.setHand(player1, List.of(kept));
+            harness.addMana(player1, ManaColor.RED, 5);
+
+            harness.handleMultipleCardsChosen(player1, List.of(axe.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            PendingInteraction.ColorChoice choice =
+                    (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+            assertThat(choice.options()).containsExactly("Discard a card", "Pay {5}");
+            harness.handleListChoice(player1, "Pay {5}");
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == axe);
+        }
+
+        @Test
+        @DisplayName("A free Bogslither's Embrace asks whether to blight or pay {3}, then blights the creature chosen")
+        void freeBogslithersEmbraceBlightsTheChosenCreature() {
+            BogslithersEmbrace embrace = new BogslithersEmbrace();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent blighted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            cast(List.of(embrace));
+            harness.addMana(player1, ManaColor.BLACK, 3);
+
+            harness.handleMultipleCardsChosen(player1, List.of(embrace.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            PendingInteraction.ColorChoice choice =
+                    (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+            assertThat(choice.options()).containsExactly("Put counters on a creature you control", "Pay {3}");
+            harness.handleListChoice(player1, "Put counters on a creature you control");
+            harness.handlePermanentChosen(player1, blighted.getId());
+
+            assertThat(blighted.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == embrace);
+        }
+
+        @Test
+        @DisplayName("A free Feed the Cycle pays {B} unasked: foraging has no free-cast prompt")
+        void freeFeedTheCyclePaysItsManaAlternative() {
+            FeedTheCycle feed = new FeedTheCycle();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            cast(List.of(feed));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            harness.handleMultipleCardsChosen(player1, List.of(feed.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == feed);
+            harness.passBothPriorities();
+            assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         }
 
         @Test

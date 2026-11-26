@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (213 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`). Next: "unless" runs U7b (the mana alternatives) and U7c (`ForageCost`); then the other verbs under Step-10 hand-offs |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`). Next: the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,919 / 2,294 (after step 10 run U7a) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,914 / 2,294 (after step 10 run U7c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -536,7 +536,10 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   payable while any is, CR 118.3; run U7a: also an additional cast cost, `addCastingCost(AnyOfCost.of(...))` of standalone cast costs,
   the alternative read from the request field it consumes by `AdditionalSpellCostService.chosenAlternative` (none: mana, else life;
   two: refused) and swapped into its own `ExtractedCosts` slot by `withChosenAlternative` before validation and payment, CR 601.2b,
-  601.2h; a free cast offers the payable ones in record order, `ExileFreeCastQueueSupport`; AI facets read the first alternative); `AllOfCost(List<CostEffect> parts)` / `AllOfCost.of(...)` (all or none, CR 601.2h, 118.3; at most one
+  601.2h; a free cast offers the payable ones in record order, `ExileFreeCastQueueSupport`; AI facets read the first alternative;
+  run U7b: a `PayManaCost` alternative is `ExtractedCosts.additionalManaCost`, paid as part of the total cost (CR 601.2f) and
+  chosen when no other alternative's field is filled; `chosenFrom` keeps the any-of; exile casts take a sacrifice through
+  `additionalCostSacrificePermanentIds`; run U7c: `ForageCost()` (CR 701.61a), "forage or pay {B}" an any-of); `AllOfCost(List<CostEffect> parts)` / `AllOfCost.of(...)` (all or none, CR 601.2h, 118.3; at most one
   mana part, no nesting); `ExileGraveyardCost()` (always payable); `GetPoisonCountersCost(int)`; `DamageFromSourceCost(DynamicAmount)`
   (paid even if prevented, CR 118.12; every "unless [P] has [this] deal N damage to them" since U5, `new DamageFromSourceCost(new SourcePower())` for "equal to his power"; `DamageFromSourceCost.of(int)`); `ExileCardsCost(CardSubject)` (the entry's EXILE
   step); `SourceControllerDrawsCost(int)` (U3c: "has you draw a card", the payer chooses and the source's controller draws; paid together
@@ -883,11 +886,9 @@ there and updates them when it lands.
   single-payer mana / life "may pay", the several-payer loop, `AllOfCost`, `ExileCardsCost`, Ice Cave, the Chain family and the tap and
   mana-and-sacrifice payments (runs U1 to U3b'), and the any-player non-mana payments with `.payingTogether()` (U3c; `MayPayManaEffect`
   is gone), and 25 single-verb records with existing factories (U3b1), and 15 with the per-payer branch `eachUnless`, the payer-declared target and four new ransoms (U3b2; Lim-Dûl's Hex's card too; Lurking Spinecrawler, Read the Runes and The Dalek Emperor fixed). U6 built `UnlessPaysEffect.forEach` (Cut the Tethers, Cleansing, Giant Albatross). U6b moved Sirocco and Sword-Point Diplomacy (`forEachCard`) and Ob Nixilis and Professor Onyx (a discard paid together), U6c put The Long Reach of Night and Possessed Portal on that discard; left on their records, each a one-card part (U6b's Findings): Stench of Evil with `EachPlayerTakesDamageUnlessPaysEffect` (departed objects, damage summed per player), Heroism (combat-damage prevention over a subject), Tidal Flats (a "blocking that creature" subject), Tariff (a ransom read from the object), Decoy Gambit (target objects, a draw per payer before the returns, and its can't-draw question for the owner); Fade Away and Killing Wave stay (a subset chosen and paid as one event, their rulings);
-  **U7**, the `XOrY…Cost` records as a cast-time `AnyOfCost`: U7a moved the four non-mana ones (7 card files); left U7b, the five mana
-  ones (`DiscardCardOrPayManaCost`, `ExileNCardsFromGraveyardOrPayManaCost`, `PutCountersOnControlledCreatureOrPayManaCost`,
-  `SacrificePermanentOrPayManaCost`, `TapPermanentOrPayManaCost`, 16 files, `PayManaCost` as a part paid with the total cost, the exile and
-  library-top paths), and U7c, `ForageCost` (CR 701.61a); `PayLifeOrPayManaCost` stays (Redirect Lightning, the Defiler units); the client
-  chooser is the owner's missing feature (defect queue). Left of the "unless" family beside U7: Decoy Gambit, Stench of Evil, Heroism,
+  **U7** (done), the `XOrY…Cost` records as a cast-time `AnyOfCost`: U7a the four non-mana ones, U7b the five mana ones (16 card
+  files), U7c `ForageCost` (CR 701.61a, Feed the Cycle an any-of); `PayLifeOrPayManaCost` stays (Redirect Lightning, the Defiler units);
+  the client chooser is the owner's missing feature (defect queue). Left of the "unless" family beside U7: Decoy Gambit, Stench of Evil, Heroism,
   Tidal Flats, Tariff, Whirlwind Denial, the `PayXMana…` records, Enchanter's Bane / Star Athlete (below);
   U4a moved `ForcedCostOrElseEffect`'s 121 card files on paid ransoms, the mandatory "if you can't" files (steps) and Midnight Crusader
   Shuttle (a villainous choice); U4b the other 38 card files (nine new ransom cases, Egon / Charnel Troll / Greenbelt Rampager as steps,
@@ -1128,6 +1129,8 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U6b (2026-11-26): `UnlessPaysEffect.forEachCard` (Sirocco, Sword-Point Diplomacy) and a discard ransom paid together (Ob Nixilis, the Adversary, Professor Onyx); four records, `LoseLifeUnlessDiscardEffect` and six handlers deleted; Sword-Point asks every opponent per card, the discards and losses come after every choice (CR 101.4)
 - Step 10, run U6c (2026-11-26): `.payingTogether()` on The Long Reach of Night and Possessed Portal; every payer chooses before any card is discarded, the chosen cards discarded together (CR 101.4)
 - Step 10, run U7a (2026-11-26): the four non-mana `XOrY…Cost` records (7 card files) onto a cast-time `AnyOfCost` with `AdditionalSpellCostService.chosenAlternative`; free Final Payment offered its alternatives, the AI pays one alternative of Dusk Mangler's cost
+- Step 10, run U7b (2026-11-26): the five mana `XOrY…Cost` records (16 card files) onto `AnyOfCost` with a `PayManaCost` alternative paid in the total cost (CR 601.2f); free Eaten Alive and Bogslither's Embrace offered their alternatives, Eaten Alive cast from exile sacrifices (CR 601.2b)
+- Step 10, run U7c (2026-11-26): `ForageOrPayManaCost` replaced by `ForageCost` (CR 701.61a); Feed the Cycle an `AnyOfCost`, castable free for {B}
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2133,8 +2136,8 @@ ruling tells them apart here, as their triggers wait for the resolution to end (
 
 ### Step 10, run U7 (cast-time AnyOfCost) (2026-11-26)
 
-The plan (`scratchpad/s10-unless/u7-plan.md`) with the orchestrator's decisions for U7 (Standing knowledge). **Only U7a is done**; U7b
-and U7c are left (below). Absorbed into `AnyOfCost`: `DiscardCardOrSacrificePermanentCost`, `DiscardCardOrPayLifeCost`,
+The plan (`scratchpad/s10-unless/u7-plan.md`) with the orchestrator's decisions for U7 (Standing knowledge). **U7a** first, U7b and U7c
+below. Absorbed into `AnyOfCost`: `DiscardCardOrSacrificePermanentCost`, `DiscardCardOrPayLifeCost`,
 `PayLifeOrSacrificePermanentCost`, `SacrificeCreatureOrDiscardCardOrPayLifeCost` (no handlers). Ratchet 2,923 / 2,294 -> 2,919 / 2,294.
 Ledger: 4 absorbed, `AnyOfCost` survivor. No `CONVERSION_VERSION` bump (no mapper or enum change).
 **Engine.** `AnyOfCost` is a handled spell cost (`HANDLED_SPELL_COST_TYPES`; off the classification test's resolution-only list).
@@ -2178,10 +2181,46 @@ artifact", rerun with the touched classes: 15 files, 138 tests, 0 failures). Com
 **Seen, not changed** (defect queue, "step 10 run U7"): the client chooser and hand-cast discard gap (owner, Q3); the chooser after
 targets (Q6); a graveyard play without paying (Horde of Notions) skips Bitter Triumph's, Final Payment's and Dusk Mangler's cost; a
 library-top Bitter Triumph with cards in hand is refused.
-**For the next run.** U7b: the five mana records (16 files) onto `AnyOfCost` with a `PayManaCost` part: add its `costSatisfiable` case
-(pool with modifiers; free casts the pool alone), generalise `alternativeAdditionalManaSuffix` to the chosen `PayManaCost`, delete the
-five after-base blocks and their `preManaPaymentPool` clauses, take the request fields on the exile and library-top paths, the free-cast
-"Pay {m}" label and payment, keep "P pays {m} for C." (Q2); then U7c `ForageCost`. Plan ratchet after both: 2,914 / 2,294.
+**U7b** (the mana alternatives). Absorbed: `DiscardCardOrPayManaCost`, `ExileNCardsFromGraveyardOrPayManaCost`,
+`PutCountersOnControlledCreatureOrPayManaCost`, `SacrificePermanentOrPayManaCost`, `TapPermanentOrPayManaCost` (no handlers). Ratchet
+2,919 / 2,294 -> 2,914 / 2,294. Cards (16 files by hand, Oracle text of all 16 checked with `get_card`): `AnyOfCost.of(discard, new
+PayManaCost("{m}"))` (Lightning Axe, Pumpkin Bombardment, Titania), `of(new ExileNCardsFromGraveyardCost(2, null), mana)` (Stoneglider),
+`of(PutCounterOnControlledCreatureCost.blight(n), mana)`, `of(new SacrificeCreatureCost(), mana)` for "sacrifice a creature" (keeps the AI's
+weakest-creature pick), `of(new SacrificePermanentCost(filter, words), mana)` (mana first for Annihilating Glare and Deadly Precision, Oracle
+order), `of(new TapMultiplePermanentsCost(1, artifact), mana)`. **Engine.** `PayManaCost` is a handled spell cost; `ExtractedCosts` has
+`additionalManaCost` (the chosen mana alternative) and `chosenFrom`; the hand paths fold it into the total cost through
+`alternativeAdditionalManaSuffix` (CR 601.2f); the five after-base blocks are one `payAdditionalManaAfterBase` (free casts, alternative
+costs); "P pays {m} for C." stays where it was logged (decision Q2: discard, counter, exile and forage alternatives,
+`logsManaAlternativePaidWithBase`). `costSatisfiable(PayManaCost)`: total cost, free casts the pool. Free casts: discard-or-mana and
+counters-or-mana branches gone into the any-of chooser (labels "Pay {m}", "Put counters on a creature you control"); new sole
+`PayManaCost` and blight branches; graveyard-exile and forage alternatives aren't offered (no free-cast prompt). Exile casts: a sole any-of
+of mana with discard / sacrifice takes the sacrifice from `additionalCostSacrificePermanentIds` (validated first, death replacements asked,
+paid after mana); library top keeps sacrifice-or-mana (`isSacrificeOrManaCost`). AI stubs read the any-of.
+**Behaviour changes** (failing-first, each seen failing on the code before the run): a free Eaten Alive offers "Sacrifice a creature" /
+"Pay {3}{B}" (was skipped; CR 601.2b, `HazoretsUndyingFuryTest.freeEatenAliveOffersBothAlternatives`), and so every free sacrifice-, tap- or
+blight-or-mana spell; a free Bogslither's Embrace offers blight / {3} (`freeBogslithersEmbraceBlightsTheChosenCreature`, was skipped);
+Eaten Alive cast from exile sacrifices the named creature (was forced to mana; `EatenAliveTest.castFromExileSacrificesTheChosenCreature`).
+Free sacrifice-or-mana satisfiability counts the pool alone (CR 601.2f; untested). Messages: "Must A or B to cast C" in record order
+("Must pay {4} or sacrifice an artifact or creature"; "tap an untapped permanent" for Disruption Protocol).
+**Pins**: free Lightning Axe's "Discard a card" / "Pay {5}" paying from the pool (`freeLightningAxePaysTheChosenMana`); Stoneglider's {1}{W}
+from WWW+CC (`paysTheManaAlternativeAsPartOfTheTotalCost`: the old after-base route also paid it, so decision Q4 is a pin); every class of
+the 16 cards (both ways by request; Bayou Groff from exile; Bolas's Citadel, Chase Stein, Extract Power, Siphon Insight casts).
+**Tests changed**: `CastingCostServiceTest` 2 methods build the cost as an `AnyOfCost` (same assertions); `CostEffectClassificationTest`
+lists. **Tests run**: 921 files, 8,167 tests, 0 failures (the 486 `addCastingCost` card classes, 52 classes naming a rewritten card, the
+`Cost|Cast|Free|…` classes, architecture, casting / availability / networking application tests, the whole AI module).
+
+**U7c** (`ForageCost`). `ForageOrPayManaCost` replaced by `ForageCost()` (CR 701.61a; ±0 records): ability costs (Camellia, Thornvault),
+`KickerEffect.forage()` (Traverse Valley), Osteomancer's permission, and Feed the Cycle `AnyOfCost.of(new ForageCost(), new
+PayManaCost("{B}"))` (Oracle text of all 5 checked). `chosenAlternative` selects forage by a Food id or graveyard indices; the graveyard path
+accepts "forage or pay {m}" (`isForageOrManaCost`, mana after the base as before); the dead mana branches of the forage paths are gone.
+**Behaviour change**: a free Feed the Cycle is cast paying {B} (was skipped; `HazoretsUndyingFuryTest.freeFeedTheCyclePaysItsManaAlternative`,
+failing-first by reading the old gate, which had no forage branch; not run on the old code). **Tests run**: the U7b set plus the forage cards: 928 files, 8,226 tests, 0 failures.
+**Seen, not changed** (defect queue, "step 10 run U7"): exile casts can't choose a discard alternative (no discard index reaches the
+exile path; Lightning Axe from exile pays {5}); free casts don't offer graveyard-exile or forage alternatives (Stoneglider, Feed the Cycle);
+exile and library-top casts still refuse tap-, blight- and exile-or-mana spells.
+**For the next run.** The "unless" family's rest (Step-10 hand-offs): Decoy Gambit, Stench of Evil, Heroism, Tidal Flats, Tariff,
+Whirlwind Denial, the `PayXMana…` records, Enchanter's Bane / Star Athlete. A free-cast graveyard picker would close the two free-cast
+lines above; a discard index on the exile path the first.
 
 ## Prompt
 

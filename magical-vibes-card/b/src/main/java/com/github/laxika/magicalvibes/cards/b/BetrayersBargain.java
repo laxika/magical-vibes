@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -16,13 +18,14 @@ import java.util.List;
 public class BetrayersBargain extends Card {
 
     public BetrayersBargain() {
-        addCastingCost(new SacrificePermanentOrPayManaCost(
-                "{2}",
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsEnchantmentPredicate()
-                )),
-                "a creature or enchantment"));
+        addCastingCost(AnyOfCost.of(
+                new SacrificePermanentCost(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsEnchantmentPredicate()
+                        )),
+                        "a creature or enchantment"),
+                new PayManaCost("{2}")));
         target(TargetFilters.creature())
                 .addSpellEffect(DealDamageEffect.toAnyTarget(5))
                 .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect());

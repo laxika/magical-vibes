@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 
 @CardRegistration(set = "SPM", collectorNumber = "139")
 @CardRegistration(set = "OM1", collectorNumber = "142")
@@ -11,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 public class PumpkinBombardment extends Card {
 
     public PumpkinBombardment() {
-        addCastingCost(new DiscardCardOrPayManaCost("{2}"));
+        addCastingCost(AnyOfCost.of(new DiscardCardTypeCost(null, null), new PayManaCost("{2}")));
         addSpellEffect(DealDamageEffect.toTargetCreature(3));
     }
 }

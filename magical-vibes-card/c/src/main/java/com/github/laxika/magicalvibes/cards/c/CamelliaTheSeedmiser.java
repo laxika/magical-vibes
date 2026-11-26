@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -47,7 +47,7 @@ public class CamelliaTheSeedmiser extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(ForageOrPayManaCost.forageOnly(), new PutCounterOnEachControlledPermanentEffect(
+                List.of(new ForageCost(), new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, otherSquirrels)),
                 "{2}, Forage: Put a +1/+1 counter on each other Squirrel you control."
         ));

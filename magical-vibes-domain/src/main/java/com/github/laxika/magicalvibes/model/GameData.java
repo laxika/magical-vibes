@@ -40,7 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
@@ -1854,7 +1854,7 @@ public class GameData {
                                                 boolean singleUse, CounterType entryCounterType,
                                                 CardSubtype grantedSubtype, boolean anyGraveyard,
                                                 boolean exileInsteadOfGraveyard,
-                                                ForageOrPayManaCost additionalCost,
+                                                ForageCost additionalCost,
                                                 CounterType enterWithCounter,
                                                 int enterWithCounterCount,
                                                 UUID graveyardOwnerId,
@@ -1880,7 +1880,7 @@ public class GameData {
                                              boolean singleUse, CounterType entryCounterType,
                                              CardSubtype grantedSubtype, boolean anyGraveyard,
                                              boolean exileInsteadOfGraveyard,
-                                             ForageOrPayManaCost additionalCost,
+                                             ForageCost additionalCost,
                                              CounterType enterWithCounter,
                                              int enterWithCounterCount) {
             this(playerId, filter, singleUse, entryCounterType, grantedSubtype, anyGraveyard,

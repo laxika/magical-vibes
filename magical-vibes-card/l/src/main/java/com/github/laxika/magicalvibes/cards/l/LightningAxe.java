@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 
 @CardRegistration(set = "INR", collectorNumber = "162")
 @CardRegistration(set = "INR", collectorNumber = "398")
@@ -17,7 +19,7 @@ public class LightningAxe extends Card {
     public LightningAxe() {
         // As an additional cost to cast this spell, discard a card or pay {5}.
         // Lightning Axe deals 5 damage to target creature.
-        addCastingCost(new DiscardCardOrPayManaCost("{5}"));
+        addCastingCost(AnyOfCost.of(new DiscardCardTypeCost(null, null), new PayManaCost("{5}")));
         addSpellEffect(DealDamageEffect.toTargetCreature(5));
     }
 }

@@ -17,6 +17,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
@@ -26,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -336,14 +339,14 @@ public class ExileFreeCastQueueSupport {
         spendManaValueBudget(gameData, cardToCast.getManaValue());
         if (additionalCosts.any()) {
             if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
-                    && (additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardCost() != null)
+                    && additionalCosts.discardCost() != null
                     && additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, cardToCast)) {
                 castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
                 return;
             }
             if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
                     && additionalCosts.anyOfCost() != null
-                    && additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, cardToCast)) {
+                    && !freeCastPayableAlternatives(gameData, playerId, cardToCast, additionalCosts.anyOfCost()).isEmpty()) {
                 castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
                 return;
             }
@@ -703,10 +706,8 @@ public class ExileFreeCastQueueSupport {
         }
         List<CardEffect> costs = entry.getEffectsToResolve().stream().filter(CostEffect.class::isInstance).toList();
         if (costs.size() == 1 && costs.getFirst() instanceof AnyOfCost anyOf) {
-            List<CostEffect> payable = anyOf.alternatives().stream()
-                    .filter(alternative -> additionalSpellCostService.alternativeSatisfiable(
-                            gameData, entry.getControllerId(), entry.getCard(), alternative, true))
-                    .toList();
+            List<CostEffect> payable = freeCastPayableAlternatives(
+                    gameData, entry.getControllerId(), entry.getCard(), anyOf);
             if (payable.isEmpty()) throw new IllegalStateException("Nothing can pay the additional cost");
             if (payable.size() == 1) {
                 return payFreeCastAlternative(gameData, entry, anyOf, payable.getFirst(), true);
@@ -725,54 +726,22 @@ public class ExileFreeCastQueueSupport {
                     "Choose a permanent or hand card to behold for " + entry.getCard().getName() + ".");
             return true;
         }
-        if (costs.size() == 1 && costs.stream().allMatch(cost -> cost instanceof DiscardCardTypeCost
-                || cost instanceof com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost)) {
-            var discardOrPay = costs.stream()
-                    .filter(com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost.class::isInstance)
-                    .map(com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost.class::cast)
-                    .findFirst().orElse(null);
-            List<Integer> candidates = additionalSpellCostService.validDiscardCostIndices(
-                    gameData, entry.getControllerId(), entry.getCard());
-            boolean canPayMana = discardOrPay != null && new com.github.laxika.magicalvibes.model.ManaCost(
-                    discardOrPay.manaCost()).canPay(gameData.playerManaPools.get(entry.getControllerId()));
-            if (canPayMana && candidates != null && !candidates.isEmpty()) {
-                interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
-                        entry.getControllerId(), null, null, new ChoiceContext.FreeCastAdditionalCostChoice(entry),
-                        List.of("Discard a card", "Pay " + discardOrPay.manaCost()),
-                        "Choose how to pay the additional cost."));
-                return true;
-            }
-            if (canPayMana) {
-                spellCastingService.payAdditionalCostsForFreeCast(gameData, entry,
-                        AdditionalSpellCostService.CostSelection.none());
-                return false;
-            }
+        if (costs.size() == 1 && costs.getFirst() instanceof DiscardCardTypeCost) {
             beginFreeCastDiscard(gameData, entry);
             return true;
         }
-        if (costs.size() == 1 && costs.getFirst() instanceof PutCountersOnControlledCreatureOrPayManaCost counterCost) {
-            // The counter-or-mana additional cost (Bogslither's Embrace) is still paid when the spell is
-            // cast without paying its mana cost; only the option's own mana can be spent on it.
-            List<UUID> candidates = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())
-                    .stream()
+        if (costs.size() == 1 && costs.getFirst() instanceof PayManaCost) {
+            // Only the alternative's own mana is paid when the spell's mana cost isn't (CR 601.2f).
+            spellCastingService.payAdditionalCostsForFreeCast(gameData, entry,
+                    AdditionalSpellCostService.CostSelection.none());
+            return false;
+        }
+        if (costs.size() == 1 && costs.getFirst() instanceof PutCounterOnControlledCreatureCost) {
+            beginFreeCastCounters(gameData, entry, gameData.playerBattlefields
+                    .getOrDefault(entry.getControllerId(), List.of()).stream()
                     .map(com.github.laxika.magicalvibes.model.Permanent::getId)
                     .filter(id -> canPutCountersAsFreeCastCost(gameData, entry, id))
-                    .toList();
-            boolean canPayMana = new com.github.laxika.magicalvibes.model.ManaCost(counterCost.manaCost())
-                    .canPay(gameData.playerManaPools.get(entry.getControllerId()));
-            if (canPayMana && !candidates.isEmpty()) {
-                interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
-                        entry.getControllerId(), null, null, new ChoiceContext.FreeCastAdditionalCostChoice(entry),
-                        List.of(COUNTERS_OPTION, "Pay " + counterCost.manaCost()),
-                        "Choose how to pay the additional cost."));
-                return true;
-            }
-            if (canPayMana) {
-                spellCastingService.payAdditionalCostsForFreeCast(gameData, entry,
-                        AdditionalSpellCostService.CostSelection.none());
-                return false;
-            }
-            beginFreeCastCounters(gameData, entry, candidates);
+                    .toList());
             return true;
         }
         if (costs.size() == 1 && costs.getFirst() instanceof TapMultiplePermanentsCost tapCost) {
@@ -949,12 +918,12 @@ public class ExileFreeCastQueueSupport {
     }
 
     private boolean canPutCountersAsFreeCastCost(GameData gameData, StackEntry entry, UUID permanentId) {
-        PutCountersOnControlledCreatureOrPayManaCost cost = entry.getEffectsToResolve().stream()
-                .filter(PutCountersOnControlledCreatureOrPayManaCost.class::isInstance)
-                .map(PutCountersOnControlledCreatureOrPayManaCost.class::cast)
+        PutCounterOnControlledCreatureCost cost = entry.getEffectsToResolve().stream()
+                .filter(PutCounterOnControlledCreatureCost.class::isInstance)
+                .map(PutCounterOnControlledCreatureCost.class::cast)
                 .findFirst().orElseThrow();
         try {
-            additionalSpellCostService.validatePutCountersOnControlledCreatureOrPayManaCost(gameData,
+            additionalSpellCostService.validatePutCounterOnControlledCreatureCost(gameData,
                     new Player(entry.getControllerId(), gameData.playerIdToName.get(entry.getControllerId())),
                     entry.getCard(), cost, permanentId);
             return true;
@@ -986,8 +955,7 @@ public class ExileFreeCastQueueSupport {
                 .map(DiscardCardTypeCost.class::cast).mapToInt(DiscardCardTypeCost::count).sum();
         if (count == 0) count = 1;
         entry.replaceEffectsToResolve(entry.getEffectsToResolve().stream()
-                .filter(effect -> !(effect instanceof DiscardCardTypeCost)
-                        && !(effect instanceof com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost)).toList());
+                .filter(effect -> !(effect instanceof DiscardCardTypeCost)).toList());
         playerInputService.beginDiscardChoice(gameData, entry.getControllerId(), candidates,
                 "Choose a card to discard to cast " + entry.getCard().getName() + ".", count,
                 DiscardFollowUp.NONE.withPendingSpellCast(entry));
@@ -1014,6 +982,20 @@ public class ExileFreeCastQueueSupport {
         return beginSacrificeCostIfNeeded(gameData, entry);
     }
 
+    /**
+     * The alternatives of a free cast's sole "[A] or [B]" additional cost the caster could pay now without the spell's
+     * mana cost (CR 118.3), in the cost's order. Exiling cards from a graveyard and foraging have no free-cast prompt,
+     * so they aren't offered (defect queue, step 10 run U7).
+     */
+    private List<CostEffect> freeCastPayableAlternatives(GameData gameData, UUID playerId, Card card, AnyOfCost anyOf) {
+        return anyOf.alternatives().stream()
+                .filter(alternative -> !(alternative instanceof ExileNCardsFromGraveyardCost)
+                        && !(alternative instanceof ForageCost))
+                .filter(alternative -> additionalSpellCostService.alternativeSatisfiable(
+                        gameData, playerId, card, alternative, true))
+                .toList();
+    }
+
     /** The option a free cast's additional-cost choice offers for one alternative. */
     private static String alternativeLabel(CostEffect alternative) {
         return switch (alternative) {
@@ -1021,6 +1003,9 @@ public class ExileFreeCastQueueSupport {
             case PayLifeCost cost -> "Pay " + cost.fixedAmount() + " life";
             case SacrificePermanentCost cost -> "Sacrifice " + cost.description();
             case SacrificeCreatureCost ignored -> "Sacrifice a creature";
+            case PayManaCost cost -> "Pay " + cost.manaCost();
+            case PutCounterOnControlledCreatureCost ignored -> COUNTERS_OPTION;
+            case TapMultiplePermanentsCost ignored -> "Tap an untapped permanent";
             default -> AdditionalSpellCostService.alternativeWords(alternative);
         };
     }
@@ -1030,27 +1015,12 @@ public class ExileFreeCastQueueSupport {
                                               ChoiceContext.FreeCastAdditionalCostChoice context) {
         gameData.interaction.clearAwaitingInput();
         AnyOfCost anyOf = context.entry().getEffectsToResolve().stream().filter(AnyOfCost.class::isInstance)
-                .map(AnyOfCost.class::cast).findFirst().orElse(null);
-        if (anyOf != null) {
-            CostEffect chosen = anyOf.alternatives().stream()
-                    .filter(alternative -> alternativeLabel(alternative).equals(choice)).findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Not a way to pay the additional cost: " + choice));
-            if (!payFreeCastAlternative(gameData, context.entry(), anyOf, chosen, false)) {
-                completeCastAfterDiscard(gameData, context.entry());
-            }
-            return;
-        }
-        if (choice.equals("Discard a card")) {
-            beginFreeCastDiscard(gameData, context.entry());
-        } else if (choice.equals(COUNTERS_OPTION)) {
-            beginFreeCastCounters(gameData, context.entry(), gameData.playerBattlefields
-                    .getOrDefault(context.entry().getControllerId(), List.of()).stream()
-                    .map(com.github.laxika.magicalvibes.model.Permanent::getId)
-                    .filter(id -> canPutCountersAsFreeCastCost(gameData, context.entry(), id))
-                    .toList());
-        } else {
-            spellCastingService.payAdditionalCostsForFreeCast(gameData, context.entry(),
-                    AdditionalSpellCostService.CostSelection.none());
+                .map(AnyOfCost.class::cast).findFirst()
+                .orElseThrow(() -> new IllegalStateException("The free cast has no additional cost to choose how to pay"));
+        CostEffect chosen = anyOf.alternatives().stream()
+                .filter(alternative -> alternativeLabel(alternative).equals(choice)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Not a way to pay the additional cost: " + choice));
+        if (!payFreeCastAlternative(gameData, context.entry(), anyOf, chosen, false)) {
             completeCastAfterDiscard(gameData, context.entry());
         }
     }

@@ -82,7 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.HandCardCost;
@@ -3501,7 +3501,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (controllerGraveyardCost == null && ability.getEffects().stream()
-                .anyMatch(ForageOrPayManaCost.class::isInstance)) {
+                .anyMatch(ForageCost.class::isInstance)) {
             controllerGraveyardCost = new ExileNCardsFromGraveyardCost(3, null);
         }
         if (controllerGraveyardCost != null) {
@@ -4326,13 +4326,10 @@ public class AbilityActivationService {
             throw new IllegalStateException("An Equipment can't equip itself");
         }
 
-        ForageOrPayManaCost forageCost = abilityEffects.stream()
-                .filter(ForageOrPayManaCost.class::isInstance)
-                .map(ForageOrPayManaCost.class::cast).findFirst().orElse(null);
+        ForageCost forageCost = abilityEffects.stream()
+                .filter(ForageCost.class::isInstance)
+                .map(ForageCost.class::cast).findFirst().orElse(null);
         if (forageCost != null) {
-            if (forageCost.manaCost() != null) {
-                throw new IllegalStateException("A forage alternative mana payment is not supported for abilities");
-            }
             boolean hasFood = forageFoodCostHandler(gameData, permanent.getId())
                     .getValidChoiceIds(gameData, playerId).size() > 0;
             boolean hasGraveyardCards = gameData.playerGraveyards.getOrDefault(playerId, List.of()).size() >= 3;
@@ -5839,7 +5836,7 @@ public class AbilityActivationService {
                     chooseSacrificeAsCost(data, player, food);
                     ActionEvents.foraged(data, player.getId());
                 }, sourcePermanentId) {
-            @Override public CardEffect costEffect() { return ForageOrPayManaCost.forageOnly(); }
+            @Override public CardEffect costEffect() { return new ForageCost(); }
             @Override public boolean shouldAutoPayAll(GameData data, UUID playerId, int remaining) {
                 return false;
             }
@@ -5854,7 +5851,7 @@ public class AbilityActivationService {
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(GameData gameData, CardEffect effect,
                                                             UUID sourcePermanentId, int xValue,
                                                             List<UUID> chosenSoFar) {
-        if (effect instanceof ForageOrPayManaCost) {
+        if (effect instanceof ForageCost) {
             return forageFoodCostHandler(gameData, sourcePermanentId);
         }
         // Every activation removes all of its cost sacrifices together once its other cost choices are made.
@@ -7123,7 +7120,7 @@ public class AbilityActivationService {
         // Permanent-choice costs (sacrifice, tap others, crew, ...) need enough valid choices
         UUID sourceId = permanent.getId();
         for (CardEffect effect : abilityEffects) {
-            if (effect instanceof ForageOrPayManaCost) {
+            if (effect instanceof ForageCost) {
                 if (gameData.playerGraveyards.getOrDefault(playerId, List.of()).size() < 3
                         && forageFoodCostHandler(gameData, sourceId)
                                 .getValidChoiceIds(gameData, playerId).isEmpty()) {

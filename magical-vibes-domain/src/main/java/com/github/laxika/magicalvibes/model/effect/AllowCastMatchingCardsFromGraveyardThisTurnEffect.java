@@ -24,7 +24,7 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
         boolean singleUse,
         CounterType entryCounterType,
         CardSubtype grantedSubtype,
-        ForageOrPayManaCost additionalCost,
+        ForageCost additionalCost,
         CounterType enterWithCounter,
         int enterWithCounterCount,
         PlayerSubject graveyards,
@@ -37,7 +37,7 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
 
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect(
             CardPredicate filter, boolean singleUse, CounterType entryCounterType, CardSubtype grantedSubtype,
-            ForageOrPayManaCost additionalCost, CounterType enterWithCounter, int enterWithCounterCount) {
+            ForageCost additionalCost, CounterType enterWithCounter, int enterWithCounterCount) {
         this(filter, singleUse, entryCounterType, grantedSubtype, additionalCost, enterWithCounter,
                 enterWithCounterCount, Subjects.you(), false, false);
     }
@@ -77,7 +77,7 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
     }
 
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect(
-            CardPredicate filter, ForageOrPayManaCost additionalCost,
+            CardPredicate filter, ForageCost additionalCost,
             CounterType enterWithCounter, int enterWithCounterCount) {
         this(filter, false, null, null, additionalCost, enterWithCounter, enterWithCounterCount);
     }

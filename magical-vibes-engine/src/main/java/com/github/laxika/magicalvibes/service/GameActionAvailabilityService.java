@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 
@@ -789,20 +792,26 @@ public class GameActionAvailabilityService {
             }
         }
 
-        ExileNCardsFromGraveyardOrPayManaCost exileOrPayCost = card.getCastingCosts().stream()
-                .filter(ExileNCardsFromGraveyardOrPayManaCost.class::isInstance)
-                .map(ExileNCardsFromGraveyardOrPayManaCost.class::cast)
+        // "Exile N cards from your graveyard or pay {m}": the mana alternative is checked against this pool.
+        AnyOfCost exileOrPayCost = card.getCastingCosts().stream()
+                .filter(AnyOfCost.class::isInstance).map(AnyOfCost.class::cast)
+                .filter(cost -> cost.alternatives().stream().anyMatch(ExileNCardsFromGraveyardCost.class::isInstance)
+                        && cost.alternatives().stream().anyMatch(PayManaCost.class::isInstance))
                 .findFirst().orElse(null);
         if (exileOrPayCost != null) {
+            ExileNCardsFromGraveyardCost exileAlternative = exileOrPayCost.alternatives().stream()
+                    .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                    .map(ExileNCardsFromGraveyardCost.class::cast).findFirst().orElseThrow();
+            PayManaCost manaAlternative = exileOrPayCost.alternatives().stream()
+                    .filter(PayManaCost.class::isInstance).map(PayManaCost.class::cast).findFirst().orElseThrow();
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
             long matchingCount = graveyard.stream()
-                    .filter(c -> (exileOrPayCost.requiredType() == null || c.hasType(exileOrPayCost.requiredType()))
-                            && (exileOrPayCost.predicate() == null
-                            || predicateEvaluationService.matchesCardPredicate(c, exileOrPayCost.predicate(), null)))
+                    .filter(c -> (exileAlternative.requiredType() == null || c.hasType(exileAlternative.requiredType()))
+                            && (exileAlternative.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(c, exileAlternative.predicate(), null)))
                     .count();
-            if (matchingCount < exileOrPayCost.count()
-                    && !castingCostService.canPayExileNCardsOrPayManaOption(
-                    gameData, playerId, card, exileOrPayCost, pool)) {
+            if (matchingCount < exileAlternative.count()
+                    && !castingCostService.canPayManaAlternative(gameData, playerId, card, manaAlternative, pool)) {
                 return false;
             }
         }
@@ -894,7 +903,7 @@ public class GameActionAvailabilityService {
             return false;
         }
         if (kicker.hasForageCost()
-                && !additionalSpellCostService.canPayForageOrPayManaCost(
+                && !additionalSpellCostService.canPayForageCost(
                 gameData, playerId, card, kicker.forageCost())) {
             return false;
         }

@@ -14,12 +14,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -567,7 +568,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (validDiscardIndices != null) {
                 if (validDiscardIndices.isEmpty()) {
                     boolean hasDiscardOrPay = card.getCastingCosts().stream()
-                            .anyMatch(DiscardCardOrPayManaCost.class::isInstance);
+                            .anyMatch(cost -> cost instanceof AnyOfCost anyOf
+                                    && anyOf.alternatives().stream().anyMatch(PayManaCost.class::isInstance));
                     if (!hasDiscardOrPay) {
                         telemetry.recordSkip("spell: discard cost unpayable", card.getName());
                         continue;

@@ -124,4 +124,19 @@ class SoaringStonegliderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Soaring Stoneglider");
     }
+
+    @Test
+    @DisplayName("Pays {1}{W} as part of the total cost, so white mana the base cost's generic part could take still pays it")
+    void paysTheManaAlternativeAsPartOfTheTotalCost() {
+        harness.setHand(player1, List.of(new SoaringStoneglider()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof SoaringStoneglider);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }

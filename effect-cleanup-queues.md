@@ -947,8 +947,16 @@ entwine with two modes (P09).
   Bitter Triumph, Final Payment and Dusk Mangler with theirs skipped (CR 601.2f, 601.2h). Kept as it was in step 10 run U7a
   (seen, not changed). Sure of the code.
 - A library-top cast of Bitter Triumph with cards in hand is refused: the library-top request carries no discard choice, so only the
-  empty-hand life payment is accepted (CR 601.2b). Step 10 run U7a (seen, not changed; U7b takes the library-top request fields).
-  Sure of the code.
+  empty-hand life payment is accepted (CR 601.2b). Step 10 run U7a (seen, not changed; U7b kept the library-top path's one request
+  field, the sacrifice ids, and added no discard field). Sure of the code.
+- An exile cast of a "discard a card or pay {m}" spell (Lightning Axe, Pumpkin Bombardment, Titania) can't choose the discard: no discard
+  index reaches the exile path (`playCardFromExile` takes only permanent ids), so it always pays the mana (CR 601.2b). Needs the
+  request's `discardHandCardIndex` threaded through the exile overloads and `ExileCastReplay`. Step 10 run U7b (seen, not changed). Sure.
+- A free cast (`ExileFreeCastQueueSupport`) doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative: there is no
+  free-cast graveyard picker, so a free Soaring Stoneglider or Feed the Cycle pays its mana alternative or is skipped (CR 601.2b). Needs a
+  graveyard choice context for the prepared spell (and a Food picker for forage). Step 10 run U7b / U7c (seen, not changed). Sure.
+- Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling,
+  Soaring Stoneglider) as "not supported from this zone"; library top takes only sacrifice-or-mana. As before step 10 run U7b. Sure.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

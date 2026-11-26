@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -69,7 +69,7 @@ final class AiTestPlayabilityStub {
                     Card card = inv.getArgument(2);
                     boolean hasDiscardCost = card.getCastingCosts().stream()
                             .anyMatch(e -> e instanceof DiscardCardTypeCost
-                                    || e instanceof DiscardCardOrPayManaCost);
+                                    || e instanceof AnyOfCost anyOf && isDiscardOrMana(anyOf));
                     if (!hasDiscardCost) {
                         return null;
                     }
@@ -134,6 +134,11 @@ final class AiTestPlayabilityStub {
      * sacrifice costs only the artifact filter is exercised by the mock suites; the rest are treated
      * as satisfiable.
      */
+    private static boolean isDiscardOrMana(AnyOfCost anyOf) {
+        return anyOf.alternatives().stream().anyMatch(DiscardCardTypeCost.class::isInstance)
+                && anyOf.alternatives().stream().anyMatch(PayManaCost.class::isInstance);
+    }
+
     private static boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
@@ -142,10 +147,7 @@ final class AiTestPlayabilityStub {
                 case SacrificeCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> p.getCard().hasType(CardType.CREATURE))) return false;
                 }
-                case SacrificePermanentOrPayManaCost ignored -> {
-                    // Mana option always keeps this cost satisfiable for stub suites.
-                }
-                case DiscardCardOrPayManaCost ignored -> {
+                case AnyOfCost anyOf when anyOf.alternatives().stream().anyMatch(PayManaCost.class::isInstance) -> {
                     // Mana option always keeps this cost satisfiable for stub suites.
                 }
                 case SacrificePermanentCost cost -> {

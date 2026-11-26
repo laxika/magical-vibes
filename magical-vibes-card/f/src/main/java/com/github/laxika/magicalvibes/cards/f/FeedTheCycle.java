@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -15,7 +17,7 @@ import java.util.List;
 public class FeedTheCycle extends Card {
 
     public FeedTheCycle() {
-        addCastingCost(new ForageOrPayManaCost("{B}"));
+        addCastingCost(AnyOfCost.of(new ForageCost(), new PayManaCost("{B}")));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

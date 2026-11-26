@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,12 +22,13 @@ import java.util.Set;
 public class LouisoixsSacrifice extends Card {
 
     public LouisoixsSacrifice() {
-        addCastingCost(new SacrificePermanentOrPayManaCost(
-                "{2}",
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
-                "a legendary creature"));
+        addCastingCost(AnyOfCost.of(
+                new SacrificePermanentCost(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+                        "a legendary creature"),
+                new PayManaCost("{2}")));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAnyOfPredicate(List.of(
                         new StackEntryTypeInPredicate(StackEntryType.ABILITIES),

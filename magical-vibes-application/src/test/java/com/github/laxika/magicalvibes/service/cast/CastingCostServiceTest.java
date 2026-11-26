@@ -1947,10 +1947,11 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("SacrificePermanentOrPayManaCost — true with creature, or with enough mana for combined cost")
+        @DisplayName("Sacrifice a creature or pay {3}{B} — true with creature, or with enough mana for combined cost")
         void sacrificePermanentOrPayManaCost() {
-            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost(
-                    "{3}{B}", new PermanentIsCreaturePredicate(), "a creature"));
+            Card spell = spellWith(com.github.laxika.magicalvibes.model.effect.AnyOfCost.of(
+                    new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "a creature"),
+                    new com.github.laxika.magicalvibes.model.effect.PayManaCost("{3}{B}")));
             spell.setManaCost("{B}");
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
 
@@ -1966,9 +1967,11 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("DiscardCardOrPayManaCost — true with another hand card, or with enough mana for combined cost")
+        @DisplayName("Discard a card or pay {5} — true with another hand card, or with enough mana for combined cost")
         void discardCardOrPayManaCost() {
-            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost("{5}"));
+            Card spell = spellWith(com.github.laxika.magicalvibes.model.effect.AnyOfCost.of(
+                    new DiscardCardTypeCost(null, null),
+                    new com.github.laxika.magicalvibes.model.effect.PayManaCost("{5}")));
             spell.setManaCost("{R}");
             gd.playerHands.get(player1Id).add(spell);
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();

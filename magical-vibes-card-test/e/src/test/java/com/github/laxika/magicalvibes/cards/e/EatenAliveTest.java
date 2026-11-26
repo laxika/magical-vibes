@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -152,5 +153,25 @@ class EatenAliveTest extends BaseCardTest {
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Cast from exile, sacrifices the creature the caster chose instead of paying {3}{B}")
+    void castFromExileSacrificesTheChosenCreature() {
+        EatenAlive eaten = new EatenAlive();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setExile(player1, List.of(eaten));
+        gd.grantExilePlayPermission(eaten.getId(), player1.getId(), Duration.PERMANENT);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        gs.playCardFromExile(gd, player1, eaten.getId(), null, target.getId(), List.of(), List.of(),
+                List.of(sacrifice.getId()), false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(target.getId()));
     }
 }

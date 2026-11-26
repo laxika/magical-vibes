@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ForageCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -23,7 +23,7 @@ public class ThornvaultForager extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(ForageOrPayManaCost.forageOnly(), new AwardAnyColorManaEffect(2, true)),
+                List.of(new ForageCost(), new AwardAnyColorManaEffect(2, true)),
                 "{T}, Forage: Add two mana in any combination of colors."
         ));
 
