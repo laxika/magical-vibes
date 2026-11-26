@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class LudevicsTestSubject extends Card {
                 false, "{1}{U}",
                 List.of(PutCountersEffect.onSelf(CounterType.HATCHLING),
                         new ConditionalEffect(new SourceCounterThreshold(5, CounterType.HATCHLING), SequenceEffect.of(
-                                new RemoveAllCountersEffect(CounterType.HATCHLING),
+                                RemoveCountersEffect.allFromSelf(CounterType.HATCHLING),
                                 new TransformSelfEffect()))),
                 "{1}{U}: Put a hatchling counter on Ludevic's Test Subject. Then if there are five or more hatchling counters on it, remove all of them and transform it."
         ));

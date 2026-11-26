@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +35,7 @@ class NornsDominionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Planeswalking away destroys unmarked nonland permanents, then removes every fate counter")
     void planeswalkingAwayDestroysUnmarkedNonlandsThenRemovesAllFateCounters() {
         Permanent markedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         markedCreature.setCounterCount(CounterType.FATE, 1);
@@ -52,6 +54,7 @@ class NornsDominionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos may put a fate counter on target permanent")
     void chaosMayPutAFateCounterOnTargetPermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
@@ -70,6 +73,7 @@ class NornsDominionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the chaos ability leaves existing fate counters")
     void chaosCanBeDeclinedWithoutRemovingExistingFateCounters() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         target.setCounterCount(CounterType.FATE, 2);
@@ -85,6 +89,7 @@ class NornsDominionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos can put another fate counter on an opponent's land")
     void chaosCanPutAnotherFateCounterOnAnOpponentsLand() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
         target.setCounterCount(CounterType.FATE, 1);
@@ -100,6 +105,7 @@ class NornsDominionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Planeswalking away removes every fate counter but keeps other kinds")
     void departureRemovesEveryFateCounterButPreservesOtherCounterTypes() {
         Permanent marked = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         marked.setCounterCount(CounterType.FATE, 3);

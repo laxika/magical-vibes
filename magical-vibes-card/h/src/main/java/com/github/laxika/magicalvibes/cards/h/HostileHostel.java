@@ -11,12 +11,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class HostileHostel extends Card {
                         new ConditionalEffect(
                                 new SourceCounterThreshold(3, CounterType.SOUL),
                                 SequenceEffect.of(
-                                        new RemoveAllCountersEffect(CounterType.SOUL),
+                                        RemoveCountersEffect.allFromSelf(CounterType.SOUL),
                                         new TransformSelfEffect(),
                                         new UntapPermanentsEffect(Subjects.source())
                                 ))

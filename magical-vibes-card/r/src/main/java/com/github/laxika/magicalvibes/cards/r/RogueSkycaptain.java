@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 
 @CardRegistration(set = "ALL", collectorNumber = "79")
@@ -30,7 +30,7 @@ public class RogueSkycaptain extends Card {
                 UnlessPaysEffect.unlessYouPay(
                         PayManaCost.withGenericIncrease("{0}", new Scaled(new CountersOnSource(CounterType.WAGE), 2)),
                         SequenceEffect.of(
-                                new RemoveAllCountersEffect(CounterType.WAGE),
+                                RemoveCountersEffect.allFromSelf(CounterType.WAGE),
                                 new OpponentGainsControlOfSourceCreatureEffect(Duration.PERMANENT)))
         ));
     }

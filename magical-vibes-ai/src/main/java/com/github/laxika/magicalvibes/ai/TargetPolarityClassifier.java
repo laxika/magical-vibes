@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCre
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
@@ -530,18 +529,6 @@ public class TargetPolarityClassifier {
                     ? TargetPolarity.BENEFICIAL
                     : TargetPolarity.NEUTRAL;
         }
-        // Removing counters inverts the sign: stripping -1/-1 counters helps the target,
-        // stripping +1/+1 counters hurts it.
-        if (effect instanceof RemoveAllCountersEffect removeAll
-                && removeAll.subject().declaresTarget()) {
-            if (removeAll.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
-                return TargetPolarity.BENEFICIAL;
-            }
-            return removeAll.counterType() == CounterType.PLUS_ONE_PLUS_ONE
-                    ? TargetPolarity.HARMFUL
-                    : TargetPolarity.NEUTRAL;
-        }
-
         // Removing some counters from a target: stripping -1/-1 counters helps it, any other kind (loyalty, +1/+1,
         // lore, time, defense) is aimed at the opponent's permanent or the opponent; the non-target forms have no
         // polarity.
@@ -551,8 +538,8 @@ public class TargetPolarityClassifier {
             }
             return removedCountersPolarity(removeSome.counterType());
         }
-        // The same for "remove N [kind] counters from target permanent"; a counter of any kind, whose kind its
-        // controller picks as it resolves, has no direction. From this permanent or a named one: no polarity.
+        // The same for "remove N [kind] (or all [kind]) counters from target permanent"; a counter of any kind, whose
+        // kind its controller picks as it resolves, has no direction. From this permanent or a named one: no polarity.
         if (effect instanceof RemoveCountersEffect remove) {
             if (!(remove.subject() instanceof PermanentSubject.Target)) {
                 return null;

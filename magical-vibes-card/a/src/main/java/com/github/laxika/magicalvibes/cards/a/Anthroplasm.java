@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class Anthroplasm extends Card {
                 true,
                 "{X}",
                 List.of(
-                        new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        RemoveCountersEffect.allFromSelf(CounterType.PLUS_ONE_PLUS_ONE),
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue())
                 ),
                 "{X}, {T}: Remove all +1/+1 counters from this creature and put X +1/+1 counters on it."

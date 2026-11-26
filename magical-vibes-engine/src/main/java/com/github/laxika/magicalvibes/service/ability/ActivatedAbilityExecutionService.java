@@ -1516,7 +1516,7 @@ public class ActivatedAbilityExecutionService {
                                 AmountContext.forManaAbility(permanent, playerId, xValue))
                         : remove.amount();
                 permanentCounterSupport.removeCounterFromPermanent(
-                        gameData, permanent, remove.counterType(), amount);
+                        gameData, permanent, remove.counterType(), remove.amountFor(permanent, amount));
             } else if (effect instanceof RevealAnyNumberOfCardsFromHandEffect reveal) {
                 List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
                 List<UUID> validCardIds = hand.stream()

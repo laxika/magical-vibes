@@ -4,16 +4,17 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -28,8 +29,8 @@ import java.util.List;
  * three choices are modelled as the modes of one {@link ChooseOneEffect}, each carrying its own
  * total mana cost — the fuse mode's is the two halves combined (CR 702.102c).
  * <p>
- * Take is {@link RemoveAllCountersEffect} snapshotting the removed count as the stack entry's event
- * value, which the following {@link DrawCardEffect} reads as "that many". The fuse mode declares one
+ * Take is a "remove all" {@link RemoveCountersEffect}, a REMOVE_COUNTERS step the following
+ * {@link DrawCardEffect} reads as "that many". The fuse mode declares one
  * filter per half so the two creatures are chosen independently — the modal unwrap binds effects to
  * filters positionally, so Give's counter effect takes group 0 and Take's removal group 1; the draw
  * takes no target. Shared targets are allowed because fusing onto a single creature (grow it, then
@@ -55,16 +56,18 @@ public class GiveTake extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Take — Remove all +1/+1 counters from target creature you control, then draw that many cards",
                         List.<CardEffect>of(
-                                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.target()),
-                                new DrawCardEffect(new EventValue())),
+                                RemoveCountersEffect.allFromTarget(CounterType.PLUS_ONE_PLUS_ONE,
+                                        new PermanentIsCreaturePredicate()),
+                                new DrawCardEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS))),
                         List.of(controlledCreature)
                 ).withManaCost("{2}{U}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Fuse — Give and then Take",
                         List.<CardEffect>of(
                                 new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
-                                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.target()),
-                                new DrawCardEffect(new EventValue())),
+                                RemoveCountersEffect.allFromTarget(CounterType.PLUS_ONE_PLUS_ONE,
+                                        new PermanentIsCreaturePredicate()),
+                                new DrawCardEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS))),
                         List.of(creature, controlledCreature)
                 ).withManaCost("{4}{G}{U}")
         )));

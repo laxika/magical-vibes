@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "43")
 @CardRegistration(set = "LTC", collectorNumber = "126")
@@ -27,7 +27,7 @@ public class PrizePig extends Card {
                 new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.RIBBON),
                         SequenceEffect.of(
-                                new RemoveAllCountersEffect(CounterType.RIBBON),
+                                RemoveCountersEffect.allFromSelf(CounterType.RIBBON),
                                 new UntapPermanentsEffect(Subjects.source())))));
 
         // {T}: Add one mana of any color.

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "57")
 @CardRegistration(set = "HA4", collectorNumber = "8")
@@ -21,6 +21,6 @@ public class AmmitEternal extends Card {
         // the source is bound by the dedicated Triggers.opponentCastsSpell() collector).
         addTrigger(Triggers.opponentCastsSpell(), PutCountersEffect.onSelf(CounterType.MINUS_ONE_MINUS_ONE));
         // Whenever this creature deals combat damage to a player, remove all -1/-1 counters from it.
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), RemoveCountersEffect.allFromSelf(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

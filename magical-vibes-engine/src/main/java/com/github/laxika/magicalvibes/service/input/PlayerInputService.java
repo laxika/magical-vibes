@@ -1091,11 +1091,11 @@ public class PlayerInputService {
 
     /**
      * Whether a mode that removes counters from its source has counters to remove. A source that is
-     * gone or has too few counters greys the mode out; a dynamic amount is left available.
+     * gone or has too few counters greys the mode out; a dynamic amount and "remove all" are left available.
      */
     private boolean canRemoveCountersFromSource(GameData gameData, UUID sourcePermanentId,
                                                 RemoveCountersEffect removal) {
-        if (removal.dynamicAmount() != null || sourcePermanentId == null) {
+        if (removal.dynamicAmount() != null || removal.all() || sourcePermanentId == null) {
             return true;
         }
         var source = gameQueryService.findPermanentById(gameData, sourcePermanentId);

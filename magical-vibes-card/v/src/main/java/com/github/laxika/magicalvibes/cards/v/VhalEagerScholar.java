@@ -171,7 +171,7 @@ public class VhalEagerScholar extends Card {
         if (!face.getTargetGroups().isEmpty()) {
             face.registerEffectTargetIndex(next, 0);
         }
-        CardEffect removeStudyCounters = RemoveCountersEffect.fromSelf(CounterType.STUDY, Integer.MAX_VALUE);
+        CardEffect removeStudyCounters = RemoveCountersEffect.allFromSelf(CounterType.STUDY);
         return switch (color) {
             case BLUE, GREEN -> List.of(removeStudyCounters, next);
             default -> List.of(removeStudyCounters, new ConditionalEffect(HappenedThisWay.removedCounters(),

@@ -1132,9 +1132,7 @@ public record RemoveCounterAndGainLifeEffect(CounterType counterType,
                                              int lifeGain,
                                              CounterRemovalSubject subject) implements CardEffect
 
-public record RemoveAllCountersEffect(CounterType counterType, CounterRemovalSubject subject)
-        implements CombatDamageTriggerContextEffect
-// sugar: (CounterType) -> subject = SOURCE
+// the remove-all record; since effect cleanup step 10 run C1 it is RemoveCountersEffect.allFromSelf / allFromTarget / allFrom
 
 // the target counter removal; since effect cleanup step 10 it is RemoveCountersEffect.fromTarget(...)
 // sugar: fromTarget() (any one kind, 1); fromTarget(CounterType, PermanentPredicate) -> amount 1
@@ -1205,7 +1203,7 @@ the survivor rather than against it:
 - Charge-cost activation now throws "Not enough counters to remove (need N, have M)" rather than
   "Not enough charge counters (…)", and its payment log drops "(N remaining)". Asserted message
   updated in `AbilityActivationServiceTest`.
-- `RemoveAllCountersEffect` sets the entry's event value on the `TARGET` path too (including `0`
+- The remove-all record (now `RemoveCountersEffect.allFromTarget`) set the entry's event value on the `TARGET` path too (including `0`
   when the subject is gone). Hapatra's Mark is the only `TARGET` card and nothing on its entry reads
   `EventValue`.
 
@@ -1217,7 +1215,7 @@ the survivor rather than against it:
   effect-cleanup step 8, run 25: the card composes it).
 - `AbilityActivationService` loses both charge-specific blocks (availability + payment) and its
   import; the generic remove-counter blocks already covered them.
-- `TargetPolarityClassifier:246` keys on `RemoveAllCountersEffect` **and** `subject == TARGET`, so
+- `TargetPolarityClassifier:246` keyed on the remove-all record **and** `subject == TARGET` (since step 10 run C1 the `RemoveCountersEffect` target rule), so
   the seven self-form cards keep returning `null` as they always did.
 - `CostEffectClassificationTest.ABILITY_ONLY_COST_TYPES` drops the deleted cost name (its
   stale-entry ratchet fails otherwise).

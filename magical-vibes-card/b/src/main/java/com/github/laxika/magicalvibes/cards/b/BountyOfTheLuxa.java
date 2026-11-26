@@ -25,7 +25,7 @@ public class BountyOfTheLuxa extends Card {
         // enchantment. If no counters were removed this way, put a flood counter on this
         // enchantment and draw a card. Otherwise, add {C}{G}{U}.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), SequenceEffect.of(
-                RemoveCountersEffect.fromSelf(CounterType.FLOOD, Integer.MAX_VALUE),
+                RemoveCountersEffect.allFromSelf(CounterType.FLOOD),
                 new ConditionalEffect(new NotCondition(HappenedThisWay.removedCounters()), SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.FLOOD, 1),
                         new DrawCardEffect(1))),

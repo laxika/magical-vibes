@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -49,7 +49,7 @@ public class TendToTheKiln extends Card {
                 new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.FLAME),
                         SequenceEffect.of(
-                                new RemoveAllCountersEffect(CounterType.FLAME),
+                                RemoveCountersEffect.allFromSelf(CounterType.FLAME),
                                 new ConjureCardToBattlefieldEffect("ECL", "139"),
                                 new GrantKeywordEffect(
                                         Keyword.HASTE,

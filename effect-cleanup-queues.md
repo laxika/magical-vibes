@@ -546,7 +546,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Run 7c. Sure of the code, low. Defect run D14: left; 3+ players only; needs CR 508.1d counting instead of the per-creature throw.
 - Journey for the Elixir: taking both cards from the graveyard doesn't shuffle, though its text says "search your library and graveyard … then shuffle". Defect run D14. Sure of the code.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Defect run D14. Unverified.
-- `RemoveAllCountersEffect` uses `setCounterCount` without the last-counter event or the vanishing check; no current card is affected (Cursed Recording's time counters, no vanishing). Defect run D14. Sure, low.
+- ~~`RemoveAllCountersEffect` uses `setCounterCount` without the last-counter event or the vanishing check; no current card is affected (Cursed Recording's time counters, no vanishing). Defect run D14. Sure, low.~~ Fixed in step 10 run C1: every "remove all [kind]" is `RemoveCountersEffect`'s removal path (`allFromSelf` / `allFrom` / `allFromTarget`).
 
 **5. Wrong targets and choices.**
 
@@ -1021,6 +1021,9 @@ entwine with two modes (P09).
   so a later "loses all abilities" ends it, though the effect gives no ability (CR 611.2a, 613.11). Needs a block-legality read of
   a floating blocker restriction on the attacker (`BlockLegalityService.buildAttackerFacts`, `CombatHelper`); run U moved only the
   plain "can't be blocked" durations onto the floating rule. Step 10 run U (seen, not changed). Sure of the code and the rule.
+- Sarulf, Realm Eater: its exile (`ExileOtherNonlandPermanentsWithManaValueAtMostEffectHandler`) moves each permanent with its own
+  `removePermanentToExile`, not as one leave batch, so "whenever one or more ... leave" abilities see several events (one
+  instruction moves them as one event: Conventions, "Rules a fold must keep"). Step 10 run C1 (seen, not changed). Sure of the code; no test.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

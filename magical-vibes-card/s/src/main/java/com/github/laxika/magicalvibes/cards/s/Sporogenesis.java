@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -17,11 +16,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "273")
 public class Sporogenesis extends Card {
@@ -45,7 +46,6 @@ public class Sporogenesis extends Card {
                 ObjectRelation.ANY), saprolingsForFungusCounters);
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new RemoveAllCountersFromMatchingPermanentsEffect(
-                        CounterType.FUNGUS, new PermanentIsCreaturePredicate()));
+                RemoveCountersEffect.allFrom(Subjects.allCreatures(), CounterType.FUNGUS));
     }
 }

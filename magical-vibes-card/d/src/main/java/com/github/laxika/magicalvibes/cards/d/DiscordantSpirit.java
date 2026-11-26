@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "261")
 public class DiscordantSpirit extends Card {
@@ -23,6 +23,6 @@ public class DiscordantSpirit extends Card {
 
         // At the beginning of your end step, remove all +1/+1 counters from this creature.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                RemoveCountersEffect.allFromSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

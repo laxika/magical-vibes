@@ -104,7 +104,7 @@ public class ChooseOneAtResolutionEffectHandler implements NormalEffectHandlerBe
         }
         return !effects.isEmpty() && effects.getFirst() instanceof RemoveCountersEffect removal
                 && removal.subject() instanceof PermanentSubject.Source
-                && removal.dynamicAmount() == null
+                && removal.dynamicAmount() == null && !removal.all()
                 && entry.getSourcePermanentId() != null
                 && lacksCounters(gameData, entry, removal);
     }

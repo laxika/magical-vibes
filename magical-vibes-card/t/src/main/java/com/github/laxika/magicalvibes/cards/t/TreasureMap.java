@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class TreasureMap extends Card {
                         new ScryEffect(1),
                         PutCountersEffect.onSelf(CounterType.LANDMARK),
                         new ConditionalEffect(new SourceCounterThreshold(3, CounterType.LANDMARK), SequenceEffect.of(
-                                new RemoveAllCountersEffect(CounterType.LANDMARK),
+                                RemoveCountersEffect.allFromSelf(CounterType.LANDMARK),
                                 new TransformSelfEffect(),
                                 CreateTokenEffect.ofTreasureToken(3)))
                 ),

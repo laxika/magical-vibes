@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -33,7 +33,6 @@ public class Aurification extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.DEFENDER, Subjects.allCreatures(),
                         goldCounterBearer));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new RemoveAllCountersFromMatchingPermanentsEffect(CounterType.GOLD,
-                        new PermanentIsCreaturePredicate()));
+                RemoveCountersEffect.allFrom(Subjects.allCreatures(), CounterType.GOLD));
     }
 }

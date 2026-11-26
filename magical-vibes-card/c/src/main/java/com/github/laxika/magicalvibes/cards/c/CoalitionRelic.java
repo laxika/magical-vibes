@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -45,8 +47,8 @@ public class CoalitionRelic extends Card {
         // Each mana gets its own color choice, and EventValue preserves the number removed.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 SequenceEffect.of(
-                        new RemoveAllCountersEffect(CounterType.CHARGE),
-                        new AwardAnyColorManaEffect(new EventValue(), ManaSpendRestriction.NONE, null,
+                        RemoveCountersEffect.allFromSelf(CounterType.CHARGE),
+                        new AwardAnyColorManaEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS), ManaSpendRestriction.NONE, null,
                                 false, false, false, false, true, false, Set.of(), false)));
     }
 }

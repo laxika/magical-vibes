@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class EnergyVortex extends Card {
         // keeps being the chosen player if control of the enchantment changes.
         addStaticEffect(new ChooseOpponentOnEnterEffect());
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveAllCountersEffect(CounterType.VORTEX));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), RemoveCountersEffect.allFromSelf(CounterType.VORTEX));
 
         // At the beginning of the chosen player's upkeep, deal 3 damage to them unless they pay {1}
         // for each vortex counter.

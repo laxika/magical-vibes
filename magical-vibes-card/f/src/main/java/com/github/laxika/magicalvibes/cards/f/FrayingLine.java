@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -41,8 +41,7 @@ public class FrayingLine extends Card {
                                 Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ROPE))))))),
-                        new RemoveAllCountersFromMatchingPermanentsEffect(CounterType.ROPE,
-                                new PermanentIsCreaturePredicate())),
+                        RemoveCountersEffect.allFrom(Subjects.allCreatures(), CounterType.ROPE)),
                 SequenceEffect.of(
                         ChoosePermanentsEffect.exactly(1,
                                         Subjects.controlledBy(Subjects.activePlayer(), new PermanentIsCreaturePredicate()),

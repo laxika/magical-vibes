@@ -368,7 +368,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         if (optionalAction instanceof RemoveCountersEffect removal
                 && removal.subject() instanceof PermanentSubject.Source
-                && removal.dynamicAmount() == null && !removal.targetsPlayer() && removal.amount() > 0
+                && !removal.all() && removal.dynamicAmount() == null && !removal.targetsPlayer() && removal.amount() > 0
                 && !sourceHasCountersToRemove(gameData, entry, removal)) {
             // "You may remove a [kind] counter from this creature. If you don't, ...": with fewer such counters on it,
             // or with it gone, the player can't choose to remove them (CR 608.2d), so "if you don't" applies.

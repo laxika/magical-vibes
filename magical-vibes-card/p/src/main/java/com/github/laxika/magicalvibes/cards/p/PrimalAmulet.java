@@ -10,12 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class PrimalAmulet extends Card {
                         PutCountersEffect.onSelf(CounterType.CHARGE),
                         new ConditionalEffect(new SourceCounterThreshold(4, CounterType.CHARGE), new MayEffect(
                                 SequenceEffect.of(
-                                        new RemoveAllCountersEffect(CounterType.CHARGE),
+                                        RemoveCountersEffect.allFromSelf(CounterType.CHARGE),
                                         new TransformSelfEffect()),
                                 "Remove counters and transform?"))));
     }

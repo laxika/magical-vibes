@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -25,6 +26,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * kind the permanent has at least that many of; with several such kinds the controller chooses one as the effect
  * resolves.</p>
  *
+ * <p>{@code all} is "remove all [kind] counters" ({@link #allFromSelf}, {@link #allFrom}, {@link #allFromTarget}): every
+ * counter of the kind each permanent has as it resolves, {@code amount} unused. It can always be done, also from a
+ * permanent with none ("if no counters were removed this way", Bounty of the Luxa), so a "may" or a mode is never
+ * refused for want of counters. "That many" after it is {@code AmountThisWay(REMOVE_COUNTERS)}.</p>
+ *
  * <p>Each removal is made by the effect's controller ("when you remove the last ... counter"); the last time counter
  * triggers vanishing and a Siege's last defense counter its defeat. It is a REMOVE_COUNTERS step: "If you do" /
  * "When you do" after it is a {@code ConditionalEffect} of {@code HappenedThisWay.removedCounters()} (or
@@ -32,7 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record RemoveCountersEffect(CounterType counterType, int amount, DynamicAmount dynamicAmount,
                                    boolean targetsPlayer, PermanentSubject subject,
-                                   PermanentPredicate targetPredicate) implements CardEffect {
+                                   PermanentPredicate targetPredicate, boolean all) implements CardEffect {
 
     public RemoveCountersEffect {
         if (subject == null) {
@@ -47,12 +53,20 @@ public record RemoveCountersEffect(CounterType counterType, int amount, DynamicA
         if (subject.declaresTarget() && !(subject instanceof PermanentSubject.Target)) {
             throw new IllegalArgumentException("Only target() declares a target here: " + subject);
         }
+        if (all && (counterType == CounterType.ANY || dynamicAmount != null || targetsPlayer || amount != 0)) {
+            throw new IllegalArgumentException("\"Remove all\" names one kind and no amount: " + counterType);
+        }
         if (counterType == CounterType.ANY
                 && (dynamicAmount != null || targetsPlayer
                 || !(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Target))) {
             throw new IllegalArgumentException(
                     "A counter of any kind is removed only from the source or a target, a fixed number");
         }
+    }
+
+    public RemoveCountersEffect(CounterType counterType, int amount, DynamicAmount dynamicAmount,
+                                boolean targetsPlayer, PermanentSubject subject, PermanentPredicate targetPredicate) {
+        this(counterType, amount, dynamicAmount, targetsPlayer, subject, targetPredicate, false);
     }
 
     public RemoveCountersEffect(CounterType counterType, int amount, DynamicAmount dynamicAmount,
@@ -70,7 +84,7 @@ public record RemoveCountersEffect(CounterType counterType, int amount, DynamicA
         this(subject, counterType, 1);
     }
 
-    /** "Remove N [kind] counters from this [permanent]" ({@code Integer.MAX_VALUE} for "remove all [kind] counters"). */
+    /** "Remove N [kind] counters from this [permanent]". */
     public static RemoveCountersEffect fromSelf(CounterType counterType, int amount) {
         return new RemoveCountersEffect(counterType, amount, null, false, Subjects.source());
     }
@@ -118,15 +132,41 @@ public record RemoveCountersEffect(CounterType counterType, int amount, DynamicA
         return new RemoveCountersEffect(counterType, 0, amount, false, Subjects.target(), targetPredicate);
     }
 
+    /** "Remove all [kind] counters from this [permanent]". */
+    public static RemoveCountersEffect allFromSelf(CounterType counterType) {
+        return allFrom(Subjects.source(), counterType);
+    }
+
+    /**
+     * "Remove all [kind] counters from {@code subject}", which it doesn't target: "from it" ({@code triggering()}),
+     * "from all creatures" ({@code controlledBy(eachPlayer(), creature)}).
+     */
+    public static RemoveCountersEffect allFrom(PermanentSubject subject, CounterType counterType) {
+        return new RemoveCountersEffect(counterType, 0, null, false, subject, null, true);
+    }
+
+    /** "Remove all [kind] counters from target [permanent matching {@code targetPredicate}]". */
+    public static RemoveCountersEffect allFromTarget(CounterType counterType, PermanentPredicate targetPredicate) {
+        return new RemoveCountersEffect(counterType, 0, null, false, Subjects.target(), targetPredicate, true);
+    }
+
     /** This effect on {@code newSubject} instead. */
     public RemoveCountersEffect withSubject(PermanentSubject newSubject) {
         return new RemoveCountersEffect(counterType, amount, dynamicAmount, targetsPlayer, newSubject,
-                newSubject instanceof PermanentSubject.Target ? targetPredicate : null);
+                newSubject instanceof PermanentSubject.Target ? targetPredicate : null, all);
     }
 
     /** This effect removing counters of {@code kind} (the kind chosen for {@link CounterType#ANY}). */
     public RemoveCountersEffect withKind(CounterType kind) {
-        return new RemoveCountersEffect(kind, amount, null, false, subject, targetPredicate);
+        return new RemoveCountersEffect(kind, amount, null, false, subject, targetPredicate, all);
+    }
+
+    /**
+     * How many counters this removes from {@code permanent} ({@code fixedOrEvaluated} being the fixed or evaluated
+     * amount): all of the kind it has for {@link #all}.
+     */
+    public int amountFor(Permanent permanent, int fixedOrEvaluated) {
+        return all ? permanent.getCounterCount(counterType) : fixedOrEvaluated;
     }
 
     @Override

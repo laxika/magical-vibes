@@ -36,9 +36,9 @@ public class TemporalDistortion extends Card {
 
         // "Remove all hourglass counters from permanents that player controls": the upkeep's player, which the
         // step-trigger collection puts on the entry without targeting.
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new RemoveCountersEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), RemoveCountersEffect.allFrom(
                 Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(),
                         new PermanentHasCountersPredicate(CounterType.HOURGLASS)),
-                CounterType.HOURGLASS, Integer.MAX_VALUE));
+                CounterType.HOURGLASS));
     }
 }

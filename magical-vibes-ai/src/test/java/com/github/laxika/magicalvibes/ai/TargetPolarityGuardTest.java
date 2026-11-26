@@ -179,6 +179,19 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("Removing all -1/-1 counters from a target creature helps it")
+    void classifiesRemovingAllMinusOneCountersFromATargetAsBeneficial() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.h.HapatrasMark(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+    }
+
+    @Test
     @DisplayName("Classifies representative permanent targeting shapes by direction")
     void classifiesRepresentativePermanentTargetingShapesByDirection() {
         GameTestHarness harness = new GameTestHarness();

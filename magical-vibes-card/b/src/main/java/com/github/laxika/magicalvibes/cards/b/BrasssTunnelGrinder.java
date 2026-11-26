@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "135")
 @CardRegistration(set = "LCI", collectorNumber = "373")
@@ -31,7 +31,7 @@ public class BrasssTunnelGrinder extends Card {
                 SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.BORE),
                         new ConditionalEffect(new SourceCounterThreshold(3, CounterType.BORE), SequenceEffect.of(
-                                new RemoveAllCountersEffect(CounterType.BORE),
+                                RemoveCountersEffect.allFromSelf(CounterType.BORE),
                                 new TransformSelfEffect()))));
     }
 

@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class ReplicatingRing extends Card {
                 new ConditionalEffect(
                         new SourceCounterThreshold(8, CounterType.NIGHT),
                         SequenceEffect.of(
-                                new RemoveAllCountersEffect(CounterType.NIGHT),
+                                RemoveCountersEffect.allFromSelf(CounterType.NIGHT),
                                 CreateTokenEffect.ofSnowArtifactToken(
                                         8,
                                         "Replicated Ring",

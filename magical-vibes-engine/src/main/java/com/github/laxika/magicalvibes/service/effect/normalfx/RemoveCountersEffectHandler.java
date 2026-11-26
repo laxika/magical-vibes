@@ -25,7 +25,7 @@ import java.util.UUID;
 
 /**
  * Resolves {@link RemoveCountersEffect}: removes up to the fixed or dynamically evaluated amount of counters of the
- * given type from each permanent its subject names, clamped at zero, each through
+ * given type from each permanent its subject names (every one of the kind for "remove all"), clamped at zero, each through
  * {@link PermanentCounterSupport#removeCounterFromPermanent} (the last time counter triggers vanishing, CR 702.63a)
  * and reported as removed by the ability's controller ("when you remove the last ... counter"); a Siege that lost its
  * last defense counter queues its defeat (CR 310.12b). A dynamic amount is evaluated against the ability's source for
@@ -63,12 +63,13 @@ public class RemoveCountersEffectHandler implements NormalEffectHandlerBean {
         Permanent amountSource = e.dynamicAmount() != null && e.subject() instanceof PermanentSubject.Target
                 ? source(gameData, entry) : null;
         for (Permanent permanent : permanents) {
-            int amount = e.dynamicAmount() != null
+            int amount = e.all() ? 0 : e.dynamicAmount() != null
                     ? amountEvaluationService.evaluate(gameData, e.dynamicAmount(), AmountContext.forStackEntry(entry,
                     e.subject() instanceof PermanentSubject.Target ? amountSource : permanent))
                     : e.amount();
             int countBefore = permanent.getCounterCount(e.counterType());
-            permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, e.counterType(), amount);
+            permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, e.counterType(),
+                    e.amountFor(permanent, amount));
             int removed = countBefore - permanent.getCounterCount(e.counterType());
             permanentCounterSupport.notifyLastCounterRemoved(gameData, permanent, e.counterType(), removed,
                     entry.getControllerId());
