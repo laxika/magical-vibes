@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.cards.l.LimDLsHex;
 import com.github.laxika.magicalvibes.cards.m.MindWhip;
 import com.github.laxika.magicalvibes.cards.o.Oasis;
+import com.github.laxika.magicalvibes.cards.r.RishadanCutpurse;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SoulBarrier;
 import com.github.laxika.magicalvibes.cards.e.EsperSentinel;
@@ -224,6 +225,24 @@ class TaxTakerTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(RishadanCutpurse.class)
+        @DisplayName("Paying Rishadan Cutpurse's {1} makes one Treasure")
+        void rishadanCutpursePayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.castFromHand(player1, new RishadanCutpurse(), "{2}{U}");
+
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            assertThat(countPermanents(player1, "Treasure")).isOne();
+        }
+
+        @Test
         @DisplayName("Paying Soul Barrier's {2} makes two Treasures")
         void soulBarrierPayment() {
             harness.addToBattlefield(player1, new TaxTaker());
@@ -260,6 +279,8 @@ class TaxTakerTest extends BaseCardTest {
         void limDulsHexPayment() {
             harness.addToBattlefield(player1, new TaxTaker());
             harness.addToBattlefield(player1, new LimDLsHex());
+            giveManaSource(player1);
+            giveManaSource(player2);
             advanceToUpkeep(player1);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);

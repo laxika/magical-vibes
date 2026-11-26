@@ -25,6 +25,15 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import org.junit.jupiter.api.Nested;
+import com.github.laxika.magicalvibes.model.effect.LandDropCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.springframework.test.util.ReflectionTestUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -355,6 +364,87 @@ class ResolutionCostPaymentServiceTest {
 
             assertThat(service.canPay(gd, payerId, new SacrificePermanentCost(null, "creature", false), null, entry))
                     .isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("Returning, putting on top, giving up a land drop and sacrificing for total power")
+    class OtherRansoms {
+
+        private PredicateEvaluationService predicates;
+
+        @BeforeEach
+        void withPredicates() {
+            predicates = org.mockito.Mockito.mock(PredicateEvaluationService.class);
+            ReflectionTestUtils.setField(service, "predicateEvaluationService", predicates);
+            gd.playerBattlefields.put(payerId, new ArrayList<>());
+        }
+
+        @Test
+        @DisplayName("{D} can be paid only on the payer's own turn with a land drop left, and paying uses one up")
+        void landDropIsPayableOnlyWithADropLeft() {
+            gd.activePlayerId = payerId;
+            when(gameQueryService.getMaxLandsThisTurn(gd, payerId)).thenReturn(1);
+
+            assertThat(service.canPay(gd, payerId, new LandDropCost(), null)).isTrue();
+            assertThat(service.pay(gd, new Player(payerId, "Payer"), new LandDropCost(),
+                    new ResolutionCostPaymentService.Payment(new GrizzlyBears(), payerId, null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            assertThat(gd.landsPlayedThisTurn.get(payerId)).isOne();
+            assertThat(service.canPay(gd, payerId, new LandDropCost(), null)).isFalse();
+
+            gd.activePlayerId = UUID.randomUUID();
+            assertThat(service.canPay(gd, payerId, new LandDropCost(), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A card can be put on top of the library only from a hand with a card in it")
+        void putOnTopNeedsACardInHand() {
+            gd.playerHands.put(payerId, new ArrayList<>());
+            assertThat(service.canPay(gd, payerId, new PutCardFromHandOnTopOfLibraryCost(), null)).isFalse();
+
+            gd.playerHands.get(payerId).add(new GrizzlyBears());
+            assertThat(service.canPay(gd, payerId, new PutCardFromHandOnTopOfLibraryCost(), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("A return is paid with a permanent the payer controls, any player's only when the cost says so")
+        void returnIsTheirOwnUnlessAnyPlayers() {
+            UUID otherId = UUID.randomUUID();
+            Permanent theirs = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.put(otherId, new ArrayList<>(List.of(theirs)));
+            when(predicates.matchesPermanentPredicate(eq(gd), eq(theirs), any())).thenReturn(true);
+
+            assertThat(service.canPay(gd, payerId, ReturnPermanentToHandCost.youControl(
+                    new PermanentTruePredicate(), "creature you control"), null)).isFalse();
+            assertThat(service.canPay(gd, payerId, ReturnPermanentToHandCost.anyPlayers(
+                    new PermanentTruePredicate(), "creature"), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Creatures with total power 12 can be sacrificed only when their positive powers reach 12")
+        void totalPowerCountsOnlyPositivePower() {
+            Permanent big = new Permanent(new GrizzlyBears());
+            Permanent shrunk = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(payerId).addAll(List.of(big, shrunk));
+            when(predicates.matchesPermanentPredicate(eq(gd), any(Permanent.class), any())).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, big.getId())).thenReturn(big);
+            when(gameQueryService.findPermanentById(gd, shrunk.getId())).thenReturn(shrunk);
+            when(gameQueryService.getEffectivePower(gd, big)).thenReturn(11);
+            when(gameQueryService.getEffectivePower(gd, shrunk)).thenReturn(-2);
+
+            assertThat(service.canPay(gd, payerId, new SacrificeCreaturesWithTotalPowerCost(12), null)).isFalse();
+
+            when(gameQueryService.getEffectivePower(gd, big)).thenReturn(12);
+            assertThat(service.canPay(gd, payerId, new SacrificeCreaturesWithTotalPowerCost(12), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Mana paid once for each of an amount must be read before it is paid")
+        void manaPerAmountIsReadFirst() {
+            assertThatThrownBy(() -> ResolutionCostPaymentService.manaCostOf(
+                    PayManaCost.perAmount("{G}", new CountersOnSource(CounterType.WIND))))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 

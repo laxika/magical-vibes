@@ -41,6 +41,10 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.LandDropCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -277,8 +281,48 @@ public class SpellEvaluator {
             case DiscardHandCost ignored -> gameData.playerHands.getOrDefault(payerId, List.of()).size() * 2.0;
             case SourceControllerDrawsCost draw -> draw.count() * 2.0;
             case ExileNCardsFromGraveyardCost exile -> exile.count() * 0.5;
+            case ReturnPermanentToHandCost toHand -> cheapestReturn(gameData, payerId, toHand);
+            case PutCardFromHandOnTopOfLibraryCost ignored -> 1.5;
+            case LandDropCost ignored -> 1.0;
+            case SacrificeCreaturesWithTotalPowerCost power -> sacrificesReachingPower(gameData, payerId, opponentId,
+                    power.totalPower());
             default -> 0;
         };
+    }
+
+    /**
+     * Returning a permanent to its owner's hand: its mana value to replay (at least 1), the cheapest the payer can
+     * return; a permanent the payer doesn't control returned to its owner costs them nothing.
+     */
+    private double cheapestReturn(GameData gameData, UUID payerId, ReturnPermanentToHandCost toHand) {
+        return gameData.playerBattlefields.getOrDefault(payerId, List.of()).stream()
+                .filter(p -> toHand.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData,
+                        p, toHand.filter()))
+                .mapToDouble(p -> Math.max(1.0, p.getCard().getManaValue()))
+                .min()
+                .orElse(toHand.anyController() ? 0.0 : Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Sacrificing creatures with total power reaching {@code totalPower}: the most powerful ones first (the fewest
+     * creatures), each at its sacrifice value; out of reach, never paid.
+     */
+    private double sacrificesReachingPower(GameData gameData, UUID payerId, UUID opponentId, int totalPower) {
+        List<Permanent> creatures = gameData.playerBattlefields.getOrDefault(payerId, List.of()).stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .sorted(Comparator.comparingInt((Permanent p) -> gameQueryService.getEffectivePower(gameData, p))
+                        .reversed())
+                .toList();
+        double cost = 0;
+        int power = 0;
+        for (Permanent creature : creatures) {
+            if (power >= totalPower) {
+                break;
+            }
+            power += Math.max(0, gameQueryService.getEffectivePower(gameData, creature));
+            cost += boardEvaluator.sacrificeCost(gameData, creature, payerId, opponentId);
+        }
+        return power >= totalPower ? cost : Double.POSITIVE_INFINITY;
     }
 
     /** The value of the {@code count} cheapest of {@code payerId}'s permanents matching {@code filter} to sacrifice. */

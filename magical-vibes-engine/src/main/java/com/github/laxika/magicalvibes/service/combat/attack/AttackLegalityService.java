@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.combat.attack;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
-import com.github.laxika.magicalvibes.model.effect.MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -110,9 +109,6 @@ public class AttackLegalityService {
      */
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
-        if (gameData.hasFloatingEffectOnPlayer(null, MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect.class)) {
-            return false;
-        }
         if (isExcludedFromThisCombat(gameData, creature)) {
             return false;
         }

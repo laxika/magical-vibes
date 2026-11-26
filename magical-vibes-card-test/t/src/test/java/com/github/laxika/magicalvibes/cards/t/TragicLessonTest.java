@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TragicLesson.class, Forest.class, Plains.class})
+@CardUsed({TragicLesson.class, Forest.class, Plains.class, GrizzlyBears.class})
 class TragicLessonTest extends BaseCardTest {
 
     private void castTragicLesson() {
@@ -117,5 +119,23 @@ class TragicLessonTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         harness.assertNotInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player1, "Tragic Lesson");
+    }
+
+    @Test
+    @DisplayName("A permanent that is a land only through an effect can be returned instead of discarding (CR 613.1d)")
+    void permanentThatIsALandByAnEffectCanBeReturned() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        grantCardTypeUntilEndOfTurn(bears, CardType.LAND);
+
+        castTragicLesson();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 }

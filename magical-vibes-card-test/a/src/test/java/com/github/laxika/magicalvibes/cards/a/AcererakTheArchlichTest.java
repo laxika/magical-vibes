@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +16,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -196,6 +201,46 @@ class AcererakTheArchlichTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
+    }
+
+    @Test
+    @DisplayName("Every opponent chooses first; the sacrifices and the Zombies come together after the last answer (ruling)")
+    void sacrificesAndTokensComeTogetherAfterEveryOpponentChose() {
+        Player player3 = addThirdPlayer();
+        addAttackingAcererak();
+        addCreatureReady(player2, new DireWolfProwler());
+        addCreatureReady(player3, new DireWolfProwler());
+
+        resolveAttackTrigger();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(countPermanents(player2, "Dire Wolf Prowler")).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, false);
+
+        assertThat(countPermanents(player2, "Dire Wolf Prowler")).isZero();
+        assertThat(countPermanents(player3, "Dire Wolf Prowler")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 
     private void resolveAttackTrigger() {

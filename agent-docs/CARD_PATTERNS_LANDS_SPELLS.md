@@ -276,7 +276,7 @@ on what the mana may pay for.
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw two, then privately look at every player's top card | `c/CaseTheJoint.java` | `DrawCardEffect(2)` + `LookAtTopCardsOfTargetLibraryEffect.lookingAt(1, eachPlayer())` |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |
-| X draw + per-card sacrifice-or-discard | `r/ReadTheRunes.java` | DrawCardEffect(XValue) + `EachPlayerSacrificesPermanentUnlessDiscardEffect.forEachCardDrawn()` |
+| X draw + per-card sacrifice-or-discard | `r/ReadTheRunes.java` | DrawCardEffect(XValue) + `SacrificePermanentsEffect` up to `CardsDrawnThisResolution` + `DiscardEffect` of the rest (sacrifices first, its rulings) |
 | Draw + any-player pay gate + discard | `r/RhysticScrying.java` | DrawCardEffect(3) + `UnlessPaysEffect.mayPay(eachPlayer(), "{2}", new DiscardEffect(3, you()))` — every player asked in APNAP order, the discard once if any paid |
 | Land: choose color, then any-player pay gate prevents mana | `r/RhysticCave.java` | `ChooseColorAtResolutionEffect` + `UnlessPaysEffect.unlessPays(eachPlayer(), "{1}", new AwardManaOfChosenColorEffect()).ifPaid(new ClearChosenColorEffect())`; the ability is intentionally non-mana so it resolves on the stack and cannot be activated during spell/ability payment |
 | Activated ability: unless an opponent pays, gain control | `s/ScarwoodBandits.java` | `UnlessPaysEffect.unlessPays(eachOpponent(), "{2}", GainControlOfTargetEffect(...))` — each opponent of the controller is asked in APNAP order, even after one paid; the control change happens when nobody pays |

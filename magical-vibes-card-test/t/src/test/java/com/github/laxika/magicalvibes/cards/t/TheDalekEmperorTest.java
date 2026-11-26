@@ -21,6 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({TheDalekEmperor.class, ClockworkDroid.class, DalekDrone.class})
 class TheDalekEmperorTest extends BaseCardTest {
 
+    private static final String SACRIFICE = "That player sacrifices a creature";
+    private static final String CREATE_DALEK = "You create a Dalek";
+
     @Test
     @DisplayName("Affinity for Daleks reduces the generic mana cost")
     void affinityForDaleksReducesGenericCost() {
@@ -43,6 +46,7 @@ class TheDalekEmperorTest extends BaseCardTest {
         Permanent emperor = harness.addToBattlefieldAndReturn(player1, new TheDalekEmperor());
 
         advanceToCombatAndResolve(player1);
+        harness.handleListChoice(player2, CREATE_DALEK);
 
         Permanent dalek = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -61,8 +65,8 @@ class TheDalekEmperorTest extends BaseCardTest {
 
         advanceToCombatAndResolve(player1);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, SACRIFICE);
 
         harness.assertInGraveyard(player2, "Clockwork Droid");
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -76,7 +80,7 @@ class TheDalekEmperorTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DalekDrone());
 
         advanceToCombatAndResolve(player1);
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, CREATE_DALEK);
 
         harness.assertOnBattlefield(player2, "Dalek Drone");
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -127,13 +131,30 @@ class TheDalekEmperorTest extends BaseCardTest {
         Permanent chosen = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
 
         advanceToCombatAndResolve(player1);
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, SACRIFICE);
         harness.handlePermanentChosen(player2, chosen.getId());
 
         harness.assertInGraveyard(player2, "Clockwork Droid");
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(chosen);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("An opponent with no creature may still choose the sacrifice, and no Dalek is made (CR 701.55b)")
+    void creaturelessOpponentMayChooseTheImpossibleSacrifice() {
+        harness.addToBattlefield(player1, new TheDalekEmperor());
+
+        advanceToCombatAndResolve(player1);
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options()).hasSize(2);
+        harness.handleListChoice(player2, choice.options().getFirst());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void advanceToCombatAndResolve(Player activePlayer) {

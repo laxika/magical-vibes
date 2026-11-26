@@ -2699,18 +2699,6 @@ public sealed interface ChoiceContext {
     }
 
 
-    /** Indulgent Tormentor: the targeted opponent chooses sacrifice, payment, or a draw. */
-    record IndulgentTormentorChoice(UUID affectedPlayerId, int lifeCost, String sourceCardName)
-            implements ChoiceContext {
-
-        public static final String SACRIFICE = "Sacrifice a creature";
-        public static final String DRAW = "Draw a card";
-
-        public static String payLife(int lifeCost) {
-            return "Pay " + lifeCost + " life";
-        }
-    }
-
 
     record TimeTravelActionChoice(UUID controllerId, String sourceCardName,
                                   List<TimeTravelTarget> targets, int targetIndex,

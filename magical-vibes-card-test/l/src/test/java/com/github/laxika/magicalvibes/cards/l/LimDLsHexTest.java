@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LimDLsHex.class, CircleOfProtectionBlack.class})
 class LimDLsHexTest extends BaseCardTest {
+
+    /** Both players can make mana, so each is asked; the tests add the mana while asked. */
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Both players declining take 1 damage each")
@@ -71,7 +79,7 @@ class LimDLsHexTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana still deals damage, then opponent is prompted")
+    @DisplayName("Accepting without enough mana pays nothing: that player is dealt the damage with the others")
     void acceptWithoutManaDealsDamage() {
         harness.addToBattlefield(player1, new LimDLsHex());
         int life1 = gd.playerLifeTotals.get(player1.getId());
@@ -79,11 +87,11 @@ class LimDLsHexTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true); // accept with empty pool → damage
+        harness.handleMayAbilityChosen(player1, true); // accept with an empty pool: not paid
 
-        harness.assertLife(player1, life1 - 1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
+        harness.assertLife(player1, life1 - 1);
         harness.assertLife(player2, life2 - 1);
     }
 
@@ -175,9 +183,9 @@ class LimDLsHexTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertLife(player1, 19);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         harness.handleMayAbilityChosen(player2, false);
+        harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
     }
 
@@ -194,10 +202,32 @@ class LimDLsHexTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertLife(player1, 19);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.handleMayAbilityChosen(player2, true);
+        harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Every player chooses first, then the damage is dealt to those who didn't pay at once (CR 101.4)")
+    void damageIsDealtTogetherAfterTheLastAnswer() {
+        harness.addToBattlefield(player1, new LimDLsHex());
+        giveManaSource(player1);
+        giveManaSource(player2);
+        int life1 = gd.playerLifeTotals.get(player1.getId());
+        int life2 = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, life1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player1, life1 - 1);
+        harness.assertLife(player2, life2 - 1);
     }
 }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,8 +8,6 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingRagingRiver;
-import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,8 +30,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
@@ -62,9 +57,6 @@ public class MayAbilityHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final RagingRiverEffectHandler ragingRiverEffectHandler;
-
-    @Autowired @Lazy
-    private LifeSupport lifeSupport;
 
     @Autowired @Lazy
     private PermanentChoiceHandlerService permanentChoiceHandlerService;
@@ -263,26 +255,12 @@ public class MayAbilityHandlerService {
     }
 
     /**
-     * Completes a resolution-time "you may" answer again (a "pay {M} or N life", "pay {M} and N life" or K'rrik
-     * payment) once the Lich's Duel Mastery sacrifice its life payment would cause has had its death replacements
-     * chosen.
+     * Completes a resolution-time "you may" answer again (an "unless" ransom's life payment, K'rrik's included) once
+     * the Lich's Duel Mastery sacrifice its life payment would cause has had its death replacements chosen.
      */
     public void completeResolutionTimeMayChoiceAgain(GameData gameData, Player player, boolean accepted,
                                                      PendingMayAbility ability) {
         handleResolutionTimeMayChoice(gameData, player, accepted, ability);
-    }
-
-    /**
-     * Pays {@code amount} life for {@code ability}, the first change its accepted answer makes. Paying life is losing
-     * it (CR 119.4), which Lich's Duel Mastery can replace with its sacrifice; that sacrifice's death replacements
-     * are then chosen before the payment (CR 616.1), and the answer is completed again.
-     *
-     * @return {@code true} when the payment stopped to ask
-     */
-    private boolean payLifeAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
-                                                        int amount) {
-        return permanentChoiceHandlerService.answerAskingDeathReplacementsFirst(gameData, player, ability, true,
-                () -> lifeSupport.applyLifePayment(gameData, player.getId(), amount, ability.sourceCard().getName()));
     }
 
     /**
@@ -343,62 +321,6 @@ public class MayAbilityHandlerService {
             }
         }
         if (accepted) {
-            if (ability.manaCost() != null) {
-                ManaCost cost = new ManaCost(ability.manaCost());
-                ManaPool pool = gameData.playerManaPools.get(player.getId());
-                boolean paidWithLife = false;
-                if (!cost.canPayResolutionCost(pool) && ability.lifeCost() > 0) {
-                    // "Pay {M} or N life" — mana that would empty at end of step is the cheaper
-                    // resource, so life is only spent when the mana cost cannot be paid.
-                    boolean canPayLife = ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, player.getId(), ability.lifeCost());
-                    if (canPayLife) {
-                        if (payLifeAskingDeathReplacementsFirst(gameData, player, ability, ability.lifeCost())) {
-                            return;
-                        }
-                        paidWithLife = true;
-                    }
-                }
-                // "Pay {M} and N life" (Purgatory) — both halves are part of one cost, so neither is
-                // paid unless both can be.
-                boolean canPayAdditionalLife = ability.additionalLifeCost() == 0
-                        || (ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, player.getId(), ability.additionalLifeCost()));
-                // K'rrik-style permission: each black symbol in the cost may be paid with 2 life instead.
-                ManaCost blackAsLifeCost = cost.withBlackManaAsPhyrexian();
-                if (!paidWithLife && ability.lifeCost() == 0 && ability.additionalLifeCost() == 0
-                        && !cost.canPayResolutionCost(pool) && canPayAdditionalLife
-                        && gameQueryService.canPayBlackManaWithLife(gameData, player.getId())
-                        && blackAsLifeCost.canPayResolutionCost(pool)) {
-                    int lifeOwed = blackAsLifeCost.payPhyrexianManaAuto(new ManaPool(pool), 0);
-                    if (ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, player.getId(), lifeOwed)) {
-                        if (lifeOwed > 0 && payLifeAskingDeathReplacementsFirst(gameData, player, ability, lifeOwed)) {
-                            return;
-                        }
-                        blackAsLifeCost.payPhyrexianManaAuto(pool, 0);
-                        blackAsLifeCost.payResolutionCost(pool);
-                        paidWithLife = true;
-                    }
-                }
-                if (!paidWithLife && (!cost.canPayResolutionCost(pool) || !canPayAdditionalLife)) {
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " cannot pay " + ability.manaCost()
-                                    + (ability.additionalLifeCost() > 0 ? " and " + ability.additionalLifeCost() + " life" : "")
-                                    + " for ", ability.sourceCard(), "'s ability."));
-                    gameData.resolvedMayAccepted = false;
-                    if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
-                    if (gameData.interaction.isAwaitingInput()) { return; }
-                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-                    return;
-                }
-                if (!paidWithLife) {
-                    if (ability.additionalLifeCost() > 0 && payLifeAskingDeathReplacementsFirst(
-                            gameData, player, ability, ability.additionalLifeCost())) {
-                        return;
-                    }
-                    cost.payResolutionCost(pool);
-                    ActionEvents.taxPaid(
-                            gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
-                }
-            }
             markOncePerTurnTriggerOnAcceptance(gameData, ability);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));

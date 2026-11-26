@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.MorticianBeetle;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.t.TeekasDragon;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.cards.w.WallOfRoots;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
@@ -29,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Enfeeblement.class, PhyrexianDreadnought.class, JungleWurm.class,
         RayOfCommand.class, TeekasDragon.class, ViashinoWarrior.class,
-        WallOfRoots.class, ZhalfirinKnight.class, MorticianBeetle.class})
+        WallOfRoots.class, ZhalfirinKnight.class, MorticianBeetle.class, Unsummon.class})
 class PhyrexianDreadnoughtTest extends BaseCardTest {
 
     private void castDreadnought() {
@@ -46,6 +47,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
                 new ControllerCantSacrificeTargetThisTurnEffect(), wurm.getId(), Duration.UNTIL_END_OF_TURN));
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -59,8 +61,8 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JungleWurm());
         castDreadnought();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Phyrexian Dreadnought");
@@ -76,6 +78,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZhalfirinKnight());
         harness.addToBattlefield(player1, new ZhalfirinKnight());
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(
@@ -98,8 +101,8 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZhalfirinKnight());
         castDreadnought();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Phyrexian Dreadnought");
         assertThat(countPermanents(player1, "Teeka's Dragon")).isEqualTo(2);
@@ -113,6 +116,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TeekasDragon());
         harness.addToBattlefield(player1, new ZhalfirinKnight());
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent dragon = findPermanents(player1, "Teeka's Dragon").getFirst();
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(dragon.getId())))
@@ -131,6 +135,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JungleWurm());
         harness.addToBattlefield(player1, new ViashinoWarrior());
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(
@@ -158,6 +163,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(
@@ -187,6 +193,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(
                 wall.getId(),
@@ -226,6 +233,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
     @DisplayName("Dreadnought alone is a legal twelve-power sacrifice payment")
     void canChooseDreadnoughtAsTheOnlySacrifice() {
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(
@@ -242,6 +250,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JungleWurm());
         harness.addToBattlefield(player1, new ZhalfirinKnight());
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(
                 harness.getPermanentId(player1, "Phyrexian Dreadnought"),
@@ -270,6 +279,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, dreadnought.getId());
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(
                 harness.getPermanentId(player1, "Teeka's Dragon"),
@@ -290,6 +300,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JungleWurm());
         harness.addToBattlefield(player1, new ViashinoWarrior());
         castDreadnought();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(
@@ -316,7 +327,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZhalfirinKnight());
         castDreadnought();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
@@ -330,5 +341,36 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Zhalfirin Knight");
         harness.assertNotOnBattlefield(player2, "Zombie");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With Phyrexian Dreadnought gone before its trigger resolves, the creatures may still be sacrificed (ruling)")
+    void creaturesMayStillBeSacrificedAfterDreadnoughtLeft() {
+        harness.addToBattlefield(player1, new TeekasDragon());
+        harness.addToBattlefield(player1, new JungleWurm());
+        harness.addToBattlefield(player1, new ZhalfirinKnight());
+        harness.castFromHand(player1, new PhyrexianDreadnought(), "{1}");
+        harness.passBothPriorities();
+
+        Permanent dreadnought = findPermanent(player1, "Phyrexian Dreadnought");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, dreadnought.getId());
+        harness.assertInHand(player1, "Phyrexian Dreadnought");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(
+                harness.getPermanentId(player1, "Teeka's Dragon"),
+                harness.getPermanentId(player1, "Jungle Wurm"),
+                harness.getPermanentId(player1, "Zhalfirin Knight")));
+
+        harness.assertInGraveyard(player1, "Teeka's Dragon");
+        harness.assertInGraveyard(player1, "Jungle Wurm");
+        harness.assertInGraveyard(player1, "Zhalfirin Knight");
+        harness.assertInHand(player1, "Phyrexian Dreadnought");
     }
 }

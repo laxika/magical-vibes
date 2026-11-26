@@ -1284,13 +1284,8 @@ public class GameData {
     public final LifeBidState lifeBid = new LifeBidState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
     public final TormentState torment = new TormentState();
-    /** Progress state for Indulgent Tormentor's target-opponent choice. */
-    public final IndulgentTormentorState indulgentTormentor = new IndulgentTormentorState();
     /** Progress state for Forbidden Ritual's "sacrifice nontoken; opponent loses life unless…" loop. */
     public final ForbiddenRitualState forbiddenRitual = new ForbiddenRitualState();
-    /** Progress state for each-player discard-or-sacrifice effects such as Possessed Portal. */
-    public final EachPlayerSacrificeOrDiscardState eachPlayerSacrificeOrDiscard =
-            new EachPlayerSacrificeOrDiscardState();
     /** Progress state for each-player sacrifice-or-life-loss effects. */
     public final EachPlayerSacrificeOrLoseLifeState eachPlayerSacrificeOrLoseLife =
             new EachPlayerSacrificeOrLoseLifeState();
@@ -9992,20 +9987,11 @@ public class GameData {
         copy.torment.totalPasses = this.torment.totalPasses;
         copy.torment.chosenSacrifices.addAll(this.torment.chosenSacrifices);
         copy.torment.lifeLossCounts.putAll(this.torment.lifeLossCounts);
-        copy.indulgentTormentor.active = this.indulgentTormentor.active;
-        copy.indulgentTormentor.waitingForSacrifice = this.indulgentTormentor.waitingForSacrifice;
-        copy.indulgentTormentor.chosenMode = this.indulgentTormentor.chosenMode;
         copy.forbiddenRitual.active = this.forbiddenRitual.active;
         copy.forbiddenRitual.controllerSacrificed = this.forbiddenRitual.controllerSacrificed;
         copy.forbiddenRitual.lifeLoss = this.forbiddenRitual.lifeLoss;
         copy.forbiddenRitual.chosenMode = this.forbiddenRitual.chosenMode;
         copy.forbiddenRitual.repeatAccepted = this.forbiddenRitual.repeatAccepted;
-        copy.eachPlayerSacrificeOrDiscard.active = this.eachPlayerSacrificeOrDiscard.active;
-        copy.eachPlayerSacrificeOrDiscard.remaining.addAll(this.eachPlayerSacrificeOrDiscard.remaining);
-        copy.eachPlayerSacrificeOrDiscard.currentPlayerId = this.eachPlayerSacrificeOrDiscard.currentPlayerId;
-        copy.eachPlayerSacrificeOrDiscard.chosenMode = this.eachPlayerSacrificeOrDiscard.chosenMode;
-        copy.eachPlayerSacrificeOrDiscard.deferSacrifices = this.eachPlayerSacrificeOrDiscard.deferSacrifices;
-        copy.eachPlayerSacrificeOrDiscard.chosenSacrifices.addAll(this.eachPlayerSacrificeOrDiscard.chosenSacrifices);
         copy.eachPlayerSacrificeOrLoseLife.active = this.eachPlayerSacrificeOrLoseLife.active;
         copy.eachPlayerSacrificeOrLoseLife.remaining.addAll(this.eachPlayerSacrificeOrLoseLife.remaining);
         copy.eachPlayerSacrificeOrLoseLife.currentPlayerId = this.eachPlayerSacrificeOrLoseLife.currentPlayerId;

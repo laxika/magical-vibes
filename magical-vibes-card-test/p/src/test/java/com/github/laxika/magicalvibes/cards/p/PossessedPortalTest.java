@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.cards.s.StaffOfDomination;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -49,8 +48,7 @@ class PossessedPortalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.handleListChoice(player1,
-                ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Possessed Portal");
@@ -73,7 +71,7 @@ class PossessedPortalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, staff.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(staff.getId()));
 
         harness.assertOnBattlefield(player1, "Possessed Portal");
         harness.assertNotOnBattlefield(player1, "Staff of Domination");
@@ -124,7 +122,7 @@ class PossessedPortalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, sacrificedStaff.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificedStaff.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(keptStaff)
@@ -143,8 +141,7 @@ class PossessedPortalTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
-        harness.handleListChoice(player1,
-                ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInHand(player1, "Staff of Domination");
         harness.assertNotInGraveyard(player1, "Staff of Domination");
@@ -166,11 +163,11 @@ class PossessedPortalTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, firstStaff.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstStaff.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstStaff);
         harness.assertNotInGraveyard(player1, "Staff of Domination");
-        harness.handlePermanentChosen(player2, secondStaff.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondStaff.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstStaff);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondStaff);
@@ -229,8 +226,7 @@ class PossessedPortalTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
-        harness.handleListChoice(player1,
-                ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Possessed Portal");
         harness.assertInGraveyard(player1, "Possessed Portal");

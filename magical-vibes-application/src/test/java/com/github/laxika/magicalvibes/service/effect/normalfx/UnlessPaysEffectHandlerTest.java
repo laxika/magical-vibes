@@ -348,4 +348,78 @@ class UnlessPaysEffectHandlerTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> UnlessPaysEffect.youMayPay("{1}",
                 new DrawCardEffect(1)).payingTogether()).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("Each payer's own branch: after the last answer the players who chose to pay are the accepted players (CR 101.4)")
+    void eachUnlessRecordsWhoPaid() {
+        gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+        gd.playerManaPools.put(player2Id, new ManaPool());
+        gd.playerManaPools.get(player2Id).add(ManaColor.COLORLESS, 2);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        UnlessPaysEffect effect = UnlessPaysEffect.eachUnless(Subjects.eachPlayer(), new PayManaCost("{2}"),
+                players -> new com.github.laxika.magicalvibes.model.effect.LoseLifeEffect(1, players));
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer()))
+                .thenReturn(List.of(player1Id, player2Id));
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player1Id, "Player1"), true, gd.pendingMayAbilities.removeFirst(), effect);
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player2Id, "Player2"), false, gd.pendingMayAbilities.removeFirst(), effect);
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.PAID);
+        assertThat(entry.getAcceptedPlayerIds()).containsExactly(player1Id);
+        assertThat(effect.ifPaid()).isEqualTo(new com.github.laxika.magicalvibes.model.effect.LoseLifeEffect(1,
+                Subjects.except(Subjects.eachPlayer(), Subjects.acceptedPlayers())));
+        assertThat(effect.ifNotPaid()).isEqualTo(
+                new com.github.laxika.magicalvibes.model.effect.LoseLifeEffect(1, Subjects.eachPlayer()));
+    }
+
+    @Test
+    @DisplayName("\"{G} for each wind counter\" reads as that many {G}, and as {0} with none")
+    void manaPerAmountReadsAsThatManySymbols() {
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessYouPay(
+                PayManaCost.perAmount("{G}", new CountersOnSource(CounterType.WIND)), new SacrificeSelfEffect());
+        StackEntry entry = counterEntry(effect);
+        when(amountEvaluationService.evaluate(eq(gd), eq(new CountersOnSource(CounterType.WIND)), any()))
+                .thenReturn(3, 0);
+
+        assertThat(handler.ransom(gd, entry, effect).manaCost()).isEqualTo("{G}{G}{G}");
+        assertThat(handler.ransom(gd, entry, effect).manaCost()).isEqualTo("{0}");
+    }
+
+    @Test
+    @DisplayName("The return, put-on-top, land-drop and total-power ransoms ask in their own words")
+    void otherRansomsAskInTheirOwnWords() {
+        StackEntry entry = counterEntry(UnlessPaysEffect.counterUnlessPays(1));
+        java.util.function.Function<com.github.laxika.magicalvibes.model.effect.CostEffect, String> action =
+                cost -> handler.ransom(gd, entry, UnlessPaysEffect.unlessYouPay(cost, new SacrificeSelfEffect()))
+                        .action();
+
+        assertThat(action.apply(com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost.youControl(
+                new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate(),
+                "artifact you control"))).isEqualTo("Return an artifact you control to its owner's hand");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost()))
+                .isEqualTo("Put a card from your hand on top of your library");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.LandDropCost())).isEqualTo("Pay {D}");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost(12)))
+                .isEqualTo("Sacrifice creatures with total power 12 or greater");
+    }
+
+    @Test
+    @DisplayName("A payer that is the effect's target declares it when no branch targets (\"unless target opponent pays\")")
+    void payerTargetIsDeclaredWhenNoBranchTargets() {
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessPaysLife(Subjects.targetPlayer(), 3, new DrawCardEffect(1));
+
+        assertThat(effect.targetSpec()).isEqualTo(com.github.laxika.magicalvibes.model.effect.TargetSpec.harmful(
+                com.github.laxika.magicalvibes.model.effect.TargetPredicates.player()));
+        assertThat(UnlessPaysEffect.unlessPaysLife(Subjects.you(), 3, new DrawCardEffect(1)).targetSpec())
+                .isEqualTo(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE);
+    }
 }

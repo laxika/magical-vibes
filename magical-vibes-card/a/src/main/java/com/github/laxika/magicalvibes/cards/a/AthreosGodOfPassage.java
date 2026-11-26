@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -39,6 +40,7 @@ public class AthreosGodOfPassage extends Card {
                                 Triggers.CREATURE,
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                         ObjectRelation.YOU_OWN),
-                new ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect(3));
+                UnlessPaysEffect.unlessPaysLife(Subjects.targetPlayer(), 3,
+                        new PutCardsIntoHandEffect(Subjects.triggeringCards())));
     }
 }

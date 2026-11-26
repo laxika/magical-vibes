@@ -50,6 +50,14 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.LandDropCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -135,6 +143,16 @@ import org.springframework.stereotype.Component;
  *   time (CR 601.2h).</li>
  *   <li>{@link SourceControllerDrawsCost}: the source's controller draws (the draw action, its replacements); always
  *   payable.</li>
+ *   <li>{@link ReturnPermanentToHandCost}: a matching permanent the payer controls (any player's when the cost says
+ *   so), judged by its current characteristics from the entry's source ("another"), chosen and returned to its
+ *   owner's hand.</li>
+ *   <li>{@link PutCardFromHandOnTopOfLibraryCost}: a card the payer chooses from their hand, put on top of their
+ *   library; payable while their hand isn't empty.</li>
+ *   <li>{@link LandDropCost} ({D}): one of the payer's land drops this turn, payable only on their own turn while
+ *   they have a land drop left.</li>
+ *   <li>{@link SacrificeCreaturesWithTotalPowerCost}: any number of the payer's creatures they could sacrifice, whose
+ *   total power reaches the amount, chosen together and sacrificed together with their death replacements asked
+ *   first (CR 616.1).</li>
  * </ul>
  * A sacrifice is offered only the permanents the payer could sacrifice for that effect (CR 608.2d, 701.21a): none while
  * an effect of an opponent can't make them sacrifice (Sigarda, Host of Herons: "you can't take that option"), never one
@@ -258,6 +276,9 @@ public class ResolutionCostPaymentService {
     @Autowired
     @Lazy
     private SubjectResolutionService subjectResolutionService;
+    @Autowired
+    @Lazy
+    private InteractionHandlerRegistry interactionHandlerRegistry;
 
     public ResolutionCostPaymentService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
@@ -305,6 +326,11 @@ public class ResolutionCostPaymentService {
                     .size() >= tapCount(gameData, tap, entry);
             case ExileCardsCost exile -> !cardsToExile(gameData, entry, exile).isEmpty();
             case SourceControllerDrawsCost ignored -> true;
+            case ReturnPermanentToHandCost toHand -> !returnCandidates(gameData, payerId, toHand, entry).isEmpty();
+            case PutCardFromHandOnTopOfLibraryCost ignored -> handSize(gameData, payerId) >= 1;
+            case LandDropCost ignored -> hasLandDropLeft(gameData, payerId);
+            case SacrificeCreaturesWithTotalPowerCost power ->
+                    reachablePower(gameData, powerCandidates(gameData, payerId, entry)) >= power.totalPower();
             case AnyOfCost anyOf -> anyOf.alternatives().stream()
                     .anyMatch(alternative -> canPay(gameData, payerId, alternative, sourceCard, entry));
             case AllOfCost allOf -> allOf.parts().stream()
@@ -643,6 +669,47 @@ public class ResolutionCostPaymentService {
                 }
                 yield afterImmediatePayment(gameData);
             }
+            case ReturnPermanentToHandCost toHand -> {
+                List<UUID> candidates = returnCandidates(gameData, payerId, toHand, payment.entry());
+                if (candidates.isEmpty()) {
+                    yield Outcome.NOT_PAID;
+                }
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ResolutionCostPayment(
+                        toHand, payerId, payment.sourceCard(), payment.sourceControllerId()));
+                playerInputService.beginPermanentChoice(gameData, payerId, candidates, "Choose "
+                        + (toHand.description() == null ? "a permanent you control" : "a " + toHand.description())
+                        + " to return to its owner's hand.");
+                yield Outcome.ASKING;
+            }
+            case PutCardFromHandOnTopOfLibraryCost ignored -> {
+                List<Card> hand = gameData.playerHands.get(payerId);
+                if (hand == null || hand.isEmpty()) {
+                    yield Outcome.NOT_PAID;
+                }
+                List<Card> snapshot = List.copyOf(hand);
+                interactionHandlerRegistry.begin(gameData, PendingInteraction.PutCardsFromHandOnLibraryCardChoice
+                        .putOnLibrary(payerId, snapshot.stream().map(Card::getId).toList(), snapshot, 1,
+                                HandToLibraryPlacement.TOP));
+                yield Outcome.ASKING;
+            }
+            case LandDropCost ignored -> {
+                if (!hasLandDropLeft(gameData, payerId)) {
+                    yield Outcome.NOT_PAID;
+                }
+                gameData.landsPlayedThisTurn.merge(payerId, 1, Integer::sum);
+                yield Outcome.PAID;
+            }
+            case SacrificeCreaturesWithTotalPowerCost power -> {
+                List<UUID> candidates = powerCandidates(gameData, payerId, payment.entry());
+                if (reachablePower(gameData, candidates) < power.totalPower()) {
+                    yield Outcome.NOT_PAID;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, candidates.size(),
+                        new MultiPermanentChoiceContext.ResolutionCostPayment(power, payerId, payment.sourceCard(),
+                                payment.sourceControllerId(), 1),
+                        "Choose creatures with total power " + power.totalPower() + " or greater to sacrifice.");
+                yield Outcome.ASKING;
+            }
             case AllOfCost ignored -> throw new IllegalArgumentException(
                     "An all-of cost is paid one part at a time, after canPayNow: " + cost);
             default -> throw new IllegalArgumentException("No resolution-time payment for " + cost);
@@ -802,6 +869,10 @@ public class ResolutionCostPaymentService {
             completeTapPick(gameData, payerId, permanentId, context, tap);
             return;
         }
+        if (context.cost() instanceof ReturnPermanentToHandCost toHand) {
+            completeReturnToHand(gameData, payerId, permanentId, toHand);
+            return;
+        }
         if (!(context.cost() instanceof PutCounterOnControlledCreatureCost blight)) {
             throw new IllegalStateException("No permanent choice pays " + context.cost());
         }
@@ -813,6 +884,19 @@ public class ResolutionCostPaymentService {
                 ? gameData.pendingEffectResolutionEntry : new StackEntry(context.sourceCard(), payerId);
         permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData, entry, creature,
                 CounterType.MINUS_ONE_MINUS_ONE, blight.count(), payerId);
+    }
+
+    /** The payer returns the permanent they chose to its owner's hand (a {@link ReturnPermanentToHandCost} ransom). */
+    private void completeReturnToHand(GameData gameData, UUID payerId, UUID permanentId,
+                                      ReturnPermanentToHandCost toHand) {
+        if (!returnCandidates(gameData, payerId, toHand, gameData.pendingEffectResolutionEntry).contains(permanentId)) {
+            throw new IllegalStateException("That permanent can't be returned for this cost");
+        }
+        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+        if (permanentRemovalService.removePermanentToHand(gameData, chosen)) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(chosen.getCard(), " is returned to its owner's hand."));
+        }
     }
 
     /**
@@ -865,6 +949,20 @@ public class ResolutionCostPaymentService {
                     throw new IllegalStateException("A selected permanent can't be sacrificed for this cost");
                 }
             }
+            case SacrificeCreaturesWithTotalPowerCost power -> {
+                List<UUID> candidates = powerCandidates(gameData, playerId, gameData.pendingEffectResolutionEntry);
+                if (!candidates.containsAll(permanentIds)) {
+                    throw new IllegalStateException("A selected creature can't be sacrificed for this cost");
+                }
+                int total = permanentIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                        .sum();
+                if (total < power.totalPower()) {
+                    // Not a partial payment: the selection reaches the total or it isn't one (CR 118.3).
+                    throw new IllegalStateException("Selected creatures have total power below " + power.totalPower());
+                }
+            }
             case WaterbendCost waterbend -> {
                 if (permanentIds.size() < context.minimum() || permanentIds.size() > waterbend.amount()) {
                     throw new IllegalStateException("Must tap at least " + context.minimum()
@@ -896,10 +994,62 @@ public class ResolutionCostPaymentService {
                 }
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
+            case SacrificeCreaturesWithTotalPowerCost ignored -> {
+                List<UUID> chosen = permanentIds.stream()
+                        .filter(id -> gameQueryService.findPermanentById(gameData, id) != null
+                                && playerId.equals(gameQueryService.findPermanentController(gameData, id)))
+                        .toList();
+                // The chosen creatures are sacrificed at the same time (one event, CR 603.10a).
+                destructionSupport.performSimultaneousSacrifice(gameData, chosen);
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
             case WaterbendCost waterbend -> payWaterbend(gameData, playerId, waterbend, context.sourceCard(),
                     context.sourceControllerId(), permanentIds);
             default -> throw new IllegalStateException("No multi-permanent choice pays " + context.cost());
         }
+    }
+
+    /**
+     * The permanents {@code payerId} could return for {@code toHand}: their own matching ones (any player's when the
+     * cost says so), judged by current characteristics from the entry's source, so "another" leaves the source out;
+     * never one that can't be chosen.
+     */
+    private List<UUID> returnCandidates(GameData gameData, UUID payerId, ReturnPermanentToHandCost toHand,
+                                        StackEntry entry) {
+        FilterContext context = filterContext(gameData, entry);
+        List<Permanent> permanents = new ArrayList<>();
+        if (toHand.anyController()) {
+            gameData.playerBattlefields.values().forEach(permanents::addAll);
+        } else {
+            permanents.addAll(gameData.playerBattlefields.getOrDefault(payerId, List.of()));
+        }
+        return permanents.stream()
+                .filter(permanent -> toHand.filter() == null || (context == null
+                        ? predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, toHand.filter())
+                        : predicateEvaluationService.matchesPermanentPredicate(permanent, toHand.filter(), context)))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+    }
+
+    /** The creatures {@code payerId} could sacrifice for a total-power ransom (CR 608.2d, 701.21a). */
+    private List<UUID> powerCandidates(GameData gameData, UUID payerId, StackEntry entry) {
+        return sacrificeCandidates(gameData, payerId, new PermanentIsCreaturePredicate(), false, entry);
+    }
+
+    /** The greatest total power a choice among {@code candidates} can have: every positive power. */
+    private int reachablePower(GameData gameData, List<UUID> candidates) {
+        return candidates.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .mapToInt(permanent -> Math.max(0, gameQueryService.getEffectivePower(gameData, permanent)))
+                .sum();
+    }
+
+    /** Whether {@code playerId} could give up a land drop now ({D}): on their own turn, with one left. */
+    private boolean hasLandDropLeft(GameData gameData, UUID playerId) {
+        return playerId.equals(gameData.activePlayerId)
+                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
+                < gameQueryService.getMaxLandsThisTurn(gameData, playerId);
     }
 
     /**
@@ -1010,7 +1160,8 @@ public class ResolutionCostPaymentService {
 
     /** {@code mana}'s cost as a {@link ManaCost}, or {@code null} for a life-only payment. */
     public static ManaCost manaCostOf(PayManaCost mana) {
-        if (mana.genericReduction() != null || mana.genericIncrease() != null || mana.useSourceManaCost()) {
+        if (mana.genericReduction() != null || mana.genericIncrease() != null || mana.useSourceManaCost()
+                || mana.timesPaid() != null) {
             throw new IllegalArgumentException("Read the mana cost before paying it: " + mana);
         }
         if (mana.manaCost() == null || mana.manaCost().isEmpty()) {

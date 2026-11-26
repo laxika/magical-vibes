@@ -8,7 +8,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -35,8 +42,13 @@ public class Overencumbered extends Card {
                                 .withSimultaneousTokens(List.of(
                                         CreateTokenEffect.ofFoodToken(1),
                                         junkToken()))));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
-                new MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect());
+        // At the beginning of combat on enchanted opponent's turn, that player may pay {1} for each artifact they
+        // control. If they don't, creatures can't attack this combat. (It is their turn: the active player's artifacts.)
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ENCHANTED_PLAYER), UnlessPaysEffect.unlessPays(
+                Subjects.enchantedPlayer(),
+                PayManaCost.withGenericIncrease("{0}",
+                        new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.ACTIVE_PLAYER)),
+                new CantAttackThisTurnEffect(Subjects.allCreatures(), Duration.UNTIL_END_OF_COMBAT)));
     }
 
     private static CreateTokenEffect junkToken() {

@@ -525,14 +525,6 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Must select exactly "
                     + culturalExchange.firstChosenIds().size() + " creatures");
         }
-        if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource powerCtx
-                && !permanentIds.isEmpty()
-                && totalEffectivePower(gameData, permanentIds) < powerCtx.requiredPower()) {
-            // Not a partial cost: the set either reaches the threshold or is not a legal choice,
-            // so leave the prompt standing rather than sacrificing creatures for nothing.
-            throw new IllegalStateException("Selected creatures have total power below "
-                    + powerCtx.requiredPower());
-        }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice powerCtx
                 && totalPower(gameData, permanentIds) > powerCtx.maxPower()) {
             throw new IllegalStateException("Selected creatures have total power above " + powerCtx.maxPower());
@@ -1550,9 +1542,8 @@ public class MultiPermanentChoiceHandlerService {
      * batch, asking both before either leaves; Worms of the Earth itself is destroyed after, as a step of its own.
      * The "choose, then remove the chosen" contexts only read their picks before one batch:
      * {@link MultiPermanentChoiceContext.ForcedDestroy} destroys, and
-     * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} and
-     * {@link MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource} sacrifice, with their
-     * draws, "if you do" effect, mana or recorded count only after.
+     * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} sacrifices, with its draws, "if you do"
+     * effect, mana or recorded count only after.
      * {@link MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice} keeps the kept
      * creatures so far in the immutable context and only prompts the next player before it sacrifices the rest. The as-enters sacrifices
      * ({@link MultiPermanentChoiceContext.DevourSacrifice},
@@ -1588,11 +1579,11 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice
                 || context instanceof MultiPermanentChoiceContext.ResolutionCostPayment payment
-                        && payment.cost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost
+                        && (payment.cost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost
+                        || payment.cost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost)
                 || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
-                || context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice
                 || context instanceof MultiPermanentChoiceContext.DevourSacrifice
                 || context instanceof MultiPermanentChoiceContext.SacrificeAsEntersForCounters
@@ -1769,10 +1760,6 @@ public class MultiPermanentChoiceHandlerService {
                 handleSacrificeAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
                 return;
             }
-            case MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource ctx -> {
-                handleSacrificeCreaturesWithTotalPowerOrSacrificeSource(gameData, playerId, permanentIds, ctx);
-                return;
-            }
             case MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice ctx -> {
                 handlePowerLimitedCreatureChoice(gameData, permanentIds, ctx);
                 return;
@@ -1941,17 +1928,6 @@ public class MultiPermanentChoiceHandlerService {
                 .count();
     }
 
-    private int totalEffectivePower(GameData gameData, List<UUID> permanentIds) {
-        int total = 0;
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                total += gameQueryService.getEffectivePower(gameData, perm);
-            }
-        }
-        return total;
-    }
-
     private int totalPower(GameData gameData, List<UUID> permanentIds) {
         int total = 0;
         for (UUID permId : permanentIds) {
@@ -1985,28 +1961,6 @@ public class MultiPermanentChoiceHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Phyrexian Dreadnought: an empty selection means the controller declined, so the source is
-     * sacrificed. Otherwise the chosen creatures are sacrificed (their total power was validated
-     * against the threshold before the interaction was cleared) and the source survives.
-     */
-    private void handleSacrificeCreaturesWithTotalPowerOrSacrificeSource(GameData gameData, UUID playerId,
-            List<UUID> permanentIds,
-            MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource context) {
-        if (permanentIds.isEmpty()) {
-            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-            // CR 701.21a: a permanent its controller no longer controls can't be sacrificed by this player.
-            if (source != null && playerId.equals(gameQueryService.findPermanentController(gameData, source.getId()))) {
-                destructionSupport.sacrificeAndLog(gameData, source, playerId);
-            }
-        } else {
-            destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
-        }
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleDestroyRestChoice(GameData gameData, List<UUID> permanentIds,

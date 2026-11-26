@@ -35,12 +35,28 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * @param announcedX           whether the cost is {X}, the announced X
  * @param useTriggeringSpellManaCost whether the cost is the mana cost of the spell that caused the trigger, read as it
  *                             resolves ({@link #ofTriggeringSpell()})
+ * @param timesPaid            how many times {@code manaCost} is paid, read as the effect resolves ("{G} for each wind
+ *                             counter on it": {@link #perAmount}), or {@code null} for once
  */
 public record PayManaCost(
         String manaCost, DynamicAmount genericReduction, DynamicAmount genericIncrease,
         boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost, boolean announcedX,
-        boolean useTriggeringSpellManaCost)
+        boolean useTriggeringSpellManaCost, DynamicAmount timesPaid)
         implements CostEffect {
+
+    public PayManaCost {
+        if (timesPaid != null && (genericReduction != null || genericIncrease != null || useSourceManaCost
+                || announcedX || useTriggeringSpellManaCost || lifeAmount != 0)) {
+            throw new IllegalArgumentException("A cost paid once for each of an amount has nothing else to read");
+        }
+    }
+
+    public PayManaCost(String manaCost, DynamicAmount genericReduction, DynamicAmount genericIncrease,
+                       boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost, boolean announcedX,
+                       boolean useTriggeringSpellManaCost) {
+        this(manaCost, genericReduction, genericIncrease, forCumulativeUpkeep, lifeAmount, useSourceManaCost,
+                announcedX, useTriggeringSpellManaCost, null);
+    }
 
     public PayManaCost(String manaCost, DynamicAmount genericReduction, DynamicAmount genericIncrease,
                        boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost, boolean announcedX) {
@@ -92,6 +108,15 @@ public record PayManaCost(
      */
     public static PayManaCost ofTriggeringSpell() {
         return new PayManaCost(null, null, null, false, 0, false, false, true);
+    }
+
+    /**
+     * "Pay {@code symbols} for each …": {@code symbols} ("{G}") paid {@code amount} times, the amount read as the effect
+     * resolves ("unless you pay {G} for each wind counter on it", Cyclone); {0} when the amount is 0.
+     */
+    public static PayManaCost perAmount(String symbols, DynamicAmount amount) {
+        return new PayManaCost(symbols, null, null, false, 0, false, false, false,
+                java.util.Objects.requireNonNull(amount, "amount"));
     }
 
     @Override

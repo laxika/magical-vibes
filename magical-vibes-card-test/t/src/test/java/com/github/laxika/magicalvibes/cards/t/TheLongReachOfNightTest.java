@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BearerOfMemory;
 import com.github.laxika.magicalvibes.cards.v.VoltageSurge;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,8 +38,8 @@ class TheLongReachOfNightTest extends BaseCardTest {
 
         advanceToNextChapter();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player2, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player2, "Bearer of Memory");
@@ -98,8 +102,8 @@ class TheLongReachOfNightTest extends BaseCardTest {
 
         advanceToNextChapter();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player2, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInHand(player2, "Forest");
         harness.assertNotInGraveyard(player2, "Forest");
@@ -219,6 +223,49 @@ class TheLongReachOfNightTest extends BaseCardTest {
 
         assertThat(first.isBlocking()).isTrue();
         assertThat(second.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Every opponent chooses first, then those who didn't discard sacrifice together (CR 101.4)")
+    void opponentsWhoDidNotDiscardSacrificeTogetherAfterTheLastAnswer() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new BearerOfMemory());
+        harness.addToBattlefield(player3, new BearerOfMemory());
+        harness.setHand(player2, List.of(new VoltageSurge()));
+        harness.setHand(player3, List.of(new VoltageSurge()));
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertOnBattlefield(player2, "Bearer of Memory");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, false);
+
+        harness.assertInGraveyard(player2, "Bearer of Memory");
+        harness.assertInGraveyard(player3, "Bearer of Memory");
+        harness.assertInHand(player2, "Voltage Surge");
+        harness.assertInHand(player3, "Voltage Surge");
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

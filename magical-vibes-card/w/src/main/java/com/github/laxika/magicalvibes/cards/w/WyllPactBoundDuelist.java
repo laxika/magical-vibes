@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsUnlessTargetPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -105,7 +106,8 @@ public class WyllPactBoundDuelist extends Card {
                     new CardAnyOfPredicate(List.of(
                             new CardTypePredicate(CardType.INSTANT),
                             new CardTypePredicate(CardType.SORCERY))));
-            case BLACK -> new DrawCardsUnlessTargetPaysLifeEffect(3, 5);
+            case BLACK -> UnlessPaysEffect.unlessPaysLife(Subjects.targetPlayer(), 5, new DrawCardEffect(3))
+                    .withPrompt("Pay 5 life to prevent drawing?");
             case RED -> SequenceEffect.of(
                     new UntapPermanentsEffect(Subjects.source()),
                     new AdditionalCombatMainPhaseEffect(1));

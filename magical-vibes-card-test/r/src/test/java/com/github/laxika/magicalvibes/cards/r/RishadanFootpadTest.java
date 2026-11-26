@@ -35,6 +35,7 @@ class RishadanFootpadTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent who declines sacrifices a permanent of their choice")
     void opponentDeclinesAndSacrificesPermanent() {
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new FreshVolunteers());
         castRishadanFootpad();
 
@@ -62,6 +63,7 @@ class RishadanFootpadTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent chooses which permanent to sacrifice")
     void opponentChoosesWhichPermanentToSacrifice() {
+        giveManaSource(player2);
         Permanent first = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         castRishadanFootpad();

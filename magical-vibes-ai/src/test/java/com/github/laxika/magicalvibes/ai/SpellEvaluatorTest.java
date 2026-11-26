@@ -1645,4 +1645,26 @@ class SpellEvaluatorTest {
         card.setSupertypes(Set.of(CardSupertype.LEGENDARY));
         return card;
     }
+
+    @Test
+    @DisplayName("A return, put-on-top or land-drop ransom is never priced as free, and an unreachable total power is never paid")
+    void otherRansomsAreNotFree() {
+        harness.addToBattlefield(player2, new DarksteelAxe());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThat(spellEvaluator.ransomCost(gd, com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost
+                .youControl(new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate(),
+                        "artifact you control"), player2.getId())).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd,
+                new com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost(), player2.getId()))
+                .isPositive();
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.LandDropCost(),
+                player2.getId())).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd,
+                new com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost(12),
+                player2.getId())).isInfinite();
+        assertThat(spellEvaluator.ransomCost(gd,
+                new com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost(2),
+                player2.getId())).isPositive().isFinite();
+    }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.a.AssaultSuit;
 import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +28,7 @@ class IndulgentTormentorTest extends BaseCardTest {
         addCreatureReady(player1, new IndulgentTormentor());
 
         resolveTormentorTrigger();
-        harness.handleListChoice(player2, ChoiceContext.IndulgentTormentorChoice.DRAW);
+        payUnlessAlternative(player2, null);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -45,7 +44,7 @@ class IndulgentTormentorTest extends BaseCardTest {
         addCreatureReady(player1, new IndulgentTormentor());
 
         resolveTormentorTrigger();
-        harness.handleListChoice(player2, ChoiceContext.IndulgentTormentorChoice.payLife(3));
+        payUnlessAlternative(player2, "Pay 3 life");
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -62,7 +61,7 @@ class IndulgentTormentorTest extends BaseCardTest {
         addCreatureReady(player1, new IndulgentTormentor());
 
         resolveTormentorTrigger();
-        harness.handleListChoice(player2, ChoiceContext.IndulgentTormentorChoice.SACRIFICE);
+        payUnlessAlternative(player2, "Sacrifice");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class))
                 .isNotNull();
@@ -91,16 +90,17 @@ class IndulgentTormentorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A sole creature is sacrificed without a second choice")
+    @DisplayName("Sacrificing a sole creature keeps the controller from drawing")
     void opponentSacrificesOnlyCreature() {
         Forest forest = new Forest();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(forest));
-        addCreatureReady(player2, new RuneclawBear());
+        Permanent bear = addCreatureReady(player2, new RuneclawBear());
         addCreatureReady(player1, new IndulgentTormentor());
 
         resolveTormentorTrigger();
-        harness.handleListChoice(player2, ChoiceContext.IndulgentTormentorChoice.SACRIFICE);
+        payUnlessAlternative(player2, "Sacrifice");
+        harness.handlePermanentChosen(player2, bear.getId());
 
         harness.assertInGraveyard(player2, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player2, "Runeclaw Bear");

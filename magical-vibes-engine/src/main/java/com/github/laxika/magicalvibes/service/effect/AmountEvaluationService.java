@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.PlayerCount;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
@@ -361,6 +362,10 @@ public class AmountEvaluationService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
     private final ConditionEvaluationService conditionEvaluationService;
+    /** Resolves the players a {@link PlayerCount} counts; absent where this service is built by hand. */
+    @Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
+    private SubjectResolutionService subjectResolutionService;
 
     private static final List<CardSubtype> PARTY_ROLES = List.of(
             CardSubtype.CLERIC, CardSubtype.ROGUE, CardSubtype.WARRIOR, CardSubtype.WIZARD);
@@ -568,6 +573,8 @@ public class AmountEvaluationService {
                     countPlayersWithCardsInHandAtLeast(gameData, a, ctx);
             case PlayersInGame ignored ->
                     gameData.orderedPlayerIds.size();
+            case PlayerCount count -> ctx.stackEntry() == null || subjectResolutionService == null ? 0
+                    : subjectResolutionService.players(gameData, ctx.stackEntry(), null, count.players()).size();
             case PlayersWhoLostGame ignored ->
                     gameData.playersWhoLostGameThisMatch.size();
             case TotalCountersAmongPlayersAndPermanents ignored ->

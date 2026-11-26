@@ -31,7 +31,7 @@ Owner: `ResolutionCostPaymentService`.
 Why: hand-rolled payments forgot the tax-paid event (Tax Taker), judged life by "can the life total change" (CR 119.8) and countered on a paid cost's shortfall (CR 118.12).
 
 ### An "unless" payer's choice is kept on the resolving entry (CR 118.12, 101.4)
-Every player the payer subject names is asked in APNAP order, every one even after another paid; the answers, the players left and an all-of ransom's parts still to pay live on the waiting entry (`StackEntry.unlessAnswer`), and `UnlessPaysEffectHandler.nextStep` picks the branch once nobody is left.
+Every player the payer subject names is asked in APNAP order, every one even after another paid; the answers, the players left and an all-of ransom's parts still to pay live on the waiting entry (`StackEntry.unlessAnswer`), and `UnlessPaysEffectHandler.nextStep` picks the branch once nobody is left, the players who chose to pay then the entry's accepted players (the branch for those who didn't, `UnlessPaysEffect.eachUnless`).
 Owner: `UnlessPaysEffectHandler`, `UnlessAnswer`.
 Why: a global flag could be taken by another question answered during the payment's own choice.
 

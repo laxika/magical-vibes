@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRiderForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -253,8 +252,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 || !sequence.steps().stream().allMatch(step -> riderStepHandler.resolvesAsStep(step)
                         || !(step instanceof MayEffect || step instanceof SequenceEffect
                         || step instanceof ConditionalEffect || step instanceof ConditionalReplacementEffect
-                        || step instanceof UnlessPaysEffect
-                        || step instanceof MayPayLandDropEffect))) {
+                        || step instanceof UnlessPaysEffect))) {
             return List.of();
         }
         return sequence.steps();

@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (210 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c and U3b1 (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` is gone). Next: "unless" runs U3b2, U4, U5, U6, U7; then the other verbs under Step-10 hand-offs |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1 and U3b2 (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone). Next: "unless" runs U4, U5, U6, U7; then the other verbs under Step-10 hand-offs |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,953 / 2,340 (after step 10 run U3b1) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,939 / 2,318 (after step 10 run U3b2) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -493,7 +493,7 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   idempotent for a Lich's Duel Mastery re-ask; `UnlessAnswer.askingAlternative` asks each payable alternative of an `AnyOfCost` in Oracle order;
   `anotherPlayerAlreadyPaid` is the AI's read (`AiDecisionEngine.anyPlayerManaPaymentAlreadyMade`). The chosen branch is put next
   (`spliceSequenceSteps`) and resolved through the loop, so a wrapper in it is judged as at the top level; `Card.bindEffectToTargetGroup`
-  binds both branches. The hard AI scores it as value(`ifPaid`) − value(`ifNotPaid`) for the payer (`SpellEvaluator`), a branch making the payer lose life or take damage (named by the payer's own subject) on the ransom's life scale, an any-of ransom priced by the alternative asked (U3b1). Card tests answer an any-of ransom with `BaseCardTest.payUnlessAlternative(payer, action)` (U3b1). Engine-built
+  binds both branches. The hard AI scores it as value(`ifPaid`) − value(`ifNotPaid`) for the payer (`SpellEvaluator`), a branch making the payer lose life or take damage (named by the payer's own subject) on the ransom's life scale, an any-of ransom priced by the alternative asked (U3b1). Card tests answer an any-of ransom with `BaseCardTest.payUnlessAlternative(payer, action)` (U3b1). U3b2: `eachUnless(payers, ransom, players -> X(players))` is "each of them [does X] unless they pay": every payer chooses, then X happens to those who didn't, together (CR 101.4), `UnlessAnswer.paidPlayerIds` being the entry's accepted players at the branch; a payer `targetPlayer()` declares the target when no branch does (harmful); ransoms `ReturnPermanentToHandCost.youControl` / `.anyPlayers`, `PutCardFromHandOnTopOfLibraryCost`, `LandDropCost`, `SacrificeCreaturesWithTotalPowerCost`, `PayManaCost.perAmount(symbols, amount)`; amount `PlayerCount(PlayerSubject)`. Engine-built
   "you may pay" steps insert an `UnlessPaysEffect`.
 - `ResolutionCostPaymentService` (`service/effect/cost`, D25): a cost a resolving effect asks any player for (CR 118.12, 118.12a). A new
   ransom kind is a case here. `couldPossiblyPay(gd, payerId, cost, sourceCard)` (takes the resolving entry) answers "no" only when it
@@ -721,7 +721,7 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
 |---|---|---|
 | First half prompts mid-step (`blocked-step-model`) | 140 | moving the handler onto the step model (`leave-battlefield-redesign.md` step 14) |
 | Each player chooses, then all act (`blocked-player-loop`) | 97 | a choose-then-act loop (not in this plan) |
-| Cost combinators, "unless", cost heads | fewer than 85 (about 85 before run U1) | step 10's "unless" runs U3c, U3b, U4, U5 (Step-10 hand-offs) |
+| Cost combinators, "unless", cost heads | fewer than 85 (about 85 before run U1) | step 10's "unless" runs U4, U5, U6, U7 (Step-10 hand-offs) |
 | A delayed trigger shape (end-of-combat, coin flip, the old delayed mechanism) | about 20 | the delayed-mechanism unification onto `RegisterDelayedStepTriggerEffect` / `RegisterDelayedEventTriggerEffect` |
 | Planar deck cards | 9 | a card subject for the planar deck with its reveal, bottom-order and planeswalk steps |
 | Next-draw replacement payloads (`DrawService`'s inline payloads) | about 20 | a "this draw was replaced" record in `DrawService` |
@@ -853,12 +853,7 @@ there and updates them when it lands.
 - **"Unless"** (owner's decisions 2026-11-25; the plan in the U1 Findings): `UnlessPaysEffect` covers the counter and retarget ransoms, every
   single-payer mana / life "may pay", the several-payer loop, `AllOfCost`, `ExileCardsCost`, Ice Cave, the Chain family and the tap and
   mana-and-sacrifice payments (runs U1 to U3b'), and the any-player non-mana payments with `.payingTogether()` (U3c; `MayPayManaEffect`
-  is gone), and 25 single-verb records with existing factories (U3b1). Left: **U3b2** (the plan's part 2,
-  `scratchpad/s10-unless/u3bb-plan.md`): the return-to-hand, put-on-top and land-drop ransoms, the payer-declared target (Athreos, Wyll,
-  Indulgent Tormentor), the per-payer branch `eachUnless` with `PlayerCount` (Rishadans, The Long Reach of Night, Possessed Portal,
-  Acererak), `SacrificeCreaturesWithTotalPowerCost`, Overencumbered (then `MayAbilityHandlerService`'s generic mana branch goes), Cyclone's
-  coloured per-counter mana, Lim-Dûl's Hex's card, and the Spinecrawler / Read the Runes / Dalek Emperor fixes: 15 records, 20 files;
-  **U6**, "for each [object] … unless" (Sirocco, Giant Albatross, Cut the Tethers, Cleansing, Stench of Evil with the Hex record, Fade
+  is gone), and 25 single-verb records with existing factories (U3b1), and 15 with the per-payer branch `eachUnless`, the payer-declared target and four new ransoms (U3b2; Lim-Dûl's Hex's card too; Lurking Spinecrawler, Read the Runes and The Dalek Emperor fixed). Left: **U6**, "for each [object] … unless" (Sirocco, Giant Albatross, Cut the Tethers, Cleansing, Stench of Evil with `EachPlayerTakesDamageUnlessPaysEffect` (Lim-Dûl's Hex's card is `eachUnless` now), Fade
   Away, Tidal Flats, Heroism, Sword-Point Diplomacy, Decoy Gambit, Killing Wave): a per-object iteration with the outcomes batched;
   **U7**, the `XOrY…Cost` records as a cast-time `AnyOfCost` (the `ForageCost` rename, the engine fold with the AI, the client chooser);
   U4, `ForcedCostOrElseEffect` (its else / paid effects as
@@ -870,7 +865,7 @@ there and updates them when it lands.
 - **Cost combinators beside `MayEffect`** (CR 118.12: their "if you do" is the choice to pay): `ForcedCostOrElseEffect` (158 cards; its
   fallback runs through a per-class list in `DestructionSupport.resolveForcedCostElseEffects` on a carrier entry, so a fallback not on
   the list, or one reading a step result, silently does nothing: Koya),
-  `PayPerCounterOrElseEffect` (Cyclone), May's 11 (owner's decisions; six went in U3b1),
+  May's 11 (owner's decisions; six went in U3b1, `MayPayLandDropEffect` and Overencumbered's in U3b2),
   `TargetPermanentControllerMaySacrificeOrDamageEffect` (Star Athlete, Enchanter's Bane), the cost pairs `Sacrifice*Cost`, `Exile*Cost`,
   `Return*ToHandCost`, `PutCounterOn*Cost`.
 - **Static restrictions**: `CantAttackUnlessEffect` (66), `CantBlockUnlessEffect` (28), `CantAttackOrBlockUnlessEffect` (25) and the three
@@ -1086,6 +1081,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U3b' (2026-11-25, `ef0278a44e`): the several-payer loop on `UnlessAnswer` (APNAP), `AllOfCost`, `ExileCardsCost`, five "may pay" records absorbed
 - Step 10, run U3c (2026-11-25, `11b14b7f88`): `UnlessPaysEffect.payingTogether()` absorbs `MayPayManaEffect` and `MayPayPayer` (19 cards); `SourceControllerDrawsCost`; the sacrifice-candidate guards
 - Step 10, run U3b1 (2026-11-26): 25 single-verb "unless" / "may pay" records (44 card files) onto `UnlessPaysEffect`'s existing factories; Erosion's, Arcum's Whistle's, Aether Rift's and Spelltithe Enforcer's payers fixed
+- Step 10, run U3b2 (2026-11-26): 15 single-verb records (24 card files) onto `UnlessPaysEffect` with `eachUnless`, the payer's target and four ransoms; Spinecrawler, Read the Runes, The Dalek Emperor, Overencumbered fixed
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -1698,6 +1694,52 @@ one-permanent sacrifice pick now reaches Vampire, Crovax, Indoraptor (cosmetic);
 case in `requirePayableAtResolution`, `UnlessPaysEffectHandler.ransom`, the service and `SpellEvaluator.ransomCost`), the payer-declared
 target, `eachUnless` + `PlayerCount`, `SacrificeCreaturesWithTotalPowerCost`, Overencumbered, Cyclone, the three rules fixes. Tests answer an
 any-of ransom with `payUnlessAlternative` and give a payer asked with an empty pool `giveManaSource`.
+
+### Step 10, run U3b2 ("unless": single-verb records) (2026-11-26)
+
+The plan's part 2 (`scratchpad/s10-unless/u3bb-plan.md`, surveys `u3bb/group-{B,C,D}.md`) with the orchestrator's U3b decisions (Q1 per-payer
+branch, Q2 the three fixes). Absorbed into `UnlessPaysEffect`: the plan's 15 records and their 22 handlers (15 normalfx, 7 mayfx), three
+`MayPenaltyChoiceHandlerService` methods, `MayAbilityHandlerService`'s generic mana block, `EffectResolutionService`'s land-drop branch,
+`AttackLegalityService`'s Overencumbered check, `IndulgentTormentorState` / `ChoiceContext.IndulgentTormentorChoice`,
+`EachPlayerSacrificeOrDiscardState`, `PermanentChoiceContext.Bounce(Own)PermanentOrSacrificeSelf`, `MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource`.
+Card-only: Lim-Dûl's Hex (`EachPlayerTakesDamageUnlessPaysEffect` stays for Stench of Evil, U6). Ratchet 2,953 / 2,340 → 2,939 / 2,318; ledger 15
+absorbed, 1 unique (`SacrificeCreaturesWithTotalPowerCost`), 1 blocked-other (the Hex record). No `CONVERSION_VERSION` bump (no mapper or enum change).
+**Engine.** `UnlessPaysEffect.eachUnless(payers, ransom, players -> X)`; `UnlessAnswer.paidPlayerIds` (was `anyPaid`), set as the entry's accepted players
+by `nextStep` before every branch; a payer `targetPlayer()` declares a harmful player target when no branch does; ransoms `ReturnPermanentToHandCost`
+(`youControl` / `anyPlayers`, a `description`), `PutCardFromHandOnTopOfLibraryCost`, `LandDropCost`, new `SacrificeCreaturesWithTotalPowerCost`, each
+a case in the record, the handler's words, `ResolutionCostPaymentService` and `SpellEvaluator.ransomCost`; `PayManaCost.timesPaid` / `perAmount`;
+`PlayerCount(PlayerSubject)` (`AmountEvaluationService`, lazy `SubjectResolutionService`); `CantAttackThisTurnEffect` takes `UNTIL_END_OF_COMBAT` for
+a set ("this combat" log); the target-player sacrifice-or-token completion moved into `TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffectHandler`.
+AI: the multi-permanent strategy picks the most powerful creatures up to a total-power ransom.
+**Cards.** 24 files by hand. Oracle text checked with `get_card` for 23 (Boulder Jockey's MB2 printing isn't in the feed: the survey's text); rulings for
+Read the Runes, The Dalek Emperor, Acererak, Phyrexian Dreadnought, Drake Familiar, Overencumbered, Possessed Portal, Cyclone. CR 101.4, 701.55b verified.
+**Behaviour changes** (failing-first, each seen failing on the old code: 15 tests):
+- Rishadans, The Long Reach of Night, Lim-Dûl's Hex, Acererak: every payer chooses, then the sacrifices / damage / tokens of those who didn't pay come
+  together (CR 101.4; Acererak's ruling). `opponentsWhoDidNotPaySacrificeTogetherAfterTheLastAnswer`, `…DiscardSacrificeTogether…`,
+  `damageIsDealtTogetherAfterTheLastAnswer`, `sacrificesAndTokensComeTogetherAfterEveryOpponentChose`.
+- A Rishadan's mana is a tax paid to its controller (Tax Taker): `TaxTakerTest.rishadanCutpursePayment`.
+- Lurking Spinecrawler's granted trigger: each opponent sacrifices a creature, those who can't discard (Oracle; was "unless they discard"): 2 tests.
+- Read the Runes: sacrifice any number up to the cards drawn, then discard the rest, never forced to sacrifice (rulings): `sacrificesComeBeforeTheDiscards`.
+- The Dalek Emperor is a villainous choice; a creatureless opponent may choose the sacrifice and no Dalek is made (CR 701.55b): `creaturelessOpponent…`.
+- Phyrexian Dreadnought gone: the creatures may still be sacrificed (ruling): `creaturesMayStillBeSacrificedAfterDreadnoughtLeft`.
+- Tragic Lesson: a land by an effect may be returned (CR 613.1d): `permanentThatIsALandByAnEffectCanBeReturned`.
+- Boulder Jockey: no land drop left, not asked (CR 118.3, 608.2d): 2 tests. Overencumbered triggers only on the enchanted opponent's turn (Oracle) and
+  isn't asked of a payer with no mana source (owner's rule): 2 tests. Not failing-first: Indulgent Tormentor asks each alternative.
+**Pins** (passed before and after): the 24 cards' existing tests (Glint Hawk family, Drake Familiar, Tainted Specter, Athreos, Wyll, Cyclone), Withdraw, Prince / Mace.
+**Tests changed** (against the Oracle text, the rules or the owner's rule): Phyrexian Dreadnought 14 methods (answer the yes/no first, decline with
+no); Read the Runes 3 (sacrifices first, ruling), Possessed Portal 6, The Long Reach of Night 3, The Dalek Emperor 4 (villainous options), Indulgent
+Tormentor 4 plus Gravebane Zombie / Lich's Duel Mastery Punisher 1 each (`payUnlessAlternative`; a lone creature is the shared pick, U3c's line), Lim-Dûl's
+Hex 3 (damage after the last answer) and a `BeforeEach` mana source, Boulder Jockey 2, Rishadans 7 and Overencumbered 5 and Tax Taker 1 (`giveManaSource`),
+Gravebane Zombie 6 (the new prompts; Portal and Long Reach's replacement now asked in the departure batch); `SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandlerTest`
+deleted; `CostEffectClassificationTest` lists the new cost. Added: `ResolutionCostPaymentServiceTest.OtherRansoms` (5), `UnlessPaysEffectHandlerTest` (4),
+`SpellEvaluatorTest.otherRansomsAreNotFree`.
+**Tests run** (XML of this run): 1,643 card-test classes (the 24 cards, every `UnlessPaysEffect` card and the cards of the touched paths: 914 cards,
+the classes naming one; the name-pattern classes), 157 application files, the whole AI module (118 files): 1,918 files, 17,343 tests, 0 failures; then the
+ratchet with the new baselines. Compiled every module's main and test sources and all card-test modules.
+**Seen, not changed** (defect queue, "step 10 run U3b2"): Acererak's tokens follow the sacrifice step instead of the same event (ruling; unsure it is
+observable); `nextStep` setting the accepted players could overwrite a Tempting Offer's list in one entry (no card has both).
+
+**For the next run.** U4 (`ForcedCostOrElseEffect`) or U6: "for each [object] … unless" can build on `eachUnless` and `UnlessAnswer.paidPlayerIds`.
 
 ## Prompt
 

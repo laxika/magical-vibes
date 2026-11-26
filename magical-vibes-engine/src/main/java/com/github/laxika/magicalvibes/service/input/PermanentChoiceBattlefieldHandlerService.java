@@ -84,7 +84,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAttachEquipmentSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileChosenPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
@@ -298,7 +298,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesCreatureToDestroyEffectHandler eachPlayerChoosesCreatureToDestroyEffectHandler;
 
-    private final EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler eachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
+    private final TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffectHandler targetPlayerSacrificesCreatureOrControllerCreatesTokenEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
 
@@ -890,7 +890,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleEachOpponentCreatesTokenUnlessSacrificesCreature(GameData gameData, UUID permanentId,
             PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature context) {
-        eachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler.completeChoice(gameData, permanentId, context);
+        targetPlayerSacrificesCreatureOrControllerCreatesTokenEffectHandler.completeChoice(gameData, permanentId, context);
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }
@@ -1302,26 +1302,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         mayReturnPermanentToHandAndEnterWithCountersEffectHandler.resolve(
                 gameData, entry, context.effect());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleBounceOwnPermanentOrSacrificeSelf(GameData gameData, UUID permanentId) {
-        handleBouncePermanentOrSacrificeSelf(gameData, permanentId);
-    }
-
-    public void handleBouncePermanentOrSacrificeSelf(GameData gameData, UUID permanentId) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Target permanent no longer exists");
-        }
-
-        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
-            log.info("Game {} - {} returned to owner's hand by bounce-or-sacrifice effect", gameData.id, target.getCard().getName());
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
@@ -1973,13 +1953,9 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleTormentSacrifice(GameData gameData, UUID permanentId,
                                        PermanentChoiceContext.TormentSacrifice ctx) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
-        var eachPlayerState = gameData.eachPlayerSacrificeOrDiscard;
         if (toSacrifice != null && gameData.torment.active && gameData.torment.deferred
                 && ctx.playerId().equals(gameData.torment.currentOpponentId)) {
             gameData.torment.chosenSacrifices.add(permanentId);
-        } else if (toSacrifice != null && eachPlayerState.active && eachPlayerState.deferSacrifices
-                && ctx.playerId().equals(eachPlayerState.currentPlayerId)) {
-            eachPlayerState.chosenSacrifices.add(permanentId);
         } else if (toSacrifice != null) {
             destructionSupport.sacrificeAndLog(gameData, toSacrifice, ctx.playerId());
         }

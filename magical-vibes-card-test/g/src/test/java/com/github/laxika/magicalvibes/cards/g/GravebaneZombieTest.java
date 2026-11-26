@@ -1091,7 +1091,7 @@ class GravebaneZombieTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, ChoiceContext.IndulgentTormentorChoice.SACRIFICE);
+        payUnlessAlternative(player2, "Sacrifice");
 
         harness.handlePermanentChosen(player2, zombie.getId());
 
@@ -1931,11 +1931,11 @@ class GravebaneZombieTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
         resolveEndStepTriggers();
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
+                        choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         assertMayAnswerAskedWhileTheZombieStays();
 
@@ -1965,7 +1965,7 @@ class GravebaneZombieTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
+                        choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertMayAnswerAskedWhileTheZombieStays();
 
         harness.handleListChoice(player2, "Put it into its owner's library");
@@ -1975,7 +1975,7 @@ class GravebaneZombieTest extends BaseCardTest {
 
     @Test
     @CardUsed({KalitasTraitorOfGhet.class, ReadTheRunes.class})
-    @DisplayName("Read the Runes asks for the lone Zombie's replacement before it is sacrificed, after an earlier discard")
+    @DisplayName("Read the Runes asks for the lone Zombie's replacement before it is sacrificed, before the discard")
     void readTheRunesAsksBeforeTheLoneZombieIsSacrificed() {
         Card filler = new WrathOfGod();
         Card firstDraw = new GrizzlyBears();
@@ -1991,17 +1991,15 @@ class GravebaneZombieTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, 2, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
-        harness.handleCardChosen(player2, 0);
-        harness.handleListChoice(player2, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE);
+        harness.handleMultiplePermanentsChosen(player2, List.of(zombie.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
-                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
+                .isInstanceOf(ChoiceContext.DeathExileReplacementChoice.class);
         assertMayAnswerAskedWhileTheZombieStays();
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
 
         harness.handleListChoice(player2, "Put it into its owner's library");
+        harness.handleCardChosen(player2, 0);
 
         assertZombieSacrificedOntoLibrary(zombie, filler, false);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -2352,6 +2350,7 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(filler));
         harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        giveManaSource(player2);
         harness.castFromHand(player1, new RishadanCutpurse(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -2449,7 +2448,7 @@ class GravebaneZombieTest extends BaseCardTest {
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
         resolveBeginningOfCombatTriggers();
 
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, "That player sacrifices a creature");
 
         assertMayAnswerAskedWhileTheZombieStays();
 
@@ -2470,7 +2469,7 @@ class GravebaneZombieTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
         resolveBeginningOfCombatTriggers();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, "That player sacrifices a creature");
 
         harness.handlePermanentChosen(player2, zombie.getId());
 

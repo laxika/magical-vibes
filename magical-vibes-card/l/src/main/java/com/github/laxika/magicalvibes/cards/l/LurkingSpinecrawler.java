@@ -5,7 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
@@ -22,7 +27,12 @@ public class LurkingSpinecrawler extends Card {
                 ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.incorporating(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         "{1}{B}",
-                        new EachOpponentSacrificesCreatureUnlessDiscardEffect()));
+                        // "Each opponent sacrifices a creature. Each opponent who can't discards a card."
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
+                                        Subjects.eachOpponent()),
+                                new DiscardEffect(1, Subjects.except(Subjects.eachOpponent(),
+                                        Subjects.playersThisWay(StepKind.SACRIFICE))))));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
                 new LoseLifeEffect(new TriggeringSpellColorCount(), Subjects.eachOpponent(), true));

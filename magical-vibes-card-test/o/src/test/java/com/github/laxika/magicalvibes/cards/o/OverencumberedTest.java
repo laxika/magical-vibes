@@ -6,13 +6,17 @@ import com.github.laxika.magicalvibes.cards.e.ErdwalIlluminator;
 import com.github.laxika.magicalvibes.cards.t.TippyToeTerrificPartner;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +47,7 @@ class OverencumberedTest extends BaseCardTest {
     @DisplayName("Declining the artifact payment prevents creatures from attacking this combat")
     void decliningPaymentPreventsAttacks() {
         attachOverencumbered();
+        giveManaSource(player2);
         addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
@@ -57,6 +62,7 @@ class OverencumberedTest extends BaseCardTest {
     @DisplayName("Paying for all controlled artifacts allows attacks")
     void payingForArtifactsAllowsAttacks() {
         attachOverencumbered();
+        giveManaSource(player2);
         addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
@@ -83,6 +89,7 @@ class OverencumberedTest extends BaseCardTest {
     @DisplayName("Artifacts are counted when the combat ability resolves")
     void countsArtifactsAfterResponsesToCombatTrigger() {
         attachOverencumbered();
+        giveManaSource(player2);
         harness.setLibrary(player2, List.of(new Overencumbered()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -128,6 +135,7 @@ class OverencumberedTest extends BaseCardTest {
     @DisplayName("Artifact creatures count toward the payment, but the Aura controller's artifacts do not")
     void countsOnlyEnchantedPlayersArtifactsIncludingArtifactCreatures() {
         attachOverencumbered();
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new SolemnSimulacrum());
         harness.addToBattlefield(player1, new SolemnSimulacrum());
 
@@ -143,6 +151,7 @@ class OverencumberedTest extends BaseCardTest {
     @DisplayName("An unaffordable payment prevents attacks without spending partial mana")
     void insufficientManaPreventsAttacks() {
         attachOverencumbered();
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new SolemnSimulacrum());
 
         resolveCombatTrigger(player2);
@@ -259,6 +268,53 @@ class OverencumberedTest extends BaseCardTest {
 
         assertThatThrownBy(() -> activateToken("Junk")).isInstanceOf(IllegalStateException.class);
         assertThat(countPermanents(player2, "Junk")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("It triggers only on the enchanted opponent's turn, not on another opponent's (Oracle)")
+    void doesNotTriggerOnAnotherOpponentsTurn() {
+        Player player3 = addThirdPlayer();
+        attachOverencumbered();
+        Permanent creature = addCreatureReady(player3, new SolemnSimulacrum());
+
+        resolveCombatTrigger(player3);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(als.canAttack(gd, creature, player3.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("An enchanted opponent with artifacts and no way at all to make mana isn't asked; creatures can't attack")
+    void opponentWithNoManaSourceIsNotAsked() {
+        attachOverencumbered();
+        Permanent creature = addCreatureReady(player2, new SolemnSimulacrum());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> harness.passBothPriorities());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(als.canAttack(gd, creature, player2.getId())).isFalse();
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 
     private void activateToken(String name) {

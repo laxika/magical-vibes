@@ -385,7 +385,7 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleListChoice(player2, ChoiceContext.IndulgentTormentorChoice.payLife(3));
+        payUnlessAlternative(player2, "Pay 3 life");
 
         assertMasteryAskedLibraryOrExile();
         harness.assertLife(player2, 20);

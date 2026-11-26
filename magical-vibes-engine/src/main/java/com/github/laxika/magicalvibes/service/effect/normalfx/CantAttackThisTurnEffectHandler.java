@@ -42,14 +42,15 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CantAttackThisTurnEffect) effect;
+        String period = e.duration() == Duration.UNTIL_END_OF_COMBAT ? "this combat" : "this turn";
         if (e.subject() instanceof PermanentSubject.ControlledBy set) {
             for (UUID playerId : subjectResolutionService.players(gameData, entry, e, set.players())) {
                 gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
                         entry.getSourcePermanentId(), entry.getControllerId(), e, playerId, e.duration()));
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(
-                        "Creatures controlled by " + playerName + " can't attack this turn."));
-                log.info("Game {} - creatures controlled by {} can't attack this turn", gameData.id, playerName);
+                        "Creatures controlled by " + playerName + " can't attack " + period + "."));
+                log.info("Game {} - creatures controlled by {} can't attack {}", gameData.id, playerName, period);
             }
             return;
         }
@@ -66,9 +67,9 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
                         entry.getSourcePermanentId(), entry.getControllerId(), floated, playerId, e.duration()));
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(
-                        "Other creatures controlled by " + playerName + " can't attack this turn."));
-                log.info("Game {} - other creatures controlled by {} can't attack this turn", gameData.id,
-                        playerName);
+                        "Other creatures controlled by " + playerName + " can't attack " + period + "."));
+                log.info("Game {} - other creatures controlled by {} can't attack {}", gameData.id,
+                        playerName, period);
             }
             return;
         }

@@ -2,7 +2,14 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,6 +29,9 @@ public class IndulgentTormentor extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffect(3));
+                UnlessPaysEffect.unlessPays(Subjects.targetPlayer(), AnyOfCost.of(
+                                new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "creature", false),
+                                new PayLifeCost(new Fixed(3))),
+                        new DrawCardEffect(1)));
     }
 }

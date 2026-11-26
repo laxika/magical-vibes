@@ -17,8 +17,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code EnchantedCreatureCantAttackEffect}).
  *
  * @param subject  which creature(s) can't attack
- * @param duration how long ({@code UNTIL_END_OF_TURN}, {@code UNTIL_YOUR_NEXT_TURN}, or for a named creature
- *                 {@code DURING_AFFECTED_PLAYERS_NEXT_TURN}: its controller's next turn)
+ * @param duration how long ({@code UNTIL_END_OF_TURN}, {@code UNTIL_YOUR_NEXT_TURN}; for a named creature
+ *                 {@code DURING_AFFECTED_PLAYERS_NEXT_TURN}: its controller's next turn; for a set
+ *                 {@code UNTIL_END_OF_COMBAT}: "creatures can't attack this combat", Overencumbered)
  */
 public record CantAttackThisTurnEffect(PermanentSubject subject, Duration duration) implements CardEffect {
 
@@ -31,7 +32,8 @@ public record CantAttackThisTurnEffect(PermanentSubject subject, Duration durati
         }
         boolean named = subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.Triggering;
         if (duration != Duration.UNTIL_END_OF_TURN && duration != Duration.UNTIL_YOUR_NEXT_TURN
-                && !(named && duration == Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN)) {
+                && !(named && duration == Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN)
+                && !(!named && duration == Duration.UNTIL_END_OF_COMBAT)) {
             throw new IllegalArgumentException("Unsupported attack restriction duration: " + duration);
         }
     }

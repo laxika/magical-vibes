@@ -70,6 +70,29 @@ public class TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffectHandler
                 entry.getCard().getName() + " - Choose a creature to sacrifice.");
     }
 
+    /**
+     * Completes the target player's creature choice: the chosen creature is sacrificed while it can still be, else
+     * the token is created.
+     */
+    public void completeChoice(GameData gameData, UUID permanentId,
+                               PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        boolean canSacrifice = creature != null
+                && context.sacrificingPlayerId().equals(gameQueryService.findPermanentController(gameData, permanentId))
+                && gameQueryService.isCreature(gameData, creature)
+                && !gameQueryService.cantBeSacrificed(gameData, creature)
+                && gameQueryService.canEffectCauseSacrifice(gameData, context.sacrificingPlayerId(),
+                context.sourceControllerId());
+        if (canSacrifice) {
+            destructionSupport.sacrificeAndLog(gameData, creature, context.sacrificingPlayerId());
+            return;
+        }
+        StackEntry sourceEntry = StackEntry.carrier(context.sourceCard(), context.sourceControllerId(),
+                context.sourceCard().getName() + "'s ability", new ArrayList<>(), 0, context.sourcePermanentId());
+        sourceEntry.setSourcePermanentSnapshot(context.sourcePermanentSnapshot());
+        createTokenEffectHandler.resolve(gameData, sourceEntry, context.token());
+    }
+
     private List<UUID> eligibleCreatureIds(GameData gameData, UUID playerId, UUID sourceControllerId) {
         if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
             return List.of();

@@ -781,10 +781,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
         } else if (context instanceof PermanentChoiceContext.MayReturnPermanentToHandAndEnterWithCounters returnChoice) {
             battlefieldHandler.handleMayReturnPermanentToHandAndEnterWithCounters(gameData, permanentId, returnChoice);
-        } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf) {
-            battlefieldHandler.handleBounceOwnPermanentOrSacrificeSelf(gameData, permanentId);
-        } else if (context instanceof PermanentChoiceContext.BouncePermanentOrSacrificeSelf) {
-            battlefieldHandler.handleBouncePermanentOrSacrificeSelf(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentToEnter sacToEnter) {
             battlefieldHandler.handleSacrificePermanentToEnter(gameData, permanentId, sacToEnter);
         } else if (context instanceof PermanentChoiceContext.LandCasualty landCasualty) {

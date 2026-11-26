@@ -26,6 +26,10 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.LandDropCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -272,6 +276,8 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             state = state.answered(false);
         }
         if (state.currentPayer() == null) {
+            // "Those who didn't pay" (eachUnless) reads the payers who chose to pay (CR 101.4).
+            entry.setAcceptedPlayerIds(state.paidPlayerIds());
             if (unless.paidTogether() && state.anyPaid()) {
                 // The choices wait on the entry for paymentMadeTogether, which the resolution asks next.
                 entry.setUnlessAnswer(state);
@@ -494,6 +500,21 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 yield new Ransom(cost, "Have " + drawer + " draw " + cards, "has " + drawer + " draw " + cards,
                         "have " + drawer + " draw " + cards);
             }
+            case ReturnPermanentToHandCost toHand -> {
+                String what = article(toHand.description() == null ? "permanent you control" : toHand.description());
+                yield new Ransom(cost, "Return " + what + " to its owner's hand",
+                        "returns " + what + " to its owner's hand", "return " + what + " to its owner's hand");
+            }
+            case PutCardFromHandOnTopOfLibraryCost ignored -> new Ransom(cost,
+                    "Put a card from your hand on top of your library",
+                    "puts a card from their hand on top of their library",
+                    "put a card from their hand on top of their library");
+            case LandDropCost ignored -> new Ransom(cost, "Pay {D}",
+                    "pays {D}", "pay {D}");
+            case SacrificeCreaturesWithTotalPowerCost power -> {
+                String what = "creatures with total power " + power.totalPower() + " or greater";
+                yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
+            }
             case AllOfCost allOf -> {
                 List<Ransom> parts = allOf.parts().stream().map(part -> ransom(gameData, entry, part, payerId))
                         .toList();
@@ -548,6 +569,10 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
     }
 
     private String manaCost(GameData gameData, StackEntry entry, PayManaCost mana) {
+        if (mana.timesPaid() != null) {
+            int times = amountEvaluationService.evaluate(gameData, mana.timesPaid(), amountContext(gameData, entry));
+            return times <= 0 ? "{0}" : mana.manaCost().repeat(times);
+        }
         if (mana.announcedX()) {
             return "{" + entry.getXValue() + "}";
         }

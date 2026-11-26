@@ -46,6 +46,7 @@ class CostEffectClassificationTest {
             "ExileCardsCost",
             "ExileGraveyardCost",
             "GetPoisonCountersCost",
+            "SacrificeCreaturesWithTotalPowerCost",
             "SourceControllerDrawsCost");
 
     /**

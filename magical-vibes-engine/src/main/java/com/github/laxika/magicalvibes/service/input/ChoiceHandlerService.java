@@ -1381,10 +1381,6 @@ public class ChoiceHandlerService {
             handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.IndulgentTormentorChoice ctx) {
-            handleIndulgentTormentorChoice(gameData, player, colorName, ctx);
-            return;
-        }
         if (!colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid color choice: " + colorName);
         }
@@ -4596,11 +4592,7 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        if (gameData.eumidianWastewaker.active && gameData.eumidianWastewaker.currentPlayerId != null) {
-            gameData.eumidianWastewaker.chosenMode = chosen;
-        } else {
-            gameData.eachPlayerSacrificeOrDiscard.chosenMode = chosen;
-        }
+        gameData.eumidianWastewaker.chosenMode = chosen;
 
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
@@ -6133,24 +6125,6 @@ public class ChoiceHandlerService {
         }
         gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                 gameData.pendingEffectResolutionIndex, List.of(followUp));
-    }
-
-    private void handleIndulgentTormentorChoice(GameData gameData, Player player, String chosen,
-            ChoiceContext.IndulgentTormentorChoice ctx) {
-        PendingInteraction.ColorChoice active =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (active == null || !active.options().contains(chosen)) {
-            throw new IllegalArgumentException("Invalid Indulgent Tormentor choice: " + chosen);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        gameData.indulgentTormentor.chosenMode = chosen;
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
-        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleMultiZoneExileCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {

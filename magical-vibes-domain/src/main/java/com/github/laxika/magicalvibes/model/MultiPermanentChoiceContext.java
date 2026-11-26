@@ -816,16 +816,6 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * "Sacrifice [source] unless you sacrifice any number of creatures with total power
-     * {@code requiredPower} or greater" (Phyrexian Dreadnought). The chosen creatures are
-     * sacrificed only when their total effective power reaches {@code requiredPower}; an empty
-     * selection sacrifices {@code sourcePermanentId} instead.
-     */
-    record SacrificeCreaturesWithTotalPowerOrSacrificeSource(UUID sourcePermanentId, int requiredPower)
-            implements MultiPermanentChoiceContext {
-    }
-
-    /**
      * Devour (CR 702.82): the entering creature's controller chose which of their other creatures to
      * sacrifice as it enters. The chosen creatures are sacrificed, the entering permanent receives
      * {@code multiplier} times that many +1/+1 counters and records the devoured count, then the

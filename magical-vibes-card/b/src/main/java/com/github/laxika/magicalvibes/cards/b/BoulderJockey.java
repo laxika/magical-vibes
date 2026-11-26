@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LandDropCost;
-import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,9 @@ public class BoulderJockey extends Card {
 
     public BoulderJockey() {
         addCastingCost(new LandDropCost());
-        addTrigger(Triggers.attacks(), new MayPayLandDropEffect(
+        // Whenever this attacks, you may pay {D}. If you do, create an attacking Boulder; sacrifice it at the
+        // beginning of the next end step.
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(new LandDropCost(),
                 SequenceEffect.of(
                         new CreateTokenEffect(
                                 CardType.CREATURE,
@@ -42,7 +44,7 @@ public class BoulderJockey extends Card {
                                 false,
                                 0,
                                 Set.of()),
-                        new SacrificeCreatedPermanentsAtEndStepEffect()),
-                "Pay {D} to create a Boulder?"));
+                        new SacrificeCreatedPermanentsAtEndStepEffect()))
+                .withPrompt("Pay {D} to create a Boulder?"));
     }
 }

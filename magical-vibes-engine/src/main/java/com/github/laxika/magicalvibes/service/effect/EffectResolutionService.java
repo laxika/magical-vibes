@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeast
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnlessPaysEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -408,27 +407,6 @@ public class EffectResolutionService {
                 if (effectToResolve != null) {
                     entry.replaceEffectToResolve(i, effectToResolve);
                     effects = entry.getEffectsToResolve();
-                }
-            }
-
-            if (effectToResolve instanceof MayPayLandDropEffect mayPayLandDrop
-                    && gameData.resolvedMayAccepted != null) {
-                boolean accepted = gameData.resolvedMayAccepted;
-                gameData.resolvedMayAccepted = null;
-                if (accepted
-                        && entry.getControllerId().equals(gameData.activePlayerId)
-                        && gameData.landsPlayedThisTurn.getOrDefault(entry.getControllerId(), 0)
-                        < gameQueryService.getMaxLandsThisTurn(gameData, entry.getControllerId())) {
-                    gameData.landsPlayedThisTurn.merge(entry.getControllerId(), 1, Integer::sum);
-                    effectToResolve = mayPayLandDrop.wrapped();
-                    log.info("Game {} - Player accepted may-land-drop ability from {} — resolving inner effect",
-                            gameData.id, entry.getCard().getName());
-                } else if (!accepted && mayPayLandDrop.elseEffect() != null) {
-                    effectToResolve = mayPayLandDrop.elseEffect();
-                } else {
-                    log.info("Game {} - Player {} may-land-drop ability from {} — nothing to resolve",
-                            gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
-                    continue;
                 }
             }
 

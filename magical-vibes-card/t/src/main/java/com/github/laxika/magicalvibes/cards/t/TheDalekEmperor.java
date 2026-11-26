@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenUnlessSacrificesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,11 +39,16 @@ public class TheDalekEmperor extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DALEK)));
 
-        // Each opponent sacrifices a creature or the controller creates a Dalek.
+        // Each opponent faces a villainous choice: that player sacrifices a creature, or you create a Dalek. Either
+        // option may be chosen, even an impossible one (CR 701.55b).
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new EachOpponentCreatesTokenUnlessSacrificesCreatureEffect(new CreateTokenEffect(
-                        "Dalek", 3, 3, CardColor.BLACK,
-                        List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE),
-                        Set.of(CardType.ARTIFACT))));
+                TargetPlayerChoosesOneEffect.villainousChoiceFacedBy(Subjects.eachOpponent(), List.of(
+                        new ChooseOneEffect.ChooseOneOption("That player sacrifices a creature",
+                                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
+                                        Subjects.targetPlayerDeclaredElsewhere())),
+                        new ChooseOneEffect.ChooseOneOption("You create a Dalek", new CreateTokenEffect(
+                                "Dalek", 3, 3, CardColor.BLACK,
+                                List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE),
+                                Set.of(CardType.ARTIFACT))))));
     }
 }

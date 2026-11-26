@@ -34,7 +34,8 @@ import java.util.Objects;
  * ({@link PutCounterOnControlledCreatureCost#blight}), {@link CollectEvidenceCost}, {@link ExileGraveyardCost},
  * {@link GetPoisonCountersCost}, {@link DamageFromSourceCost}, {@link WaterbendCost}, {@link SacrificeSelfCost},
  * {@link ExileNCardsFromGraveyardCost}, {@link TapMultiplePermanentsCost} with a fixed count, {@link ExileCardsCost},
- * {@link SourceControllerDrawsCost},
+ * {@link SourceControllerDrawsCost}, {@link ReturnPermanentToHandCost}, {@link PutCardFromHandOnTopOfLibraryCost},
+ * {@link LandDropCost}, {@link SacrificeCreaturesWithTotalPowerCost},
  * {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
  * factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter target spell unless its controller pays
  * {3}" and ward {3}.
@@ -43,6 +44,14 @@ import java.util.Objects;
  * asks each of them, in APNAP order, every one even after another paid (CR 101.4); the branch is chosen once, after
  * the last answer: {@code ifPaid} if any of them paid, else {@code ifNotPaid} ({@code unlessPays(eachPlayer(), "{2}",
  * search)} is Rhystic Tutor).
+ *
+ * <p>"Each of them [does X] unless they pay" is a branch for each payer, decided by that payer's own choice
+ * ({@link #eachUnless}): every payer chooses in APNAP order, then X happens to every one who didn't pay, at once
+ * (CR 101.4). The players who chose to pay are the entry's accepted players
+ * ({@code Subjects.acceptedPlayers()}) when the branch resolves.
+ *
+ * <p>A payer that is the effect's own target ("unless target opponent pays 3 life") declares that target when no
+ * branch does ({@link #targetSpec()}).
  *
  * <p>The chosen branch is put next in the resolution and resolved like any other step, so a wrapper in it (an "if"
  * on the "if you do", a "you may" in "you may copy that spell unless …") is judged as at the top level.
@@ -127,6 +136,10 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             case TapMultiplePermanentsCost tap -> tap.count() instanceof Fixed && !tap.tracksChosenPermanents();
             case ExileCardsCost ignored -> true;
             case SourceControllerDrawsCost ignored -> true;
+            case ReturnPermanentToHandCost ignored -> true;
+            case PutCardFromHandOnTopOfLibraryCost ignored -> true;
+            case LandDropCost ignored -> true;
+            case SacrificeCreaturesWithTotalPowerCost ignored -> true;
             default -> false;
         };
         if (!payable) {
@@ -326,6 +339,22 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         return new UnlessPaysEffect(payer, new PayLifeCost(life), Objects.requireNonNull(effect, "effect"), null);
     }
 
+    /**
+     * "{@code payers} each [do X] unless they {@code ransom}" ("each opponent sacrifices a permanent unless they pay
+     * {3}", "for each player, this deals 1 damage to that player unless they pay {B} or {3}"): each payer's own choice
+     * decides what happens to them. Every payer chooses in APNAP order, then {@code effect} happens to the players who
+     * didn't pay, together (CR 101.4): {@code effect.apply(payers)} when none paid, else
+     * {@code effect.apply(except(payers, acceptedPlayers()))}, the players who chose to pay being the entry's
+     * accepted players then.
+     *
+     * @param effect the branch over the players it happens to
+     */
+    public static UnlessPaysEffect eachUnless(PlayerSubject payers, CostEffect ransom,
+                                              java.util.function.Function<PlayerSubject, CardEffect> effect) {
+        return new UnlessPaysEffect(payers, ransom, Objects.requireNonNull(effect.apply(payers), "effect"),
+                effect.apply(Subjects.except(payers, Subjects.acceptedPlayers())));
+    }
+
     private static UnlessPaysEffect counter(CostEffect ransom) {
         return new UnlessPaysEffect(Subjects.controllerOf(Subjects.targetSpell()), ransom, new CounterSpellEffect(), null);
     }
@@ -407,12 +436,18 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
 
     /**
      * The target of either branch: chosen as the ability is put on the stack (CR 603.3d), whichever branch the payment
-     * then picks (CR 603.5); {@code ifNotPaid}'s first.
+     * then picks (CR 603.5); {@code ifNotPaid}'s first. When neither branch targets, the payer's own player target
+     * ("unless target opponent pays 3 life"): asking a player to pay is against them, so it is harmful.
      */
     @Override
     public TargetSpec targetSpec() {
         TargetSpec spec = ifNotPaid == null ? TargetSpec.NONE : ifNotPaid.targetSpec();
-        return spec.equals(TargetSpec.NONE) && ifPaid != null ? ifPaid.targetSpec() : spec;
+        spec = spec.equals(TargetSpec.NONE) && ifPaid != null ? ifPaid.targetSpec() : spec;
+        if (spec.equals(TargetSpec.NONE) && payer.declaresTarget()) {
+            TargetSpec payerTarget = TargetSpec.harmful(TargetPredicates.player());
+            return payer.targetChosenAtRandom() ? payerTarget.atRandom() : payerTarget;
+        }
+        return spec;
     }
 
     /** "You may pay {X}. When you do, [targeted effect]": the reflexive ability chooses the target (CR 603.12). */

@@ -1457,10 +1457,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record ChooseOpponentToChooseTriggerTarget(AttackTriggerTarget target) implements PermanentChoiceContext {}
 
-    record BounceOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
-
-    record BouncePermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
-
     /** "If this permanent would enter, sacrifice a [permanent] instead. If you do, put it onto the
      *  battlefield. If you don't, put it into its owner's graveyard." (Balduvian Trading Post.) The
      *  entering permanent is parked here — it is in no zone while the choice is pending. Choosing
@@ -2581,7 +2577,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             int count
     ) implements PermanentChoiceContext {}
 
-    /** Each opponent chooses a creature to sacrifice instead of letting the source's controller create a token. */
+    /**
+     * The target player chooses a creature to sacrifice instead of letting the source's controller create a token
+     * ({@code TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffect}); {@code remainingOpponentIds} is unused.
+     */
     record EachOpponentCreatesTokenUnlessSacrificesCreature(
             UUID sacrificingPlayerId,
             UUID sourceControllerId,

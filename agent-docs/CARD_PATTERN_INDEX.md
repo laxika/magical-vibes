@@ -203,7 +203,7 @@
 | life-loss trigger creature with symmetric end-step damage and five specialization faces | `s/ShadowheartSharranCleric.java` + `SpecializeEffect` + conditional controller-life-loss triggers |
 | ETB optional fight with source-tracked exile replacement and five token-copy specialize faces | `g/GutFanaticalPriestess.java` + `SpecializeEffect` + `CreateTokenCopyOfExiledCreatureWithSourceEffect` |
 | battlefield-or-graveyard activated five-face specialize creature with perpetual no-block and color-specific riders | `k/KarlachRagingTiefling.java` + `SpecializeKarlachEffect` + `SeekInstantOrSorceryAndMayCastFreeEffect` |
-| temporary-control ETB with mana-value restriction and five sacrifice-based specialize faces | `w/WyllPactBoundDuelist.java` + `SpecializeEffect` + `DrawCardsUnlessTargetPaysLifeEffect` |
+| temporary-control ETB with mana-value restriction and five sacrifice-based specialize faces | `w/WyllPactBoundDuelist.java` + `SpecializeEffect` + `UnlessPaysEffect.unlessPaysLife(targetPlayer(), 5, DrawCardEffect(3))` (the payer's target) |
 | six-land five-face specialize creature with color-form static abilities and death-time unspecialization | `l/LukaminaMoonDruid.java` + `SpecializeEffect` + `UnspecializeLukaminaEffect` |
 | one-time spell-cast boon plus five specialize faces with "attack with one or more other creatures with flying" triggers (`EventValue` count; the +2/+2 face a `Triggers.youAttack().withFilter(...)`) | `l/LuluForgetfulHollyphant.java` + `SpecializeEffect` + `BoostAllOwnCreaturesEffect.forDeclaredAttackers()` |
 | conjure a random creature duplicate from an opponent's library with perpetual casting permission | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.extern.slf4j.Slf4j;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -70,6 +71,9 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
             if (chosen.isEmpty() && validPermanentIds != null && !validPermanentIds.isEmpty()) {
                 chosen = List.of(validPermanentIds.getFirst());
             }
+        } else if (interaction.context() instanceof MultiPermanentChoiceContext.ResolutionCostPayment payment
+                && payment.cost() instanceof SacrificeCreaturesWithTotalPowerCost power) {
+            chosen = creaturesReachingPower(validPermanentIds, ctx, power.totalPower());
         } else if (interaction.context()
                 instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice powerChoice) {
             chosen = chooseCreaturesWithinPowerLimit(interaction, ctx, powerChoice.maxPower());
@@ -110,6 +114,25 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
 
         log.info("AI: Choosing {} permanents or players in game {}", chosen.size(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.PermanentsChosen(chosen));
+    }
+
+    /** The fewest of the valid creatures whose total power reaches {@code totalPower}: the most powerful first. */
+    private List<UUID> creaturesReachingPower(List<UUID> validPermanentIds, AiInteractionContext ctx, int totalPower) {
+        GameData gameData = ctx.gameData();
+        List<UUID> chosen = new ArrayList<>();
+        int power = 0;
+        for (UUID id : validPermanentIds.stream()
+                .sorted(Comparator.comparingInt((UUID candidate) -> ctx.gameQueryService().getEffectivePower(gameData,
+                        ctx.gameQueryService().findPermanentById(gameData, candidate))).reversed())
+                .toList()) {
+            if (power >= totalPower) {
+                break;
+            }
+            power += ctx.gameQueryService().getEffectivePower(gameData,
+                    ctx.gameQueryService().findPermanentById(gameData, id));
+            chosen.add(id);
+        }
+        return chosen;
     }
 
     private List<UUID> fillRequiredPermanents(List<UUID> preferred, List<UUID> validIds, int requiredCount) {
