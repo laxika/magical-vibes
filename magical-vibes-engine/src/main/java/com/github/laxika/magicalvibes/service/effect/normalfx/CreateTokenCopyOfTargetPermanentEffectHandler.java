@@ -235,6 +235,36 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private boolean resolveEsixReplacement(GameData gameData, StackEntry entry,
                                            CreateTokenCopyOfTargetPermanentEffect copyEffect,
                                            List<UUID> targetIds, int copyCount) {
+        if (gameData.pendingTokenCreationReplacement != null) {
+            return replaceFirstTokenCreation(gameData, entry, copyCount);
+        }
+        if (copyEffect.chooseAttackTarget() || copyEffect.createForTargetController()
+                || copyEffect.tokenController() != null || copyEffect.tappedAndAttacking()) {
+            return false;
+        }
+        // A copy of a permanent that left is made from its last known information (Red Sun's Twilight's destroyed
+        // artifacts), so it is one of the tokens the replacement may replace.
+        long existingTargets = targetIds.stream()
+                .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null
+                        || lastKnownCopySource(gameData, entry, copyEffect, targetId) != null)
+                .count();
+        if (existingTargets == 0) {
+            return false;
+        }
+        return replaceFirstTokenCreation(gameData, entry, (int) (copyCount * existingTargets));
+    }
+
+    /**
+     * The "first time you would create one or more tokens" replacements (Esix, Mirrormind Crown, Moonlit Meditation)
+     * for a creation of {@code amount} tokens by {@code entry}'s controller, a token copy of any kind (Esix's ruling:
+     * "This effect can apply to any token"). On the re-run after the answer: accepted, the substitutes are created and
+     * {@code true} returned; declined, {@code false}, and the caller creates its tokens without a second offer.
+     * Otherwise one available replacement is offered, the creation parked in {@code pendingTokenCreationReplacement}
+     * for the re-run of the resolving effect, and {@code true} returned.
+     *
+     * @return {@code true} when the creation was replaced or waits for the answer
+     */
+    public boolean replaceFirstTokenCreation(GameData gameData, StackEntry entry, int amount) {
         PendingTokenCreationReplacement pending = gameData.pendingTokenCreationReplacement;
         if (pending != null) {
             gameData.pendingTokenCreationReplacement = null;
@@ -251,22 +281,8 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             }
             return true;
         }
-        if (copyEffect.chooseAttackTarget() || copyEffect.createForTargetController()
-                || copyEffect.tokenController() != null || copyEffect.tappedAndAttacking()) {
-            return false;
-        }
-        // A copy of a permanent that left is made from its last known information (Red Sun's Twilight's destroyed
-        // artifacts), so it is one of the tokens the replacement may replace.
-        long existingTargets = targetIds.stream()
-                .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null
-                        || lastKnownCopySource(gameData, entry, copyEffect, targetId) != null)
-                .count();
-        if (existingTargets == 0) {
-            return false;
-        }
-        int replacedAmount = (int) (copyCount * existingTargets);
-        return esixTokenReplacementSupport.offerAttachedCopy(gameData, entry.getControllerId(), replacedAmount, 0, 0)
-                || esixTokenReplacementSupport.offer(gameData, entry.getControllerId(), replacedAmount, 0, 0);
+        return esixTokenReplacementSupport.offerAttachedCopy(gameData, entry.getControllerId(), amount, 0, 0)
+                || esixTokenReplacementSupport.offer(gameData, entry.getControllerId(), amount, 0, 0);
     }
 
     /**

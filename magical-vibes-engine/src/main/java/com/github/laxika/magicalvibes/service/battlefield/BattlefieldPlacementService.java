@@ -177,7 +177,7 @@ public class BattlefieldPlacementService {
     @Lazy
     private CreaturePositioningSupport creaturePositioningSupport;
     private com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler opponentEntryControlHandler;
-    private com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfSourceEffectHandler createTokenCopyOfSourceEffectHandler;
+    private com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Autowired
@@ -187,9 +187,8 @@ public class BattlefieldPlacementService {
     }
 
     @Autowired
-    void setCreateTokenCopyOfSourceEffectHandler(
-            @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfSourceEffectHandler handler) {
-        this.createTokenCopyOfSourceEffectHandler = handler;
+    void setEffectResolutionService(@Lazy com.github.laxika.magicalvibes.service.effect.EffectResolutionService service) {
+        this.effectResolutionService = service;
     }
 
     @Autowired
@@ -1836,13 +1835,17 @@ public class BattlefieldPlacementService {
         }
     }
 
-    /** Creates the token copy of a land that entered with its land casualty cost paid, without using the stack. */
+    /**
+     * Creates the token copy of a land that entered with its land casualty cost paid, without using the stack: its
+     * record resolves inside whatever is under way, so a token-creation replacement it offers (Esix) resumes it once
+     * answered.
+     */
     private void createLandCasualtyCopy(GameData gameData, UUID controllerId, Permanent permanent) {
         CreateTokenCopyOfSourceEffect copyEffect = new CreateTokenCopyOfSourceEffect();
         StackEntry copyEntry = StackEntry.carrier(permanent.getCard(), controllerId,
                 FaceDownVisibility.publicName(gameData, permanent) + "'s land casualty", new ArrayList<>(List.of(copyEffect)), null,
                 permanent.getId());
-        createTokenCopyOfSourceEffectHandler.resolve(gameData, copyEntry, copyEffect);
+        effectResolutionService.resolveNestedInCurrentResolution(gameData, copyEntry);
     }
 
     public void completeSacrificePermanentsToEnter(GameData gameData, UUID controllerId, Permanent permanent,

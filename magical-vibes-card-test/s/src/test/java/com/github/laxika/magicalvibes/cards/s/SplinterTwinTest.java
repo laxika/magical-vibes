@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.n.NestInvader;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SplinterTwin.class, SporecapSpider.class, NestInvader.class})
+@CardUsed({SplinterTwin.class, SporecapSpider.class, NestInvader.class, EsixFractalBloom.class})
 class SplinterTwinTest extends BaseCardTest {
 
     @Test
@@ -182,5 +184,18 @@ class SplinterTwinTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("Esix isn't offered for the copy exiled at the next end step (its rider is the owner's question)")
+    void esixIsNotOfferedForTheCopyWithAnEndStepExile() {
+        Permanent creature = enchantedCreature(player1, player1);
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(tokenCopy(player1).getCard().getName()).isEqualTo(creature.getCard().getName());
     }
 }

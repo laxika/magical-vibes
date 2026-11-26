@@ -38,6 +38,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
     private final AmountEvaluationService amountEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final TokenCopySupport tokenCopySupport;
+    private final CreateTokenCopyOfTargetPermanentEffectHandler targetCopyHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -71,6 +72,12 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
         if (amount <= 0) {
             return;
         }
+        // A token copy of the source is a token its controller creates (CR 701.7a), so a "first time you would create
+        // one or more tokens" replacement is offered for it (Esix's ruling: "This effect can apply to any token").
+        if ((gameData.pendingTokenCreationReplacement != null || substitutesNeedNoInstructions(e))
+                && targetCopyHandler.replaceFirstTokenCreation(gameData, entry, amount)) {
+            return;
+        }
 
         int entersWithPlusOneCounters = amountEvaluationService.evaluate(gameData, e.initialPlusOnePlusOneCounters(),
                 amountContext);
@@ -101,6 +108,19 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
         tokenCopySupport.createSourceTokenCopiesThen(gameData, entry, sourceCard, amount, sourcePermanent,
                 copyEffect, copyException(e), e.tappedAndAttacking(),
                 putCounters.isEmpty() ? null : (game, tokens) -> putCounters(game, entry, tokens, putCounters));
+    }
+
+    /**
+     * Whether the replacement's substitutes would be created as this effect creates its copies: none of its
+     * instructions about how the tokens enter or what then happens to them (tapped, tapped and attacking, counters,
+     * exiled at the next end step or end of combat) is carried over to the substitutes yet, so a copy with one is
+     * not offered the replacement, as before.
+     */
+    private static boolean substitutesNeedNoInstructions(CreateTokenCopyOfSourceEffect e) {
+        return !e.tappedAndAttacking() && !e.tapped() && !e.exileAtEndStep() && !e.exileAtEndOfCombat()
+                && (e.initialCounters() == null || e.initialCounters().isEmpty())
+                && (e.initialPlusOnePlusOneCounters() == null
+                || e.initialPlusOnePlusOneCounters() instanceof Fixed fixed && fixed.value() == 0);
     }
 
     /** The parts of the copy exception the shared token-copy effect doesn't express, or {@code null}. */

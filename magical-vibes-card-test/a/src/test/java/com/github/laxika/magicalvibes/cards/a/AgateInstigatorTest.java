@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.j.JadeMage;
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AgateInstigator.class, GrizzlyBears.class, WhipOfErebos.class})
+@CardUsed({AgateInstigator.class, GrizzlyBears.class, WhipOfErebos.class, EsixFractalBloom.class, JadeMage.class})
 class AgateInstigatorTest extends BaseCardTest {
 
     @Test
@@ -119,5 +123,61 @@ class AgateInstigatorTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    @Test
+    @DisplayName("Esix is offered for the offspring copy; declined, the 1/1 copy is made and the turn's offer is spent")
+    void esixIsOfferedForTheOffspringCopy() {
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        harness.addToBattlefield(player1, new JadeMage());
+        harness.setHand(player1, List.of(new AgateInstigator()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().getName()).isEqualTo("Agate Instigator");
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                });
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Saproling"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Accepting Esix for the offspring copy copies the chosen creature instead")
+    void acceptingEsixReplacesTheOffspringCopy() {
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AgateInstigator()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
     }
 }

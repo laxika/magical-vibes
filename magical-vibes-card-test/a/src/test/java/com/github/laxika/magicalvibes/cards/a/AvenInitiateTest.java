@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.m.MirrormindCrown;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AvenInitiate.class})
+@CardUsed({AvenInitiate.class, GrizzlyBears.class, MirrormindCrown.class})
 class AvenInitiateTest extends BaseCardTest {
 
     private void setUpEmbalm() {
@@ -148,5 +151,25 @@ class AvenInitiateTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Aven Initiate");
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mirrormind Crown is offered for the embalm copy and copies the equipped creature instead")
+    void mirrormindCrownReplacesTheEmbalmCopy() {
+        setUpEmbalm();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent crown = harness.addToBattlefieldAndReturn(player1, new MirrormindCrown());
+        crown.setAttachedTo(bears.getId());
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
     }
 }

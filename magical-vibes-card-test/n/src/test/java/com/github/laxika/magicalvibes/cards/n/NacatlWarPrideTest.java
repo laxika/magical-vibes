@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GoblinWarDrums;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NacatlWarPride.class, BladeOfTheSixthPride.class, ChandraNalaar.class,
-        ZoeticCavern.class, GoblinWarDrums.class})
+        ZoeticCavern.class, GoblinWarDrums.class, EsixFractalBloom.class})
 class NacatlWarPrideTest extends BaseCardTest {
 
     @Test
@@ -241,5 +242,24 @@ class NacatlWarPrideTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(findPermanents(player1, "Nacatl War-Pride").stream()
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Esix isn't offered for the tapped and attacking copies (kept as today, the owner's question)")
+    void esixIsNotOfferedForTappedAndAttackingCopies() {
+        addCreatureReady(player1, new NacatlWarPride());
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        addCreatureReady(player2, new BladeOfTheSixthPride()).tap();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanents(player1, "Nacatl War-Pride").stream()
+                .filter(permanent -> permanent.getCard().isToken()))
+                .singleElement()
+                .satisfies(copy -> assertThat(copy.isAttacking()).isTrue());
     }
 }

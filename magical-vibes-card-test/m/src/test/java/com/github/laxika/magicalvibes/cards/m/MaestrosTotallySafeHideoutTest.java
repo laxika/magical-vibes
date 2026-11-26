@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MaestrosTotallySafeHideout.class, GrizzlyBears.class, Memnite.class, GlimpseTheUnthinkablePlaytest.class})
+@CardUsed({MaestrosTotallySafeHideout.class, GrizzlyBears.class, Memnite.class, GlimpseTheUnthinkablePlaytest.class, EsixFractalBloom.class})
 class MaestrosTotallySafeHideoutTest extends BaseCardTest {
 
     @Test
@@ -137,5 +139,49 @@ class MaestrosTotallySafeHideoutTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(countPermanents(player1, "Maestros' Totally Safe Hideout")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Esix is offered for the land casualty copy; accepted, the chosen creature is copied instead")
+    void esixReplacesTheLandCasualtyCopy() {
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        harness.setHand(player1, List.of(new MaestrosTotallySafeHideout()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, memnite.getId());
+
+        assertThat(countPermanents(player1, "Maestros' Totally Safe Hideout")).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Memnite"));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining Esix for the land casualty copy creates the copy of the land")
+    void decliningEsixCreatesTheLandCasualtyCopy() {
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.setHand(player1, List.of(new MaestrosTotallySafeHideout()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        // The copy has land casualty too; Esix could pay it, so its controller declines.
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(countPermanents(player1, "Maestros' Totally Safe Hideout")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Maestros' Totally Safe Hideout")).allMatch(Permanent::isTapped);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

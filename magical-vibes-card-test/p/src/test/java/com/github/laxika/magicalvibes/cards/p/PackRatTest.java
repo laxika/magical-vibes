@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.cards.c.CatacombSlug;
 import com.github.laxika.magicalvibes.cards.d.DrainpipeVermin;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PackRat.class, CatacombSlug.class, DrainpipeVermin.class})
+@CardUsed({PackRat.class, CatacombSlug.class, DrainpipeVermin.class, EsixFractalBloom.class, GrizzlyBears.class})
 class PackRatTest extends BaseCardTest {
 
     private void addActivationMana() {
@@ -182,5 +185,29 @@ class PackRatTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Esix is offered for the token copy and copies the chosen creature instead")
+    void esixReplacesTheTokenCopy() {
+        setupMainPhase();
+        harness.addToBattlefield(player1, new PackRat());
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CatacombSlug()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
     }
 }
