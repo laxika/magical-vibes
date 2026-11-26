@@ -35,11 +35,12 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
     @Test
     void enrageOffersSacrificeToTheRandomOpponent() {
         Permanent indoraptor = harness.addToBattlefieldAndReturn(player1, new IndoraptorThePerfectHybrid());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         shockIndoraptor(indoraptor);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, bears.getId());
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -137,7 +138,7 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         shockIndoraptor(indoraptor);
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+        harness.handlePermanentChosen(player2, second.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -157,6 +158,7 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
         shockIndoraptor(indoraptor);
 
         harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, zombie.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
@@ -164,7 +166,7 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
                         choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(zombie);
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie")).isEmpty();
 
         harness.handleListChoice(player2, "Put it into its owner's library");
 

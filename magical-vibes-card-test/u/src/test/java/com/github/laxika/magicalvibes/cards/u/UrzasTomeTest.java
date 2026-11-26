@@ -96,11 +96,8 @@ class UrzasTomeTest extends BaseCardTest {
         // Accept — choose to exile
         harness.handleMayAbilityChosen(player1, true);
 
-        // Should now be awaiting graveyard choice
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
-
-        // Choose the Millstone (index 0 in graveyard)
-        harness.handleGraveyardCardChosen(player1, 0);
+        // The Millstone is the only historic card, so it is exiled without a choice (CR 608.2d)
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
 
         // Hand should still have 2 cards (no discard needed)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -159,11 +156,8 @@ class UrzasTomeTest extends BaseCardTest {
         // Accept exile
         harness.handleMayAbilityChosen(player1, true);
 
-        // Should be awaiting graveyard choice — only the Millstone (index 1) should be valid
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
-
-        // Choose the Millstone at index 1
-        harness.handleGraveyardCardChosen(player1, 1);
+        // Only the Millstone can be exiled, so it is exiled without a choice (CR 608.2d)
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
 
         // Millstone exiled, GrizzlyBears still in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -207,7 +201,6 @@ class UrzasTomeTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

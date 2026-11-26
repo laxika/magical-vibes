@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -39,7 +43,9 @@ class MusicianTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.MUSIC)).isEqualTo(1);
         assertThat(PermanentGrants.grantedTriggerEffects(gd, bears, Triggers.upkeep(ActivePlayer.YOU)))
-                .containsExactly(new DestroyUnlessPaysPerCounterEffect(CounterType.MUSIC, "{1}"));
+                .containsExactly(UnlessPaysEffect.unlessYouPay(
+                        PayManaCost.withGenericIncrease("{0}", new CountersOnSource(CounterType.MUSIC)),
+                        new DestroyTargetPermanentEffect(Subjects.source())));
         assertThat(musician.isTapped()).isTrue();
     }
 
@@ -64,6 +70,7 @@ class MusicianTest extends BaseCardTest {
     @Test
     @DisplayName("Paying music upkeep keeps the creature; cost scales with counters")
     void payingMusicUpkeepKeepsCreature() {
+        giveManaSource(player2);
         Permanent musician = addReadyMusician(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
@@ -88,6 +95,7 @@ class MusicianTest extends BaseCardTest {
     @Test
     @DisplayName("Declining music upkeep destroys the creature")
     void decliningMusicUpkeepDestroys() {
+        giveManaSource(player2);
         Permanent musician = addReadyMusician(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
@@ -119,6 +127,7 @@ class MusicianTest extends BaseCardTest {
     @Test
     @DisplayName("Unpaid music upkeep cannot destroy an indestructible creature")
     void unpaidMusicUpkeepCannotDestroyIndestructibleCreature() {
+        giveManaSource(player2);
         Permanent musician = addReadyMusician(player1);
         Permanent sentinel = harness.addToBattlefieldAndReturn(player2, new DarksteelSentinel());
 
@@ -136,6 +145,7 @@ class MusicianTest extends BaseCardTest {
     @Test
     @DisplayName("Granted music ability persists after Musician leaves")
     void abilityPersistsAfterMusicianLeaves() {
+        giveManaSource(player2);
         Permanent musician = addReadyMusician(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
@@ -203,6 +213,7 @@ class MusicianTest extends BaseCardTest {
     @Test
     @DisplayName("Music upkeep uses the number of counters at resolution")
     void musicPaymentCountsCountersAtResolution() {
+        giveManaSource(player2);
         addReadyMusician(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({TormentOfVenom.class, AirElemental.class, GrizzlyBears.class, Forest.class})
 class TormentOfVenomTest extends BaseCardTest {
 
-    private static final String LOSE_LIFE = "Lose 3 life";
 
     @Test
     @DisplayName("Small target creature dies to the three -1/-1 counters and its controller loses 3 life")
@@ -69,7 +67,7 @@ class TormentOfVenomTest extends BaseCardTest {
 
         castTormentOfVenom(target.getId());
 
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        payUnlessAlternative(player2, "Sacrifice");
         harness.handlePermanentChosen(player2, bearsId);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -89,7 +87,7 @@ class TormentOfVenomTest extends BaseCardTest {
 
         castTormentOfVenom(target.getId());
 
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        payUnlessAlternative(player2, "Discard");
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -107,7 +105,7 @@ class TormentOfVenomTest extends BaseCardTest {
 
         castTormentOfVenom(target.getId());
 
-        harness.handleListChoice(player2, LOSE_LIFE);
+        payUnlessAlternative(player2, null);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -172,7 +170,7 @@ class TormentOfVenomTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        payUnlessAlternative(player2, "Discard");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.handleCardChosen(player2, 0);
 

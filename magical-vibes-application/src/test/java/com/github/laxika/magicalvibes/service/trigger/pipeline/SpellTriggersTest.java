@@ -70,8 +70,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
@@ -1596,7 +1595,8 @@ class SpellTriggersTest {
     @DisplayName("A \"that player\" punisher cast trigger goes on the stack as written, the caster its non-targeting player")
     void thatPlayerPunisherTriggerGoesOnTheStackAsWritten() {
         Permanent perm = createPermanent("Painful Quandary");
-        CardEffect loseLife = new LoseLifeUnlessDiscardEffect(5);
+        CardEffect loseLife = UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(),
+                new DiscardCardTypeCost(null, null), new LoseLifeEffect(5, Subjects.triggeringPlayer()));
         CastAbility ability = castAbility(Triggers.opponentCastsSpell().anySpell(), loseLife);
         Card spellCard = createInstant("Grizzly Bears");
         gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player2Id, "Grizzly Bears",
@@ -1620,7 +1620,8 @@ class SpellTriggersTest {
     @DisplayName("A filtered \"unless that player pays\" cast trigger doesn't trigger for a spell its filter refuses")
     void filteredUnlessPaysTriggerSkipsUnmatchedSpell() {
         Permanent perm = createPermanent("Isolation Cell");
-        CardEffect loseLife = LoseLifeUnlessPaysEffect.forTriggeringPlayer(2, 2);
+        CardEffect loseLife = UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(), "{2}",
+                new LoseLifeEffect(2, Subjects.triggeringPlayer()));
         CardPredicate creature = new CardNamedPredicate("Test Filter");
         CastAbility ability = castAbility(Triggers.opponentCastsSpell().withFilter(creature), loseLife);
         Card spellCard = createInstant("Shock");

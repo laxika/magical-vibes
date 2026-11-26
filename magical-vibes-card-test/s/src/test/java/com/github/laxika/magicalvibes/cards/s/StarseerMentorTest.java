@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -67,7 +66,7 @@ class StarseerMentorTest extends BaseCardTest {
         advanceToEndStep();
         chooseOpponentTarget();
         harness.passBothPriorities();
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        payUnlessAlternative(player2, "Sacrifice");
         harness.handlePermanentChosen(player2, bears.getId());
 
         harness.assertLife(player2, 20);
@@ -84,7 +83,7 @@ class StarseerMentorTest extends BaseCardTest {
         advanceToEndStep();
         chooseOpponentTarget();
         harness.passBothPriorities();
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        payUnlessAlternative(player2, "Discard");
         harness.handleCardChosen(player2, 0);
 
         harness.assertLife(player2, 20);
@@ -102,7 +101,7 @@ class StarseerMentorTest extends BaseCardTest {
         advanceToEndStep();
         chooseOpponentTarget();
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lose 3 life");
+        payUnlessAlternative(player2, null);
 
         harness.assertLife(player2, 17);
         harness.assertOnBattlefield(player2, "Starseer Mentor");

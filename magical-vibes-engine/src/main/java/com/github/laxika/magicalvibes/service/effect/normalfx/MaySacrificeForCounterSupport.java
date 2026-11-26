@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -17,8 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Shared steps of {@code MaySacrificePermanentForCounterOrTapSourceEffect}, used by the resolution
- * handler, the accept/decline handler and the "which permanent" choice completion.
+ * Shared steps of {@code MaySacrificePermanentForCounterSourceEffect} ("you may sacrifice a creature. If you do, put
+ * counters on this"), used by its accept handler, the "which permanent" choice completion and
+ * {@code ReturnTargetPermanentToHandThenMayCopyEffectHandler}'s candidate list.
  */
 @Slf4j
 @Component
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Component;
 public class MaySacrificeForCounterSupport {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final DestructionSupport destructionSupport;
@@ -96,22 +94,4 @@ public class MaySacrificeForCounterSupport {
                 counterType, count);
     }
 
-    /** Removes one counter of {@code counterType} from the source, if it has one. */
-    public void removeCounterFromSource(GameData gameData, UUID sourcePermanentId, CounterType counterType) {
-        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source != null) {
-            permanentCounterSupport.removeCounterFromPermanent(gameData, source, counterType, 1);
-        }
-    }
-
-    /** "If you don't, tap this creature." */
-    public void tapSource(GameData gameData, UUID sourcePermanentId) {
-        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || source.isTapped()) {
-            return;
-        }
-        source.tap();
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is tapped."));
-        log.info("Game {} - {} is tapped (no sacrifice made)", gameData.id, source.getCard().getName());
-    }
 }

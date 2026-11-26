@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -254,6 +255,26 @@ public abstract class BaseCardTest {
     protected void giveManaSource(Player player) {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test mana source", null, player.getId(),
                 new MayPayLifeForColorlessManaUntilEndOfTurnEffect(), player.getId(), Duration.PERMANENT));
+    }
+
+    /**
+     * Answers an "unless" whose ransom is asked one alternative at a time, in Oracle order ("Sacrifice a nonland
+     * permanent?", then "Discard a card?"): {@code payer} declines each question until the one starting with
+     * {@code action}, which they accept; with {@code action} {@code null} they decline every one (not paying).
+     */
+    protected void payUnlessAlternative(Player payer, String action) {
+        PendingInteraction.MayAbilityChoice asked;
+        while ((asked = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)) != null
+                && payer.getId().equals(asked.playerId())) {
+            boolean accept = action != null && asked.description().startsWith(action);
+            harness.handleMayAbilityChosen(payer, accept);
+            if (accept) {
+                return;
+            }
+        }
+        if (action != null) {
+            throw new IllegalStateException(payer.getUsername() + " wasn't asked to " + action);
+        }
     }
 
     protected Permanent addCreatureReady(Player player, Card card) {

@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +37,9 @@ public class Musician extends Card {
                         new PutCountersEffect(CounterType.MUSIC, 1),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                                new DestroyUnlessPaysPerCounterEffect(CounterType.MUSIC, "{1}")))
+                                UnlessPaysEffect.unlessYouPay(
+                                        PayManaCost.withGenericIncrease("{0}", new CountersOnSource(CounterType.MUSIC)),
+                                        new DestroyTargetPermanentEffect(Subjects.source()))))
                 ),
                 "{T}: Put a music counter on target creature. If it doesn't have \"At the beginning "
                         + "of your upkeep, destroy this creature unless you pay {1} for each music "

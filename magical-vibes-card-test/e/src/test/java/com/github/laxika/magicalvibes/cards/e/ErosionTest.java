@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.o.Oasis;
@@ -23,7 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Erosion.class, Oasis.class, BogImp.class, Disenchant.class, CourageousResolve.class})
+@CardUsed({Erosion.class, Oasis.class, Island.class, BogImp.class, Disenchant.class, CourageousResolve.class})
 class ErosionTest extends BaseCardTest {
 
     @Test
@@ -81,8 +82,9 @@ class ErosionTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.passBothPriorities(); // resolve trigger -> prompt
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player2, "Pay {1}");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .isEqualTo("Pay {1}?");
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
@@ -117,8 +119,7 @@ class ErosionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player2, "Pay 1 life");
+        payUnlessAlternative(player2, "Pay 1 life");
 
         harness.assertOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
@@ -151,8 +152,7 @@ class ErosionTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player2, "Pay 1 life");
+        payUnlessAlternative(player2, "Pay 1 life");
 
         harness.assertOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
@@ -204,7 +204,7 @@ class ErosionTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Don't pay");
+        payUnlessAlternative(player2, null);
 
         harness.assertNotOnBattlefield(player2, "Oasis");
         harness.assertInGraveyard(player2, "Oasis");
@@ -236,7 +236,7 @@ class ErosionTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        payUnlessAlternative(player2, null);
 
         assertDeathReplacementAskedWhileArborStays(arbor);
 
@@ -254,7 +254,7 @@ class ErosionTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Don't pay");
+        payUnlessAlternative(player2, null);
 
         assertDeathReplacementAskedWhileArborStays(arbor);
 
@@ -265,13 +265,17 @@ class ErosionTest extends BaseCardTest {
 
     @Test
     @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class, PlatinumEmperion.class})
-    @DisplayName("When nothing can be paid, asks for a Dryad Arbor's death replacement before it is destroyed")
-    void unpayableTriggerAsksForTheDeathReplacementBeforeTheArborIsDestroyed() {
+    @DisplayName("When life can't be paid and the {1} the Arbor could make is declined, asks for its death replacement before it is destroyed")
+    void unpayableLifeAndDeclinedManaAsksForTheDeathReplacementBeforeTheArborIsDestroyed() {
         Permanent arbor = setUpEnchantedArborAgainstKalitas();
         harness.addToBattlefield(player2, new PlatinumEmperion());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        // The Arbor can tap for mana while asked (CR 605.3a), so only the {1} is asked: life can't be paid.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .isEqualTo("Pay {1}?");
+        harness.handleMayAbilityChosen(player2, false);
 
         assertDeathReplacementAskedWhileArborStays(arbor);
 
@@ -348,6 +352,51 @@ class ErosionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertNotOnBattlefield(player2, "Oasis");
         harness.assertLife(player2, 5);
+    }
+
+    @Test
+    @DisplayName("A controller who can't lose life is still offered {1} while an untapped land could make it (CR 605.3a)")
+    void controllerWhoCantLoseLifeIsOfferedManaFromAnUntappedLand() {
+        Permanent land = addLand(player2);
+        harness.addToBattlefield(player2, new Island());
+        attachErosion(land);
+        advanceToUpkeep(player2);
+        harness.setLife(player2, 5);
+        harness.setHand(player2, List.of(new CourageousResolve()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        assertThat(gqs.canPlayerLoseLife(gd, player2.getId())).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player2, 1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Oasis");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A controller with an untapped land and an empty pool may still save the land with 1 life")
+    void controllerWithAnUntappedLandPaysLife() {
+        Permanent land = addLand(player2);
+        harness.addToBattlefield(player2, new Island());
+        attachErosion(land);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        PendingInteraction.MayAbilityChoice asked;
+        while ((asked = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)) != null) {
+            harness.handleMayAbilityChosen(player2, asked.description().contains("life"));
+        }
+
+        harness.assertOnBattlefield(player2, "Oasis");
+        harness.assertLife(player2, lifeBefore - 1);
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isTapped()).isFalse();
     }
 
     private void attachErosion(Permanent land) {

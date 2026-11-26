@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.UnlessAnswer;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -3276,6 +3278,20 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * trigger is evaluated as draw value minus life loss, and declined when the
      * AI is at very low life.
      */
+    /**
+     * The ransom {@code unless} asks for now: an any-of ransom ("sacrifice a nonland permanent or discard a card") is
+     * asked one alternative at a time, the one the waiting resolution's {@code UnlessAnswer} names.
+     */
+    private static CostEffect askedRansom(GameData gameData, UnlessPaysEffect unless) {
+        if (!(unless.ransom() instanceof AnyOfCost anyOf)) {
+            return unless.ransom();
+        }
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        UnlessAnswer state = entry == null ? null : entry.unlessAnswer(gameData.pendingEffectResolutionIndex);
+        int asked = state == null ? 0 : Math.min(state.alternative(), anyOf.alternatives().size() - 1);
+        return anyOf.alternatives().get(asked);
+    }
+
     @Override
     protected void handleMayAbilityChoice(GameData gameData) {
         PendingInteraction.MayAbilityChoice mayChoice =
@@ -3308,7 +3324,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (pending.manaCost() == null || pending.manaCost().isEmpty()) {
             for (CardEffect effect : pending.effects()) {
                 if (effect instanceof UnlessPaysEffect unless && aiPlayer.getId().equals(pending.controllerId())) {
-                    value -= spellEvaluator.ransomCost(gameData, unless.ransom(), aiPlayer.getId());
+                    value -= spellEvaluator.ransomCost(gameData, askedRansom(gameData, unless), aiPlayer.getId());
                 }
             }
         }

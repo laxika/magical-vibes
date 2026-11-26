@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.e.ErtaisTrickery;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,7 +31,7 @@ class ThornplateIntimidatorTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castIntimidator(player2.getId());
 
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        payUnlessAlternative(player2, "Sacrifice");
         harness.handlePermanentChosen(player2, bears.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -44,7 +43,7 @@ class ThornplateIntimidatorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest()));
         castIntimidator(player2.getId());
 
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        payUnlessAlternative(player2, "Discard");
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -95,7 +94,7 @@ class ThornplateIntimidatorTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ThornplateIntimidator());
 
         castIntimidator(player2.getId());
-        harness.handleListChoice(player2, "Lose 3 life");
+        payUnlessAlternative(player2, null);
 
         harness.assertLife(player2, 17);
         harness.assertInHand(player2, "Forest");

@@ -320,6 +320,7 @@ public sealed interface Condition permits
         OpponentControlsPermanentCount,
         AnOpponentIsMonarch,
         OpponentDealtDamageThisTurn,
+        OpponentDealtCombatDamageThisTurn,
         OpponentPermanentDealtExcessDamageThisTurn,
         OpponentDrewAtLeastCardsThisTurn,
         OpponentAttacksWithAtLeastCreatures,

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
@@ -9,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +32,8 @@ public class NazgLBattleMace extends Card {
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS),
-                new StealDyingOpponentPermanentUnlessPaysLifeEffect(3)),
+                UnlessPaysEffect.unlessPaysLife(Subjects.controllerOf(Subjects.triggering()), 3,
+                        new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards()).underControlOf(Subjects.you()))),
                 Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));

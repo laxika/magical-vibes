@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +16,7 @@ public class PrinceOfThralls extends Card {
         // Whenever a permanent an opponent controls is put into a graveyard, put that card onto the
         // battlefield under your control unless that opponent pays 3 life.
         addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS),
-                new StealDyingOpponentPermanentUnlessPaysLifeEffect(3));
+                UnlessPaysEffect.unlessPaysLife(Subjects.controllerOf(Subjects.triggering()), 3,
+                        new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards()).underControlOf(Subjects.you())));
     }
 }

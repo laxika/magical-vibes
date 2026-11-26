@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>When the controller has a land to return, this asks via a "you may" ability whose accept
  * branch returns a chosen land and whose decline branch discards a card. With no land the discard
- * is mandatory — the same shape as {@link DiscardUnlessExileCardFromGraveyardEffectHandler}.
+ * is mandatory.
  */
 @Component
 @RequiredArgsConstructor

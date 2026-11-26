@@ -151,6 +151,23 @@ class ExciseTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.t.TaxTaker.class)
+    @DisplayName("Paying {X} for the caster's Excise is a tax the caster's Tax Taker sees")
+    void paymentIsATaxPaidToTheCaster() {
+        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.t.TaxTaker());
+        Permanent attacker = addAttacker(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        castExcise(2, attacker.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(2);
+    }
+
     private void castExcise(int x, java.util.UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

@@ -49,8 +49,23 @@ class ArcumsWhistleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A player with no way at all to make mana isn't asked, and the creature must attack (CR 118.3, 608.2d)")
+    void playerWithNoManaSourceIsNotAsked() {
+        addReadyWhistle();
+        Permanent bears = setUpTargetForPlayer2();
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustAttackIfAbleEffect.class)).isTrue();
+    }
+
+    @Test
     @DisplayName("Declining the payment forces the target to attack this turn if able")
     void declineForcesAttack() {
+        giveManaSource(player2);
         addReadyWhistle();
         Permanent bears = setUpTargetForPlayer2();
 
@@ -64,6 +79,7 @@ class ArcumsWhistleTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment destroys the target at end step if it didn't attack")
     void declineDestroysAtEndStepIfItDidNotAttack() {
+        giveManaSource(player2);
         addReadyWhistle();
         Permanent bears = setUpTargetForPlayer2();
 
@@ -80,6 +96,7 @@ class ArcumsWhistleTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment spares the target at end step if it attacked")
     void declineSparesTargetThatAttacked() {
+        giveManaSource(player2);
         addReadyWhistle();
         Permanent bears = setUpTargetForPlayer2();
 
@@ -115,6 +132,7 @@ class ArcumsWhistleTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still applies the penalty")
     void acceptingWithoutManaAppliesPenalty() {
+        giveManaSource(player2);
         addReadyWhistle();
         Permanent bears = setUpTargetForPlayer2();
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -178,6 +196,7 @@ class ArcumsWhistleTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment destroys the target that cannot legally attack")
     void declineDestroysTargetThatCannotAttack() {
+        giveManaSource(player2);
         addReadyWhistle();
         Permanent bears = setUpTargetForPlayer2();
         bears.tap();
@@ -207,6 +226,7 @@ class ArcumsWhistleTest extends BaseCardTest {
     @Test
     @DisplayName("The delayed destruction retains the Whistle ability's controller and source")
     void delayedDestructionBelongsToWhistleController() {
+        giveManaSource(player2);
         addReadyWhistle();
         Permanent bears = setUpTargetForPlayer2();
 

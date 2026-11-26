@@ -61,6 +61,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {4}{R} at the next upkeep avoids losing the game")
     void payingAvoidsLoss() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -75,6 +76,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     @Test
     @DisplayName("Being unable to pay at the next upkeep loses the game")
     void beingUnableToPayCausesLoss() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -87,6 +89,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the next-upkeep payment loses the game")
     void decliningCausesLoss() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -99,6 +102,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     @Test
     @DisplayName("Five mana without red cannot pay the upkeep obligation")
     void wrongColorManaCausesLoss() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -111,6 +115,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     @Test
     @DisplayName("Colored mana can pay the generic portion and payment is consumed")
     void coloredManaPaysGenericCost() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
         harness.addMana(player1, ManaColor.RED, 1);
@@ -126,6 +131,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     @Test
     @DisplayName("The paid obligation does not trigger again at later upkeeps")
     void paymentTriggersOnlyOnce() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
         harness.addMana(player1, ManaColor.RED, 1);
@@ -143,6 +149,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     @Test
     @DisplayName("Removing the Giant does not remove the payment obligation")
     void paymentSurvivesTokenRemoval() {
+        giveManaSource(player1);
         castPact();
         Permanent giant = findPermanent(player1, "Giant");
         giant.setMarkedDamage(4);

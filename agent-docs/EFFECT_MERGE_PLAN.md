@@ -362,7 +362,7 @@ including the source-null early return, which is kept for `SOURCE_PERMANENT`.
   deletions, so the real count is 6 records + 6 handlers.
 
 **Other call sites updated**
-- `MustAttackUnlessControllerPaysManaValueEffectHandler` (Arcum's Whistle) injects the merged handler
+- Arcum's Whistle's handler (since replaced by an `UnlessPaysEffect`) injected the merged handler
   and builds `MUST_ATTACK` for its synthetic penalty entry — it was constructing the deleted record.
 - `TargetPolarityClassifier` (magical-vibes-ai) loses three name-keyed entries and one `instanceof`
   in favour of a single `switch (requirement)` branch: attack/block requirements are `HARMFUL`,
@@ -619,7 +619,7 @@ dead code.
 - `DestructionSupport:552` matched `elseEffect instanceof DestroySourcePermanentEffect` for the
   "unless you pay {cost}, destroy this" fallback (Musician); now `instanceof
   DestroyReferencedPermanentEffect d && d.reference() == SOURCE`.
-- `DestroyUnlessPaysPerCounterEffectHandler:47` **constructs** the deleted record at runtime for that
+- Musician's per-counter handler (since replaced by an `UnlessPaysEffect`) **constructed** the deleted record at runtime for that
   same fallback — it is not only a read site.
 - `BoardEvaluator:294`'s `DestroyPermanentsTargetPlayerControlsEffect` branch is deleted outright:
   the `DestroyAllPermanentsEffect` branch twelve lines above it is character-for-character the same

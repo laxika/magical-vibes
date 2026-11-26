@@ -281,7 +281,7 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.handleListChoice(player2, "Lose 3 life");
+        payUnlessAlternative(player2, null);
 
         assertMasteryAskedLibraryOrExile();
         harness.assertLife(player2, 20);
@@ -791,7 +791,7 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
-        harness.handleListChoice(player2, "Pay 1 life");
+        payUnlessAlternative(player2, "Pay 1 life");
 
         assertMasteryAskedLibraryOrExile();
         harness.assertLife(player2, 20);

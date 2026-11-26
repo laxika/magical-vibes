@@ -1357,10 +1357,6 @@ public class ChoiceHandlerService {
             handleForbiddenRitualPenaltyChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.OathOfLimDulPenaltyChoice ctx) {
-            handleOathOfLimDulPenaltyChoice(gameData, player, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerSacrificeOrDiscardChoice ctx) {
             handleEachPlayerSacrificeOrDiscardChoice(gameData, player, colorName, ctx);
             return;
@@ -1383,10 +1379,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
             handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
-            handleEnchantedPermanentManaOrLifePaymentChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.IndulgentTormentorChoice ctx) {
@@ -4594,29 +4586,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    /**
-     * Oath of Lim-Dûl: the controller picked sacrifice-another-permanent or discard for one life
-     * point. Record the choice on {@link GameData#torment} and resume so the effect handler applies
-     * it and advances to the next life point.
-     */
-    private void handleOathOfLimDulPenaltyChoice(GameData gameData, Player player, String chosen,
-            ChoiceContext.OathOfLimDulPenaltyChoice ctx) {
-        PendingInteraction.ColorChoice active =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (active == null || !active.options().contains(chosen)) {
-            throw new IllegalArgumentException("Invalid Oath of Lim-Dûl choice: " + chosen);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        gameData.torment.chosenMode = chosen;
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
-        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     /** Records an each-player discard-or-sacrifice choice and resumes its parked effect. */
     private void handleEachPlayerSacrificeOrDiscardChoice(GameData gameData, Player player,
             String chosen, ChoiceContext.EachPlayerSacrificeOrDiscardChoice ctx) {
@@ -4750,78 +4719,10 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleEnchantedPermanentManaOrLifePaymentChoice(
-            GameData gameData, String chosen,
-            ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
-        PendingInteraction.ColorChoice active =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (active == null || !active.options().contains(chosen)) {
-            throw new IllegalArgumentException("Invalid enchanted-permanent payment choice: " + chosen);
-        }
-
-        boolean paid = false;
-        boolean paysLife = false;
-        if (ctx.payManaOption().equals(chosen)) {
-            // The Aura's trigger is the resolution waiting on this answer; mana paid for it is a tax paid to its
-            // controller.
-            UUID auraControllerId = gameData.pendingEffectResolutionEntry != null
-                    ? gameData.pendingEffectResolutionEntry.getControllerId()
-                    : gameQueryService.findPermanentController(gameData, ctx.sourcePermanentId());
-            paid = resolutionCostPaymentService.payManaFromPool(
-                    gameData, ctx.affectedPlayerId(), new ManaCost(ctx.manaCost()), auraControllerId);
-        } else if (ctx.payLifeOption().equals(chosen)
-                && resolutionCostPaymentService.canPayLife(gameData, ctx.affectedPlayerId(), ctx.lifeCost())) {
-            paysLife = true;
-        } else if (!ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
-            throw new IllegalArgumentException("Invalid enchanted-permanent payment choice: " + chosen);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        gameData.rerunCurrentEffectAfterInteraction = false;
-        if (gameData.pendingEffectResolutionEntry != null) {
-            gameData.pendingEffectResolutionIndex++;
-        }
-        if (paysLife) {
-            // The payment is this answer's first change, so a Lich's Duel Mastery it would sacrifice (paying life is
-            // losing it, CR 119.4) is asked about before any life is paid (CR 616.1), and the payment is completed
-            // again after.
-            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
-                    () -> payLifeForEnchantedPermanent(gameData, ctx),
-                    new GameData.ListChoiceReplay(active, chosen));
-            return;
-        }
-        if (paid) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-        // An unpaid answer only destroys, so a creature land with competing death replacements is
-        // asked about before it leaves (CR 616.1) and the destruction is completed again after.
-        permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
-                () -> destroyUnpaidEnchantedPermanent(gameData, ctx),
-                new GameData.ListChoiceReplay(active, chosen));
-    }
-
     private void redistributeLifeTotals(GameData gameData, String chosen,
                                         ChoiceContext.RedistributePlayerLifeTotalsChoice ctx) {
         redistributePlayerLifeTotalsSupport.applyChoice(gameData, chosen, ctx.choices());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void payLifeForEnchantedPermanent(GameData gameData,
-                                              ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
-        lifeSupport.applyLifePayment(gameData, ctx.affectedPlayerId(), ctx.lifeCost(), ctx.sourceCardName());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void destroyUnpaidEnchantedPermanent(GameData gameData,
-                                                 ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        Permanent enchanted = aura != null && aura.isAttached()
-                ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) : null;
-        if (enchanted != null) {
-            destructionSupport.tryDestroyAndLog(gameData, enchanted, ctx.sourceCardName());
-        }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
@@ -4840,17 +4741,8 @@ public class ChoiceHandlerService {
                     () -> payAnyAmountOfLifeAsEnters(gameData, Integer.parseInt(replay.chosen()), asEnters), replay);
             return;
         }
-        if (!(replay.choice().context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx)) {
-            throw new IllegalStateException("Not a list choice that asks death replacements first: "
-                    + replay.choice().context());
-        }
-        if (ctx.payLifeOption().equals(replay.chosen())) {
-            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
-                    () -> payLifeForEnchantedPermanent(gameData, ctx), replay);
-            return;
-        }
-        permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
-                () -> destroyUnpaidEnchantedPermanent(gameData, ctx), replay);
+        throw new IllegalStateException("Not a list choice that asks death replacements first: "
+                + replay.choice().context());
     }
 
     /**

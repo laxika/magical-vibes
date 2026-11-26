@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MaySacrificePermanentForCounterOrRemoveSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,8 +31,10 @@ public class CrovaxTheCursed extends Card {
         // At the beginning of your upkeep, you may sacrifice a creature. If you do, put a +1/+1
         // counter on Crovax. If you don't, remove a +1/+1 counter from Crovax.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MaySacrificePermanentForCounterOrRemoveSourceCounterEffect(
-                        new PermanentIsCreaturePredicate(), CounterType.PLUS_ONE_PLUS_ONE, "a creature"));
+                UnlessPaysEffect.youMayPay(
+                                new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "creature", false),
+                                PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE))
+                        .ifNotPaid(RemoveCountersEffect.fromSelf(CounterType.PLUS_ONE_PLUS_ONE, 1)));
 
         // {B}: Crovax gains flying until end of turn.
         addActivatedAbility(new ActivatedAbility(

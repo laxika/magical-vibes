@@ -250,8 +250,9 @@ public class SpellEvaluator {
     /**
      * What paying an "unless" ransom other than mana costs {@code payerId}, as a score deduction: life and damage per
      * point, the cheapest matching permanents to sacrifice, each permanent tapped, each card discarded, each card the
-     * source's controller draws. {@link Double#POSITIVE_INFINITY} for a life payment or damage at or above the payer's
-     * life total, which the AI never pays. Mana ransoms are scored by the caller from the mana itself (0 here).
+     * source's controller draws, each graveyard card exiled. {@link Double#POSITIVE_INFINITY} for a life payment or
+     * damage at or above the payer's life total, which the AI never pays. Mana ransoms are scored by the caller from
+     * the mana itself (0 here); an any-of ransom is priced by the alternative asked.
      */
     public double ransomCost(GameData gameData, CostEffect ransom, UUID payerId) {
         UUID opponentId = getOpponentId(gameData, payerId);
@@ -275,6 +276,7 @@ public class SpellEvaluator {
             case DiscardRandomCardCost discard -> discard.count() * 2.0;
             case DiscardHandCost ignored -> gameData.playerHands.getOrDefault(payerId, List.of()).size() * 2.0;
             case SourceControllerDrawsCost draw -> draw.count() * 2.0;
+            case ExileNCardsFromGraveyardCost exile -> exile.count() * 0.5;
             default -> 0;
         };
     }
@@ -324,6 +326,22 @@ public class SpellEvaluator {
         return value;
     }
 
+    /**
+     * The life the payer of an "unless" loses when they don't pay ("that player loses 3 life unless …", "deals 2 damage
+     * to that player unless they pay {2}"), as a negative number, or 0 when the branch doesn't make the payer lose life:
+     * the branch names the payer by the payer's own subject. Scored on the ransom's life scale ({@link #ransomCost}).
+     */
+    private int payerLosesLife(GameData gameData, CardEffect branch, PlayerSubject payer, UUID aiPlayerId) {
+        AmountContext context = AmountContext.forEstimation(aiPlayerId);
+        if (branch instanceof LoseLifeEffect lose && lose.player().equals(payer)) {
+            return -Math.max(0, amountEvaluationService.evaluate(gameData, lose.amount(), context));
+        }
+        if (branch instanceof DealDamageToPlayersEffect damage && damage.player().equals(payer)) {
+            return -Math.max(0, amountEvaluationService.evaluate(gameData, damage.amount(), context));
+        }
+        return 0;
+    }
+
     private double evaluateAbilityEffect(GameData gameData, CardEffect effect,
                                          UUID aiPlayerId, UUID opponentId,
                                          List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
@@ -331,8 +349,11 @@ public class SpellEvaluator {
         if (effect instanceof UnlessPaysEffect unless) {
             double paid = unless.ifPaid() == null ? 0 : evaluateAbilityEffect(gameData, unless.ifPaid(),
                     aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
-            double notPaid = unless.ifNotPaid() == null ? 0 : evaluateAbilityEffect(gameData, unless.ifNotPaid(),
-                    aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+            int lifeLost = unless.ifNotPaid() == null ? 0
+                    : payerLosesLife(gameData, unless.ifNotPaid(), unless.payer(), aiPlayerId);
+            double notPaid = unless.ifNotPaid() == null ? 0 : lifeLost < 0 ? lifeLost * 1.5
+                    : evaluateAbilityEffect(gameData, unless.ifNotPaid(), aiPlayerId, opponentId, aiBattlefield,
+                    oppBattlefield);
             return paid - notPaid;
         }
         // Self-pump (e.g. Shivan Dragon's {R}: +1/+0)

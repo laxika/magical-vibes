@@ -49,6 +49,18 @@ class SlaughterPactTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.d.DarksteelMyr.class)
+    @DisplayName("A target that isn't destroyed still leaves the upkeep payment owed (its ruling)")
+    void indestructibleTargetStillSchedulesPayment() {
+        Permanent myr = addCreatureReady(player2, new com.github.laxika.magicalvibes.cards.d.DarksteelMyr());
+        harness.setHand(player1, List.of(new SlaughterPact()));
+        harness.castAndResolveInstant(player1, 0, myr.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(myr);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Waits for the controller's next upkeep")
     void waitsForControllerNextUpkeep() {
         castPact();
@@ -62,6 +74,7 @@ class SlaughterPactTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2}{B} at the next upkeep avoids losing the game")
     void payingAvoidsLoss() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -79,6 +92,7 @@ class SlaughterPactTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the next-upkeep payment loses the game")
     void decliningCausesLoss() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -91,6 +105,7 @@ class SlaughterPactTest extends BaseCardTest {
     @Test
     @DisplayName("Being unable to pay at the next upkeep loses the game")
     void beingUnableToPayCausesLoss() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -158,6 +173,7 @@ class SlaughterPactTest extends BaseCardTest {
     @Test
     @DisplayName("Three mana without black mana cannot pay the upkeep cost")
     void paymentRequiresBlackMana() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -170,6 +186,7 @@ class SlaughterPactTest extends BaseCardTest {
     @Test
     @DisplayName("A paid Pact does not require another payment on a later upkeep")
     void paymentOccursOnlyOnce() {
+        giveManaSource(player1);
         castPact();
         reachPactUpkeepPrompt();
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -215,5 +232,15 @@ class SlaughterPactTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Zoetic Cavern");
         harness.assertInGraveyard(player1, "Slaughter Pact");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A controller with no way at all to make mana isn't asked at the next upkeep and loses (CR 118.3)")
+    void controllerWithNoManaSourceIsNotAskedAndLoses() {
+        castPact();
+        reachPactUpkeepPrompt();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }

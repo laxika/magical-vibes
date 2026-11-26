@@ -20,6 +20,7 @@ class PhantasmalSphereTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep adds a +1/+1 counter and the sphere survives when the upkeep cost is paid")
     void payingUpkeepKeepsSphere() {
+        giveManaSource(player1);
         Permanent sphere = harness.addToBattlefieldAndReturn(player1, new PhantasmalSphere());
 
         advanceToUpkeep(player1);
@@ -36,6 +37,7 @@ class PhantasmalSphereTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep cost sacrifices the sphere and gives an opponent an X/X flying Orb")
     void decliningUpkeepSacrificesAndGivesOrb() {
+        giveManaSource(player1);
         Permanent sphere = harness.addToBattlefieldAndReturn(player1, new PhantasmalSphere());
         sphere.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
@@ -65,6 +67,7 @@ class PhantasmalSphereTest extends BaseCardTest {
 
     @Test
     void payingUpkeepScalesWithCounters() {
+        giveManaSource(player1);
         Permanent sphere = harness.addToBattlefieldAndReturn(player1, new PhantasmalSphere());
         sphere.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         advanceToUpkeep(player1);
@@ -149,5 +152,30 @@ class PhantasmalSphereTest extends BaseCardTest {
     private void queueLeaveTriggerTarget() {
         harness.inMutationScope(() ->
                 harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
+    }
+
+    @Test
+    @DisplayName("With the Sphere gone before its trigger resolves, the payment is still offered for its last counters (CR 608.2h)")
+    void paymentIsOfferedAfterTheSphereLeaves() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new PhantasmalSphere());
+        sphere.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sphere));
+        resolveAllTriggers();
+
+        for (int step = 0; step < 4 && gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null;
+                step++) {
+            if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+                harness.handlePermanentChosen(player1, player2.getId());
+            }
+            harness.passBothPriorities();
+        }
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .isEqualTo("Pay {2}?");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

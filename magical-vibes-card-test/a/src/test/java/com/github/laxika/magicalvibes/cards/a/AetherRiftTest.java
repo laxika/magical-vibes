@@ -6,13 +6,18 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.u.UndergroundRiver;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,13 +101,18 @@ class AetherRiftTest extends BaseCardTest {
     }
 
     @Test
-    void controllerCanPayAndNoOtherPlayerIsAsked() {
+    @DisplayName("The controller may pay, and the other player is still given the option (its ruling, CR 101.4)")
+    void controllerPaysAndTheOtherPlayerIsStillAsked() {
         harness.addToBattlefield(player1, new AetherRift());
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
@@ -161,7 +171,8 @@ class AetherRiftTest extends BaseCardTest {
     }
 
     @Test
-    void acceptingLibraryOfLengReplacementDoesNotOfferLifePayment() {
+    @DisplayName("A creature card discarded onto the library by Library of Leng is still a discard: the payment is offered, nothing returns")
+    void acceptingLibraryOfLengReplacementStillOffersThePaymentButNothingReturns() {
         harness.addToBattlefield(player1, new AetherRift());
         harness.addToBattlefield(player1, new LibraryOfLeng());
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -169,6 +180,10 @@ class AetherRiftTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        // "If you discard a creature card this way": it was discarded, so the payment is offered (CR 118.12a), but
+        // the card isn't in the graveyard to return.
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -195,5 +210,46 @@ class AetherRiftTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Every player is asked in turn order, the next one even after another paid (its ruling, CR 101.4)")
+    void everyPlayerIsAskedEvenAfterOnePaid() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player1, new AetherRift());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, false);
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 }

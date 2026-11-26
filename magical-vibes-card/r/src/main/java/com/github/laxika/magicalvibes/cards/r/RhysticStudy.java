@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PCY", collectorNumber = "45")
@@ -14,6 +17,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RhysticStudy extends Card {
 
     public RhysticStudy() {
-        addTrigger(Triggers.opponentCastsSpell().anySpell(), new DrawCardUnlessPaysEffect(1, 1));
+        // Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(), "{1}",
+                                new MayEffect(new DrawCardEffect(1), "Draw a card?"))
+                        .withPrompt("Pay {1}? If you don't, Rhystic Study's controller may draw a card."));
     }
 }

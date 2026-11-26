@@ -51,6 +51,7 @@ class InterventionPactTest extends BaseCardTest {
     @Test
     @DisplayName("Paying at the next upkeep avoids losing the game")
     void payingAtNextUpkeepAvoidsLoss() {
+        giveManaSource(player1);
         castInterventionPact();
         reachNextUpkeepPrompt();
 
@@ -103,6 +104,7 @@ class InterventionPactTest extends BaseCardTest {
     @Test
     @DisplayName("Declining at the next upkeep loses the game")
     void decliningAtNextUpkeepCausesLoss() {
+        giveManaSource(player1);
         castInterventionPact();
         reachNextUpkeepPrompt();
 
@@ -126,6 +128,7 @@ class InterventionPactTest extends BaseCardTest {
     @Test
     @DisplayName("The payment is owed even when no damage was prevented")
     void owesPaymentWithoutPreventingDamage() {
+        giveManaSource(player1);
         harness.setLife(player1, 20);
         castInterventionPact();
         reachNextUpkeepPrompt();
@@ -139,6 +142,7 @@ class InterventionPactTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep payment accepts two white mana and one colorless mana")
     void paysExactMixedManaCost() {
+        giveManaSource(player1);
         castInterventionPact();
         reachNextUpkeepPrompt();
 
@@ -154,6 +158,7 @@ class InterventionPactTest extends BaseCardTest {
     @Test
     @DisplayName("Three mana cannot pay the upkeep cost without two white mana")
     void insufficientWhiteManaCausesLoss() {
+        giveManaSource(player1);
         castInterventionPact();
         reachNextUpkeepPrompt();
 

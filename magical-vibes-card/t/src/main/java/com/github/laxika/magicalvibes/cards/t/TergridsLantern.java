@@ -1,9 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -17,8 +23,10 @@ public class TergridsLantern extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3,
-                        Subjects.targetPlayerDeclaredElsewhere())),
+                List.of(UnlessPaysEffect.unlessPays(Subjects.targetPlayerDeclaredElsewhere(),
+                        AnyOfCost.of(new SacrificePermanentCost(new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                                "nonland permanent", false), new DiscardCardTypeCost(null, null)),
+                        new LoseLifeEffect(3, Subjects.targetPlayerDeclaredElsewhere()))),
                 "{T}: Target player loses 3 life unless they sacrifice a nonland permanent of their choice or discard a card.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

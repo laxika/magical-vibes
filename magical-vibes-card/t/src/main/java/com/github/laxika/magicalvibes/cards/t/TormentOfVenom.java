@@ -1,10 +1,19 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,6 +28,11 @@ public class TormentOfVenom extends Card {
         // the battlefield at resolution (lethal counters are cleaned up only by the trailing SBA).
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, 3))
-                .addSpellEffect(new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, Subjects.controllerOf(Subjects.target())));
+                .addSpellEffect(UnlessPaysEffect.unlessPays(Subjects.controllerOf(Subjects.target()),
+                        AnyOfCost.of(new SacrificePermanentCost(new PermanentAllOfPredicate(List.of(
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                                new PermanentNotPredicate(new PermanentIsTargetCardPredicate()))),
+                                "nonland permanent other than that creature", false), new DiscardCardTypeCost(null, null)),
+                        new LoseLifeEffect(3, Subjects.controllerOf(Subjects.target()))));
     }
 }

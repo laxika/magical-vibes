@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.RegisterPayManaOrLoseGameAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -24,6 +28,7 @@ public class SummonersPact extends Card {
                 new CardColorPredicate(CardColor.GREEN),
                 new CardTypePredicate(CardType.CREATURE)
         ))));
-        addSpellEffect(new RegisterPayManaOrLoseGameAtNextUpkeepEffect("{2}{G}{G}"));
+        addSpellEffect(RegisterDelayedStepTriggerEffect.atNext(Triggers.upkeep(ActivePlayer.YOU),
+                UnlessPaysEffect.unlessYouPay("{2}{G}{G}", new ControllerLosesGameEffect())));
     }
 }

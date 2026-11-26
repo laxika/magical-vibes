@@ -18,6 +18,7 @@ class RogueSkycaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep adds a wage counter and paying the wages keeps the captain")
     void payingWagesKeepsCaptain() {
+        giveManaSource(player1);
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
 
         advanceToUpkeep(player1);
@@ -35,6 +36,7 @@ class RogueSkycaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Paying multiple wages charges two mana for each wage counter")
     void payingMultipleWagesChargesPerCounter() {
+        giveManaSource(player1);
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
         captain.setCounterCount(CounterType.WAGE, 1);
 
@@ -54,6 +56,7 @@ class RogueSkycaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Unable to pay all wages leaves the mana pool untouched and transfers the captain")
     void unableToPayAllWagesTransfersCaptainWithoutPartialPayment() {
+        giveManaSource(player1);
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
         captain.setCounterCount(CounterType.WAGE, 1);
 
@@ -75,6 +78,7 @@ class RogueSkycaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Not paying removes all wage counters and hands the captain to the opponent")
     void decliningWagesGivesCaptainToOpponent() {
+        giveManaSource(player1);
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
         captain.setCounterCount(CounterType.WAGE, 2);
 
@@ -106,6 +110,7 @@ class RogueSkycaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Declining wages preserves counters of other types")
     void decliningWagesOnlyRemovesWageCounters() {
+        giveManaSource(player1);
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
         captain.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
@@ -121,6 +126,8 @@ class RogueSkycaptainTest extends BaseCardTest {
     @Test
     @DisplayName("The new controller pays fresh wages and can later return the captain")
     void newControllerPaysWagesAndCanDeclineLater() {
+        giveManaSource(player2);
+        giveManaSource(player1);
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
 
         advanceToUpkeep(player1);

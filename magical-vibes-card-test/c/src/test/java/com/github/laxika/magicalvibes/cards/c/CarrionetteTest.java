@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,6 +21,7 @@ class CarrionetteTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay exiles both the target creature and Carrionette")
     void declineExilesBoth() {
+        giveManaSource(player2);
         Permanent turtle = addCreatureReady(player2, new HornedTurtle());
         harness.setGraveyard(player1, List.of(new Carrionette()));
         harness.forceActivePlayer(player1);
@@ -60,8 +62,31 @@ class CarrionetteTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.t.TaxTaker.class)
+    @DisplayName("Paying {2} for Carrionette's ability is a tax its controller's Tax Taker sees")
+    void paymentIsATaxPaidToTheController() {
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.t.TaxTaker());
+        Permanent turtle = addCreatureReady(player2, new HornedTurtle());
+        harness.setGraveyard(player1, List.of(new Carrionette()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0, turtle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(turtle);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Accepting without the mana still exiles both")
     void acceptWithoutManaExilesBoth() {
+        giveManaSource(player2);
         Permanent turtle = addCreatureReady(player2, new HornedTurtle());
         harness.setGraveyard(player1, List.of(new Carrionette()));
         harness.forceActivePlayer(player1);
@@ -100,6 +125,7 @@ class CarrionetteTest extends BaseCardTest {
     @Test
     @DisplayName("Can be activated during an upkeep")
     void canBeActivatedDuringUpkeep() {
+        giveManaSource(player2);
         Permanent turtle = addCreatureReady(player2, new HornedTurtle());
         harness.setGraveyard(player1, List.of(new Carrionette()));
         harness.forceActivePlayer(player1);
@@ -133,6 +159,7 @@ class CarrionetteTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple activations can exile multiple creatures with one Carrionette")
     void multipleActivationsExileBothTargets() {
+        giveManaSource(player2);
         Permanent first = addCreatureReady(player2, new HornedTurtle());
         Permanent second = addCreatureReady(player2, new HornedTurtle());
         harness.setGraveyard(player1, List.of(new Carrionette()));
@@ -159,6 +186,7 @@ class CarrionetteTest extends BaseCardTest {
     @Test
     @DisplayName("The target is still exiled if Carrionette leaves the graveyard before resolution")
     void sourceLeavingGraveyardDoesNotStopExilingTarget() {
+        giveManaSource(player2);
         Permanent turtle = addCreatureReady(player2, new HornedTurtle());
         Carrionette carrionette = new Carrionette();
         harness.setGraveyard(player1, List.of(carrionette));
@@ -215,5 +243,23 @@ class CarrionetteTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Carrionette");
         harness.assertOnBattlefield(player2, "Horned Turtle");
+    }
+
+    @Test
+    @DisplayName("A controller with no way at all to make mana isn't asked, and both are exiled (CR 118.3)")
+    void controllerWithNoManaSourceIsNotAsked() {
+        Permanent turtle = addCreatureReady(player2, new HornedTurtle());
+        harness.setGraveyard(player1, List.of(new Carrionette()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0, turtle.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player2, "Horned Turtle");
+        harness.assertNotInGraveyard(player1, "Carrionette");
     }
 }

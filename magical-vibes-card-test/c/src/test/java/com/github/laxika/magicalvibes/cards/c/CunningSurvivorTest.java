@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.StripedRiverwinder;
 import com.github.laxika.magicalvibes.cards.t.TormentOfScarabs;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -143,7 +142,7 @@ class CunningSurvivorTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        payUnlessAlternative(player1, "Discard");
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HithlainRope;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({TormentOfScarabs.class, Forest.class, GrizzlyBears.class})
 class TormentOfScarabsTest extends BaseCardTest {
 
-    private static final String LOSE_LIFE = "Lose 3 life";
 
     @Test
     @DisplayName("Enchanted player with no hand and no nonland permanent just loses 3 life")
@@ -65,7 +63,7 @@ class TormentOfScarabsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player2, LOSE_LIFE);
+        payUnlessAlternative(player2, null);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -84,7 +82,7 @@ class TormentOfScarabsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        payUnlessAlternative(player2, "Sacrifice");
         harness.handlePermanentChosen(player2, bearsId);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -102,7 +100,7 @@ class TormentOfScarabsTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        payUnlessAlternative(player2, "Discard");
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -184,7 +182,7 @@ class TormentOfScarabsTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        payUnlessAlternative(player1, "Sacrifice");
         harness.handlePermanentChosen(player1, curse.getId());
 
         harness.assertLife(player1, 20);

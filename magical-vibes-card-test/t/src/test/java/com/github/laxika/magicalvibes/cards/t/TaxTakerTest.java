@@ -280,7 +280,7 @@ class TaxTakerTest extends BaseCardTest {
             harness.addMana(player2, ManaColor.COLORLESS, 1);
 
             harness.passBothPriorities();
-            harness.handleListChoice(player2, "Pay {1}");
+            harness.handleMayAbilityChosen(player2, true);
             resolveAllTriggers();
 
             assertThat(countPermanents(player1, "Treasure")).isOne();

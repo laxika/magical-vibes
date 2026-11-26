@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -9,7 +13,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -31,7 +34,9 @@ public class PhantasmalSphere extends Card {
         // counter lands before the payment is sized.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                new DestroyUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, "{1}", true)
+                UnlessPaysEffect.unlessYouPay(
+                        PayManaCost.withGenericIncrease("{0}", new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
+                        new SacrificeSelfEffect())
         ));
 
         // When this creature leaves the battlefield, target opponent creates an X/X blue Orb

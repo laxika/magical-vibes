@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +20,7 @@ public class EsperSentinel extends Card {
         addTrigger(Triggers.opponentCastsSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
                         .nthThisTurn(1),
-                DrawCardUnlessPaysEffect.mandatory(1, new SourcePower()));
+                UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(),
+                        PayManaCost.withGenericIncrease("{0}", new SourcePower()), new DrawCardEffect(1)));
     }
 }

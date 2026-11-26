@@ -63,6 +63,7 @@ class PactOfNegationTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {3}{U}{U} at the next upkeep avoids losing the game")
     void payingAvoidsLoss() {
+        giveManaSource(player2);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -80,6 +81,7 @@ class PactOfNegationTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the next-upkeep payment loses the game")
     void decliningCausesLoss() {
+        giveManaSource(player2);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -92,6 +94,7 @@ class PactOfNegationTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting payment with only one blue mana still loses the game")
     void insufficientBlueManaCausesLoss() {
+        giveManaSource(player2);
         castPact();
         reachPactUpkeepPrompt();
 
@@ -149,6 +152,7 @@ class PactOfNegationTest extends BaseCardTest {
     @Test
     @DisplayName("Targeting an uncounterable spell still creates the Pact upkeep obligation")
     void uncounterableTargetStillRequiresPayment() {
+        giveManaSource(player2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         ProwlingSerpopard serpopard = new ProwlingSerpopard();

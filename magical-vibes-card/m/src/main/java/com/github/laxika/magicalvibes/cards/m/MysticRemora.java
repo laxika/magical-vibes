@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,6 +28,8 @@ public class MysticRemora extends Card {
         // Whenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.
         addTrigger(Triggers.opponentCastsSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new DrawCardUnlessPaysEffect(1, 4));
+                UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(), "{4}",
+                                new MayEffect(new DrawCardEffect(1), "Draw a card?"))
+                        .withPrompt("Pay {4}? If you don't, Mystic Remora's controller may draw a card."));
     }
 }

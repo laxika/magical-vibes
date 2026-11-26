@@ -464,7 +464,7 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ravenous Vampire sacrifices itself without a prompt when Glimpse is the other nonartifact creature")
+    @DisplayName("Ravenous Vampire can only sacrifice itself when Glimpse is the other nonartifact creature")
     void ravenousVampireCannotSacrificeGlimpse() {
         harness.addToBattlefield(player1, new RavenousVampire());
         harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
@@ -472,6 +472,10 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        var pick = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class);
+        assertThat(pick.validPermanentIds()).containsExactly(harness.getPermanentId(player1, "Ravenous Vampire"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ravenous Vampire"));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");

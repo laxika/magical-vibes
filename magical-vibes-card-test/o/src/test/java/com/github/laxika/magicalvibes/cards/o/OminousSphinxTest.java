@@ -129,7 +129,7 @@ class OminousSphinxTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, sphinx.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        payUnlessAlternative(player1, "Discard");
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bears.getId());

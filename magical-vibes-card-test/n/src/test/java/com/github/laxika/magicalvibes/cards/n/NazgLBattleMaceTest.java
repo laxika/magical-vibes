@@ -95,6 +95,25 @@ class NazgLBattleMaceTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Spellbook");
     }
 
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.r.RestInPeace.class)
+    @DisplayName("A sacrificed card Rest in Peace exiles instead is still put onto the battlefield (its ruling)")
+    void cardExiledInsteadOfGoingToTheGraveyardIsStillStolen() {
+        equipMaceToCreature();
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.r.RestInPeace());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        preparePlayerTwoSorcery();
+        harness.setHand(player2, List.of(new KuldothaRebirth()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player2, 0, spellbook.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+    }
+
     private void equipMaceToCreature() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mace = harness.addToBattlefieldAndReturn(player1, new NazgLBattleMace());

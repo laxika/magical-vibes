@@ -431,20 +431,6 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.OathOfLimDulPenaltyChoice) {
-            // Prefer discarding a card over sacrificing a permanent (keep board presence).
-            List<String> options = interaction.options();
-            String chosen;
-            if (options.contains(ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD)) {
-                chosen = ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD;
-            } else {
-                chosen = ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE;
-            }
-            log.info("AI: Choosing \"{}\" for Oath of Lim-Dûl in game {}", chosen, gameId);
-            answerWith(ctx, interaction, chosen);
-            return;
-        }
-
         if (context instanceof ChoiceContext.WintersChillPaymentChoice) {
             // Save own attackers: prefer pay {2}, then {1}, then nothing.
             List<String> options = interaction.options();

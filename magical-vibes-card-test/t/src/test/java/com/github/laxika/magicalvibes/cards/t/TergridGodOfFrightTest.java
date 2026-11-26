@@ -163,7 +163,7 @@ class TergridGodOfFrightTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Sacrifice a nonland permanent");
+        payUnlessAlternative(player2, "Sacrifice");
         harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
 
@@ -179,7 +179,7 @@ class TergridGodOfFrightTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Discard a card");
+        payUnlessAlternative(player2, "Discard");
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 
@@ -196,7 +196,7 @@ class TergridGodOfFrightTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lose 3 life");
+        payUnlessAlternative(player2, null);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);
@@ -211,7 +211,7 @@ class TergridGodOfFrightTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, player1.getId(), null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Sacrifice a nonland permanent");
+        payUnlessAlternative(player1, "Sacrifice");
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Tergrid's Lantern"));
         harness.passBothPriorities();
 
@@ -276,7 +276,7 @@ class TergridGodOfFrightTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, 0, player2.getId(), null);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Discard a card");
+        payUnlessAlternative(player2, "Discard");
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

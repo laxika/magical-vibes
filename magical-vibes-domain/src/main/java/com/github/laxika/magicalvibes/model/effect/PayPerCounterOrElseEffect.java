@@ -6,8 +6,8 @@ import java.util.List;
 
 /**
  * "You may pay {@code costPerCounter} for each {@code counterType} counter on this permanent. If you
- * don't, [elseEffects]." The generic sibling of {@link DestroyUnlessPaysPerCounterEffect}, whose
- * fallback is fixed to destroying or sacrificing the source.
+ * don't, [elseEffects]." (Cyclone; a plain "unless you pay {1} for each" is an {@link UnlessPaysEffect} with
+ * {@code PayManaCost.withGenericIncrease}.)
  *
  * <p>With zero counters and no paid effects, no prompt or fallback is produced. A payment
  * with paid effects remains optional even when its cost is zero. The fallback effects are resolved through the {@link ForcedCostOrElseEffect} plumbing,

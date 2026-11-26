@@ -2626,17 +2626,6 @@ public sealed interface ChoiceContext {
         public static final String DISCARD = "Discard a card";
     }
 
-    /**
-     * Oath of Lim-Dûl: for each 1 life lost, the controller chooses to sacrifice a permanent other
-     * than the source enchantment, or discard a card. Offered options are pruned to what they can
-     * do; if neither is possible the iteration is skipped (no prompt). Answered via
-     * {@code handleListChoice}.
-     */
-    record OathOfLimDulPenaltyChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
-
-        public static final String SACRIFICE = "Sacrifice a permanent other than this enchantment";
-        public static final String DISCARD = "Discard a card";
-    }
 
     /**
      * Each-player discard-or-sacrifice effect: the affected player chooses to sacrifice a permanent
@@ -2709,21 +2698,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Chooses how to pay, or not pay, an enchanted permanent's upkeep penalty. */
-    record EnchantedPermanentManaOrLifePaymentChoice(
-            UUID affectedPlayerId, String sourceCardName, UUID sourcePermanentId,
-            String manaCost, int lifeCost) implements ChoiceContext {
-
-        public static final String DECLINE = "Don't pay";
-
-        public String payManaOption() {
-            return "Pay " + manaCost;
-        }
-
-        public String payLifeOption() {
-            return "Pay " + lifeCost + " life";
-        }
-    }
 
     /** Indulgent Tormentor: the targeted opponent chooses sacrifice, payment, or a draw. */
     record IndulgentTormentorChoice(UUID affectedPlayerId, int lifeCost, String sourceCardName)

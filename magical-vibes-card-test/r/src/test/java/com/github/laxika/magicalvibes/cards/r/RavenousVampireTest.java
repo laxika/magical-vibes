@@ -64,6 +64,9 @@ class RavenousVampireTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(harness.getPermanentId(player1, "Ravenous Vampire"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ravenous Vampire"));
 
         harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
         harness.assertOnBattlefield(player1, "Igneous Golem");
@@ -78,6 +81,7 @@ class RavenousVampireTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ravenous Vampire"));
 
         harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
         harness.assertInGraveyard(player1, "Ravenous Vampire");
@@ -116,5 +120,23 @@ class RavenousVampireTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Ravenous Vampire").isTapped()).isTrue();
         assertThat(findPermanent(player1, "Ravenous Vampire")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.c.Cryoshatter.class)
+    @DisplayName("Declining taps the Vampire through the tap action, so a \"becomes tapped\" trigger fires")
+    void declineTapTriggersBecomesTapped() {
+        harness.addToBattlefield(player1, new RavenousVampire());
+        harness.addToBattlefield(player1, new FeralShadow());
+        harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.c.Cryoshatter())
+                .setAttachedTo(harness.getPermanentId(player1, "Ravenous Vampire"));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
+        harness.assertInGraveyard(player1, "Ravenous Vampire");
     }
 }

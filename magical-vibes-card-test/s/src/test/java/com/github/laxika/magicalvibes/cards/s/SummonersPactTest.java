@@ -79,6 +79,7 @@ class SummonersPactTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2}{G}{G} at the next upkeep avoids losing the game")
     void payingAtNextUpkeepAvoidsLoss() {
+        giveManaSource(player1);
         harness.setLibrary(player1, List.of());
         castPact();
         reachNextUpkeepPrompt();
@@ -95,6 +96,7 @@ class SummonersPactTest extends BaseCardTest {
     @Test
     @DisplayName("Being unable to pay at the next upkeep loses the game")
     void beingUnableToPayAtNextUpkeepCausesLoss() {
+        giveManaSource(player1);
         harness.setLibrary(player1, List.of());
         castPact();
         reachNextUpkeepPrompt();
@@ -107,6 +109,7 @@ class SummonersPactTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the next-upkeep payment loses the game")
     void decliningAtNextUpkeepCausesLoss() {
+        giveManaSource(player1);
         harness.setLibrary(player1, List.of());
         castPact();
         reachNextUpkeepPrompt();
@@ -119,6 +122,7 @@ class SummonersPactTest extends BaseCardTest {
     @Test
     @DisplayName("Failing to find an available green creature still requires upkeep payment")
     void canDeclineAvailableCreature() {
+        giveManaSource(player1);
         Card greenCreature = new LlanowarEmpath();
         harness.setLibrary(player1, List.of(greenCreature));
         castPact();
@@ -136,6 +140,7 @@ class SummonersPactTest extends BaseCardTest {
     @Test
     @DisplayName("Four mana with only one green mana cannot pay the upkeep cost")
     void insufficientGreenManaCausesLoss() {
+        giveManaSource(player1);
         harness.setLibrary(player1, List.of());
         castPact();
         reachNextUpkeepPrompt();
@@ -150,6 +155,7 @@ class SummonersPactTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep payment is required only once")
     void paymentDoesNotRepeatOnLaterUpkeep() {
+        giveManaSource(player1);
         harness.setLibrary(player1, List.of());
         castPact();
         reachNextUpkeepPrompt();

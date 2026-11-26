@@ -56,6 +56,7 @@ class PrimordialOozeTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep adds a +1/+1 counter, and declining to pay taps it and deals X damage to you")
     void declineTapsAndDealsCounterDamage() {
+        giveManaSource(player1);
         harness.addToBattlefield(player1, new PrimordialOoze());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -73,6 +74,7 @@ class PrimordialOozeTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {X} keeps it untapped, deals no damage, and spends the mana")
     void payAvoidsPenalty() {
+        giveManaSource(player1);
         harness.addToBattlefield(player1, new PrimordialOoze());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -90,6 +92,7 @@ class PrimordialOozeTest extends BaseCardTest {
     @Test
     @DisplayName("Paying uses the number of counters after the new counter is added")
     void payUsesCurrentCounterCount() {
+        giveManaSource(player1);
         Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
         ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -107,6 +110,7 @@ class PrimordialOozeTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still taps it and deals the damage")
     void acceptWithoutManaAppliesPenalty() {
+        giveManaSource(player1);
         harness.addToBattlefield(player1, new PrimordialOoze());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -121,6 +125,7 @@ class PrimordialOozeTest extends BaseCardTest {
     @Test
     @DisplayName("The penalty uses the number of counters after the new counter is added")
     void penaltyUsesCountersAfterPlacement() {
+        giveManaSource(player1);
         Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
         ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -184,6 +189,7 @@ class PrimordialOozeTest extends BaseCardTest {
     @Test
     @DisplayName("Removing the Ooze in response does not prevent damage based on its last counters")
     void removedOozeStillDealsLastKnownCounterDamage() {
+        giveManaSource(player1);
         Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
         ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setHand(player1, List.of(new Unsummon()));

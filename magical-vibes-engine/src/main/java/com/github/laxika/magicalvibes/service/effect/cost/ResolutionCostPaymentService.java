@@ -64,7 +64,8 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandEffectHandler;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
@@ -235,7 +236,7 @@ public class ResolutionCostPaymentService {
     private ExileService exileService;
     @Autowired
     @Lazy
-    private DiscardHandUnlessPaysLifeEffectHandler discardHandHandler;
+    private DiscardHandEffectHandler discardHandEffectHandler;
     @Autowired
     @Lazy
     private DamageSupport damageSupport;
@@ -499,7 +500,7 @@ public class ResolutionCostPaymentService {
                 yield Outcome.ASKING;
             }
             case DiscardHandCost ignored -> {
-                discardHandHandler.discardTargetHand(gameData, payerId, payerId, payment.sourceCard());
+                discardHand(gameData, payerId, payment.sourceCard());
                 yield afterImmediatePayment(gameData);
             }
             case PutCounterOnControlledCreatureCost blight -> {
@@ -933,6 +934,17 @@ public class ResolutionCostPaymentService {
         ActionEvents.taxPaid(gameData, payerId, sourceControllerId, before - after);
     }
 
+    /**
+     * {@code payerId} discards their hand through the discard-hand action (madness, "whenever a player discards"), as
+     * their own instruction: the payer chose to pay, so the discard is theirs.
+     */
+    private void discardHand(GameData gameData, UUID payerId, Card sourceCard) {
+        DiscardHandEffect discard = new DiscardHandEffect(Subjects.targetPlayer());
+        StackEntry carrier = StackEntry.carrier(sourceCard, payerId, sourceCard.getName() + " - discard hand",
+                List.of(discard), payerId, (UUID) null);
+        discardHandEffectHandler.resolve(gameData, carrier, discard);
+    }
+
     /** A payment made at once is paid, unless one of its actions stopped to ask (a replacement's choice). */
     private static Outcome afterImmediatePayment(GameData gameData) {
         return gameData.interaction.isAwaitingInput() ? Outcome.ASKING : Outcome.PAID;
@@ -1148,15 +1160,21 @@ public class ResolutionCostPaymentService {
                 .toList();
     }
 
-    /** The filter context of a resolving entry's source, or {@code null} without an entry. */
-    private static FilterContext filterContext(GameData gameData, StackEntry entry) {
+    /**
+     * The filter context of a resolving entry's source, or {@code null} without an entry; it names the card of the
+     * permanent the entry targets, so "another" than that one ({@code PermanentIsTargetCardPredicate}) can be judged.
+     */
+    private FilterContext filterContext(GameData gameData, StackEntry entry) {
         if (entry == null) {
             return null;
         }
+        Permanent target = entry.getTargetId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getTargetId());
         return FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId());
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withTargetCardId(target == null ? null : target.getOriginalCard().getId());
     }
 
     /**

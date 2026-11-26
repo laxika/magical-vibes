@@ -51,6 +51,28 @@ class PrinceOfThrallsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A card that left the graveyard isn't put onto the battlefield, but the opponent is still asked")
+    void cardThatLeftTheGraveyardIsNotReturnedButThePaymentIsOffered() {
+        harness.addToBattlefield(player1, new PrinceOfThralls());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        var bears = gd.playerGraveyards.get(player2.getId()).stream()
+                .filter(card -> card.getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        gd.playerGraveyards.get(player2.getId()).remove(bears);
+        gd.playerHands.get(player2.getId()).add(bears);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).contains(bears);
+    }
+
+    @Test
     @DisplayName("Opponent pays 3 life — the permanent stays in their graveyard")
     void payingKeepsPermanent() {
         princeAndShockGrizzly();

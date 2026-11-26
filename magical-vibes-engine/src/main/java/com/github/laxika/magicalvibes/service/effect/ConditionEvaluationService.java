@@ -353,6 +353,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtCombatDamageByLegendaryCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
@@ -1479,6 +1480,8 @@ public class ConditionEvaluationService {
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case OpponentDealtCombatDamageThisTurn ignored ->
+                    wasAnyOpponentDealtCombatDamageThisTurn(gameData, ctx.controllerId());
             case OpponentPermanentDealtExcessDamageThisTurn ignored ->
                     gameData.wasOpponentPermanentDealtExcessDamageThisTurn(ctx.controllerId());
             case OpponentDealtCombatDamageByLegendaryCreatureThisTurn ignored ->
@@ -4673,6 +4676,14 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    /** Whether a player other than {@code controllerId} was dealt combat damage this turn. */
+    private boolean wasAnyOpponentDealtCombatDamageThisTurn(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        return gameData.combatDamageToPlayersThisTurn.values().stream()
+                .flatMap(java.util.Collection::stream)
+                .anyMatch(playerId -> gameData.orderedPlayerIds.contains(playerId) && !playerId.equals(controllerId));
     }
 
     private boolean wasAnyOpponentDealtDamageThisTurn(GameData gameData, UUID controllerId, int minimumAmount) {

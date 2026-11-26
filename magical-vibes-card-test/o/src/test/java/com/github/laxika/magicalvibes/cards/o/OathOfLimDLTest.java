@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,13 +47,13 @@ class OathOfLimDLTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -78,12 +77,11 @@ class OathOfLimDLTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
-
-        harness.handlePermanentChosen(player1, bears.getId());
+        // Second life point, empty hand: the Bears is the only permanent to sacrifice, so it goes unasked.
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Balduvian Bears");
@@ -100,13 +98,12 @@ class OathOfLimDLTest extends BaseCardTest {
 
         loseLife(2);
 
-        UUID forestId = forest.getId();
-        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE);
-        harness.handlePermanentChosen(player1, forestId);
+        // Not discarding: the Forest is the only other permanent, so it is sacrificed without a choice.
+        harness.handleMayAbilityChosen(player1, false);
 
         // Discarding is optional even when the remaining sacrifice is impossible.
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInHand(player1, "Balduvian Bears");
@@ -125,14 +122,8 @@ class OathOfLimDLTest extends BaseCardTest {
 
         loseLife(2);
 
-        // Only sacrifice is available (empty hand) — Oath is not among legal choices.
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(bears.getId());
-
-        harness.handlePermanentChosen(player1, bears.getId());
-        // Second life point: only Oath remains — nothing legal to sacrifice and empty hand → skip.
+        // Only sacrifice is possible (empty hand) and Oath isn't a legal choice, so the Bears goes unasked; second
+        // life point: only Oath remains — nothing legal to sacrifice and empty hand → nothing.
         assertThat(gd.playerBattlefields.get(player1.getId())).containsOnly(oath);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -151,12 +142,7 @@ class OathOfLimDLTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, oath));
         harness.passBothPriorities();
 
-        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(bears.getId());
-
-        harness.handlePermanentChosen(player1, bears.getId());
-
+        // The Bears is the only permanent left to sacrifice, so it goes without a choice.
         harness.assertInGraveyard(player1, "Oath of Lim-Dûl");
         harness.assertInGraveyard(player1, "Balduvian Bears");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -185,8 +171,8 @@ class OathOfLimDLTest extends BaseCardTest {
 
         loseLife(1);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInHand(player1, "Forest");
         harness.assertOnBattlefield(player1, "Oath of Lim-Dûl");
@@ -223,7 +209,6 @@ class OathOfLimDLTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getLifeSupport()
                 .applyLifePayment(gd, player1.getId(), 1, "test"));
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, forest.getId());
 
         harness.assertLife(player1, 19);
         harness.assertInGraveyard(player1, "Forest");
@@ -242,10 +227,7 @@ class OathOfLimDLTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player1, new OathOfLimDL());
         harness.passBothPriorities();
 
-        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(second.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        // The other Oath is the only permanent this Oath may sacrifice, so it goes without a choice.
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsOnly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -258,5 +240,20 @@ class OathOfLimDLTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(amount);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.h.HithlainRope.class)
+    @DisplayName("A permanent that can't be sacrificed isn't sacrificed for the Oath")
+    void permanentThatCantBeSacrificedIsNotSacrificed() {
+        harness.addToBattlefield(player1, new OathOfLimDL());
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.h.HithlainRope());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+
+        loseLife(1);
+
+        harness.assertOnBattlefield(player1, "Hithlain Rope");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
