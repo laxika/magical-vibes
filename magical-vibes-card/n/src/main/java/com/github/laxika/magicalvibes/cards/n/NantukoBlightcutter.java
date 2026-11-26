@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -23,6 +23,6 @@ public class NantukoBlightcutter extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)), CountScope.OPPONENTS);
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new BoostSelfEffect(blackPermanentsOpponentsControl, blackPermanentsOpponentsControl)));
+                BoostEffect.self(blackPermanentsOpponentsControl, blackPermanentsOpponentsControl)));
     }
 }

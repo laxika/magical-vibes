@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -24,7 +24,7 @@ public class BrineShaman extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(),
-                        new BoostTargetCreatureEffect(2, 2)
+                        BoostEffect.target(2, 2)
                 ),
                 "{T}, Sacrifice a creature: Target creature gets +2/+2 until end of turn."
         ));

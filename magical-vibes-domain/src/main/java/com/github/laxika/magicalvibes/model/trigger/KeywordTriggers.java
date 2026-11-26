@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourceToughness;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
@@ -43,7 +43,7 @@ public final class KeywordTriggers {
     /** Prowess: "Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn" (CR 702.108a). */
     public static final TriggeredAbility PROWESS = new TriggeredAbility(
             Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-            new BoostSelfEffect(1, 1));
+            BoostEffect.self(1, 1));
 
     /**
      * Evolve: "Whenever a creature you control enters, if that creature's power is greater than this creature's power

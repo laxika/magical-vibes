@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
@@ -32,7 +32,7 @@ public class RuneBrandJuggler extends Card {
                 "{3}{B}{R}",
                 List.of(
                         new SacrificePermanentCost(suspectedCreature, "a suspected creature", false),
-                        new BoostTargetCreatureEffect(-5, -5)
+                        BoostEffect.target(-5, -5)
                 ),
                 "{3}{B}{R}, Sacrifice a suspected creature: Target creature gets -5/-5 until end of turn.",
                 TargetFilters.creature()

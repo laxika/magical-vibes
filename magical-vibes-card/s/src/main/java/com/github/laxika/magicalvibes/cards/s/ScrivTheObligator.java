@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -52,7 +52,7 @@ public class ScrivTheObligator extends Card {
                 List.of(
                         new TriggeredAbility(Triggers.attacks(), SequenceEffect.of(
                         new ConditionalEffect(new AttackedTargetIsOpponent(),
-                                new BoostSelfEffect(Subjects.triggering(), 2, 0)),
+                                BoostEffect.of(Subjects.triggering(), 2, 0)),
                         new ConditionalEffect(new NotCondition(new AttackedTargetIsOpponent()),
                                 new LoseLifeEffect(2, Subjects.controllerOf(Subjects.triggering())))))),
                 List.of(),

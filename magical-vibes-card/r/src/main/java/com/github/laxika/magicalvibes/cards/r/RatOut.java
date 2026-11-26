@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class RatOut extends Card {
 
     public RatOut() {
         target(TargetFilters.creature(), 0, 1)
-                .addSpellEffect(new BoostTargetCreatureEffect(-1, -1));
+                .addSpellEffect(BoostEffect.target(-1, -1));
         addSpellEffect(new CreateTokenEffect(
                 1,
                 "Rat",

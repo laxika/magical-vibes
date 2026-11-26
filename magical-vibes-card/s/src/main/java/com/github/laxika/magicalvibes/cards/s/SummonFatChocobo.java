@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,7 @@ public class SummonFatChocobo extends Card {
                 1, "Bird", 2, 2, CardColor.GREEN,
                 List.of(CardSubtype.BIRD), Set.of(), Set.of(),
                 List.of(new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                        new BoostSelfEffect(1, 0))));
+                        BoostEffect.self(1, 0))));
         addTrigger(Triggers.chapter(1), bird);
 
         addTrigger(Triggers.chapter(2),

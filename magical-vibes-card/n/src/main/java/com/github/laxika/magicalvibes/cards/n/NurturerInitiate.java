@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class NurturerInitiate extends Card {
         // Whenever a player casts a green spell, you may pay {1}. If you do, target creature gets +1/+1 until end of turn.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
-                        UnlessPaysEffect.youMayPay("{1}", new BoostTargetCreatureEffect(1, 1))
+                        UnlessPaysEffect.youMayPay("{1}", BoostEffect.target(1, 1))
                                 .withPrompt("Pay {1} to give target creature +1/+1 until end of turn?"));
     }
 }

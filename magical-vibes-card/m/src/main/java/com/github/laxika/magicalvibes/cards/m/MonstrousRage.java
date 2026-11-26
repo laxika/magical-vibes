@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -26,7 +26,7 @@ public class MonstrousRage extends Card {
 
     public MonstrousRage() {
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
+                .addSpellEffect(BoostEffect.target(2, 0))
                 .addSpellEffect(new CreateTokenAttachedToTargetEffect(monsterRoleToken(), PlayerRelation.ANY));
     }
 

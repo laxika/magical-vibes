@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -28,7 +28,7 @@ public class MouserAttack extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +3/+0 and gains first strike until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(3, 0),
+                                BoostEffect.target(3, 0),
                                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(), "Target must be a creature."))

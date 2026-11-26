@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -50,7 +50,7 @@ public class IronManArmor extends Card {
                                         List.of(CardSubtype.CONSTRUCT, CardSubtype.HERO),
                                         Set.of(Keyword.FLYING)),
                                 new GrantStaticEffectToSourceEffect(
-                                        new BoostSelfEffect(artifactsYouControl, artifactsYouControl),
+                                        BoostEffect.self(artifactsYouControl, artifactsYouControl),
                                         Duration.UNTIL_END_OF_TURN)))),
                 "{2}: If this Equipment isn't a creature, it becomes a 0/0 Construct Hero artifact creature "
                         + "with flying and \"This creature gets +1/+1 for each artifact you control\" until end of turn."

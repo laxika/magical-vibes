@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,7 +14,7 @@ public class JovensFerrets extends Card {
 
     public JovensFerrets() {
         // Whenever this creature attacks, it gets +0/+2 until end of turn.
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(0, 2));
+        addTrigger(Triggers.attacks(), BoostEffect.self(0, 2));
 
         // At end of combat, tap all creatures that blocked this creature this turn. They don't untap
         // during their controller's next untap step.

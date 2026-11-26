@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "266")
 @CardRegistration(set = "M10", collectorNumber = "184")
@@ -45,6 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 public class GiantGrowth extends Card {
 
     public GiantGrowth() {
-        addSpellEffect(new BoostTargetCreatureEffect(3, 3));
+        addSpellEffect(BoostEffect.target(3, 3));
     }
 }

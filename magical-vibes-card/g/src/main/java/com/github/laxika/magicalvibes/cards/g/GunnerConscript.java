@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -24,7 +24,7 @@ public class GunnerConscript extends Card {
 
     public GunnerConscript() {
         Scaled onePerAttachment = new Scaled(new AttachmentsOnSource(true, true), 1);
-        addStaticEffect(new BoostSelfEffect(onePerAttachment, onePerAttachment));
+        addStaticEffect(BoostEffect.self(onePerAttachment, onePerAttachment));
 
         addTrigger(Triggers.dies(new PermanentIsEnchantedPredicate(), ObjectRelation.THIS), junkToken());
         addTrigger(Triggers.dies(new PermanentIsEquippedPredicate(), ObjectRelation.THIS), junkToken());

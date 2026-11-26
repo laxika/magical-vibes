@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -22,7 +22,7 @@ public class TowerAbove extends Card {
         // boosted creature attacks, forces a chosen creature to block it (MustBlockSourceEffect,
         // source snapshotted to the attacker in CombatAttackService).
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(4, 4))
+                .addSpellEffect(BoostEffect.target(4, 4))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.WITHER, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(

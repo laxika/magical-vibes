@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,6 +22,6 @@ public class NeighborhoodGuardian extends Card {
                                         Triggers.CREATURE,
                                         new PermanentPowerAtMostPredicate(2))),
                                 ObjectRelation.ANOTHER_YOU_CONTROL),
-                        new BoostTargetCreatureEffect(1, 1));
+                        BoostEffect.target(1, 1));
     }
 }

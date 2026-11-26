@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,7 +16,7 @@ public class TragicTrajectory extends Card {
         // the battlefield this turn or a spell was warped this turn.
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new VoidCondition(),
-                new BoostTargetCreatureEffect(-2, -2),
-                new BoostTargetCreatureEffect(-10, -10)));
+                BoostEffect.target(-2, -2),
+                BoostEffect.target(-10, -10)));
     }
 }

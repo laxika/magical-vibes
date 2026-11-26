@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect;
@@ -41,7 +41,7 @@ public class IdrisSoulOfTheTARDIS extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect(true, artifactYouControl));
         addStaticEffect(new GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect());
-        addStaticEffect(new BoostSelfEffect(
+        addStaticEffect(BoostEffect.self(
                 new ImprintedCardManaValue(), new ImprintedCardManaValue()));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,7 +31,7 @@ public class Clickslither extends Card {
                                 "Sacrifice a Goblin",
                                 false
                         ),
-                        new BoostSelfEffect(2, 2),
+                        BoostEffect.self(2, 2),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())
                 ),
                 "Sacrifice a Goblin: This creature gets +2/+2 and gains trample until end of turn."

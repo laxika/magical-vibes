@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class ForbiddenLore extends Card {
                         new ActivatedAbility(
                                 true,
                                 null,
-                                List.of(new BoostTargetCreatureEffect(2, 1)),
+                                List.of(BoostEffect.target(2, 1)),
                                 "{T}: Target creature gets +2/+1 until end of turn."
                         ),
                         Subjects.attached()

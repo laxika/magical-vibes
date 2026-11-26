@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.List;
 
 /**
- * Applies one {@link BoostTargetCreatureEffect} to each target in a multi-target group, pairing
+ * Applies one {@link BoostEffect#target} to each target in a multi-target group, pairing
  * the boosts with the targets by their chosen position.
  */
-public record BoostTargetCreaturesByPositionEffect(List<BoostTargetCreatureEffect> boosts)
+public record BoostTargetCreaturesByPositionEffect(List<BoostEffect> boosts)
         implements CardEffect {
 
     public BoostTargetCreaturesByPositionEffect {

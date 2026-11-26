@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -41,7 +41,7 @@ public class BedeckBedazzle extends Card {
                 "Target must be an opponent or planeswalker."
         );
 
-        CardEffect bedeck = new BoostTargetCreatureEffect(3, -3);
+        CardEffect bedeck = BoostEffect.target(3, -3);
         CardEffect destroyNonbasicLand = new DestroyTargetPermanentEffect();
         CardEffect dealDamage = DealDamageEffect.toTargetOpponentOrPlaneswalker(2);
 

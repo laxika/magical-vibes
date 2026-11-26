@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +19,7 @@ public class ThunderscapeApprentice extends Card {
                 "{B}, {T}: Target player loses 1 life."));
 
         addActivatedAbility(new ActivatedAbility(true, "{G}",
-                List.of(new BoostTargetCreatureEffect(1, 1)),
+                List.of(BoostEffect.target(1, 1)),
                 "{G}, {T}: Target creature gets +1/+1 until end of turn.",
                 TargetFilters.creature()));
     }

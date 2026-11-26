@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +28,7 @@ public class ToxicStench extends Card {
                 "Target must be a nonblack creature"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new GraveyardCardThreshold(7, null),
-                new BoostTargetCreatureEffect(-1, -1),
+                BoostEffect.target(-1, -1),
                 new DestroyTargetPermanentEffect(true)
         ));
     }

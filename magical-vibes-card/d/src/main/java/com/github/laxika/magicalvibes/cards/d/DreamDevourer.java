@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantForetellToNonlandCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +12,6 @@ public class DreamDevourer extends Card {
 
     public DreamDevourer() {
         addStaticEffect(new GrantForetellToNonlandCardsInHandEffect());
-        addTrigger(Triggers.youForetell(), new BoostSelfEffect(2, 0));
+        addTrigger(Triggers.youForetell(), BoostEffect.self(2, 0));
     }
 }

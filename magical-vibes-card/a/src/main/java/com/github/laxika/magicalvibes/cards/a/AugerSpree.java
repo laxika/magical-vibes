@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "144")
 @CardRegistration(set = "MM3", collectorNumber = "151")
@@ -12,6 +12,6 @@ public class AugerSpree extends Card {
 
     public AugerSpree() {
         // Target creature gets +4/-4 until end of turn.
-        addSpellEffect(new BoostTargetCreatureEffect(4, -4));
+        addSpellEffect(BoostEffect.target(4, -4));
     }
 }

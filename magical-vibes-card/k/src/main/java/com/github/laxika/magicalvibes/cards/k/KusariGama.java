@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -29,7 +29,7 @@ public class KusariGama extends Card {
                 new ActivatedAbility(
                         false,
                         "{2}",
-                        List.of(new BoostSelfEffect(1, 0)),
+                        List.of(BoostEffect.self(1, 0)),
                         "{2}: This creature gets +1/+0 until end of turn."
                 ),
                 Subjects.attachedCreature()

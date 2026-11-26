@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -325,15 +325,17 @@ public final class TextChangeTransformer {
                 PermanentPredicate filter = apply(bounce.filter(), substitution);
                 yield filter == bounce.filter() ? bounce : bounce.withFilter(filter);
             }
-            case BoostTargetCreatureEffect boost -> {
+            // The amounts and target filter of a boost read against its source; a boost of the boosted permanent
+            // and the creature-or-Vehicle target are left as they are (CR 612.2 would reach them too).
+            case BoostEffect boost when boost.amountsRead() == BoostEffect.AmountsRead.SOURCE
+                    && !boost.targetsPermanent() -> {
                 DynamicAmount power = apply(boost.powerBoost(), substitution);
                 DynamicAmount toughness = apply(boost.toughnessBoost(), substitution);
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 DynamicAmount castTimeXValue = apply(boost.castTimeXValue(), substitution);
                 yield power == boost.powerBoost() && toughness == boost.toughnessBoost()
                         && filter == boost.filter() && castTimeXValue == boost.castTimeXValue() ? boost
-                        : new BoostTargetCreatureEffect(power, toughness, filter, boost.duration(),
-                        boost.targetGroup(), castTimeXValue, boost.subject());
+                        : boost.withAmounts(power, toughness, filter, castTimeXValue);
             }
             case com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect protection -> {
                 CardColor color = protection.color() == substitution.fromColor()

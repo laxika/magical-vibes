@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DistinctCounterKindsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class PerrieThePulverizer extends Card {
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.attacks(),
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                         new DistinctCounterKindsAmongControlledPermanents(),
                         new DistinctCounterKindsAmongControlledPermanents()),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));

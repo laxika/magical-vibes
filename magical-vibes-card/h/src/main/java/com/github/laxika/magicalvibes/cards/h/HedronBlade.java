@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
@@ -17,7 +17,7 @@ public class HedronBlade extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         // "Becomes blocked by one or more colorless creatures": once, if a blocker matches the filter.
         addTrigger(Triggers.becomesBlocked().withFilter(new PermanentIsColorlessPredicate()),
-                new BoostSelfEffect(Subjects.triggering(), 0, 0, Keyword.DEATHTOUCH));
+                BoostEffect.of(Subjects.triggering(), 0, 0, Keyword.DEATHTOUCH));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

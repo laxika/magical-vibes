@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -17,7 +17,7 @@ public class RootSpider extends Card {
         // Triggers once per block declaration even when it blocks multiple attackers.
         addTrigger(Triggers.blocks(),
                 TriggerOptions.ONE_OR_MORE,
-                new BoostSelfEffect(1, 0),
+                BoostEffect.self(1, 0),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()));
     }
 }

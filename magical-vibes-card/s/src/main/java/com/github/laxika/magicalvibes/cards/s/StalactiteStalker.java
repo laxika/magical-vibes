@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,7 +30,7 @@ public class StalactiteStalker extends Card {
                 "{2}{B}",
                 List.of(
                         new SacrificeSelfCost(true, false, true),
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                                 new Scaled(new XValue(), -1),
                                 new Scaled(new XValue(), -1))),
                 "{2}{B}, Sacrifice this creature: Target creature gets -X/-X until end of turn, "

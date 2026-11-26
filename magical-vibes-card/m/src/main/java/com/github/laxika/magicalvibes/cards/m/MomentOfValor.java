@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -26,7 +26,7 @@ public class MomentOfValor extends Card {
                         "Untap target creature. It gets +1/+0 and gains indestructible until end of turn",
                         List.of(
                                 new UntapPermanentsEffect(Subjects.target()),
-                                new BoostTargetCreatureEffect(1, 0),
+                                BoostEffect.target(1, 0),
                                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(

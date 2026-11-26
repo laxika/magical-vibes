@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,7 +34,7 @@ public class Kithkeeper extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(3, new PermanentIsCreaturePredicate()),
-                        new BoostSelfEffect(3, 0),
+                        BoostEffect.self(3, 0),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
                 ),
                 "Tap three untapped creatures you control: This creature gets +3/+0 and gains flying until end of turn."

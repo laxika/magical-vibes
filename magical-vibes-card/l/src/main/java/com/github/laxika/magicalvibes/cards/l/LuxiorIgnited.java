@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -33,7 +33,7 @@ public class LuxiorIgnited extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new BoostSelfEffect(Subjects.attached(), 2, 2, Keyword.DOUBLE_STRIKE)),
+                List.of(BoostEffect.of(Subjects.attached(), 2, 2, Keyword.DOUBLE_STRIKE)),
                 "−2: Equipped creature gets +2/+2 and gains double strike until end of turn."));
     }
 }

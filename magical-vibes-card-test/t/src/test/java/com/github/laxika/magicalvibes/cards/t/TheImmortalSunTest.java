@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -99,7 +99,7 @@ class TheImmortalSunTest extends BaseCardTest {
         planeswalker.setManaCost("{3}");
         planeswalker.setColor(CardColor.BLUE);
         planeswalker.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new BoostSelfEffect(1, 1)), "{T}: Test ability"
+                true, null, List.of(BoostEffect.self(1, 1)), "{T}: Test ability"
         ));
         Permanent permanent = new Permanent(planeswalker);
         permanent.setCounterCount(CounterType.LOYALTY, 3);

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -52,7 +52,7 @@ public class BreyaEtheriumShaper extends Card {
                                                 "Target must be a player or planeswalker.")),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Target creature gets -4/-4 until end of turn",
-                                        new BoostTargetCreatureEffect(-4, -4),
+                                        BoostEffect.target(-4, -4),
                                         new PermanentPredicateTargetFilter(
                                                 new PermanentIsCreaturePredicate(),
                                                 "Target must be a creature.")),

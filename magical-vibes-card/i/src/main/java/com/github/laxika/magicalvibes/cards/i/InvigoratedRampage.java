@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,13 +20,13 @@ public class InvigoratedRampage extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +4/+0 and gains trample until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(4, 0),
+                                BoostEffect.target(4, 0),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Two target creatures each get +2/+0 and gain trample until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(2, 0),
+                                BoostEffect.target(2, 0),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         TargetFilters.creature(), null, 2, 2, false, null)
         )));

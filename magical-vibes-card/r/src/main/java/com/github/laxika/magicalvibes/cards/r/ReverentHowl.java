@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -34,7 +34,7 @@ public class ReverentHowl extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +2/+2 and gains lifelink until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(2, 2),
+                                BoostEffect.target(2, 2),
                                 new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                         TargetFilters.creature())
         )));

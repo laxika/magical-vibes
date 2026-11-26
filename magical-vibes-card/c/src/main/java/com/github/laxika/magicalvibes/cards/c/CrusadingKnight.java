@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -20,6 +20,6 @@ public class CrusadingKnight extends Card {
 
         PermanentCount opponentSwamps =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.OPPONENTS);
-        addStaticEffect(new BoostSelfEffect(opponentSwamps, opponentSwamps));
+        addStaticEffect(BoostEffect.self(opponentSwamps, opponentSwamps));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -24,7 +24,7 @@ public class Teleportal extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}{R}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new BoostTargetCreatureEffect(1, 0),
+                BoostEffect.target(1, 0),
                 new BoostAllOwnCreaturesEffect(1, 0)));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -23,7 +23,7 @@ public class ElspethSunsNemesis extends Card {
     public ElspethSunsNemesis() {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new BoostTargetCreatureEffect(2, 1)),
+                List.of(BoostEffect.target(2, 1)),
                 "−1: Up to two target creatures you control each get +2/+1 until end of turn.",
                 null, -1, null, null,
                 List.<TargetFilter>of(TargetFilters.creatureYouControl(), TargetFilters.creatureYouControl()), 0, 2));

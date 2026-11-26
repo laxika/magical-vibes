@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
 
@@ -21,7 +21,7 @@ public class MossbridgeTroll extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(CrewCost.tapCreaturesWithTotalPower(10), new BoostSelfEffect(20, 20)),
+                List.of(CrewCost.tapCreaturesWithTotalPower(10), BoostEffect.self(20, 20)),
                 "Tap any number of untapped creatures you control other than this creature with total power 10 or greater: This creature gets +20/+20 until end of turn."
         ));
     }

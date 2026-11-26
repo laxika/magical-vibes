@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,7 +25,7 @@ public class MinionOfTeveshSzat extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new BoostTargetCreatureEffect(3, -2)),
+                List.of(BoostEffect.target(3, -2)),
                 "{T}: Target creature gets +3/-2 until end of turn."));
     }
 }

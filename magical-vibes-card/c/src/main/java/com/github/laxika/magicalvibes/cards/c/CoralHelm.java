@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class CoralHelm extends Card {
                 "{3}",
                 List.of(
                         new DiscardRandomCardCost(),
-                        new BoostTargetCreatureEffect(2, 2)
+                        BoostEffect.target(2, 2)
                 ),
                 "{3}, Discard a card at random: Target creature gets +2/+2 until end of turn."
         ));

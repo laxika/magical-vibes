@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
@@ -48,7 +48,7 @@ public class SarevokTheUsurper extends Card {
 
     public SarevokTheUsurper() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostTargetCreatureEffect(
+                BoostEffect.target(
                         new CardsInGraveyard(CREATURE_CARDS, CountScope.CONTROLLER), new Fixed(0)));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
@@ -77,7 +77,7 @@ public class SarevokTheUsurper extends Card {
     public static CardEffect specializedCombatTrigger(CardColor color) {
         CardPredicate graveyardFilter = color == CardColor.BLUE
                 ? CREATURE_INSTANT_OR_SORCERY_CARDS : CREATURE_CARDS;
-        CardEffect boost = new BoostTargetCreatureEffect(
+        CardEffect boost = BoostEffect.target(
                 new CardsInGraveyard(graveyardFilter, CountScope.CONTROLLER), new Fixed(0));
         return switch (color) {
             case WHITE -> SequenceEffect.of(

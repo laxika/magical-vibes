@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillAndRegisterDelayedAttackerBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -49,7 +49,7 @@ public class MillAndRegisterDelayedAttackerBoostEffectHandler implements NormalE
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.thisTurn(
                 controllerId, entry.getCard(),
                 new TriggeredAbility(Triggers.creatureAttacks(),
-                        new BoostTargetCreatureEffect(new Fixed(power), new Fixed(toughness))),
+                        BoostEffect.target(new Fixed(power), new Fixed(toughness))),
                 entry.getSourcePermanentId()));
         log.info("Game {} - {} registers delayed attacker boost +{}/+{} ({} creature card(s) milled)",
                 gameData.id, entry.getCard().getName(), power, toughness, creatureCount);

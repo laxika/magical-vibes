@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -26,7 +26,7 @@ public class LowlandOaf extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(
-                        new BoostTargetCreatureEffect(1, 0),
+                        BoostEffect.target(1, 0),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endStep(ActivePlayer.ANY),
                                 Subjects.target(),

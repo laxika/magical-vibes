@@ -8,13 +8,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * targets are chosen only when the linked triggered ability is put on the stack.</p>
  */
 public record BoostSelfAndTriggerWhenPowerBecomesEffect(
-        BoostSelfEffect boost,
+        BoostEffect boost,
         int powerThreshold,
         CardEffect triggeredEffect) implements CardEffect {
 
     public BoostSelfAndTriggerWhenPowerBecomesEffect(int powerBoost, int toughnessBoost,
                                                      int powerThreshold, int damage) {
-        this(new BoostSelfEffect(powerBoost, toughnessBoost), powerThreshold,
+        this(BoostEffect.self(powerBoost, toughnessBoost), powerThreshold,
                 DealDamageEffect.toAnyTarget(damage));
     }
 }

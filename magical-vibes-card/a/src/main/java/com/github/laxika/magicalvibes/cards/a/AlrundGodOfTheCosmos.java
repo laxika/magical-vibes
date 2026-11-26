@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfChosenTypeToHandRestEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -26,7 +26,7 @@ public class AlrundGodOfTheCosmos extends Card {
         var count = new Sum(
                 new CardsInHand(CountScope.CONTROLLER),
                 new ForetoldCardsInExile(CountScope.CONTROLLER));
-        addStaticEffect(new BoostSelfEffect(count, count));
+        addStaticEffect(BoostEffect.self(count, count));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new RevealTopCardsOfChosenTypeToHandRestEffect(2));
         addSpellEffect(new ChooseOneEffect(List.of(

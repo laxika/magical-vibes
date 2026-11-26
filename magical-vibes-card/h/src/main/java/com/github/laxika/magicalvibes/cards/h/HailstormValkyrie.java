@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class HailstormValkyrie extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{S}{S}",
-                List.of(new BoostSelfEffect(2, 2)),
+                List.of(BoostEffect.self(2, 2)),
                 "{S}{S}: This creature gets +2/+2 until end of turn."
         ));
     }

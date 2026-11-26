@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -40,7 +40,7 @@ import java.util.Set;
 public class SkanosDragonVassal extends Card {
 
     public SkanosDragonVassal() {
-        addAttackAbility(this, new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0)));
+        addAttackAbility(this, BoostEffect.target(new SourcePower(), new Fixed(0)));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);
@@ -56,7 +56,7 @@ public class SkanosDragonVassal extends Card {
     }
 
     public static CardEffect specializedAttackEffect(CardColor color) {
-        CardEffect boost = new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0));
+        CardEffect boost = BoostEffect.target(new SourcePower(), new Fixed(0));
         return switch (color) {
             case WHITE -> SequenceEffect.of(
                     new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()), boost);

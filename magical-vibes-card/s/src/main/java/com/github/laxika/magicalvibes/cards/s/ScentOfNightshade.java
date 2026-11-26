@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +17,7 @@ public class ScentOfNightshade extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new RevealAnyNumberOfCardsFromHandEffect(
                         new CardColorPredicate(CardColor.BLACK)))
-                .addSpellEffect(new BoostTargetCreatureEffect(
+                .addSpellEffect(BoostEffect.target(
                         new Scaled(new EventValue(), -1),
                         new Scaled(new EventValue(), -1)));
     }

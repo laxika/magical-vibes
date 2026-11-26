@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -25,7 +25,7 @@ public class RetreatToHagra extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +1/+0 and gains deathtouch until end of turn.",
                         List.of(
-                                new BoostTargetCreatureEffect(1, 0),
+                                BoostEffect.target(1, 0),
                                 new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())
                         ),
                         TargetFilters.creature()),

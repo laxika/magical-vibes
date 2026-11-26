@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
@@ -26,6 +26,6 @@ public class OKagachiMadeManifest extends Card {
                         .by(Subjects.defendingPlayer()),
                 new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE)),
                 new ConditionalEffect(new HappenedThisWay(StepKind.CHOOSE),
-                        new BoostSelfEffect(AmountThisWay.chosenManaValue(), new Fixed(0)))));
+                        BoostEffect.self(AmountThisWay.chosenManaValue(), new Fixed(0)))));
     }
 }

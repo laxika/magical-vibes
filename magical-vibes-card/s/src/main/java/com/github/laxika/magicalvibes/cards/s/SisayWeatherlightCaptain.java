@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanen
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -33,7 +33,7 @@ public class SisayWeatherlightCaptain extends Card {
         ColorsAmongControlledPermanents colorsAmongOtherLegendaryPermanents =
                 new ColorsAmongControlledPermanents(otherLegendaryPermanents);
 
-        addStaticEffect(new BoostSelfEffect(
+        addStaticEffect(BoostEffect.self(
                 colorsAmongOtherLegendaryPermanents, colorsAmongOtherLegendaryPermanents));
 
         addActivatedAbility(new ActivatedAbility(

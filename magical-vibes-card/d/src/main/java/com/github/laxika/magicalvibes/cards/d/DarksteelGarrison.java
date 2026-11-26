@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +19,7 @@ public class DarksteelGarrison extends Card {
 
     public DarksteelGarrison() {
         addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attached()));
-        addTrigger(Triggers.enchantedPermanentBecomesTapped(), new BoostTargetCreatureEffect(1, 1));
+        addTrigger(Triggers.enchantedPermanentBecomesTapped(), BoostEffect.target(1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

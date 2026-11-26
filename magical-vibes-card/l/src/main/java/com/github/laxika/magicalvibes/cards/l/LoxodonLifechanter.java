@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class LoxodonLifechanter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{W}",
-                List.of(new BoostSelfEffect(new ControllerLifeTotal(), new ControllerLifeTotal())),
+                List.of(BoostEffect.self(new ControllerLifeTotal(), new ControllerLifeTotal())),
                 "This creature gets +X/+X until end of turn, where X is your life total."
         ));
     }

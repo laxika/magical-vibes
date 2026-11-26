@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +17,7 @@ public class CunningSurvivor extends Card {
         // DiscardTriggerCollectorService enqueues it carrying the source permanent id, so both steps land
         // on this creature.
         addTrigger(Triggers.youDiscardCard(), SequenceEffect.of(
-                new BoostSelfEffect(1, 0),
+                BoostEffect.self(1, 0),
                 new MakeCreatureUnblockableEffect(true)));
     }
 }

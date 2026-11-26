@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,6 +27,6 @@ public class TerritorialWitchstalker extends Card {
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtLeastPredicate(4))))),
-                SequenceEffect.of(new BoostSelfEffect(1, 0), new CanAttackAsThoughNoDefenderEffect()));
+                SequenceEffect.of(BoostEffect.self(1, 0), new CanAttackAsThoughNoDefenderEffect()));
     }
 }

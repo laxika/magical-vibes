@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -52,7 +52,7 @@ public class DeathsporeThallid extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING),
                                 "a Saproling"
                         ),
-                        new BoostTargetCreatureEffect(-1, -1)
+                        BoostEffect.target(-1, -1)
                 ),
                 "Sacrifice a Saproling: Target creature gets -1/-1 until end of turn.",
                 TargetFilters.creature()

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "5DN", collectorNumber = "56")
@@ -14,6 +14,6 @@ public class NimGrotesque extends Card {
     public NimGrotesque() {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(artifactsYouControl, new Fixed(0)));
+        addStaticEffect(BoostEffect.self(artifactsYouControl, new Fixed(0)));
     }
 }

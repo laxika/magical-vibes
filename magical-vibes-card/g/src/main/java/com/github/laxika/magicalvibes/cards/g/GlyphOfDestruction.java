@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -29,7 +29,7 @@ public class GlyphOfDestruction extends Card {
                 )),
                 "Target must be a blocking Wall you control"
         ))
-                .addSpellEffect(new BoostTargetCreatureEffect(10, 0,
+                .addSpellEffect(BoostEffect.target(10, 0,
                         Duration.UNTIL_END_OF_COMBAT))
                 .addSpellEffect(PreventDamageEffect.allToTargetCreatures())
                 .addSpellEffect(RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endStep(ActivePlayer.ANY),

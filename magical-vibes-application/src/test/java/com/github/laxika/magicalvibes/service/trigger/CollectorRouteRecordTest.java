@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -302,7 +302,7 @@ class CollectorRouteRecordTest extends BaseCardTest {
     void combatDamageAbilityWithTwoTargetGroupsRecordsTheDamage() {
         Card card = creature("Twin Wrecker");
         CardEffect destroy = new DestroyTargetPermanentEffect();
-        CardEffect boost = new BoostTargetCreatureEffect(1, 1);
+        CardEffect boost = BoostEffect.target(1, 1);
         card.addTrigger(Triggers.dealsCombatDamageToPlayer(), destroy, boost);
         card.target(TargetFilters.creature()).bindEffect(destroy);
         card.target(TargetFilters.creature()).bindEffect(boost);

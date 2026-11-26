@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -19,11 +19,11 @@ public class FrontlineSage extends Card {
     public FrontlineSage() {
         // Exalted: whenever a creature you control attacks alone, that creature gets +1/+1 until end
         // of turn. Triggers.creatureYouControlAttacks() fires per attacking ally and records the attacker as the
-        // trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that creature";
+        // trigger's (non-targeting) target, so BoostEffect.target boosts "that creature";
         // AttacksAlone (checked at resolution) restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new BoostTargetCreatureEffect(1, 1));
+                BoostEffect.target(1, 1));
 
         // {U}, {T}: Draw a card, then discard a card. (Loot: draw resolves before the discard.)
         addActivatedAbility(new ActivatedAbility(

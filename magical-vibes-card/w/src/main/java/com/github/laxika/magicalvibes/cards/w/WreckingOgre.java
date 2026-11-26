@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class WreckingOgre extends Card {
     public WreckingOgre() {
         // Bloodrush — {3}{R}{R}, Discard this card: Target attacking creature gets +3/+3 and gains double strike until end of turn.
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{3}{R}{R}",
-                List.of(new BoostTargetCreatureEffect(3, 3),
+                List.of(BoostEffect.target(3, 3),
                         new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target())),
                 "Bloodrush — {3}{R}{R}, Discard this card: Target attacking creature gets +3/+3 and gains double strike until end of turn.",
                 TargetFilters.attackingCreature()));

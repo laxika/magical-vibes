@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -21,7 +21,7 @@ public class SeizeOpportunity extends Card {
                         new ExileTopCardMayPlayThisTurnEffect(2, false).until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Up to two target creatures each get +2/+1 until end of turn",
-                        List.<CardEffect>of(new BoostTargetCreatureEffect(2, 1)),
+                        List.<CardEffect>of(BoostEffect.target(2, 1)),
                         TargetFilters.creature(), null, 0, 2, false, null)
         )));
     }

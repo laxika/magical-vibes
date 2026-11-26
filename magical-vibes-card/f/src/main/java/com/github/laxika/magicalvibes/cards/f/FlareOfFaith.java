@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -18,10 +18,10 @@ public class FlareOfFaith extends Card {
 
     public FlareOfFaith() {
         PermanentHasSubtypePredicate human = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
-        addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+        addSpellEffect(BoostEffect.target(2, 2));
         addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(human),
                 SequenceEffect.of(
-                        new BoostTargetCreatureEffect(1, 1),
+                        BoostEffect.target(1, 1),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()))));
     }
 }

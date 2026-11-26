@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -43,7 +43,7 @@ public class GarrukUnleashed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(
-                        new BoostTargetCreatureEffect(3, 3),
+                        BoostEffect.target(3, 3),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "+1: Up to one target creature gets +3/+3 and gains trample until end of turn.",

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -25,7 +25,7 @@ public class LifeOfTheParty extends Card {
     public LifeOfTheParty() {
         PermanentCount creaturesYouControl = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(creaturesYouControl, new Fixed(0)));
+        addTrigger(Triggers.attacks(), BoostEffect.self(creaturesYouControl, new Fixed(0)));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new CreateTokenCopyOfSourceForEachOtherPlayerEffect(

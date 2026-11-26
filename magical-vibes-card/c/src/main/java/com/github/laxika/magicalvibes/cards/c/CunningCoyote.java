@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,7 +34,7 @@ public class CunningCoyote extends Card {
                 "Target must be another creature you control"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(1, 1),
+                        BoostEffect.target(1, 1),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 }

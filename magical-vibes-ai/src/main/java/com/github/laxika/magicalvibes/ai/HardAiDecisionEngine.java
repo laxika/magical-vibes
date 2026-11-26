@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1790,7 +1790,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     double evaluateCombatTrickInCombat(GameData gameData, Card card, boolean isOpponentsTurn) {
         CreatureBoostEffect boost = null;
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
-            if (effect instanceof CreatureBoostEffect b) {
+            if (CreatureBoostEffect.targetedBoost(effect) instanceof CreatureBoostEffect b) {
                 boost = b;
                 break;
             }
@@ -2254,7 +2254,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 .toList();
 
         boolean isSelfPump = nonCostEffects.stream().anyMatch(effect -> selfBoost(effect) != null);
-        boolean isTargetedPump = nonCostEffects.stream().anyMatch(CreatureBoostEffect.class::isInstance);
+        // A boost reading its source that names no target (a Crown's "enchanted creature and the creatures that share
+        // a creature type with it") is timed like a targeted pump: with no target it has no boosted permanent here.
+        boolean isTargetedPump = nonCostEffects.stream().anyMatch(effect -> CreatureBoostEffect.targetedBoost(effect) != null
+                || effect instanceof BoostEffect boost && boost.amountsRead() == BoostEffect.AmountsRead.SOURCE);
         boolean isPump = isSelfPump || isTargetedPump;
         boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof CardDrawingEffect draw
                 && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer));
@@ -2331,7 +2334,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     if (amount >= projectedRemainingToughness) {
                         return true;
                     }
-                } else if (effect instanceof CreatureBoostEffect) {
+                } else if (CreatureBoostEffect.targetedBoost(effect) != null) {
                     int toughnessChange = toughnessBoost(gameData, effect, threat);
                     if (projectedRemainingToughness + toughnessChange <= 0) {
                         return true;
@@ -2354,7 +2357,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             for (CardEffect effect : stackEffects(pending)) {
                 if ((selfEffect && selfBoost(effect) != null)
-                        || (targetedEffect && effect instanceof CreatureBoostEffect)) {
+                        || (targetedEffect && CreatureBoostEffect.targetedBoost(effect) != null)) {
                     boost += toughnessBoost(gameData, effect, pending);
                 }
             }
@@ -2363,14 +2366,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     private int toughnessBoost(GameData gameData, CardEffect effect, StackEntry entry) {
-        BoostSelfEffect selfBoost = selfBoost(effect);
+        BoostEffect selfBoost = selfBoost(effect);
         if (selfBoost != null) {
             AmountContext context = entry == null
                     ? AmountContext.forEstimation(aiPlayer.getId())
                     : AmountContext.forStackEntry(entry, null);
             return amountEvaluationService.evaluate(gameData, selfBoost.toughnessBoost(), context);
         }
-        if (effect instanceof CreatureBoostEffect boost) {
+        if (CreatureBoostEffect.targetedBoost(effect) instanceof CreatureBoostEffect boost) {
             AmountContext context = entry == null
                     ? AmountContext.forEstimation(aiPlayer.getId())
                     : AmountContext.forStackEntry(entry, null);
@@ -2380,8 +2383,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /** Keeps the AI's one sanctioned concrete self-pump dispatch in a single place. */
-    private BoostSelfEffect selfBoost(CardEffect effect) {
-        return effect instanceof BoostSelfEffect boost && boost.subject() instanceof PermanentSubject.Source ? boost : null;
+    private BoostEffect selfBoost(CardEffect effect) {
+        return effect instanceof BoostEffect boost && boost.subject() instanceof PermanentSubject.Source ? boost : null;
     }
 
     private List<CardEffect> stackEffects(StackEntry entry) {
@@ -3141,7 +3144,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (!isInstantSpeedCard(card) || !card.hasType(CardType.INSTANT)) continue;
             int boost = 0;
             for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
-                if (effect instanceof CreatureBoostEffect b) {
+                if (CreatureBoostEffect.targetedBoost(effect) instanceof CreatureBoostEffect b) {
                     boost = amountEvaluationService.evaluate(gameData, b.powerBoost(), amountCtx);
                     break;
                 }

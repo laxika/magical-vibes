@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -35,7 +35,7 @@ public class PriestOfTheHauntedEdge extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostTargetCreatureEffect(minusSnowLands, minusSnowLands)
+                        BoostEffect.target(minusSnowLands, minusSnowLands)
                 ),
                 "{T}, Sacrifice this creature: Target creature gets -X/-X until end of turn, where X is "
                         + "the number of snow lands you control. Activate only as a sorcery.",

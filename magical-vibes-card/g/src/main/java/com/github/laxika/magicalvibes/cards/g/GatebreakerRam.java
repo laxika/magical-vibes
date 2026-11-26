@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class GatebreakerRam extends Card {
     public GatebreakerRam() {
         PermanentCount gatesYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.GATE), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(gatesYouControl, gatesYouControl));
+        addStaticEffect(BoostEffect.self(gatesYouControl, gatesYouControl));
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE)),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), Subjects.source())));

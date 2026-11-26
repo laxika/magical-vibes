@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
@@ -22,7 +22,7 @@ public class CaptainHowlerSeaScourge extends Card {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2, 2));
         addTrigger(Triggers.youDiscardOneOrMoreCards(),
                 SequenceEffect.of(
-                        new BoostTargetCreatureEffect(new Scaled(new EventValue(), 2), new Fixed(0),
+                        BoostEffect.target(new Scaled(new EventValue(), 2), new Fixed(0),
                                 new PermanentIsCreaturePredicate()),
                         new RegisterDelayedWatchedCreaturesCombatDamageEffect(List.of(new DrawCardEffect(1)), true, true)
                 ));

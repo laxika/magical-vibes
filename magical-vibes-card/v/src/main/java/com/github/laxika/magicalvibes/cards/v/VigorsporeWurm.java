@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,7 @@ public class VigorsporeWurm extends Card {
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(creatureCardsInGraveyard, creatureCardsInGraveyard),
+                        BoostEffect.target(creatureCardsInGraveyard, creatureCardsInGraveyard),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
 
         addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -17,7 +17,7 @@ public class UnagisSpray extends Card {
 
     public UnagisSpray() {
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(-4, 0))
+                .addSpellEffect(BoostEffect.target(-4, 0))
                 .addSpellEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasAnySubtypePredicate(Set.of(
                                 CardSubtype.FISH,

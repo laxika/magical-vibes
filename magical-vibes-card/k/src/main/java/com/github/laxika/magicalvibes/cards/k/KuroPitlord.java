@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
@@ -27,7 +27,7 @@ public class KuroPitlord extends Card {
 
         // Pay 1 life: Target creature gets -1/-1 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new PayLifeCost(1), new BoostTargetCreatureEffect(-1, -1)),
+                List.of(new PayLifeCost(1), BoostEffect.target(-1, -1)),
                 "Pay 1 life: Target creature gets -1/-1 until end of turn.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature")));

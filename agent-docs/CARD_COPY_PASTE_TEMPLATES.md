@@ -652,7 +652,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -663,7 +663,7 @@ public class CARDNAME extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), BoostEffect.target(POWER_BOOST, TOUGHNESS_BOOST));
     }
 }
 ```

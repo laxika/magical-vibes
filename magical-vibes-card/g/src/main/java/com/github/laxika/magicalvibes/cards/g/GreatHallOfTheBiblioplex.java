@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -46,7 +46,7 @@ public class GreatHallOfTheBiblioplex extends Card {
         addStaticEffect(new ConditionalEffect(new SourceIsCreature(),
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.youCastSpell()
                                 .withFilter(INSTANT_OR_SORCERY),
-                        new BoostSelfEffect(1, 0)),
+                        BoostEffect.self(1, 0)),
                         Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(

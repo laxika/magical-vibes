@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "157")
 public class WieldingTheGreenDragon extends Card {
 
     public WieldingTheGreenDragon() {
-        addSpellEffect(new BoostTargetCreatureEffect(4, 4));
+        addSpellEffect(BoostEffect.target(4, 4));
     }
 }

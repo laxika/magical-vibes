@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class TrepanationBlade extends Card {
         // for each card revealed this way. That player puts the revealed cards into their graveyard.
         addTrigger(Triggers.attacks(),
                 new RevealCardsFromTopUntilEffect(Subjects.defendingPlayer(), new CardTypePredicate(CardType.LAND)),
-                new BoostSelfEffect(Subjects.triggering(), new AmountThisWay(StepKind.REVEAL), new Fixed(0)),
+                BoostEffect.of(Subjects.triggering(), new AmountThisWay(StepKind.REVEAL), new Fixed(0)),
                 new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.revealedThisWay()));
 
         // Equip {2}

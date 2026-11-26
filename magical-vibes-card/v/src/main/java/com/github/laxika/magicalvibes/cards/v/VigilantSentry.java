@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -39,7 +39,7 @@ public class VigilantSentry extends Card {
                         new ActivatedAbility(
                                 true,
                                 null,
-                                List.of(new BoostTargetCreatureEffect(3, 3)),
+                                List.of(BoostEffect.target(3, 3)),
                                 "{T}: Target attacking or blocking creature gets +3/+3 until end of turn.",
                                 attackingOrBlockingCreature),
                         Subjects.source())));

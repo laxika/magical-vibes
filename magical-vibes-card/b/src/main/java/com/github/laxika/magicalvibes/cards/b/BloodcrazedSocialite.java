@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -32,7 +32,7 @@ public class BloodcrazedSocialite extends Card {
                                         new PermanentIsTokenPredicate())),
                                 Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                new BoostSelfEffect(2, 2))),
+                                BoostEffect.self(2, 2))),
                 "Sacrifice a Blood token?"));
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +21,7 @@ public class BriarShield extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new BoostSelfEffect(Subjects.attached(), new Fixed(3), new Fixed(3))),
+                List.of(new SacrificeSelfCost(), BoostEffect.of(Subjects.attached(), new Fixed(3), new Fixed(3))),
                 "Sacrifice Briar Shield: Enchanted creature gets +3/+3 until end of turn."
         ));
     }

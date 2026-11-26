@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class BroodKeeper extends Card {
                 CardType.CREATURE, 1, "Dragon", 2, 2, CardColor.RED, null,
                 List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of(), false, false,
                 List.of(),
-                List.of(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
+                List.of(new ActivatedAbility(false, "{R}", List.of(BoostEffect.self(1, 0)),
                         "{R}: This creature gets +1/+0 until end of turn.")),
                 false, false, false, 0, Set.of()));
     }

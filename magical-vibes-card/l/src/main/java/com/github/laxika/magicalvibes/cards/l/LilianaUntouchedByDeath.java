@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -43,7 +43,7 @@ public class LilianaUntouchedByDeath extends Card {
         // −2: Target creature gets -X/-X until end of turn, where X is the number of Zombies you control.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new BoostTargetCreatureEffect(zombiesYouControlNegated(), zombiesYouControlNegated())),
+                List.of(BoostEffect.target(zombiesYouControlNegated(), zombiesYouControlNegated())),
                 "−2: Target creature gets -X/-X until end of turn, where X is the number of Zombies you control.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

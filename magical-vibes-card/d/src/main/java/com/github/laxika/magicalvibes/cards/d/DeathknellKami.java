@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -21,7 +21,7 @@ public class DeathknellKami extends Card {
 
     public DeathknellKami() {
         addActivatedAbility(new ActivatedAbility(false, "{2}",
-                List.of(new BoostSelfEffect(1, 1), new SacrificeSelfAtEndStepEffect()),
+                List.of(BoostEffect.self(1, 1), new SacrificeSelfAtEndStepEffect()),
                 "{2}: This creature gets +1/+1 until end of turn. Sacrifice it at the beginning of the next end step."));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()

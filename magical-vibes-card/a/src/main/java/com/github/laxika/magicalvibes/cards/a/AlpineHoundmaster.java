@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -33,7 +33,7 @@ public class AlpineHoundmaster extends Card {
                 "Search your library for a card named Alpine Watchdog and/or a card named Igneous Cur?"
         ));
 
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), BoostEffect.self(
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER, true),
                 new Fixed(0)));
     }

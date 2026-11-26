@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -26,7 +26,7 @@ public class StreambedAquitects extends Card {
                 true,
                 null,
                 List.of(
-                        new BoostTargetCreatureEffect(1, 1),
+                        BoostEffect.target(1, 1),
                         new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.target())
                 ),
                 "{T}: Target Merfolk creature gets +1/+1 and gains islandwalk until end of turn.",

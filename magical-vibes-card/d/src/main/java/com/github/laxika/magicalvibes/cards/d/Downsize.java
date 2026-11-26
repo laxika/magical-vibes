@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -29,7 +29,7 @@ public class Downsize extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{U}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new BoostTargetCreatureEffect(-4, 0),
+                BoostEffect.target(-4, 0),
                 new BoostAllCreaturesEffect(-4, 0,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
         target(TargetFilters.creatureAnOpponentControls());

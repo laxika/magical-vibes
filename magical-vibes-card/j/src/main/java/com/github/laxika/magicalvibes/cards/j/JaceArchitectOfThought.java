@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchEachPlayerLibraryForNonlandCardToExileAndCastEffect;
@@ -30,7 +30,7 @@ public class JaceArchitectOfThought extends Card {
                 List.of(RegisterGlobalTriggeredAbilityEffect.untilYourNextTurn(new TriggeredAbility(
                         Triggers.creatureAttacks().withFilter(
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())),
-                        new BoostTargetCreatureEffect(new Fixed(-1), new Fixed(0))))),
+                        BoostEffect.target(new Fixed(-1), new Fixed(0))))),
                 "+1: Until your next turn, whenever a creature an opponent controls attacks, it gets -1/-0 until end of turn."
         ));
 

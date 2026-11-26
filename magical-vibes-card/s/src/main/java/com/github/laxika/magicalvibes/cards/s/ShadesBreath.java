@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -24,7 +24,7 @@ public class ShadesBreath extends Card {
                 new ActivatedAbility(
                         false,
                         "{B}",
-                        List.of(new BoostSelfEffect(1, 1)),
+                        List.of(BoostEffect.self(1, 1)),
                         "{B}: This creature gets +1/+1 until end of turn."
                 ),
                 Subjects.otherCreaturesYouControl(),

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -31,6 +31,6 @@ public class KataraSeekingRevenge extends Card {
 
         CardsInGraveyard lessons = new CardsInGraveyard(
                 new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(lessons, lessons));
+        addStaticEffect(BoostEffect.self(lessons, lessons));
     }
 }

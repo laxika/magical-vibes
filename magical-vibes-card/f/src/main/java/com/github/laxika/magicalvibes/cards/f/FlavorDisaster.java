@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -50,8 +50,8 @@ public class FlavorDisaster extends Card {
         addStaticEffect(new PutCountersOnTurnFaceUpEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, false));
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()))
+                        BoostEffect.target(new SourcePower(), new SourcePower()))
                 .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()));
+                        BoostEffect.target(new SourcePower(), new SourcePower()));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -21,6 +21,6 @@ public class VinesOfVastwood extends Card {
                 .addSpellEffect(new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(
                         TargetingRestrictionEffect.opponentSpellsAndAbilities()))
                 .addSpellEffect(new ConditionalEffect(
-                        new Kicked(), new BoostTargetCreatureEffect(4, 4)));
+                        new Kicked(), BoostEffect.target(4, 4)));
     }
 }

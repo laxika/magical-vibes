@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -39,6 +39,6 @@ public class MomoFriendlyFlier extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasKeywordPredicate(Keyword.FLYING))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BoostSelfEffect(1, 1));
+                BoostEffect.self(1, 1));
     }
 }

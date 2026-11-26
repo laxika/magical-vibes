@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class DwarvenSoldier extends Card {
         PermanentHasSubtypePredicate orc = new PermanentHasSubtypePredicate(CardSubtype.ORC);
         addTrigger(Triggers.blocks().withFilter(orc),
                 TriggerOptions.ONE_OR_MORE,
-                new BoostSelfEffect(0, 2));
-        addTrigger(Triggers.becomesBlocked().withFilter(orc), new BoostSelfEffect(0, 2));
+                BoostEffect.self(0, 2));
+        addTrigger(Triggers.becomesBlocked().withFilter(orc), BoostEffect.self(0, 2));
     }
 }

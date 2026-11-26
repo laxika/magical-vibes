@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "116")
 @CardRegistration(set = "MM2", collectorNumber = "108")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 public class BruteForce extends Card {
 
     public BruteForce() {
-        addSpellEffect(new BoostTargetCreatureEffect(3, 3));
+        addSpellEffect(BoostEffect.target(3, 3));
     }
 }

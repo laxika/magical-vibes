@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class NimDevourer extends Card {
 
     public NimDevourer() {
         // This creature gets +1/+0 for each artifact you control.
-        addStaticEffect(new BoostSelfEffect(
+        addStaticEffect(BoostEffect.self(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER), new Fixed(0)));
 
         // {B}{B}: Return this card from your graveyard to the battlefield, then sacrifice a creature.

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,7 +16,7 @@ public class DiscipleOfTeveshSzat extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new BoostTargetCreatureEffect(-1, -1)),
+                List.of(BoostEffect.target(-1, -1)),
                 "{T}: Target creature gets -1/-1 until end of turn.",
                 TargetFilters.creature()
         ));
@@ -24,7 +24,7 @@ public class DiscipleOfTeveshSzat extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{B}{B}",
-                List.of(new SacrificeSelfCost(), new BoostTargetCreatureEffect(-6, -6)),
+                List.of(new SacrificeSelfCost(), BoostEffect.target(-6, -6)),
                 "{4}{B}{B}, {T}, Sacrifice this creature: Target creature gets -6/-6 until end of turn.",
                 TargetFilters.creature()
         ));

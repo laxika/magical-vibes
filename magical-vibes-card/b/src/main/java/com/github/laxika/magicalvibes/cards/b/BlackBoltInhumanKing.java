@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,7 +16,7 @@ public class BlackBoltInhumanKing extends Card {
 
     public BlackBoltInhumanKing() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new BoostSelfEffect(2, 2));
+                BoostEffect.self(2, 2));
 
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),

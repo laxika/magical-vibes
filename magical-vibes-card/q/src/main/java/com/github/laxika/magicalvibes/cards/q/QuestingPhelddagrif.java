@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -34,7 +34,7 @@ public class QuestingPhelddagrif extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
 
         addActivatedAbility(new ActivatedAbility(false, "{G}",
-                List.of(new BoostSelfEffect(1, 1),
+                List.of(BoostEffect.self(1, 1),
                         new TargetOpponentCreatesTokenEffect(new CreateTokenEffect("Hippo", 1, 1,
                                 CardColor.GREEN, List.of(CardSubtype.HIPPO), Set.of(), Set.of()))),
                 "{G}: Questing Phelddagrif gets +1/+1 until end of turn. Target opponent creates a 1/1 green Hippo creature token.",

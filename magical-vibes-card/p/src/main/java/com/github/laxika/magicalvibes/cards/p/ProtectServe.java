@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -31,8 +31,8 @@ public class ProtectServe extends Card {
         setAllowSharedTargets(true);
 
         TargetFilter creature = TargetFilters.creature();
-        CardEffect protect = new BoostTargetCreatureEffect(2, 4);
-        CardEffect serve = new BoostTargetCreatureEffect(-6, 0);
+        CardEffect protect = BoostEffect.target(2, 4);
+        CardEffect serve = BoostEffect.target(-6, 0);
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

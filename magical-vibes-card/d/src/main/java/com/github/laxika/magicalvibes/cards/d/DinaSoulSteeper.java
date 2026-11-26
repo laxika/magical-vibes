@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -29,7 +29,7 @@ public class DinaSoulSteeper extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(false, true, false, true),
-                        new BoostSelfEffect(new XValue(), new Fixed(0))
+                        BoostEffect.self(new XValue(), new Fixed(0))
                 ),
                 "{1}, Sacrifice another creature: Dina, Soul Steeper gets +X/+0 until end of turn, "
                         + "where X is the sacrificed creature's power."

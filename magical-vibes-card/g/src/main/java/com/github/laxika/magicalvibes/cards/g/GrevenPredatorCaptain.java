@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ import java.util.List;
 public class GrevenPredatorCaptain extends Card {
 
     public GrevenPredatorCaptain() {
-        addStaticEffect(new BoostSelfEffect(
+        addStaticEffect(BoostEffect.self(
                 new LifeLostThisTurn(CountScope.CONTROLLER), new Fixed(0)));
 
         addTrigger(Triggers.attacks(), new MayEffect(

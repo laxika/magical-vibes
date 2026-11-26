@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,8 +25,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KarnSilverGolem extends Card {
 
     public KarnSilverGolem() {
-        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BoostSelfEffect(-4, 4));
-        addTrigger(Triggers.becomesBlocked(), new BoostSelfEffect(-4, 4));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, BoostEffect.self(-4, 4));
+        addTrigger(Triggers.becomesBlocked(), BoostEffect.self(-4, 4));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

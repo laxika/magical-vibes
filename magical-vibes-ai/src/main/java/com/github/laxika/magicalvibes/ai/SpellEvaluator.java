@@ -45,7 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGra
 import com.github.laxika.magicalvibes.model.effect.BoardWipeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -194,7 +194,7 @@ public class SpellEvaluator {
                 sacrificesChosenCreature |= cost.sacrificesChosenCreature();
                 continue;
             }
-            if (!(effect instanceof BoostSelfEffect boost && boost.subject() instanceof PermanentSubject.Source)) {
+            if (!(effect instanceof BoostEffect boost && boost.subject() instanceof PermanentSubject.Source)) {
                 return false;
             }
             hasEffect = true;
@@ -399,7 +399,7 @@ public class SpellEvaluator {
     /**
      * Evaluates the value of activating an ability by scoring its non-cost effects.
      * Uses the same evaluation logic as spell effects, plus ability-specific effects
-     * like BoostSelfEffect and RegenerateEffect.
+     * like BoostEffect.self and RegenerateEffect.
      */
     public double evaluateAbilityEffects(GameData gameData, List<CardEffect> effects, UUID aiPlayerId) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
@@ -446,7 +446,7 @@ public class SpellEvaluator {
             return paid - notPaid;
         }
         // Self-pump (e.g. Shivan Dragon's {R}: +1/+0)
-        if (effect instanceof BoostSelfEffect boost && boost.subject() instanceof PermanentSubject.Source) {
+        if (effect instanceof BoostEffect boost && boost.subject() instanceof PermanentSubject.Source) {
             AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
             return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
                     + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
@@ -1055,7 +1055,7 @@ public class SpellEvaluator {
         }
 
         // P/T boost to target creature
-        if (effect instanceof CreatureBoostEffect boost) {
+        if (CreatureBoostEffect.targetedBoost(effect) instanceof CreatureBoostEffect boost) {
             AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
             return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
                     + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);

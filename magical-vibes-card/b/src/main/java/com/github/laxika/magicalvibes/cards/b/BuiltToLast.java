@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -16,7 +16,7 @@ import java.util.List;
 public class BuiltToLast extends Card {
 
     public BuiltToLast() {
-        addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+        addSpellEffect(BoostEffect.target(2, 2));
         addSpellEffect(GrantKeywordEffect.toTargetIf(
                 Keyword.INDESTRUCTIBLE,
                 new PermanentAllOfPredicate(List.of(

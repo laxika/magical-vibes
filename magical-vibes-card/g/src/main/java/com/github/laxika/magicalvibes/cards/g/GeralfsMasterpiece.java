@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -21,7 +21,7 @@ public class GeralfsMasterpiece extends Card {
 
     public GeralfsMasterpiece() {
         Scaled minusOnePerCardInHand = new Scaled(new CardsInHand(CountScope.CONTROLLER), -1);
-        addStaticEffect(new BoostSelfEffect(minusOnePerCardInHand, minusOnePerCardInHand));
+        addStaticEffect(BoostEffect.self(minusOnePerCardInHand, minusOnePerCardInHand));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

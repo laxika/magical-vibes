@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class DevouringRage extends Card {
         addCastingCost(new SacrificeAnyNumberOfPermanentsCost(
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
         // Target creature gets +3/+0, plus an additional +3/+0 for each Spirit sacrificed this way.
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(
                 new Sum(new Fixed(3), new Scaled(new XValue(), 3)),
                 new Fixed(0)
         ));

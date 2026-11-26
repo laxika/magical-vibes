@@ -957,6 +957,20 @@ entwine with two modes (P09).
   graveyard choice context for the prepared spell (and a Food picker for forage). Step 10 run U7b / U7c (seen, not changed). Sure.
 - Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling,
   Soaring Stoneglider) as "not supported from this zone"; library top takes only sacrifice-or-mana. As before step 10 run U7b. Sure.
+- `BoostEffect.targetPermanent` (Vehicle boosts: Fang Guardian, Captain America's Motorcycle, Blacksmith's Skill, Tributary Vaulter)
+  declares a harmful target spec whatever the sign of the boost, so the AI's target prior treats a pump of its own creature or Vehicle
+  as an attack; derive the prior from the sign as `BoostEffect.target` does. AI only. Orchestrator's decision Q6 for step 10 run Boost
+  B1 (parity kept); sure.
+- Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a
+  teammate's attackers too (Two-Headed Giant). Orchestrator's decision Q7 for step 10 run Boost B1; sure of the rule.
+- Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent
+  boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the
+  mass boosts' set filters. Orchestrator's decision Q8 for step 10 run Boost B1 (parity); sure of the code.
+- `TriggeredAbilityQueueService.triggerOrderLabel` names a source-reading boost with no target "target creature gets +N/+M" (Sigardian
+  Zealot, Mirkwood Trapper's second trigger, Zenos yae Galvus); a label only. Step 10 run Boost B1 (seen, not changed); sure.
+- `BoostEffectHandler`'s refresh of the boosted permanent's waiting abilities' snapshots changes nothing observable: a departing
+  permanent refreshes every waiting entry's snapshot itself (`PermanentRemovalService`), and a live source is read live. Cleanup
+  candidate, not a defect (step 10 run Boost B1's Q3 test passed on the old code). Sure.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

@@ -23,7 +23,7 @@ public class BoostSelfAndTriggerWhenPowerBecomesEffectHandler implements NormalE
     private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final BoostSelfEffectHandler boostSelfEffectHandler;
+    private final BoostEffectHandler boostEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +44,7 @@ public class BoostSelfAndTriggerWhenPowerBecomesEffectHandler implements NormalE
         }
 
         int powerBefore = gameQueryService.getEffectivePower(gameData, source);
-        boostSelfEffectHandler.resolve(gameData, entry, e.boost());
+        boostEffectHandler.resolve(gameData, entry, e.boost());
 
         source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class SerraInquisitors extends Card {
         PermanentColorInPredicate black = new PermanentColorInPredicate(Set.of(CardColor.BLACK));
         addTrigger(Triggers.blocks().withFilter(black),
                 TriggerOptions.ONE_OR_MORE,
-                new BoostSelfEffect(2, 0));
-        addTrigger(Triggers.becomesBlocked().withFilter(black), new BoostSelfEffect(2, 0));
+                BoostEffect.self(2, 0));
+        addTrigger(Triggers.becomesBlocked().withFilter(black), BoostEffect.self(2, 0));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
@@ -18,7 +18,7 @@ public class ThrowFromTheSaddle extends Card {
     public ThrowFromTheSaddle() {
         target(TargetFilters.creatureYouControl()).addSpellEffect(new ConditionalReplacementEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.MOUNT)),
-                        new BoostTargetCreatureEffect(1, 1),
+                        BoostEffect.target(1, 1),
                         new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public class BasaltGargoyle extends Card {
 
     public BasaltGargoyle() {
         addStaticEffect(new EchoEffect("{2}{R}"));
-        addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(0, 1)),
+        addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(BoostEffect.self(0, 1)),
                 "{R}: This creature gets +0/+1 until end of turn."));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -39,7 +39,7 @@ public class InvisibleWoman extends Card {
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.youAttack(),
                 UnlessPaysEffect.youMayPay("{R}{G}{W}{U}", new QueueReflexiveAbilityEffect(SequenceEffect.of(
-                                new BoostTargetCreatureEffect(creaturesYouControl, new Fixed(0)),
+                                BoostEffect.target(creaturesYouControl, new Fixed(0)),
                                 new MakeCreatureUnblockableEffect()))).withPrompt("Pay {R}{G}{W}{U} to boost a creature and make it unblockable?"));
     }
 }

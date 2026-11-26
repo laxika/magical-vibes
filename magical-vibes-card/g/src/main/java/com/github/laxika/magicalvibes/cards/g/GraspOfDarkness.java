@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "65")
 @CardRegistration(set = "M21", collectorNumber = "102")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 public class GraspOfDarkness extends Card {
 
     public GraspOfDarkness() {
-        addSpellEffect(new BoostTargetCreatureEffect(-4, -4));
+        addSpellEffect(BoostEffect.target(-4, -4));
     }
 }

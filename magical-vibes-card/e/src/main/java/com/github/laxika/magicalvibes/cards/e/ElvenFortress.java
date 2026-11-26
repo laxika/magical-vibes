@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class ElvenFortress extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(new BoostTargetCreatureEffect(0, 1, BLOCKING_CREATURE)),
+                List.of(BoostEffect.target(0, 1, BLOCKING_CREATURE)),
                 "{1}{G}: Target blocking creature gets +0/+1 until end of turn.",
                 new PermanentPredicateTargetFilter(BLOCKING_CREATURE, "Target must be a blocking creature")
         ));

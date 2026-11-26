@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -25,9 +25,9 @@ public class ColossalGrowth extends Card {
         // If this spell was kicked, instead that creature gets +4/+4 and gains trample and haste
         // until end of turn.
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
-                        new BoostTargetCreatureEffect(3, 3),
+                        BoostEffect.target(3, 3),
                         SequenceEffect.of(
-                                new BoostTargetCreatureEffect(4, 4),
+                                BoostEffect.target(4, 4),
                                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.target()))));
     }
 }

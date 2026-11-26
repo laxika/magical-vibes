@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -23,6 +23,6 @@ public class SardianCliffstomper extends Card {
         var mountains = new PermanentCount(mountain, CountScope.CONTROLLER);
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(new ControllerTurn(), new ControlsPermanentCount(4, mountain))),
-                new BoostSelfEffect(mountains, new Fixed(0))));
+                BoostEffect.self(mountains, new Fixed(0))));
     }
 }

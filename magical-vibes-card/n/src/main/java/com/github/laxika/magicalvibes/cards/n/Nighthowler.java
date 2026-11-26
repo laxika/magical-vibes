@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class Nighthowler extends Card {
 
         CardsInGraveyard creatureCardsInAllGraveyards =
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER);
-        addStaticEffect(new BoostSelfEffect(creatureCardsInAllGraveyards, creatureCardsInAllGraveyards));
+        addStaticEffect(BoostEffect.self(creatureCardsInAllGraveyards, creatureCardsInAllGraveyards));
 
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(

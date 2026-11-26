@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,8 +21,8 @@ public class DroolingGroodion extends Card {
                 "{2}{B}{G}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        BoostTargetCreatureEffect.forTargetGroup(2, 2, 0),
-                        BoostTargetCreatureEffect.forTargetGroup(-2, -2, 1)
+                        BoostEffect.targetInGroup(2, 2, 0),
+                        BoostEffect.targetInGroup(-2, -2, 1)
                 ),
                 "{2}{B}{G}, Sacrifice a creature: Target creature gets +2/+2 until end of turn. "
                         + "Another target creature gets -2/-2 until end of turn.",

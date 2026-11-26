@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,7 +21,7 @@ import java.util.List;
 public class RimehornAurochs extends Card {
 
     public RimehornAurochs() {
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), BoostEffect.self(
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsAttackingPredicate(),

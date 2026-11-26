@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ public class YouComeToTheGnollCamp extends Card {
                         null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Fend Them Off — Target creature gets +3/+1 until end of turn",
-                        new BoostTargetCreatureEffect(3, 1),
+                        BoostEffect.target(3, 1),
                         TargetFilters.creature())
         )));
     }

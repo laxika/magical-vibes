@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -28,7 +28,7 @@ public class ElephantMandrill extends Card {
         PermanentCount opponentArtifacts =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.OPPONENTS);
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostSelfEffect(opponentArtifacts, opponentArtifacts));
+                BoostEffect.self(opponentArtifacts, opponentArtifacts));
     }
 
     private static CreateTokenEffect foodToken() {

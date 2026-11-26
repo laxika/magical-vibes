@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class SanctuaryRaptor extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(3, new PermanentIsTokenPredicate())),
                 SequenceEffect.of(
-                        new BoostSelfEffect(2, 0),
+                        BoostEffect.self(2, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
     }
 }

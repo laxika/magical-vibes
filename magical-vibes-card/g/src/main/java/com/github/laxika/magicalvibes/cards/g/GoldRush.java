@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class GoldRush extends Card {
         PermanentCount treasures = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE), CountScope.CONTROLLER);
         target(TargetFilters.creature(), 0, 1)
-                .addSpellEffect(new BoostTargetCreatureEffect(
+                .addSpellEffect(BoostEffect.target(
                         new Scaled(treasures, 2), new Scaled(treasures, 2)));
     }
 }

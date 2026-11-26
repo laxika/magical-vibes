@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class MirkwoodTrapper extends Card {
     public MirkwoodTrapper() {
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.creaturesAttackYou(),
-                        new BoostTargetCreatureEffect(-2, 0));
+                        BoostEffect.target(-2, 0));
 
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new PlayerAttacksNotController()),
@@ -34,6 +34,6 @@ public class MirkwoodTrapper extends Card {
                                 Subjects.controlledBy(Subjects.triggeringPlayer(), new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(), new PermanentIsAttackingPredicate()))),
                                 "an attacking creature").chosenBy(Subjects.triggeringPlayer()),
-                        new BoostTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), 2, 0)));
+                        BoostEffect.each(Subjects.thisWay(StepKind.CHOOSE), 2, 0)));
     }
 }

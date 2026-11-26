@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -34,7 +34,7 @@ public class StormQueenOfWakanda extends Card {
                 "Target must be another attacking creature"
         ))
                 .addTrigger(Triggers.attacks(),
-                        new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0), anotherAttackingCreature),
+                        BoostEffect.target(new SourcePower(), new Fixed(0), anotherAttackingCreature),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), anotherAttackingCreature));
 
         addTrigger(Triggers.creatureAttacksYou().withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),

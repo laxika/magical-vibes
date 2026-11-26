@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -24,7 +24,7 @@ public class Yare extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
-                .addSpellEffect(new BoostTargetCreatureEffect(POWER_BOOST, TOUGHNESS_BOOST))
+                .addSpellEffect(BoostEffect.target(POWER_BOOST, TOUGHNESS_BOOST))
                 .addSpellEffect(new GrantAdditionalBlockToTargetUntilEndOfTurnEffect(ADDITIONAL_BLOCKS));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -26,7 +26,7 @@ public class Facevaulter extends Card {
                                 "Sacrifice a Goblin",
                                 false
                         ),
-                        new BoostSelfEffect(2, 2)
+                        BoostEffect.self(2, 2)
                 ),
                 "{B}, Sacrifice a Goblin: Facevaulter gets +2/+2 until end of turn."
         ));

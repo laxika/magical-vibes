@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,7 +19,7 @@ public class LivingLiesOfLoki extends Card {
         // This creature gets +1/+0 for each other Illusion you control.
         PermanentCount otherIllusionsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ILLUSION), CountScope.CONTROLLER, true);
-        addStaticEffect(new BoostSelfEffect(otherIllusionsYouControl, new Fixed(0)));
+        addStaticEffect(BoostEffect.self(otherIllusionsYouControl, new Fixed(0)));
 
         // When this creature dies, draw a card.
         addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect());

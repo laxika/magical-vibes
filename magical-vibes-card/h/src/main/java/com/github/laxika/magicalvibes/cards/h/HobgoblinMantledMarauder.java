@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "80")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HobgoblinMantledMarauder extends Card {
 
     public HobgoblinMantledMarauder() {
-        addTrigger(Triggers.youDiscardCard(), new BoostSelfEffect(2, 0));
+        addTrigger(Triggers.youDiscardCard(), BoostEffect.self(2, 0));
     }
 }

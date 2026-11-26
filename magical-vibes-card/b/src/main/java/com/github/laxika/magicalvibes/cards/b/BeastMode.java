@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -19,7 +19,7 @@ public class BeastMode extends Card {
     public BeastMode() {
         addCastingCost(new TeamworkCost(1));
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(BoostEffect.target(2, 2))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(
                         new TeamworkCostPaid(),

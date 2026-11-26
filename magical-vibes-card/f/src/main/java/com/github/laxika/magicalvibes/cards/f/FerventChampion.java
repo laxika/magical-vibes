@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostForTargetingSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +32,7 @@ public class FerventChampion extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 ANOTHER_ATTACKING_KNIGHT,
                 "Target must be another attacking Knight you control"
-        )).addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(1, 0, ANOTHER_ATTACKING_KNIGHT));
+        )).addTrigger(Triggers.attacks(), BoostEffect.target(1, 0, ANOTHER_ATTACKING_KNIGHT));
 
         addStaticEffect(new ReduceActivatedAbilityCostForTargetingSourceEffect(3));
     }

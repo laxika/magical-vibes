@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
@@ -34,7 +34,7 @@ public class BlademaneBaku extends Card {
         // and drives the boost via Scaled(XValue, 2).
         addActivatedAbility(new ActivatedAbility(false, "{1}",
                 List.of(new RemoveXCountersFromSourceCost(CounterType.KI),
-                        new BoostSelfEffect(new Scaled(new XValue(), 2), new Fixed(0))),
+                        BoostEffect.self(new Scaled(new XValue(), 2), new Fixed(0))),
                 "{1}, Remove X ki counters from this creature: For each counter removed, this "
                         + "creature gets +2/+0 until end of turn."));
     }

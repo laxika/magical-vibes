@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -26,7 +26,7 @@ public class LimDLsPaladin extends Card {
                 SequenceEffect.of(new SacrificeSelfEffect(), new DrawCardEffect(1))));
 
         // Whenever this creature becomes blocked, it gets +6/+3 until end of turn.
-        addTrigger(Triggers.becomesBlocked(), new BoostSelfEffect(6, 3));
+        addTrigger(Triggers.becomesBlocked(), BoostEffect.self(6, 3));
 
         // Whenever this creature attacks and isn't blocked, it assigns no combat damage this
         // turn and defending player loses 4 life. The defending player is the trigger's

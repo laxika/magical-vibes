@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealXCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -22,7 +22,7 @@ public class MartyrOfSpores extends Card {
                 List.of(
                         new RevealXCardsFromHandCost(new CardColorPredicate(CardColor.GREEN)),
                         new SacrificeSelfCost(),
-                        new BoostTargetCreatureEffect(new XValue(), new XValue())
+                        BoostEffect.target(new XValue(), new XValue())
                 ),
                 "{1}, Reveal X green cards from your hand, Sacrifice this creature: Target creature gets +X/+X until end of turn."
         ).withXValueFromCardsInHand(CardColor.GREEN));

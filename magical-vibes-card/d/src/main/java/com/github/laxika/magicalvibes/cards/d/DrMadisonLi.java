@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -36,7 +36,7 @@ public class DrMadisonLi extends Card {
                 null,
                 List.of(
                         new PayEnergyCost(1),
-                        new BoostTargetCreatureEffect(1, 0),
+                        BoostEffect.target(1, 0),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target())
                 ),

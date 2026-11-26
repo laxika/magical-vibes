@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class CacklingWitch extends Card {
                 "{X}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new BoostTargetCreatureEffect(new XValue(), new Fixed(0))
+                        BoostEffect.target(new XValue(), new Fixed(0))
                 ),
                 "{X}{B}, {T}, Discard a card: Target creature gets +X/+0 until end of turn.",
                 TargetFilters.creature()

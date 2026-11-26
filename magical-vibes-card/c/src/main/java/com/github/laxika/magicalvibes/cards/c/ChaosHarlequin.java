@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,13 +27,13 @@ public class ChaosHarlequin extends Card {
                         new ExileTopCardOfOwnLibraryEffect(true),
                         new ConditionalEffect(
                                 new ImprintedCardMatches(new CardTypePredicate(CardType.LAND), "a land card"),
-                                new BoostSelfEffect(-4, 0)
+                                BoostEffect.self(-4, 0)
                         ),
                         // "Otherwise" also covers exiling nothing from an empty library
                         new ConditionalEffect(
                                 new NotCondition(new ImprintedCardMatches(
                                         new CardTypePredicate(CardType.LAND), "a land card")),
-                                new BoostSelfEffect(2, 0)
+                                BoostEffect.self(2, 0)
                         )
                 ),
                 "{R}: Exile the top card of your library. If that card is a land card, this "

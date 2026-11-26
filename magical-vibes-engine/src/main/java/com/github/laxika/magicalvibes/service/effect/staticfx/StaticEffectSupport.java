@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -192,7 +192,7 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
                 accumulator.addToughness(boost.toughnessBoost() * multiplier);
                 accumulator.addKeywords(boost.grantedKeywords());
             }
-        } else if (wrapped instanceof BoostSelfEffect boost) {
+        } else if (wrapped instanceof BoostEffect boost) {
             BoostSelfSelfEffectHandler.requireStaticSelfBoost(boost);
             AmountContext amountContext =
                     AmountContext.forStaticEffect(context.source(), context.sourceControllerId());

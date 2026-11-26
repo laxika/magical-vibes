@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -17,10 +17,10 @@ public class LightfootRogue extends Card {
         addTrigger(Triggers.attacks(), new RollD20Effect(
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source()),
                 SequenceEffect.of(
-                        new BoostSelfEffect(1, 0),
+                        BoostEffect.self(1, 0),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 SequenceEffect.of(
-                        new BoostSelfEffect(3, 0),
+                        BoostEffect.self(3, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source()))));
     }

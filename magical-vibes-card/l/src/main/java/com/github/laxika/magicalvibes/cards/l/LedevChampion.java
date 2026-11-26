@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -31,7 +31,7 @@ public class LedevChampion extends Card {
                                         new PermanentCanBecomeTappedPredicate()))),
                         "any number of untapped creatures you control to tap"),
                 new TapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)),
-                new BoostSelfEffect(new AmountThisWay(StepKind.TAP), new AmountThisWay(StepKind.TAP))));
+                BoostEffect.self(new AmountThisWay(StepKind.TAP), new AmountThisWay(StepKind.TAP))));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}{W}",

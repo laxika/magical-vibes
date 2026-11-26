@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -22,6 +22,6 @@ public class SlaughterSinger extends Card {
                         .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasKeywordPredicate(Keyword.TOXIC),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
-                new BoostTargetCreatureEffect(1, 1));
+                BoostEffect.target(1, 1));
     }
 }

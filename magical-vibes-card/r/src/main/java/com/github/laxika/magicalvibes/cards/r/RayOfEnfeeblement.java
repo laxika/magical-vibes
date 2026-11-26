@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,8 +17,8 @@ public class RayOfEnfeeblement extends Card {
     public RayOfEnfeeblement() {
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.WHITE))),
-                new BoostTargetCreatureEffect(-4, -1),
-                new BoostTargetCreatureEffect(-4, -4)
+                BoostEffect.target(-4, -1),
+                BoostEffect.target(-4, -4)
         ));
     }
 }

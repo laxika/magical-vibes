@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "84")
@@ -13,8 +13,8 @@ public class MirranMettle extends Card {
         // Target creature gets +2/+2 until end of turn.
         // Metalcraft — That creature gets +4/+4 until end of turn instead if you control three or more artifacts.
         addSpellEffect(new ConditionalReplacementEffect(new Metalcraft(), 
-                new BoostTargetCreatureEffect(2, 2),
-                new BoostTargetCreatureEffect(4, 4)
+                BoostEffect.target(2, 2),
+                BoostEffect.target(4, 4)
         ));
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,6 +24,6 @@ public class BestialFury extends Card {
 
         // Whenever enchanted creature becomes blocked, it gets +4/+0 and gains trample until end of turn.
         addTrigger(Triggers.becomesBlocked(),
-                new BoostSelfEffect(Subjects.triggering(), 4, 0, Keyword.TRAMPLE));
+                BoostEffect.of(Subjects.triggering(), 4, 0, Keyword.TRAMPLE));
     }
 }

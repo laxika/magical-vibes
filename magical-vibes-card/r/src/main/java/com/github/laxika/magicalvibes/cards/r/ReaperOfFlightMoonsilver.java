@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class ReaperOfFlightMoonsilver extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new BoostSelfEffect(2, 1)
+                        BoostEffect.self(2, 1)
                 ),
                 "Sacrifice another creature: Reaper of Flight Moonsilver gets +2/+1 until end of turn."
         ).withActivationCondition(

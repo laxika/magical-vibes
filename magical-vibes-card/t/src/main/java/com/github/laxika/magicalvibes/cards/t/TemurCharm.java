@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
@@ -25,7 +25,7 @@ public class TemurCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control gets +1/+1 until end of turn. It fights target creature you don't control",
-                        List.of(new BoostTargetCreatureEffect(1, 1), new FightTargetsEffect()),
+                        List.of(BoostEffect.target(1, 1), new FightTargetsEffect()),
                         List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays {3}",

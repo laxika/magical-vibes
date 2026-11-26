@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,7 +23,7 @@ public class SavageSwipe extends Card {
                                 new PermanentPowerAtLeastPredicate(2),
                                 new PermanentPowerAtMostPredicate(2)
                         ))),
-                        new BoostTargetCreatureEffect(2, 2)));
+                        BoostEffect.target(2, 2)));
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new FightTargetsEffect());

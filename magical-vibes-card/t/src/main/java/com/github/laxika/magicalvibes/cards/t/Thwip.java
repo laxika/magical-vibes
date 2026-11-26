@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -22,7 +22,7 @@ public class Thwip extends Card {
         // Target creature gets +2/+2 and gains flying until end of turn.
         // If it's a Spider, you gain 2 life.
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(BoostEffect.target(2, 2))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.SPIDER)),

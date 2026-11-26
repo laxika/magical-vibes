@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -30,7 +30,7 @@ public class AllSeeingArbiter extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), drawTwoThenDiscard);
         addTrigger(Triggers.attacks(), drawTwoThenDiscard);
 
-        addTrigger(Triggers.youDiscardCard(), new BoostTargetCreatureEffect(
+        addTrigger(Triggers.youDiscardCard(), BoostEffect.target(
                 new Scaled(new DistinctManaValuesAmongCardsInGraveyard(), -1),
                 new Fixed(0),
                 new PermanentAllOfPredicate(List.of(

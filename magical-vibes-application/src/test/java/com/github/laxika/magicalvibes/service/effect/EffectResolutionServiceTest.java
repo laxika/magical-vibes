@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -20,7 +21,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -920,7 +920,7 @@ class EffectResolutionServiceTest {
 
     // =========================================================================
     // ConditionalReplacementEffect
-    // (HuatlisSpurring: ConditionalReplacementEffect(PermanentHasSubtypePredicate(HUATLI), BoostTargetCreatureEffect(2,0), BoostTargetCreatureEffect(4,0)))
+    // (HuatlisSpurring: ConditionalReplacementEffect(PermanentHasSubtypePredicate(HUATLI), BoostEffect.target(2, 0), BoostEffect.target(4, 0)))
     // =========================================================================
 
     @Nested
@@ -930,8 +930,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves base effect when controller does not control the subtype")
         void resolvesBaseEffectWhenSubtypeNotControlled() {
-            CardEffect base = new BoostTargetCreatureEffect(2, 0);
-            CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
+            CardEffect base = BoostEffect.target(2, 0);
+            CardEffect upgraded = BoostEffect.target(4, 0);
             CardEffect replacement = new ConditionalReplacementEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUATLI)), base, upgraded);
             StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
 
@@ -946,8 +946,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves upgraded effect when controller controls the subtype")
         void resolvesUpgradedEffectWhenSubtypeControlled() {
-            CardEffect base = new BoostTargetCreatureEffect(2, 0);
-            CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
+            CardEffect base = BoostEffect.target(2, 0);
+            CardEffect upgraded = BoostEffect.target(4, 0);
             CardEffect replacement = new ConditionalReplacementEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUATLI)), base, upgraded);
             StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
 
@@ -968,8 +968,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Opponent's subtype permanent does not meet the condition")
         void opponentSubtypeDoesNotCount() {
-            CardEffect base = new BoostTargetCreatureEffect(2, 0);
-            CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
+            CardEffect base = BoostEffect.target(2, 0);
+            CardEffect upgraded = BoostEffect.target(4, 0);
             CardEffect replacement = new ConditionalReplacementEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUATLI)), base, upgraded);
             StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
 
@@ -999,8 +999,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves base effect when target permanent does not match")
         void resolvesBaseEffectWhenTargetDoesNotMatch() {
-            CardEffect base = new BoostTargetCreatureEffect(1, 0);
-            CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
+            CardEffect base = BoostEffect.target(1, 0);
+            CardEffect upgraded = BoostEffect.target(2, 0);
             UUID targetId = UUID.randomUUID();
             CardEffect replacement = new ConditionalReplacementEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), base, upgraded);
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
@@ -1019,8 +1019,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves upgraded effect when target permanent matches")
         void resolvesUpgradedEffectWhenTargetMatches() {
-            CardEffect base = new BoostTargetCreatureEffect(1, 0);
-            CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
+            CardEffect base = BoostEffect.target(1, 0);
+            CardEffect upgraded = BoostEffect.target(2, 0);
             UUID targetId = UUID.randomUUID();
             CardEffect replacement = new ConditionalReplacementEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), base, upgraded);
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
@@ -1039,8 +1039,8 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves base effect when target permanent is missing")
         void resolvesBaseEffectWhenTargetMissing() {
-            CardEffect base = new BoostTargetCreatureEffect(1, 0);
-            CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
+            CardEffect base = BoostEffect.target(1, 0);
+            CardEffect upgraded = BoostEffect.target(2, 0);
             UUID targetId = UUID.randomUUID();
             CardEffect replacement = new ConditionalReplacementEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), base, upgraded);
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);

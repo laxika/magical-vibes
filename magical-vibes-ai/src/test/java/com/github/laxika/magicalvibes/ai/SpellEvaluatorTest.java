@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -416,16 +416,16 @@ class SpellEvaluatorTest {
     // ===== evaluateAbilityEffects =====
 
     @Test
-    @DisplayName("BoostSelfEffect scores power*2 + toughness")
+    @DisplayName("A self boost scores power*2 + toughness")
     void boostSelfEffectScoring() {
         // {R}: +1/+0 (Shivan Dragon style)
         double value = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new BoostSelfEffect(1, 0)), player1.getId());
+                gd, List.of(BoostEffect.self(1, 0)), player1.getId());
         assertThat(value).isEqualTo(2.0); // 1*2.0 + 0
 
         // +2/+2 pump
         double bigPump = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new BoostSelfEffect(2, 2)), player1.getId());
+                gd, List.of(BoostEffect.self(2, 2)), player1.getId());
         assertThat(bigPump).isEqualTo(6.0); // 2*2.0 + 2
     }
 
@@ -558,12 +558,12 @@ class SpellEvaluatorTest {
     @DisplayName("Multiple non-cost effects are summed")
     void multipleEffectsAreSummed() {
         double boostOnly = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new BoostSelfEffect(1, 0)), player1.getId());
+                gd, List.of(BoostEffect.self(1, 0)), player1.getId());
         double regenOnly = spellEvaluator.evaluateAbilityEffects(
                 gd, List.of(new RegenerateEffect()), player1.getId());
 
         double combined = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new BoostSelfEffect(1, 0), new RegenerateEffect()), player1.getId());
+                gd, List.of(BoostEffect.self(1, 0), new RegenerateEffect()), player1.getId());
 
         assertThat(combined).isEqualTo(boostOnly + regenOnly);
     }

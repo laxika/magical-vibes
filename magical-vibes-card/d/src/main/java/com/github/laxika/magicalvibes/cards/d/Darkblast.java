@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Darkblast extends Card {
 
     public Darkblast() {
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(-1, -1));
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(-1, -1));
         addStaticEffect(new DredgeEffect(3));
     }
 }

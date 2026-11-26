@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -21,7 +21,7 @@ public class LodestoneMyr extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(1, new PermanentIsArtifactPredicate()),
-                        new BoostSelfEffect(1, 1)),
+                        BoostEffect.self(1, 1)),
                 "Tap an untapped artifact you control: This creature gets +1/+1 until end of turn."));
     }
 }

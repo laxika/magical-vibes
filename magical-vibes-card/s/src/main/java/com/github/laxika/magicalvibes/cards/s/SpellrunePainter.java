@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class SpellrunePainter extends Card {
     public SpellrunePainter() {
         setBackFaceCard(new SpellruneHowler());
 
-        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), new BoostSelfEffect(1, 1));
+        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), BoostEffect.self(1, 1));
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,6 +30,6 @@ public class BloodvialPurveyor extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.BLOOD)
                 )),
                 CountScope.DEFENDING_PLAYER);
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(defendingPlayerBloodTokens, new Fixed(0)));
+        addTrigger(Triggers.attacks(), BoostEffect.self(defendingPlayerBloodTokens, new Fixed(0)));
     }
 }

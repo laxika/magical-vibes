@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,6 +21,6 @@ public class OakheartDryads extends Card {
                                 new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
                                 new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
                                         ObjectRelation.ANOTHER_YOU_CONTROL))),
-                        TriggerOptions.DEFAULT, List.of(new EffectRegistration(new BoostTargetCreatureEffect(1, 1)))));
+                        TriggerOptions.DEFAULT, List.of(new EffectRegistration(BoostEffect.target(1, 1)))));
     }
 }

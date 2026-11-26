@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -79,7 +79,7 @@ public class GarrukApexPredator extends Card {
                         "Whenever a creature attacks you, it gets +5/+5 and gains trample until end of turn.",
                         Subjects.targetPlayer(), List.of(),
                         List.of(new TriggeredAbility(Triggers.creatureAttacksYou(),
-                                new BoostSelfEffect(Subjects.triggering(), new Fixed(5), new Fixed(5), Set.of(Keyword.TRAMPLE)))))),
+                                BoostEffect.of(Subjects.triggering(), new Fixed(5), new Fixed(5), Set.of(Keyword.TRAMPLE)))))),
                 "−8: Target opponent gets an emblem with \"Whenever a creature attacks you, it "
                         + "gets +5/+5 and gains trample until end of turn.\"",
                 new PlayerPredicateTargetFilter(

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -31,7 +31,7 @@ public class OsaiVultures extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(2, CounterType.CARRION),
-                        new BoostSelfEffect(1, 1)
+                        BoostEffect.self(1, 1)
                 ),
                 "Remove two carrion counters from Osai Vultures: Osai Vultures gets +1/+1 until end of turn."
         ));

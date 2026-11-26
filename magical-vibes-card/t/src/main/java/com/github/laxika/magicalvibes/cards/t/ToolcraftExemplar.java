@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class ToolcraftExemplar extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(1, new PermanentIsArtifactPredicate())),
                 SequenceEffect.of(
-                                new BoostSelfEffect(2, 1),
+                                BoostEffect.self(2, 1),
                                 new ConditionalEffect(new Metalcraft(),
                                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()))
                         ));

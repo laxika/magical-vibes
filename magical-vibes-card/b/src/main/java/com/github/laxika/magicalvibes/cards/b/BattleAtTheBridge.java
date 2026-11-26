@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "53")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class BattleAtTheBridge extends Card {
 
     public BattleAtTheBridge() {
-        addSpellEffect(new BoostTargetCreatureEffect(
+        addSpellEffect(BoostEffect.target(
                 new Scaled(new XValue(), -1),
                 new Scaled(new XValue(), -1)
         ));

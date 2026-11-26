@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -34,7 +34,7 @@ public class JaradGolgariLichLord extends Card {
         // Jarad gets +1/+1 for each creature card in your graveyard.
         CardsInGraveyard creatureCards =
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(creatureCards, creatureCards));
+        addStaticEffect(BoostEffect.self(creatureCards, creatureCards));
 
         // {1}{B}{G}, Sacrifice another creature: Each opponent loses life equal to the
         // sacrificed creature's power.

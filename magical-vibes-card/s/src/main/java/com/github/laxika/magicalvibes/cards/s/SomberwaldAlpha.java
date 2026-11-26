@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +18,7 @@ public class SomberwaldAlpha extends Card {
     public SomberwaldAlpha() {
         // Whenever a creature you control becomes blocked, it gets +1/+1 until end of turn.
         addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                new BoostSelfEffect(Subjects.triggering(), 1, 1));
+                BoostEffect.of(Subjects.triggering(), 1, 1));
 
         // {1}{G}: Target creature you control gains trample until end of turn.
         addActivatedAbility(new ActivatedAbility(

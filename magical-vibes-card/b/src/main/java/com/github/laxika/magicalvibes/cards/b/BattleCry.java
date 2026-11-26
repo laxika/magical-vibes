@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -29,6 +29,6 @@ public class BattleCry extends Card {
 
         // Whenever a creature blocks this turn, it gets +0/+1 until end of turn.
         addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
-                Triggers.creatureBlocks(), new BoostTargetCreatureEffect(new Fixed(0), new Fixed(1)))));
+                Triggers.creatureBlocks(), BoostEffect.target(new Fixed(0), new Fixed(1)))));
     }
 }

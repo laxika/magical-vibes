@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
@@ -40,7 +40,7 @@ public class VivienNaturesAvenger extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(
-                        new BoostTargetCreatureEffect(10, 10),
+                        BoostEffect.target(10, 10),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "−6: Target creature gets +10/+10 and gains trample until end of turn.",

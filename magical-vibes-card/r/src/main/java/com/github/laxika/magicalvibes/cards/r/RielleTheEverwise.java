@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,7 +22,7 @@ public class RielleTheEverwise extends Card {
         CardsInGraveyard instantsAndSorceries = new CardsInGraveyard(new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(instantsAndSorceries, new Fixed(0)));
+        addStaticEffect(BoostEffect.self(instantsAndSorceries, new Fixed(0)));
         addTrigger(Triggers.youDiscardOneOrMoreCards().firstTimeEachTurn(),
                 new DrawCardEffect(new EventValue()));
     }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +19,7 @@ public class Blightcaster extends Card {
         // is made at resolution, so the MayEffect wraps the boost rather than the trigger.
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
-                new MayEffect(new BoostTargetCreatureEffect(-2, -2),
+                new MayEffect(BoostEffect.target(-2, -2),
                         "Have target creature get -2/-2 until end of turn?"));
     }
 }

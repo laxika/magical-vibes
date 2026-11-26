@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,14 +19,14 @@ public class TifasLimitBreak extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Somersault - {0} - Target creature gets +2/+2 until end of turn",
-                        new BoostTargetCreatureEffect(2, 2), TargetFilters.creature()),
+                        BoostEffect.target(2, 2), TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Meteor Strikes - {2} - Double target creature's power and toughness until end of turn",
-                        new BoostTargetCreatureEffect(new TargetPower(true), new TargetToughness()),
+                        BoostEffect.target(new TargetPower(true), new TargetToughness()),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Final Heaven - {6}{G} - Triple target creature's power and toughness until end of turn",
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                                 new Scaled(new TargetPower(true), 2),
                                 new Scaled(new TargetToughness(), 2)),
                         TargetFilters.creature())

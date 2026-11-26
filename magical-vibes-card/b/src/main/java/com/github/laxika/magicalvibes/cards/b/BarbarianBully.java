@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ public class BarbarianBully extends Card {
                 List.of(
                         new DiscardRandomCardCost(),
                         UnlessPaysEffect.unlessPays(Subjects.eachPlayer(), DamageFromSourceCost.of(4),
-                                new BoostSelfEffect(2, 2))
+                                BoostEffect.self(2, 2))
                                 .withPrompt("Have it deal 4 damage to you? If no player does, it gets +2/+2 until end"
                                         + " of turn.")
                                 .payingTogether()),

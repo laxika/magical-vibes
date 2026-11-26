@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class HundredTalonStrike extends Card {
 
     public HundredTalonStrike() {
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(BoostEffect.target(1, 0))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()));
         // Splice onto Arcane—Tap an untapped white creature you control. The splice cost has no mana
         // component, so only the tap filter is supplied.

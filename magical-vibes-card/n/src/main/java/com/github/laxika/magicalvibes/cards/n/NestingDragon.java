@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -65,7 +65,7 @@ public class NestingDragon extends Card {
                 false,
                 false,
                 List.of(),
-                List.of(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
+                List.of(new ActivatedAbility(false, "{R}", List.of(BoostEffect.self(1, 0)),
                         "{R}: This token gets +1/+0 until end of turn.")),
                 false,
                 false,

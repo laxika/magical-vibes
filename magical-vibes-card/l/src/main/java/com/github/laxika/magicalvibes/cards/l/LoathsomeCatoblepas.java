@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -18,7 +18,7 @@ public class LoathsomeCatoblepas extends Card {
 
     public LoathsomeCatoblepas() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(-3, -3));
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), BoostEffect.target(-3, -3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

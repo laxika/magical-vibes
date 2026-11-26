@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class KithkinShielddare extends Card {
 
     public KithkinShielddare() {
-        addActivatedAbility(new ActivatedAbility(true, "{W}", List.of(new BoostTargetCreatureEffect(2, 2)),
+        addActivatedAbility(new ActivatedAbility(true, "{W}", List.of(BoostEffect.target(2, 2)),
                 "{W}, {T}: Target blocking creature gets +2/+2 until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsBlockingPredicate(),

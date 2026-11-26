@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -31,7 +31,7 @@ public class BlizzardBrawl extends Card {
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
         )).addSpellEffect(new ConditionalEffect(
-                controlsThreeSnowPermanents, new BoostTargetCreatureEffect(1, 0)))
+                controlsThreeSnowPermanents, BoostEffect.target(1, 0)))
                 .addSpellEffect(new ConditionalEffect(
                         controlsThreeSnowPermanents,
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())));

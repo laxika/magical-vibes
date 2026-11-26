@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -24,7 +24,7 @@ public class PantherPounce extends Card {
                 .addSpellEffect(new CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofClueToken(1)));
 
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(BoostEffect.target(1, 0))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target()))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()));
     }

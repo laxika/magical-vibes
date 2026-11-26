@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
@@ -36,7 +36,7 @@ public class DefilerOfFlesh extends Card {
         addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 blackPermanentFilter, "{B}", 2, CostModificationScope.SELF));
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCastSpell().withFilter(blackPermanentFilter),
-                new BoostTargetCreatureEffect(1, 1),
+                BoostEffect.target(1, 1),
                 new GrantKeywordEffect(Keyword.MENACE, Subjects.target()));
     }
 }

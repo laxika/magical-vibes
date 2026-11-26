@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotStartingPlayer;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -24,7 +24,7 @@ public class LonelyEnd extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets -3/-3 until end of turn",
-                        new BoostTargetCreatureEffect(-3, -3), TargetFilters.creature()),
+                        BoostEffect.target(-3, -3), TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove three loyalty counters from target planeswalker",
                         RemoveCountersEffect.fromTarget(CounterType.LOYALTY, 3, planeswalker),

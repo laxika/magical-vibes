@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class HagraSharpshooter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{B}",
-                List.of(new BoostTargetCreatureEffect(-1, -1)),
+                List.of(BoostEffect.target(-1, -1)),
                 "{4}{B}: Target creature gets -1/-1 until end of turn.",
                 creature()
         ));

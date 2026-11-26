@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ChargingHooligan extends Card {
 
     public ChargingHooligan() {
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), BoostEffect.self(
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER),
                 new Fixed(0)),
                 new ConditionalEffect(

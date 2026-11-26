@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
@@ -22,7 +22,7 @@ public class SawtoothThresher extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(2, CounterType.PLUS_ONE_PLUS_ONE),
-                        new BoostSelfEffect(4, 4)
+                        BoostEffect.self(4, 4)
                 ),
                 "Remove two +1/+1 counters from this creature: It gets +4/+4 until end of turn."
         ));

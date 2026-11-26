@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class ThoughtweftLieutenant extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.KITHKIN))),
                                 ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                         SequenceEffect.of(
-                                new BoostTargetCreatureEffect(1, 1),
+                                BoostEffect.target(1, 1),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,6 +22,6 @@ public class DrownInFilth extends Card {
 
         final Scaled minusOnePerLand = new Scaled(
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER), -1);
-        addSpellEffect(new BoostTargetCreatureEffect(minusOnePerLand, minusOnePerLand));
+        addSpellEffect(BoostEffect.target(minusOnePerLand, minusOnePerLand));
     }
 }

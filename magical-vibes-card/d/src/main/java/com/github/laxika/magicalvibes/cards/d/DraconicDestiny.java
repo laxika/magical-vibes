@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
@@ -30,7 +30,7 @@ public class DraconicDestiny extends Card {
                         new ActivatedAbility(
                                 false,
                                 "{1}",
-                                List.of(new BoostSelfEffect(1, 0)),
+                                List.of(BoostEffect.self(1, 0)),
                                 "{1}: This creature gets +1/+0 until end of turn."
                         ),
                         Subjects.attachedCreature()

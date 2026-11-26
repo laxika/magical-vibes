@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -36,7 +36,7 @@ public class AmyRose extends Card {
                 "Target must be an Equipment"), 0, 1)
                 .bindEffect(attachTargetEquipmentToTriggeringPermanent);
 
-        var boostTargetCreature = new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0));
+        var boostTargetCreature = BoostEffect.target(new SourcePower(), new Fixed(0));
         target(new PermanentPredicateTargetFilter(otherAttackingCreature,
                 "Target must be another attacking creature"), 0, 1)
                 .bindEffect(boostTargetCreature);

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -34,7 +34,7 @@ public class ContractHero extends Card {
                                         new DiscardEffect(1, Subjects.you()))))),
                         new ConditionalEffect(
                                 new AnyOf(List.of(HappenedThisWay.sacrificed(), new HappenedThisWay(StepKind.DISCARD))),
-                                new BoostSelfEffect(2, 0))),
+                                BoostEffect.self(2, 0))),
                 "Sacrifice an artifact or discard a card?"));
     }
 }

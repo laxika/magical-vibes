@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class FallenAngel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeCreatureCost(), new BoostSelfEffect(2, 1)),
+                List.of(new SacrificeCreatureCost(), BoostEffect.self(2, 1)),
                 "Sacrifice a creature: Fallen Angel gets +2/+1 until end of turn."
         ));
     }

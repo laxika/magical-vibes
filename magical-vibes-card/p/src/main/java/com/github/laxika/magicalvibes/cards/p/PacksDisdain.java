@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,6 +19,6 @@ public class PacksDisdain extends Card {
         DynamicAmount minusOnePerPermanent = new Scaled(
                 new PermanentCount(new PermanentHasTypeChosenThisResolutionPredicate(), CountScope.CONTROLLER), -1);
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(minusOnePerPermanent, minusOnePerPermanent));
+                .addSpellEffect(BoostEffect.target(minusOnePerPermanent, minusOnePerPermanent));
     }
 }

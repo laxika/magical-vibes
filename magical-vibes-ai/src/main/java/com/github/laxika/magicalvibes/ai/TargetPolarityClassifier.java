@@ -580,7 +580,7 @@ public class TargetPolarityClassifier {
         // Targeted P/T boosts are sign-aware: any negative component makes the shape a
         // debuff. Dynamic amounts evaluate in estimation context, matching SpellEvaluator; a
         // "-1/-1 for each ..." amount is a debuff even when it counts nothing yet.
-        if (effect instanceof CreatureBoostEffect boost) {
+        if (CreatureBoostEffect.targetedBoost(effect) instanceof CreatureBoostEffect boost) {
             AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
             boolean negative = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) < 0
                     || amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx) < 0

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,7 +34,7 @@ public class TheTriumphOfAnax extends Card {
     private void addChapterPowerAndTrample(int chapter) {
         addTrigger(Triggers.chapter(chapter),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
-                new BoostTargetCreatureEffect(
+                BoostEffect.target(
                         new CountersOnSource(CounterType.LORE), new Fixed(0)));
     }
 }

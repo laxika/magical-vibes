@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -36,7 +36,7 @@ public class JiangYanggu extends Card {
     public JiangYanggu() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new BoostTargetCreatureEffect(2, 2)),
+                List.of(BoostEffect.target(2, 2)),
                 "+1: Target creature gets +2/+2 until end of turn.",
                 TargetFilters.creature()
         ));
@@ -58,7 +58,7 @@ public class JiangYanggu extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -5,
                 List.of(
-                        new BoostTargetCreatureEffect(landsYouControl, landsYouControl),
+                        BoostEffect.target(landsYouControl, landsYouControl),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "−5: Until end of turn, target creature gains trample and gets +X/+X, where X is the number of lands you control.",

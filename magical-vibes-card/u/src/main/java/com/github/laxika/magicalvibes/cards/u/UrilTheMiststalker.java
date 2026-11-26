@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "124")
 @CardRegistration(set = "SLD", collectorNumber = "1767")
@@ -16,6 +16,6 @@ public class UrilTheMiststalker extends Card {
 
         // Uril, the Miststalker gets +2/+2 for each Aura attached to it.
         Scaled twicePerAura = new Scaled(new AttachmentsOnSource(true, false), 2);
-        addStaticEffect(new BoostSelfEffect(twicePerAura, twicePerAura));
+        addStaticEffect(BoostEffect.self(twicePerAura, twicePerAura));
     }
 }

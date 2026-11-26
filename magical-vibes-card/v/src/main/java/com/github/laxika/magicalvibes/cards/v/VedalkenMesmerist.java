@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +13,6 @@ public class VedalkenMesmerist extends Card {
     public VedalkenMesmerist() {
         // Whenever this creature attacks, target creature an opponent controls gets -2/-0 until end of turn.
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(-2, 0));
+                .addTrigger(Triggers.attacks(), BoostEffect.target(-2, 0));
     }
 }

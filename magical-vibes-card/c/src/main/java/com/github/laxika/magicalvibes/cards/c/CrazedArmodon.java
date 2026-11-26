@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
@@ -20,7 +20,7 @@ public class CrazedArmodon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{G}",
                 List.of(
-                        new BoostSelfEffect(3, 0),
+                        BoostEffect.self(3, 0),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()),
                         new DestroySelfAtEndStepEffect()
                 ),

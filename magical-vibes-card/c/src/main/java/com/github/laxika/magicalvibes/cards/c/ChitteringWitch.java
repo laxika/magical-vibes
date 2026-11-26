@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -34,7 +34,7 @@ public class ChitteringWitch extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
-                List.of(new SacrificeCreatureCost(), new BoostTargetCreatureEffect(-2, -2)),
+                List.of(new SacrificeCreatureCost(), BoostEffect.target(-2, -2)),
                 "{1}{B}, Sacrifice a creature: Target creature gets -2/-2 until end of turn.",
                 TargetFilters.creature()
         ));

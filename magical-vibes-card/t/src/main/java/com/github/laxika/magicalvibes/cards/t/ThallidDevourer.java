@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -57,7 +57,7 @@ public class ThallidDevourer extends Card {
                                 "a Saproling",
                                 false
                         ),
-                        new BoostSelfEffect(1, 2)
+                        BoostEffect.self(1, 2)
                 ),
                 "Sacrifice a Saproling: Thallid Devourer gets +1/+2 until end of turn."
         ));

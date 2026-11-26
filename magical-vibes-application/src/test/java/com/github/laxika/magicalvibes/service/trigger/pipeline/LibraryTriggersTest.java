@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -219,7 +219,7 @@ class LibraryTriggersTest {
         @DisplayName("a \"you may\" goes on the stack as written")
         void mayAbilityGoesOnTheStackAsWritten() {
             Card card = createCard("Hoofprints of the Stag", CardType.ENCHANTMENT);
-            MayEffect may = new MayEffect(new BoostSelfEffect(1, 1), "Do it?");
+            MayEffect may = new MayEffect(BoostEffect.self(1, 1), "Do it?");
             card.addTrigger(Triggers.youDrawCard(), may);
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -233,7 +233,7 @@ class LibraryTriggersTest {
         @DisplayName("hands the door the draw as the event the additional-trigger effects of draws judge")
         void handsTheDoorTheDrawEvent() {
             Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
-            crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
+            crawlerCard.addTrigger(Triggers.youDrawCard(), BoostEffect.self(1, 1));
             Permanent crawler = new Permanent(crawlerCard);
             gd.playerBattlefields.get(player1Id).add(crawler);
 
@@ -250,7 +250,7 @@ class LibraryTriggersTest {
         void aGrantedAbilityTriggers() {
             Permanent bears = new Permanent(createCard("Grizzly Bears", CardType.CREATURE));
             PermanentGrants.abilityUntilEndOfTurn(gd, bears,
-                    new TriggeredAbility(Triggers.youDrawCard(), new BoostSelfEffect(1, 1)));
+                    new TriggeredAbility(Triggers.youDrawCard(), BoostEffect.self(1, 1)));
             gd.playerBattlefields.get(player1Id).add(bears);
 
             draw(player1Id, null);
@@ -263,7 +263,7 @@ class LibraryTriggersTest {
         @DisplayName("judges the filter on the drawn card and records the card as the triggering card")
         void judgesTheFilterOnTheDrawnCard() {
             Card whelpCard = createCard("Whelp", CardType.CREATURE);
-            whelpCard.addTrigger(Triggers.youDrawCard().withFilter(CREATURE), new BoostSelfEffect(1, 1));
+            whelpCard.addTrigger(Triggers.youDrawCard().withFilter(CREATURE), BoostEffect.self(1, 1));
             Permanent whelp = new Permanent(whelpCard);
             gd.playerBattlefields.get(player1Id).add(whelp);
             Card bears = createCard("Grizzly Bears", CardType.CREATURE);
@@ -308,7 +308,7 @@ class LibraryTriggersTest {
         @DisplayName("the draw step's first draw is told apart (Orcish Bowmasters' \"except the first\")")
         void theDrawStepsFirstDrawIsToldApart() {
             Card card = createCard("Orcish Bowmasters", CardType.CREATURE);
-            card.addTrigger(Triggers.opponentDrawsCardExceptFirstInDrawStep(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.opponentDrawsCardExceptFirstInDrawStep(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.trigger(gd, new LibraryEvent.Drew(player2Id, null, true, 1));
@@ -322,7 +322,7 @@ class LibraryTriggersTest {
         @DisplayName("an opponent's draw names the drawing player as the non-targeting \"that player\"")
         void opponentDrawNamesTheDrawingPlayer() {
             Card card = createCard("Fate Unraveler", CardType.ENCHANTMENT);
-            card.addTrigger(Triggers.opponentDrawsCard(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.opponentDrawsCard(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             draw(player1Id, null);
@@ -342,7 +342,7 @@ class LibraryTriggersTest {
         void opponentDrawTriggerHonorsItsOncePerTurnLimit() {
             Card card = createCard("Tataru Taru", CardType.CREATURE);
             card.addTrigger(Triggers.opponentDrawsCard(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                    new BoostSelfEffect(1, 1));
+                    BoostEffect.self(1, 1));
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
 
@@ -359,7 +359,7 @@ class LibraryTriggersTest {
         void graveyardSecondDrawAbility() {
             Card wolfbat = createCard("Wolfbat", CardType.CREATURE);
             wolfbat.addTrigger(new TriggerCondition(Triggers.youDrawSecondCardEachTurn(), AbilityZones.GRAVEYARD),
-                    TriggerOptions.DEFAULT, UnlessPaysEffect.youMayPay("{B}", new BoostSelfEffect(1, 1)));
+                    TriggerOptions.DEFAULT, UnlessPaysEffect.youMayPay("{B}", BoostEffect.self(1, 1)));
             gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(wolfbat)));
 
             draw(player1Id, null);
@@ -378,7 +378,7 @@ class LibraryTriggersTest {
         void graveyardOpponentSecondDrawAbility() {
             Card detective = createCard("Dogged Detective", CardType.CREATURE);
             detective.addTrigger(new TriggerCondition(Triggers.opponentDrawsSecondCardEachTurn(),
-                    AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT, new MayEffect(new BoostSelfEffect(1, 1), "?"));
+                    AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT, new MayEffect(BoostEffect.self(1, 1), "?"));
             gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(detective)));
 
             draw(player2Id, null);
@@ -467,7 +467,7 @@ class LibraryTriggersTest {
         @DisplayName("an opponent's discard names the discarding player and the card, with its graveyard stay")
         void opponentDiscardRecordsThePlayerAndTheCard() {
             Card card = createCard("Megrim", CardType.ENCHANTMENT);
-            card.addTrigger(Triggers.opponentDiscardsCard(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.opponentDiscardsCard(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             Card discarded = createCard("Forest", CardType.LAND);
 
@@ -488,7 +488,7 @@ class LibraryTriggersTest {
         @DisplayName("\"whenever you cycle a card\" triggers on a cycling discard only")
         void youCycleACard() {
             Card card = createCard("Drake Haven", CardType.ENCHANTMENT);
-            card.addTrigger(Triggers.youCycleCard(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.youCycleCard(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             Card discarded = createCard("Forest", CardType.LAND);
 
@@ -504,7 +504,7 @@ class LibraryTriggersTest {
         void theFirstNonlandDiscardEachTurn() {
             Card card = createCard("Veronica, Dissident Scribe", CardType.CREATURE);
             card.addTrigger(Triggers.youDiscardCard().withFilter(NONLAND).firstTimeEachTurn(),
-                    new BoostSelfEffect(1, 1));
+                    BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             Card bears = createCard("Grizzly Bears", CardType.CREATURE);
             when(predicateEvaluationService.matchesCardPredicate(eq(bears), eq(NONLAND), any(), eq(gd),
@@ -523,7 +523,7 @@ class LibraryTriggersTest {
         @DisplayName("a discard event of its own triggers \"one or more cards\" with their number as its value")
         void aLoneDiscardIsADiscardEvent() {
             Card card = createCard("Archfiend of the Dross", CardType.CREATURE);
-            card.addTrigger(Triggers.youDiscardOneOrMoreCards(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.youDiscardOneOrMoreCards(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             Card first = createCard("First", CardType.CREATURE);
             Card second = createCard("Second", CardType.CREATURE);
@@ -579,9 +579,9 @@ class LibraryTriggersTest {
         @DisplayName("a scry records the player, the cards put on the bottom and the cards looked at")
         void scry() {
             Card own = createCard("Flamekin Village", CardType.ENCHANTMENT);
-            own.addTrigger(Triggers.youScry(), new BoostSelfEffect(1, 1));
+            own.addTrigger(Triggers.youScry(), BoostEffect.self(1, 1));
             Card theirs = createCard("Opponent Watcher", CardType.ENCHANTMENT);
-            theirs.addTrigger(Triggers.opponentScries(), new BoostSelfEffect(1, 1));
+            theirs.addTrigger(Triggers.opponentScries(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(own));
             gd.playerBattlefields.get(player2Id).add(new Permanent(theirs));
 
@@ -601,7 +601,7 @@ class LibraryTriggersTest {
         @DisplayName("\"whenever you surveil for the first time each turn\" triggers on the first surveil only")
         void surveilFirstTimeEachTurn() {
             Card card = createCard("Sinister Snitch", CardType.CREATURE);
-            card.addTrigger(Triggers.youSurveil().firstTimeEachTurn(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.youSurveil().firstTimeEachTurn(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.trigger(gd, new LibraryEvent.Surveilled(player1Id, true));
@@ -614,7 +614,7 @@ class LibraryTriggersTest {
         @DisplayName("an opponent's search names the searching player as \"that player\"")
         void opponentSearch() {
             Card card = createCard("Ob Nixilis, Unshackled", CardType.CREATURE);
-            card.addTrigger(Triggers.opponentSearchesTheirLibrary(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.opponentSearchesTheirLibrary(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.trigger(gd, new LibraryEvent.Searched(player1Id));
@@ -629,7 +629,7 @@ class LibraryTriggersTest {
         @DisplayName("\"a spell or ability causes its controller to shuffle\" needs the shuffler's own spell or ability")
         void shuffleCausedByItsController() {
             Card card = createCard("Cosi's Trickster", CardType.CREATURE);
-            card.addTrigger(Triggers.spellOrAbilityCausesItsControllerToShuffle(), new BoostSelfEffect(1, 1));
+            card.addTrigger(Triggers.spellOrAbilityCausesItsControllerToShuffle(), BoostEffect.self(1, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.trigger(gd, new LibraryEvent.Shuffled(player2Id, player1Id));

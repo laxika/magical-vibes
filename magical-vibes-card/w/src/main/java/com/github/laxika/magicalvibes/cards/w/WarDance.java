@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -30,7 +30,7 @@ public class WarDance extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostTargetCreatureEffect(verseCounters, verseCounters)
+                        BoostEffect.target(verseCounters, verseCounters)
                 ),
                 "Sacrifice War Dance: Target creature gets +X/+X until end of turn, where X is the number "
                         + "of verse counters on War Dance.",

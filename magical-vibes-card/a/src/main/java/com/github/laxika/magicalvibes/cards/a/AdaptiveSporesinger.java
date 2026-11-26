@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -24,7 +24,7 @@ public class AdaptiveSporesinger extends Card {
     public AdaptiveSporesinger() {
         TargetFilter creature = TargetFilters.creature();
         CardEffect boostAndVigilance = SequenceEffect.of(
-                new BoostTargetCreatureEffect(2, 2),
+                BoostEffect.target(2, 2),
                 new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target())
         );
 

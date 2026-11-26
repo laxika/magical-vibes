@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "128")
@@ -14,7 +14,7 @@ public class NamelessInversion extends Card {
     public NamelessInversion() {
         // Target creature gets +3/-3 and loses all creature types until end of turn.
         // Both effects share the single auto-derived creature target.
-        addSpellEffect(new BoostTargetCreatureEffect(3, -3));
+        addSpellEffect(BoostEffect.target(3, -3));
         addSpellEffect(new LoseAllCreatureTypesEffect());
     }
 }

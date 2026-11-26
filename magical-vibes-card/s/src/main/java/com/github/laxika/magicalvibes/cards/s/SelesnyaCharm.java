@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -35,7 +35,7 @@ public class SelesnyaCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +2/+2 and gains trample until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(2, 2),
+                                BoostEffect.target(2, 2),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),

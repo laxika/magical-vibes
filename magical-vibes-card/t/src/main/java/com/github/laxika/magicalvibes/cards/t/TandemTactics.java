@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,7 +12,7 @@ public class TandemTactics extends Card {
     public TandemTactics() {
         // Up to two target creatures each get +1/+2 until end of turn. You gain 2 life.
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 2))
+                .addSpellEffect(BoostEffect.target(1, 2))
                 .addSpellEffect(new GainLifeEffect(2));
     }
 }

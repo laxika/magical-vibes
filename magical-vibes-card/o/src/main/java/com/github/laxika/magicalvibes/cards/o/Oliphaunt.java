@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +36,7 @@ public class Oliphaunt extends Card {
                 "Target must be another creature you control"
         ))
                 .addTrigger(Triggers.attacks(),
-                        new BoostTargetCreatureEffect(2, 0, anotherCreature),
+                        BoostEffect.target(2, 0, anotherCreature),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target(), anotherCreature));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}",

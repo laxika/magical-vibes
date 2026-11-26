@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 
@@ -11,6 +11,6 @@ import java.util.List;
 public class SoltariCrusader extends Card {
 
     public SoltariCrusader() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}{W}", List.of(new BoostSelfEffect(1, 0)), "{1}{W}: This creature gets +1/+0 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{1}{W}", List.of(BoostEffect.self(1, 0)), "{1}{W}: This creature gets +1/+0 until end of turn."));
     }
 }

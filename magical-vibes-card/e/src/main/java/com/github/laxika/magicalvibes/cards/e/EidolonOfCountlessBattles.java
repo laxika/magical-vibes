@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class EidolonOfCountlessBattles extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.AURA), CountScope.CONTROLLER);
         Sum boost = new Sum(creaturesYouControl, aurasYouControl);
 
-        addStaticEffect(new BoostSelfEffect(boost, boost));
+        addStaticEffect(BoostEffect.self(boost, boost));
 
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(

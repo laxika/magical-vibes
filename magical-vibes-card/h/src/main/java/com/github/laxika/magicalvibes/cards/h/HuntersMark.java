@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
@@ -34,7 +34,7 @@ public class HuntersMark extends Card {
                 opponentBluePermanent, 3, false, 1));
 
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 1));
+                .addSpellEffect(BoostEffect.target(1, 1));
 
         PermanentPredicate opponentCreatureOrPlaneswalker = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

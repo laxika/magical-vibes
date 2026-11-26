@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
@@ -20,7 +20,7 @@ public class PhoenixOfAsh extends Card {
 
     public PhoenixOfAsh() {
         addActivatedAbility(new ActivatedAbility(false, "{2}{R}",
-                List.of(new BoostSelfEffect(2, 0)),
+                List.of(BoostEffect.self(2, 0)),
                 "{2}{R}: Phoenix of Ash gets +2/+0 until end of turn."));
 
         addCastingOption(new GraveyardCast(null, "{2}{R}{R}", List.of(

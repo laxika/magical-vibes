@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
@@ -91,7 +91,7 @@ final class ChosenPermanentsAiChoice {
                         && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE;
                 case AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect attach ->
                         chosen.equals(attach.subject());
-                case BoostTargetCreatureEffect boost -> chosen.equals(boost.subject())
+                case BoostEffect boost -> chosen.equals(boost.subject())
                         && !(boost.powerBoost() instanceof Fixed fixed && fixed.value() < 0);
                 // "Tap any number of untapped creatures you control. [Something] for each creature tapped this way."
                 case TapPermanentsEffect tap -> chosen.equals(tap.subject());

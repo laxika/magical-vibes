@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -27,7 +27,7 @@ public class VeteranSurvivor extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceExiledCardsThreshold(3),
-                new BoostSelfEffect(3, 3)));
+                BoostEffect.self(3, 3)));
         addStaticEffect(new ConditionalEffect(
                 new SourceExiledCardsThreshold(3),
                 new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -21,6 +21,6 @@ public class MoonBoyDinoRider extends Card {
 
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))),
-                new BoostSelfEffect(1, 1));
+                BoostEffect.self(1, 1));
     }
 }

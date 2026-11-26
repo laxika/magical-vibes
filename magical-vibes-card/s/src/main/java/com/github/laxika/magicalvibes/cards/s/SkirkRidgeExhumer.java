@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -38,7 +38,7 @@ public class SkirkRidgeExhumer extends Card {
                 List.of(CardSubtype.ZOMBIE, CardSubtype.GOBLIN),
                 Set.of(),
                 Set.of(),
-                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(-1, -1)))
+                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), BoostEffect.target(-1, -1)))
         );
     }
 }

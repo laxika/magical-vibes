@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SweepingCleave;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -18,7 +18,7 @@ public class TwoHandedAxe extends Card {
         setBackFaceCard(new SweepingCleave());
         addCastingOption(new AdventureCast("{1}{R}"));
         addTrigger(Triggers.attacks(),
-                new BoostSelfEffect(Subjects.triggering(), new SourcePower(true), new Fixed(0)));
+                BoostEffect.of(Subjects.triggering(), new SourcePower(true), new Fixed(0)));
         addActivatedAbility(new EquipActivatedAbility("{1}{R}"));
     }
 

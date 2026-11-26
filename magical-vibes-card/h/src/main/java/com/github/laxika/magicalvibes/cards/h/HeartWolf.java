@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -28,7 +28,7 @@ public class HeartWolf extends Card {
                 true,
                 null,
                 List.of(
-                        new BoostTargetCreatureEffect(2, 0),
+                        BoostEffect.target(2, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()),
                         RegisterDelayedEventTriggerEffect.whenLeavesThisTurn(Subjects.target(),
                                 new SacrificeSelfEffect())

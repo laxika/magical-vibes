@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -16,7 +16,7 @@ public class VinesOfTheRecluse extends Card {
 
     public VinesOfTheRecluse() {
         target(TargetFilters.creature()).addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 2))
+                .addSpellEffect(BoostEffect.target(1, 2))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.target()));
     }
 }

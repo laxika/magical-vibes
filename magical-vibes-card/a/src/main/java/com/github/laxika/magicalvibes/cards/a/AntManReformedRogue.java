@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -17,10 +17,10 @@ public class AntManReformedRogue extends Card {
 
     public AntManReformedRogue() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
-                new BoostSelfEffect(1, 0),
+                BoostEffect.self(1, 0),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()));
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
-                new BoostSelfEffect(-1, 0),
+                BoostEffect.self(-1, 0),
                 new MakeCreatureUnblockableEffect(true));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect());
     }

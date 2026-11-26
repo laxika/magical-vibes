@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,7 +16,7 @@ public class Earthbrawn extends Card {
 
     public Earthbrawn() {
         // Target creature gets +3/+3 until end of turn.
-        addSpellEffect(new BoostTargetCreatureEffect(3, 3));
+        addSpellEffect(BoostEffect.target(3, 3));
 
         // Reinforce 1—{1}{G} ({1}{G}, Discard this card: Put a +1/+1 counter on target creature.)
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{G}",

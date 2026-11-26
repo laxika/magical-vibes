@@ -27,8 +27,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VotingResult;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -1175,7 +1175,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.fixturePermanents(cards);
                             Permanent victim = test.addCreatureReady(test.player1, new GrizzlyBears());
                             Card boost = card("Boost", CardType.INSTANT);
-                            boost.addSpellEffect(new BoostTargetCreatureEffect(1, 1));
+                            boost.addSpellEffect(BoostEffect.target(1, 1));
                             test.mainPhaseOf(test.player2);
                             test.harness.setHand(test.player2, List.of(boost));
                             test.harness.addMana(test.player2, ManaColor.COLORLESS, 1);
@@ -2106,13 +2106,13 @@ class TriggerRouteRecordTest extends BaseCardTest {
         switch (variant) {
             case MAY -> watch.addAbility(card, new MayEffect(new GainLifeEffect(1), "Gain?"));
             case TARGET -> {
-                CardEffect boost = new BoostTargetCreatureEffect(1, 1);
+                CardEffect boost = BoostEffect.target(1, 1);
                 watch.addAbility(card, boost);
                 card.target(TargetFilters.creature()).bindEffect(boost);
             }
             case TWO_GROUPS -> {
                 CardEffect destroy = new DestroyTargetPermanentEffect();
-                CardEffect boost = new BoostTargetCreatureEffect(1, 1);
+                CardEffect boost = BoostEffect.target(1, 1);
                 watch.addAbility(card, destroy, boost);
                 card.target(TargetFilters.creature()).bindEffect(destroy);
                 card.target(TargetFilters.creature()).bindEffect(boost);
@@ -3082,7 +3082,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
 
     private void castBoostAt(Permanent target) {
         Card boost = card("Boost", CardType.INSTANT);
-        boost.addSpellEffect(new BoostTargetCreatureEffect(1, 1));
+        boost.addSpellEffect(BoostEffect.target(1, 1));
         mainPhaseOf(player1);
         harness.setHand(player1, List.of(boost));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

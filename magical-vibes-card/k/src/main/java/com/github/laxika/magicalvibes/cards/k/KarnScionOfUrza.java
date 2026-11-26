@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -65,7 +65,7 @@ public class KarnScionOfUrza extends Card {
                         1, "Construct", 0, 0,
                         null, List.of(CardSubtype.CONSTRUCT),
                         Set.of(), Set.of(CardType.ARTIFACT),
-                        List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl)))
+                        List.of(StaticAbility.of(BoostEffect.self(artifactsYouControl, artifactsYouControl)))
                 )),
                 "−2: Create a 0/0 colorless Construct artifact creature token with \"This creature gets +1/+1 for each artifact you control.\""
         ));

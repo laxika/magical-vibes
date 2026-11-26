@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -21,7 +21,7 @@ public class InfantryVeteran extends Card {
 
     public InfantryVeteran() {
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new BoostTargetCreatureEffect(1, 1)),
+                List.of(BoostEffect.target(1, 1)),
                 "{T}: Target attacking creature gets +1/+1 until end of turn.",
                 TargetFilters.attackingCreature()));
     }

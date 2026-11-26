@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -32,7 +32,7 @@ public class BloodthirstyOgre extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new BoostTargetCreatureEffect(minusDevotion, minusDevotion)),
+                List.of(BoostEffect.target(minusDevotion, minusDevotion)),
                 "{T}: Target creature gets -X/-X until end of turn, where X is the number of "
                         + "devotion counters on this creature. Activate only if you control a Demon."
         ).withRequiredControlledPermanents(

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
@@ -18,7 +18,7 @@ public class BattlefieldPercher extends Card {
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 "creatures with flying"
         ));
-        addActivatedAbility(new ActivatedAbility(false, "{1}{B}", List.of(new BoostSelfEffect(1, 1)),
+        addActivatedAbility(new ActivatedAbility(false, "{1}{B}", List.of(BoostEffect.self(1, 1)),
                 "{1}{B}: Battlefield Percher gets +1/+1 until end of turn."));
     }
 }

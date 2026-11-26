@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.Max;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -24,6 +24,6 @@ public class FreelanceMuscle extends Card {
                 new GreatestToughnessAmongControlled(otherCreatures));
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
                 TriggerOptions.ONE_OR_MORE,
-                new BoostSelfEffect(greatestPowerOrToughness, greatestPowerOrToughness));
+                BoostEffect.self(greatestPowerOrToughness, greatestPowerOrToughness));
     }
 }

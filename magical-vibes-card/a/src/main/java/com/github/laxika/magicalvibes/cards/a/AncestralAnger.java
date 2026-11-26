@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class AncestralAnger extends Card {
         // Target creature gains trample and gets +X/+0 until end of turn, where X is 1 plus
         // the number of cards named Ancestral Anger in your graveyard.
         // Draw a card.
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(
                 // X is 1 plus the number of cards named Ancestral Anger in your graveyard.
                 new Sum(new Fixed(1), new CardsInGraveyard(new CardNamedPredicate("Ancestral Anger"), CountScope.CONTROLLER)),
                 new Fixed(0)

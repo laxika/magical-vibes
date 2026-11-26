@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -18,7 +18,7 @@ public class ShellShield extends Card {
         addStaticEffect(new KickerEffect("{1}"));
 
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new BoostTargetCreatureEffect(0, 3))
+                .addSpellEffect(BoostEffect.target(0, 3))
                 .addSpellEffect(new ConditionalEffect(
                         new Kicked(), new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())));
     }

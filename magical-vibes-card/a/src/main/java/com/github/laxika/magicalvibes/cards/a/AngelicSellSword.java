@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -50,7 +50,7 @@ public class AngelicSellSword extends Card {
                 List.of(new ActivatedAbility(
                         true,
                         null,
-                        List.of(new BoostTargetCreatureEffect(1, 0)),
+                        List.of(BoostEffect.target(1, 0)),
                         "{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.",
                         TargetFilters.creatureYouControl(),
                         null,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -28,7 +28,7 @@ public class RakdosGuildmage extends Card {
                 "{3}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new BoostTargetCreatureEffect(-2, -2)
+                        BoostEffect.target(-2, -2)
                 ),
                 "{3}{B}, Discard a card: Target creature gets -2/-2 until end of turn.",
                 TargetFilters.creature()

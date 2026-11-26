@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -38,7 +38,7 @@ public class Fleshtaker extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new BoostSelfEffect(2, 2)
+                        BoostEffect.self(2, 2)
                 ),
                 "{1}, Sacrifice another creature: This creature gets +2/+2 until end of turn."
         ));

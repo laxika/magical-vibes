@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
@@ -19,6 +19,6 @@ public class BeastmastersMagemark extends Card {
                         new PermanentIsEnchantedPredicate()))
                 .addTrigger(Triggers.creatureYouControlBecomesBlocked()
                                 .withFilter(new PermanentIsEnchantedPredicate()),
-                        new BoostSelfEffect(Subjects.triggering(), new CreaturesBlockingSource(true), new CreaturesBlockingSource(true)));
+                        BoostEffect.of(Subjects.triggering(), new CreaturesBlockingSource(true), new CreaturesBlockingSource(true)));
     }
 }

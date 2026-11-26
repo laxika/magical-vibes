@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -26,7 +26,7 @@ public class SpiritOfTheAldergard extends Card {
                 new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.SNOW),
                         new CardTypePredicate(CardType.LAND)))));
-        addStaticEffect(new BoostSelfEffect(
+        addStaticEffect(BoostEffect.self(
                 new PermanentCount(new PermanentHasSupertypePredicate(CardSupertype.SNOW), CountScope.CONTROLLER, true),
                 new Fixed(0)));
     }

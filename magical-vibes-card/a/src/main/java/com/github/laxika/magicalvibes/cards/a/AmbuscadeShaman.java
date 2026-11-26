@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,6 +17,6 @@ public class AmbuscadeShaman extends Card {
     public AmbuscadeShaman() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{B}"))));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new BoostSelfEffect(Subjects.triggering(), 2, 2));
+                BoostEffect.of(Subjects.triggering(), 2, 2));
     }
 }

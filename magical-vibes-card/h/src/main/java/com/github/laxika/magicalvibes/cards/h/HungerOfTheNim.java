@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "46")
 public class HungerOfTheNim extends Card {
 
     public HungerOfTheNim() {
-        addSpellEffect(new BoostTargetCreatureEffect(
+        addSpellEffect(BoostEffect.target(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
                 new Fixed(0)
         ));

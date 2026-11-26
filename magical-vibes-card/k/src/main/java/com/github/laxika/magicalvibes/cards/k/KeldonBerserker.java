@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -23,6 +23,6 @@ public class KeldonBerserker extends Card {
                                         new PermanentIsLandPredicate(),
                                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                                 )))),
-                new BoostSelfEffect(3, 0));
+                BoostEffect.self(3, 0));
     }
 }

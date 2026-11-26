@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,7 @@ public class Hackrobat extends Card {
                 List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 "{B}: This creature gains deathtouch until end of turn."));
         addActivatedAbility(new ActivatedAbility(false, "{R}",
-                List.of(new BoostSelfEffect(2, -2)),
+                List.of(BoostEffect.self(2, -2)),
                 "{R}: This creature gets +2/-2 until end of turn."));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,7 +32,7 @@ public class InsideSource extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{3}",
                 List.of(
-                        new BoostTargetCreatureEffect(2, 0),
+                        BoostEffect.target(2, 0),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target())
                 ),
                 "{3}, {T}: Target Detective you control gets +2/+0 and gains vigilance until end of turn. Activate only as a sorcery.",

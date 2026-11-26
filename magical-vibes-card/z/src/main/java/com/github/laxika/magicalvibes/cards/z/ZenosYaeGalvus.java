@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
@@ -26,7 +26,7 @@ public class ZenosYaeGalvus extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 ChoosePermanentsEffect.exactly(1, Subjects.creaturesYourOpponentsControl(),
                         "a creature an opponent controls"),
-                new BoostTargetCreatureEffect(
+                BoostEffect.each(
                         Subjects.except(Subjects.otherCreatures(), Subjects.thisWay(StepKind.CHOOSE)), -2, -2));
         addTrigger(Triggers.leavesBattlefield(new PermanentIsChosenPermanentPredicate(),
                         ObjectRelation.ANOTHER),

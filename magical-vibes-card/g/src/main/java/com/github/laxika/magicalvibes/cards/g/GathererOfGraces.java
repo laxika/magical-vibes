@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -17,7 +17,7 @@ public class GathererOfGraces extends Card {
 
     public GathererOfGraces() {
         AttachmentsOnSource aurasAttached = new AttachmentsOnSource(true, false);
-        addStaticEffect(new BoostSelfEffect(aurasAttached, aurasAttached));
+        addStaticEffect(BoostEffect.self(aurasAttached, aurasAttached));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,7 +15,7 @@ public class HareRaising extends Card {
     public HareRaising() {
         PermanentCount creatureCount = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new BoostTargetCreatureEffect(creatureCount, creatureCount))
+                .addSpellEffect(BoostEffect.target(creatureCount, creatureCount))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
     }
 }

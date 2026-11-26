@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -34,7 +34,7 @@ public class VishKalBloodArbiter extends Card {
                 null,
                 List.of(
                         new RemoveAllCountersAsCostEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                                 new Scaled(new XValue(), -1),
                                 new Scaled(new XValue(), -1)
                         )

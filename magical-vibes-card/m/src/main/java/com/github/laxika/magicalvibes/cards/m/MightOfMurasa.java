@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,8 +15,8 @@ public class MightOfMurasa extends Card {
         addStaticEffect(new KickerEffect("{2}{G}"));
 
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(3, 3))
+                .addSpellEffect(BoostEffect.target(3, 3))
                 .addSpellEffect(new ConditionalEffect(
-                        new Kicked(), new BoostTargetCreatureEffect(2, 2)));
+                        new Kicked(), BoostEffect.target(2, 2)));
     }
 }

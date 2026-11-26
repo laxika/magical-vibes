@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -48,7 +48,7 @@ public class Stonewright extends Card {
         ActivatedAbility pump = new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new BoostSelfEffect(1, 0)),
+                List.of(BoostEffect.self(1, 0)),
                 "{R}: This creature gets +1/+0 until end of turn."
         );
         addStaticEffect(new ConditionalEffect(

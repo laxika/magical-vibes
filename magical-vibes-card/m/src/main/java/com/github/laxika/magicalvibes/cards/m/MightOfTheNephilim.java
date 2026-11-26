@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.TargetPermanentColorCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DIS", collectorNumber = "88")
@@ -12,7 +12,7 @@ public class MightOfTheNephilim extends Card {
 
     public MightOfTheNephilim() {
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(
+                .addSpellEffect(BoostEffect.target(
                         new Scaled(new TargetPermanentColorCount(), 2),
                         new Scaled(new TargetPermanentColorCount(), 2)));
     }

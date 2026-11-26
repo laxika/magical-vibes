@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +17,7 @@ public class InTheWebOfWar extends Card {
         // Whenever a creature you control enters, it gets +2/+0 and gains haste until end of turn.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 SequenceEffect.of(
-                        new BoostSelfEffect(Subjects.triggering(), 2, 0),
+                        BoostEffect.of(Subjects.triggering(), 2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering())));
     }
 }

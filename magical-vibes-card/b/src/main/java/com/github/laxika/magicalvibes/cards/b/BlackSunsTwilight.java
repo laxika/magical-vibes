@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -18,7 +18,7 @@ public class BlackSunsTwilight extends Card {
 
     public BlackSunsTwilight() {
         target(TargetFilters.creature(), 0, 1)
-                .addSpellEffect(new BoostTargetCreatureEffect(
+                .addSpellEffect(BoostEffect.target(
                         new Scaled(new XValue(), -1), new Scaled(new XValue(), -1)));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(5),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -20,7 +20,7 @@ public class ViashinoBranchrider extends Card {
         addStaticEffect(new KickerEffect("{2}{G}"));
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addActivatedAbility(new ActivatedAbility(false, "{2}{R}", List.of(new BoostSelfEffect(2, 0)),
+        addActivatedAbility(new ActivatedAbility(false, "{2}{R}", List.of(BoostEffect.self(2, 0)),
                 "{2}{R}: This creature gets +2/+0 until end of turn."));
     }
 }

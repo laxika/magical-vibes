@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ExiledCardTypeThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,7 +18,7 @@ public class KeenEyedCurator extends Card {
 
     public KeenEyedCurator() {
         ExiledCardTypeThreshold threshold = new ExiledCardTypeThreshold(4);
-        addStaticEffect(new ConditionalEffect(threshold, new BoostSelfEffect(4, 4)));
+        addStaticEffect(new ConditionalEffect(threshold, BoostEffect.self(4, 4)));
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
         addActivatedAbility(new ActivatedAbility(

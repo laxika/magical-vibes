@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureWithManaValueEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class CosmicSovereign extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new BoostSelfEffect(1, 0)),
+                List.of(BoostEffect.self(1, 0)),
                 "{R}: Cosmic Sovereign gets +1/+0 until end of turn."));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConjureRandomCreatureWithManaValueEffect(new SourcePower()));

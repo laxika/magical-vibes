@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
@@ -19,7 +19,7 @@ public class SkyclavePickAxe extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AttachSourceEquipmentToTargetCreatureEffect());
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new BoostSelfEffect(Subjects.attached(), new Fixed(2), new Fixed(2)));
+                BoostEffect.of(Subjects.attached(), new Fixed(2), new Fixed(2)));
         addActivatedAbility(new EquipActivatedAbility("{2}{G}"));
     }
 }

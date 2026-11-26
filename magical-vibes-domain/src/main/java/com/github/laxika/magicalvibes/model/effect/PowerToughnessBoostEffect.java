@@ -10,7 +10,7 @@ import java.util.Set;
  * {@code Duration}, not this record's.
  *
  * <p>It is the payload the boost handlers put on a permanent, never a card's effect: cards name
- * {@link BoostTargetCreatureEffect} (or another boost effect), whose handlers put it on the permanent through
+ * {@link BoostEffect#target} (or another boost effect), whose handlers put it on the permanent through
  * {@code GameData.addPowerToughnessBoost} with the stated duration ({@code Duration.PERMANENT} when none is stated,
  * CR 611.2a) and the amounts fixed as the effect began (CR 608.2h). {@code GameQueryService.assembleStaticBonus} reads
  * every such effect on the permanent; several add up.

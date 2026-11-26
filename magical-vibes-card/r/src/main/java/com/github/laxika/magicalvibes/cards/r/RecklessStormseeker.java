@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.StormChargedSlasher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +19,7 @@ public class RecklessStormseeker extends Card {
         setBackFaceCard(new StormChargedSlasher());
 
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), BoostEffect.target(1, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 

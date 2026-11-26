@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class SnarlingUndorak extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{G}",
-                List.of(new BoostTargetCreatureEffect(1, 1, BEAST_CREATURE)),
+                List.of(BoostEffect.target(1, 1, BEAST_CREATURE)),
                 "{2}{G}: Target Beast creature gets +1/+1 until end of turn.",
                 new PermanentPredicateTargetFilter(BEAST_CREATURE, "Target must be a Beast creature")
         ));

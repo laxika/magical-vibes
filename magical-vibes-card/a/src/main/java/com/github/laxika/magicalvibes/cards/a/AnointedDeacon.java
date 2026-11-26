@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -20,7 +20,7 @@ public class AnointedDeacon extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                 "Target must be a Vampire"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
-                new BoostTargetCreatureEffect(2, 0),
+                BoostEffect.target(2, 0),
                 "You may have target Vampire get +2/+0 until end of turn."
         ));
     }

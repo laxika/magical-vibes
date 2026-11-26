@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BushidoEffectHandler implements NormalEffectHandlerBean {
 
-    private final BoostSelfEffectHandler boostSelfEffectHandler;
+    private final BoostEffectHandler boostEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -20,6 +20,6 @@ public class BushidoEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        boostSelfEffectHandler.resolve(gameData, entry, ((BushidoEffect) effect).asBoost());
+        boostEffectHandler.resolve(gameData, entry, ((BushidoEffect) effect).asBoost());
     }
 }

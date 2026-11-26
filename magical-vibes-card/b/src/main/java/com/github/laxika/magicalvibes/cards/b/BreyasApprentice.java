@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -41,7 +41,7 @@ public class BreyasApprentice extends Card {
                                                 .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Target creature gets +2/+0 until end of turn.",
-                                        new BoostTargetCreatureEffect(2, 0),
+                                        BoostEffect.target(2, 0),
                                         TargetFilters.creature())))
                 ),
                 "{T}, Sacrifice an artifact: Choose one — Exile the top card of your library. Until the end of your next turn, you may play that card; or target creature gets +2/+0 until end of turn."

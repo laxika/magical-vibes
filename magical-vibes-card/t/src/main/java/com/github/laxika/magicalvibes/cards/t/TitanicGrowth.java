@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "198")
 @CardRegistration(set = "M13", collectorNumber = "195")
@@ -17,6 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 public class TitanicGrowth extends Card {
 
     public TitanicGrowth() {
-        addSpellEffect(new BoostTargetCreatureEffect(4, 4));
+        addSpellEffect(BoostEffect.target(4, 4));
     }
 }

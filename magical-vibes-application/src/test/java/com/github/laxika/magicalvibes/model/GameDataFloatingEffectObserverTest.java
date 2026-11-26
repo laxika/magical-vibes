@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
@@ -41,7 +41,7 @@ class GameDataFloatingEffectObserverTest {
 
     private static FloatingContinuousEffect floating(String source, Duration duration) {
         return new FloatingContinuousEffect(UUID.randomUUID(), source, null, UUID.randomUUID(),
-                new BoostTargetCreatureEffect(1, 1), UUID.randomUUID(), null, null, duration, 0);
+                BoostEffect.target(1, 1), UUID.randomUUID(), null, null, duration, 0);
     }
 
     @Test

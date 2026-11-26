@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -19,7 +19,7 @@ public class ScrapyardSteelbreaker extends Card {
                 "{1}",
                 List.of(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "another artifact"),
-                        new BoostSelfEffect(2, 1)
+                        BoostEffect.self(2, 1)
                 ),
                 "{1}, Sacrifice another artifact: This creature gets +2/+1 until end of turn."
         ));

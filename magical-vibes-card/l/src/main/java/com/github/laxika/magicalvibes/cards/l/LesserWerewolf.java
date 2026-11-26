@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -30,7 +30,7 @@ public class LesserWerewolf extends Card {
         CardEffect effect = new ConditionalEffect(
                 new SourcePowerAtLeast(1),
                 SequenceEffect.of(
-                        new BoostSelfEffect(-1, 0),
+                        BoostEffect.self(-1, 0),
                         new PutCountersEffect(CounterType.MINUS_ZERO_MINUS_ONE)
                 ));
 

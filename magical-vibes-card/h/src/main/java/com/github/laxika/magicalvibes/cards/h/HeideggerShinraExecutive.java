@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCreaturesThanController;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +22,7 @@ public class HeideggerShinraExecutive extends Card {
         PermanentCount soldiersYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SOLDIER), CountScope.CONTROLLER);
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostTargetCreatureEffect(soldiersYouControl, new Fixed(0)));
+                BoostEffect.target(soldiersYouControl, new Fixed(0)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 CreateTokenEffect.whiteSoldier(new OpponentsWithMoreCreaturesThanController()));

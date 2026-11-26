@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -34,6 +34,6 @@ public class Invigorate extends Card {
                 false));
 
         // Target creature gets +4/+4 until end of turn.
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(4, 4));
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(4, 4));
     }
 }

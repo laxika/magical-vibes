@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,6 +25,6 @@ public class SurgeOfStrength extends Card {
                         new CardColorPredicate(CardColor.GREEN))),
                 "red or green"));
         addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
-        addSpellEffect(new BoostTargetCreatureEffect(new TargetManaValue(), new Fixed(0)));
+        addSpellEffect(BoostEffect.target(new TargetManaValue(), new Fixed(0)));
     }
 }

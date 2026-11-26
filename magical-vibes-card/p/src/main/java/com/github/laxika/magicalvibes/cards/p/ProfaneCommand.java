@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -55,7 +55,7 @@ public class ProfaneCommand extends Card {
                                 .build()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets -X/-X until end of turn",
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                                 new Scaled(new XValue(), -1),
                                 new Scaled(new XValue(), -1)),
                         new PermanentPredicateTargetFilter(

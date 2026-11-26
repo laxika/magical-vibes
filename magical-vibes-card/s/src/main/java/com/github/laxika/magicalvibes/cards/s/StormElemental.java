@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -59,7 +59,7 @@ public class StormElemental extends Card {
                                         )),
                                         "a snow land"
                                 ),
-                                new BoostSelfEffect(1, 1)
+                                BoostEffect.self(1, 1)
                         )
                 ),
                 "{U}, Exile the top card of your library: If the exiled card is a snow land, "

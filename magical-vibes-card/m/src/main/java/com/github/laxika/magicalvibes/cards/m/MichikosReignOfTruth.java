@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -29,10 +29,10 @@ public class MichikosReignOfTruth extends Card {
                 CountScope.CONTROLLER);
 
         target(TargetFilters.creature()).addTrigger(Triggers.chapter(1),
-                new BoostTargetCreatureEffect(
+                BoostEffect.target(
                         artifactsAndEnchantmentsYouControl, artifactsAndEnchantmentsYouControl));
         target(TargetFilters.creature()).addTrigger(Triggers.chapter(2),
-                new BoostTargetCreatureEffect(
+                BoostEffect.target(
                         artifactsAndEnchantmentsYouControl, artifactsAndEnchantmentsYouControl));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 1, 1)));

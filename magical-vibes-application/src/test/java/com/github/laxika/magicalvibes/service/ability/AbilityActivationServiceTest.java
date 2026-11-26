@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
@@ -31,7 +32,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -458,7 +458,7 @@ class AbilityActivationServiceTest {
             creature.addActivatedAbility(new ActivatedAbility(
                     true,
                     null,
-                    List.of(new WaterbendCost(1), new BoostSelfEffect(1, 1)),
+                    List.of(new WaterbendCost(1), BoostEffect.self(1, 1)),
                     "Waterbend {1}, {T}: Get bigger."
             ));
             Permanent perm = addReadyPermanent(player1Id, creature);
@@ -1309,7 +1309,7 @@ class AbilityActivationServiceTest {
         void arrestBlocksAllAbilities() {
             Card card = createCreatureCard("Nantuko Husk", 2, 2);
             card.addActivatedAbility(new ActivatedAbility(
-                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)), "Sacrifice a creature: +2/+2"
+                    false, null, List.of(new SacrificeCreatureCost(false, false), BoostEffect.self(2, 2)), "Sacrifice a creature: +2/+2"
             ));
             Permanent perm = addReadyPermanent(player1Id, card);
 
@@ -1530,7 +1530,7 @@ class AbilityActivationServiceTest {
         void sacrificeCreatureCostAutoPaysSingleCreature() {
             Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
             huskCard.addActivatedAbility(new ActivatedAbility(
-                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    false, null, List.of(new SacrificeCreatureCost(false, false), BoostEffect.self(2, 2)),
                     "Sacrifice a creature: +2/+2"
             ));
             Permanent husk = addReadyPermanent(player1Id, huskCard);
@@ -1555,7 +1555,7 @@ class AbilityActivationServiceTest {
         void sacrificeCreatureCostPromptsMultipleCreatures() {
             Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
             huskCard.addActivatedAbility(new ActivatedAbility(
-                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    false, null, List.of(new SacrificeCreatureCost(false, false), BoostEffect.self(2, 2)),
                     "Sacrifice a creature: +2/+2"
             ));
             Permanent husk = addReadyPermanent(player1Id, huskCard);
@@ -1583,7 +1583,7 @@ class AbilityActivationServiceTest {
         void validateCanPayThrowsWhenNoCreatures() {
             Card artifactCard = createGenericArtifact("Phyrexian Altar");
             artifactCard.addActivatedAbility(new ActivatedAbility(
-                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    false, null, List.of(new SacrificeCreatureCost(false, false), BoostEffect.self(2, 2)),
                     "Sacrifice a creature: +2/+2"
             ));
             Permanent artifact = addReadyPermanent(player1Id, artifactCard);
@@ -1604,7 +1604,7 @@ class AbilityActivationServiceTest {
         void onlyConsidersControllerCreatures() {
             Card artifactCard = createGenericArtifact("Phyrexian Altar");
             artifactCard.addActivatedAbility(new ActivatedAbility(
-                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    false, null, List.of(new SacrificeCreatureCost(false, false), BoostEffect.self(2, 2)),
                     "Sacrifice a creature: +2/+2"
             ));
             Permanent artifact = addReadyPermanent(player1Id, artifactCard);
@@ -1629,7 +1629,7 @@ class AbilityActivationServiceTest {
         void sacrificeCreatureCostRefusedWhenCreaturesCantBeSacrificed() {
             Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
             huskCard.addActivatedAbility(new ActivatedAbility(
-                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    false, null, List.of(new SacrificeCreatureCost(false, false), BoostEffect.self(2, 2)),
                     "Sacrifice a creature: +2/+2"
             ));
             Permanent husk = addReadyPermanent(player1Id, huskCard);
@@ -2222,7 +2222,7 @@ class AbilityActivationServiceTest {
         card.setPower(1);
         card.setToughness(1);
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new BoostSelfEffect(1, 1)), "Tap to boost"
+                true, null, List.of(BoostEffect.self(1, 1)), "Tap to boost"
         ));
         return card;
     }
@@ -2298,7 +2298,7 @@ class AbilityActivationServiceTest {
         card.setPower(power);
         card.setToughness(toughness);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new BoostSelfEffect(1, 1)),
+                false, null, List.of(BoostEffect.self(1, 1)),
                 "Test ability", null, null, null, restriction
         ));
         return card;
@@ -2312,7 +2312,7 @@ class AbilityActivationServiceTest {
         card.setColor(CardColor.RED);
         // +1 loyalty ability with a simple effect
         card.addActivatedAbility(new ActivatedAbility(
-                1, List.of(new BoostSelfEffect(1, 1)), "+1: Test"
+                1, List.of(BoostEffect.self(1, 1)), "+1: Test"
         ));
         return card;
     }
@@ -2324,7 +2324,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{2}{R}{R}");
         card.setColor(CardColor.RED);
         card.addActivatedAbility(new ActivatedAbility(
-                loyaltyCost, List.of(new BoostSelfEffect(1, 1)), "Negative ability"
+                loyaltyCost, List.of(BoostEffect.self(1, 1)), "Negative ability"
         ));
         return card;
     }

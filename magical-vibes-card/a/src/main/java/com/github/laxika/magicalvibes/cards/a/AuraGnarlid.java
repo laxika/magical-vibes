@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesWithLessPowerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -23,6 +23,6 @@ public class AuraGnarlid extends Card {
         // This creature gets +1/+1 for each Aura on the battlefield.
         PermanentCount aurasOnBattlefield = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA), CountScope.ANY_PLAYER);
-        addStaticEffect(new BoostSelfEffect(aurasOnBattlefield, aurasOnBattlefield));
+        addStaticEffect(BoostEffect.self(aurasOnBattlefield, aurasOnBattlefield));
     }
 }

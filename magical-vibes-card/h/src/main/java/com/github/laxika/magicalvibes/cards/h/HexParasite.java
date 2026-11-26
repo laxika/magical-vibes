@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -23,7 +23,7 @@ public class HexParasite extends Card {
                 "{X}{B/P}",
                 List.of(
                         new RemoveUpToCountersFromAllPermanentsEffect(CounterType.ANY, new XValue(), Subjects.target()),
-                        new BoostSelfEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS), new Fixed(0))),
+                        BoostEffect.self(new AmountThisWay(StepKind.REMOVE_COUNTERS), new Fixed(0))),
                 "{X}{B/P}: Remove up to X counters from target permanent. For each counter removed this way, Hex Parasite gets +1/+0 until end of turn."
         ));
     }

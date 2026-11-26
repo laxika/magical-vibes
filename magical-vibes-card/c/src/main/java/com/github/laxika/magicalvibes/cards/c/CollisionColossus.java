@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -31,7 +31,7 @@ public class CollisionColossus extends Card {
 
         CardEffect collision = DealDamageEffect.toTargetCreature(6, flyingCreature);
         List<CardEffect> colossus = List.of(
-                new BoostTargetCreatureEffect(4, 2),
+                BoostEffect.target(4, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
 
         addSpellEffect(new ChooseOneEffect(List.of(

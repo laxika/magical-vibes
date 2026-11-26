@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 
@@ -32,7 +32,7 @@ public class StillmoonCavalier extends Card {
 
         // {W/B}{W/B}: This creature gets +1/+0 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{W/B}{W/B}",
-                List.of(new BoostSelfEffect(1, 0)),
+                List.of(BoostEffect.self(1, 0)),
                 "{W/B}{W/B}: This creature gets +1/+0 until end of turn."));
     }
 }

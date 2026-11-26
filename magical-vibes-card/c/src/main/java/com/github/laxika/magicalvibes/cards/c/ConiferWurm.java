@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class ConiferWurm extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}",
-                List.of(new BoostSelfEffect(snowPermanentsYouControl, snowPermanentsYouControl)),
+                List.of(BoostEffect.self(snowPermanentsYouControl, snowPermanentsYouControl)),
                 "{3}{G}: This creature gets +X/+X until end of turn, where X is the number of snow permanents you control."
         ));
     }

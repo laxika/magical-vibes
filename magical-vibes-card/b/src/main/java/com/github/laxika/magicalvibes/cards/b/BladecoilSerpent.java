@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -28,7 +28,7 @@ public class BladecoilSerpent extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DiscardEffect(new ColorManaPairsSpentToCast(ManaColor.BLACK), Subjects.eachOpponent()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new BoostSelfEffect(new ColorManaPairsSpentToCast(ManaColor.RED), new Fixed(0)),
+                BoostEffect.self(new ColorManaPairsSpentToCast(ManaColor.RED), new Fixed(0)),
                 new ConditionalEffect(new ColorSpentToCast(ManaColor.RED, 2),
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.source()))));
     }

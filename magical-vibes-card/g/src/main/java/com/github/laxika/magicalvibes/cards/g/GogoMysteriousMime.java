@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -44,10 +43,10 @@ public class GogoMysteriousMime extends Card {
                 new ConditionalEffect(new SourceIsOnBattlefield(), SequenceEffect.of(
                         new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                                 "Gogo, Mysterious Mime", Set.of()),
-                        new BoostSelfEffect(2, 0),
+                        BoostEffect.self(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.source()),
                         new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate(), true),
-                        new BoostTargetCreatureEffect(2, 0),
+                        BoostEffect.target(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK)
                 )),

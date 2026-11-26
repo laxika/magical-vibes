@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MOR", collectorNumber = "87")
@@ -20,6 +20,6 @@ public class BorderlandBehemoth extends Card {
         Scaled fourPerGiant = new Scaled(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.GIANT),
                 CountScope.CONTROLLER, true), 4);
-        addStaticEffect(new BoostSelfEffect(fourPerGiant, fourPerGiant));
+        addStaticEffect(BoostEffect.self(fourPerGiant, fourPerGiant));
     }
 }

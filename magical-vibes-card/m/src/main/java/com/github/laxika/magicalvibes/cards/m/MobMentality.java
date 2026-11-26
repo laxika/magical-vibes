@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -40,6 +40,6 @@ public class MobMentality extends Card {
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new AllMatchingCreaturesAttack(nonWallCreature)),
-                new BoostSelfEffect(Subjects.attached(), attackingCreatures, new Fixed(0)));
+                BoostEffect.of(Subjects.attached(), attackingCreatures, new Fixed(0)));
     }
 }

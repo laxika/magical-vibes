@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -36,7 +36,7 @@ public class FellShepherd extends Card {
                 "{B}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new BoostTargetCreatureEffect(-2, -2)
+                        BoostEffect.target(-2, -2)
                 ),
                 "{B}, Sacrifice another creature: Target creature gets -2/-2 until end of turn.",
                 TargetFilters.creature()

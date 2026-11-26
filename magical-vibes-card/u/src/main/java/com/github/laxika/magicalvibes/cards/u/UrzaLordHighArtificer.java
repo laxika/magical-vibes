@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
@@ -37,7 +37,7 @@ public class UrzaLordHighArtificer extends Card {
         CreateTokenEffect constructToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Construct", 0, 0, null, null,
                 List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT), false, false,
-                List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl))),
+                List.of(StaticAbility.of(BoostEffect.self(artifactsYouControl, artifactsYouControl))),
                 List.of(), false, false, false, 0, Set.of());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), constructToken);

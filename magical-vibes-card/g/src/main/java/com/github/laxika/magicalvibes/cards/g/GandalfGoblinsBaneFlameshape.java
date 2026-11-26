@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Flameshape;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -20,7 +20,7 @@ public class GandalfGoblinsBaneFlameshape extends Card {
         addCastingOption(new AdventureCast("{1}{R}"));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new BoostSelfEffect(1, 1),
+                BoostEffect.self(1, 1),
                 new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
     }
 

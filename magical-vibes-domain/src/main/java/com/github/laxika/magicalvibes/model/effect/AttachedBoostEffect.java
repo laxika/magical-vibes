@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * The creature identified by {@code subject} (typically the enchanted/equipped creature of an Aura
  * or Equipment) gets +X/+Y as a continuous static bonus, where the amounts are {@link DynamicAmount}s.
  *
- * <p>This is the attached-subject sibling of {@link BoostSelfEffect}: "equipped creature gets +1/+1
+ * <p>This is the attached-subject sibling of {@link BoostEffect#of}: "equipped creature gets +1/+1
  * for each Swamp you control", "+X/+X where X is the number of creature cards in all graveyards",
  * and "+X/+0 for each instant/sorcery in your graveyard" are all the same effect with different
  * amount parameters, collapsing the former {@code BoostCreaturePer*} family.

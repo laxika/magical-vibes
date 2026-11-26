@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -37,6 +37,6 @@ public class WildwoodMentor extends Card {
                 )),
                 "Target must be another attacking creature"
         )).addTrigger(Triggers.attacks(),
-                new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()));
+                BoostEffect.target(new SourcePower(), new SourcePower()));
     }
 }

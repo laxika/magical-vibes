@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -35,7 +35,7 @@ public class KangDynasty extends Card {
 
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addTrigger(Triggers.chapter(3),
-                new BoostTargetCreatureEffect(cardsInHand, cardsInHand),
+                BoostEffect.target(cardsInHand, cardsInHand),
                 new MakeCreatureUnblockableEffect());
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));

@@ -316,6 +316,58 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @DisplayName("Hard AI keeps Crown of Vigor in the precombat main phase")
+    void keepsCrownOfVigorDuringMain() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent crown = new Permanent(new com.github.laxika.magicalvibes.cards.c.CrownOfVigor());
+        crown.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(crown);
+        harness.setHand(player1, List.of());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(crown);
+    }
+
+    @Test
+    @DisplayName("Hard AI keeps Crown of Vigor while its enchanted creature attacks")
+    void keepsCrownOfVigorDuringCombat() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        bears.setAttacking(true);
+        bears.setAttackTarget(player2.getId());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent crown = new Permanent(new com.github.laxika.magicalvibes.cards.c.CrownOfVigor());
+        crown.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(crown);
+        harness.setHand(player1, List.of());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(crown);
+    }
+
+    @Test
     @DisplayName("Hard AI does not activate pump ability during precombat main phase")
     void doesNotActivatePumpDuringMain() {
         HardAiDecisionEngine ai = createHardAi(player1);

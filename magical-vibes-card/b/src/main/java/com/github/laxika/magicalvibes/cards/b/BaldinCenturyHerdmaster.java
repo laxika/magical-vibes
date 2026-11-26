@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,6 +23,6 @@ public class BaldinCenturyHerdmaster extends Card {
                 new AssignCombatDamageWithToughnessEffect(Subjects.otherCreatures())));
 
         target(TargetFilters.creature(), 0, 100).addTrigger(Triggers.attacks(),
-                new BoostTargetCreatureEffect(new Fixed(0), new CardsInHand(CountScope.CONTROLLER)));
+                BoostEffect.target(new Fixed(0), new CardsInHand(CountScope.CONTROLLER)));
     }
 }

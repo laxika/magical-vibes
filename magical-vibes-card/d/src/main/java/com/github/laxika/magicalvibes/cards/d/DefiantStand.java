@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
@@ -15,7 +15,7 @@ public class DefiantStand extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED);
 
         // Target creature gets +1/+3 until end of turn. Untap that creature (same target group).
-        addSpellEffect(new BoostTargetCreatureEffect(1, 3));
+        addSpellEffect(BoostEffect.target(1, 3));
         addSpellEffect(new UntapPermanentsEffect(Subjects.target()));
     }
 }

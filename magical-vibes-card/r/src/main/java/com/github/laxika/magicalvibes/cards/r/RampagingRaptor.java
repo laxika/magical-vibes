@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -34,7 +34,7 @@ public class RampagingRaptor extends Card {
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
                         DealDamageEffect.toTargetPermanent(new EventValue()));
         addActivatedAbility(new ActivatedAbility(false, "{2}{R}",
-                List.of(new BoostSelfEffect(2, 0)),
+                List.of(BoostEffect.self(2, 0)),
                 "{2}{R}: This creature gets +2/+0 until end of turn."));
     }
 }

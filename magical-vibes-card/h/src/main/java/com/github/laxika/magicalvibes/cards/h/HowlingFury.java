@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "97")
@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HowlingFury extends Card {
 
     public HowlingFury() {
-        addSpellEffect(new BoostTargetCreatureEffect(4, 0));
+        addSpellEffect(BoostEffect.target(4, 0));
     }
 }

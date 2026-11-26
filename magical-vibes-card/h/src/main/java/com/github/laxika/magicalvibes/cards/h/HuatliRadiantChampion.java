@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -38,7 +38,7 @@ public class HuatliRadiantChampion extends Card {
         // you control.
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl)),
+                List.of(BoostEffect.target(creaturesYouControl, creaturesYouControl)),
                 "−1: Target creature gets +X/+X until end of turn, where X is the number of creatures you control.",
                 TargetFilters.creature()
         ));

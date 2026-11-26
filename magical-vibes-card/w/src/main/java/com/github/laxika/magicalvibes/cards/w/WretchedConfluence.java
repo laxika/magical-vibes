@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -39,7 +39,7 @@ public class WretchedConfluence extends Card {
                         anyPlayer()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target creature gets -2/-2 until end of turn",
-                        () -> new BoostTargetCreatureEffect(-2, -2),
+                        () -> BoostEffect.target(-2, -2),
                         TargetFilters.creature()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Return target creature card from your graveyard to your hand",

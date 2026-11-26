@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -37,7 +37,7 @@ public class FriendlyNeighborhood extends Card {
                                 true,
                                 "{1}",
                                 List.of(
-                                        new BoostTargetCreatureEffect(
+                                        BoostEffect.target(
                                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)
                                         )

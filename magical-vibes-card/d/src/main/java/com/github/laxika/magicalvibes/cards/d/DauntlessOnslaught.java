@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "6")
@@ -13,6 +13,6 @@ public class DauntlessOnslaught extends Card {
     public DauntlessOnslaught() {
         // Up to two target creatures each get +2/+2 until end of turn.
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+                .addSpellEffect(BoostEffect.target(2, 2));
     }
 }

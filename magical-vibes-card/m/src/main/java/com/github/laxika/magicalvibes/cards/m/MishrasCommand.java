@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -45,7 +45,7 @@ public class MishrasCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +X/+0 and gains haste until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(new XValue(), new Fixed(0)),
+                                BoostEffect.target(new XValue(), new Fixed(0)),
                                 new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                         TargetFilters.creature())
         ), 2));

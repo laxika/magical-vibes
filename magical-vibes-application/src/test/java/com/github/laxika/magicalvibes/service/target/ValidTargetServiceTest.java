@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -1161,7 +1161,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.WHITE);
             ActivatedAbility ability = new ActivatedAbility(true, "{W}",
-                    List.of(new BoostTargetCreatureEffect(1, 1)), "Target creature gets +1/+1 until end of turn");
+                    List.of(BoostEffect.target(1, 1)), "Target creature gets +1/+1 until end of turn");
 
             Permanent creature = addPermanentToBattlefield(player1Id, createCreatureCard());
 
@@ -1179,7 +1179,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.WHITE);
             ActivatedAbility ability = new ActivatedAbility(true, "{W}",
-                    List.of(new BoostTargetCreatureEffect(1, 1)), "Target creature gets +1/+1 until end of turn");
+                    List.of(BoostEffect.target(1, 1)), "Target creature gets +1/+1 until end of turn");
 
             Permanent creature = addPermanentToBattlefield(player1Id, createCreatureCard());
 

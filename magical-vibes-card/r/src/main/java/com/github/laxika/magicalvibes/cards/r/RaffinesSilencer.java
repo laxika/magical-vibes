@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,7 +17,7 @@ public class RaffinesSilencer extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect());
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), BoostEffect.target(
                         new Scaled(new SourcePower(), -1),
                         new Scaled(new SourcePower(), -1)));
     }

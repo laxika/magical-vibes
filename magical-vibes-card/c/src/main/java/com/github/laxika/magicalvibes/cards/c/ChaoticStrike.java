@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +17,7 @@ public class ChaoticStrike extends Card {
 
         // Flip a coin. If you win the flip, target creature gets +1/+1 until end of turn.
         target(TargetFilters.creature())
-                .addSpellEffect(new FlipCoinWinEffect(new BoostTargetCreatureEffect(1, 1)));
+                .addSpellEffect(new FlipCoinWinEffect(BoostEffect.target(1, 1)));
 
         // Draw a card.
         addSpellEffect(new DrawCardEffect());

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -25,7 +25,7 @@ public class FurybladeVampire extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new DiscardEffect(1, Subjects.you()),
-                        new ConditionalEffect(new HappenedThisWay(StepKind.DISCARD), new BoostSelfEffect(3, 0))),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.DISCARD), BoostEffect.self(3, 0))),
                 "Discard a card to give this creature +3/+0 until end of turn?"
         ));
     }

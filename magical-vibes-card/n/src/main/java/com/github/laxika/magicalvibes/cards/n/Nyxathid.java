@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "49")
@@ -16,6 +16,6 @@ public class Nyxathid extends Card {
         // This creature gets -1/-1 for each card in the chosen player's hand.
         addStaticEffect(new ChooseOpponentOnEnterEffect());
         Scaled minusOnePerCard = new Scaled(new CardsInHand(CountScope.CHOSEN_PLAYER), -1);
-        addStaticEffect(new BoostSelfEffect(minusOnePerCard, minusOnePerCard));
+        addStaticEffect(BoostEffect.self(minusOnePerCard, minusOnePerCard));
     }
 }

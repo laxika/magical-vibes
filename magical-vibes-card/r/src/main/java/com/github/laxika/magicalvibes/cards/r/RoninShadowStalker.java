@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -46,7 +46,7 @@ public class RoninShadowStalker extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                                 new PermanentAttachedToSourcePermanentPredicate()
                         )), "Sacrifice an Equipment attached to Ronin", false),
-                        new BoostTargetCreatureEffect(-4, -4)
+                        BoostEffect.target(-4, -4)
                 ),
                 "{T}, Sacrifice an Equipment attached to Ronin: Target creature gets -4/-4 until end of turn. Activate only as a sorcery.",
                 TargetFilters.creature(),

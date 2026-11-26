@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -29,7 +29,7 @@ public class BattleMenu extends Card {
                                 List.of(CardSubtype.KNIGHT), Set.of(), Set.of())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Ability — Target creature gets +0/+4 until end of turn",
-                        new BoostTargetCreatureEffect(0, 4),
+                        BoostEffect.target(0, 4),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Magic — Destroy target creature with power 4 or greater",

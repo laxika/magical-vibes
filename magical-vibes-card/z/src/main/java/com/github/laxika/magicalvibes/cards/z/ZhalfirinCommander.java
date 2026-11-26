@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class ZhalfirinCommander extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}{W}",
-                List.of(new BoostTargetCreatureEffect(1, 1, KNIGHT_CREATURE)),
+                List.of(BoostEffect.target(1, 1, KNIGHT_CREATURE)),
                 "{1}{W}{W}: Target Knight creature gets +1/+1 until end of turn.",
                 new PermanentPredicateTargetFilter(KNIGHT_CREATURE, "Target must be a Knight creature")
         ));

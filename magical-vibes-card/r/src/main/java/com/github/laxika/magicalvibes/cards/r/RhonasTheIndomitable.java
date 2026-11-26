@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -40,7 +40,7 @@ public class RhonasTheIndomitable extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}{G}",
                 List.of(
-                        new BoostTargetCreatureEffect(2, 0),
+                        BoostEffect.target(2, 0),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "{2}{G}: Another target creature gets +2/+0 and gains trample until end of turn.",

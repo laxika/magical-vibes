@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -18,7 +18,7 @@ import java.util.UUID;
 public class BoostTargetCreaturesByPositionEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final BoostTargetCreatureEffectHandler boostTargetCreatureEffectHandler;
+    private final BoostEffectHandler boostEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,12 +30,12 @@ public class BoostTargetCreaturesByPositionEffectHandler implements NormalEffect
         var positionalBoost = (BoostTargetCreaturesByPositionEffect) effect;
         boolean singleTarget = entry.getDeclaredTargetIds().isEmpty() && entry.getTargetId() != null;
         List<UUID> targetIds = singleTarget ? List.of(entry.getTargetId()) : entry.getDeclaredTargetIds();
-        List<BoostTargetCreatureEffect> boosts = positionalBoost.boosts();
+        List<BoostEffect> boosts = positionalBoost.boosts();
 
         for (int position = 0; position < targetIds.size() && position < boosts.size(); position++) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetIds.get(position));
             if (target != null && (singleTarget || entry.isTargetLegal(position))) {
-                boostTargetCreatureEffectHandler.resolveForTarget(gameData, entry, target, boosts.get(position));
+                boostEffectHandler.resolveForTarget(gameData, entry, target, boosts.get(position));
             }
         }
     }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -21,11 +21,11 @@ public class IgnobleHierarch extends Card {
     public IgnobleHierarch() {
         // Exalted: whenever a creature you control attacks alone, that creature gets +1/+1 until end
         // of turn. Triggers.creatureYouControlAttacks() fires per attacking ally and records the attacker as the
-        // trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that creature";
+        // trigger's (non-targeting) target, so BoostEffect.target boosts "that creature";
         // AttacksAlone restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new BoostTargetCreatureEffect(1, 1));
+                BoostEffect.target(1, 1));
 
         // {T}: Add {B}, {R}, or {G}.
         addActivatedAbility(new ActivatedAbility(

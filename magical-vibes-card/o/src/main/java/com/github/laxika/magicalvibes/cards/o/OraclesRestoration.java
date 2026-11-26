@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -12,7 +12,7 @@ public class OraclesRestoration extends Card {
 
     public OraclesRestoration() {
         // Target creature you control gets +1/+1 until end of turn. You draw a card and gain 1 life.
-        target(TargetFilters.creatureYouControl()).addSpellEffect(new BoostTargetCreatureEffect(1, 1))
+        target(TargetFilters.creatureYouControl()).addSpellEffect(BoostEffect.target(1, 1))
           .addSpellEffect(new DrawCardEffect())
           .addSpellEffect(new GainLifeEffect(1));
     }

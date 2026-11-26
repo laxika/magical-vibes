@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SetChosenColorUntilEndOfTurnEffect;
 
@@ -22,7 +22,7 @@ public class WildMongrel extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new BoostSelfEffect(1, 1),
+                        BoostEffect.self(1, 1),
                         new SetChosenColorUntilEndOfTurnEffect(false, false)
                 ),
                 "Discard a card: This creature gets +1/+1 and becomes the color of your choice until end of turn."

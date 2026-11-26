@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "71")
@@ -20,6 +20,6 @@ public class Flunk extends Card {
         // in that creature's controller's hand.
         CardsInHand targetControllerHand = new CardsInHand(CountScope.TARGET_PLAYER);
         DynamicAmount amount = new Max(new Fixed(0), new Sum(new Fixed(7), new Scaled(targetControllerHand, -1)));
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(new Scaled(amount, -1), new Scaled(amount, -1)));
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(new Scaled(amount, -1), new Scaled(amount, -1)));
     }
 }

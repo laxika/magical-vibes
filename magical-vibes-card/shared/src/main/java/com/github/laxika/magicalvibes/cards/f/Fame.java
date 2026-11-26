@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class Fame extends Card {
     public Fame() {
         // Target creature gets +2/+0 and gains haste until end of turn.
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
+                .addSpellEffect(BoostEffect.target(2, 0))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{1}{R}"));

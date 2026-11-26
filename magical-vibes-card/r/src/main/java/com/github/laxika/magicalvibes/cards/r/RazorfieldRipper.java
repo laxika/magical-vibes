@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -35,7 +35,7 @@ public class RazorfieldRipper extends Card {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.source(),
                 Duration.WHILE_ATTACHED));
         addTrigger(Triggers.attacks(), new EnergyCountersEffect(1),
-                new BoostSelfEffect(Subjects.triggeringOrSource(), new ControllerEnergyCounters(), new ControllerEnergyCounters()));
+                BoostEffect.of(Subjects.triggeringOrSource(), new ControllerEnergyCounters(), new ControllerEnergyCounters()));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

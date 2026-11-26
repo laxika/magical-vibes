@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +20,7 @@ public class FlowstoneBlade extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new BoostSelfEffect(Subjects.attached(), new Fixed(1), new Fixed(-1))),
+                List.of(BoostEffect.of(Subjects.attached(), new Fixed(1), new Fixed(-1))),
                 "{R}: Enchanted creature gets +1/-1 until end of turn."
         ));
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerToughnessPredicate;
@@ -31,6 +31,6 @@ public class DuskanaTheRageMother extends Card {
         // Whenever a creature you control with base power and toughness 2/2 attacks, it gets
         // +3/+3 until end of turn.
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(twoTwoCreature),
-                new BoostTargetCreatureEffect(3, 3));
+                BoostEffect.target(3, 3));
     }
 }

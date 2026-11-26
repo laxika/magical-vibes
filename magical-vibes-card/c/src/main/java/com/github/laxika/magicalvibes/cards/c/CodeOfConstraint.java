@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -19,7 +19,7 @@ public class CodeOfConstraint extends Card {
 
     public CodeOfConstraint() {
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(-4, 0))
+                .addSpellEffect(BoostEffect.target(-4, 0))
                 .addSpellEffect(new DrawCardEffect(1))
                 .addSpellEffect(new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
                         new TapPermanentsEffect(Subjects.target())))

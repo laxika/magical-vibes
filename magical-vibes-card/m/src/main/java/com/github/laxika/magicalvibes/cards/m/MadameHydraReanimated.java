@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -18,7 +18,7 @@ public class MadameHydraReanimated extends Card {
     public MadameHydraReanimated() {
         CardsInGraveyard creatureCards =
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(creatureCards, creatureCards));
+        addStaticEffect(BoostEffect.self(creatureCards, creatureCards));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, Subjects.you()));
         addTrigger(Triggers.attacks(), new MillEffect(2, Subjects.you()));
     }

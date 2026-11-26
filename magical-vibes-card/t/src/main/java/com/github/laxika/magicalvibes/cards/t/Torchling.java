@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -63,13 +63,13 @@ public class Torchling extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new BoostSelfEffect(1, -1)),
+                List.of(BoostEffect.self(1, -1)),
                 "{1}: Torchling gets +1/-1 until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new BoostSelfEffect(-1, 1)),
+                List.of(BoostEffect.self(-1, 1)),
                 "{1}: Torchling gets -1/+1 until end of turn."
         ));
     }

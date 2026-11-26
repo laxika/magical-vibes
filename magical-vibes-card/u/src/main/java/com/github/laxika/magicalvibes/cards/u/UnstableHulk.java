@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
@@ -18,7 +18,7 @@ public class UnstableHulk extends Card {
     public UnstableHulk() {
         addMorph("{3}{R}{R}");
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), SequenceEffect.of(
-                new BoostSelfEffect(6, 6),
+                BoostEffect.self(6, 6),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()),
                 new SkipNextEffect(SkipKind.TURN)));
     }

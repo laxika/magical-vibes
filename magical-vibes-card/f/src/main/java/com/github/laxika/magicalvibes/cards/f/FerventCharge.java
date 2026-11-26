@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "APC", collectorNumber = "98")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FerventCharge extends Card {
 
     public FerventCharge() {
-        addTrigger(Triggers.creatureYouControlAttacks(), new BoostTargetCreatureEffect(2, 2));
+        addTrigger(Triggers.creatureYouControlAttacks(), BoostEffect.target(2, 2));
     }
 }

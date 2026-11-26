@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import java.util.List;
 public class AnointedChorister extends Card {
 
     public AnointedChorister() {
-        addActivatedAbility(new ActivatedAbility(false, "{4}{W}", List.of(new BoostSelfEffect(3, 3)),
+        addActivatedAbility(new ActivatedAbility(false, "{4}{W}", List.of(BoostEffect.self(3, 3)),
                 "{4}{W}: This creature gets +3/+3 until end of turn."));
     }
 }

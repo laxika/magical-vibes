@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -41,7 +41,7 @@ public class SilverquillCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +3/+3 and gains flying until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(3, 3),
+                                BoostEffect.target(3, 3),
                                 new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(

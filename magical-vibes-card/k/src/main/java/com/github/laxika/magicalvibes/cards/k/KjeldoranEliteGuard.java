@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,7 @@ public class KjeldoranEliteGuard extends Card {
                 true,
                 null,
                 List.of(
-                        new BoostTargetCreatureEffect(2, 2),
+                        BoostEffect.target(2, 2),
                         RegisterDelayedEventTriggerEffect.whenLeavesThisTurn(Subjects.target(),
                                 new SacrificeSelfEffect())
                 ),

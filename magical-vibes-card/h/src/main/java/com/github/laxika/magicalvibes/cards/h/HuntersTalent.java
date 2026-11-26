@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -59,7 +59,7 @@ public class HuntersTalent extends Card {
                 .addTrigger(Triggers.youAttack(),
                         TriggerOptions.DEFAULT.withEventCondition(
                                 new SourceClassLevelAtLeast(2)),
-                                new BoostTargetCreatureEffect(1, 0),
+                                BoostEffect.target(1, 0),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

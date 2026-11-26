@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
@@ -21,7 +21,7 @@ public class HeirToDragonfire extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new BoostSelfEffect(1, 0)),
+                List.of(BoostEffect.self(1, 0)),
                 "{R}: Heir to Dragonfire gets +1/+0 until end of turn."
         ));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(

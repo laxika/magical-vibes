@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class RevelsongHorn extends Card {
                 "{1}",
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate()),
-                        new BoostTargetCreatureEffect(1, 1)),
+                        BoostEffect.target(1, 1)),
                 "{1}, {T}, Tap an untapped creature you control: Target creature gets +1/+1 until end of turn.",
                 TargetFilters.creature()
         ));

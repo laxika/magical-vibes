@@ -15,7 +15,7 @@ public record BushidoEffect(DynamicAmount amount) implements CardEffect {
         this(new Fixed(amount));
     }
 
-    public BoostSelfEffect asBoost() {
-        return new BoostSelfEffect(amount, amount);
+    public BoostEffect asBoost() {
+        return BoostEffect.self(amount, amount);
     }
 }

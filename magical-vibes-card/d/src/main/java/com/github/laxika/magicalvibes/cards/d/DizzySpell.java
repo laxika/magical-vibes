@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class DizzySpell extends Card {
 
     public DizzySpell() {
-        addSpellEffect(new BoostTargetCreatureEffect(-3, 0));
+        addSpellEffect(BoostEffect.target(-3, 0));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

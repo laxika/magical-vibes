@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -16,7 +16,7 @@ public class ChillingTrap extends Card {
     public ChillingTrap() {
         // Target creature gets -4/-0 until end of turn. If you control a Wizard, draw a card.
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(-4, 0))
+                .addSpellEffect(BoostEffect.target(-4, 0))
                 .addSpellEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
                         new DrawCardEffect(1)));

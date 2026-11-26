@@ -1667,7 +1667,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 
 | Target | Absorbs | Cards |
 |---|---|---|
-| `BoostSelfEffect(subject, DynamicAmount, DynamicAmount, Set<Keyword>)` | `BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect`: **Done** (effect-cleanup run 5i) | 11 + 3 |
+| `BoostEffect.of(subject, DynamicAmount, DynamicAmount, Set<Keyword>)` | `BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect`: **Done** (effect-cleanup run 5i) | 11 + 3 |
 | `AwardManaOfColorsAmongControlledEffect(PermanentPredicate, boolean oneOfEach)` | `AwardOneManaOfEachColorAmongControlledEffect` | 1 + 1 |
 | `AddManaWhenLandOfSubtypeTappedForManaEffect(+ ManaRestriction)` | **Done differently**: the subtype is the trigger's filter, the fixed-color form is `AddManaWhenTappedForManaEffect`, the restricted one `AddRestrictedManaWhenLandTappedForManaEffect` | — |
 | `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly)` + the trigger's `withFilter` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` (and `TappedSnowLandDoesntUntapEffect`): **Gone** | 1 + 1 |

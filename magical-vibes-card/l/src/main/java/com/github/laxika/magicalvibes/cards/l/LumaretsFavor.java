@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class LumaretsFavor extends Card {
                 new ConditionalEffect(new GainedLifeThisTurn(), new CopyTriggeringSpellEffect()));
 
         // Target creature gets +2/+4 until end of turn. (Targeting auto-derived.)
-        addSpellEffect(new BoostTargetCreatureEffect(2, 4));
+        addSpellEffect(BoostEffect.target(2, 4));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -22,7 +22,7 @@ public class SlabHammer extends Card {
                 SequenceEffect.of(
                         ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentIsLandPredicate(), "land"),
                         new ConditionalEffect(HappenedThisWay.returned(),
-                                new BoostSelfEffect(Subjects.triggering(), new Fixed(2), new Fixed(2)))),
+                                BoostEffect.of(Subjects.triggering(), new Fixed(2), new Fixed(2)))),
                 "Return a land you control to its owner's hand?"));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

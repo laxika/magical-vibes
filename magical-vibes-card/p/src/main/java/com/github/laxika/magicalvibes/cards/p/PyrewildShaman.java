@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class PyrewildShaman extends Card {
         // Bloodrush — {1}{R}, Discard this card: Target attacking creature gets +3/+1 until end of
         // turn. The discard is the intrinsic cost of a hand activated ability.
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{R}",
-                List.of(new BoostTargetCreatureEffect(3, 1)),
+                List.of(BoostEffect.target(3, 1)),
                 "Bloodrush — {1}{R}, Discard this card: Target attacking creature gets +3/+1 until end of turn.",
                 TargetFilters.attackingCreature()));
 

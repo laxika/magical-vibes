@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
@@ -35,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyard
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1022,7 +1022,7 @@ class StepResultsTest extends BaseCardTest {
 
             StackEntry entry = resolve(player1, giant.getId(), null,
                     DealDamageEffect.toAnyTarget(new Fixed(1)),
-                    new BoostSelfEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE), 5, 0));
+                    BoostEffect.of(Subjects.thisWay(StepKind.DEAL_DAMAGE), 5, 0));
 
             assertThat(entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE).objectIds())
                     .containsExactly(giant.getId());
@@ -1035,7 +1035,7 @@ class StepResultsTest extends BaseCardTest {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
             resolve(player1, player2.getId(), null, DealDamageEffect.toAnyTarget(new Fixed(3)),
-                    new BoostSelfEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE), 5, 0));
+                    BoostEffect.of(Subjects.thisWay(StepKind.DEAL_DAMAGE), 5, 0));
 
             assertThat(gd.getLife(player2.getId())).isEqualTo(17);
             assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);

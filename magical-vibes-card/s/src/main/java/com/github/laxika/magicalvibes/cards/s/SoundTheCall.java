@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
@@ -22,7 +22,7 @@ public class SoundTheCall extends Card {
                 new CardNamedPredicate("Sound the Call"), CountScope.ANY_PLAYER);
         addSpellEffect(new CreateTokenEffect(
                 1, "Wolf", 1, 1, CardColor.GREEN, List.of(CardSubtype.WOLF), Set.of(), Set.of(),
-                List.of(StaticAbility.of(new BoostSelfEffect(sameNameCards, sameNameCards)))
+                List.of(StaticAbility.of(BoostEffect.self(sameNameCards, sameNameCards)))
         ));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -21,7 +21,7 @@ public class PlaneswalkersFavor extends Card {
                 false,
                 "{3}{G}",
                 List.of(RevealCardsFromHandEffect.atRandom(Subjects.targetPlayer(0), 1),
-                        new BoostTargetCreatureEffect(AmountThisWay.revealedManaValue(), AmountThisWay.revealedManaValue(), 1)),
+                        BoostEffect.targetInGroup(AmountThisWay.revealedManaValue(), AmountThisWay.revealedManaValue(), 1)),
                 "{3}{G}: Target opponent reveals a card at random from their hand. Target creature gets +X/+X until end of turn, where X is the revealed card's mana value.",
                 null,
                 null,

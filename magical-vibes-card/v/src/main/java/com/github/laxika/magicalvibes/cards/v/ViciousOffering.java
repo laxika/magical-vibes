@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -20,8 +20,8 @@ public class ViciousOffering extends Card {
         // Target creature gets -2/-2 until end of turn.
         // If this spell was kicked, that creature gets -5/-5 until end of turn instead.
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
-                new BoostTargetCreatureEffect(-2, -2),
-                new BoostTargetCreatureEffect(-5, -5)
+                BoostEffect.target(-2, -2),
+                BoostEffect.target(-5, -5)
         ));
     }
 }

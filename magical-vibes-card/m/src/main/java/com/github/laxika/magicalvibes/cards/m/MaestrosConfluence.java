@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesTargetPlayerControlsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -46,7 +46,7 @@ public class MaestrosConfluence extends Card {
                                 monocoloredInstantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target creature gets -3/-3 until end of turn",
-                        () -> new BoostTargetCreatureEffect(-3, -3),
+                        () -> BoostEffect.target(-3, -3),
                         TargetFilters.creature()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Goad each creature target player controls",

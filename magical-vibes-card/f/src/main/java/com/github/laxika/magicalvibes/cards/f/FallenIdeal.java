@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -31,7 +31,7 @@ public class FallenIdeal extends Card {
                         new ActivatedAbility(
                                 false,
                                 null,
-                                List.of(new SacrificeCreatureCost(), new BoostSelfEffect(2, 1)),
+                                List.of(new SacrificeCreatureCost(), BoostEffect.self(2, 1)),
                                 "Sacrifice a creature: This creature gets +2/+1 until end of turn."
                         ),
                         Subjects.attachedCreature()

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -22,7 +22,7 @@ public class KrovikanElementalist extends Card {
         // {2}{R}: Target creature gets +1/+0 until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}{R}",
-                List.of(new BoostTargetCreatureEffect(1, 0)),
+                List.of(BoostEffect.target(1, 0)),
                 "{2}{R}: Target creature gets +1/+0 until end of turn.",
                 TargetFilters.creature()
         ));

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -53,7 +53,7 @@ public class UrzasSaga extends Card {
                                 List.of(CardSubtype.CONSTRUCT),
                                 Set.of(),
                                 Set.of(CardType.ARTIFACT),
-                                List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl)))
+                                List.of(StaticAbility.of(BoostEffect.self(artifactsYouControl, artifactsYouControl)))
                         )),
                         "{2}, {T}: Create a 0/0 colorless Construct artifact creature token with "
                                 + "\"This token gets +1/+1 for each artifact you control.\""

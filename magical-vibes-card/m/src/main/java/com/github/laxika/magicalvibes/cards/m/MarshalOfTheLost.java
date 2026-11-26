@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class MarshalOfTheLost extends Card {
         // Whenever you attack, target creature gets +X/+X until end of turn, where X is the number
         // of attacking creatures. The count is evaluated as the ability resolves.
         target(TargetFilters.creature()).addTrigger(Triggers.youAttack(),
-                new BoostTargetCreatureEffect(
+                BoostEffect.target(
                         new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER),
                         new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER)));
     }

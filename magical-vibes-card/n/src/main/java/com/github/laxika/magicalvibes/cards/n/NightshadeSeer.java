@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
@@ -21,7 +21,7 @@ public class NightshadeSeer extends Card {
                 List.of(
                         new RevealAnyNumberOfCardsFromHandEffect(
                                 new CardColorPredicate(CardColor.BLACK)),
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                                 new Scaled(new EventValue(), -1),
                                 new Scaled(new EventValue(), -1))),
                 "{2}{B}, {T}: Reveal any number of black cards in your hand. Target creature gets -X/-X until end of turn, where X is the number of cards revealed this way."));

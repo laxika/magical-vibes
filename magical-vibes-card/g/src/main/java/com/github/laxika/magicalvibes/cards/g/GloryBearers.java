@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,6 +14,6 @@ public class GloryBearers extends Card {
         // Whenever another creature you control attacks, it gets +0/+1 until end of turn.
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),
-                new BoostTargetCreatureEffect(0, 1));
+                BoostEffect.target(0, 1));
     }
 }

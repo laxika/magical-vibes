@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -32,8 +32,8 @@ class CrackdownConstructTest extends BaseCardTest {
     @DisplayName("Activating artifact and creature abilities gives +1/+1 for each activation")
     void artifactAndCreatureAbilitiesBoostConstruct() {
         Permanent construct = addCreatureReady(player1, new CrackdownConstruct());
-        addPermanentWithAbility(player1, CardType.ARTIFACT, new BoostSelfEffect(1, 0));
-        addPermanentWithAbility(player1, CardType.CREATURE, new BoostSelfEffect(1, 0));
+        addPermanentWithAbility(player1, CardType.ARTIFACT, BoostEffect.self(1, 0));
+        addPermanentWithAbility(player1, CardType.CREATURE, BoostEffect.self(1, 0));
 
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
@@ -61,7 +61,7 @@ class CrackdownConstructTest extends BaseCardTest {
     @DisplayName("Activating an enchantment ability does not boost Construct")
     void nonArtifactNonCreatureAbilityDoesNotBoostConstruct() {
         Permanent construct = addCreatureReady(player1, new CrackdownConstruct());
-        addPermanentWithAbility(player1, CardType.ENCHANTMENT, new BoostSelfEffect(1, 0));
+        addPermanentWithAbility(player1, CardType.ENCHANTMENT, BoostEffect.self(1, 0));
 
         harness.activateAbility(player1, 1, null, null);
 

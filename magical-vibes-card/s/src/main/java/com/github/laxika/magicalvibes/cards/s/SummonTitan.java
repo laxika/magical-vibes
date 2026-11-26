@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -47,7 +47,7 @@ public class SummonTitan extends Card {
         ));
         PermanentCount yourLands = new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.chapter(3),
-                new BoostTargetCreatureEffect(yourLands, yourLands, anotherCreatureYouControl),
+                BoostEffect.target(yourLands, yourLands, anotherCreatureYouControl),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
         setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(anotherCreatureYouControl,

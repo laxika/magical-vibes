@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -21,11 +21,11 @@ public class FinestHour extends Card {
 
     public FinestHour() {
         // Exalted (CR 702.83a): Triggers.creatureYouControlAttacks() fires per attacking ally and records the attacker
-        // as the trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that creature"; "attacks
+        // as the trigger's (non-targeting) target, so BoostEffect.target boosts "that creature"; "attacks
         // alone" is part of the trigger event, so it is the event condition.
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new BoostTargetCreatureEffect(1, 1));
+                BoostEffect.target(1, 1));
         // Second ability: whenever a creature you control attacks alone, if it's the first combat phase of the turn,
         // untap that creature and, after this phase, add an additional combat phase. "If it's the first combat
         // phase" is an intervening "if" (CR 603.4), checked as the ability triggers and again as it resolves, so the

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class WantedGriffin extends Card {
                 List.of(new ActivatedAbility(
                         true,
                         null,
-                        List.of(new BoostTargetCreatureEffect(1, 0)),
+                        List.of(BoostEffect.target(1, 0)),
                         "{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.",
                         TargetFilters.creatureYouControl(),
                         null,

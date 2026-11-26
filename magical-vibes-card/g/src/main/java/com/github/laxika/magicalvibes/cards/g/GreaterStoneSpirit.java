@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
@@ -27,12 +26,12 @@ public class GreaterStoneSpirit extends Card {
                 false,
                 "{2}{R}",
                 List.of(
-                        new BoostTargetCreatureEffect(0, 2),
+                        BoostEffect.target(0, 2),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         false,
                                         "{R}",
-                                        List.of(new BoostSelfEffect(1, 0)),
+                                        List.of(BoostEffect.self(1, 0)),
                                         "{R}: This creature gets +1/+0 until end of turn."
                                 ),
                                 Subjects.target(),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class ShidakoBroodmistress extends Card {
                 "{G}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new BoostTargetCreatureEffect(3, 3)
+                        BoostEffect.target(3, 3)
                 ),
                 "{G}, Sacrifice a creature: Target creature gets +3/+3 until end of turn."
         ));

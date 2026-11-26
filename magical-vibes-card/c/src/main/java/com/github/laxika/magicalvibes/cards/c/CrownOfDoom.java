@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -17,7 +17,7 @@ public class CrownOfDoom extends Card {
 
     public CrownOfDoom() {
         // Whenever a creature attacks you or a planeswalker you control, it gets +2/+0 until end of turn.
-        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(), new BoostTargetCreatureEffect(2, 0));
+        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(), BoostEffect.target(2, 0));
 
         // {2}: Target player other than this artifact's owner gains control of it. Activate only during your turn.
         addActivatedAbility(new ActivatedAbility(

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public class KithkinDaggerdare extends Card {
 
     public KithkinDaggerdare() {
         addActivatedAbility(new ActivatedAbility(true, "{G}",
-                List.of(new BoostTargetCreatureEffect(2, 2)),
+                List.of(BoostEffect.target(2, 2)),
                 "{G}, {T}: Target attacking creature gets +2/+2 until end of turn.",
                 TargetFilters.attackingCreature()));
     }

@@ -186,7 +186,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                 case 4 -> List.of(
                         new LoseLifeEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1));
-                case 5 -> List.of(new com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect(-4, 0,
+                case 5 -> List.of(com.github.laxika.magicalvibes.model.effect.BoostEffect.target(-4, 0,
                         com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_YOUR_NEXT_TURN));
                 case 6 -> List.of(new DrawCardEffect(1), new CompleteDungeonEffect(progress.dungeon()));
                 default -> throw new IllegalStateException("Room index is outside Lost Mine of Phandelver");

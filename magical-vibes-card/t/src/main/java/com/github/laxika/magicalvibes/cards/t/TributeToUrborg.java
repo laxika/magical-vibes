@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -29,9 +29,9 @@ public class TributeToUrborg extends Card {
                 CountScope.CONTROLLER);
 
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(-2, -2))
+                .addSpellEffect(BoostEffect.target(-2, -2))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                                 new Scaled(instantOrSorceryCount, -1),
                                 new Scaled(instantOrSorceryCount, -1))));
     }

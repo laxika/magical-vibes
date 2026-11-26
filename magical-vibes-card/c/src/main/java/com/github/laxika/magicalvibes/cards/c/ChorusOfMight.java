@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -17,7 +17,7 @@ public class ChorusOfMight extends Card {
     public ChorusOfMight() {
         // Until end of turn, target creature gets +1/+1 for each creature you control and gains trample.
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(
+                .addSpellEffect(BoostEffect.target(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)
                 ))

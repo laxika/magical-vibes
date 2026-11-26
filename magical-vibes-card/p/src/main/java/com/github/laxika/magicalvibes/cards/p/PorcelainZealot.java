@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class PorcelainZealot extends Card {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConditionalReplacementEffect(
                         new TargetPermanentMatches(new PermanentHasKeywordPredicate(Keyword.TOXIC)),
-                        new BoostTargetCreatureEffect(1, 1),
-                        new BoostTargetCreatureEffect(2, 2)));
+                        BoostEffect.target(1, 1),
+                        BoostEffect.target(2, 2)));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -18,6 +18,6 @@ public class Painsmith extends Card {
 
     public Painsmith() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
-                new MayEffect(SequenceEffect.of(new BoostTargetCreatureEffect(2, 0), new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())), "Have target creature get +2/+0 and gain deathtouch until end of turn?"));
+                new MayEffect(SequenceEffect.of(BoostEffect.target(2, 0), new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())), "Have target creature get +2/+0 and gain deathtouch until end of turn?"));
     }
 }

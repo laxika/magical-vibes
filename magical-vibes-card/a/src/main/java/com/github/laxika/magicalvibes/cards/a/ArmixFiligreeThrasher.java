@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -36,7 +36,7 @@ public class ArmixFiligreeThrasher extends Card {
         addTrigger(Triggers.attacks(), new MayEffect(
                 new DiscardCardThenEffect(
                         null,
-                        new BoostTargetCreatureEffect(minusX, minusX, defendingPlayerCreature),
+                        BoostEffect.target(minusX, minusX, defendingPlayerCreature),
                         "a card"),
                 "Discard a card?"));
     }

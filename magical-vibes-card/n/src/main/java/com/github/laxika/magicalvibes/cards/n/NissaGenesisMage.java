@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -45,7 +45,7 @@ public class NissaGenesisMage extends Card {
         // −3: Target creature gets +5/+5 until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new BoostTargetCreatureEffect(5, 5)),
+                List.of(BoostEffect.target(5, 5)),
                 "−3: Target creature gets +5/+5 until end of turn.",
                 TargetFilters.creature()
         ));

@@ -691,7 +691,7 @@ Reasoning behind the non-obvious mappings:
   `GainControlOfEnchantedTargetEffect`, `GainControlOfTargetAuraEffect`,
   `GainControlOfAuraAttachedPermanentEffect`,
   `TargetPlayerGainsControlOfSourceCreatureEffect`) → L2; `ChangeColorTextEffect` (Mind Bend)
-  → L3; `LoseAllCreatureTypesEffect` → L4; `BoostTargetCreatureEffect` (Giant Growth) → 7c;
+  → L3; `LoseAllCreatureTypesEffect` → L4; `BoostEffect.target` (Giant Growth) → 7c;
   `SwitchPowerToughnessEffect` → 7d.
 - **Global text changes** (`AllColorWordsBecomeChosenColorEffect`, Swirl the Mists) are the one
   layer-3 effect with NO classifier entry and NO handler. They stamp nothing onto objects;

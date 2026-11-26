@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -34,7 +34,7 @@ public class FirewakeSliver extends Card {
         ActivatedAbility boostAbility = new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new BoostTargetCreatureEffect(2, 2, sliverCreature)),
+                List.of(new SacrificeSelfCost(), BoostEffect.target(2, 2, sliverCreature)),
                 "{1}, Sacrifice this permanent: Target Sliver creature gets +2/+2 until end of turn.",
                 new PermanentPredicateTargetFilter(sliverCreature, "Target must be a Sliver creature")
         );

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -42,6 +42,6 @@ public class RinoaHeartilly extends Card {
                 )),
                 "Target must be another creature you control"
         )).addTrigger(Triggers.attacks(),
-                new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl));
+                BoostEffect.target(creaturesYouControl, creaturesYouControl));
     }
 }

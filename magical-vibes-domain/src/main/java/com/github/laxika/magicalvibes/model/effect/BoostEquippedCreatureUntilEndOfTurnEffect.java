@@ -11,7 +11,7 @@ import java.util.Objects;
  * {@code orControlledCreatureMatching} (each counted once), and the controller chooses one when there are several.
  * The amounts are evaluated with the chosen creature as the amount source. Without an attached creature the source
  * can still boost a matching creature, which is how a token that copied the trigger works. A boost of the attached
- * creature alone is {@link BoostSelfEffect} with {@link Subjects#attached()}.
+ * creature alone is {@link BoostEffect#of} with {@link Subjects#attached()}.
  */
 public record BoostEquippedCreatureUntilEndOfTurnEffect(
         DynamicAmount powerBoost,

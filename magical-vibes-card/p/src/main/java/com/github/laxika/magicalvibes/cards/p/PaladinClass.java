@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
@@ -55,7 +55,7 @@ public class PaladinClass extends Card {
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.youAttack(),
                         TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(2, CounterType.LEVEL)),
-                        new BoostTargetCreatureEffect(otherAttackingCreatures, otherAttackingCreatures),
+                        BoostEffect.target(otherAttackingCreatures, otherAttackingCreatures),
                         new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(

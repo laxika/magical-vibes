@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnedGraveyardCardValue;
@@ -23,7 +23,7 @@ public class FoulRenewal extends Card {
                 .targetGraveyard(true)
                 .build());
         addSpellEffect(new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.TOUGHNESS));
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.targetInGroup(
                 new Scaled(new EventValue(), -1), new Scaled(new EventValue(), -1), 0));
     }
 }

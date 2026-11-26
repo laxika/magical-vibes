@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsOrLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -40,7 +40,7 @@ public class LilianaWakerOfTheDead extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new BoostTargetCreatureEffect(graveyardCardsNegated(), graveyardCardsNegated())),
+                List.of(BoostEffect.target(graveyardCardsNegated(), graveyardCardsNegated())),
                 "-3: Target creature gets -X/-X until end of turn, where X is the number of cards in your graveyard.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(), "Target must be a creature")

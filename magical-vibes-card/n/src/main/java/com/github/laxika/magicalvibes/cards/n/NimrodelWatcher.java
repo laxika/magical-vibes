@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -16,7 +16,7 @@ public class NimrodelWatcher extends Card {
         addTrigger(Triggers.youScry(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 SequenceEffect.of(
-                        new BoostSelfEffect(1, 0),
+                        BoostEffect.self(1, 0),
                         new MakeCreatureUnblockableEffect(true)));
     }
 }

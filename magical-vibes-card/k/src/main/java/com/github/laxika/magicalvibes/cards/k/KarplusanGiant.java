@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -24,7 +24,7 @@ public class KarplusanGiant extends Card {
                         new TapMultiplePermanentsCost(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)))),
-                        new BoostSelfEffect(1, 1)),
+                        BoostEffect.self(1, 1)),
                 "Tap an untapped snow land you control: This creature gets +1/+1 until end of turn."));
     }
 }

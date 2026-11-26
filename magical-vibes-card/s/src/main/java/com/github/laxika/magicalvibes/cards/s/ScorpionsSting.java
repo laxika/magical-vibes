@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "65")
@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ScorpionsSting extends Card {
 
     public ScorpionsSting() {
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(-3, -3));
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(-3, -3));
     }
 }

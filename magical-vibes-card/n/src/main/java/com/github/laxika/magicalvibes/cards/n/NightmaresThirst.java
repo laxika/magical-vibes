@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "111")
@@ -16,6 +16,6 @@ public class NightmaresThirst extends Card {
         // of life you gained this turn. (The 1 life from this spell is included in X.)
         var minusLifeGained = new Scaled(new LifeGainedThisTurn(CountScope.CONTROLLER), -1);
         addSpellEffect(new GainLifeEffect(1));
-        addSpellEffect(new BoostTargetCreatureEffect(minusLifeGained, minusLifeGained));
+        addSpellEffect(BoostEffect.target(minusLifeGained, minusLifeGained));
     }
 }

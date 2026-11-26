@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "80")
@@ -18,6 +18,6 @@ public class VileManifestation extends Card {
         // This creature gets +1/+0 for each card with cycling in your graveyard.
         CardsInGraveyard cyclingCardsInGraveyard =
                 new CardsInGraveyard(new CardHasCyclingPredicate(), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(cyclingCardsInGraveyard, new Fixed(0)));
+        addStaticEffect(BoostEffect.self(cyclingCardsInGraveyard, new Fixed(0)));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -33,7 +33,7 @@ public class GrowthCharm extends Card {
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Giant Growth",
-                        new BoostTargetCreatureEffect(3, 3),
+                        BoostEffect.target(3, 3),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Regrowth",

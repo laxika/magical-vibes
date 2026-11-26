@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -31,7 +30,7 @@ public class DeadlyDancer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}{R}",
-                List.of(new BoostSelfEffect(1, 0), new BoostTargetCreatureEffect(1, 0, anotherCreature)),
+                List.of(BoostEffect.self(1, 0), BoostEffect.target(1, 0, anotherCreature)),
                 "{R}{R}: This creature and another target creature each get +1/+0 until end of turn.",
                 new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature")
         ));

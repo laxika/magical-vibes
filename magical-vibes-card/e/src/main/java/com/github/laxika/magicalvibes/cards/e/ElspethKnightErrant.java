@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -38,7 +38,7 @@ public class ElspethKnightErrant extends Card {
         // +1: Target creature gets +3/+3 and gains flying until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new BoostTargetCreatureEffect(3, 3), new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
+                List.of(BoostEffect.target(3, 3), new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "+1: Target creature gets +3/+3 and gains flying until end of turn.",
                 TargetFilters.creature()
         ));

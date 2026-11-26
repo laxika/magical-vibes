@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class TirelessTribe extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new DiscardCardTypeCost(null, null), new BoostSelfEffect(0, 4)),
+                List.of(new DiscardCardTypeCost(null, null), BoostEffect.self(0, 4)),
                 "Discard a card: Tireless Tribe gets +0/+4 until end of turn."
         ));
     }

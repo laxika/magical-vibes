@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -32,7 +32,7 @@ public class GriffinCanyon extends Card {
                 List.of(
                         new UntapPermanentsEffect(Subjects.target(), griffin),
                         new ConditionalEffect(new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
-                                new BoostTargetPermanentEffect(1, 1, griffin))
+                                BoostEffect.targetPermanent(1, 1, griffin))
                 ),
                 "{T}: Untap target Griffin. If it's a creature, it gets +1/+1 until end of turn.",
                 new PermanentPredicateTargetFilter(griffin, "Target must be a Griffin")

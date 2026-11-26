@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -14,7 +14,7 @@ public class KayasOnslaught extends Card {
 
     public KayasOnslaught() {
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 1))
+                .addSpellEffect(BoostEffect.target(1, 1))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
         addCastingOption(new ForetellCast("{W}"));
     }

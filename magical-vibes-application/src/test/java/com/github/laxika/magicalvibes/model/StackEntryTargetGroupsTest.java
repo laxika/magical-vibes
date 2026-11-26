@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,8 +30,8 @@ class StackEntryTargetGroupsTest {
     @DisplayName("Two single-target groups slice into one target each")
     void twoSingleTargetGroups() {
         Card card = new Card();
-        CardEffect first = new BoostTargetCreatureEffect(1, 1);
-        CardEffect second = new BoostTargetCreatureEffect(-1, -1);
+        CardEffect first = BoostEffect.target(1, 1);
+        CardEffect second = BoostEffect.target(-1, -1);
         card.target(1, 1).addSpellEffect(first);
         card.target(1, 1).addSpellEffect(second);
 
@@ -49,7 +49,7 @@ class StackEntryTargetGroupsTest {
     @DisplayName("An activated ability's targets are positional even when its card declares target groups")
     void activatedAbilityTargetsArePositional() {
         Card card = new Card();
-        card.target(1, 1).addSpellEffect(new BoostTargetCreatureEffect(1, 1));
+        card.target(1, 1).addSpellEffect(BoostEffect.target(1, 1));
 
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
@@ -133,7 +133,7 @@ class StackEntryTargetGroupsTest {
     @DisplayName("A separate graveyard target does not shift battlefield target groups")
     void separateGraveyardTargetDoesNotShiftFlatTargetGroups() {
         Card card = new Card();
-        CardEffect effect = new BoostTargetCreatureEffect(1, 1);
+        CardEffect effect = BoostEffect.target(1, 1);
         card.target(1, 1).addSpellEffect(effect);
 
         UUID graveyardTarget = UUID.randomUUID();
@@ -155,7 +155,7 @@ class StackEntryTargetGroupsTest {
     @DisplayName("A single 'up to N' group receives every chosen target")
     void singleUpToNGroup() {
         Card card = new Card();
-        CardEffect effect = new BoostTargetCreatureEffect(2, 2);
+        CardEffect effect = BoostEffect.target(2, 2);
         card.target(1, 2).addSpellEffect(effect);
 
         UUID a = UUID.randomUUID();
@@ -169,8 +169,8 @@ class StackEntryTargetGroupsTest {
     @DisplayName("Trailing variable-count group takes the remaining targets; empty when omitted")
     void fixedGroupThenVariableGroup() {
         Card card = new Card();
-        CardEffect first = new BoostTargetCreatureEffect(1, 1);
-        CardEffect rest = new BoostTargetCreatureEffect(0, 0);
+        CardEffect first = BoostEffect.target(1, 1);
+        CardEffect rest = BoostEffect.target(0, 0);
         card.target(1, 1).addSpellEffect(first);
         card.target(0, 2).addSpellEffect(rest);
 
@@ -191,7 +191,7 @@ class StackEntryTargetGroupsTest {
     @DisplayName("An effect not bound to any group keeps the whole flat target list")
     void unboundEffectKeepsFlatList() {
         Card card = new Card();
-        CardEffect unbound = new BoostTargetCreatureEffect(1, 1);
+        CardEffect unbound = BoostEffect.target(1, 1);
         card.addSpellEffect(unbound);
 
         UUID a = UUID.randomUUID();
@@ -218,7 +218,7 @@ class StackEntryTargetGroupsTest {
     @DisplayName("Bound effect on a single-target cast resolves against the lone targetId")
     void boundEffectFallsBackToSingleTargetId() {
         Card card = new Card();
-        CardEffect effect = new BoostTargetCreatureEffect(1, 1);
+        CardEffect effect = BoostEffect.target(1, 1);
         card.target(1, 1).addSpellEffect(effect);
 
         UUID a = UUID.randomUUID();
@@ -233,7 +233,7 @@ class StackEntryTargetGroupsTest {
     void auraEnchantTargetHeldSeparately() {
         Card card = new Card();
         card.setSubtypes(List.of(CardSubtype.AURA));
-        CardEffect etbEffect = new BoostTargetCreatureEffect(1, 1);
+        CardEffect etbEffect = BoostEffect.target(1, 1);
         card.target(1, 1); // group 0: the enchant target
         card.target(1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), etbEffect);
 
@@ -252,7 +252,7 @@ class StackEntryTargetGroupsTest {
     void auraWithoutEtbTargets() {
         Card card = new Card();
         card.setSubtypes(List.of(CardSubtype.AURA));
-        CardEffect etbEffect = new BoostTargetCreatureEffect(1, 1);
+        CardEffect etbEffect = BoostEffect.target(1, 1);
         card.target(1, 1); // group 0: the enchant target
         card.target(0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), etbEffect);
 
@@ -268,7 +268,7 @@ class StackEntryTargetGroupsTest {
     @DisplayName("Wrapper effects register their inner effect under the same group")
     void wrapperInnerEffectSharesGroup() {
         Card card = new Card();
-        CardEffect inner = new BoostTargetCreatureEffect(1, 0);
+        CardEffect inner = BoostEffect.target(1, 0);
         CardEffect wrapper = new ConditionalEffect(new Kicked(), inner);
         card.target(1, 1);
         card.target(1, 1).addSpellEffect(wrapper);
@@ -285,13 +285,13 @@ class StackEntryTargetGroupsTest {
     @DisplayName("Flashback aftermath slices against the back half's target groups")
     void flashbackAftermathUsesBackHalfTargetGroups() {
         Card back = new Card();
-        CardEffect backEffect = new BoostTargetCreatureEffect(0, 0);
+        CardEffect backEffect = BoostEffect.target(0, 0);
         back.target(1, 1);
         back.target(1, 1).addSpellEffect(backEffect);
         back.addCastingOption(new FlashbackCast("{1}"));
 
         Card front = new Card();
-        front.target(1, 1).addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+        front.target(1, 1).addSpellEffect(BoostEffect.target(2, 2));
         front.setBackFaceCard(back);
 
         UUID a = UUID.randomUUID();

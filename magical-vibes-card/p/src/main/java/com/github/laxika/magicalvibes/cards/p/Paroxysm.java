@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
@@ -24,7 +24,7 @@ public class Paroxysm extends Card {
                         new RevealTopCardOfLibraryEffect(Subjects.triggeringPlayer()),
                         new ConditionalReplacementEffect(
                                 new TopCardOfLibraryType(CardType.LAND, LibraryOwner.ENCHANTED_PERMANENT_CONTROLLER),
-                                new BoostSelfEffect(Subjects.attachedAtTrigger(), 3, 3),
+                                BoostEffect.of(Subjects.attachedAtTrigger(), 3, 3),
                                 new DestroyTargetPermanentEffect(Subjects.attachedAtTrigger()))));
     }
 }

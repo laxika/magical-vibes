@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -20,7 +20,7 @@ public class ShantottoTacticianMagician extends Card {
     public ShantottoTacticianMagician() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
         addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
-                new BoostSelfEffect(new ManaSpentToCast(), new Fixed(0)),
+                BoostEffect.self(new ManaSpentToCast(), new Fixed(0)),
                 new ConditionalEffect(new SpellManaSpentAtLeast(4), new DrawCardEffect()));
     }
 }

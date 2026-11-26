@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,8 +26,8 @@ public class VaynesTreachery extends Card {
         ));
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
-                new BoostTargetCreatureEffect(-2, -2),
-                new BoostTargetCreatureEffect(-6, -6)
+                BoostEffect.target(-2, -2),
+                BoostEffect.target(-6, -6)
         ));
     }
 }

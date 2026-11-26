@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,7 @@ public class KarganIntimidator extends Card {
                 "Cowards can't block Warriors"));
 
         addActivatedAbility(new ActivatedAbility(
-                false, "{1}", List.of(new BoostSelfEffect(1, 1)),
+                false, "{1}", List.of(BoostEffect.self(1, 1)),
                 "This creature gets +1/+1 until end of turn. Activate only once each turn.", 1));
 
         addActivatedAbility(new ActivatedAbility(

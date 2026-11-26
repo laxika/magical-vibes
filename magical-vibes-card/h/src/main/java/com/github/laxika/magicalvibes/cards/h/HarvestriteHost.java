@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -26,7 +26,7 @@ public class HarvestriteHost extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.RABBIT))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new BoostTargetCreatureEffect(1, 0),
+                        BoostEffect.target(1, 0),
                         new ConditionalEffect(new NthAbilityResolutionThisTurn(2),
                                 new DrawCardEffect(1))));
     }

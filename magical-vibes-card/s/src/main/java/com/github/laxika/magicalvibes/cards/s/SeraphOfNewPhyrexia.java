@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -32,7 +32,7 @@ public class SeraphOfNewPhyrexia extends Card {
                                 )),
                                 Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                new BoostSelfEffect(2, 1))),
+                                BoostEffect.self(2, 1))),
                 "Sacrifice another creature or artifact?"));
     }
 }

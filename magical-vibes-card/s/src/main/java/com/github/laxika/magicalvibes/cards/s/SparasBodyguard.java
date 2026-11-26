@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandToPerpetuallyGrantStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
@@ -40,6 +40,6 @@ public class SparasBodyguard extends Card {
         PermanentCounterSum shieldCounters = new PermanentCounterSum(
                 CounterType.SHIELD, otherCreaturesWithShield, CountScope.CONTROLLER);
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                new BoostSelfEffect(shieldCounters, shieldCounters));
+                BoostEffect.self(shieldCounters, shieldCounters));
     }
 }

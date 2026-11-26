@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -16,7 +16,7 @@ public class RhonassStalwart extends Card {
     public RhonassStalwart() {
         addStaticEffect(new ExertAsItAttacksEffect());
         addTrigger(Triggers.exertedAsItAttacks(), SequenceEffect.of(
-                                new BoostSelfEffect(1, 1),
+                                BoostEffect.self(1, 1),
                                 new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                                 new PermanentPowerAtLeastPredicate(3),
                                 "creatures with power 3 or greater",

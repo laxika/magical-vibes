@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -25,7 +25,7 @@ public class DjinnOfTheFountain extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Djinn of the Fountain gets +1/+1 until end of turn",
-                                new BoostSelfEffect(1, 1)),
+                                BoostEffect.self(1, 1)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Exile Djinn of the Fountain. Return it to the battlefield under its owner's control at the beginning of the next end step",
                                 FlickerEffect.exileSelfReturnAtEndStepUnderOwnerControl(false)),

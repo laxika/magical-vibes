@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -48,7 +48,7 @@ public class LavaclawReaches extends Card {
                                 Set.of(CardColor.BLACK, CardColor.RED)),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(false, "{X}",
-                                        List.of(new BoostSelfEffect(new XValue(), new Fixed(0))),
+                                        List.of(BoostEffect.self(new XValue(), new Fixed(0))),
                                         "{X}: This creature gets +X/+0 until end of turn."),
                                 Subjects.source(), null, Duration.UNTIL_END_OF_TURN)
                 ),

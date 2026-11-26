@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class GranPulseOchu extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{8}",
-                List.of(new BoostSelfEffect(permanentCardsInYourGraveyard, permanentCardsInYourGraveyard)),
+                List.of(BoostEffect.self(permanentCardsInYourGraveyard, permanentCardsInYourGraveyard)),
                 "{8}: Until end of turn, this creature gets +1/+1 for each permanent card in your graveyard."
         ));
     }

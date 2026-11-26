@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -25,7 +25,7 @@ public class HolyArmor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new BoostSelfEffect(Subjects.attached(), new Fixed(0), new Fixed(1))),
+                List.of(BoostEffect.of(Subjects.attached(), new Fixed(0), new Fixed(1))),
                 "{W}: Enchanted creature gets +0/+1 until end of turn."
         ));
     }

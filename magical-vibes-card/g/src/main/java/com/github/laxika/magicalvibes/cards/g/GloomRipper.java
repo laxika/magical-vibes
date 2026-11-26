@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,9 +25,9 @@ public class GloomRipper extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER),
                 new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER));
 
-        var boostTargetCreature = new BoostTargetCreatureEffect(elfCount, new Fixed(0));
+        var boostTargetCreature = BoostEffect.target(elfCount, new Fixed(0));
         target(TargetFilters.creatureYouControl()).bindEffect(boostTargetCreature);
-        var boostTargetCreature2 = new BoostTargetCreatureEffect(new Fixed(0), new Scaled(elfCount, -1));
+        var boostTargetCreature2 = BoostEffect.target(new Fixed(0), new Scaled(elfCount, -1));
         target(TargetFilters.creatureAnOpponentControls(), 0, 1).bindEffect(boostTargetCreature2);
         addTrigger(Triggers.enters(ObjectRelation.THIS), boostTargetCreature, boostTargetCreature2);
     }

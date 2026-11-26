@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +38,7 @@ public class HearthcageGiant extends Card {
                                 "Sacrifice an Elemental",
                                 false
                         ),
-                        new BoostTargetCreatureEffect(3, 1)
+                        BoostEffect.target(3, 1)
                 ),
                 "Sacrifice an Elemental: Target Giant creature gets +3/+1 until end of turn.",
                 new PermanentPredicateTargetFilter(

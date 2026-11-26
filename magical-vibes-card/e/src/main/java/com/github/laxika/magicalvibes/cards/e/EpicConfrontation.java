@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -13,7 +13,7 @@ public class EpicConfrontation extends Card {
 
     public EpicConfrontation() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 2));
+                .addSpellEffect(BoostEffect.target(1, 2));
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new FightTargetsEffect());

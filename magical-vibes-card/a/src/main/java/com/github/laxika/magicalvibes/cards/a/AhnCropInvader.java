@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -25,7 +25,7 @@ public class AhnCropInvader extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new BoostSelfEffect(2, 0)
+                        BoostEffect.self(2, 0)
                 ),
                 "{1}, Sacrifice another creature: This creature gets +2/+0 until end of turn."
         ));

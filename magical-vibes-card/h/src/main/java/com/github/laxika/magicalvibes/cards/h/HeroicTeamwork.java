@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
@@ -15,7 +15,7 @@ public class HeroicTeamwork extends Card {
     public HeroicTeamwork() {
         addCastingCost(new TeamworkCost(3));
         target(TargetFilters.creature(), 1, 2)
-                .addSpellEffect(new BoostTargetCreatureEffect(2, 1));
+                .addSpellEffect(BoostEffect.target(2, 1));
         addSpellEffect(new ConditionalEffect(
                 new TeamworkCostPaid(), new DrawCardEffect(1)));
     }

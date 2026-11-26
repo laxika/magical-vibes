@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -35,7 +35,7 @@ public class JunkJet extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentIsArtifactPredicate(), "Sacrifice another artifact"),
-                        new BoostSelfEffect(Subjects.attached(), new SourcePower(true), new Fixed(0))
+                        BoostEffect.of(Subjects.attached(), new SourcePower(true), new Fixed(0))
                 ),
                 "{3}, Sacrifice another artifact: Double equipped creature's power until end of turn."
         ));

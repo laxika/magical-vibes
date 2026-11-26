@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -26,7 +26,7 @@ public class SpikedRipsaw extends Card {
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.FOREST), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                new BoostSelfEffect(Subjects.triggering(), 0, 0, Keyword.TRAMPLE))),
+                                BoostEffect.of(Subjects.triggering(), 0, 0, Keyword.TRAMPLE))),
                 "Sacrifice a Forest?"));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

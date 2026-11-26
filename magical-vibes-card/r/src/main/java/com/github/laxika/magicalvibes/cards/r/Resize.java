@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Resize extends Card {
 
     public Resize() {
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(3, 3));
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(3, 3));
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.YOU_OWN),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 UnlessPaysEffect.youMayPay("{1}{G}", new ReturnSourceCardFromGraveyardToOwnerHandEffect())

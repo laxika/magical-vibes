@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -35,7 +35,7 @@ public class DoranBesiegedByTime extends Card {
         DynamicAmount difference = new Max(
                 new Sum(new TargetPower(true), new Scaled(new TargetToughness(), -1)),
                 new Sum(new TargetToughness(), new Scaled(new TargetPower(true), -1)));
-        BoostTargetCreatureEffect boost = new BoostTargetCreatureEffect(difference, difference);
+        BoostEffect boost = BoostEffect.target(difference, difference);
         addTrigger(Triggers.creatureYouControlAttacks(), boost);
         addTrigger(Triggers.creatureBlocks().withFilter(new PermanentControlledBySourceControllerPredicate()), boost);
     }

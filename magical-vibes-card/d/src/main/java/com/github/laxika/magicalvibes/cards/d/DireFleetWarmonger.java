@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -33,7 +33,7 @@ public class DireFleetWarmonger extends Card {
                                 )),
                                 Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                new BoostSelfEffect(Subjects.source(), new Fixed(2), new Fixed(2),
+                                BoostEffect.of(Subjects.source(), new Fixed(2), new Fixed(2),
                                         Set.of(Keyword.TRAMPLE)))),
                 "Sacrifice another creature?"));
     }

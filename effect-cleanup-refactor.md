@@ -26,8 +26,8 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
-| 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (213 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`). Next: the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
+| 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files). Next: Boost B2 (the two mass records), the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,914 / 2,294 (after step 10 run U7c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,912 / 2,292 (after step 10 run Boost B1) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -465,6 +465,11 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `dealerControllerId` / `entryDealtByPermanent`: a permanent deals damage as itself, live or last known (CR 120.1, 608.2h).
   `PermanentRemovalService` refreshes the resolving entry's source snapshot as the source leaves, and last known information keeps
   lifelink, deathtouch, infect and wither (CR 608.2h).
+- `BoostEffect` (run Boost B1): "[permanent] gets +X/+Y [and gains K] [for a duration]", a layer-7c floating effect per permanent
+  (CR 613.4c, 611.2a). Factories `self`, `of(subject, …[, keywords])` (amounts read the boosted permanent, `AmountsRead.BOOSTED`),
+  `target`, `targetInGroup`, `withCastTimeXValue`, `targetPermanent` (creature or Vehicle, harmful spec), `each(subject, …)` (only creatures,
+  the set found once, CR 611.2c) (amounts read the source, `AmountsRead.SOURCE`, CR 608.2h). The static self bonus is `self` in the
+  `STATIC` slot. `CreatureBoostEffect.targetedBoost(effect)` is the AI's targeted shape (a `BoostEffect` only with a target subject).
 - `UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid)` (runs U1 to U3b'): "[X] unless [P]
   pays [cost]" (CR 118.12a) and "[P] may pay. If they do" (`ifNotPaid` null). Counter factories `counterUnlessPays(int | String |
   DynamicAmount)`, `counterUnlessPays(mana, life)`, `counterUnlessPaysX()`, `counterUnlessPaysLife(int | DynamicAmount)`,
@@ -842,6 +847,10 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
   line; (Q7) the split U7a / U7b / U7c; the engine's free-cast chooser for every shape and the exile / library-top request fields are in
   scope.
 
+- **2026-11-26, step 10 run Boost: orchestrator's decisions (owner to review)**: (Q1) the survivor is `BoostEffect` (handler
+  `BoostEffectHandler`), every call site on factories; (Q2) an explicit `AmountsRead {SOURCE, BOOSTED}` set by the factory; (Q3) a target or
+  set boost refreshes the boosted creature's waiting abilities' snapshots too (CR 608.2h, 113.7a); (Q4) today's log lines kept; (Q5)
+  `CreatureBoostEffect.targetedBoost` by `declaresTarget()`, AI-only; (Q6, Q7, Q8) parity, one defect-queue line each; (Q9) split B1 / B2.
 - **2026-11-25, how the rest of the refactor runs** (the owner, after run U3b'): the orchestrator answers the planners' questions itself from
   the Comprehensive Rules, the card rulings and the owner's earlier decisions, and logs each answer here as an orchestrator decision for the
   owner to review; there is no per-run sign-off. It stops only for a question that changes play and that the rules and rulings don't settle,
@@ -877,7 +886,7 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
 ### Fold and defect queues
 
 The fold queue, the defect queue and the re-triage list are in `effect-cleanup-queues.md`. The fold queue is closed (no class's latest
-ledger row is `step-9`). The defect queue has 211 lines not struck through, each with what it needs; a defect run reads its own lines
+ledger row is `step-9`). The defect queue has 216 lines not struck through, each with what it needs; a defect run reads its own lines
 there and updates them when it lands.
 
 ### Step-10 hand-offs
@@ -908,11 +917,12 @@ there and updates them when it lands.
   `Return*ToHandCost`, `PutCounterOn*Cost`.
 - **Static restrictions**: `CantAttackUnlessEffect` (66), `CantBlockUnlessEffect` (28), `CantAttackOrBlockUnlessEffect` (25) and the three
   `…CantAttack…UnlessPredicateEffect` records; can't-activate, unblockable, goad and must-block pairs.
-- **Boost**: `BoostSelfEffect`, `BoostTargetCreatureEffect` (with a subject), `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesEffect`;
-  `BoostSelfEffect` reads amounts against the boosted permanent, `BoostTargetCreatureEffect` against the source, so the merged record
-  needs that as a property of the subject or an explicit choice. `BoostTargetPermanentEffect` (harmful, Vehicles).
-  `BoostTargetCreatureEffect(createdThisResolution(), …)` is "that creature gets +N/+M" after a token step, with `Duration.PERMANENT` for
-  no stated duration (CR 611.2a); `TargetPolarityClassifier` reads a negatively `Scaled` boost as a debuff.
+- **Boost**: B1 done (`BoostEffect`). **B2**: `BoostAllOwnCreaturesEffect` (419 files) and `BoostAllCreaturesEffect` (195) as
+  `controlledBy` subjects (`creaturesYouControl`, `allCreatures`, `creaturesTargetPlayerControls`, `narrowed`; `except(…,
+  targetDeclaredElsewhere())` for Exhilarating Elocution, `triggeringAttackers()` for the declared-attacker calls), amounts read once from the
+  source before any boost lands, the summary log line kept, `BoostEffect`'s SOURCE guard widened to them; readers `readsExcessDamage` and
+  `DestroyTargetPermanentThenEffectHandler`, battle cry. Out (more than the subject): the `StaticBoostEffect` family, the while-tapped record,
+  the chosen-type / Hand of Vecna records, the per-creature and other-target amounts, the composites (they hold a `BoostEffect`).
 - **Counters**: left the remove-all records (`RemoveAllCountersEffect`, `RemoveAllCountersFromTargetPermanentEffect`, the matching /
   of-type / fusion forms) for a "remove all" run, and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
   `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a batched
@@ -1131,6 +1141,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U7a (2026-11-26): the four non-mana `XOrY…Cost` records (7 card files) onto a cast-time `AnyOfCost` with `AdditionalSpellCostService.chosenAlternative`; free Final Payment offered its alternatives, the AI pays one alternative of Dusk Mangler's cost
 - Step 10, run U7b (2026-11-26): the five mana `XOrY…Cost` records (16 card files) onto `AnyOfCost` with a `PayManaCost` alternative paid in the total cost (CR 601.2f); free Eaten Alive and Bogslither's Embrace offered their alternatives, Eaten Alive cast from exile sacrifices (CR 601.2b)
 - Step 10, run U7c (2026-11-26): `ForageOrPayManaCost` replaced by `ForageCost` (CR 701.61a); Feed the Cycle an `AnyOfCost`, castable free for {B}
+- Step 10, run Boost B1 (2026-11-26): `BoostTargetCreatureEffect` renamed `BoostEffect` with factories, `BoostSelfEffect` and `BoostTargetPermanentEffect` absorbed (2,542 card files by script); `AmountsRead`, `CreatureBoostEffect.targetedBoost`
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2221,6 +2232,56 @@ exile and library-top casts still refuse tap-, blight- and exile-or-mana spells.
 **For the next run.** The "unless" family's rest (Step-10 hand-offs): Decoy Gambit, Stench of Evil, Heroism, Tidal Flats, Tariff,
 Whirlwind Denial, the `PayXMana…` records, Enchanter's Bane / Star Athlete. A free-cast graveyard picker would close the two free-cast
 lines above; a discard index on the exile path the first.
+
+### Step 10, run Boost B1 (2026-11-26)
+
+"[permanent] gets +X/+Y", orchestrator's decisions under Standing knowledge. `BoostTargetCreatureEffect` is renamed `BoostEffect` (handler
+`BoostEffectHandler`) and absorbs `BoostSelfEffect` and `BoostTargetPermanentEffect` (factories and `AmountsRead` under Shared pieces).
+Ledger: 2 absorbed, 1 survivor. Ratchet 2,914 / 2,294 -> 2,912 / 2,292. No `CONVERSION_VERSION` bump (no mapper or enum AGENTS.md names).
+**Premise.** The three handlers differed in more than the subject: the amount source (self: the boosted permanent; target and Vehicle: the
+source, live else last known), durations (target coerced the unused ones to end of turn; self passed them through), the face-down label
+(`effectSourceName` vs `FaceDownVisibility.sourceName`), a non-end-of-turn self boost's floating effect had no source permanent id and was
+added at +0/+0, and the log's duration words. One handler keeps every reading through the explicit `AmountsRead`; the rest is unified.
+**Card rewrite.** 2,542 card files, 2,700 calls (scratch script: balanced parentheses, 13 shapes, loud failure on any other, leftover check,
+imports; deleted): `target` 1,540, `self` 1,209, `of` 72, `each` 12, `targetPermanent` 9, `targetInGroup` 6, `withCastTimeXValue` 2; plus 37
+engine, domain and test files by the same script, 13 by hand (local types, builders, composites). Oracle text checked for 2,540 files with
+the MCP `get_card` implementation (back faces through their front card): 2,488 matched subject wording, amounts and duration automatically,
+52 by hand (variants: "double its power", "each get", specialize faces, prowess reminder text, the `each` subjects); Growth Charm and Swarm
+of Locus (MB1, in no feed) checked against their code text. None differed.
+**Behaviour changes** (log and label only; no play change):
+- The log's duration words follow the duration: "until end of combat" (Glyph of Destruction; the target record said "until end of turn"),
+  "indefinitely" (Goblin Ski Patrol; the self record said "until end of turn"), `GlyphOfDestructionTest` / `GoblinSkiPatrolTest` new log tests
+  (not run on the old code; the old handlers' text, read, fails them).
+- A self boost's floating effect is labelled through `FaceDownVisibility.sourceName` ("a face-down card" for a face-down source, was "a
+  face-down permanent"; Conventions: the one rule), carries its source permanent id, and +0/+0 adds nothing.
+- AI (Q5): `CreatureBoostEffect.targetedBoost` drops the non-targeting source-reading boosts (the three Crowns, Elemental Appeal, Mirkwood
+  Trapper, Sigardian Zealot, Zenos yae Galvus) from the combat-trick, pump-score, polarity and size-gate readers. The pin
+  `HardAiAbilityAndInteractionTest` "keeps Crown of Vigor" (main phase and combat) failed after the change (the AI sacrificed the Crown at
+  any priority), so `isGoodTimingForAbility` still times a SOURCE boost with no target as a targeted pump: both pins pass as before.
+**Q3.** `AbyssalHunterTest` "pumped while its ability waits, then bounced" passed on the old code: not failing-first. The premise doesn't
+hold: `PermanentRemovalService` refreshes every waiting entry's source snapshot as the permanent leaves, and a live source is read live, so
+the refresh (now after target and set boosts too, as decided) changes nothing observable (defect queue: a cleanup candidate).
+**Pins** (passed before and after): the Q3 test, the two Crown pins; existing: Two-Handed Axe, Junk Jet, Beastmaster's Magemark, Rabble-Rouser,
+Cultivator of Blades, Anya, Goblin Ski Patrol, Murk Dwellers, Riding the Dilu Horse, Jace, Howler's Heavy, Fang Guardian, Pack's Disdain.
+**Readers.** `triggerOrderLabel`, `TextChangeTransformer`: the old record's set (SOURCE, not `targetPermanent`); `selfBoost`, `SpellEvaluator`: a
+`source()` subject; `readsExcessDamage` and the destroy-then handler read only B2's records.
+**Shared engine files that changed meaning.** `BoostEffect` / `BoostEffectHandler` (new); `CreatureBoostEffect` (`targetedBoost`);
+`BoostSelfSelfEffectHandler`, `StaticEffectSupport` (keyed on `BoostEffect`); `TextChangeTransformer`, `TriggeredAbilityQueueService`,
+`LayerClassifier`; the AI readers (`HardAiDecisionEngine`, `SpellEvaluator`, `InstantCategoryClassifier`, `SizeGatedRemovalPump`,
+`AiTargetSelector`, `TargetPolarityClassifier`, `ChosenPermanentsAiChoice`).
+**Tests changed.** Three `@DisplayName`s named the deleted record (`SpellEvaluatorTest`, `ActivatedAbilityExecutionServiceTest`,
+`SpellTriggersTest`); 27 test files build boosts through the factories, `DurationClockTest` filters on `BoostEffect.class` (same assertions).
+**Tests run** (one Gradle run, XML of this run): 5,698 classes (every rewritten card's class, the 5,549 classes naming a rewritten card, the
+`Boost|Pump|Layer|Static|Polarity|TextChange|Equip|Aura|Vehicle` classes, the whole AI module, the readers' and changed application tests,
+every architecture ratchet), 53,856 tests, 0 failures. Compiled every module's main, test and test-fixture sources.
+**Seen, not changed** (defect queue, "step 10 run Boost B1"): the Vehicle boost's harmful prior (Q6); battle cry vs CR 702.91a (Q7); text
+changes not reaching self amounts, Vehicle filters or set filters (CR 612.2, Q8); the trigger-order label of a source-reading boost with no
+target says "target creature".
+
+**For the next run.** Boost B2: `BoostAllOwnCreaturesEffect` and `BoostAllCreaturesEffect` onto `BoostEffect` as `controlledBy` subjects
+(plan section 3: `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls` factories, Exhilarating Elocution's `except`, the
+declared attackers, Strategic Intervention), widening the SOURCE guard, the summary log line for a set, `readsExcessDamage`, the destroy-then
+handler and battle cry; the AI's `targetedBoost` already leaves non-targeting sets out.
 
 ## Prompt
 

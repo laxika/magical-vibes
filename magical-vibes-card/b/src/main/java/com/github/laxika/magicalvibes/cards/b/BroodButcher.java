@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -53,7 +53,7 @@ public class BroodButcher extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}{G}",
-                List.of(new SacrificeCreatureCost(), new BoostTargetCreatureEffect(-2, -2)),
+                List.of(new SacrificeCreatureCost(), BoostEffect.target(-2, -2)),
                 "{B}{G}, Sacrifice a creature: Target creature gets -2/-2 until end of turn.",
                 TargetFilters.creature()
         ));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -84,7 +84,7 @@ public class KarlachRagingTiefling extends Card {
                     "Sacrifice a creature?");
             case BLUE -> new SeekInstantOrSorceryAndMayCastFreeEffect();
             case RED -> new CantBlockThisTurnEffect(Subjects.target());
-            case GREEN -> new BoostTargetCreatureEffect(4, 4, anotherCreatureYouControl());
+            case GREEN -> BoostEffect.target(4, 4, anotherCreatureYouControl());
             case WHITE -> SequenceEffect.of(
                     new CreateTokenEffect(1, "Knight", 2, 2, CardColor.WHITE,
                             List.of(CardSubtype.KNIGHT), Set.of(), Set.of()),

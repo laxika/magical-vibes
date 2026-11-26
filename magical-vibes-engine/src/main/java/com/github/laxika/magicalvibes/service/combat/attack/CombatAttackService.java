@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DeclarationReplacementEffect;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -124,14 +123,14 @@ public class CombatAttackService {
      * creature's power" (CR 702.154a).
      */
     private static final TriggeredAbility ENLIST_ABILITY = new TriggeredAbility(Triggers.enlists(),
-            new BoostSelfEffect(new ChosenPermanentPower(), new Fixed(0)));
+            BoostEffect.self(new ChosenPermanentPower(), new Fixed(0)));
 
     /**
      * An exalted a static ability grants: "Whenever a creature you control attacks alone, that creature gets +1/+1
      * until end of turn" (CR 702.83a); its collector judges that the creature attacks alone.
      */
     private static final TriggeredAbility GRANTED_EXALTED_ABILITY = new TriggeredAbility(
-            Triggers.creatureYouControlAttacks(), new BoostTargetCreatureEffect(1, 1));
+            Triggers.creatureYouControlAttacks(), BoostEffect.target(1, 1));
 
     private final GameQueryService gameQueryService;
     private final AttackLegalityService attackLegalityService;
@@ -936,7 +935,7 @@ public class CombatAttackService {
         }
         int meleeBoost = opponentsAttackedThisCombat.size();
         TriggeredAbility meleeAbility = new TriggeredAbility(Triggers.attacks(),
-                new BoostSelfEffect(meleeBoost, meleeBoost));
+                BoostEffect.self(meleeBoost, meleeBoost));
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.MELEE)) {

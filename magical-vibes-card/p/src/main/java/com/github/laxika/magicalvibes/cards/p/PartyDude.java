@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -59,7 +59,7 @@ public class PartyDude extends Card {
         target(TargetFilters.attackingCreature(), 0, 1)
                 .addTrigger(Triggers.youAttackPlayer(),
                         TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(3)),
-                        new BoostTargetCreatureEffect(
+                        BoostEffect.target(
                                 new CardsInHand(CountScope.CONTROLLER),
                                 new CardsInHand(CountScope.CONTROLLER)));
     }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,7 +39,7 @@ public class RuthlessInstincts extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target attacking creature gets +2/+2 and gains trample until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(2, 2),
+                                BoostEffect.target(2, 2),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                         ),
                         new PermanentPredicateTargetFilter(

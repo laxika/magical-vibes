@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -50,7 +50,7 @@ public class CampsiteCuisine extends Card {
                                         HappenedThisWay.sacrificed(),
                                         new QueueReflexiveAbilityEffect(
                                                 SequenceEffect.of(
-                                                        new BoostTargetCreatureEffect(3, 3),
+                                                        BoostEffect.target(3, 3),
                                                         grantKeywords)))),
                         "Sacrifice one or more Foods?"));
     }

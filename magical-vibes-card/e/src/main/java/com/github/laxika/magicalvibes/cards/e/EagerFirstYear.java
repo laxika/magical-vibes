@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class EagerFirstYear extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        List<CardEffect> boost = List.of(new BoostSelfEffect(1, 0));
+        List<CardEffect> boost = List.of(BoostEffect.self(1, 0));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), boost.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery), boost.toArray(CardEffect[]::new));

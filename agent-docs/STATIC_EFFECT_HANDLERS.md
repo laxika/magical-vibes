@@ -30,7 +30,7 @@ Handlers own the per-effect scope/filter/amount logic; **ordering and precedence
 
 ## Dynamic-amount boosts (self and attached scopes)
 
-`BoostSelfEffect(DynamicAmount, DynamicAmount)` as a static ability (`addStaticEffect`) is handled by the single
+`BoostEffect.self(DynamicAmount, DynamicAmount)` as a static ability (`addStaticEffect`) is handled by the single
 generic `BoostSelfSelfEffectHandler` (selfOnly), which evaluates the amounts via
 `AmountEvaluationService` — do NOT add per-derivation `BoostSelfPer*` handlers.
 

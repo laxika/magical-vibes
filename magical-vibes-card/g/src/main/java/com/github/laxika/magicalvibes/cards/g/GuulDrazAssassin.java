@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -52,7 +52,7 @@ public class GuulDrazAssassin extends Card {
         return new ActivatedAbility(
                 true,
                 "{B}",
-                List.of(new BoostTargetCreatureEffect(-amount, -amount)),
+                List.of(BoostEffect.target(-amount, -amount)),
                 "{B}, {T}: Target creature gets -" + amount + "/-" + amount + " until end of turn.",
                 TargetFilters.creature()
         );

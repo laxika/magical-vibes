@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
@@ -155,7 +155,7 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
 
     private FloatingContinuousEffect floating(UUID sourcePermanentId, UUID controllerId, Duration duration) {
         return new FloatingContinuousEffect(UUID.randomUUID(), "Test Source", sourcePermanentId,
-                controllerId, new BoostTargetCreatureEffect(3, 3), null, null, null, duration, 0L);
+                controllerId, BoostEffect.target(3, 3), null, null, null, duration, 0L);
     }
 
     private Card createCreature(String name) {

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -30,7 +30,7 @@ public class SkemfarElderhall extends Card {
                 "{2}{B}{B}{G}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostTargetCreatureEffect(-2, -2),
+                        BoostEffect.target(-2, -2),
                         new CreateTokenEffect(
                                 2,
                                 "Elf Warrior",

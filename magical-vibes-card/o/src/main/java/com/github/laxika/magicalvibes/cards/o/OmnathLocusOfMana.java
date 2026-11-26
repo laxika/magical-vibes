@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.UnspentMana;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "109")
@@ -18,6 +18,6 @@ public class OmnathLocusOfMana extends Card {
     public OmnathLocusOfMana() {
         addStaticEffect(new PreventManaDrainEffect(ManaColor.GREEN));
         UnspentMana greenMana = new UnspentMana(ManaColor.GREEN);
-        addStaticEffect(new BoostSelfEffect(greenMana, greenMana));
+        addStaticEffect(BoostEffect.self(greenMana, greenMana));
     }
 }

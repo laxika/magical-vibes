@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.x;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,6 +22,6 @@ public class XandeDarkMage extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
         CardsInGraveyard noncreatureNonlandCardsInGraveyard =
                 new CardsInGraveyard(noncreatureNonland, CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(noncreatureNonlandCardsInGraveyard, noncreatureNonlandCardsInGraveyard));
+        addStaticEffect(BoostEffect.self(noncreatureNonlandCardsInGraveyard, noncreatureNonlandCardsInGraveyard));
     }
 }

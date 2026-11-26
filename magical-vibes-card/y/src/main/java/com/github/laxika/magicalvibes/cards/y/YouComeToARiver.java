@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -22,7 +22,7 @@ public class YouComeToARiver extends Card {
                         TargetFilters.nonlandPermanent()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +1/+0 until end of turn and can't be blocked this turn",
-                        List.of(new BoostTargetCreatureEffect(1, 0), new MakeCreatureUnblockableEffect()),
+                        List.of(BoostEffect.target(1, 0), new MakeCreatureUnblockableEffect()),
                         TargetFilters.creature())
         )));
     }

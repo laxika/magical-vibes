@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -185,7 +185,7 @@ class HarshMentorTest extends BaseCardTest {
     }
 
     private void addPermanentWithNonManaAbility(Player player, CardType type) {
-        addPermanentWithAbility(player, type, new BoostSelfEffect(1, 0));
+        addPermanentWithAbility(player, type, BoostEffect.self(1, 0));
     }
 
     private void addPermanentWithAbility(Player player, CardType type, CardEffect effect) {

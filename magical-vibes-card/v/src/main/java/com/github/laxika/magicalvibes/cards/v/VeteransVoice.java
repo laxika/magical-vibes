@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class VeteransVoice extends Card {
         // Tap enchanted creature: Target creature other than the creature tapped this way
         // gets +2/+1 until end of turn. Activate only if enchanted creature is untapped.
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new TapEnchantedPermanentCost(), new BoostTargetCreatureEffect(2, 1)),
+                List.of(new TapEnchantedPermanentCost(), BoostEffect.target(2, 1)),
                 "Tap enchanted creature: Target creature other than the creature tapped this way "
                         + "gets +2/+1 until end of turn. Activate only if enchanted creature is untapped.",
                 new PermanentPredicateTargetFilter(

@@ -54,7 +54,7 @@ public class SizeGatedRemovalPump {
         int toughnessBoost = 0;
         AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
         for (CardEffect effect : pumpCard.getCastingCostsAndSpellEffects()) {
-            if (effect instanceof CreatureBoostEffect boost) {
+            if (CreatureBoostEffect.targetedBoost(effect) instanceof CreatureBoostEffect boost) {
                 powerBoost += amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
                 toughnessBoost += amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
             }

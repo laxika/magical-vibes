@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -26,7 +26,7 @@ public class RowanFearlessSparkmage extends Card {
                 false,
                 null,
                 List.of(
-                        new BoostTargetCreatureEffect(3, 0),
+                        BoostEffect.target(3, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())
                 ),
                 "+1: Up to one target creature gets +3/+0 and gains first strike until end of turn.",

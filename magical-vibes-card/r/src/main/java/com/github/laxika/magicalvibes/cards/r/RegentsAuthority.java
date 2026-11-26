@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -32,10 +32,10 @@ public class RegentsAuthority extends Card {
 
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(upgradedTarget),
-                new BoostTargetCreatureEffect(2, 2),
+                BoostEffect.target(2, 2),
                 SequenceEffect.of(
                         new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                        new BoostTargetCreatureEffect(1, 1))
+                        BoostEffect.target(1, 1))
         ));
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -32,12 +32,12 @@ public class MultaniYavimayasAvatar extends Card {
         // Multani, Yavimaya's Avatar gets +1/+1 for each land you control
         PermanentCount landsYouControl =
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(landsYouControl, landsYouControl));
+        addStaticEffect(BoostEffect.self(landsYouControl, landsYouControl));
 
         // ... and each land card in your graveyard.
         CardsInGraveyard landCardsInGraveyard =
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(landCardsInGraveyard, landCardsInGraveyard));
+        addStaticEffect(BoostEffect.self(landCardsInGraveyard, landCardsInGraveyard));
 
         // {1}{G}, Return two lands you control to their owner's hand:
         // Return Multani, Yavimaya's Avatar from your graveyard to your hand.

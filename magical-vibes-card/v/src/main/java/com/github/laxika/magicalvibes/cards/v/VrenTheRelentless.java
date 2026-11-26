@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreaturesExiledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
@@ -33,7 +33,7 @@ public class VrenTheRelentless extends Card {
         CreateTokenEffect ratToken = new CreateTokenEffect(
                 new CreaturesExiledThisTurn(CountScope.OPPONENTS),
                 "Rat", 1, 1, CardColor.BLACK, List.of(CardSubtype.RAT), Set.of(), Set.of())
-                .withTokenEffects(List.of(StaticAbility.of(new BoostSelfEffect(otherRats, otherRats))));
+                .withTokenEffects(List.of(StaticAbility.of(BoostEffect.self(otherRats, otherRats))));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), ratToken);
     }
 }

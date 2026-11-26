@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -79,7 +80,6 @@ import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
@@ -1441,7 +1441,7 @@ class GameQueryServiceTest {
     @Test
     @DisplayName("retains self P/T modifiers on a noncreature permanent")
     void retainsSelfPtModifiersOnNoncreaturePermanent() {
-        CardEffect boost = new BoostSelfEffect(-2, -2);
+        CardEffect boost = BoostEffect.self(-2, -2);
         Card vehicle = createArtifact("Test Vehicle");
         vehicle.setPower(3);
         vehicle.setToughness(3);

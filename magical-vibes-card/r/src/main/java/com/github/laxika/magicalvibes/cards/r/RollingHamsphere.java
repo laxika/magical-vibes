@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class RollingHamsphere extends Card {
                 List.of(new CrewCost(3), AnimatePermanentsEffect.crew()), "Crew 3"));
         PermanentCount hamsters = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.HAMSTER), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(hamsters, hamsters));
+        addStaticEffect(BoostEffect.self(hamsters, hamsters));
 
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new CreateTokenEffect(3, "Hamster", 1, 1, CardColor.RED,

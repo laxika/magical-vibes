@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,6 +30,6 @@ public class GruulBeastmaster extends Card {
                 )),
                 "Target must be another creature you control"
         )).addTrigger(Triggers.attacks(),
-                new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0)));
+                BoostEffect.target(new SourcePower(), new Fixed(0)));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,6 +18,6 @@ public class Whack extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE)), 3));
 
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(-4, -4));
+                .addSpellEffect(BoostEffect.target(-4, -4));
     }
 }

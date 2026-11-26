@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfPermanentsUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -30,7 +30,7 @@ public class LumberingBattlement extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));
         // This creature gets +2/+2 for each card exiled with it.
-        addStaticEffect(new BoostSelfEffect(
+        addStaticEffect(BoostEffect.self(
                 new Scaled(new CardsExiledWithSource(), 2),
                 new Scaled(new CardsExiledWithSource(), 2)));
     }

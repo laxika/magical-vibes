@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomOpponentMustAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -23,6 +23,6 @@ public class UrsineMonstrosity extends Card {
                 new MillEffect(1, Subjects.you()),
                 new ChooseRandomOpponentMustAttackThisCombatEffect(),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()),
-                new BoostSelfEffect(cardTypes, cardTypes)));
+                BoostEffect.self(cardTypes, cardTypes)));
     }
 }

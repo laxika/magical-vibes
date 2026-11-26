@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -59,7 +60,6 @@ import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -629,7 +629,7 @@ class StepTriggerServiceTest {
         @Test
         void optionalMultipleUpkeepTargetsUseGroupSelection() {
             Card card = createCardWithName("Artifact animator");
-            CardEffect effect = new BoostTargetCreatureEffect(1, 1);
+            CardEffect effect = BoostEffect.target(1, 1);
             card.target(0, 3).addTrigger(Triggers.upkeep(ActivePlayer.YOU), effect);
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
@@ -1623,7 +1623,7 @@ class StepTriggerServiceTest {
             sourceCard.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Target creature"))
                     .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                            new MayEffect(new BoostTargetCreatureEffect(2, 0), "Boost target creature?"));
+                            new MayEffect(BoostEffect.target(2, 0), "Boost target creature?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
 
             Permanent target = new Permanent(createCardWithName("Target Creature"));
@@ -1667,7 +1667,7 @@ class StepTriggerServiceTest {
             sourceCard.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption(
                             "Target creature gets +2/+0",
-                            new BoostTargetCreatureEffect(2, 0),
+                            BoostEffect.target(2, 0),
                             new PermanentPredicateTargetFilter(
                                     new PermanentIsCreaturePredicate(), "Target creature"))
             )));

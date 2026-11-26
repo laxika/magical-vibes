@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -25,7 +25,7 @@ public class StirringAddress extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{W}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new BoostTargetCreatureEffect(2, 2),
+                BoostEffect.target(2, 2),
                 new BoostAllOwnCreaturesEffect(2, 2)));
         target(TargetFilters.creatureYouControl());
     }

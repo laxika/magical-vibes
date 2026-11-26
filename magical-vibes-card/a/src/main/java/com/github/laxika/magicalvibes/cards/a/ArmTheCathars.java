@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -18,9 +18,9 @@ public class ArmTheCathars extends Card {
     public ArmTheCathars() {
         target(TargetFilters.creature(), 1, 3)
                 .addSpellEffect(new BoostTargetCreaturesByPositionEffect(List.of(
-                        new BoostTargetCreatureEffect(3, 3),
-                        new BoostTargetCreatureEffect(2, 2),
-                        new BoostTargetCreatureEffect(1, 1))))
+                        BoostEffect.target(3, 3),
+                        BoostEffect.target(2, 2),
+                        BoostEffect.target(1, 1))))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
     }
 }

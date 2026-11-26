@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "SNC", collectorNumber = "100")
 public class Antagonize extends Card {
 
     public Antagonize() {
-        addSpellEffect(new BoostTargetCreatureEffect(4, 3));
+        addSpellEffect(BoostEffect.target(4, 3));
     }
 }

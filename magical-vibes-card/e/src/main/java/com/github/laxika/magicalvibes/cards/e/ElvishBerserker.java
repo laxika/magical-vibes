@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "260")
@@ -14,7 +14,7 @@ public class ElvishBerserker extends Card {
     public ElvishBerserker() {
         // Whenever Elvish Berserker becomes blocked, it gets +1/+1 until end of turn
         // for each creature blocking it.
-        addTrigger(Triggers.becomesBlocked(), new BoostSelfEffect(
+        addTrigger(Triggers.becomesBlocked(), BoostEffect.self(
                 new CreaturesBlockingSource(), new CreaturesBlockingSource()));
     }
 }

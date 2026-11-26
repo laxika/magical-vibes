@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -30,7 +30,7 @@ public class PrideOfTheClouds extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 CountScope.ANY_PLAYER,
                 true);
-        addStaticEffect(new BoostSelfEffect(otherFlyingCreatures, otherFlyingCreatures));
+        addStaticEffect(BoostEffect.self(otherFlyingCreatures, otherFlyingCreatures));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

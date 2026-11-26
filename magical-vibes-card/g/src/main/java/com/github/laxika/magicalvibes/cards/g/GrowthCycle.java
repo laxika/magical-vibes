@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +19,7 @@ public class GrowthCycle extends Card {
         // of turn for each card named Growth Cycle in your graveyard.
         var namedCardsInGraveyard = new CardsInGraveyard(
                 new CardNamedPredicate("Growth Cycle"), CountScope.CONTROLLER);
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(
                 new Sum(new Fixed(3), new Scaled(namedCardsInGraveyard, 2)),
                 new Sum(new Fixed(3), new Scaled(namedCardsInGraveyard, 2))));
     }

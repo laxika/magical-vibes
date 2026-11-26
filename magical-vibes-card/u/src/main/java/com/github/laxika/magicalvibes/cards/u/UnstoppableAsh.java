@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,6 +18,6 @@ public class UnstoppableAsh extends Card {
                 new ChampionCreatureEffect(CardSubtype.TREEFOLK, CardSubtype.WARRIOR));
 
         // Whenever a creature you control becomes blocked, it gets +0/+5 until end of turn.
-        addTrigger(Triggers.creatureYouControlBecomesBlocked(), new BoostSelfEffect(Subjects.triggering(), 0, 5));
+        addTrigger(Triggers.creatureYouControlBecomesBlocked(), BoostEffect.of(Subjects.triggering(), 0, 5));
     }
 }

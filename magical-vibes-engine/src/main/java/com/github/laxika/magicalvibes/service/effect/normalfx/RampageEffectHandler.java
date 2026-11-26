@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RampageEffectHandler implements NormalEffectHandlerBean {
 
-    private final BoostSelfEffectHandler boostSelfEffectHandler;
+    private final BoostEffectHandler boostEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,7 +29,7 @@ public class RampageEffectHandler implements NormalEffectHandlerBean {
         RampageEffect rampage = (RampageEffect) effect;
         var blockersBeyondTheFirst = new Max(
                 new Sum(new CreaturesBlockingSource(), new Fixed(-1)), new Fixed(0));
-        boostSelfEffectHandler.resolve(gameData, entry, new BoostSelfEffect(
+        boostEffectHandler.resolve(gameData, entry, BoostEffect.self(
                 new Scaled(blockersBeyondTheFirst, rampage.bonusPerAdditionalBlocker()),
                 new Scaled(blockersBeyondTheFirst, rampage.bonusPerAdditionalBlocker())));
     }

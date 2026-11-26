@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class FiredrinkerSatyr extends Card {
                 false,
                 "{1}{R}",
                 List.of(
-                        new BoostSelfEffect(1, 0),
+                        BoostEffect.self(1, 0),
                         new DealDamageToPlayersEffect(1, Subjects.you())
                 ),
                 "{1}{R}: This creature gets +1/+0 until end of turn and deals 1 damage to you."

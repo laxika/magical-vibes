@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -75,7 +75,7 @@ class AttackRouteRecordTest extends BaseCardTest {
 
     private static Card targeted(String name, CardType type, Trigger trigger, CardSubtype... subtypes) {
         Card card = card(name, type, subtypes);
-        CardEffect boost = new BoostTargetCreatureEffect(1, 1);
+        CardEffect boost = BoostEffect.target(1, 1);
         card.addTrigger(trigger, boost);
         card.target(TargetFilters.creature()).bindEffect(boost);
         return card;

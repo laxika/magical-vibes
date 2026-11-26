@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
@@ -19,7 +19,7 @@ public class TwistedReflection extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets -6/-0 until end of turn",
-                        new BoostTargetCreatureEffect(-6, 0),
+                        BoostEffect.target(-6, 0),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Switch target creature's power and toughness until end of turn",

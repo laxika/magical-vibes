@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +29,7 @@ public class KnightOfTheReliquary extends Card {
         // This creature gets +1/+1 for each land card in your graveyard.
         CardsInGraveyard landCardsInGraveyard =
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
-        addStaticEffect(new BoostSelfEffect(landCardsInGraveyard, landCardsInGraveyard));
+        addStaticEffect(BoostEffect.self(landCardsInGraveyard, landCardsInGraveyard));
 
         // {T}, Sacrifice a Forest or Plains:
         // Search your library for a land card, put it onto the battlefield, then shuffle.

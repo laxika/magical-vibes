@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
@@ -23,7 +23,7 @@ public class TerrificTeamUp extends Card {
 
         var victimTarget = target(TargetFilters.creatureAnOpponentControls());
         target(TargetFilters.creatureYouControl(), 1, 2)
-                .addSpellEffect(new BoostTargetCreatureEffect(1, 0));
+                .addSpellEffect(BoostEffect.target(1, 0));
         victimTarget.addSpellEffect(new TargetDealsPowerDamageToTargetEffect(1, 0));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,7 +14,7 @@ public class SpoilsOfTheHunt extends Card {
 
     public SpoilsOfTheHunt() {
         SpellTarget sourceTarget = target(TargetFilters.creatureYouControl());
-        sourceTarget.addSpellEffect(new BoostTargetCreatureEffect(new TreasureManaSpentToCast(), new Fixed(0)));
+        sourceTarget.addSpellEffect(BoostEffect.target(new TreasureManaSpentToCast(), new Fixed(0)));
 
         SpellTarget victimTarget = target(TargetFilters.creatureAnOpponentControls());
         victimTarget.addSpellEffect(new TargetCreatureDealsPowerDamageToAnyTargetEffect());

@@ -32,7 +32,7 @@ import java.util.List;
  * may pause/resume for async player input. {@code ClashEffect} and {@code FlipCoinWinEffect} instead dispatch
  * their win/branch reward <em>synchronously</em> (via each step's own handler, not the loop), so a
  * {@code SequenceEffect} used there must contain only synchronous steps (no async player-input pause between
- * steps). Sentry Oak's {@code ClashEffect(SequenceEffect.of(BoostSelfEffect, RemoveKeywordEffect))} is the
+ * steps). Sentry Oak's {@code ClashEffect(SequenceEffect.of(BoostEffect.self, RemoveKeywordEffect))} is the
  * canonical example — both steps resolve without interaction.</p>
  *
  * <p><b>Targeting.</b> {@link #targetSpec()} returns the first step with an explicitly declared

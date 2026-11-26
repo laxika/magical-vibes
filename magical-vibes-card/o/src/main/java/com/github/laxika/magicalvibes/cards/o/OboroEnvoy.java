@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class OboroEnvoy extends Card {
                 "{2}",
                 List.of(
                         new ReturnMultiplePermanentsToHandCost(1, new PermanentIsLandPredicate()),
-                        new BoostTargetCreatureEffect(new Scaled(handSize, -1), new Fixed(0))),
+                        BoostEffect.target(new Scaled(handSize, -1), new Fixed(0))),
                 "{2}, Return a land you control to its owner's hand: Target creature gets -X/-0 until end of turn, where X is the number of cards in your hand.",
                 TargetFilters.creature()));
     }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "MSH", collectorNumber = "213")
 public class DaredevilManWithoutFear extends Card {
@@ -24,7 +24,7 @@ public class DaredevilManWithoutFear extends Card {
                         new ExileTopCardMayPlayThisTurnEffect(false),
                         new ConditionalEffect(
                                 HappenedThisWay.toACard(StepKind.EXILE, new CardSubtypePredicate(CardSubtype.HERO)),
-                                new BoostSelfEffect(2, 1))),
+                                BoostEffect.self(2, 1))),
                 "Exile the top card of your library?"));
     }
 }

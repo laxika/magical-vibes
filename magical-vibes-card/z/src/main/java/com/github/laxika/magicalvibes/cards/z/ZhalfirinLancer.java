@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -26,7 +26,7 @@ public class ZhalfirinLancer extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.KNIGHT))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new BoostSelfEffect(1, 1),
+                        BoostEffect.self(1, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
     }
 }

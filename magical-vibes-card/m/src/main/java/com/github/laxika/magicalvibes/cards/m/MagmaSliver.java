@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +32,7 @@ public class MagmaSliver extends Card {
         ActivatedAbility boostAbility = new ActivatedAbility(
                 true,
                 null,
-                List.of(new BoostTargetCreatureEffect(sliverCount, new Fixed(0), sliverCreature)),
+                List.of(BoostEffect.target(sliverCount, new Fixed(0), sliverCreature)),
                 "{T}: Target Sliver creature gets +X/+0 until end of turn, where X is the number of Slivers on the battlefield.",
                 new PermanentPredicateTargetFilter(sliverCreature, "Target must be a Sliver creature")
         );

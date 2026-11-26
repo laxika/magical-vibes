@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachAttackingCreatureThisTurnEffect;
 
 import com.github.laxika.magicalvibes.model.effect.DeclarationReplacementEffect;
@@ -26,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.PayBlockCostsEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
@@ -80,7 +80,7 @@ public class CombatBlockService {
 
     /** Flanking (CR 702.25a); its collector judges the blocking creature's flanking. */
     private static final TriggeredAbility FLANKING_ABILITY = new TriggeredAbility(Triggers.becomesBlocked(),
-            new BoostTargetCreatureEffect(-1, -1));
+            BoostEffect.target(-1, -1));
 
     private final GameQueryService gameQueryService;
     private final BlockLegalityService blockLegalityService;

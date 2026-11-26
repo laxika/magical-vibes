@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -21,7 +21,7 @@ public class ErebossIntervention extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets -X/-X until end of turn. You gain X life",
                         List.of(
-                                new BoostTargetCreatureEffect(new Scaled(new XValue(), -1),
+                                BoostEffect.target(new Scaled(new XValue(), -1),
                                         new Scaled(new XValue(), -1)),
                                 new GainLifeEffect(new XValue())
                         ),

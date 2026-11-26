@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class StonewoodInvoker extends Card {
 
     public StonewoodInvoker() {
-        addActivatedAbility(new ActivatedAbility(false, "{7}{G}", List.of(new BoostSelfEffect(5, 5)),
+        addActivatedAbility(new ActivatedAbility(false, "{7}{G}", List.of(BoostEffect.self(5, 5)),
                 "{7}{G}: This creature gets +5/+5 until end of turn."));
     }
 }

@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,9 +20,9 @@ public class Fleshformer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{W}{U}{B}{R}{G}",
                 List.of(
-                        new BoostSelfEffect(2, 2),
+                        BoostEffect.self(2, 2),
                         new GrantKeywordEffect(Keyword.FEAR, Subjects.source()),
-                        new BoostTargetCreatureEffect(-2, -2)
+                        BoostEffect.target(-2, -2)
                 ),
                 "{W}{U}{B}{R}{G}: This creature gets +2/+2 and gains fear until end of turn. "
                         + "Target creature gets -2/-2 until end of turn. Activate only during your turn.",

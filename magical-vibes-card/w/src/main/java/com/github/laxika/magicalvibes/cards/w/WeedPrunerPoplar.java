@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -25,6 +25,6 @@ public class WeedPrunerPoplar extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be a creature other than this creature"
-        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new BoostTargetCreatureEffect(-1, -1));
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), BoostEffect.target(-1, -1));
     }
 }

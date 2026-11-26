@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class AvatarRokuFirebender extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}{R}{R}",
-                List.of(new BoostTargetCreatureEffect(3, 0)),
+                List.of(BoostEffect.target(3, 0)),
                 "{R}{R}{R}: Target creature gets +3/+0 until end of turn.",
                 TargetFilters.creature()));
     }

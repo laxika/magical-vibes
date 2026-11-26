@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class GoblinMachinist extends Card {
                 false,
                 "{2}{R}",
                 List.of(new RevealCardsFromTopUntilEffect(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                        new BoostSelfEffect(AmountThisWay.revealedManaValue(), new Fixed(0)),
+                        BoostEffect.self(AmountThisWay.revealedManaValue(), new Fixed(0)),
                         PutCardsIntoLibraryEffect.onBottom(Subjects.revealedThisWay())),
                 "{2}{R}: Reveal cards from the top of your library until you reveal a nonland card. "
                         + "This creature gets +X/+0 until end of turn, where X is that card's mana value. "

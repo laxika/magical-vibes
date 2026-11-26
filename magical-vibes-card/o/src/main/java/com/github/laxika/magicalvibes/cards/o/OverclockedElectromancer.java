@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -33,7 +33,7 @@ public class OverclockedElectromancer extends Card {
         ));
 
         addTrigger(Triggers.attacks(),
-                new BoostSelfEffect(new SourcePower(), new Fixed(0)));
+                BoostEffect.self(new SourcePower(), new Fixed(0)));
 
         addTrigger(Triggers.dealsCombatDamageToCreature(),
                 TriggerOptions.DEFAULT.withInterveningIf(new EventValueAtLeast(1)),

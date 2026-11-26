@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -28,7 +28,7 @@ public class Rubblehulk extends Card {
         // until end of turn, where X is the number of lands you control. Discard cost is
         // intrinsic to the hand ability; the engine pays it.
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{R}{G}",
-                List.of(new BoostTargetCreatureEffect(lands, lands)),
+                List.of(BoostEffect.target(lands, lands)),
                 "Bloodrush — {1}{R}{G}, Discard this card: Target attacking creature gets +X/+X until end of turn, where X is the number of lands you control.",
                 TargetFilters.attackingCreature()));
     }

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -13,7 +13,7 @@ public class OffenderAtLarge extends Card {
     public OffenderAtLarge() {
         addMorph("{4}{R}");
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), BoostEffect.target(2, 0))
+                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), BoostEffect.target(2, 0));
     }
 }

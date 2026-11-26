@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -31,7 +31,7 @@ public class BorosChallenger extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}{W}",
-                List.of(new BoostSelfEffect(1, 1)),
+                List.of(BoostEffect.self(1, 1)),
                 "{2}{R}{W}: This creature gets +1/+1 until end of turn."));
     }
 }

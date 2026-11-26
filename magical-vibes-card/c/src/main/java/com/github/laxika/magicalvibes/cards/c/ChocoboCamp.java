@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -61,7 +61,7 @@ public class ChocoboCamp extends Card {
 
         List<Ability> birdTokenEffects = List.of(new TriggeredAbility(Triggers.enters(Triggers.LAND,
                 ObjectRelation.YOU_CONTROL),
-                new BoostSelfEffect(1, 0)));
+                BoostEffect.self(1, 0)));
         CreateTokenEffect birdToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Bird", 2, 2,
                 CardColor.GREEN, null, List.of(CardSubtype.BIRD), Set.of(), Set.of(),

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -19,6 +19,6 @@ public class WastelandStrangler extends Card {
                 SequenceEffect.of(
                         new PutOpponentOwnedExiledCardIntoGraveyardEffect(),
                         new ConditionalEffect(new EventValueAtLeast(1),
-                                new BoostTargetCreatureEffect(-3, -3))));
+                                BoostEffect.target(-3, -3))));
     }
 }

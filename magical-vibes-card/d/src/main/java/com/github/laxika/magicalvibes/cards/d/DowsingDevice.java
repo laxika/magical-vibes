@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -34,7 +34,7 @@ public class DowsingDevice extends Card {
                 new AllOf(List.of(new ControlsPermanentCount(4, new PermanentIsArtifactPredicate()))),
                 new TransformSelfEffect());
 
-        CardEffect enterEffect = SequenceEffect.of(new BoostTargetCreatureEffect(1, 0),
+        CardEffect enterEffect = SequenceEffect.of(BoostEffect.target(1, 0),
                 new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), transformIfFourArtifacts);
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addTriggeredAbility(new TriggeredAbility(List.of(

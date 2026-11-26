@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -20,7 +20,7 @@ public class KorSpiritdancer extends Card {
     public KorSpiritdancer() {
         // This creature gets +2/+2 for each Aura attached to it.
         Scaled twicePerAura = new Scaled(new AttachmentsOnSource(true, false), 2);
-        addStaticEffect(new BoostSelfEffect(twicePerAura, twicePerAura));
+        addStaticEffect(BoostEffect.self(twicePerAura, twicePerAura));
 
         // Whenever you cast an Aura spell, you may draw a card.
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsAuraPredicate()),

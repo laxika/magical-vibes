@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,6 +16,6 @@ public class ThorntoothWitch extends Card {
         // Whenever you cast a Treefolk spell, you may have target creature get +3/-3 until end of turn.
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardSubtypePredicate(CardSubtype.TREEFOLK)),
-                new MayEffect(new BoostTargetCreatureEffect(3, -3), "Have target creature get +3/-3 until end of turn?"));
+                new MayEffect(BoostEffect.target(3, -3), "Have target creature get +3/-3 until end of turn?"));
     }
 }

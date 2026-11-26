@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,6 +21,6 @@ public class Rouse extends Card {
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
                 false));
 
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(2, 0));
+        target(TargetFilters.creature()).addSpellEffect(BoostEffect.target(2, 0));
     }
 }

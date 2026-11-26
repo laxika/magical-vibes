@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +18,7 @@ public class GlassdustHulk extends Card {
         // Whenever another artifact you control enters, this creature gets +1/+1 until end of turn
         // and can't be blocked this turn. Both effects are self-scoped (sourcePermanentId).
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
-                new BoostSelfEffect(1, 1),
+                BoostEffect.self(1, 1),
                 new MakeCreatureUnblockableEffect(true)));
 
         // Cycling {W/U} ({W/U}, Discard this card: Draw a card.) — discard cost is intrinsic.

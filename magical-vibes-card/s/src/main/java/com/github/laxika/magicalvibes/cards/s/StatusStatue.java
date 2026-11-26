@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -34,7 +34,7 @@ public class StatusStatue extends Card {
                 "Target must be an artifact, creature, or enchantment"
         );
         CardEffect status = SequenceEffect.of(
-                new BoostTargetCreatureEffect(1, 1),
+                BoostEffect.target(1, 1),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()));
         CardEffect statue = new DestroyTargetPermanentEffect();
 

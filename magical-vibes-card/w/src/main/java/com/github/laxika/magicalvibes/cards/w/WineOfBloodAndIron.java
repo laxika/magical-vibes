@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +19,7 @@ public class WineOfBloodAndIron extends Card {
                 false,
                 "{4}",
                 List.of(
-                        new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)),
+                        BoostEffect.target(new TargetPower(), new Fixed(0)),
                         new SacrificeSelfAtEndStepEffect()),
                 "{4}: Target creature gets +X/+0 until end of turn, where X is its power. Sacrifice this artifact at the beginning of the next end step.",
                 TargetFilters.creature()));

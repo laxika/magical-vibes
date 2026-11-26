@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "173")
@@ -12,6 +12,6 @@ public class HoodedBrawler extends Card {
 
     public HoodedBrawler() {
         addStaticEffect(new ExertAsItAttacksEffect());
-        addTrigger(Triggers.exertedAsItAttacks(), new BoostSelfEffect(2, 2));
+        addTrigger(Triggers.exertedAsItAttacks(), BoostEffect.self(2, 2));
     }
 }

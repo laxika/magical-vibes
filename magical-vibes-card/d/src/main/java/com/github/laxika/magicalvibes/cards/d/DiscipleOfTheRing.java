@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -51,7 +51,7 @@ public class DiscipleOfTheRing extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 COST,
-                List.of(exileInstantOrSorceryCost(), new BoostSelfEffect(1, 1)),
+                List.of(exileInstantOrSorceryCost(), BoostEffect.self(1, 1)),
                 "{1}, Exile an instant or sorcery card from your graveyard: This creature gets +1/+1 until end of turn."
         ));
 

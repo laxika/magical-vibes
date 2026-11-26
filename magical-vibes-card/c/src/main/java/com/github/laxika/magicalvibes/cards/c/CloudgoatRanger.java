@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +36,7 @@ public class CloudgoatRanger extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(3, new PermanentHasSubtypePredicate(CardSubtype.KITHKIN)),
-                        new BoostSelfEffect(2, 0),
+                        BoostEffect.self(2, 0),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
                 ),
                 "Tap three untapped Kithkin you control: This creature gets +2/+0 and gains flying until end of turn."

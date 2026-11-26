@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class UrzasAvenger extends Card {
 
     public UrzasAvenger() {
         addActivatedAbility(new ActivatedAbility(false, "{0}",
-                List.of(new BoostSelfEffect(-1, -1),
+                List.of(BoostEffect.self(-1, -1),
                         new GrantChosenKeywordEffect(
                                 List.of(Keyword.BANDING, Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
                                 Subjects.source())),

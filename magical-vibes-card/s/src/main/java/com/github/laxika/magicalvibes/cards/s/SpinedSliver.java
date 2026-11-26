@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,6 +19,6 @@ public class SpinedSliver extends Card {
         // Whenever a Sliver becomes blocked, that Sliver gets +1/+1 until end of turn
         // for each creature blocking it.
         addTrigger(Triggers.creatureBecomesBlocked().withFilter(new PermanentHasSubtypePredicate(CardSubtype.SLIVER)),
-                new BoostSelfEffect(Subjects.triggering(), new CreaturesBlockingSource(true), new CreaturesBlockingSource(true)));
+                BoostEffect.of(Subjects.triggering(), new CreaturesBlockingSource(true), new CreaturesBlockingSource(true)));
     }
 }

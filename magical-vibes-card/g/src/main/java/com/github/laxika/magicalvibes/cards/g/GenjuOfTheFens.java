@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -39,7 +39,7 @@ public class GenjuOfTheFens extends Card {
                 new AnimatePermanentsEffect(2, 2, List.of(CardSubtype.SPIRIT), Set.of(), CardColor.BLACK,
                         Set.of(), Subjects.attached(), Duration.UNTIL_END_OF_TURN),
                 new GrantActivatedAbilityEffect(
-                        new ActivatedAbility(false, "{B}", List.of(new BoostSelfEffect(1, 1)),
+                        new ActivatedAbility(false, "{B}", List.of(BoostEffect.self(1, 1)),
                                 "{B}: This creature gets +1/+1 until end of turn."),
                         Subjects.attached(), null, Duration.UNTIL_END_OF_TURN)
         ), "{2}: Until end of turn, enchanted Swamp becomes a 2/2 black Spirit creature with "

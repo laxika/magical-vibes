@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class EfreetWeaponmaster extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature you control"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(3, 0))
-                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new BoostTargetCreatureEffect(3, 0));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), BoostEffect.target(3, 0))
+                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), BoostEffect.target(3, 0));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 
@@ -19,7 +19,7 @@ public class SeafloorStalker extends Card {
                 "{4}{U}",
                 List.of(
                         new ReduceActivationCostEffect(new PartySize()),
-                        new BoostSelfEffect(1, 0),
+                        BoostEffect.self(1, 0),
                         new MakeCreatureUnblockableEffect(true)
                 ),
                 "{4}{U}: This creature gets +1/+0 until end of turn and can't be blocked this turn. "

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -35,7 +35,7 @@ public class AzulaRuthlessFirebender extends Card {
                 false,
                 "{2}{B}",
                 List.of(
-                        new BoostSelfEffect(new ControllerExperienceCounters(),
+                        BoostEffect.self(new ControllerExperienceCounters(),
                                 new ControllerExperienceCounters()),
                         new GrantKeywordEffect(Keyword.MENACE, Subjects.source())
                 ),

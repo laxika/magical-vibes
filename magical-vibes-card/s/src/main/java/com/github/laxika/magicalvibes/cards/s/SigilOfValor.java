@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
@@ -24,7 +24,7 @@ public class SigilOfValor extends Card {
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true);
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new BoostSelfEffect(Subjects.triggering(), otherCreatures, otherCreatures));
+                BoostEffect.of(Subjects.triggering(), otherCreatures, otherCreatures));
 
         // Equip {1}
         addActivatedAbility(new EquipActivatedAbility("{1}"));

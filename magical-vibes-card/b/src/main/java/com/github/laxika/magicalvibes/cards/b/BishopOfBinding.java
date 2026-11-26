@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,7 +23,7 @@ public class BishopOfBinding extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                 "Target must be a Vampire"
-        )).addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(
+        )).addTrigger(Triggers.attacks(), BoostEffect.target(
                 new TotalPowerOfCardsExiledWithSource(), new TotalPowerOfCardsExiledWithSource()));
     }
 }

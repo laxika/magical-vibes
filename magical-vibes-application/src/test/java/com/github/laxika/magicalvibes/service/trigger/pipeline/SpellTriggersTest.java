@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -32,7 +33,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpe
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellModeCount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -413,7 +412,7 @@ class SpellTriggersTest {
     void referringToTheTriggeringSpellDoesNotMakeItADeclaredTarget() {
         Permanent source = createPermanent("Spell watcher");
         Card spell = createInstant("Triggering spell");
-        var effect = authored(SpellFilter.ANY, List.of(new BoostSelfEffect(2, 2),
+        var effect = authored(SpellFilter.ANY, List.of(BoostEffect.self(2, 2),
                 new MayEffect(new com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect(),
                         "Choose new targets?")));
         var context = new SpellEvent.Cast(spell, player1Id, Zone.HAND, null);
@@ -546,7 +545,7 @@ class SpellTriggersTest {
         void casterRelativeTurnGateUsesCastingPlayer() {
             Permanent perm = createPermanent("Vision");
             var effect = authored(SpellFilter.ANY.withTurn(SpellFilter.Turn.NOT_CASTERS),
-                    List.of(new BoostSelfEffect(1, 1)));
+                    List.of(BoostEffect.self(1, 1)));
             Card spellCard = createInstant("Opt");
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
@@ -614,7 +613,7 @@ class SpellTriggersTest {
         @DisplayName("uses self-targeting stack entry when resolved effect is self-targeting")
         void selfTargetingStackEntry() {
             Permanent perm = createPermanent("Some Permanent");
-            var innerEffect = new BoostSelfEffect(1, 1);
+            var innerEffect = BoostEffect.self(1, 1);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -657,7 +656,7 @@ class SpellTriggersTest {
         @DisplayName("an ability reading the mana spent keeps the spell, its mana spent recorded, as its triggering spell")
         void manaSpentAmountReadsTheTriggeringSpell() {
             Permanent perm = createPermanent("Aberrant Manawurm");
-            var innerEffect = new BoostSelfEffect(new ManaSpentToCast(), new Fixed(0));
+            var innerEffect = BoostEffect.self(new ManaSpentToCast(), new Fixed(0));
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -744,7 +743,7 @@ class SpellTriggersTest {
             source.target(TargetFilters.creature(), 0, 1)
                     .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
             source.target(TargetFilters.creatureYouControl())
-                    .addTrigger(Triggers.youCastSpell().anySpell(), new BoostTargetCreatureEffect(1, 1));
+                    .addTrigger(Triggers.youCastSpell().anySpell(), BoostEffect.target(1, 1));
             Permanent perm = new Permanent(source);
             TriggeredAbility ability = source.getTriggeredAbilities().get(1);
             CastAbility effect = CastAbility.of(ability, SpellFilter.ANY);
@@ -761,7 +760,7 @@ class SpellTriggersTest {
             assertThat(result).isTrue();
             assertThat(gd.pendingInteractions).singleElement()
                     .isInstanceOfSatisfying(PermanentChoiceContext.AttackTriggerTarget.class, queued ->
-                            assertThat(queued.effects()).containsExactly(new BoostTargetCreatureEffect(1, 1)));
+                            assertThat(queued.effects()).containsExactly(BoostEffect.target(1, 1)));
         }
 
         @Test
@@ -1180,7 +1179,7 @@ class SpellTriggersTest {
             Permanent perm = createPermanent("Clever Lumimancer");
 
             boolean result = collectCopy(perm, SpellFilter.ANY, copyOf(createInstant("Lightning Bolt"), player1Id),
-                    player1Id, new BoostSelfEffect(2, 2));
+                    player1Id, BoostEffect.self(2, 2));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1200,7 +1199,7 @@ class SpellTriggersTest {
 
             boolean result = collectCopy(perm,
                     SpellFilter.ANY.withStackEntry(new StackEntryControlledByEnchantedPlayerPredicate()),
-                    copiedSpell, player1Id, new BoostSelfEffect(2, 2));
+                    copiedSpell, player1Id, BoostEffect.self(2, 2));
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
@@ -1217,7 +1216,7 @@ class SpellTriggersTest {
 
             boolean result = collectCopy(perm,
                     SpellFilter.ANY.withStackEntry(new StackEntryControlledByEnchantedPlayerPredicate()),
-                    copiedSpell, player1Id, new BoostSelfEffect(2, 2));
+                    copiedSpell, player1Id, BoostEffect.self(2, 2));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1281,14 +1280,14 @@ class SpellTriggersTest {
     }
 
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — BoostSelfEffect on the attached creature")
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — a boost of the attached creature")
     class ControllerBoostEquippedOnSpellCast {
 
         @Test
         @DisplayName("puts triggered ability on stack carrying the source permanent id")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Leering Emblem");
-            var effect = new BoostSelfEffect(Subjects.attached(), new Fixed(2), new Fixed(2));
+            var effect = BoostEffect.of(Subjects.attached(), new Fixed(2), new Fixed(2));
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
@@ -1399,7 +1398,7 @@ class SpellTriggersTest {
         @DisplayName("returns false when spell was cast from hand")
         void returnsFalseWhenCastFromHand() {
             Permanent perm = createPermanent("Snapcaster Mage");
-            var innerEffect = new BoostSelfEffect(1, 1);
+            var innerEffect = BoostEffect.self(1, 1);
             var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
@@ -1414,7 +1413,7 @@ class SpellTriggersTest {
         @DisplayName("puts triggered ability on stack when cast from graveyard with non-targeting effects")
         void putsOnStackWhenNoTargetingNeeded() {
             Permanent perm = createPermanent("Some Card");
-            var innerEffect = new BoostSelfEffect(1, 1);
+            var innerEffect = BoostEffect.self(1, 1);
             var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.GRAVEYARD, null);
@@ -1672,7 +1671,7 @@ class SpellTriggersTest {
         void tracksEachPlayerIndependently() {
             Permanent perm = createPermanent("Zenith Chronicler");
             var effect = castAbility(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
-                    new BoostSelfEffect(1, 1));
+                    BoostEffect.self(1, 1));
             Card player1Spell = createCard("Player 1 Spell");
             player1Spell.setColors(List.of(CardColor.RED, CardColor.BLUE));
             Card player2Spell = createCard("Player 2 Spell");
@@ -1697,7 +1696,7 @@ class SpellTriggersTest {
         void ignoresLaterMulticoloredSpell() {
             Permanent perm = createPermanent("Zenith Chronicler");
             var effect = castAbility(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
-                    new BoostSelfEffect(1, 1));
+                    BoostEffect.self(1, 1));
             Card firstSpell = createCard("First Spell");
             firstSpell.setColors(List.of(CardColor.RED, CardColor.BLUE));
             Card secondSpell = createCard("Second Spell");

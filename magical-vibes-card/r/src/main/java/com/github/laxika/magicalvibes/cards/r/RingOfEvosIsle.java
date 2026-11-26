@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -26,7 +26,7 @@ public class RingOfEvosIsle extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new BoostSelfEffect(Subjects.attached(), 0, 0, Keyword.HEXPROOF)),
+                List.of(BoostEffect.of(Subjects.attached(), 0, 0, Keyword.HEXPROOF)),
                 "{2}: Equipped creature gains hexproof until end of turn."
         ));
 

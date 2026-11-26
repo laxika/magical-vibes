@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +32,7 @@ public class WaspShrinkingSavior extends Card {
                 new PermanentPowerAtMostPredicate(-1)
         ));
 
-        var boostTargetCreature = new BoostTargetCreatureEffect(new Fixed(-3), new Fixed(0), otherCreature,
+        var boostTargetCreature = BoostEffect.target(new Fixed(-3), new Fixed(0), otherCreature,
                         Duration.UNTIL_YOUR_NEXT_TURN);
         target(new PermanentPredicateTargetFilter(
                 otherCreature,

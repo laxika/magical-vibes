@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithChosenNameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,6 +40,6 @@ public class AGirlAndHerDogs extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                 CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(legendaryCreatures, legendaryCreatures));
+        addTrigger(Triggers.attacks(), BoostEffect.self(legendaryCreatures, legendaryCreatures));
     }
 }

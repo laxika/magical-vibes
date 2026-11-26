@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class VampiresZeal extends Card {
 
     public VampiresZeal() {
-        addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+        addSpellEffect(BoostEffect.target(2, 2));
         addSpellEffect(GrantKeywordEffect.toTargetIf(
                 Keyword.FIRST_STRIKE, new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)));
     }

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class OminousSphinx extends Card {
         // puts the ability on the stack; no cast-time target() is declared, so casting Ominous Sphinx
         // itself never prompts for a target.
         addTrigger(Triggers.youDiscardCard(),
-                new BoostTargetCreatureEffect(-2, 0, new PermanentAllOfPredicate(List.of(
+                BoostEffect.target(-2, 0, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))));
     }

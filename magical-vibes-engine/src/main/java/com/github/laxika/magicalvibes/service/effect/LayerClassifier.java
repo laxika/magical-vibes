@@ -30,9 +30,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEf
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenPlayerModeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesSharingColorWithTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTurnedFaceUpEffect;
@@ -465,10 +464,9 @@ public final class LayerClassifier {
                             false, false);
                 }));
         map.put(DynamicStaticBoostEffect.class, fixed(Layer.L7C_MODIFY_PT));
-        map.put(BoostSelfEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(AttachedBoostEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(ShrinkEnchantedCreatureEffect.class, fixed(Layer.L7C_MODIFY_PT));
-        map.put(BoostTargetCreatureEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByOtherCreaturesWithSameNameEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByBushidoEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByAttackCountEffect.class, fixed(Layer.L7C_MODIFY_PT));

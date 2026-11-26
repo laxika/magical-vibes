@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class GnarlbarkElm extends Card {
                 "{2}{B}",
                 List.of(
                         new RemoveCounterFromSourceCost(2),
-                        new BoostTargetCreatureEffect(-2, -2)
+                        BoostEffect.target(-2, -2)
                 ),
                 "{2}{B}, Remove two counters from this creature: Target creature gets -2/-2 until end of turn. "
                         + "Activate only as a sorcery.",

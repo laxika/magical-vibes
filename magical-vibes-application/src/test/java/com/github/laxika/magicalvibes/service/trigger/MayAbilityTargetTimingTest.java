@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,7 +40,7 @@ class MayAbilityTargetTimingTest extends BaseCardTest {
         card.setManaCost("{1}");
         card.setPower(2);
         card.setToughness(2);
-        card.addTrigger(Triggers.attacks(), new MayEffect(new BoostTargetCreatureEffect(3, 3), QUESTION));
+        card.addTrigger(Triggers.attacks(), new MayEffect(BoostEffect.target(3, 3), QUESTION));
         return card;
     }
 
@@ -106,7 +106,7 @@ class MayAbilityTargetTimingTest extends BaseCardTest {
     void acceptedAbilityWithoutATargetIsGivenNone() {
         Permanent source = addCreatureReady(player1, raider());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        List<CardEffect> effects = List.of(new MayEffect(new BoostTargetCreatureEffect(3, 3), QUESTION));
+        List<CardEffect> effects = List.of(new MayEffect(BoostEffect.target(3, 3), QUESTION));
         StackEntry untargeted = TestStackDoor.triggered(source.getCard(), player1.getId(),
                 "Fixture Raider's ability", effects);
         gd.stack.add(untargeted);

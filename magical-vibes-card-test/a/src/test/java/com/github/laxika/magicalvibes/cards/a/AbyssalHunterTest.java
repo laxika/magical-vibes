@@ -209,6 +209,30 @@ class AbyssalHunterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Hunter pumped while its ability waits, then bounced, deals its boosted last-known power")
+    void pumpedWhileAbilityWaitsThenBouncedUsesBoostedLastKnownPower() {
+        Permanent hunter = addCreatureReady(player1, new AbyssalHunter());
+        Permanent target = addCreatureReady(player2, new NobleElephant());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castInstant(player1, 0, hunter.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, hunter.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Abyssal Hunter");
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertInGraveyard(player2, "Noble Elephant");
+    }
+
+    @Test
     @DisplayName("A tapped Hunter cannot activate its tap ability")
     void cannotActivateWhileTapped() {
         Permanent hunter = addCreatureReady(player1, new AbyssalHunter());

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "162")
@@ -14,6 +14,6 @@ public class ScourgeOfGeierReach extends Card {
         // Scourge of Geier Reach gets +1/+1 for each creature your opponents control.
         PermanentCount opponentCreatures =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS);
-        addStaticEffect(new BoostSelfEffect(opponentCreatures, opponentCreatures));
+        addStaticEffect(BoostEffect.self(opponentCreatures, opponentCreatures));
     }
 }

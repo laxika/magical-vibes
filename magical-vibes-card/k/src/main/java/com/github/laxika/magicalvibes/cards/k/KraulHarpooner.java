@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -43,7 +43,7 @@ public class KraulHarpooner extends Card {
                 "Target must be a creature with flying an opponent controls"
         ), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostSelfEffect(creatureCardsInGraveyard, new Fixed(0)),
+                        BoostEffect.self(creatureCardsInGraveyard, new Fixed(0)),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(flyingCreatureAnOpponentControls),
                                 new MayEffect(

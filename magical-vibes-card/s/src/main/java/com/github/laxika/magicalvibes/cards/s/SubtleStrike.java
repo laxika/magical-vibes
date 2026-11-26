@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -21,7 +21,7 @@ public class SubtleStrike extends Card {
         setAllowSharedTargets(true);
 
         TargetFilter creature = TargetFilters.creature();
-        CardEffect weaken = new BoostTargetCreatureEffect(-1, -1);
+        CardEffect weaken = BoostEffect.target(-1, -1);
         CardEffect strengthen = new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "87")
 @CardRegistration(set = "M20", collectorNumber = "95")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 public class Disfigure extends Card {
 
     public Disfigure() {
-        addSpellEffect(new BoostTargetCreatureEffect(-2, -2));
+        addSpellEffect(BoostEffect.target(-2, -2));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -30,7 +30,7 @@ public class DromarsCharm extends Card {
                                 "Target must be a spell.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets -2/-2 until end of turn",
-                        new BoostTargetCreatureEffect(-2, -2),
+                        BoostEffect.target(-2, -2),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."))

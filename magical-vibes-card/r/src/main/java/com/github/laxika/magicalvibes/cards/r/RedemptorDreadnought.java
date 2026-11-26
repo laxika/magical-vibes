@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -19,6 +19,6 @@ public class RedemptorDreadnought extends Card {
                 new CardTypePredicate(CardType.CREATURE), 0, 1));
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceExiledCardsThreshold(1)),
-                new BoostSelfEffect(new TotalPowerOfCardsExiledWithSource(), new TotalPowerOfCardsExiledWithSource()));
+                BoostEffect.self(new TotalPowerOfCardsExiledWithSource(), new TotalPowerOfCardsExiledWithSource()));
     }
 }

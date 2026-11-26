@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -24,7 +24,7 @@ public class TailSwipe extends Card {
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
         )).addSpellEffect(new ConditionalEffect(
-                new CastDuringMainPhase(), new BoostTargetCreatureEffect(1, 1)));
+                new CastDuringMainPhase(), BoostEffect.target(1, 1)));
 
         // Then those creatures fight each other.
         target(new PermanentPredicateTargetFilter(

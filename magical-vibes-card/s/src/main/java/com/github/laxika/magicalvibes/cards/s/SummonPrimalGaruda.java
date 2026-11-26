@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -45,7 +45,7 @@ public class SummonPrimalGaruda extends Card {
         setSagaChapterTargetRequired(1);
 
         addTrigger(Triggers.chapter(2),
-                new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl),
+                BoostEffect.target(1, 0, anotherCreatureYouControl),
                 new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), anotherCreatureYouControl));
         setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(
@@ -55,7 +55,7 @@ public class SummonPrimalGaruda extends Card {
         setSagaChapterTargetRequired(2);
 
         addTrigger(Triggers.chapter(3),
-                new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl),
+                BoostEffect.target(1, 0, anotherCreatureYouControl),
                 new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), anotherCreatureYouControl));
         setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(

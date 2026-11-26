@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class IronCrawCrusher extends Card {
     public IronCrawCrusher() {
         addPrototype("{2}{G}{G}", CardColor.GREEN, 2, 5);
         target(TargetFilters.attackingCreature()).addTrigger(Triggers.attacks(),
-                new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0)));
+                BoostEffect.target(new SourcePower(), new Fixed(0)));
     }
 }

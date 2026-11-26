@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MIR", collectorNumber = "224")
@@ -20,6 +20,6 @@ public class JungleWurm extends Card {
         var blockersBeyondTheFirst = new Scaled(
                 new Max(new Sum(new CreaturesBlockingSource(), new Fixed(-1)), new Fixed(0)), -1);
         addTrigger(Triggers.becomesBlocked(),
-                new BoostSelfEffect(blockersBeyondTheFirst, blockersBeyondTheFirst));
+                BoostEffect.self(blockersBeyondTheFirst, blockersBeyondTheFirst));
     }
 }

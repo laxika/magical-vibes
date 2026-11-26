@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
@@ -34,7 +34,7 @@ public class ThornmantleStriker extends Card {
                         TargetFilters.permanent()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature an opponent controls gets -X/-X until end of turn, where X is the number of Elves you control",
-                        new BoostTargetCreatureEffect(new Scaled(elfCount, -1), new Scaled(elfCount, -1),
+                        BoostEffect.target(new Scaled(elfCount, -1), new Scaled(elfCount, -1),
                                 opponentCreature.predicate()),
                         opponentCreature)
         ))));

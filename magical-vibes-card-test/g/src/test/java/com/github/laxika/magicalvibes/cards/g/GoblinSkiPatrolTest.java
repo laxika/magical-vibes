@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,6 +49,20 @@ class GoblinSkiPatrolTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, patrol)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, patrol)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, patrol, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The log says the boost, which has no stated duration, lasts indefinitely")
+    void logNamesTheIndefiniteBoost() {
+        addPatrol();
+        addSnowMountain();
+        payMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).extracting(GameLogEntry::plainText)
+                .anyMatch(line -> line.endsWith("gets +2/+0 indefinitely."));
     }
 
     @Test

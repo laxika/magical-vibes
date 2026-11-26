@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class MerrowGrimeblotter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U/B}",
-                List.of(new BoostTargetCreatureEffect(-2, 0)),
+                List.of(BoostEffect.target(-2, 0)),
                 "{1}{U/B}, {Q}: Target creature gets -2/-0 until end of turn.",
                 TargetFilters.creature()
         ).withRequiresUntap());

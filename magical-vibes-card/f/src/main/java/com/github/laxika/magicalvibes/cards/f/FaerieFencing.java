@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlledFaerieAsCast;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,9 +14,9 @@ public class FaerieFencing extends Card {
 
     public FaerieFencing() {
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(
+                .addSpellEffect(BoostEffect.target(
                         new Scaled(new XValue(), -1), new Scaled(new XValue(), -1)))
                 .addSpellEffect(new ConditionalEffect(
-                        new ControlledFaerieAsCast(), new BoostTargetCreatureEffect(-3, -3)));
+                        new ControlledFaerieAsCast(), BoostEffect.target(-3, -3)));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -26,7 +26,7 @@ public class OsgirTheReconstructor extends Card {
                 "{1}",
                 List.of(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact"),
-                        new BoostTargetCreatureEffect(2, 0)),
+                        BoostEffect.target(2, 0)),
                 "{1}, Sacrifice an artifact: Target creature you control gets +2/+0 until end of turn.",
                 TargetFilters.creatureYouControl()));
 

@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Soulbond rider for a targeted pump: "If it's paired with a creature, that creature also gets
- * +X/+Y until end of turn" (Joint Assault). Pair it with a {@link BoostTargetCreatureEffect} in
+ * +X/+Y until end of turn" (Joint Assault). Pair it with a {@link BoostEffect#target} in
  * the same target group — this effect boosts the soulbond partner of the target, never the target
  * itself, and does nothing when the target is unpaired or has already left the battlefield.
  *
  * <p>The amounts are {@link DynamicAmount}s evaluated against the effect's controller, exactly as
- * in {@link BoostTargetCreatureEffect}.
+ * in {@link BoostEffect#target}.
  */
 public record BoostPairedCreatureOfTargetEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost)
         implements CreatureBoostEffect {

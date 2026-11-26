@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "319")
 @CardRegistration(set = "CHR", collectorNumber = "67")
@@ -15,6 +15,6 @@ public class RabidWombat extends Card {
     public RabidWombat() {
         // Rabid Wombat gets +2/+2 for each Aura attached to it. (Vigilance is auto-loaded.)
         Scaled twicePerAura = new Scaled(new AttachmentsOnSource(true, false), 2);
-        addStaticEffect(new BoostSelfEffect(twicePerAura, twicePerAura));
+        addStaticEffect(BoostEffect.self(twicePerAura, twicePerAura));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -41,7 +41,7 @@ public class DerelictAtticWidowsWalk extends Card {
                         new TriggeredAbility(Triggers.creatureYouControlAttacks(),
                                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                                 SequenceEffect.of(
-                                        new BoostTargetCreatureEffect(1, 0),
+                                        BoostEffect.target(1, 0),
                                         new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()))),
                         Subjects.source())));
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,7 +32,7 @@ public class EnslavedDwarf extends Card {
                 "{R}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostTargetCreatureEffect(1, 0, blackCreature),
+                        BoostEffect.target(1, 0, blackCreature),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target(), blackCreature)
                 ),
                 "{R}, Sacrifice this creature: Target black creature gets +1/+0 and gains first strike until end of turn.",

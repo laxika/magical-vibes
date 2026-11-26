@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -34,7 +34,7 @@ public class ScourgeOfTheNobilis extends Card {
                                 new ActivatedAbility(
                                         false,
                                         "{R/W}",
-                                        List.of(new BoostSelfEffect(1, 0)),
+                                        List.of(BoostEffect.self(1, 0)),
                                         "{R/W}: This creature gets +1/+0 until end of turn."
                                 ),
                                 Subjects.attachedCreature()

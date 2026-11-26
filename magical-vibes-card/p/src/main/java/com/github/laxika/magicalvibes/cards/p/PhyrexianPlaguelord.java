@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -22,7 +22,7 @@ public class PhyrexianPlaguelord extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), new BoostTargetCreatureEffect(-4, -4)),
+                List.of(new SacrificeSelfCost(), BoostEffect.target(-4, -4)),
                 "{T}, Sacrifice Phyrexian Plaguelord: Target creature gets -4/-4 until end of turn."
         ));
 
@@ -30,7 +30,7 @@ public class PhyrexianPlaguelord extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeCreatureCost(), new BoostTargetCreatureEffect(-1, -1)),
+                List.of(new SacrificeCreatureCost(), BoostEffect.target(-1, -1)),
                 "Sacrifice a creature: Target creature gets -1/-1 until end of turn."
         ));
     }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,6 +25,6 @@ public class BolshackDragon extends Card {
                 new CardColorPredicate(CardColor.RED), CountScope.CONTROLLER);
         addStaticEffect(new ConditionalEffect(
                 new SourceIsAttacking(),
-                new BoostSelfEffect(redCards, new Fixed(0))));
+                BoostEffect.self(redCards, new Fixed(0))));
     }
 }

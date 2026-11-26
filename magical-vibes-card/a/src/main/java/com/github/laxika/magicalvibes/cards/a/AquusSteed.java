@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import java.util.List;
 public class AquusSteed extends Card {
 
     public AquusSteed() {
-        addActivatedAbility(new ActivatedAbility(true, "{2}{U}", List.of(new BoostTargetCreatureEffect(-2, 0)),
+        addActivatedAbility(new ActivatedAbility(true, "{2}{U}", List.of(BoostEffect.target(-2, 0)),
                 "{2}{U}, {T}: Target creature gets -2/-0 until end of turn."));
     }
 }

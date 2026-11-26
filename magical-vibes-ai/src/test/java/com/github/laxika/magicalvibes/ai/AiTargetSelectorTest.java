@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
@@ -68,7 +69,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -466,7 +466,7 @@ class AiTargetSelectorTest {
         Card pumpSpell = new Card();
         pumpSpell.setName("Test Growth");
         pumpSpell.setType(CardType.INSTANT);
-        pumpSpell.addSpellEffect(new BoostTargetCreatureEffect(3, 3));
+        pumpSpell.addSpellEffect(BoostEffect.target(3, 3));
 
         UUID target = targetSelector.chooseTarget(gd, pumpSpell, aiPlayer.getId());
 
@@ -1391,7 +1391,7 @@ class AiTargetSelectorTest {
             pumpSpell.setType(CardType.INSTANT);
             pumpSpell.target(new PermanentPredicateTargetFilter(
                     new PermanentIsCreaturePredicate(), "Target must be a creature"), 0, 2)
-                    .addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+                    .addSpellEffect(BoostEffect.target(2, 2));
 
             List<UUID> targets = targetSelector.chooseMultiTargets(gd, pumpSpell, aiPlayer.getId());
 
@@ -1822,7 +1822,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
 
             ActivatedAbility ability = new ActivatedAbility(true, null,
-                    List.of(new BoostTargetCreatureEffect(2, 2)),
+                    List.of(BoostEffect.target(2, 2)),
                     "{T}: Target creature gets +2/+2 until end of turn.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
@@ -1838,7 +1838,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
 
             ActivatedAbility ability = new ActivatedAbility(true, null,
-                    List.of(new BoostTargetCreatureEffect(2, 2)),
+                    List.of(BoostEffect.target(2, 2)),
                     "{T}: Target creature gets +2/+2 until end of turn.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);

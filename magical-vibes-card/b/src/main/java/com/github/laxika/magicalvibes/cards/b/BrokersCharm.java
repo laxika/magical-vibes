@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -41,7 +41,7 @@ public class BrokersCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control gets +1/+0 until end of turn. It deals damage equal to its power to target creature or planeswalker an opponent controls",
                         List.<CardEffect>of(
-                                new BoostTargetCreatureEffect(1, 0),
+                                BoostEffect.target(1, 0),
                                 new TargetDealsPowerDamageToTargetEffect()),
                         List.of(creatureYouControl, creatureOrPlaneswalkerOpponentControls)),
                 new ChooseOneEffect.ChooseOneOption(

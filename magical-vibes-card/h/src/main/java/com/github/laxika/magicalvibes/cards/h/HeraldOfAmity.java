@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,6 +23,6 @@ public class HeraldOfAmity extends Card {
 
         PermanentCount aurasYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA), CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(aurasYouControl, aurasYouControl));
+        addTrigger(Triggers.attacks(), BoostEffect.self(aurasYouControl, aurasYouControl));
     }
 }

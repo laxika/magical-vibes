@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class VilisBrokerOfBlood extends Card {
     public VilisBrokerOfBlood() {
         // {B}, Pay 2 life: Target creature gets -1/-1 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{B}",
-                List.of(new PayLifeCost(2), new BoostTargetCreatureEffect(-1, -1)),
+                List.of(new PayLifeCost(2), BoostEffect.target(-1, -1)),
                 "{B}, Pay 2 life: Target creature gets -1/-1 until end of turn.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature")));

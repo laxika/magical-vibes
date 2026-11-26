@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -34,7 +34,7 @@ public class BurningYardTrainer extends Card {
                 "Target must be another Knight you control"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(2, 2, ANOTHER_KNIGHT),
+                        BoostEffect.target(2, 2, ANOTHER_KNIGHT),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target(), ANOTHER_KNIGHT),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target(), ANOTHER_KNIGHT));
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfOrPutCounterIfExactlyThreeColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BoostSelfOrPutCounterIfExactlyThreeColorsEffectHandler implements NormalEffectHandlerBean {
 
-    private final BoostSelfEffectHandler boostSelfEffectHandler;
+    private final BoostEffectHandler boostEffectHandler;
     private final PutCountersEffectHandler putCountersEffectHandler;
 
     @Override
@@ -31,7 +31,7 @@ public class BoostSelfOrPutCounterIfExactlyThreeColorsEffectHandler implements N
         if (colorsSpent == 3) {
             putCountersEffectHandler.resolve(gameData, entry, PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         } else {
-            boostSelfEffectHandler.resolve(gameData, entry, new BoostSelfEffect(1, 1));
+            boostEffectHandler.resolve(gameData, entry, BoostEffect.self(1, 1));
         }
     }
 }

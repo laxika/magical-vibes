@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
@@ -49,7 +49,7 @@ public class Cromat extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}{W}",
-                List.of(new BoostSelfEffect(1, 1)),
+                List.of(BoostEffect.self(1, 1)),
                 "{R}{W}: Cromat gets +1/+1 until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(

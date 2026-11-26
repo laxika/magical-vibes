@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -15,8 +15,8 @@ public class TragicFall extends Card {
         // Hellbent — That creature gets -13/-13 until end of turn instead if you have no cards in hand.
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new ControllerHandEmpty(),
-                new BoostTargetCreatureEffect(-3, -3),
-                new BoostTargetCreatureEffect(-13, -13)
+                BoostEffect.target(-3, -3),
+                BoostEffect.target(-13, -13)
         ));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -28,7 +28,7 @@ public class HeroesHangout extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "One or two target creatures each get +1/+0 and gain first strike until end of turn",
                         List.<CardEffect>of(
-                                new BoostTargetCreatureEffect(1, 0),
+                                BoostEffect.target(1, 0),
                                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                         TargetFilters.creature(), null, 1, 2, false, null)
         )));

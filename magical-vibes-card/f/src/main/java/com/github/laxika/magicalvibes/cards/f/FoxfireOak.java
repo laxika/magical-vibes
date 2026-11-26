@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class FoxfireOak extends Card {
 
     public FoxfireOak() {
-        addActivatedAbility(new ActivatedAbility(false, "{R/G}{R/G}{R/G}", List.of(new BoostSelfEffect(3, 0)), "{R/G}{R/G}{R/G}: Foxfire Oak gets +3/+0 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{R/G}{R/G}{R/G}", List.of(BoostEffect.self(3, 0)), "{R/G}{R/G}{R/G}: Foxfire Oak gets +3/+0 until end of turn."));
     }
 }

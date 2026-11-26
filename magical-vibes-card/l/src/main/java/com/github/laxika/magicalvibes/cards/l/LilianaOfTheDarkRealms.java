@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -51,9 +51,9 @@ public class LilianaOfTheDarkRealms extends Card {
                 -3,
                 List.of(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("Target creature gets +X/+X until end of turn.",
-                                new BoostTargetCreatureEffect(swamps, swamps)),
+                                BoostEffect.target(swamps, swamps)),
                         new ChooseOneEffect.ChooseOneOption("Target creature gets -X/-X until end of turn.",
-                                new BoostTargetCreatureEffect(negativeSwamps, negativeSwamps))))),
+                                BoostEffect.target(negativeSwamps, negativeSwamps))))),
                 "−3: Target creature gets +X/+X or -X/-X until end of turn, where X is the number of Swamps you control.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

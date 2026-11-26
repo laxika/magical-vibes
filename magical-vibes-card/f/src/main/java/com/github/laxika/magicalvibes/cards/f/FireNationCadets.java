@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,7 +28,7 @@ public class FireNationCadets extends Card {
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
                         new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2)), Subjects.source())));
 
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(1, 0)),
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(BoostEffect.self(1, 0)),
                 "{2}: This creature gets +1/+0 until end of turn."));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -18,7 +18,7 @@ public class GatewayShade extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new BoostSelfEffect(1, 1)),
+                List.of(BoostEffect.self(1, 1)),
                 "{B}: This creature gets +1/+1 until end of turn."
         ));
 
@@ -28,7 +28,7 @@ public class GatewayShade extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.GATE)),
-                        new BoostSelfEffect(2, 2)
+                        BoostEffect.self(2, 2)
                 ),
                 "Tap an untapped Gate you control: This creature gets +2/+2 until end of turn."
         ));

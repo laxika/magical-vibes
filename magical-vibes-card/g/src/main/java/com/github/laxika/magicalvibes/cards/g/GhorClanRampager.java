@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +22,7 @@ public class GhorClanRampager extends Card {
     public GhorClanRampager() {
         // Bloodrush — {R}{G}, Discard this card: Target attacking creature gets +4/+4 and gains trample until end of turn.
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{R}{G}",
-                List.of(new BoostTargetCreatureEffect(4, 4),
+                List.of(BoostEffect.target(4, 4),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                 "Bloodrush — {R}{G}, Discard this card: Target attacking creature gets +4/+4 and gains trample until end of turn.",
                 TargetFilters.attackingCreature()));

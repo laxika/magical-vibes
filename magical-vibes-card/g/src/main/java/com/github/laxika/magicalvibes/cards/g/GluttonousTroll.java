@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -33,7 +33,7 @@ public class GluttonousTroll extends Card {
                         new SacrificePermanentCost(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 "Sacrifice another nonland permanent"),
-                        new BoostSelfEffect(2, 2)),
+                        BoostEffect.self(2, 2)),
                 "{1}{G}, Sacrifice another nonland permanent: This creature gets +2/+2 until end of turn."
         ));
     }

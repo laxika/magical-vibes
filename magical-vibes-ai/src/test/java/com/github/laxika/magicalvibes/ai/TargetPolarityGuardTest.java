@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
@@ -21,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect;
@@ -145,7 +145,7 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd, new AttachTargetToSourcePermanentEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd, new AttachTargetEquipmentsToTargetCreatureThenEffect(
-                new BoostTargetCreatureEffect(1, 1)), aiPlayerId))
+                BoostEffect.target(1, 1)), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd, RemoveAllCountersFromTargetPermanentEffect.fromTargetCreature(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
@@ -186,7 +186,7 @@ class TargetPolarityGuardTest {
         TargetPolarityClassifier classifier = createClassifier(harness);
 
         assertThat(classifier.classify(gd,
-                new FlipCoinWinEffect(new BoostTargetCreatureEffect(1, 1)), aiPlayerId))
+                new FlipCoinWinEffect(BoostEffect.target(1, 1)), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd, new MakeTargetAttackingCreatureBlockedEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
@@ -445,10 +445,10 @@ class TargetPolarityGuardTest {
         TargetPolarityClassifier classifier = createClassifier(harness);
 
         assertThat(classifier.classify(gd, new BoostTargetCreaturesByPositionEffect(List.of(
-                new BoostTargetCreatureEffect(3, 3), new BoostTargetCreatureEffect(2, 2))), aiPlayerId))
+                BoostEffect.target(3, 3), BoostEffect.target(2, 2))), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd, new BoostTargetCreaturesByPositionEffect(List.of(
-                new BoostTargetCreatureEffect(3, 3), new BoostTargetCreatureEffect(-1, -1))), aiPlayerId))
+                BoostEffect.target(3, 3), BoostEffect.target(-1, -1))), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
         assertThat(classifier.classify(gd, new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                 new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.WALL),
@@ -468,7 +468,7 @@ class TargetPolarityGuardTest {
         for (int branchIndex = 0; branchIndex < 4; branchIndex++) {
             CardEffect[] branches = {null, null, null, null};
             branches[branchIndex] = ReturnToHandEffect.target();
-            branches[(branchIndex + 1) % branches.length] = new BoostTargetCreatureEffect(1, 1);
+            branches[(branchIndex + 1) % branches.length] = BoostEffect.target(1, 1);
             RollD20Effect roll = RollD20Effect.withSubtractedAmount(new Fixed(1),
                     branches[0], branches[1], branches[2], branches[3]);
 
@@ -477,7 +477,7 @@ class TargetPolarityGuardTest {
                     .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
         }
         assertThat(classifier.classify(gd, new RollD20Effect(null,
-                new BoostTargetCreatureEffect(1, 1)), aiPlayerId))
+                BoostEffect.target(1, 1)), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
     }
 

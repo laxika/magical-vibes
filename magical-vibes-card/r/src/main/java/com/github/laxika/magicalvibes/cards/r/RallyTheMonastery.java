@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -41,7 +40,7 @@ public class RallyTheMonastery extends Card {
         List<Ability> monkTokenEffects = List.of(
                 new TriggeredAbility(Triggers.youCastSpell()
                                 .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                        new BoostSelfEffect(1, 1)));
+                        BoostEffect.self(1, 1)));
         CreateTokenEffect monkToken = new CreateTokenEffect(
                 CardType.CREATURE, 2, "Monk", 1, 1,
                 CardColor.WHITE, null, List.of(CardSubtype.MONK),
@@ -54,7 +53,7 @@ public class RallyTheMonastery extends Card {
                         monkToken),
                 new ChooseOneEffect.ChooseOneOption(
                         "Up to two target creatures you control each get +2/+2 until end of turn",
-                        List.<CardEffect>of(new BoostTargetCreatureEffect(2, 2)),
+                        List.<CardEffect>of(BoostEffect.target(2, 2)),
                         TargetFilters.creatureYouControl(), null, 0, 2, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature with power 4 or greater",

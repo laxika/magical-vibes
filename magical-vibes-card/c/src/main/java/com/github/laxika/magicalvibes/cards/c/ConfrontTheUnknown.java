@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,6 +19,6 @@ public class ConfrontTheUnknown extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.CLUE), CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addSpellEffect(CreateTokenEffect.ofClueToken(1))
-                .addSpellEffect(new BoostTargetCreatureEffect(cluesYouControl, cluesYouControl));
+                .addSpellEffect(BoostEffect.target(cluesYouControl, cluesYouControl));
     }
 }

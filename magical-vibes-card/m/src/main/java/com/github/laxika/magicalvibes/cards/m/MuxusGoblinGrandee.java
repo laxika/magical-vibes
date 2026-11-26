@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -38,6 +38,6 @@ public class MuxusGoblinGrandee extends Card {
 
         PermanentCount otherGoblins = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN), CountScope.CONTROLLER, true);
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(otherGoblins, otherGoblins));
+        addTrigger(Triggers.attacks(), BoostEffect.self(otherGoblins, otherGoblins));
     }
 }

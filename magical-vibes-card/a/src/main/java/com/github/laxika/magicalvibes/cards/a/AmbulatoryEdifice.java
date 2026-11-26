@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -13,7 +13,7 @@ public class AmbulatoryEdifice extends Card {
 
     public AmbulatoryEdifice() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                UnlessPaysEffect.youMayPayLife(2, new QueueReflexiveAbilityEffect(new BoostTargetCreatureEffect(-1, -1)))
+                UnlessPaysEffect.youMayPayLife(2, new QueueReflexiveAbilityEffect(BoostEffect.target(-1, -1)))
                         .withPrompt("Pay 2 life to give target creature -1/-1 until end of turn?"));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -26,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -702,11 +702,11 @@ class ActivatedAbilityExecutionServiceTest {
     class SelfTargetingDetection {
 
         @Test
-        @DisplayName("BoostSelfEffect auto-targets source permanent on the stack")
+        @DisplayName("A self boost auto-targets source permanent on the stack")
         void boostSelfAutoTargets() {
             Card card = createCreature("Test Boost Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            List<CardEffect> effects = List.of(BoostEffect.self(1, 1));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -785,7 +785,7 @@ class ActivatedAbilityExecutionServiceTest {
         void nonManaAbilityPushedToStack() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            List<CardEffect> effects = List.of(BoostEffect.self(1, 1));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -802,7 +802,7 @@ class ActivatedAbilityExecutionServiceTest {
         void stackEntryHasCorrectController() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            List<CardEffect> effects = List.of(BoostEffect.self(1, 1));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -816,7 +816,7 @@ class ActivatedAbilityExecutionServiceTest {
             gameData.activePlayerId = player2Id;
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            List<CardEffect> effects = List.of(BoostEffect.self(1, 1));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -829,7 +829,7 @@ class ActivatedAbilityExecutionServiceTest {
         void stackEntryHasCorrectSourcePermanent() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            List<CardEffect> effects = List.of(BoostEffect.self(1, 1));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -898,7 +898,7 @@ class ActivatedAbilityExecutionServiceTest {
         void pendingMayAbilitiesProcessed() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            List<CardEffect> effects = List.of(BoostEffect.self(1, 1));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
             // Set up a pending may ability so the code path is hit

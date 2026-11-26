@@ -89,7 +89,7 @@ public final class InstantCategoryClassifier {
         if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) return InstantCategory.REMOVAL;
 
         // Combat tricks (targeted pump spells)
-        if (effect instanceof CreatureBoostEffect) return InstantCategory.COMBAT_TRICK;
+        if (CreatureBoostEffect.targetedBoost(effect) != null) return InstantCategory.COMBAT_TRICK;
 
         // Burn to face
         if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player().declaresTarget()) return InstantCategory.BURN_TO_FACE;

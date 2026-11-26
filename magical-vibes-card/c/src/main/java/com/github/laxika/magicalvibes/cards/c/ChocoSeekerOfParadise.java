@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandThenLandsToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,6 +24,6 @@ public class ChocoSeekerOfParadise extends Card {
     public ChocoSeekerOfParadise() {
         addTrigger(Triggers.youAttack().withFilter(new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
                 new LookAtTopCardsChooseOneToHandThenLandsToBattlefieldTappedEffect(new EventValue()));
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new BoostSelfEffect(1, 0));
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), BoostEffect.self(1, 0));
     }
 }

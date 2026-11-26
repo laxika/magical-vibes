@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 
@@ -33,7 +33,7 @@ public class ChronatogTotem extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{0}",
-                List.of(new BoostSelfEffect(3, 3), new SkipNextEffect(SkipKind.TURN)),
+                List.of(BoostEffect.self(3, 3), new SkipNextEffect(SkipKind.TURN)),
                 "{0}: This creature gets +3/+3 until end of turn. You skip your next turn. "
                         + "Activate only once each turn.",
                 1

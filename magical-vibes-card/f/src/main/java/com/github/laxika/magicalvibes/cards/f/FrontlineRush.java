@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class FrontlineRush extends Card {
                                 List.of(CardSubtype.GOBLIN), Set.of(), Set.of())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +X/+X until end of turn, where X is the number of creatures you control",
-                        new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl),
+                        BoostEffect.target(creaturesYouControl, creaturesYouControl),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."))

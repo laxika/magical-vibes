@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +29,7 @@ public class LysAlanaScarblade extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(new CardSubtypePredicate(CardSubtype.ELF), "Elf"),
-                        new BoostTargetCreatureEffect(minusElves, minusElves)),
+                        BoostEffect.target(minusElves, minusElves)),
                 "{T}, Discard an Elf card: Target creature gets -X/-X until end of turn, "
                         + "where X is the number of Elves you control."
         ));

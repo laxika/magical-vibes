@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -30,7 +30,7 @@ public class DarigaazsCharm extends Card {
                         DealDamageEffect.toAnyTarget(3)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +3/+3 until end of turn",
-                        new BoostTargetCreatureEffect(3, 3))
+                        BoostEffect.target(3, 3))
         )));
     }
 }

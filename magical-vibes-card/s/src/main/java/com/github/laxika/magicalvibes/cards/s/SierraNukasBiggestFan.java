@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -36,7 +36,7 @@ public class SierraNukasBiggestFan extends Card {
                 SequenceEffect.of(PutCountersEffect.onSelf(CounterType.QUEST), CreateTokenEffect.ofFoodToken(1)));
 
         addTrigger(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.FOOD), ObjectRelation.YOU_CONTROL),
-                new BoostTargetCreatureEffect(
+                BoostEffect.target(
                         new CountersOnSource(CounterType.QUEST),
                         new CountersOnSource(CounterType.QUEST),
                         CREATURE_YOU_CONTROL));

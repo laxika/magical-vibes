@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -45,7 +45,7 @@ public class TezzeretTheSchemer extends Card {
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new BoostTargetCreatureEffect(artifacts, new Scaled(artifacts, -1))),
+                List.of(BoostEffect.target(artifacts, new Scaled(artifacts, -1))),
                 "−2: Target creature gets +X/−X until end of turn, where X is the number of artifacts you control.",
                 TargetFilters.creature()
         ));

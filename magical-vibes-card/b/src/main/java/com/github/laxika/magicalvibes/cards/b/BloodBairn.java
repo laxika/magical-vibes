@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class BloodBairn extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeCreatureCost(false, false, false, true), new BoostSelfEffect(2, 2)),
+                List.of(new SacrificeCreatureCost(false, false, false, true), BoostEffect.self(2, 2)),
                 "Sacrifice another creature: Blood Bairn gets +2/+2 until end of turn."
         ));
     }

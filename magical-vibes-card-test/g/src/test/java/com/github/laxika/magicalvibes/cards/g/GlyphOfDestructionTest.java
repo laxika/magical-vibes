@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CrimsonKobolds;
 import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
 import com.github.laxika.magicalvibes.cards.r.RagingBull;
 import com.github.laxika.magicalvibes.cards.w.WallOfCaltrops;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -60,6 +61,24 @@ class GlyphOfDestructionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
         harness.assertInGraveyard(player2, "Wall of Caltrops");
+    }
+
+    @Test
+    @DisplayName("The log says the +10/+0 lasts until end of combat")
+    void logNamesTheEndOfCombatDuration() {
+        Permanent wall = addCreatureReady(player2, new WallOfCaltrops());
+        addCreatureReady(player1, new CrimsonKobolds());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new GlyphOfDestruction()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, wall.getId());
+
+        assertThat(gd.gameLog).extracting(GameLogEntry::plainText)
+                .anyMatch(line -> line.endsWith("gets +10/+0 until end of combat."));
     }
 
     @Test

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -30,7 +30,7 @@ public class DemonOfFatesDesign extends Card {
                         new SacrificePermanentCost(
                                 new PermanentIsEnchantmentPredicate(), "another enchantment", true,
                                 false, true, false),
-                        new BoostSelfEffect(new XValue(), new Fixed(0))
+                        BoostEffect.self(new XValue(), new Fixed(0))
                 ),
                 "{2}{B}, Sacrifice another enchantment: Demon of Fate's Design gets +X/+0 until end of turn, where X is the sacrificed enchantment's mana value."
         ));

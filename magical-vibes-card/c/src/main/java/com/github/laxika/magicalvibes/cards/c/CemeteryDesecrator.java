@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -47,7 +47,7 @@ public class CemeteryDesecrator extends Card {
                         TargetFilters.permanent()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature an opponent controls gets -X/-X until end of turn",
-                        new BoostTargetCreatureEffect(new Scaled(x, -1), new Scaled(x, -1),
+                        BoostEffect.target(new Scaled(x, -1), new Scaled(x, -1),
                                 TargetFilters.creatureAnOpponentControls().predicate()),
                         TargetFilters.creatureAnOpponentControls())));
         return SequenceEffect.of(

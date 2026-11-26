@@ -35,7 +35,7 @@ public class BoostPairedCreatureOfTargetEffectHandler implements NormalEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostPairedCreatureOfTargetEffect) effect;
         // Counting contexts refer to the effect's controller, so the amounts evaluate against the
-        // source, matching BoostTargetCreatureEffect.
+        // source, matching BoostEffect.target.
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);

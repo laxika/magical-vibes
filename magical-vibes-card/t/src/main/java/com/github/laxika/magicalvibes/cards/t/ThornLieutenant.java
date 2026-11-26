@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class ThornLieutenant extends Card {
                         List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()));
 
         // {5}{G}: This creature gets +4/+4 until end of turn.
-        addActivatedAbility(new ActivatedAbility(false, "{5}{G}", List.of(new BoostSelfEffect(4, 4)),
+        addActivatedAbility(new ActivatedAbility(false, "{5}{G}", List.of(BoostEffect.self(4, 4)),
                 "{5}{G}: This creature gets +4/+4 until end of turn."));
     }
 }

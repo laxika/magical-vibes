@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
@@ -33,7 +33,7 @@ public class RadhaHeartOfKeld extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{R}{G}",
-                List.of(new BoostSelfEffect(landsYouControl, landsYouControl)),
+                List.of(BoostEffect.self(landsYouControl, landsYouControl)),
                 "{4}{R}{G}: Radha, Heart of Keld gets +X/+X until end of turn, where X is the number of lands you control."
         ));
     }

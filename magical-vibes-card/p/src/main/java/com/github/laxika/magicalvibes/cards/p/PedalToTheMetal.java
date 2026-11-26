@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +16,7 @@ public class PedalToTheMetal extends Card {
     public PedalToTheMetal() {
         // Target creature gets +X/+0 and gains first strike until end of turn.
         target(TargetFilters.creature())
-                .addSpellEffect(new BoostTargetCreatureEffect(new XValue(), new Fixed(0)))
+                .addSpellEffect(BoostEffect.target(new XValue(), new Fixed(0)))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()));
     }
 }

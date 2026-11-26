@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -47,7 +47,7 @@ public class ArahboRoarOfTheWorld extends Card {
                         AbilityZones.of(Zone.BATTLEFIELD, Zone.COMMAND)),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield()))),
-                new BoostTargetCreatureEffect(3, 3));
+                BoostEffect.target(3, 3));
 
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentAllOfPredicate(List.of(
@@ -55,6 +55,6 @@ public class ArahboRoarOfTheWorld extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
                 UnlessPaysEffect.youMayPay("{1}{G}{W}", SequenceEffect.of(
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
-                                new BoostTargetCreatureEffect(new TargetPower(), new TargetPower()))).withPrompt("Pay {1}{G}{W} to give it trample and +X/+X until end of turn?"));
+                                BoostEffect.target(new TargetPower(), new TargetPower()))).withPrompt("Pay {1}{G}{W} to give it trample and +X/+X until end of turn?"));
     }
 }

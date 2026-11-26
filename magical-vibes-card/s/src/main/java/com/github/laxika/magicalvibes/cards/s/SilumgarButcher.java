@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,6 +20,6 @@ public class SilumgarButcher extends Card {
 
         // When this creature exploits a creature, target creature gets -3/-3 until end of turn.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.exploits(), new BoostTargetCreatureEffect(-3, -3));
+                .addTrigger(Triggers.exploits(), BoostEffect.target(-3, -3));
     }
 }

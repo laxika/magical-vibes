@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,8 +19,8 @@ public class UlrichOfTheKrallenhorde extends Card {
         setBackFaceCard(new UlrichUncontestedAlpha());
 
         target(TargetFilters.creature());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(4, 4));
-        addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), new BoostTargetCreatureEffect(4, 4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), BoostEffect.target(4, 4));
+        addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), BoostEffect.target(4, 4));
 
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()),

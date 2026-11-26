@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -17,7 +17,7 @@ import java.util.List;
 public class UnlikelyAlliance extends Card {
 
     public UnlikelyAlliance() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}{W}", List.of(new BoostTargetCreatureEffect(0, 2)),
+        addActivatedAbility(new ActivatedAbility(false, "{1}{W}", List.of(BoostEffect.target(0, 2)),
                 "{1}{W}: Target nonattacking, nonblocking creature gets +0/+2 until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

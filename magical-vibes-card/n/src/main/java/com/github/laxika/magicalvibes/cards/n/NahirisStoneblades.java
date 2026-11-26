@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "139")
@@ -11,6 +11,6 @@ public class NahirisStoneblades extends Card {
     public NahirisStoneblades() {
         // Up to two target creatures each get +2/+0 until end of turn.
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new BoostTargetCreatureEffect(2, 0));
+                .addSpellEffect(BoostEffect.target(2, 0));
     }
 }

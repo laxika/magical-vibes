@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithLifeAtMost;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class AnyaMercilessAngel extends Card {
 
     public AnyaMercilessAngel() {
-        addStaticEffect(new BoostSelfEffect(
+        addStaticEffect(BoostEffect.self(
                 new Scaled(new OpponentsWithLifeAtMost(0, true), 3),
                 new Scaled(new OpponentsWithLifeAtMost(0, true), 3),
                 Duration.STATIC));

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
@@ -52,7 +52,7 @@ public class Marjhan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}{U}",
-                List.of(new BoostSelfEffect(-1, 0), DealDamageEffect.toTargetCreature(1)),
+                List.of(BoostEffect.self(-1, 0), DealDamageEffect.toTargetCreature(1)),
                 "{U}{U}: This creature gets -1/-0 until end of turn and deals 1 damage to target attacking creature without flying.",
                 new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),

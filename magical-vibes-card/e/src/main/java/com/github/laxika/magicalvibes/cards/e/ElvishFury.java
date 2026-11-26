@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -18,7 +18,7 @@ public class ElvishFury extends Card {
         // card into your hand as it resolves.)
         // Target creature gets +2/+2 until end of turn.
         addStaticEffect(new BuybackEffect("{4}"));
-        addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+        addSpellEffect(BoostEffect.target(2, 2));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

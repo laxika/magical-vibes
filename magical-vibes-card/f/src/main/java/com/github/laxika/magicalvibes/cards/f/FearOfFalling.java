@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class FearOfFalling extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(),
-                        new BoostTargetCreatureEffect(-2, 0, Duration.UNTIL_YOUR_NEXT_TURN),
+                        BoostEffect.target(-2, 0, Duration.UNTIL_YOUR_NEXT_TURN),
                         new RemoveKeywordEffect(Keyword.FLYING, Subjects.target(),
                                 Duration.UNTIL_YOUR_NEXT_TURN));
     }

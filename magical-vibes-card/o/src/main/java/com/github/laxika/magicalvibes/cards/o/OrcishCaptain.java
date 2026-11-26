@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,8 +22,8 @@ public class OrcishCaptain extends Card {
     public OrcishCaptain() {
         addActivatedAbility(new ActivatedAbility(false, "{1}",
                 List.of(new FlipCoinWinEffect(
-                        new BoostTargetCreatureEffect(2, 0),
-                        new BoostTargetCreatureEffect(0, -2))),
+                        BoostEffect.target(2, 0),
+                        BoostEffect.target(0, -2))),
                 "{1}: Flip a coin. If you win the flip, target Orc creature gets +2/+0 until end of turn. "
                         + "If you lose the flip, it gets -0/-2 until end of turn.",
                 new PermanentPredicateTargetFilter(

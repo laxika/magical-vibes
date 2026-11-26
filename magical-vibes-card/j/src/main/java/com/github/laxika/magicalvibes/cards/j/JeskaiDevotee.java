@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
 public class JeskaiDevotee extends Card {
 
     public JeskaiDevotee() {
-        addTrigger(Triggers.youCastSpell().nthThisTurn(2), new BoostSelfEffect(1, 1));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2), BoostEffect.self(1, 1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

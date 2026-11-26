@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfWithinXManaValueOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -20,7 +20,7 @@ public class Evershrike extends Card {
     public Evershrike() {
         // Evershrike gets +2/+2 for each Aura attached to it.
         Scaled twicePerAura = new Scaled(new AttachmentsOnSource(true, false), 2);
-        addStaticEffect(new BoostSelfEffect(twicePerAura, twicePerAura));
+        addStaticEffect(BoostEffect.self(twicePerAura, twicePerAura));
 
         // {X}{W/B}{W/B}: Return this card from your graveyard to the battlefield. You may put an Aura
         // card with mana value X or less from your hand onto the battlefield attached to it. If you

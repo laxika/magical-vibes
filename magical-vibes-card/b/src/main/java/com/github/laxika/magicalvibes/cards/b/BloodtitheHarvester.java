@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -46,7 +46,7 @@ public class BloodtitheHarvester extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostTargetCreatureEffect(minusTwiceBlood, minusTwiceBlood)
+                        BoostEffect.target(minusTwiceBlood, minusTwiceBlood)
                 ),
                 "{T}, Sacrifice this creature: Target creature gets -X/-X until end of turn, "
                         + "where X is twice the number of Blood tokens you control. "

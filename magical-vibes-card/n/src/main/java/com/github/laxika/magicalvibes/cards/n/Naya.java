@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class Naya extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be a red, green, or white creature you control"
-        )).addTrigger(Triggers.chaosEnsues(), new BoostTargetCreatureEffect(
+        )).addTrigger(Triggers.chaosEnsues(), BoostEffect.target(
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
                 targetFilter));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,7 +29,7 @@ public class HydroManFluidFelon extends Card {
     public HydroManFluidFelon() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsCreature()),
-                new BoostSelfEffect(1, 1));
+                BoostEffect.self(1, 1));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(Subjects.source()),
