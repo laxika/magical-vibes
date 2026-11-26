@@ -1005,14 +1005,8 @@ public class DamageSupport {
             Map<UUID, Integer> damageBefore = cantRegenerate
                     ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn)
                     : Map.of();
-            UUID redirectedPlayerId = cantBeRedirected ? null
-                    : damagePreventionService.applyNextInstantOrSorceryDamageRedirectShield(
-                            gameData, entry, targetId, rawDamage);
-            if (redirectedPlayerId != null && !redirectedPlayerId.equals(targetId)) {
-                dealDamageToPlayer(gameData, entry, redirectedPlayerId, rawDamage);
-                return 0;
-            }
-            // Every prevention of the damage is an option of the player's damage pool (CR 616.1).
+            // Every prevention and redirection of the damage (Aegis of Honor's included) is an option of the player's
+            // damage pool, applied once in the order the player chooses (CR 616.1).
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             if (cantRegenerate) {
                 markCreaturesDamagedSinceAsUnregenerable(gameData, entry, damageBefore);
@@ -1157,7 +1151,7 @@ public class DamageSupport {
         }
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getEffectiveDamageSourceCard(), entry.getControllerId())) continue;
+            // Protection and every prevention are options of the permanent's damage pool (CR 616.1, 702.16e).
             int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
             if (exileInsteadOfDie && damageDealt > 0 && gameQueryService.isCreature(gameData, p)) {
                 gameData.exileInsteadOfDying(entry, p.getId());

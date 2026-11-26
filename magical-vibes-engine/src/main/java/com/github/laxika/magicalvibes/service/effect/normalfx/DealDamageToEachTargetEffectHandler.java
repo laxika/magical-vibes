@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -25,7 +25,6 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -38,6 +37,8 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToEachTargetEffect) effect;
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
 
         List<UUID> targets = entry.isTargetIdsFromAssignments()
                 ? entry.getTargetIds()
@@ -62,9 +63,6 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
                 AmountContext.forStackEntry(entry, source));
 
         int rawDamage = damage;
-        String cardName = entry.getCard().getName();
-
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
@@ -84,14 +82,11 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
                 continue;
             }
 
+            // Protection and every prevention are options of the recipient's damage pool (CR 616.1, 702.16e).
             if (targetIsPlayer) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             } else {
-                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard(), entry.getControllerId()))) {
-                    damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
-                } else {
-                    gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
             }
         }
 

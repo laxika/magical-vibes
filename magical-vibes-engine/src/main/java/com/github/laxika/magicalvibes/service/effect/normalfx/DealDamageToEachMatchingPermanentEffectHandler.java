@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -32,7 +30,6 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -44,6 +41,8 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry abilityEntry, CardEffect effect) {
         var e = (DealDamageToEachMatchingPermanentEffect) effect;
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        abilityEntry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
         // "It deals 4 damage to each creature blocking it": the triggering permanent is the source the damage and the
         // predicate are read with.
         StackEntry entry = e.damageSource() == DamageSource.TRIGGERING_PERMANENT
@@ -63,11 +62,9 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        if (source == null && damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
         int evaluated = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
         int rawDamage = evaluated;
-        String cardName = source == null ? FaceDownVisibility.sourceName(gameData, entry) : FaceDownVisibility.publicName(gameData, source);
 
         List<Permanent> candidates = new ArrayList<>();
         if (e.scope() == EachPermanentScope.TARGET_PLAYER) {
@@ -86,9 +83,6 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withDefendingPlayerId(entry.getDefendingPlayerId())
                 .withTriggeringPermanentId(entry.getTriggeringPermanentId());
-        boolean resolvingSpellSource = source == null
-                && (entry.getEntryType() == StackEntryType.INSTANT_SPELL
-                || entry.getEntryType() == StackEntryType.SORCERY_SPELL);
         Set<UUID> declaredAttackerIds = e.onlyDeclaredAttackers()
                 ? entry.getAttackingPermanentSnapshots().stream().map(Permanent::getId).collect(Collectors.toSet())
                 : Set.of();
@@ -96,15 +90,12 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
             if (e.onlyDeclaredAttackers()
                     ? !declaredAttackerIds.contains(creature.getId())
                     : !predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
-            if (gameQueryService.isDamagePreventable(gameData) && (source != null
-                    ? gameQueryService.hasProtectionFromDamageSource(gameData, creature, source)
-                    : gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())
-                    || resolvingSpellSource
-                    && gameQueryService.hasProtectionFromResolvingColoredSpell(gameData, creature, entry.getCard()))) {
-                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
-                continue;
-            }
+            // Protection and every prevention are options of the permanent's damage pool (CR 616.1, 702.16e).
             damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage, source);
+        }
+        if (entry != abilityEntry) {
+            // Dealt through the permanent the trigger event was about: the damage is this step's.
+            abilityEntry.addToStep(StepKind.DEAL_DAMAGE, entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
         }
 
         gameOutcomeService.checkWinCondition(gameData);

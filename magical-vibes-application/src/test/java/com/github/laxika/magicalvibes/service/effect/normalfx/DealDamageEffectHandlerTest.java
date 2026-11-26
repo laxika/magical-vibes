@@ -64,6 +64,7 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
     }
 
     @Test
+    @DisplayName("The entering permanent deals the damage under its controller; the ability keeps its own controller")
     void enteringPermanentDamageUsesItsControllerWithoutChangingAbilityOwnership() {
         Permanent creature = addPermanent(player2Id, createCreature("Entering creature", 3, 3));
         StackEntry entry = TestStackDoor.triggered(createCard("Enchantment"), player1Id, "Damage ability", java.util.List.of(),
@@ -71,13 +72,16 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
         entry.setTriggeringPermanentControllerId(player2Id);
         when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
         when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
+        stubPlayerDamageCore(player1Id);
 
         handler.resolve(gd, entry,
-                DealDamageEffect.toAnyTarget(new com.github.laxika.magicalvibes.model.amount.Fixed(0)).byTriggeringPermanent());
+                DealDamageEffect.toAnyTarget(new com.github.laxika.magicalvibes.model.amount.Fixed(1)).byTriggeringPermanent());
 
-        verify(damagePreventionService).applyNextInstantOrSorceryDamageRedirectShield(eq(gd), argThat(damageEntry ->
-                damageEntry.getControllerId().equals(player2Id)
-                        && damageEntry.getEffectiveDamageSourceCard() == creature.getCard()), eq(player1Id), eq(0));
+        verify(replacementOrderService).run(eq(gd), argThat(event ->
+                event instanceof com.github.laxika.magicalvibes.model.replacement.DamageEvent damage
+                        && damage.recipientPlayerId().equals(player1Id)
+                        && damage.entry().getControllerId().equals(player2Id)
+                        && damage.entry().getEffectiveDamageSourceCard() == creature.getCard()));
         assertThat(entry.getControllerId()).isEqualTo(player1Id);
     }
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -12,7 +11,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -24,7 +22,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link DealDamageToPermanentsTargetControlsEffect}: each permanent of its subject, found once through
  * {@link SubjectResolutionService}, is dealt the damage, evaluated once; nothing happens when a {@code controlledBy}
- * subject's players name nobody.
+ * subject's players name nobody. Protection and every prevention are options of each permanent's damage pool, ordered
+ * by its controller (CR 616.1).
  */
 @Component
 @RequiredArgsConstructor
@@ -32,7 +31,6 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final SubjectResolutionService subjectResolutionService;
     private final AmountEvaluationService amountEvaluationService;
@@ -60,15 +58,9 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
         }
         int rawDamage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        String cardName = entry.getCard().getName();
-
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
         for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard(), entry.getControllerId())) {
-                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", permanent.getCard(), " is prevented."));
-                continue;
-            }
+            // Protection and every prevention are options of the permanent's damage pool (CR 616.1, 702.16e).
             int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage);
             // "Each creature dealt damage this way …" (Aggravate): a creature whose damage was
             // fully prevented or redirected away never took damage, so it isn't affected.

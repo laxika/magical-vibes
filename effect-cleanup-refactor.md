@@ -26,8 +26,8 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
-| 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files). Next: the damage defect run, then Damage M1, M2, R (Step-10 hand-offs); the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
+| 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files). Next (after defect run D26): Damage M1, M2, R (Step-10 hand-offs); the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -259,7 +259,7 @@ Guard rails:
 Each run ends with its family row in Findings: audited, absorbed, split, blocked (by cause), unique, left. The step is done when
 `--unaudited` lists no record used by fewer than three cards.
 
-**Where it stands.** Triage, the fold queue and defect runs 1, 2 and D10 to D25 are done (one line per run under Findings). Left:
+**Where it stands.** Triage, the fold queue and defect runs 1, 2 and D10 to D26 are done (one line per run under Findings). Left:
 the defect queue's open lines (`effect-cleanup-queues.md`); the `blocked-*` rows wait for the causes under Standing knowledge.
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
@@ -937,9 +937,8 @@ there and updates them when it lands.
   of-type / fusion forms) for a "remove all" run, and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
   `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a batched
   path in `PutCountersEffect` first (owner's decision 2026-11-25).
-- **Damage**: run Damage P folded the player record (`to(PlayerSubject)`). Next, in order (orchestrator's decisions 2026-11-26): a defect run
-  (the player kinds' and the set handlers' pre-pool prevention and protection checks into the pool, failing-first, CR 616.1; the missing
-  DEAL_DAMAGE steps; the set handlers' face-down names in logs), then M1 (set damage), M2 (mass), R (another dealer); mass and set damage (`MassDamageEffect`, `DealDamageToEachMatchingPermanentEffect`, `DealDamageToEachTargetEffect`,
+- **Damage**: run Damage P folded the player record (`to(PlayerSubject)`); defect run D26 moved the player kinds' and the set handlers'
+  pre-pool checks into the pools and begins their DEAL_DAMAGE steps. Next, in order (orchestrator's decisions 2026-11-26): M1 (set damage), M2 (mass), R (another dealer); mass and set damage (`MassDamageEffect`, `DealDamageToEachMatchingPermanentEffect`, `DealDamageToEachTargetEffect`,
   `DealDamageToPermanentsTargetControlsEffect`, `DealDamageToDefendingPlayerCreaturesEffect`: a "mass damage" run, one event for many
   recipients); another dealer (bite, fight, `TargetCreatureDealsPowerDamageToAnyTargetEffect`, the `ControlledCreaturesDeal…` records: a
   "dealer" run); divided damage (`DealDividedDamageEffect`, CR 601.2d); excess redirected
@@ -1155,6 +1154,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run Boost B1 (2026-11-26): `BoostTargetCreatureEffect` renamed `BoostEffect` with factories, `BoostSelfEffect` and `BoostTargetPermanentEffect` absorbed (2,542 card files by script); `AmountsRead`, `CreatureBoostEffect.targetedBoost`
 - Step 10, run Boost B2 (2026-11-26): `BoostAllOwnCreaturesEffect` and `BoostAllCreaturesEffect` absorbed into `BoostEffect.creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls` (609 card files by script); the resolver binds a rider's target card
 - Step 10, run Damage P (2026-11-26): `DealDamageEffect` takes the player recipients; `DealDamageToPlayersEffect` and `DealDamageToEachOpponentEqualToControlledPermanentCountEffect` absorbed (704 card files by script)
+- Step 9, defect run D26 (2026-11-26): the set handlers' and the player kinds' preventions, protection and Aegis of Honor's redirect applied in the damage pools (CR 616.1); DEAL_DAMAGE begun by the set handlers; no face-down source named
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2385,6 +2385,46 @@ AGENTS.md's reuse example still names `new DealDamageToPlayersEffect(3, Subjects
 **For the next run.** The damage defect run (orchestrator's order): move the player kinds' `isPlayerDamagePrevented` /
 `isDamageSourcePreventedWithLog` and the set handlers' protection pre-checks into the pools with D24's failing-first tests (CR 616.1),
 begin DEAL_DAMAGE in the set handlers, read names through `FaceDownVisibility`; then M1 (set damage), M2 (mass), R (another dealer).
+
+### Step 9, defect run D26 (2026-11-26): damage pools for set and player damage
+
+The prerequisite of step 10's runs M1, M2 and R (plan `s10-damage2`), as D24 was of run Damage; no record merged, no card file, ratchet,
+ledger, `CONVERSION_VERSION` or shared API changed.
+
+**Sites changed** (each prevention and protection is now an option of the recipient's pool, ordered by its controller or the player,
+CR 616.1, 615.1, 702.16e; the pre-checks and their own log lines are gone):
+- The five set handlers (each-matching, permanents-target-controls, defending-player creatures, each-target, mass): no
+  `isDamageSourcePreventedWithLog`, no protection pre-check (mass's sat in `DamageSupport.damageFilteredCreatures`, shared with Mob
+  Verdict, the reveal-mana-value and each-player-and-their-creatures handlers; the pool's predicate is the same). Each-matching, defending
+  player, each-target and mass begin DEAL_DAMAGE; each-matching and mass add a triggering dealer's damage to the resolving entry's step.
+- `PermanentDamagePreventions` `Protection`: also noncombat damage the dealing entry's own source permanent deals as itself (each-matching
+  passes it as the dealer; fight and bite carriers, which still pre-check, and Aura Barbs' carrier reach it too).
+- `DealDamageEffectHandler`'s player kinds: `isPlayerDamagePrevented` and the or-their-planeswalker pre-check are gone (the player pool's
+  `SourcePrevented` and `TargetSpellPrevented` apply).
+- `DamageSupport.resolveAnyTargetDamage`'s player branch: Aegis of Honor's shield is no longer applied before the pool; the pool's
+  `NextInstantOrSorceryRedirect` applies it once, in the player's order (CR 616.1, 614.9).
+
+**Behaviour changes** (failing-first, each seen failing on the old code; `SetAndPlayerDamagePoolTest`, `StepResultsTest`): protection
+(a red ability, or a red permanent dealing each-matching damage) or a red-source prevention beside a creature shield asks the creature's
+controller the order, for each of the five set records; a red-source prevention beside a player shield asks the player for
+`eachOpponent()`, `you()` and `toPlayerOrTheirPlaneswalker`; Aegis of Honor beside a player shield asks, the shield first leaving the
+Aegis unused; a face-down source's prevented set damage names no hidden card (CR 708.2; the leaking lines were the protection lines);
+each-matching, defending-player, each-target and mass damage begin their own DEAL_DAMAGE step ("that much" reads only theirs). From the
+pool, not tested one by one: those preventions send the damage-prevented event (Selfless Squire); the defending-player handler judges
+protection by the source's controller, not owner, with Ghostly Flame's colours (CR 702.16e). Logs: the pools' lines replace "X's damage
+to controller is prevented." and "X's damage to Y is prevented.".
+
+**Tests.** New `SetAndPlayerDamagePoolTest` (application, 20; pins passing before and after: protection prevents each set record's
+damage, a red-source prevention each-target and each-opponent damage, Aegis redirects a Shock); 4 in `StepResultsTest`. Changed:
+`DealDamageEffectHandlerTest.enteringPermanentDamageUsesItsControllerWithoutChangingAbilityOwnership` observed the dealer through the
+removed Aegis call; it reads the damage event the pool is given. Run (XML of this run): 3,090 files, 26,420 tests, 0 failures (the
+changed handlers' and the fight / bite / Aura Barbs records' card classes, the pattern classes, the AI module, both ratchets); the new
+class, untracked and so missed by the selection, after it: 20, 0 failures.
+
+**Seen, not changed** (defect queue): a player `DamageEvent` has no can't-be-redirected flag (no card needs it; sure); about 20 other
+damage handlers still pre-check (D24's line).
+
+**For the next run.** M1: the four set records onto `DealDamageEffect` over a set subject, no pre-pool difference left between them.
 
 ## Prompt
 

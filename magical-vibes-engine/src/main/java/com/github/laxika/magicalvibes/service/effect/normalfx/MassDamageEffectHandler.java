@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -39,11 +41,12 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry abilityEntry, CardEffect effect) {
         var e = (MassDamageEffect) effect;
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        abilityEntry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
         StackEntry entry = e.damageSource() == DamageSource.TRIGGERING_PERMANENT
                 ? damageSupport.entryDealtByTriggeringPermanent(gameData, abilityEntry) : abilityEntry;
         if (entry == null) return;
-
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
+        // Protection and every prevention are options of each recipient's damage pool (CR 616.1, 702.16e).
 
         // Source-relative amounts use the live source permanent when present, else the
         // last-known snapshot (matching LoseLifeEffectHandler).
@@ -109,6 +112,10 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
             }
         } finally {
             entry.setExilesCreaturesDamaged(previousExilesCreaturesDamaged);
+            if (entry != abilityEntry) {
+                // Dealt through the permanent the trigger event was about: the damage is this step's.
+                abilityEntry.addToStep(StepKind.DEAL_DAMAGE, entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
+            }
         }
     }
 

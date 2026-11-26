@@ -428,9 +428,8 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
      *
      * <p>The amount is evaluated for each player dealt damage, every player's before any damage is dealt (CR 608.2h):
      * with that player as the controller for {@code eachPlayer()} and with {@code amountForEachPlayer}, as the target
-     * for {@code defendingPlayer()}, else in the resolving entry's own context. "You" and "that creature's controller"
-     * check only the stack entry's own prevention; the other subjects also check prevention of a targeted spell's
-     * damage.
+     * for {@code defendingPlayer()}, else in the resolving entry's own context. Every prevention is an option of each
+     * player's damage pool, ordered by that player (CR 616.1).
      */
     private void damagePlayers(GameData gameData, StackEntry entry, DealDamageEffect e) {
         // The entry the damage is dealt through: the resolving one, or one whose source is the permanent that dealt
@@ -472,7 +471,7 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
 
     private void damageEachPlayer(GameData gameData, StackEntry entry, StackEntry dealing, DealDamageEffect e) {
         List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.players());
-        if (players.isEmpty() || isPlayerDamagePrevented(gameData, dealing, e, players.getFirst())) {
+        if (players.isEmpty()) {
             return;
         }
         boolean spellController = readsTarget(e, PermanentSubject.TargetSpell.class);
@@ -486,30 +485,6 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
                 damageSupport.dealDamageToPlayer(gameData, dealing, playerId, amount);
             }
         });
-    }
-
-    /**
-     * Whether the damage is prevented before it is dealt. "You" and "that creature's controller" check only the
-     * entry's own prevention, with their own log line; every other subject checks every source-wide prevention.
-     */
-    private boolean isPlayerDamagePrevented(GameData gameData, StackEntry dealing, DealDamageEffect e, UUID playerId) {
-        if (e.players() instanceof PlayerSubject.You) {
-            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, dealing)) {
-                gameLogService.append(gameData,
-                        GameLog.cardThen(dealing.getCard(), "'s damage to controller is prevented."));
-                return true;
-            }
-            return false;
-        }
-        if (readsTarget(e, PermanentSubject.Target.class)) {
-            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, dealing)) {
-                gameLogService.append(gameData, GameLog.text(FaceDownVisibility.sourceName(gameData, dealing)
-                        + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-                return true;
-            }
-            return false;
-        }
-        return damageSupport.isDamageSourcePreventedWithLog(gameData, dealing);
     }
 
     private static boolean readsTarget(DealDamageEffect e, Class<? extends PermanentSubject> kind) {
@@ -550,10 +525,8 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             recipient = entry.getTargetId() == null ? player : entry.getTargetId();
         }
         gameData.rerunCurrentEffectAfterInteraction = false;
-        if (!damageSupport.isDamageSourcePreventedWithLog(gameData, dealing)) {
-            int amount = evaluatePlayerAmount(gameData, entry, effect, player);
-            damageSupport.resolveAnyTargetDamage(gameData, dealing, recipient, amount, false);
-        }
+        int amount = evaluatePlayerAmount(gameData, entry, effect, player);
+        damageSupport.resolveAnyTargetDamage(gameData, dealing, recipient, amount, false);
     }
 
     private int evaluatePlayerAmount(GameData gameData, StackEntry entry, DealDamageEffect e, UUID playerId) {

@@ -2,6 +2,11 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
@@ -1088,6 +1093,51 @@ class StepResultsTest extends BaseCardTest {
                     DealDamageEffect.toTargetPermanent(1),
                     new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE)));
 
+            assertThat(entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE).objectIds())
+                    .containsExactly(giant.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        }
+
+        @Test
+        @DisplayName("Damage to each matching permanent begins its own step: \"that much\" reads only its damage")
+        void eachMatchingDamageBeginsItsOwnStep() {
+            assertSetDamageBeginsItsOwnStep(null, new DealDamageToEachMatchingPermanentEffect(1,
+                    new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS));
+        }
+
+        @Test
+        @DisplayName("Damage to the defending player's creatures begins its own step: \"that much\" reads only its damage")
+        void defendingPlayerCreatureDamageBeginsItsOwnStep() {
+            assertSetDamageBeginsItsOwnStep(player2.getId(), new DealDamageToDefendingPlayerCreaturesEffect(1));
+        }
+
+        @Test
+        @DisplayName("Damage to each target begins its own step: \"that much\" reads only its damage")
+        void eachTargetDamageBeginsItsOwnStep() {
+            assertSetDamageBeginsItsOwnStep(Boolean.TRUE, new DealDamageToEachTargetEffect(new Fixed(1)));
+        }
+
+        @Test
+        @DisplayName("Mass damage begins its own step: \"that much\" reads only its damage")
+        void massDamageBeginsItsOwnStep() {
+            assertSetDamageBeginsItsOwnStep(null, new MassDamageEffect(1));
+        }
+
+        /**
+         * Resolves 2 damage to each opponent, then {@code setDamage} (1 to the Hill Giant), then "you gain life equal to
+         * the damage dealt this way". {@code target} is the entry's target: a player id, {@code Boolean.TRUE} for the
+         * Giant, or null.
+         */
+        private void assertSetDamageBeginsItsOwnStep(Object target, CardEffect setDamage) {
+            Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+            UUID targetId = target instanceof UUID id ? id : Boolean.TRUE.equals(target) ? giant.getId() : null;
+
+            StackEntry entry = resolve(player1, targetId, null,
+                    DealDamageEffect.to(Subjects.eachOpponent(), 2),
+                    setDamage,
+                    new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE)));
+
+            assertThat(giant.getMarkedDamage()).isEqualTo(1);
             assertThat(entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE).objectIds())
                     .containsExactly(giant.getId());
             assertThat(gd.getLife(player1.getId())).isEqualTo(21);
