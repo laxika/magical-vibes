@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TheGrimCaptainsLockerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Surveils one")
     void surveilsOne() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         Card topCard = new GrizzlyBears();
@@ -34,6 +36,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Grants creature cards escape until end of turn")
     void grantsCreatureCardsEscapeUntilEndOfTurn() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         harness.setGraveyard(player1, List.of(
@@ -52,6 +55,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not grant escape to non creature cards")
     void doesNotGrantEscapeToNonCreatureCards() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         harness.setGraveyard(player1, List.of(new Shock()));
@@ -64,6 +68,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Escape grant expires at end of turn")
     void escapeGrantExpiresAtEndOfTurn() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         harness.setGraveyard(player1, List.of(
@@ -82,6 +87,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Surveil can leave the card on top")
     void surveilCanLeaveTheCardOnTop() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         Card topCard = new GrizzlyBears();
@@ -96,6 +102,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Surveil with an empty library needs no choice")
     void surveilWithAnEmptyLibraryNeedsNoChoice() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         harness.setLibrary(player1, List.of());
@@ -109,6 +116,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Both abilities require tapping the locker")
     void bothAbilitiesRequireTappingTheLocker() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
@@ -122,6 +130,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Requires four other cards for escape")
     void requiresFourOtherCardsForEscape() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         harness.setGraveyard(player1, List.of(
@@ -139,6 +148,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Escape does not allow casting creatures at instant speed")
     void escapeDoesNotAllowCastingCreaturesAtInstantSpeed() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         harness.setGraveyard(player1, List.of(
@@ -156,6 +166,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not grant escape to creatures that die after resolution")
     void doesNotGrantEscapeToCreaturesThatDieAfterResolution() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -177,6 +188,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Grants escape to creatures that die before resolution")
     void grantsEscapeToCreaturesThatDieBeforeResolution() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
         var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -196,5 +208,31 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("A creature card that escaped, died and came back to the graveyard has no escape (CR 400.7)")
+    void creatureCardThatLeftAndReturnedHasNoEscape() {
+        harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears, new Shock(), new Shock(), new Shock(), new Shock(),
+                new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.castFromGraveyard(player1, 0, List.of(0, 1, 2, 3));
+        harness.passBothPriorities();
+        var creature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard() == bears).findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        int bearsIndex = gd.playerGraveyards.get(player1.getId()).indexOf(bears);
+        assertThat(bearsIndex).isGreaterThanOrEqualTo(0);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, bearsIndex, List.of(0, 1, 2, 3)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

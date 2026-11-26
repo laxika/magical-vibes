@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -51,8 +51,7 @@ public class KayaGeistHunter extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new GrantPlayerStaticEffectsUntilEndOfTurnEffect(
-                        List.of(new MultiplyTokenCreationEffect(2)))),
+                List.of(GrantStaticEffectToPlayerEffect.untilEndOfTurn(new MultiplyTokenCreationEffect(2))),
                 "-2: Until end of turn, if one or more tokens would be created under your control, twice that many of those tokens are created instead."));
 
         addActivatedAbility(new ActivatedAbility(

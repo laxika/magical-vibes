@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,7 +25,7 @@ public class SewerPlague extends Card {
                         opponentCreature))
                 .addSpellEffect(new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
-                        new PerpetuallyBoostSourceEffect(-1, -1)),
+                        PerpetuallyBoostCardEffect.toCards(Subjects.sourceObjectCard(), -1, -1)),
                         opponentCreature));
     }
 }

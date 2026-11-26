@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SoulShredderTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Gets one perpetual boost for multiple simultaneous deaths")
     void getsOnePerpetualBoostForMultipleSimultaneousDeaths() {
         Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SoulShredder());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -39,6 +41,7 @@ class SoulShredderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Perpetually boosts its card while in the graveyard")
     void perpetuallyBoostsItsCardWhileInTheGraveyard() {
         SoulShredder shredder = new SoulShredder();
         harness.setGraveyard(player1, List.of(shredder));
@@ -54,11 +57,12 @@ class SoulShredderTest extends BaseCardTest {
                 .filter(card -> card.getId().equals(shredder.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(updatedShredder.getPower()).isEqualTo(3);
-        assertThat(updatedShredder.getToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardPower(gd, updatedShredder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, updatedShredder)).isEqualTo(3);
     }
 
     @Test
+    @DisplayName("Returns from the graveyard by paying mana and sacrificing two creatures")
     void returnsFromTheGraveyardByPayingManaAndSacrificingTwoCreatures() {
         harness.setGraveyard(player1, List.of(new SoulShredder()));
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -77,6 +81,7 @@ class SoulShredderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Graveyard ability triggers for opponent creature death")
     void graveyardAbilityTriggersForOpponentCreatureDeath() {
         harness.setGraveyard(player1, List.of(new SoulShredder()));
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -87,11 +92,12 @@ class SoulShredderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
         Card shredder = gd.playerGraveyards.get(player1.getId()).getFirst();
-        assertThat(shredder.getPower()).isEqualTo(3);
-        assertThat(shredder.getToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardPower(gd, shredder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, shredder)).isEqualTo(3);
     }
 
     @Test
+    @DisplayName("Graveyard ability triggers once for simultaneous deaths")
     void graveyardAbilityTriggersOnceForSimultaneousDeaths() {
         harness.setGraveyard(player1, List.of(new SoulShredder()));
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -106,11 +112,12 @@ class SoulShredderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
         Card shredder = gd.playerGraveyards.get(player1.getId()).getFirst();
-        assertThat(shredder.getPower()).isEqualTo(3);
-        assertThat(shredder.getToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardPower(gd, shredder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, shredder)).isEqualTo(3);
     }
 
     @Test
+    @DisplayName("Sacrifice cost grants one perpetual boost before returning")
     void sacrificeCostGrantsOnePerpetualBoostBeforeReturning() {
         harness.setGraveyard(player1, List.of(new SoulShredder()));
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -129,6 +136,7 @@ class SoulShredderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Crew animates vehicle using summoning sick creature")
     void crewAnimatesVehicleUsingSummoningSickCreature() {
         Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SoulShredder());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -143,6 +151,7 @@ class SoulShredderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Perpetual boost immediately applies to crewed vehicle")
     void perpetualBoostImmediatelyAppliesToCrewedVehicle() {
         Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SoulShredder());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -159,6 +168,7 @@ class SoulShredderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Own death alone does not trigger perpetual boost")
     void ownDeathAloneDoesNotTriggerPerpetualBoost() {
         Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SoulShredder());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -173,11 +183,12 @@ class SoulShredderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Card card = gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Soul Shredder")).findFirst().orElseThrow();
-        assertThat(card.getPower()).isEqualTo(2);
-        assertThat(card.getToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(2);
     }
 
     @Test
+    @DisplayName("Graveyard return cannot be activated outside main phase")
     void graveyardReturnCannotBeActivatedOutsideMainPhase() {
         harness.setGraveyard(player1, List.of(new SoulShredder()));
         harness.addToBattlefield(player1, new GrizzlyBears());

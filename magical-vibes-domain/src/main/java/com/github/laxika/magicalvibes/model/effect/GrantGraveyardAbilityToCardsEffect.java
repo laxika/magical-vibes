@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * Static effect: "each [filter] card in your graveyard has [ability]". The ability is the same for every card
  * (Sedris, the Traitor King's unearth {2}{B}) or a keyword ability whose cost is that card's mana cost or mana
- * value (Naktamun, Wire Surgeons, Sliver Gravemother). The engine judges {@code filter} with the card's current
+ * value (Naktamun, Wire Surgeons, Sliver Gravemother; scavenge for its mana cost, Varolz, the Scar-Striped, CR 702.97a). The engine judges {@code filter} with the card's current
  * characteristics.
  *
  * @param filter     the cards that have the ability
@@ -23,7 +23,7 @@ public record GrantGraveyardAbilityToCardsEffect(CardPredicate filter, Activated
 
     /** A keyword ability whose cost is read from the card that has it. */
     public enum PerCard {
-        EMBALM_FOR_MANA_COST, UNEARTH_FOR_MANA_COST, ENCORE_FOR_MANA_COST, ENCORE_FOR_MANA_VALUE
+        EMBALM_FOR_MANA_COST, UNEARTH_FOR_MANA_COST, SCAVENGE_FOR_MANA_COST, ENCORE_FOR_MANA_COST, ENCORE_FOR_MANA_VALUE
     }
 
     public GrantGraveyardAbilityToCardsEffect {
@@ -62,6 +62,7 @@ public record GrantGraveyardAbilityToCardsEffect(CardPredicate filter, Activated
         return switch (perCard) {
             case EMBALM_FOR_MANA_COST -> Card.embalmAbility(cost);
             case UNEARTH_FOR_MANA_COST -> Card.unearthAbility(cost);
+            case SCAVENGE_FOR_MANA_COST -> Card.scavengeAbility(cost);
             case ENCORE_FOR_MANA_COST, ENCORE_FOR_MANA_VALUE -> encore(cost);
         };
     }

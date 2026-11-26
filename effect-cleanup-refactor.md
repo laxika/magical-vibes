@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files; run PO: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` per effect with the escape snapshot, `GrantSupertypeToEnchantedPermanentEffect` into `GrantSupertypeEffect(T, attached())`, the scavenge grant into `PerCard.SCAVENGE_FOR_MANA_COST`, `PerpetuallyBoostSourceEffect` into `PerpetuallyBoostCardEffect` (perpetual P/T on a graveyard card in layer 7c), 32 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (U, C1, C2, K / K2, then R2, J, T, U8) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,880 / 2,264 (after step 10 run D) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,876 / 2,261 (after step 10 run PO) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -668,7 +668,8 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `TargetPlayerCouldCastSorcery` (CR 307.5), `TargetPlayerMatches(PlayerPredicate)`.
 - `GrantStaticEffectToPlayerEffect` (`untilEndOfTurn`, `untilYourNextTurn`, `untilPlaneswalk`, `PERMANENT`, `WHILE_SOURCE_REMAINS`:
   nothing begins if the source left, CR 611.2b): a resolution's "until …, you [rule]" floats the rule's static record on the player, its
-  reader asking for the floating copy beside the battlefield (`hasFloatingEffectOnPlayer`). Floated rules include the damage doublers and
+  reader asking for the floating copy beside the battlefield (`hasFloatingEffectOnPlayer`). Several rules are several grants; a floated
+  `GrantEscapeToGraveyardCardsEffect` reaches only the matching cards in that player's graveyard as it begins (CR 611.2c; run PO). Floated rules include the damage doublers and
   plus-N, `SkipDrawStepEffect`, `PlayWithHandsRevealedEffect`, `ProtectionFromPlayersEffect`, `IgnoreOpponentHexproofEffect`,
   `PlayerHasProtectionEffect`, `EnterPermanentsOfTypesTappedEffect`, `ReplaceDamageAboveThresholdEffect`, the library-top permissions
   (`CastingPermissionService.libraryTopGrants`).
@@ -677,7 +678,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
 - Perpetual verbs over card subjects, each with one store keyed by the physical card id: `PerpetuallyGrantAbilitiesEffect`
   (`perpetualAbilityGrants`; a graveyard ability with `AbilityZones.GRAVEYARD`, never seeded onto a permanent), `PerpetuallyChangeCastCostEffect`
   / `PerpetualCardCastCostSupport`, `PerpetuallyBoostCardEffect.toCards`, `PerpetuallyGrantAlternateCastEffect` (`perpetualAlternateCasts`),
-  `PerpetuallyGrantAnyColorManaToCastEffect`, `GameData.grantPerpetualKeywords`; `GrantGraveyardAbilityToCardsEffect`, `GrantSupertypeEffect`.
+  `PerpetuallyGrantAnyColorManaToCastEffect`, `GameData.grantPerpetualKeywords`; `GrantGraveyardAbilityToCardsEffect` (`PerCard`, scavenge
+  included), `GrantSupertypeEffect` (`(T, attached())` for "enchanted permanent is"). "This card perpetually gets" is
+  `PerpetuallyBoostCardEffect(this, …)` or `.toCards(sourceObjectCard(), …)`, a layer-7c modifier in every zone (run PO).
 
 **Damage, prevention, redirection:**
 
@@ -979,12 +982,12 @@ there and updates them when it lands.
   (`ConjureCardToBattlefieldEffect`, 25 cards; `ConjureCardNamedOntoBattlefieldEffect`, 9).
 - **Register**: `RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect` (Season of the Bold, Nuka-Nuke Launcher): its watched player is a
   permanent target's controller or the defending player, which the survivor can't take.
-- **Other pairs**: subtype grant, choose-one-for-target, perpetual boost, the returns from a graveyard; the reveal heads of three or more
-  cards; the graveyard-ability grant with the scavenge record; `GrantSupertypeEffect` with its 4-card enchanted twin; a copy verb with a
-  copier subject (Mirrorform).
+- **Other pairs**: run PO folded perpetual boost, the scavenge grant and the enchanted supertype twin. Left: the subtype grant
+  (`GrantSubtypeToTargetCreatureEffect` / `TargetCreatureBecomesSubtypeUntilEndOfTurnEffect`: an `overriding` component, Goatnapper's
+  perpetual half, a per-mode AI polarity) and choose-one-for-target (the creature form works; folding needs the same per-mode polarity and
+  keeps the permanent form's no-target prompt), the returns from a graveyard (run R2), the reveal heads, Mirrorform's copier set.
 - **`ExileGraveyardCardsEffect.eventValueFilter` stays**: the earlier "no card left" note was false; 7 card files set it (rest-of-step-10 plan, orchestrator's decision 2026-11-26).
-- **Player grants**: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` (10 cards, Angel's Grace) is `GrantStaticEffectToPlayerEffect.untilEndOfTurn`
-  over a list, plus its escape-grant snapshot; merge them.
+- **Player grants**: done in run PO.
 
 ## Findings
 
@@ -1193,6 +1196,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run S (2026-11-26): the attack and block restrictions absorbed into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest lock into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, Evil Eye's lock into `CreaturesCantAttackUnlessPredicateEffect.youControl` (145 card files by script); no behaviour change
 - Step 10, run G (2026-11-26): the two goad-set records absorbed into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` (10 card files by hand); their goads are a GOAD step under the CR 701.15d check
 - Step 10, run D (2026-11-26): `EachPlayerDrawsCardEffect` absorbed into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (61 card files by script), 8 opponent-draw files onto `DrawCardEffect`; every amount fixed before the first draw (CR 608.2h), Baleful Mastery's chosen opponent, the AI's own-draw rule
+- Step 10, run PO (2026-11-26): the player-grant list onto `GrantStaticEffectToPlayerEffect.untilEndOfTurn` with the escape snapshot, the supertype, scavenge and perpetual-boost pairs absorbed (32 card files by hand and script); perpetual P/T on a graveyard card in layer 7c (CR 613.4c), Courageous Resolve's opponents can lose
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2816,6 +2820,43 @@ tests, `TriggerRouteRecordTest`, both ratchets).
 (CR 101.4); the AI prices "each opponent draws" for one opponent. AGENTS.md names no deleted class.
 
 **For the next run.** P, O and U (`s10-rest` plan section 2). Draw leaves `EachOpponentDrawsCardEffect` (Struggle, D14 L17) and the 11 gift files.
+
+### Step 10, run PO (player grants and small pairs) (2026-11-26)
+
+Run P and O of the plan `s10-rest`. Absorbed with their handlers: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` (10 card files by hand) into one
+`GrantStaticEffectToPlayerEffect.untilEndOfTurn` per listed effect, its escape snapshot moved into the survivor's handler (per named player, CR
+611.2c, 400.7); `GrantSupertypeToEnchantedPermanentEffect` (4, its staticfx handler and layer case) into `GrantSupertypeEffect(T, attached())`;
+`GrantScavengeEqualToManaCostToCreatureCardsEffect` (3, no handler) into `GrantGraveyardAbilityToCardsEffect(creature, PerCard.SCAVENGE_FOR_MANA_COST)`;
+`PerpetuallyBoostSourceEffect` (15 files, 17 sites by a scratch script) into `PerpetuallyBoostCardEffect(this, p, t)`, or `.toCards(sourceObjectCard(), p, t)`
+in a static helper or an ability granted to another creature (Sewer Plague, Tawnos Endures, Phoenix of Iteration, Wyll: their change is logged,
+the survivor's line). Ledger: 4 absorbed, 4 survivors, 3 blocked-other. Ratchet 2,880 / 2,264 → 2,876 / 2,261. No `CONVERSION_VERSION` bump.
+
+**Premises.** Held: the list's always-stamped source id is read by no reader of the ten floated types (attack requirements read the float's
+controller; the others `floatingPlayerEffects`); the supertype layer case and handler differ only in the scope; the scavenge record is the
+survivor's per-card shape. Not held: the choose-one creature form's suspected defect doesn't exist (one target group per card; its no-target
+return covers "up to one"), and the pair isn't folded: the permanent form must ask with no target (Ballroom Brawlers' modes act on the source),
+and the AI reads the forms differently while some modes harm the target. The subtype grant needs `overriding`, Goatnapper's split and the same
+per-mode polarity. Both are `blocked-other`; the returns from a graveyard are run R2's.
+
+**Behaviour changes.** (1) A perpetual boost of a graveyard card is the layer-7c modifier, not a copy with changed printed P/T (CR 613.4c, 707.2):
+`TomakulPhoenixTest.perpetualBoostFromTheGraveyardAppliesAfterABaseSet` (Turn to Frog on the returned Phoenix: 3/3; the old code gave 1/1).
+(2) Courageous Resolve's fateful hour no longer stops its controller winning and so its opponents losing (Oracle: "you can't lose the game …
+your opponents can't win"; its rulings): `CourageousResolveTest.fatefulHourLeavesTheOpponentAbleToLose`. (3) The scavenge filter reads current
+characteristics (a perpetual creature type, as the survivor's other grants): `VarolzTheScarStripedTest.grantsScavengeToACardThatPerpetuallyBecameACreature`.
+All failed first. Code only: the AI's granted-ability polarity reads the survivor (`TargetPolarityClassifier`).
+
+**Pins** (old code and after): `TheGrimCaptainsLockerTest.creatureCardThatLeftAndReturnedHasNoEscape` (CR 400.7), the ten P cards' tests.
+**Tests changed:** `CourageousResolveTest.fatefulHour` lost its "opponent can't lose" line (contradicts Oracle); `TomakulPhoenixTest.perpetuallyBoostsItselfWhenItDies`
+and four `SoulShredderTest` methods read the effective card P/T, not the printed fields (the old implementation's detail); `TargetPolarityGuardTest`
+names the survivor; `@DisplayName`s added to `SoulShredderTest` and `TheGrimCaptainsLockerTest`. **Tests run** (XML of this run): P: 103 classes,
+1,093 tests, 0 failures; O: 259 classes plus the AI module, 400 result files, 4,192 tests, 3 failures (the `SoulShredderTest` printed-P/T reads,
+changed above, rerun green). Oracle text checked with `get_card` for all 32 cards; Courageous Resolve's rulings read.
+
+**Seen, not changed** (defect queue): the AI's choose-one polarity; `TheGrimCaptainsLockerTest.doesNotGrantEscapeToNonCreatureCards` asserts a card
+that isn't there. AGENTS.md names no deleted class.
+
+**For the next run.** U (the unblockable subject, `s10-rest` plan section 2). A follow-on for the subtype grant and choose-one needs a per-mode AI
+polarity rule first.
 
 ## Prompt
 

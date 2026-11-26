@@ -348,7 +348,8 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd,
                 new com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
-                                new com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect(-1, -1))),
+                                com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect.toCards(
+                                        com.github.laxika.magicalvibes.model.effect.Subjects.sourceObjectCard(), -1, -1))),
                 aiPlayerId)).isEqualTo(TargetPolarity.HARMFUL);
     }
 

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -39,7 +39,7 @@ public class PhoenixOfIteration extends Card {
 
     private static List<CardEffect> opusEffects() {
         return List.of(
-                new PerpetuallyBoostSourceEffect(1, 1),
+                PerpetuallyBoostCardEffect.toCards(Subjects.sourceObjectCard(), 1, 1),
                 new ConditionalEffect(
                         new SpellManaSpentAtLeast(5),
                         new MayEffect(

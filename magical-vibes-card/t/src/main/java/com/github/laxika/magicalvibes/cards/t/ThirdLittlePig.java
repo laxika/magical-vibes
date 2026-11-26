@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ThirdLittlePig extends Card {
 
     public ThirdLittlePig() {
-        addTrigger(Triggers.youConjure(), new PerpetuallyBoostSourceEffect(1, 1));
+        addTrigger(Triggers.youConjure(), new PerpetuallyBoostCardEffect(this, 1, 1));
         addTrigger(new TriggerCondition(Triggers.youConjure(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new PerpetuallyBoostSourceEffect(1, 1));
+                TriggerOptions.DEFAULT, new PerpetuallyBoostCardEffect(this, 1, 1));
     }
 }

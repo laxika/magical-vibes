@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.SavagebornHydra;
 import com.github.laxika.magicalvibes.cards.t.TurnBurn;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,12 +17,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VarolzTheScarStriped.class, GrizzlyBears.class, HillGiant.class,
-        LightningBolt.class, TurnBurn.class, SavagebornHydra.class})
+        LightningBolt.class, TurnBurn.class, SavagebornHydra.class, MindStone.class})
 class VarolzTheScarStripedTest extends BaseCardTest {
 
     private Permanent addVarolz() {
@@ -59,6 +62,17 @@ class VarolzTheScarStripedTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Grants scavenge to a graveyard card that is a creature only by a perpetual change")
+    void grantsScavengeToACardThatPerpetuallyBecameACreature() {
+        addVarolz();
+        MindStone artifact = new MindStone();
+        harness.setGraveyard(player1, List.of(artifact));
+        gd.perpetualCardTypes.put(artifact.getId(), Set.of(CardType.CREATURE));
+
+        assertThat(gqs.computeGrantedGraveyardAbilitiesForOwnedCard(gd, player1.getId(), artifact)).isNotEmpty();
     }
 
     @Test

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -112,7 +112,7 @@ public class WyllPactBoundDuelist extends Card {
                     new UntapPermanentsEffect(Subjects.source()),
                     new AdditionalCombatMainPhaseEffect(1));
             case GREEN -> SequenceEffect.of(
-                    new PerpetuallyBoostSourceEffect(3, 3),
+                    PerpetuallyBoostCardEffect.toCards(Subjects.sourceObjectCard(), 3, 3),
                     new PerpetuallyGrantKeywordToSourceEffect(Keyword.TRAMPLE));
         };
     }

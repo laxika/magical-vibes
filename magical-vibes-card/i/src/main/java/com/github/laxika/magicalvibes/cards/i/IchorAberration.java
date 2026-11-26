@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGravey
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -35,7 +35,7 @@ public class IchorAberration extends Card {
                         AbilityZones.of(Zone.BATTLEFIELD, Zone.GRAVEYARD)),
                 TriggerOptions.DEFAULT.withInterveningIf(inGraveyardOrOnBattlefield),
                 SequenceEffect.of(
-                        new PerpetuallyBoostSourceEffect(1, 1),
+                        new PerpetuallyBoostCardEffect(this, 1, 1),
                         AllowCastTargetCardFromGraveyardThisTurnEffect.of(Subjects.sourceObjectCard(), false)));
     }
 }

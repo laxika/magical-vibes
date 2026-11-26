@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TomakulPhoenix extends Card {
 
     public TomakulPhoenix() {
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new PerpetuallyBoostSourceEffect(2, 2));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PerpetuallyBoostCardEffect(this, 2, 2));
         addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 new UnlessPaysEffect(Subjects.you(), PayManaCost.withGenericIncrease("{R}", new SourceCardPower()), null,

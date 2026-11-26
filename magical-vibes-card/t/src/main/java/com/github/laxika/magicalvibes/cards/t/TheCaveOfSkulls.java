@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScavengeEqualToManaCostToCreatureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantGraveyardAbilityToCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,7 +18,8 @@ public class TheCaveOfSkulls extends Card {
 
     public TheCaveOfSkulls() {
         // Each creature card in your graveyard has scavenge. The scavenge cost is equal to its mana cost.
-        addStaticEffect(new GrantScavengeEqualToManaCostToCreatureCardsEffect());
+        addStaticEffect(new GrantGraveyardAbilityToCardsEffect(new CardTypePredicate(CardType.CREATURE),
+                GrantGraveyardAbilityToCardsEffect.PerCard.SCAVENGE_FOR_MANA_COST));
 
         // Whenever chaos ensues, create two 1/1 white Warrior creature tokens.
         addTrigger(Triggers.chaosEnsues(),

@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TomakulPhoenix.class, Shock.class})
+@CardUsed({TomakulPhoenix.class, Shock.class, TurnToFrog.class})
 class TomakulPhoenixTest extends BaseCardTest {
 
     @Test
@@ -26,8 +26,8 @@ class TomakulPhoenixTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(phoenix.getCard().getId())
-                        && card.getPower() == 4
-                        && card.getToughness() == 4);
+                        && gqs.getEffectiveCardPower(gd, card) == 4
+                        && gqs.getEffectiveCardToughness(gd, card) == 4);
     }
 
     @Test
@@ -66,6 +66,31 @@ class TomakulPhoenixTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(phoenix.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(phoenix.getId()));
+    }
+
+    @Test
+    @DisplayName("Its perpetual +2/+2 from dying applies in layer 7c, after a base power and toughness is set (CR 613.4c)")
+    void perpetualBoostFromTheGraveyardAppliesAfterABaseSet() {
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new TomakulPhoenix());
+        destroyWithShock(phoenix);
+
+        advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(phoenix.getCard().getId()))
+                .findFirst().orElseThrow();
+
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.clearPriorityPassed();
+        harness.castInstant(player1, 0, returned.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
     }
 
     private void destroyWithShock(Permanent target) {

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class HurkylsProdigy extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), powerstone);
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{2}", SequenceEffect.of(
                         new MakeCreatureUnblockableEffect(true),
-                        new PerpetuallyBoostSourceEffect(2, 0)
+                        new PerpetuallyBoostCardEffect(this, 2, 0)
                 )).withPrompt("Pay {2} to make Hurkyl's Prodigy unblockable this turn and perpetually give it +2/+0?"));
     }
 }

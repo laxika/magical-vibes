@@ -6,12 +6,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEndOfTurnEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "18")
@@ -25,7 +24,7 @@ public class EverybodyLives extends Card {
                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.allCreatures()));
         addSpellEffect(GrantControllerKeywordUntilEndOfTurnEffect.eachPlayer(Keyword.HEXPROOF));
         addSpellEffect(new PlayersCantLoseLifeThisTurnEffect());
-        addSpellEffect(new GrantPlayerStaticEffectsUntilEndOfTurnEffect(List.of(
-                new CantLoseGameEffect(), new CantWinGameEffect())));
+        addSpellEffect(GrantStaticEffectToPlayerEffect.untilEndOfTurn(new CantLoseGameEffect()));
+        addSpellEffect(GrantStaticEffectToPlayerEffect.untilEndOfTurn(new CantWinGameEffect()));
     }
 }

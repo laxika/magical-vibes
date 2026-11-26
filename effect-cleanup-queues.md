@@ -1009,6 +1009,13 @@ entwine with two modes (P09).
   fold with the gift opponent. Step 10 run D (seen, not changed). Sure of the code.
 - The hard AI prices "each opponent draws" (`SpellEvaluator.drawScore`) as one opponent's cards, not one set per opponent in a
   multiplayer game. AI only. Step 10 run D (seen, not changed). Sure.
+- `TargetPolarityClassifier` has no entry for `ChooseOneForTargetCreatureEffect` and reads `ChooseOneForTargetPermanentEffect` as
+  NEUTRAL, though some modes harm the target (Urborg, Walking Sponge, one of Shaper Parasite's): the AI's targeting for these 15
+  cards ignores the modes. AI only; it blocks folding the pair (and the subtype grant's polarity). Step 10 run PO (seen, not
+  changed). Sure of the code, not of the AI's resulting choices.
+- `TheGrimCaptainsLockerTest.doesNotGrantEscapeToNonCreatureCards` asserts a Grizzly Bears in a graveyard that holds only a Shock
+  and never tries to cast the Shock with escape, so it doesn't test what its name says. Test only. Step 10 run PO (seen, not
+  changed). Sure of the assertion; not checked why it passes.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

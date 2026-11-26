@@ -47,7 +47,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPe
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -702,8 +704,10 @@ public class TargetPolarityClassifier {
             }
             return best;
         }
-        if (granted instanceof PerpetuallyBoostSourceEffect boost) {
-            return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
+        if (granted instanceof PerpetuallyBoostCardEffect boost
+                && (boost.cards() == null || boost.cards() instanceof CardSubject.SourceObjectCard)
+                && boost.powerBoost() instanceof Fixed power && boost.toughnessBoost() instanceof Fixed toughness) {
+            return power.value() < 0 || toughness.value() < 0
                     ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
         }
         if (granted instanceof DealDamageEffect damage && damage.players() instanceof PlayerSubject.You) {

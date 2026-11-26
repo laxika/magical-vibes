@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInExile;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -26,7 +27,7 @@ public class TawnosEndures extends Card {
                                 new TriggeredAbility(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.EXILE),
                                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInExile()),
                                 SequenceEffect.of(
-                                        new PerpetuallyBoostSourceEffect(1, 1),
+                                        PerpetuallyBoostCardEffect.toCards(Subjects.sourceObjectCard(), 1, 1),
                                         new MayEffect(new ReturnSourceCardFromExileToBattlefieldEffect(false),
                                                 "Return it to the battlefield?")))))
                 .addSpellEffect(new ExileTargetPermanentEffect());

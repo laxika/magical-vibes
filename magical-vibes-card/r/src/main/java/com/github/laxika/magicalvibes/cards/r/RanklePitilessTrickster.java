@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsNoPermanen
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,7 +30,7 @@ public class RanklePitilessTrickster extends Card {
                         new DiscardEffect(1, Subjects.eachPlayer()),
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.eachPlayer()))).withPrompt("Pay 1 life to have each player discard a card and sacrifice a creature?"));
 
-        addTrigger(Triggers.youDiscardCard(), new PerpetuallyBoostSourceEffect(1, 0));
-        addTrigger(Triggers.opponentDiscardsCard(), new PerpetuallyBoostSourceEffect(1, 0));
+        addTrigger(Triggers.youDiscardCard(), new PerpetuallyBoostCardEffect(this, 1, 0));
+        addTrigger(Triggers.opponentDiscardsCard(), new PerpetuallyBoostCardEffect(this, 1, 0));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GrantEscapeToGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -25,9 +25,8 @@ public class TheGrimCaptainsLocker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantPlayerStaticEffectsUntilEndOfTurnEffect(List.of(
-                        new GrantEscapeToGraveyardCardsEffect(
-                                new CardTypePredicate(CardType.CREATURE), "{3}{B}", 4)))),
+                List.of(GrantStaticEffectToPlayerEffect.untilEndOfTurn(new GrantEscapeToGraveyardCardsEffect(
+                        new CardTypePredicate(CardType.CREATURE), "{3}{B}", 4))),
                 "{T}: Until end of turn, each creature card in your graveyard gains escape {3}{B}."
         ));
     }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -29,7 +29,7 @@ public class SoulShredder extends Card {
         // triggers if Soul Shredder is in your graveyard.
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANOTHER),
                         AbilityZones.of(Zone.BATTLEFIELD, Zone.GRAVEYARD)),
-                TriggerOptions.ONE_OR_MORE, new PerpetuallyBoostSourceEffect(1, 1));
+                TriggerOptions.ONE_OR_MORE, new PerpetuallyBoostCardEffect(this, 1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

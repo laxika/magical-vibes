@@ -770,8 +770,8 @@ new CreateTokenCopyOfSourceEffect(false, 1, CardColor.BLACK, CardSubtype.ZOMBIE,
 `TargetFilters.creature()` filter and `SORCERY_SPEED`. The count is `SourceCardPower`, not
 `SourcePower`: the scavenged card was exiled as a cost and never was a permanent, so the number
 comes from the card. Cards: `SewerShambler`. `Card.scavengeAbility(cost)` builds the same
-`ActivatedAbility` standalone — used by `GrantScavengeEqualToManaCostToCreatureCardsEffect` (Varolz,
-the Scar-Striped) to grant scavenge for each graveyard creature card's own mana cost.
+`ActivatedAbility` standalone — used by `GrantGraveyardAbilityToCardsEffect`'s `PerCard.SCAVENGE_FOR_MANA_COST` (Varolz, the
+Scar-Striped) to grant scavenge for each graveyard creature card's own mana cost.
 
 **Unearth** is `addUnearth("{B}")` — returns the card itself from the graveyard with haste, exiled
 at the beginning of the next end step, sorcery speed only. It makes no token, so

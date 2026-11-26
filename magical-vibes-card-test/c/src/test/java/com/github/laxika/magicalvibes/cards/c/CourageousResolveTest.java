@@ -49,7 +49,6 @@ class CourageousResolveTest extends BaseCardTest {
         assertThat(gqs.canPlayerLoseLife(gd, player1.getId())).isFalse();
         assertThat(gqs.canPlayerLoseLife(gd, player2.getId())).isTrue();
         assertThat(gqs.canPlayerLoseGame(gd, player1.getId())).isFalse();
-        assertThat(gqs.canPlayerLoseGame(gd, player2.getId())).isFalse();
     }
 
     @Test
@@ -109,6 +108,16 @@ class CourageousResolveTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
 
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Fateful hour doesn't stop the opponent from losing the game or the controller from winning it")
+    void fatefulHourLeavesTheOpponentAbleToLose() {
+        harness.setLife(player1, 5);
+        castCourageousResolve();
+
+        assertThat(gqs.canPlayerLoseGame(gd, player2.getId())).isTrue();
+        assertThat(gqs.playerHasCantWinGameEffect(gd, player1.getId())).isFalse();
     }
 
     private void castCourageousResolve() {
