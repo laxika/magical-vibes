@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChandraPyromaster;
 import com.github.laxika.magicalvibes.cards.c.Chronostutter;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SiegeDragon.class, AirElemental.class, GrizzlyBears.class, WallOfWood.class,
-        ChandraPyromaster.class, Chronostutter.class})
+        ChandraPyromaster.class, Chronostutter.class, Forest.class})
 class SiegeDragonTest extends BaseCardTest {
 
     @Test
@@ -154,6 +155,18 @@ class SiegeDragonTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The attack trigger deals no damage to a land the defending player controls")
+    void attackDealsNoDamageToLands() {
+        addCreatureReady(player1, new SiegeDragon());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(forest.getMarkedDamage()).isZero();
     }
 
     private void castDragon() {

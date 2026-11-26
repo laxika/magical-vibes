@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -15,7 +15,7 @@ public class Twinstrike extends Card {
     public Twinstrike() {
         target(TargetFilters.creature(), 2, 2).addSpellEffect(new ConditionalReplacementEffect(
                 new ControllerHandEmpty(),
-                new DealDamageToEachTargetEffect(new Fixed(2)),
+                DealDamageEffect.toEachTarget(new Fixed(2)),
                 new DestroyEachTargetPermanentEffect()
         ));
     }

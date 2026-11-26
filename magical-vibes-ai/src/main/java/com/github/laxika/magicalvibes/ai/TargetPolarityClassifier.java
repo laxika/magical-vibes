@@ -393,6 +393,11 @@ public class TargetPolarityClassifier {
                 && toPlayers.player() instanceof PlayerSubject.Each) {
             return null;
         }
+        // "Deals N damage to each of up to N targets" damages each target.
+        if (effect instanceof DealDamageEffect eachTarget
+                && eachTarget.recipient() == DealDamageEffect.Recipient.EACH_TARGET) {
+            return TargetPolarity.HARMFUL_DAMAGE;
+        }
         if (effect instanceof DamageDealingEffect damage) {
             if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 return null;
@@ -752,7 +757,6 @@ public class TargetPolarityClassifier {
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
-            entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetCreaturesThenCreateTokensEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),

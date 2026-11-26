@@ -4,24 +4,20 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
- * Lightmine Field — whenever one or more creatures attack, it deals damage to each attacking
- * creature equal to the number of attacking creatures.
+ * Lightmine Field — whenever one or more creatures attack, it deals damage to each of those creatures (the attackers
+ * the trigger recorded, whether or not they are still attacking) equal to the number of attacking creatures.
  */
 @CardRegistration(set = "ROE", collectorNumber = "32")
 public class LightmineField extends Card {
 
     public LightmineField() {
-        PermanentIsAttackingPredicate attacking = new PermanentIsAttackingPredicate();
-        addTrigger(Triggers.playerAttacks(), new DealDamageToEachMatchingPermanentEffect(
-                new PermanentCount(attacking, CountScope.ANY_PLAYER),
-                attacking,
-                EachPermanentScope.ALL_PLAYERS,
-                true));
+        addTrigger(Triggers.playerAttacks(), DealDamageEffect.toEach(Subjects.triggeringAttackers(),
+                new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER)));
     }
 }

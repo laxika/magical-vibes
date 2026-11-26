@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,6 +20,6 @@ public class ChokingVines extends Card {
         // already blocked just takes the damage.
         targetExactlyX(TargetFilters.attackingCreature(), Integer.MAX_VALUE)
                 .addSpellEffect(new MakeTargetAttackingCreatureBlockedEffect())
-                .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)));
+                .addSpellEffect(DealDamageEffect.toEachTarget(new Fixed(1)));
     }
 }

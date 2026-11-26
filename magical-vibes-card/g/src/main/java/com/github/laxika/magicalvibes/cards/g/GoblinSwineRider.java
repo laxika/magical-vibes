@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -28,7 +28,8 @@ public class GoblinSwineRider extends Card {
     public GoblinSwineRider() {
         // Whenever this creature becomes blocked, it deals 2 damage to each attacking
         // creature and each blocking creature.
-        addTrigger(Triggers.becomesBlocked(), new DealDamageToEachMatchingPermanentEffect(
-                2, ATTACKING_OR_BLOCKING_CREATURE, EachPermanentScope.ALL_PLAYERS));
+        addTrigger(Triggers.becomesBlocked(), DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.eachPlayer(), ATTACKING_OR_BLOCKING_CREATURE),
+                2));
     }
 }

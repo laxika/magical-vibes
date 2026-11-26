@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,6 @@ public class ScorchingWinds extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED);
 
         // Scorching Winds deals 1 damage to each attacking creature.
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                1, ATTACKING_CREATURE, EachPermanentScope.ALL_PLAYERS));
+        addSpellEffect(DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), ATTACKING_CREATURE), 1));
     }
 }

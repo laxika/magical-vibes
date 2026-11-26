@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,11 +24,11 @@ public class DisasterRadius extends Card {
 
     public DisasterRadius() {
         addCastingCost(new RevealCardFromHandCost(new CardTypePredicate(CardType.CREATURE), "creature", true));
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                new XValue(),
-                new PermanentAllOfPredicate(List.of(
+        addSpellEffect(DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))),
+                new XValue()));
     }
 }

@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -35,7 +35,8 @@ public class SagittarsVolley extends Card {
                 "Target must be a creature with flying"
         ))
                 .addSpellEffect(new DestroyTargetPermanentEffect())
-                .addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                        1, OPPONENT_FLYING_CREATURE, EachPermanentScope.ALL_PLAYERS));
+                .addSpellEffect(DealDamageEffect.toEach(
+                        Subjects.controlledBy(Subjects.eachPlayer(), OPPONENT_FLYING_CREATURE),
+                        1));
     }
 }

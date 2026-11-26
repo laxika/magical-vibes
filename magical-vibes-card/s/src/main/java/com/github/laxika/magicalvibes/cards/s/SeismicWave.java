@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -36,14 +35,12 @@ public class SeismicWave extends Card {
                 "Target must be any target"
         );
         DealDamageEffect targetDamage = DealDamageEffect.toAnyTarget(2);
-        DealDamageToEachMatchingPermanentEffect creatureDamage = new DealDamageToEachMatchingPermanentEffect(
-                1,
-                new PermanentAllOfPredicate(List.of(
+        DealDamageEffect creatureDamage = DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.targetPlayer(),
+                        new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())
-                )),
-                EachPermanentScope.TARGET_PLAYER
-        );
+                ))), 1);
         target(anyTarget).bindEffect(targetDamage);
 
         target(new PlayerPredicateTargetFilter(

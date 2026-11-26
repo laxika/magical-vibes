@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnedGraveyardCardValue;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,8 +40,9 @@ public class VolcanicVision extends Card {
         PermanentAllOfPredicate opponentCreatures = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                new EventValue(), opponentCreatures, EachPermanentScope.ALL_PLAYERS));
+        addSpellEffect(DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.eachPlayer(), opponentCreatures),
+                new EventValue()));
         addSpellEffect(new ExileSpellEffect());
     }
 }

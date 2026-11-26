@@ -104,4 +104,13 @@ class InstantCategoryClassifierTest {
                     .isEqualTo(InstantCategory.OTHER);
         }
     }
+
+    @Test
+    @DisplayName("Classifies set damage to a target player's creatures and to each target as no removal")
+    void classifiesSetDamageAsNoRemoval() {
+        assertThat(InstantCategoryClassifier.classify(new com.github.laxika.magicalvibes.cards.s.Simoon()))
+                .isNotEqualTo(InstantCategory.REMOVAL);
+        assertThat(InstantCategoryClassifier.classify(new com.github.laxika.magicalvibes.cards.t.Twinstrike()))
+                .isNotEqualTo(InstantCategory.REMOVAL);
+    }
 }

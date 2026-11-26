@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -50,8 +48,9 @@ public class SavageAlliance extends Card {
                         creatureFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Savage Alliance deals 1 damage to each creature target opponent controls",
-                        new DealDamageToEachMatchingPermanentEffect(
-                                1, new PermanentIsCreaturePredicate(), EachPermanentScope.TARGET_PLAYER),
+                        DealDamageEffect.toEach(
+                                Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()),
+                                1),
                         opponentFilter)
         )));
     }

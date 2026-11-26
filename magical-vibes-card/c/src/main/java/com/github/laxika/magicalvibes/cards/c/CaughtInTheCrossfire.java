@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,18 +30,19 @@ public class CaughtInTheCrossfire extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Caught in the Crossfire deals 2 damage to each outlaw creature",
-                        new DealDamageToEachMatchingPermanentEffect(2,
-                                new PermanentAllOfPredicate(List.of(
+                        DealDamageEffect.toEach(
+                                Subjects.controlledBy(Subjects.eachPlayer(),
+                                        new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES))),
-                                EachPermanentScope.ALL_PLAYERS)),
+                                        new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)))), 2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Caught in the Crossfire deals 2 damage to each non-outlaw creature",
-                        new DealDamageToEachMatchingPermanentEffect(2,
-                                new PermanentAllOfPredicate(List.of(
+                        DealDamageEffect.toEach(
+                                Subjects.controlledBy(Subjects.eachPlayer(),
+                                        new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)))),
-                                EachPermanentScope.ALL_PLAYERS))
+                                        new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES))))),
+                                2))
         )));
     }
 }

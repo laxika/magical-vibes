@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.m.MetzaliTowerOfTriumph;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -47,7 +47,7 @@ public class PathOfMettle extends Card {
         setBackFaceCard(new MetzaliTowerOfTriumph());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToEachMatchingPermanentEffect(1, CREATURE_WITHOUT_SPEED, EachPermanentScope.ALL_PLAYERS));
+                DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), CREATURE_WITHOUT_SPEED), 1));
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumMatchingAttackers(2, FAST_CREATURE)),
                 new TransformSelfEffect());

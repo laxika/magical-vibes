@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 import java.util.List;
@@ -18,6 +18,6 @@ public class FallOfTheTitans extends Card {
         addCastingOption(new AlternateHandCast(
                 List.of(new ManaCastingCost("{X}{R}")),
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()), false));
-        target(0, 2).addSpellEffect(new DealDamageToEachTargetEffect(new XValue()));
+        target(0, 2).addSpellEffect(DealDamageEffect.toEachTarget(new XValue()));
     }
 }

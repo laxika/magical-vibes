@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,7 +14,7 @@ public class SparkmagesGambit extends Card {
 
     public SparkmagesGambit() {
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)))
+                .addSpellEffect(DealDamageEffect.toEachTarget(new Fixed(1)))
                 .addSpellEffect(new CantBlockThisTurnEffect(Subjects.target()));
     }
 }

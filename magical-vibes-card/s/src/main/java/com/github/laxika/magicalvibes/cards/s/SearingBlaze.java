@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -30,8 +30,8 @@ public class SearingBlaze extends Card {
 
         addSpellEffect(new ConditionalReplacementEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.LAND), 1),
-                new DealDamageToEachTargetEffect(new Fixed(1)),
-                new DealDamageToEachTargetEffect(new Fixed(3))
+                DealDamageEffect.toEachTarget(new Fixed(1)),
+                DealDamageEffect.toEachTarget(new Fixed(3))
         ));
     }
 }

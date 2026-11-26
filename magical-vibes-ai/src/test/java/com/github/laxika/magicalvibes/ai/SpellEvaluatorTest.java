@@ -1742,4 +1742,17 @@ class SpellEvaluatorTest {
 
         assertThat(withCreatures).isEqualTo(empty);
     }
+
+    @Test
+    @DisplayName("Set damage is not scored as single-target creature damage: an opposing creature doesn't change its value")
+    void setDamageSweeperIsNotScoredAsTargetedDamage() {
+        double empty = spellEvaluator.estimateSpellValue(gd, new com.github.laxika.magicalvibes.cards.s.Simoon(),
+                player1.getId());
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+        double withCreature = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.s.Simoon(), player1.getId());
+
+        assertThat(withCreature).isEqualTo(empty);
+    }
 }

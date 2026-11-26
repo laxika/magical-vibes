@@ -101,6 +101,14 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             damagePlayers(gameData, entry, e);
             return;
         }
+        if (e.recipient() == Recipient.EACH_PERMANENT) {
+            damageEachPermanent(gameData, entry, e);
+            return;
+        }
+        if (e.recipient() == Recipient.EACH_TARGET) {
+            damageEachTarget(gameData, entry, e);
+            return;
+        }
         switch (e.subject()) {
             case PermanentSubject.Source ignored -> damageSource(gameData, entry, e);
             case PermanentSubject.Triggering ignored -> damageTriggeringPermanent(gameData, entry, e);
@@ -231,8 +239,8 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
                 }
                 yield entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
             }
-            case PLAYERS, PLAYER_OR_THEIR_PLANESWALKER ->
-                    throw new IllegalStateException("Player damage names its players: " + e.recipient());
+            case PLAYERS, PLAYER_OR_THEIR_PLANESWALKER, EACH_PERMANENT, EACH_TARGET ->
+                    throw new IllegalStateException("Not one target's damage: " + e.recipient());
         };
         boolean playersAllowed = e.recipient() == Recipient.ANY_TARGET
                 || e.recipient() == Recipient.PLAYER_OR_PLANESWALKER;
@@ -333,6 +341,76 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
                 }
             }
         }
+    }
+
+    /**
+     * "Deals N damage to each [permanent of a set]": the set is found once through {@link SubjectResolutionService} as
+     * the effect is applied (CR 608.2h) and the amount evaluated once, against the dealer as it is or last existed;
+     * each of its creatures, planeswalkers and battles (CR 120.1) is dealt the damage in the effect's one damage event,
+     * every prevention (protection included) an option of its damage pool (CR 616.1). With {@link DamageSource#TRIGGERING_PERMANENT} the permanent the trigger
+     * event was about deals it ("it deals 4 damage to each creature blocking it", Ib Halfheart): the set is then found
+     * with that permanent as the source, and its damage is this step's.
+     */
+    private void damageEachPermanent(GameData gameData, StackEntry entry, DealDamageEffect e) {
+        StackEntry dealing = e.damageSource() == DamageSource.TRIGGERING_PERMANENT
+                ? damageSupport.entryDealtByTriggeringPermanent(gameData, entry) : entry;
+        if (dealing == null) {
+            return;
+        }
+        if (e.subject() instanceof PermanentSubject.ControlledBy set
+                && subjectResolutionService.players(gameData, dealing, e, set.players()).isEmpty()) {
+            return;
+        }
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(dealing, dealerOf(gameData, dealing)));
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, dealing, e, e.subject())) {
+            // Only a creature, planeswalker or battle can be dealt damage (CR 120.1): a set whose filter admits a land
+            // ("each creature without flying" written without the creature filter) deals it none.
+            if (damageSupport.isAnyTargetDamageRecipient(gameData, permanent)) {
+                damageSupport.dealCreatureDamage(gameData, dealing, permanent, damage);
+            }
+        }
+        if (dealing != entry) {
+            entry.addToStep(StepKind.DEAL_DAMAGE, dealing.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
+        }
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * "Deals N damage to each of [up to] N targets": the amount is evaluated once and each of the effect's targets
+     * still on the battlefield or in the game is dealt the full amount (CR 115.4), a player through the player
+     * damage pool, a permanent through its own; one damage event.
+     */
+    private void damageEachTarget(GameData gameData, StackEntry entry, DealDamageEffect e) {
+        List<UUID> targets = entry.isTargetIdsFromAssignments()
+                ? entry.getTargetIds()
+                : entry.targetsForEffect(e);
+        if (targets.isEmpty()) {
+            if (entry.getTargetId() == null) {
+                return;
+            }
+            targets = List.of(entry.getTargetId());
+        }
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, dealerOf(gameData, entry)));
+        for (UUID targetId : targets) {
+            if (gameData.playerIds.contains(targetId)) {
+                damageSupport.dealDamageToPlayer(gameData, entry, targetId, damage);
+                continue;
+            }
+            Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
+            if (permanent != null) {
+                damageSupport.dealCreatureDamage(gameData, entry, permanent, damage);
+            }
+        }
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /** The entry's source permanent as it is, else as it last existed (an amount read from it, CR 608.2h). */
+    private Permanent dealerOf(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return source == null ? entry.getSourcePermanentSnapshot() : source;
     }
 
     /** "And X damage to itself": the live source permanent, through the permanent-damage path. */

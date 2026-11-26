@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 
 import java.util.List;
@@ -20,6 +20,6 @@ public class CometStorm extends Card {
     public CometStorm() {
         setAdditionalCostPerExtraTarget(1);
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}")));
-        target(1, Integer.MAX_VALUE).addSpellEffect(new DealDamageToEachTargetEffect(new XValue()));
+        target(1, Integer.MAX_VALUE).addSpellEffect(DealDamageEffect.toEachTarget(new XValue()));
     }
 }

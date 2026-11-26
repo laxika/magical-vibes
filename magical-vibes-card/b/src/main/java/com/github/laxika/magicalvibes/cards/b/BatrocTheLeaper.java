@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -36,6 +36,6 @@ public class BatrocTheLeaper extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a creature, planeswalker, or player"), 100)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DealDamageToEachTargetEffect(new SourcePower()));
+                        DealDamageEffect.toEachTarget(new SourcePower()));
     }
 }

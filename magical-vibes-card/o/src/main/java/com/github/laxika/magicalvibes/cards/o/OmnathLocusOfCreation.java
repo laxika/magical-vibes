@@ -5,9 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -40,11 +38,11 @@ public class OmnathLocusOfCreation extends Card {
                 new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(3), SequenceEffect.simultaneous(
                         DealDamageEffect.to(Subjects.eachOpponent(), 4),
-                        new DealDamageToEachMatchingPermanentEffect(4,
-                                new PermanentAllOfPredicate(List.of(
+                        DealDamageEffect.toEach(
+                                Subjects.controlledBy(Subjects.eachPlayer(),
+                                        new PermanentAllOfPredicate(List.of(
                                         new PermanentIsPlaneswalkerPredicate(),
                                         new PermanentNotPredicate(
-                                                new PermanentControlledBySourceControllerPredicate()))),
-                                EachPermanentScope.ALL_PLAYERS))));
+                                                new PermanentControlledBySourceControllerPredicate())))), 4))));
     }
 }

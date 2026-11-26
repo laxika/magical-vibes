@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -521,7 +520,7 @@ class ValidTargetServiceTest {
             Card spell = createCard();
             spell.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
-                    .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)));
+                    .addSpellEffect(DealDamageEffect.toEachTarget(new Fixed(1)));
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
@@ -1002,7 +1001,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(false, null,
-                    List.of(new DealDamageToEachTargetEffect(new Fixed(6))),
+                    List.of(DealDamageEffect.toEachTarget(new Fixed(6))),
                     "Deal 6 damage to each of up to six targets",
                     null, -6, null, null, List.of(), 0, 6);
 

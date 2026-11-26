@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -42,7 +42,7 @@ public class AshlingsCommand extends Card {
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Ashling's Command deals 2 damage to each creature target player controls",
-                        new DealDamageToPermanentsTargetControlsEffect(2),
+                        DealDamageEffect.toEachCreatureOfTargetedPlayer(2),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player creates two Treasure tokens",

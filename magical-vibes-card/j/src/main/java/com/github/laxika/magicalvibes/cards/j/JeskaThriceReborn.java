@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -28,7 +28,7 @@ public class JeskaThriceReborn extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new DealDamageToEachTargetEffect(new XValue())),
+                List.of(DealDamageEffect.toEachTarget(new XValue())),
                 "−X: Jeska deals X damage to each of up to three targets.",
                 null, 0, null, null, List.of(), 0, 3, true));
     }

@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
@@ -37,9 +36,9 @@ public class IbHalfheartGoblinTactician extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
                 SequenceEffect.of(new SacrificeSelfEffect(Subjects.triggeringOrSource()),
-                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DealDamageToEachMatchingPermanentEffect(
-                        4, new PermanentBlockingSourcePredicate(), EachPermanentScope.ALL_PLAYERS)
-                        .dealtByTriggeringPermanent())));
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), DealDamageEffect.toEach(
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentBlockingSourcePredicate()),
+                                4).byTriggeringPermanent())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

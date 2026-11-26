@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -29,7 +28,8 @@ public class EmberGale extends Card {
 
         // Ember Gale deals 1 damage to each white and/or blue creature that player controls.
         // Rides the shared player target from the can't-block effect above.
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                1, WHITE_OR_BLUE_CREATURE, EachPermanentScope.TARGET_PLAYER));
+        addSpellEffect(DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.targetPlayer(), WHITE_OR_BLUE_CREATURE),
+                1));
     }
 }

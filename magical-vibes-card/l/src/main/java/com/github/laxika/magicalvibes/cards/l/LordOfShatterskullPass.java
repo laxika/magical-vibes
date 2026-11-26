@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -35,6 +36,8 @@ public class LordOfShatterskullPass extends Card {
         // level requirement is only checked when the attack happens (CR 711.2, CR 603.4).
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(6, CounterType.LEVEL)),
-                new DealDamageToDefendingPlayerCreaturesEffect(6));
+                DealDamageEffect.toEach(
+                        Subjects.controlledBy(Subjects.defendingPlayer(), new PermanentIsCreaturePredicate()),
+                        6));
     }
 }

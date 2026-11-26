@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "BNG", collectorNumber = "105")
 public class PinnacleOfRage extends Card {
 
     public PinnacleOfRage() {
         target(2, 2)
-                .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(3)));
+                .addSpellEffect(DealDamageEffect.toEachTarget(new Fixed(3)));
     }
 }

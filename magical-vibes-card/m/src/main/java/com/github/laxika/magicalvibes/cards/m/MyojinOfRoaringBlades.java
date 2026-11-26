@@ -10,12 +10,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+
 import java.util.List;
 
 @CardRegistration(set = "NEC", collectorNumber = "36")
@@ -35,7 +36,7 @@ public class MyojinOfRoaringBlades extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.INDESTRUCTIBLE),
-                        new DealDamageToEachTargetEffect(new Fixed(7))
+                        DealDamageEffect.toEachTarget(new Fixed(7))
                 ),
                 "Remove an indestructible counter from Myojin of Roaring Blades: It deals 7 damage to each of up to three targets.",
                 null, null, null, null,

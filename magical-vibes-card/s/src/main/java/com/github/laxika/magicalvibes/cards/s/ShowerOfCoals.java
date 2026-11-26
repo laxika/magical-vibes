@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "221")
 public class ShowerOfCoals extends Card {
@@ -16,8 +16,8 @@ public class ShowerOfCoals extends Card {
 
         target(0, 3)
                 .addSpellEffect(new ConditionalEffect(
-                        new NotCondition(threshold), new DealDamageToEachTargetEffect(new Fixed(2))))
+                        new NotCondition(threshold), DealDamageEffect.toEachTarget(new Fixed(2))))
                 .addSpellEffect(new ConditionalEffect(
-                        threshold, new DealDamageToEachTargetEffect(new Fixed(4))));
+                        threshold, DealDamageEffect.toEachTarget(new Fixed(4))));
     }
 }

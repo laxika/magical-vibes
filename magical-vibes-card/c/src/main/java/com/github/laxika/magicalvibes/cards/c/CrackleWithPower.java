@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "STX", collectorNumber = "95")
 @CardRegistration(set = "OTP", collectorNumber = "22")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 public class CrackleWithPower extends Card {
 
     public CrackleWithPower() {
-        targetX(null, Integer.MAX_VALUE).addSpellEffect(new DealDamageToEachTargetEffect(new Scaled(new XValue(), 5)));
+        targetX(null, Integer.MAX_VALUE).addSpellEffect(DealDamageEffect.toEachTarget(new Scaled(new XValue(), 5)));
     }
 }

@@ -638,7 +638,7 @@ TARGET_PLAYER, null)` is indeed a straight record swap, but:
   `targetSpec()` — it never consults `getTargetFilter()`. Swapping the record without adding a spec
   would have made Ajani's ultimate stop asking for a target, resolve with a null `targetId`, and do
   nothing. The two sibling effects that share `EachPermanentScope` already branch their spec on the
-  scope (`DealDamageToEachMatchingPermanentEffect:26`,
+  scope (the each-matching damage record, now `DealDamageEffect.toEach`,
   `PutCounterOnEachMatchingPermanentEffect:28`); `DestroyAllPermanentsEffect` was the odd one out.
   It now returns `TargetSpec.harmful(TargetPredicates.player())` for `TARGET_PLAYER` and
   `TargetSpec.NONE` otherwise, which keeps Ajani identical and **fixes a latent bug for Rain of
@@ -1335,7 +1335,7 @@ public record /* player-or-planeswalker damage, now DealDamageEffect */ (Dynamic
 // sugar: (DynamicAmount), (int) -> ANY; (int, PlayerRelation)
 // PlayerRelation is the EXISTING model/filter enum; SELF is rejected in the compact constructor
 
-public record DealDamageToPermanentsTargetControlsEffect(int damage,
+public record /* set damage, now DealDamageEffect.toEach */ (int damage,
                                                          DamagedPermanentScope scope,
                                                          boolean damagedCreaturesMustAttackThisTurn) implements CardEffect
 // sugar: (int), (int, boolean), (int, DamagedPermanentScope)
@@ -1371,7 +1371,7 @@ The chosen-type-count handlers really do share the whole two-phase choice protoc
   `DamagedPermanentScope` and the old flag stays a boolean behind it.
 - **The all-creatures survivor had to be renamed.** Step 12's lesson applies verbatim:
   `DealDamageToAllCreaturesTargetControlsEffect` lies the moment planeswalkers fold in, hence
-  `DealDamageToPermanentsTargetControlsEffect`.
+  the permanents-target-controls record (now `DealDamageEffect.toEach`).
 - **The chosen-type-count handlers diverged on two more axes.** Only the any-target one had a
   `targetId == null` guard and a `gameOutcomeService.checkWinCondition` call (and the
   `GameOutcomeService` injection to go with it). Both are preserved on the any-target branch only:
@@ -1420,7 +1420,7 @@ misroute would zero out).
 
 **Kept separate**: `DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect` carries its own
 `boolean opponentOnly` but is a multi-target shape with a creature rider, not this family;
-`DealDamageToEachMatchingPermanentEffect` (predicate-driven, `EachPermanentScope`) and
+the each-matching damage record (predicate-driven, now `DealDamageEffect.toEach`) and
 `DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect` (divides one amount) both already own
 their own axes; `DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect` does its own
 discard first.
@@ -1905,7 +1905,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 |---|---|---|
 | target-creature damage (+ includePlaneswalkers, targetRestriction) | the creature-or-planeswalker damage record (4) | **Done another way** (effect-cleanup step 10, run Damage): both, with the any-target, player-or-planeswalker and target-permanent records, are `DealDamageEffect` (`toTargetCreatureOrPlaneswalker(...)`), one handler with one target loop and one excess tracker |
 | `DiscardOwnHandThenDrawEffect(new EventValue())` | `DiscardOwnHandThenDrawThatManyEffect` (4) | Handler must `entry.setEventValue(discardCount)` before evaluating; reconcile the empty-hand log |
-| `DealDamageToEachMatchingPermanentEffect(+ OPPONENTS scope)` | `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` (1) | Done another way (effect-cleanup step 8, run 5): absorbed by `DealDamageToPermanentsTargetControlsEffect` with `controlledBy(eachOpponent(), creature or planeswalker)` |
+| each-matching damage `(+ OPPONENTS scope)` (now `DealDamageEffect.toEach`) | `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` (1) | Done another way (effect-cleanup step 8, run 5): absorbed by the set damage record (now `DealDamageEffect.toEach`) with `controlledBy(eachOpponent(), creature or planeswalker)` |
 | `EachPlayerDiscardsHandThenDrawsEffect(mode)` | 2 classes | **Surfaces a bug**: one handler sets `discardCausedByOpponent = false` unconditionally, the other `!playerId.equals(controllerId)`. The `false` looks wrong |
 | `MakeCreatureUnblockableEffect(+ massFilter)` | `MakeAllCreaturesUnblockableEffect` (1) | `targetSpec()` becomes three-way; 34 existing call sites must keep their current spec |
 | `SetPreparedEffect(boolean prepared)` | 2 classes | Pre-existing inconsistency: one is `benign(CREATURE)`, the other `benign(PERMANENT)`. Merging forces a decision |

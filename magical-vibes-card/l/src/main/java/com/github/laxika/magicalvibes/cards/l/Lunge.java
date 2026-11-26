@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -20,6 +20,6 @@ public class Lunge extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Second target must be a player or planeswalker"
         ));
-        addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(2)));
+        addSpellEffect(DealDamageEffect.toEachTarget(new Fixed(2)));
     }
 }

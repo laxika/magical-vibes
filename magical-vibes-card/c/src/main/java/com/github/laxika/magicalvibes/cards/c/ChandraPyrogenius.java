@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -33,7 +32,7 @@ public class ChandraPyrogenius extends Card {
                 -10,
                 List.of(SequenceEffect.simultaneous(
                         DealDamageEffect.toTargetPlayerOrPlaneswalker(6),
-                        DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new Fixed(6)))),
+                        DealDamageEffect.toCreaturesOfTargetedPlayer(new Fixed(6)))),
                 "\u221210: Chandra deals 6 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),

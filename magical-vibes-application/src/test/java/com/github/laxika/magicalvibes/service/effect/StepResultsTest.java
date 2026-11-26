@@ -2,10 +2,6 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
@@ -1101,20 +1097,21 @@ class StepResultsTest extends BaseCardTest {
         @Test
         @DisplayName("Damage to each matching permanent begins its own step: \"that much\" reads only its damage")
         void eachMatchingDamageBeginsItsOwnStep() {
-            assertSetDamageBeginsItsOwnStep(null, new DealDamageToEachMatchingPermanentEffect(1,
-                    new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS));
+            assertSetDamageBeginsItsOwnStep(null, DealDamageEffect.toEach(
+                    Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsCreaturePredicate()), 1));
         }
 
         @Test
         @DisplayName("Damage to the defending player's creatures begins its own step: \"that much\" reads only its damage")
         void defendingPlayerCreatureDamageBeginsItsOwnStep() {
-            assertSetDamageBeginsItsOwnStep(player2.getId(), new DealDamageToDefendingPlayerCreaturesEffect(1));
+            assertSetDamageBeginsItsOwnStep(player2.getId(), DealDamageEffect.toEach(
+                    Subjects.controlledBy(Subjects.defendingPlayer(), new PermanentIsCreaturePredicate()), 1));
         }
 
         @Test
         @DisplayName("Damage to each target begins its own step: \"that much\" reads only its damage")
         void eachTargetDamageBeginsItsOwnStep() {
-            assertSetDamageBeginsItsOwnStep(Boolean.TRUE, new DealDamageToEachTargetEffect(new Fixed(1)));
+            assertSetDamageBeginsItsOwnStep(Boolean.TRUE, DealDamageEffect.toEachTarget(new Fixed(1)));
         }
 
         @Test
@@ -1125,17 +1122,21 @@ class StepResultsTest extends BaseCardTest {
 
         /**
          * Resolves 2 damage to each opponent, then {@code setDamage} (1 to the Hill Giant), then "you gain life equal to
-         * the damage dealt this way". {@code target} is the entry's target: a player id, {@code Boolean.TRUE} for the
-         * Giant, or null.
+         * the damage dealt this way". {@code target} is the entry's target: a player id (also the defending player the
+         * entry records), {@code Boolean.TRUE} for the Giant, or null.
          */
         private void assertSetDamageBeginsItsOwnStep(Object target, CardEffect setDamage) {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
             UUID targetId = target instanceof UUID id ? id : Boolean.TRUE.equals(target) ? giant.getId() : null;
 
-            StackEntry entry = resolve(player1, targetId, null,
-                    DealDamageEffect.to(Subjects.eachOpponent(), 2),
-                    setDamage,
-                    new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE)));
+            StackEntry entry = TestStackDoor.triggered(new GrizzlyBears(), player1.getId(), "Step results",
+                    List.of(DealDamageEffect.to(Subjects.eachOpponent(), 2), setDamage,
+                            new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE))), targetId, (UUID) null);
+            if (target instanceof UUID playerId) {
+                entry.setDefendingPlayerId(playerId);
+            }
+            gd.stack.add(entry);
+            harness.passBothPriorities();
 
             assertThat(giant.getMarkedDamage()).isEqualTo(1);
             assertThat(entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE).objectIds())

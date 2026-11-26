@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +23,6 @@ public class BattleScarredGoblin extends Card {
     public BattleScarredGoblin() {
         // Whenever this creature becomes blocked, it deals 1 damage to each creature blocking it.
         addTrigger(Triggers.becomesBlocked(),
-                new DealDamageToEachMatchingPermanentEffect(1, CREATURES_BLOCKING_SOURCE,
-                        EachPermanentScope.ALL_PLAYERS));
+                DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), CREATURES_BLOCKING_SOURCE), 1));
     }
 }

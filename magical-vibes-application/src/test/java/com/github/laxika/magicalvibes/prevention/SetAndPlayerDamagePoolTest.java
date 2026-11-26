@@ -20,11 +20,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -57,6 +52,8 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
 
     private static final String PERMANENT_SHIELD = "Prevent the next damage to it";
     private static final PermanentIsCreaturePredicate CREATURE = new PermanentIsCreaturePredicate();
+    private static final CardEffect DEFENDING_CREATURES =
+            DealDamageEffect.toEach(Subjects.controlledBy(Subjects.defendingPlayer(), CREATURE), 2);
 
     @BeforeEach
     void setUpTurn() {
@@ -75,7 +72,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("Prevents a red ability's damage to each creature")
         void eachMatching() {
             Permanent knight = addCreatureReady(player2, new SilverKnight());
-            redAbility(null, new DealDamageToEachMatchingPermanentEffect(2, CREATURE, EachPermanentScope.ALL_PLAYERS));
+            redAbility(null, DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), CREATURE), 2));
             assertThat(knight.getMarkedDamage()).isZero();
         }
 
@@ -85,7 +82,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
             Permanent knight = addCreatureReady(player2, new SilverKnight());
             Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
             resolve(pyromancer.getCard(), null, pyromancer.getId(),
-                    new DealDamageToEachMatchingPermanentEffect(2, CREATURE, EachPermanentScope.ALL_PLAYERS));
+                    DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), CREATURE), 2));
             assertThat(knight.getMarkedDamage()).isZero();
         }
 
@@ -93,7 +90,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("Prevents a red ability's damage to each creature target player controls")
         void permanentsTargetControls() {
             Permanent knight = addCreatureReady(player2, new SilverKnight());
-            redAbility(player2.getId(), DealDamageToPermanentsTargetControlsEffect.toTargetedPlayers(2, CREATURE));
+            redAbility(player2.getId(), DealDamageEffect.toEachControlledByTargetedPlayer(2, CREATURE));
             assertThat(knight.getMarkedDamage()).isZero();
         }
 
@@ -101,7 +98,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("Prevents a red ability's damage to each creature the defending player controls")
         void defendingPlayerCreatures() {
             Permanent knight = addCreatureReady(player2, new SilverKnight());
-            redAbility(player2.getId(), new DealDamageToDefendingPlayerCreaturesEffect(2));
+            defendingPlayerAbility(null, DEFENDING_CREATURES);
             assertThat(knight.getMarkedDamage()).isZero();
         }
 
@@ -123,7 +120,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("Each matching permanent")
         void eachMatching() {
             Permanent knight = shieldedKnight();
-            redAbility(null, new DealDamageToEachMatchingPermanentEffect(2, CREATURE, EachPermanentScope.ALL_PLAYERS));
+            redAbility(null, DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), CREATURE), 2));
             chooseShieldFirst(knight, 3);
         }
 
@@ -133,7 +130,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
             Permanent knight = shieldedKnight();
             Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
             resolve(pyromancer.getCard(), null, pyromancer.getId(),
-                    new DealDamageToEachMatchingPermanentEffect(2, CREATURE, EachPermanentScope.ALL_PLAYERS));
+                    DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), CREATURE), 2));
             chooseShieldFirst(knight, 3);
         }
 
@@ -141,7 +138,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("The permanents target player controls")
         void permanentsTargetControls() {
             Permanent knight = shieldedKnight();
-            redAbility(player2.getId(), DealDamageToPermanentsTargetControlsEffect.toTargetedPlayers(2, CREATURE));
+            redAbility(player2.getId(), DealDamageEffect.toEachControlledByTargetedPlayer(2, CREATURE));
             chooseShieldFirst(knight, 3);
         }
 
@@ -149,7 +146,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("The defending player's creatures")
         void defendingPlayerCreatures() {
             Permanent knight = shieldedKnight();
-            redAbility(player2.getId(), new DealDamageToDefendingPlayerCreaturesEffect(2));
+            defendingPlayerAbility(null, DEFENDING_CREATURES);
             chooseShieldFirst(knight, 3);
         }
 
@@ -173,7 +170,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         void prevents() {
             Prevention.add(gd, PreventDamageEffect.fromColors(Set.of(CardColor.RED)));
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-            redAbility(bears.getId(), new DealDamageToEachTargetEffect(new Fixed(2)));
+            redAbility(bears.getId(), DealDamageEffect.toEachTarget(new Fixed(2)));
             assertThat(bears.getMarkedDamage()).isZero();
         }
 
@@ -183,7 +180,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
             Prevention.add(gd, PreventDamageEffect.fromColors(Set.of(CardColor.RED)));
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
             gd.addPermanentDamagePreventionShield(bears.getId(), 5);
-            redAbility(bears.getId(), new DealDamageToEachTargetEffect(new Fixed(2)));
+            redAbility(bears.getId(), DealDamageEffect.toEachTarget(new Fixed(2)));
             chooseShieldFirst(bears, 3);
         }
     }
@@ -289,7 +286,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
             Permanent hidden = faceDownGiant();
             Permanent progenitus = addCreatureReady(player2, new Progenitus());
             resolve(hidden.getCard(), player2.getId(), hidden.getId(),
-                    DealDamageToPermanentsTargetControlsEffect.toTargetedPlayers(2, CREATURE));
+                    DealDamageEffect.toEachControlledByTargetedPlayer(2, CREATURE));
             assertHiddenAndPrevented(progenitus);
         }
 
@@ -298,7 +295,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         void defendingPlayerCreatures() {
             Permanent hidden = faceDownGiant();
             Permanent progenitus = addCreatureReady(player2, new Progenitus());
-            resolve(hidden.getCard(), player2.getId(), hidden.getId(), new DealDamageToDefendingPlayerCreaturesEffect(2));
+            defendingPlayerAbility(hidden, DEFENDING_CREATURES);
             assertHiddenAndPrevented(progenitus);
         }
 
@@ -312,6 +309,16 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
             assertThat(progenitus.getMarkedDamage()).isZero();
             assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(line -> line.contains("Hill Giant"));
         }
+    }
+
+    /** {@code effect} as an attack trigger of {@code dealer} ({@code null}: a red ability) with player 2 defending. */
+    private void defendingPlayerAbility(Permanent dealer, CardEffect effect) {
+        StackEntry entry = TestStackDoor.triggered(dealer == null ? new Shock() : dealer.getCard(), player1.getId(),
+                "Set damage", List.of(effect), null, dealer == null ? null : dealer.getId());
+        entry.setAttackedTargetId(player2.getId());
+        entry.setDefendingPlayerId(player2.getId());
+        gd.stack.add(entry);
+        harness.passBothPriorities();
     }
 
     private void redAbility(UUID targetId, CardEffect effect) {

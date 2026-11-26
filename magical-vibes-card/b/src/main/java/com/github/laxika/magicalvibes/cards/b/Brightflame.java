@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,8 +18,9 @@ public class Brightflame extends Card {
     public Brightflame() {
         DealDamageEffect targetDamage = DealDamageEffect.toTargetCreature(new XValue());
         target(TargetFilters.creature()).bindEffect(targetDamage);
-        addSimultaneousSpellEffects(targetDamage, new DealDamageToPermanentsTargetControlsEffect(new XValue(),
-                Subjects.otherCreaturesSharing(Subjects.target(), SharedQuality.COLOR)));
+        addSimultaneousSpellEffects(targetDamage, DealDamageEffect.toEach(
+                Subjects.otherCreaturesSharing(Subjects.target(), SharedQuality.COLOR),
+                new XValue()));
         addSpellEffect(new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE)));
     }
 }

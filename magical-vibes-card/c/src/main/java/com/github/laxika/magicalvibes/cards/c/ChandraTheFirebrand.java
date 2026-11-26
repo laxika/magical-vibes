@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
@@ -38,7 +37,7 @@ public class ChandraTheFirebrand extends Card {
         // −6: Chandra, the Firebrand deals 6 damage to each of up to six targets.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new DealDamageToEachTargetEffect(new Fixed(6))),
+                List.of(DealDamageEffect.toEachTarget(new Fixed(6))),
                 "−6: Chandra, the Firebrand deals 6 damage to each of up to six targets.",
                 null, -6, null, null,
                 List.of(), 0, 6

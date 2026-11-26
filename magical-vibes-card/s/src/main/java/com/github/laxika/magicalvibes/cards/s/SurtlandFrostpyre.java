@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -33,8 +33,9 @@ public class SurtlandFrostpyre extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new ScryEffect(2),
-                        new DealDamageToEachMatchingPermanentEffect(
-                                2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS)
+                        DealDamageEffect.toEach(
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsCreaturePredicate()),
+                                2)
                 ),
                 "{2}{U}{U}{R}, {T}, Sacrifice Surtland Frostpyre: Scry 2. This land deals 2 damage to each creature. "
                         + "Activate only as a sorcery.",

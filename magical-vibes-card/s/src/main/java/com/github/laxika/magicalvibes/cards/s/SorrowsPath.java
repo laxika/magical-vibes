@@ -4,9 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SwapBlockingAssignmentsBetweenTwoCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -51,10 +49,10 @@ public class SorrowsPath extends Card {
         addTrigger(Triggers.becomesTapped(),
                 SequenceEffect.simultaneous(
                         DealDamageEffect.to(Subjects.you(), 2),
-                        new DealDamageToEachMatchingPermanentEffect(2,
-                                new PermanentAllOfPredicate(List.of(
+                        DealDamageEffect.toEach(
+                                Subjects.controlledBy(Subjects.eachPlayer(),
+                                        new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentControlledBySourceControllerPredicate())),
-                                EachPermanentScope.ALL_PLAYERS)));
+                                        new PermanentControlledBySourceControllerPredicate()))), 2)));
     }
 }

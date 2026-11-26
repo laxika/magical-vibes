@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -21,8 +20,8 @@ public class GoblinChainwhirler extends Card {
         // and each creature and planeswalker they control.
         addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS),
                 DealDamageEffect.to(Subjects.eachOpponent(), 1),
-                new DealDamageToPermanentsTargetControlsEffect(1, Subjects.controlledBy(Subjects.eachOpponent(),
+                DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachOpponent(),
                         new PermanentAnyOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate())))));
+                                new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate()))), 1));
     }
 }

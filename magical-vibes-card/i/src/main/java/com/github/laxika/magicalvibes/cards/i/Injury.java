@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Modeled as {@link FlashbackCast} on the back face; the engine routes graveyard casts through
  * {@code Card.graveyardCastHalf()}.
  *
- * <p>Uses {@link DealDamageToEachTargetEffect} (full amount to every chosen target) so resolution
+ * <p>Uses {@link DealDamageEffect#toEachTarget} (full amount to every chosen target) so resolution
  * reads the flat {@code targetIds} list — aftermath stack entries keep the parent split card,
  * whose empty {@code effectTargetIndexMap} would break per-group remapped {@code targetId}.
  */
@@ -32,7 +32,7 @@ public class Injury extends Card {
                 "Second target must be a player or planeswalker"
         ));
         // 2 damage to each chosen target.
-        addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(2)));
+        addSpellEffect(DealDamageEffect.toEachTarget(new Fixed(2)));
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{2}{R}"));

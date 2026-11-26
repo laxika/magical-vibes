@@ -457,7 +457,7 @@ restriction, so deleting the inference cannot widen them.
 | `DistributeCountersAmongTargetsEffect` | `CREATURE` in both modes |
 | `PreventDividedDamageEffect` | `ANY_TARGET` (Remedy's oracle text is "any number of targets") |
 | `RevealTopCardsBottomThenDamageIfCopyRevealedEffect` | `ANY_TARGET` |
-| `DealDamageToEachTargetEffect` | `harmful(ANY_TARGET)` — was `benign`, see below |
+| `DealDamageEffect.toEachTarget` | `harmful(ANY_TARGET)` — was `benign`, see below |
 
 Behaviour changes, all rules-correct:
 
@@ -470,7 +470,7 @@ Behaviour changes, all rules-correct:
 | Samut, the Tested −2 | every permanent + players offered | creature/planeswalker + players |
 | Chandra, the Firebrand −6 | protection from the source was not checked (`isValidAbilityPermanentTarget` keys that on `harmful`) | protection blocks targeting (CR 702.16b) |
 
-The `benign` → `harmful` flip on `DealDamageToEachTargetEffect` is in scope because it is the same
+The `benign` → `harmful` flip on `DealDamageEffect.toEachTarget` is in scope because it is the same
 defect: an effect that deals damage was declaring the opposite of what it does. On the spell path it
 changes nothing (protection is checked structurally there regardless); on the ability path it fixes
 Chandra's −6.

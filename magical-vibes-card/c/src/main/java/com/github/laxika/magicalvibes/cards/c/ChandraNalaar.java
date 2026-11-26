@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -47,7 +46,7 @@ public class ChandraNalaar extends Card {
                 -8,
                 List.of(SequenceEffect.simultaneous(
                         DealDamageEffect.toTargetPlayerOrPlaneswalker(10),
-                        DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new Fixed(10)))),
+                        DealDamageEffect.toCreaturesOfTargetedPlayer(new Fixed(10)))),
                 "\u22128: Chandra Nalaar deals 10 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),

@@ -495,6 +495,20 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.HARMFUL);
     }
 
+    @Test
+    @DisplayName("Damage to each target is harmful damage; damage to each creature a target player controls aims at no permanent")
+    void setDamagePolarity() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+
+        assertThat(classifier.classifyCard(gd, new com.github.laxika.magicalvibes.cards.j.JayasImmolatingInferno(),
+                aiPlayerId)).isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
+        assertThat(classifier.classifyCard(gd, new com.github.laxika.magicalvibes.cards.s.Simoon(), aiPlayerId))
+                .isNull();
+    }
+
     private TargetPolarityClassifier createClassifier(GameTestHarness harness) {
         AmountEvaluationService amountEvaluationService = new AmountEvaluationService(
                 new PredicateEvaluationService(harness.getGameQueryService()), harness.getGameQueryService());

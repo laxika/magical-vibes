@@ -704,12 +704,13 @@ public class GameSimulator {
 
     /**
      * Damage the ability deals to what it aims at; a permanent damaging itself ("and 3 damage to itself") is not, nor
-     * is a target creature's power damage (the creature, not the ability's source, deals it).
+     * is damage to a set or to each of several targets, nor a target creature's power damage (the creature, not the
+     * ability's source, deals it).
      */
     private static boolean isAimedDamage(CardEffect effect) {
         return effect instanceof DamageDealingEffect
                 && !(effect instanceof DealDamageEffect damage
-                && damage.subject() instanceof PermanentSubject.Source)
+                && (damage.subject() instanceof PermanentSubject.Source || damage.recipient().dealsToSeveral()))
                 && !(effect instanceof TargetDealsPowerDamageToTargetEffect powerDamage
                 && !powerDamage.canDamageCreatures());
     }

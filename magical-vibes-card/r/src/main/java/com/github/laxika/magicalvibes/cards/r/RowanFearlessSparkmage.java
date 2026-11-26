@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -43,7 +43,7 @@ public class RowanFearlessSparkmage extends Card {
                 false,
                 null,
                 List.of(
-                        new DealDamageToEachTargetEffect(new Fixed(1), null, new PermanentIsCreaturePredicate()),
+                        DealDamageEffect.toEachTargetCreature(new Fixed(1)),
                         new CantBlockThisTurnEffect(Subjects.target())
                 ),
                 "\u22122: Rowan deals 1 damage to each of up to two target creatures. Those creatures can't block this turn.",

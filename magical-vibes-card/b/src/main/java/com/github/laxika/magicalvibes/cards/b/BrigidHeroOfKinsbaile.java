@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -27,8 +27,9 @@ public class BrigidHeroOfKinsbaile extends Card {
 
     public BrigidHeroOfKinsbaile() {
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToEachMatchingPermanentEffect(
-                        2, ATTACKING_OR_BLOCKING_CREATURE, EachPermanentScope.TARGET_PLAYER)),
+                List.of(DealDamageEffect.toEach(
+                        Subjects.controlledBy(Subjects.targetPlayer(), ATTACKING_OR_BLOCKING_CREATURE),
+                        2)),
                 "{T}: Brigid deals 2 damage to each attacking or blocking creature target player controls."));
     }
 }

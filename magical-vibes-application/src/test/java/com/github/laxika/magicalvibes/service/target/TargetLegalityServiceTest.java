@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -1524,7 +1523,7 @@ class TargetLegalityServiceTest {
             spell.setType(CardType.SORCERY);
             spell.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
-                    .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)));
+                    .addSpellEffect(DealDamageEffect.toEachTarget(new Fixed(1)));
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(
                     gd, spell, List.of(player2Id), player1Id, 0, false,

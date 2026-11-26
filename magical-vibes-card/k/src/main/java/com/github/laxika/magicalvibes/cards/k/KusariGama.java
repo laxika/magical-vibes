@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,12 +37,12 @@ public class KusariGama extends Card {
         // Whenever equipped creature deals damage to a blocking creature, this Equipment deals that
         // much damage to each other creature defending player controls.
         addTrigger(Triggers.equippedCreatureDealsDamageToCreature().withDamagedFilter(new PermanentIsBlockingPredicate()),
-                new DealDamageToEachMatchingPermanentEffect(new EventValue(),
-                        new PermanentAllOfPredicate(List.of(
+                DealDamageEffect.toEach(
+                        Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate()),
-                                new PermanentControlledByDefendingPlayerPredicate())),
-                        EachPermanentScope.ALL_PLAYERS));
+                                new PermanentControlledByDefendingPlayerPredicate()))), new EventValue()));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

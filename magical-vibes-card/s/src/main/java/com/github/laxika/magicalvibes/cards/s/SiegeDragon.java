@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -39,11 +39,11 @@ public class SiegeDragon extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new NotCondition(new DefendingPlayerControlsPermanent(
                                 new PermanentHasSubtypePredicate(CardSubtype.WALL)))),
-                new DealDamageToEachMatchingPermanentEffect(2,
-                        new PermanentAllOfPredicate(List.of(
+                DealDamageEffect.toEach(
+                        Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledByDefendingPlayerPredicate(),
                                 new PermanentNotPredicate(
-                                        new PermanentHasKeywordPredicate(Keyword.FLYING)))),
-                        EachPermanentScope.ALL_PLAYERS));
+                                        new PermanentHasKeywordPredicate(Keyword.FLYING))))), 2));
     }
 }

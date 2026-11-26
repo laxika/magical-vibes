@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAnyNumberThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -29,8 +27,9 @@ public class TheElderDragonWar extends Card {
         addStaticEffect(new ReadAheadEffect(false));
 
         addSimultaneousTrigger(Triggers.chapter(1),
-                new DealDamageToEachMatchingPermanentEffect(
-                        2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS),
+                DealDamageEffect.toEach(
+                        Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsCreaturePredicate()),
+                        2),
                 DealDamageEffect.to(Subjects.eachOpponent(), 2));
 
         addTrigger(Triggers.chapter(2), new DiscardAnyNumberThenEffect(

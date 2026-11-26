@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -50,7 +50,7 @@ public class ChandraHopesBeacon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new DealDamageToEachTargetEffect(new XValue())),
+                List.of(DealDamageEffect.toEachTarget(new XValue())),
                 "−X: Chandra deals X damage to each of up to two targets.",
                 null,
                 0,

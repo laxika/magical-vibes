@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,8 +18,9 @@ public class IzzetStaticaster extends Card {
         // {T}: This creature deals 1 damage to target creature and each other creature with the same name as that creature.
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(SequenceEffect.simultaneous(DealDamageEffect.toTargetCreature(1),
-                        new DealDamageToPermanentsTargetControlsEffect(1,
-                        Subjects.otherCreaturesSharing(Subjects.target(), SharedQuality.NAME)))),
+                        DealDamageEffect.toEach(
+                                Subjects.otherCreaturesSharing(Subjects.target(), SharedQuality.NAME),
+                                1))),
                 "{T}: This creature deals 1 damage to target creature and each other creature with the same name as that creature."));
     }
 }

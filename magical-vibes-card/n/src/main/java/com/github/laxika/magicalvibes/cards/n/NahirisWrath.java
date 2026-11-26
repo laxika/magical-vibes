@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,6 +24,6 @@ public class NahirisWrath extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Targets must be creatures or planeswalkers"
-        ), 100).addSpellEffect(DealDamageToEachTargetEffect.creaturesOrPlaneswalkers(new XValue()));
+        ), 100).addSpellEffect(DealDamageEffect.toEachTargetCreatureOrPlaneswalker(new XValue()));
     }
 }

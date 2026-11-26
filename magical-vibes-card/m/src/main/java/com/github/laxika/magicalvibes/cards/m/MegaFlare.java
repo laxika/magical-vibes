@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -28,6 +28,6 @@ public class MegaFlare extends Card {
 
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
-                .addSpellEffect(new DealDamageToEachTargetEffect(new GreatestPowerAmongControlled()));
+                .addSpellEffect(DealDamageEffect.toEachTarget(new GreatestPowerAmongControlled()));
     }
 }

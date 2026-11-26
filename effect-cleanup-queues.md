@@ -986,6 +986,10 @@ entwine with two modes (P09).
   defending-player records) log the source by `getCard().getName()`, bypassing `FaceDownVisibility` (CR 708.2a), and the
   each-matching, each-target and defending-player handlers begin no DEAL_DAMAGE step: the defect run before M1. Step 10 run Damage P
   (plan's survey, seen, not changed). Sure of the code.~~ Fixed in defect run D26 (the lines went with the protection pre-checks; mass begins its step too; `SetAndPlayerDamagePoolTest.FaceDownSource`, `StepResultsTest.DealDamage`).
+- The hard AI gives set damage no value: `DealDamageEffect.toEach` / `toEachTarget` answer `canDamageCreatures()` and
+  `canDamagePlayers()` false (as the absorbed records were no `DamageDealingEffect`), so Simoon scores the same with or without an
+  opposing creature (`SpellEvaluatorTest.setDamageSweeperIsNotScoredAsTargetedDamage` pins it) and no sweeper branch reads them; M2's
+  `BoardWipeEffect` view could cover `toEach`. Step 10 run Damage M1 (seen, not changed: AI parity). Sure.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

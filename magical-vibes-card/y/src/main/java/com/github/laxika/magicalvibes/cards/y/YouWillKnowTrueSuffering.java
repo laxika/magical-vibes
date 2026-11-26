@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
@@ -17,12 +17,12 @@ import java.util.List;
 public class YouWillKnowTrueSuffering extends Card {
 
     public YouWillKnowTrueSuffering() {
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                new GreatestManaValueAmongOwnedCommanders(),
-                new PermanentAllOfPredicate(List.of(
+        addSpellEffect(DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsCommanderPredicate()),
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))),
+                new GreatestManaValueAmongOwnedCommanders()));
     }
 }

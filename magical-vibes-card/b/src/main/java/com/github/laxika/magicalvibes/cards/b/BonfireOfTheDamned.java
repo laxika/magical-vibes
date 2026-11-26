@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,6 +26,6 @@ public class BonfireOfTheDamned extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
         )).bindEffect(targetDamage);
-        addSimultaneousSpellEffects(targetDamage, DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new XValue()));
+        addSimultaneousSpellEffects(targetDamage, DealDamageEffect.toCreaturesOfTargetedPlayer(new XValue()));
     }
 }

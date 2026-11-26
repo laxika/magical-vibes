@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -18,12 +16,11 @@ import java.util.List;
 public class ClawsOfWirewood extends Card {
 
     public ClawsOfWirewood() {
-        addSimultaneousSpellEffects(new DealDamageToEachMatchingPermanentEffect(
-                        3,
+        addSimultaneousSpellEffects(DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.eachPlayer(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentHasKeywordPredicate(Keyword.FLYING))),
-                        EachPermanentScope.ALL_PLAYERS),
+                                new PermanentHasKeywordPredicate(Keyword.FLYING)))), 3),
                 DealDamageEffect.to(Subjects.eachPlayer(), 3));
         addCycling("{2}");
     }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,11 +23,11 @@ import java.util.List;
 public class ThundercloudShaman extends Card {
 
     public ThundercloudShaman() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToEachMatchingPermanentEffect(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GIANT), CountScope.CONTROLLER),
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT)))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT))))),
+                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GIANT), CountScope.CONTROLLER)));
     }
 }

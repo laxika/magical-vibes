@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerControlsCreaturesThenPerpetuallyBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -22,7 +22,7 @@ public class DealDamageToTargetPlayerControlsCreaturesThenPerpetuallyBoostEffect
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final DealDamageToPermanentsTargetControlsEffectHandler damageHandler;
+    private final DealDamageEffectHandler damageHandler;
     private final PerpetuallyBoostTargetCreatureEffectHandler boostHandler;
 
     @Override
@@ -45,7 +45,7 @@ public class DealDamageToTargetPlayerControlsCreaturesThenPerpetuallyBoostEffect
                 .toList());
 
         damageHandler.resolve(gameData, entry,
-                new DealDamageToPermanentsTargetControlsEffect(boostEffect.damage()));
+                DealDamageEffect.toEachCreatureOfTargetedPlayer(boostEffect.damage()));
 
         for (Permanent creature : creatures) {
             StackEntry boostEntry = StackEntry.carrier(entry.getCard(),

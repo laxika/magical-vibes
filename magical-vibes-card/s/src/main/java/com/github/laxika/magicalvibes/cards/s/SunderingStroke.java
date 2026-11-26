@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "144")
@@ -21,6 +21,6 @@ public class SunderingStroke extends Card {
                 .addSpellEffect(new ConditionalEffect(
                         new NotCondition(threshold), DealDividedDamageEffect.chosenAmongAnyTargets(7)))
                 .addSpellEffect(new ConditionalEffect(
-                        threshold, new DealDamageToEachTargetEffect(new Fixed(7))));
+                        threshold, DealDamageEffect.toEachTarget(new Fixed(7))));
     }
 }

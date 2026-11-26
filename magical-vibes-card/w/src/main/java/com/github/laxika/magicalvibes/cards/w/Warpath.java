@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -16,11 +16,11 @@ import java.util.List;
 public class Warpath extends Card {
 
     public Warpath() {
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(3,
-                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+        addSpellEffect(DealDamageEffect.toEach(
+                Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                         new PermanentAnyOfPredicate(List.of(
                         new PermanentIsBlockingPredicate(),
-                        new PermanentIsBlockedPredicate())))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentIsBlockedPredicate()))))), 3));
     }
 }

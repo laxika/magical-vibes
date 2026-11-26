@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,10 +37,10 @@ public class GoblinShrine extends Card {
                 null));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new DealDamageToEachMatchingPermanentEffect(1,
-                        new PermanentAllOfPredicate(List.of(
+                DealDamageEffect.toEach(
+                        Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN))),
-                        EachPermanentScope.ALL_PLAYERS));
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)))), 1));
     }
 }

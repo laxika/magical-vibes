@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,9 +26,9 @@ public class FlamesOfTheRazeBoar extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtLeastPredicate(4)
                         ))),
-                        new DealDamageToPermanentsTargetControlsEffect(2, Subjects.controlledBy(
+                        DealDamageEffect.toEach(Subjects.controlledBy(
                                 Subjects.controllerOf(Subjects.target()),
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
-                                        new PermanentNotPredicate(new PermanentIsTargetCardPredicate())))))));
+                                        new PermanentNotPredicate(new PermanentIsTargetCardPredicate())))), 2)));
     }
 }
