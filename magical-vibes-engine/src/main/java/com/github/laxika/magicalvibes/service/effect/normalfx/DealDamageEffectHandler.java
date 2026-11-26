@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -97,6 +99,10 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
         entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
         DealDamageEffect e = (DealDamageEffect) effect;
+        if (e.dealers() != null) {
+            damageByDealers(gameData, entry, e);
+            return;
+        }
         if (e.recipient().namesPlayers()) {
             damagePlayers(gameData, entry, e);
             return;
@@ -222,7 +228,9 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
      * be dealt damage (CR 120.1) and a player for a creature kind are left out.
      */
     private List<UUID> targetsOf(GameData gameData, StackEntry entry, DealDamageEffect e) {
-        List<UUID> candidates = switch (e.recipient()) {
+        Integer group = e.recipient() != Recipient.ANY_TARGET && e.subject() instanceof PermanentSubject.Target target
+                ? target.group() : null;
+        List<UUID> candidates = group != null ? entry.targetsForGroup(group) : switch (e.recipient()) {
             case ANY_TARGET -> {
                 UUID targetId = entry.isTargetIdOverriddenForEffectResolution() || e.targetGroup() < 0
                         ? entry.getTargetId()
@@ -289,6 +297,10 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         if (effect instanceof DealDamageEffect playerDamage && playerDamage.recipient() == Recipient.PLAYERS) {
             return Subjects.controllerOf(Subjects.target()).equals(playerDamage.players())
                     && amountEvaluationService.referencesEventValue(playerDamage.damage());
+        }
+        if (effect instanceof PerpetuallyBoostCardEffect boost) {
+            return amountEvaluationService.referencesEventValue(boost.powerBoost())
+                    || amountEvaluationService.referencesEventValue(boost.toughnessBoost());
         }
         if (effect instanceof GainLifeEffect gainLife) {
             return amountEvaluationService.referencesEventValue(gainLife.amount());
@@ -433,6 +445,127 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             }
         }
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Damage each permanent {@code dealers} names deals itself (CR 120.1; CR 608.2h: the object as it exists, or as it
+     * most recently existed, does it). The recipients are found once, before any damage (CR 608.2h): the effect's
+     * targets (a target group's for the bite), the source ("to this creature"), each permanent of a set with the
+     * players {@code players} names, or the players. Then each dealer in turn: a target dealer as it is, nothing once
+     * it has left (CR 608.2b; a noncreature has no power, CR 208.3, so a power amount is 0); any other as it is or last existed
+     * ({@link DamageSupport#dealerAsItIsOrWas}); its amount evaluated with it as the amount's source (0 deals nothing,
+     * CR 120.8); its damage dealt through {@link DamageSupport#entryDealtByPermanent}, so it is the source with its
+     * own colours, lifelink, deathtouch, infect and wither, and every prevention and protection is an option of the
+     * recipient's damage pool (CR 616.1); "damage this deals can't be prevented" is the dealer's (CR 615.12). "Its controller" / "its owner" of the dealers is each dealer's own. Each
+     * dealer's damage is added to this step's DEAL_DAMAGE result; the excess over one target is tracked against the
+     * dealer's deathtouch (CR 120.4a).
+     */
+    private void damageByDealers(GameData gameData, StackEntry entry, DealDamageEffect e) {
+        List<UUID> dealerIds = subjectResolutionService.permanentIds(gameData, entry, e, e.dealers());
+        if (dealerIds.isEmpty()) {
+            return;
+        }
+        boolean targetDealers = e.dealers().declaresTarget();
+        boolean perDealerPlayers = e.players() instanceof PlayerSubject.ControllerOf
+                || e.players() instanceof PlayerSubject.OwnerOf;
+        List<UUID> targets = List.of();
+        List<Permanent> set = List.of();
+        List<UUID> players = List.of();
+        if (e.recipient() == Recipient.PLAYERS) {
+            players = perDealerPlayers ? List.of() : subjectResolutionService.players(gameData, entry, e, e.players());
+        } else if (e.recipient() == Recipient.EACH_PERMANENT) {
+            set = subjectResolutionService.permanents(gameData, entry, e, e.subject()).stream()
+                    .filter(permanent -> damageSupport.isAnyTargetDamageRecipient(gameData, permanent))
+                    .toList();
+            if (e.players() != null) {
+                players = subjectResolutionService.players(gameData, entry, e, e.players());
+            }
+        } else if (e.subject() instanceof PermanentSubject.Source) {
+            Permanent source = subjectResolutionService.permanent(gameData, entry, e, e.subject());
+            targets = source != null && damageSupport.isAnyTargetDamageRecipient(gameData, source)
+                    ? List.of(source.getId()) : List.of();
+        } else if (e.recipient() == Recipient.ANY_TARGET && e.targetGroup() >= 0) {
+            // The bite to any target reads its recipient group's target, whatever the entry's primary target is.
+            targets = entry.targetsForGroup(e.targetGroup()).stream().limit(1).toList();
+        } else {
+            targets = targetsOf(gameData, entry, e);
+        }
+        boolean excess = targets.size() == 1 && tracksExcess(entry, e);
+        if (excess) {
+            entry.setEventValue(0);
+        }
+
+        for (UUID dealerId : dealerIds) {
+            Permanent dealer = targetDealers
+                    ? gameQueryService.findPermanentById(gameData, dealerId)
+                    : damageSupport.dealerAsItIsOrWas(gameData, entry, dealerId);
+            if (dealer == null) {
+                continue;
+            }
+            UUID controllerId = damageSupport.dealerControllerId(gameData, entry, dealer);
+            if (controllerId == null) {
+                continue;
+            }
+            int damage = amountEvaluationService.evaluate(gameData, e.damage(), AmountContext.forStackEntry(entry, dealer));
+            if (damage <= 0) {
+                continue;
+            }
+            StackEntry dealing = damageSupport.entryDealtByPermanent(gameData, entry, dealer, controllerId);
+            // "Damage this deals can't be prevented" is the dealer's (CR 615.12), for its damage only.
+            boolean previousUnpreventable = gameData.unpreventableDamageInProgress;
+            gameData.unpreventableDamageInProgress = previousUnpreventable
+                    || gameQueryService.damageCantBePreventedFromSource(gameData, dealer);
+            try {
+                dealOneDealersDamage(gameData, entry, e, dealing, dealer, controllerId, damage, perDealerPlayers,
+                        players, set, targets, excess);
+            } finally {
+                gameData.unpreventableDamageInProgress = previousUnpreventable;
+            }
+            entry.addToStep(StepKind.DEAL_DAMAGE, dealing.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
+        }
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    private void dealOneDealersDamage(GameData gameData, StackEntry entry, DealDamageEffect e, StackEntry dealing,
+                                      Permanent dealer, UUID controllerId, int damage, boolean perDealerPlayers,
+                                      List<UUID> players, List<Permanent> set, List<UUID> targets, boolean excess) {
+        switch (e.recipient()) {
+            case PLAYERS -> {
+                List<UUID> dealt = !perDealerPlayers ? players
+                        : e.players() instanceof PlayerSubject.ControllerOf ? List.of(controllerId)
+                        : dealerOwner(gameData, entry, e, dealer);
+                for (UUID playerId : dealt) {
+                    damageSupport.dealDamageToPlayer(gameData, dealing, playerId, damage);
+                }
+            }
+            case EACH_PERMANENT -> {
+                damageSupport.damageFilteredCreatures(gameData, dealing, permanent -> damage, set,
+                        permanent -> true, false, false);
+                for (UUID playerId : players) {
+                    damageSupport.dealDamageToPlayer(gameData, dealing, playerId, damage);
+                }
+            }
+            default -> {
+                for (UUID targetId : targets) {
+                    ExcessBaseline baseline = excess ? excessBaseline(gameData, dealing, targetId) : null;
+                    int dealt = damageSupport.resolveAnyTargetDamage(gameData, dealing, targetId, damage, false);
+                    if (baseline != null) {
+                        entry.setEventValue(baseline.excessOf(damageSupport, dealt));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * "Its owner": the owner of the dealer's card, as it is or as it last existed (a card's owner never changes,
+     * CR 108.3).
+     */
+    private List<UUID> dealerOwner(GameData gameData, StackEntry entry, DealDamageEffect e, Permanent dealer) {
+        Card card = dealer.getOriginalCard() != null ? dealer.getOriginalCard() : dealer.getCard();
+        UUID owner = gameData.ownerOf(card);
+        return owner != null ? List.of(owner) : subjectResolutionService.players(gameData, entry, e,
+                Subjects.ownerOf(Subjects.named(dealer.getId())));
     }
 
     /** The entry's source permanent as it is, else as it last existed (an amount read from it, CR 608.2h). */

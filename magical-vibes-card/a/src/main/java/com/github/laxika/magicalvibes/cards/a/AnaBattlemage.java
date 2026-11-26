@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -24,7 +25,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 
 @CardRegistration(set = "PLC", collectorNumber = "124")
@@ -49,6 +49,7 @@ public class AnaBattlemage extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{1}{B}")),
                         SequenceEffect.of(new TapPermanentsEffect(Subjects.target()),
-                                new TargetCreatureDealsDamageToControllerEffect(new SourcePower())));
+                                DealDamageEffect.to(Subjects.controllerOf(Subjects.target()),
+                                        new SourcePower()).dealtBy(Subjects.target())));
     }
 }

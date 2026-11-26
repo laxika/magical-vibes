@@ -3,14 +3,15 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "HOB", collectorNumber = "114")
 @CardRegistration(set = "HOC", collectorNumber = "114")
@@ -21,7 +22,7 @@ public class ThorinMountainKing extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AttachTargetEquipmentsToTargetCreatureThenEffect(
                                 SequenceEffect.upToOneTarget(
-                                        TargetDealsPowerDamageToTargetEffect.bySource())));
+                                        DealDamageEffect.toTargetCreature(new SourcePower()))));
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"), 0, 99);

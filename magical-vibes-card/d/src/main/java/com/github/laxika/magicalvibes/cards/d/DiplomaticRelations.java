@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EOE", collectorNumber = "177")
@@ -18,6 +18,6 @@ public class DiplomaticRelations extends Card {
                 .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(DealDamageEffect.bite());
     }
 }

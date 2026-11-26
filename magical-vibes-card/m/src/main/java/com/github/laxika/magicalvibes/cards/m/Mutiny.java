@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RIX", collectorNumber = "106")
@@ -11,7 +11,7 @@ public class Mutiny extends Card {
 
     public Mutiny() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(DealDamageEffect.bite());
         target(TargetFilters.creature());
         setMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET);
     }

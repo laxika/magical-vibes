@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "234")
 public class Backlash extends Card {
@@ -26,6 +26,7 @@ public class Backlash extends Card {
                 "Target must be an untapped creature"
         ))
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new TargetCreatureDealsDamageToControllerEffect(new SourcePower()));
+                .addSpellEffect(DealDamageEffect.to(Subjects.controllerOf(Subjects.target()),
+                        new SourcePower()).dealtBy(Subjects.target()));
     }
 }

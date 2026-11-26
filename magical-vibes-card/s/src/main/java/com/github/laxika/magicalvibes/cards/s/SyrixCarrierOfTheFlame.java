@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -48,7 +50,7 @@ public class SyrixCarrierOfTheFlame extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target")).addTrigger(Triggers.endStep(ActivePlayer.ANY),
                         TriggerOptions.DEFAULT.withInterveningIf(new CreatureCardLeftGraveyardThisTurn()),
-                        new TargetCreatureDealsPowerDamageToAnyTargetEffect());
+                        DealDamageEffect.toAnyTargetInGroup(new SourcePower(), 1).dealtBy(Subjects.target(0)));
 
         addTrigger(new TriggerCondition(Triggers.creatureDies(
                                 new PermanentHasSubtypePredicate(CardSubtype.PHOENIX),

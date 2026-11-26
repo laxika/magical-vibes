@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class RavenousPursuit extends Card {
     public RavenousPursuit() {
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(TargetDealsPowerDamageToTargetEffect.recordingExcessDamage())
+                .addSpellEffect(DealDamageEffect.bite())
                 .addSpellEffect(ChooseCardEffect.oneOf(
                         Subjects.cardsInYourHand(new CardTypePredicate(CardType.CREATURE)),
                         "a creature card in your hand"))

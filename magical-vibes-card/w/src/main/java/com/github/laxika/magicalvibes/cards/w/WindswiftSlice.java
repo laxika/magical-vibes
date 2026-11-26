@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class WindswiftSlice extends Card {
     public WindswiftSlice() {
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(TargetDealsPowerDamageToTargetEffect.recordingExcessDamage())
+                .addSpellEffect(DealDamageEffect.bite())
                 .addSpellEffect(new CreateTokenEffect(new EventValue(), "Elf Warrior", 1, 1,
                         CardColor.GREEN, List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()));
     }

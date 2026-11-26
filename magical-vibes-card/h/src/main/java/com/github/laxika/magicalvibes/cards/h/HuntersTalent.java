@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class HuntersTalent extends Card {
     public HuntersTalent() {
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TargetDealsPowerDamageToTargetEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.bite());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

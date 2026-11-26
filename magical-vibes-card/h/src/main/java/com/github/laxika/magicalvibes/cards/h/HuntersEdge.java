@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -29,6 +29,6 @@ public class HuntersEdge extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        )).addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+        )).addSpellEffect(DealDamageEffect.bite());
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class Polliwallop extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FROG), CountScope.CONTROLLER)));
 
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(2));
+                .addSpellEffect(DealDamageEffect.bite(0, 1, 2));
         target(TargetFilters.creatureAnOpponentControls());
     }
 }

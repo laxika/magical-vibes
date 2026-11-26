@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -43,10 +45,10 @@ public class TheBearsOfLittjara extends Card {
         ));
 
         addTrigger(Triggers.chapter(3),
-                ControlledCreaturesDealPowerDamageToTargetEffect.creatureOrPlaneswalker(
-                        new PermanentAllOfPredicate(List.of(
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new SourcePower())
+                        .dealtBy(Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentPowerAtLeastPredicate(4)))));
+                                new PermanentPowerAtLeastPredicate(4))))));
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

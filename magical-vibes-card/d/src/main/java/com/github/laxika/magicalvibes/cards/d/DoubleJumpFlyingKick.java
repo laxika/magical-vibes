@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -33,8 +35,10 @@ public class DoubleJumpFlyingKick extends Card {
         CardEffect doubleJump = SequenceEffect.of(
                 new PutCountersEffect(CounterType.FLYING),
                 new SetBasePowerToughnessEffect(5, 5));
-        CardEffect flyingKick = new TargetCreatureDealsPowerDamageToAnyTargetEffect(0, 1, false);
-        CardEffect fusedFlyingKick = new TargetCreatureDealsPowerDamageToAnyTargetEffect(1, 2, false);
+        CardEffect flyingKick = DealDamageEffect.toTargetPermanentOfGroup(1, new SourcePower())
+                .dealtBy(Subjects.target(0));
+        CardEffect fusedFlyingKick = DealDamageEffect.toTargetPermanentOfGroup(2, new SourcePower())
+                .dealtBy(Subjects.target(1));
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -50,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
@@ -196,10 +196,10 @@ public class DamagePreventionService {
         if (damagedPlayerId == null || sourceCard == null) return;
         StackEntry entry = TriggeredAbilityStackService.madeAbility(sourceCard, damagedPlayerId,
                 sourceCard.getName() + "'s triggered ability",
-                List.of(new TargetDealsPowerDamageToTargetEffect(
+                List.of(DealDamageEffect.to(Subjects.targetDeclaredElsewhere(), new SourcePower()).dealtBy(
                         Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(), new PermanentIsCommanderPredicate()))),
-                        Subjects.targetDeclaredElsewhere())), preventedCreatureId,
+                                new PermanentIsCreaturePredicate(), new PermanentIsCommanderPredicate()))))),
+                preventedCreatureId,
                 (UUID) null);
         entry.setNonTargeting(true);
         triggeredAbilityStackServiceProvider.getObject().putDelayed(gameData, entry);

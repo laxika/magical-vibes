@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +22,7 @@ public class ContestOfClaws extends Card {
         ));
 
         target(TargetFilters.creature())
-                .addSpellEffect(TargetDealsPowerDamageToTargetEffect.recordingExcessDamage())
+                .addSpellEffect(DealDamageEffect.bite())
                 .addSpellEffect(new ConditionalEffect(
                         new EventValueAtLeast(1),
                         new DiscoverEffect(new EventValue())));

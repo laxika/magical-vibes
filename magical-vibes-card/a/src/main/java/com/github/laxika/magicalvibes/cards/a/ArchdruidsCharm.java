@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -50,7 +50,7 @@ public class ArchdruidsCharm extends Card {
                         "Put a +1/+1 counter on target creature you control. It deals damage equal to its power to target creature you don't control",
                         List.of(
                                 new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new TargetDealsPowerDamageToTargetEffect()),
+                                DealDamageEffect.bite()),
                         List.of(
                                 new ControlledPermanentPredicateTargetFilter(
                                         new PermanentIsCreaturePredicate(),

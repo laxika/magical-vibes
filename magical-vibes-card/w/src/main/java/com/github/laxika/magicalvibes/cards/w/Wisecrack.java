@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "98")
 @CardRegistration(set = "OM1", collectorNumber = "98")
@@ -17,7 +16,7 @@ public class Wisecrack extends Card {
 
     public Wisecrack() {
         target(TargetFilters.creature())
-                .addSpellEffect(TargetDealsPowerDamageToTargetEffect.toItself())
+                .addSpellEffect(DealDamageEffect.targetCreatureToItself(1))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsAttackingPredicate()),
                         DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2)));

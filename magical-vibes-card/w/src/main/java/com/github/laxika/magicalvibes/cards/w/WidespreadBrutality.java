@@ -7,16 +7,17 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -56,7 +57,7 @@ public class WidespreadBrutality extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ARMY))));
         // "The Army you amassed" is the Army the amass step chose (CR 701.47a); it is the source of the damage.
-        addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(
-                Subjects.thisWay(StepKind.CHOOSE), Subjects.controlledBy(Subjects.eachPlayer(), nonArmyCreature)));
+        addSpellEffect(DealDamageEffect.toEachOther(Subjects.thisWay(StepKind.CHOOSE),
+                Subjects.controlledBy(Subjects.eachPlayer(), nonArmyCreature), new SourcePower()));
     }
 }

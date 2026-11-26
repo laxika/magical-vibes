@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -43,7 +42,6 @@ public class ChainersTorment extends Card {
         addTrigger(Triggers.chapter(3),
                 new CreateTokenEffect("Nightmare Horror", halfYourLife, halfYourLife, CardColor.BLACK,
                         List.of(CardSubtype.NIGHTMARE, CardSubtype.HORROR), Set.of(), Set.of()),
-                new TargetCreatureDealsDamageToControllerEffect(halfYourLife,
-                        Subjects.createdThisResolution(), Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), halfYourLife).dealtBy(Subjects.createdThisResolution()));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -41,7 +41,7 @@ public class HuatliDinosaurKnight extends Card {
         // −3: Target Dinosaur you control deals damage equal to its power to target creature you don't control.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new TargetDealsPowerDamageToTargetEffect()),
+                List.of(DealDamageEffect.bite()),
                 "\u22123: Target Dinosaur you control deals damage equal to its power to target creature you don't control.",
                 null, -3, null, null,
                 List.of(

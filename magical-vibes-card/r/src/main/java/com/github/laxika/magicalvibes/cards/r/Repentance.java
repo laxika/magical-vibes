@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "37")
 @CardRegistration(set = "TPR", collectorNumber = "25")
 public class Repentance extends Card {
 
     public Repentance() {
-        addSpellEffect(TargetDealsPowerDamageToTargetEffect.toItself());
+        addSpellEffect(DealDamageEffect.targetCreatureToItself(1));
     }
 }

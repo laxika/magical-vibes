@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThisTurn;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -37,7 +38,7 @@ public class Asmoranomardicadaistinaculdacar extends Card {
                 List.of(
                         new SacrificeMultiplePermanentsCost(2,
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD)),
-                        new TargetCreatureDealsDamageToSelfEffect(6)),
+                        DealDamageEffect.toTargetCreature(6).dealtBy(Subjects.target())),
                 "Sacrifice two Foods: Target creature deals 6 damage to itself."
         ));
     }

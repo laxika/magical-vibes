@@ -75,9 +75,6 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -369,29 +366,28 @@ public class TargetPolarityClassifier {
         // controller") is still harmful to whoever the card targets; damage with no
         // permanent in its target spec carries no permanent polarity — the player-targeting
         // branch handles it.
-        // One permanent deals damage equal to its power to another: the bite of two target groups is harmful, a
-        // creature damaging itself or damage from this or the triggering creature is creature damage, the rest
-        // (Aura's creature as it triggered, damage to this creature) aims at no permanent.
-        if (effect instanceof TargetDealsPowerDamageToTargetEffect powerDamage) {
-            if (powerDamage.readsTwoTargetGroups()) {
+        // Damage another permanent deals: the bite of two target groups is harmful (Soul's Fire's any target too);
+        // a target creature dealing damage to each other creature is harmful when they are its own controller's
+        // (Alpha Brawl), else the controller's own creature, beneficial; a target creature dealing damage to each
+        // opponent aims at the AI's own creature; a creature damaging itself or a set's damage to a target creature is
+        // creature damage, the Aura's creature as it triggered and damage to this creature aim at no permanent.
+        if (effect instanceof DealDamageEffect dealt && dealt.dealers() != null) {
+            if (dealt.readsTwoTargetGroups()) {
                 return TargetPolarity.HARMFUL;
             }
-            return powerDamage.recipient() instanceof PermanentSubject.Target
-                    && !(powerDamage.dealer() instanceof PermanentSubject.AttachedAtTrigger)
-                    ? TargetPolarity.HARMFUL_DAMAGE
-                    : null;
-        }
-        // "Target creature an opponent controls deals damage equal to its power to each other creature that player
-        // controls" (Alpha Brawl) is harmful; the controller's own creature dealing damage to every other creature is
-        // beneficial (the name table below).
-        if (effect instanceof TargetCreatureDealsPowerDamageToEachOtherCreatureEffect eachOther
-                && eachOther.targetSpec().harmful()) {
-            return TargetPolarity.HARMFUL;
-        }
-        // "Target creature you control deals damage to each opponent" aims at the AI's own creature.
-        if (effect instanceof TargetCreatureDealsDamageToControllerEffect toPlayers
-                && toPlayers.player() instanceof PlayerSubject.Each) {
-            return null;
+            if (dealt.recipient() == DealDamageEffect.Recipient.EACH_PERMANENT) {
+                return dealt.targetSpec().harmful() ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
+            }
+            if (dealt.recipient() == DealDamageEffect.Recipient.PLAYERS
+                    && dealt.players() instanceof PlayerSubject.Each) {
+                return null;
+            }
+            if (dealt.recipient() == DealDamageEffect.Recipient.CREATURE) {
+                return dealt.subject() instanceof PermanentSubject.Target
+                        && !(dealt.dealers() instanceof PermanentSubject.AttachedAtTrigger)
+                        ? TargetPolarity.HARMFUL_DAMAGE
+                        : null;
+            }
         }
         // "Deals N damage to each of up to N targets" damages each target.
         if (effect instanceof DealDamageEffect eachTarget
@@ -769,7 +765,6 @@ public class TargetPolarityClassifier {
             entry("RedirectNextDamageFromChosenSourceToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectNextDamageFromTargetToAnotherTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandBottomThenDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
@@ -834,8 +829,6 @@ public class TargetPolarityClassifier {
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
             // Chandra's Ignition: the target is a creature you control and is only the damage
             // source — it takes no damage itself, so the AI should aim at its own board.
-            entry("TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect", TargetPolarity.BENEFICIAL),
-            entry("TargetCreatureDealsPowerDamageToEachOtherCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("TapTargetThenEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),

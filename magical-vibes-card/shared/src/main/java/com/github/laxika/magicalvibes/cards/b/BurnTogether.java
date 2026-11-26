@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +28,8 @@ public class BurnTogether extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Second target must be any other target"));
-        victimTarget.addSpellEffect(new TargetCreatureDealsPowerDamageToAnyTargetEffect());
+        victimTarget.addSpellEffect(DealDamageEffect.toAnyTargetInGroup(new SourcePower(), 1)
+                .dealtBy(Subjects.target(0)));
         sourceTarget.addSpellEffect(new SacrificeSelfEffect(Subjects.target(0)));
     }
 }

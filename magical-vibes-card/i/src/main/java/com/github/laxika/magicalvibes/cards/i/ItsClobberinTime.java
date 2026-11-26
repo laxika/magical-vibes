@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -29,7 +29,7 @@ public class ItsClobberinTime extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control deals damage equal to its power to target creature an opponent controls",
-                        List.<CardEffect>of(new TargetDealsPowerDamageToTargetEffect()),
+                        List.<CardEffect>of(DealDamageEffect.bite()),
                         List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact or enchantment",

@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -20,7 +22,7 @@ public class NibelheimAflame extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect());
+        )).addSpellEffect(DealDamageEffect.toEachOther(Subjects.target(), Subjects.allCreatures(), new SourcePower()));
         addSpellEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
                 new DiscardOwnHandThenDrawEffect(new Fixed(4))));

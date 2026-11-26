@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -19,6 +21,7 @@ public class NovaFlame extends Card {
                 "Target must be a creature you control"
         ))
                 .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()))
-                .addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect());
+                .addSpellEffect(DealDamageEffect.toEachOther(Subjects.target(), Subjects.allCreatures(),
+                        new SourcePower()));
     }
 }

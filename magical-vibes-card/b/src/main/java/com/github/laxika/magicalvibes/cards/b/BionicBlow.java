@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MSC", collectorNumber = "680")
@@ -16,6 +16,6 @@ public class BionicBlow extends Card {
                 .addSpellEffect(BoostEffect.target(new XValue(), new Fixed(0)));
 
         target(TargetFilters.creature(), 0, 1)
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(DealDamageEffect.bite());
     }
 }

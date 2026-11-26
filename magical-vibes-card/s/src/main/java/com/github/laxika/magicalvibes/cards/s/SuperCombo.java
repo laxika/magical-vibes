@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,6 +25,6 @@ public class SuperCombo extends Card {
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(DealDamageEffect.bite());
     }
 }

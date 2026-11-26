@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardPutPowerCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -71,14 +73,15 @@ public class FleshBlood extends Card {
                 ).withManaCost("{3}{B}{G}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Blood — Target creature you control deals damage equal to its power to any target",
-                        List.<CardEffect>of(new TargetCreatureDealsPowerDamageToAnyTargetEffect(1, 0)),
+                        List.<CardEffect>of(DealDamageEffect.toAnyTargetInGroup(new SourcePower(), 0)
+                                .dealtBy(Subjects.target(1))),
                         List.of(anyTarget, controlledCreature)
                 ).withManaCost("{R}{G}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Fuse — Flesh and then Blood",
                         List.<CardEffect>of(
                                 new ExileTargetCreatureCardFromGraveyardPutPowerCountersEffect(0, 2),
-                                new TargetCreatureDealsPowerDamageToAnyTargetEffect(3, 1)),
+                                DealDamageEffect.toAnyTargetInGroup(new SourcePower(), 1).dealtBy(Subjects.target(3))),
                         List.of(creatureCardInGraveyard, anyTarget, creature, controlledCreature)
                 ).withManaCost("{3}{B}{G}{R}{G}")
         )));

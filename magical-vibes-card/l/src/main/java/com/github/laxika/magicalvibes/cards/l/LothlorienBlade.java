@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -13,7 +15,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "77")
 @CardRegistration(set = "LTC", collectorNumber = "157")
@@ -30,7 +31,7 @@ public class LothlorienBlade extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(),
-                        new TargetDealsPowerDamageToTargetEffect(Subjects.triggering(), Subjects.target()));
+                        DealDamageEffect.toTargetCreature(new SourcePower()).byTriggeringPermanent());
 
         addActivatedAbility(new EquipActivatedAbility(
                 "{2}", ELF, "Target must be an Elf creature you control"));

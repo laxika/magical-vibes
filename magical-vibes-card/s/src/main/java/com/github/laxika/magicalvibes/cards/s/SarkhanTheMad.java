@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
@@ -47,10 +47,10 @@ public class SarkhanTheMad extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -4,
-                List.of(new ControlledCreaturesDealPowerDamageToTargetPlayerOrPlaneswalkerEffect(
-                        new PermanentAllOfPredicate(List.of(
+                List.of(DealDamageEffect.toTargetPlayerOrPlaneswalker(new SourcePower())
+                        .dealtBy(Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.DRAGON))))),
+                                new PermanentHasSubtypePredicate(CardSubtype.DRAGON)))))),
                 "-4: Each Dragon creature you control deals damage equal to its power to target player or planeswalker.",
                 new AnyTargetPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -23,7 +23,7 @@ public class SuperState extends Card {
                                 Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.HASTE),
                                 Subjects.attachedCreature()))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.triggering(), new EventValue(),
-                                Subjects.except(Subjects.eachOpponent(), Subjects.triggeringPlayer())));
+                        DealDamageEffect.to(Subjects.except(Subjects.eachOpponent(), Subjects.triggeringPlayer()),
+                                new EventValue()).byTriggeringPermanent());
     }
 }

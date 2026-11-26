@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,11 +28,11 @@ public class SarkhanTheMasterless extends Card {
 
     public SarkhanTheMasterless() {
         addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(),
-                new ControlledCreaturesDealDamageToTargetEffect(1,
-                        new PermanentAllOfPredicate(List.of(
+                DealDamageEffect.toTargetCreature(1)
+                        .dealtBy(Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON)
-                        ))));
+                        )))));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

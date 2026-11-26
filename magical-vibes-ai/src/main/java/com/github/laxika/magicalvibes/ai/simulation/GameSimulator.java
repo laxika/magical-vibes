@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -710,9 +709,8 @@ public class GameSimulator {
     private static boolean isAimedDamage(CardEffect effect) {
         return effect instanceof DamageDealingEffect
                 && !(effect instanceof DealDamageEffect damage
-                && (damage.subject() instanceof PermanentSubject.Source || damage.recipient().dealsToSeveral()))
-                && !(effect instanceof TargetDealsPowerDamageToTargetEffect powerDamage
-                && !powerDamage.canDamageCreatures());
+                && (damage.subject() instanceof PermanentSubject.Source || damage.recipient().dealsToSeveral()
+                || damage.dealers() != null && !damage.canDamageCreatures()));
     }
 
     private double abilityTargetPriority(GameData gd, UUID targetId, UUID playerId,

@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -39,7 +41,7 @@ public class ThrashThreat extends Card {
                 "Target must be a creature or planeswalker you don't control"
         );
 
-        CardEffect thrash = new TargetCreatureDealsPowerDamageToAnyTargetEffect();
+        CardEffect thrash = DealDamageEffect.toAnyTargetInGroup(new SourcePower(), 1).dealtBy(Subjects.target(0));
         CardEffect threat = new CreateTokenEffect(
                 1, "Beast", 4, 4, CardColor.RED, Set.of(CardColor.RED, CardColor.GREEN),
                 List.of(CardSubtype.BEAST), Set.of(Keyword.TRAMPLE), Set.of());

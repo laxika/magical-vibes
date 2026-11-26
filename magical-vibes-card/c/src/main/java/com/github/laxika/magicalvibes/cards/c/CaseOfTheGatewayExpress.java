@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisT
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,8 @@ public class CaseOfTheGatewayExpress extends Card {
     public CaseOfTheGatewayExpress() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ControlledCreaturesDealDamageToTargetEffect(1, new PermanentIsCreaturePredicate()));
+                        DealDamageEffect.toTargetCreature(1)
+                                .dealtBy(Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(

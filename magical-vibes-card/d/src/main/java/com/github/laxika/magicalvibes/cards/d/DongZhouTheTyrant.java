@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 
 @CardRegistration(set = "PTK", collectorNumber = "109")
@@ -17,6 +18,7 @@ public class DongZhouTheTyrant extends Card {
         // When Dong Zhou enters, target creature an opponent controls deals damage equal to its
         // power to that player.
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new TargetCreatureDealsDamageToControllerEffect(new SourcePower()));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), new SourcePower())
+                        .dealtBy(Subjects.target()));
     }
 }

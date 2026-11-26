@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,7 +30,7 @@ public class HulksThunderclap extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+        )).addSpellEffect(DealDamageEffect.bite());
 
         target(TargetFilters.creature());
 

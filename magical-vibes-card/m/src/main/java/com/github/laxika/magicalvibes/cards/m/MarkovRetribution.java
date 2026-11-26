@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,7 +34,7 @@ public class MarkovRetribution extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target Vampire you control deals damage equal to its power to another target creature",
-                        List.of(new TargetDealsPowerDamageToTargetEffect()),
+                        List.of(DealDamageEffect.bite()),
                         List.of(vampireYouControl, TargetFilters.creature())
                 )
         )));

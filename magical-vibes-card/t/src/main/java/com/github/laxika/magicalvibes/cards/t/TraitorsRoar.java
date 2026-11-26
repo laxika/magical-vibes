@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "200")
 public class TraitorsRoar extends Card {
@@ -28,6 +28,7 @@ public class TraitorsRoar extends Card {
                 "Target must be an untapped creature"
         ))
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new TargetCreatureDealsDamageToControllerEffect(new SourcePower()));
+                .addSpellEffect(DealDamageEffect.to(Subjects.controllerOf(Subjects.target()),
+                        new SourcePower()).dealtBy(Subjects.target()));
     }
 }

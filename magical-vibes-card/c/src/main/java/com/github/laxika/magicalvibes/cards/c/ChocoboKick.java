@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class ChocoboKick extends Card {
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
-                        new TargetDealsPowerDamageToTargetEffect(),
-                        new TargetDealsPowerDamageToTargetEffect(2)));
+                        DealDamageEffect.bite(),
+                        DealDamageEffect.bite(0, 1, 2)));
     }
 }

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFi
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -50,13 +51,13 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndPreventCombatDamageByTargetAndBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -231,7 +232,8 @@ class TargetPolarityGuardTest {
                 aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
-                new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(), aiPlayerId))
+                DealDamageEffect.toEachOther(Subjects.target(), Subjects.allCreatures(), new SourcePower()),
+                aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
                 RegisterControlLossUnattachTriggerEffect.whenControlLost(), aiPlayerId))

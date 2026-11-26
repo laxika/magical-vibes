@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -14,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "209")
 public class ViviensInvocation extends Card {
@@ -23,7 +24,7 @@ public class ViviensInvocation extends Card {
         @Override
         public CardEffect effect() {
             return QueueReflexiveAbilityEffect.aboutPickedPermanent(
-                    TargetDealsPowerDamageToTargetEffect.bySource(new PermanentAllOfPredicate(List.of(
+                    DealDamageEffect.toTargetCreature(new SourcePower(), new PermanentAllOfPredicate(List.of(
                             new PermanentIsCreaturePredicate(),
                             new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))));
         }

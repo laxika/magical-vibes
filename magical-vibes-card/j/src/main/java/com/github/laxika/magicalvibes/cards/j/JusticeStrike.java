@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "182")
 public class JusticeStrike extends Card {
 
     public JusticeStrike() {
-        addSpellEffect(TargetDealsPowerDamageToTargetEffect.toItself());
+        addSpellEffect(DealDamageEffect.targetCreatureToItself(1));
     }
 }

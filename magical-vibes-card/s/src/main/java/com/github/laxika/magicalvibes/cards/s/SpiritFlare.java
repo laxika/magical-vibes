@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetThenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,7 +30,7 @@ public class SpiritFlare extends Card {
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 )),
                 "First target must be an untapped creature you control"
-        )).addSpellEffect(new TapTargetThenEffect(new TargetDealsPowerDamageToTargetEffect()));
+        )).addSpellEffect(new TapTargetThenEffect(DealDamageEffect.bite()));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

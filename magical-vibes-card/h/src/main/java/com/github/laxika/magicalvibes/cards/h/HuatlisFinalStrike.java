@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LCI", collectorNumber = "190")
@@ -13,6 +15,6 @@ public class HuatlisFinalStrike extends Card {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(BoostEffect.target(1, 0));
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetCreatureDealsPowerDamageToAnyTargetEffect());
+                .addSpellEffect(DealDamageEffect.toAnyTargetInGroup(new SourcePower(), 1).dealtBy(Subjects.target(0)));
     }
 }

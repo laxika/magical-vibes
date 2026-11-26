@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -36,7 +36,7 @@ public class GarrukSavageHerald extends Card {
         // −2: Target creature you control deals damage equal to its power to another target creature.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new TargetDealsPowerDamageToTargetEffect()),
+                List.of(DealDamageEffect.bite()),
                 "−2: Target creature you control deals damage equal to its power to another target creature.",
                 null, -2, null, null,
                 List.of(TargetFilters.creatureYouControl(), TargetFilters.creature()), 2, 2

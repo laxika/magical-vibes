@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,8 @@ public class ItzquinthFirstbornOfGishath extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)
                 )),
                 "First target must be a Dinosaur creature you control"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{2}", new QueueReflexiveAbilityEffect(new TargetDealsPowerDamageToTargetEffect()))
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{2}",
+                new QueueReflexiveAbilityEffect(DealDamageEffect.bite()))
                 .withPrompt("Pay {2} to have the Dinosaur deal damage?"));
 
         target(new PermanentPredicateTargetFilter(

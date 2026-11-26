@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -11,7 +13,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "MH2", collectorNumber = "125")
 public class FlametongueYearling extends Card {
@@ -21,6 +22,6 @@ public class FlametongueYearling extends Card {
         addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{2}")));
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TargetDealsPowerDamageToTargetEffect.bySource());
+                DealDamageEffect.toTargetCreature(new SourcePower()));
     }
 }

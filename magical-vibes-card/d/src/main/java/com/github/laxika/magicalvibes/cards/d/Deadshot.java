@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -18,7 +18,7 @@ public class Deadshot extends Card {
                 "First target must be a creature"
         ))
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(DealDamageEffect.bite());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),

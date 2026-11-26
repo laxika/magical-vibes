@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class HuntersBow extends Card {
         var attachSourceEquipmentToTargetCreature = new AttachSourceEquipmentToTargetCreatureEffect();
         target(TargetFilters.creatureYouControl())
                 .bindEffect(attachSourceEquipmentToTargetCreature);
-        var targetDealsPowerDamageToTarget = new TargetDealsPowerDamageToTargetEffect();
+        var targetDealsPowerDamageToTarget = DealDamageEffect.bite();
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .bindEffect(targetDealsPowerDamageToTarget);
         addTrigger(Triggers.enters(ObjectRelation.THIS),

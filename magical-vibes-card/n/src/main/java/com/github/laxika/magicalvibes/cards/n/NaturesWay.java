@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -19,6 +19,6 @@ public class NaturesWay extends Card {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), Subjects.target()));
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(DealDamageEffect.bite());
     }
 }

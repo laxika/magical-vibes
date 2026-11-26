@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class PiercingExhale extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+        )).addSpellEffect(DealDamageEffect.bite());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,6 +21,6 @@ public class PunishingPunch extends Card {
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(0, 1, 2));
+                .addSpellEffect(DealDamageEffect.bite(0, 1, 2));
     }
 }

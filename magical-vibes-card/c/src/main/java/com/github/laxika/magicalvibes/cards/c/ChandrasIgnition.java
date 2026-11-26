@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -21,6 +23,7 @@ public class ChandrasIgnition extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect());
+        )).addSpellEffect(DealDamageEffect.toEachOther(Subjects.target(), Subjects.allCreatures(), new SourcePower())
+                .andTo(Subjects.eachOpponent()));
     }
 }

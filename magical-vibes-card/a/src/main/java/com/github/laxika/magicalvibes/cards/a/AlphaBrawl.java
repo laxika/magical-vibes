@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,10 +29,9 @@ public class AlphaBrawl extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target creature an opponent controls"
-        )).addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(Subjects.target(),
-                        creaturesThatPlayerControls))
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(
-                        Subjects.except(creaturesThatPlayerControls, Subjects.targetDeclaredElsewhere()),
-                        Subjects.target()));
+        )).addSpellEffect(DealDamageEffect.toEachOther(Subjects.target(), creaturesThatPlayerControls,
+                new SourcePower()))
+                .addSpellEffect(DealDamageEffect.toTargetCreature(new SourcePower())
+                        .dealtBy(Subjects.except(creaturesThatPlayerControls, Subjects.targetDeclaredElsewhere())));
     }
 }

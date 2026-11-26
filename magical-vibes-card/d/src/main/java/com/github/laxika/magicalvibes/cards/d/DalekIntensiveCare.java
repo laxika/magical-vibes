@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -50,6 +52,6 @@ public class DalekIntensiveCare extends Card {
                 "Target must be a Dalek you control"));
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.chaosEnsues(),
-                        new TargetCreatureDealsPowerDamageToAnyTargetEffect(0, 1, false));
+                        DealDamageEffect.toTargetPermanentOfGroup(1, new SourcePower()).dealtBy(Subjects.target(0)));
     }
 }

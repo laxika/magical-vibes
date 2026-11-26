@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "154")
@@ -22,6 +22,6 @@ public class BiteDownOnCrime extends Card {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(BoostEffect.target(2, 0));
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(DealDamageEffect.bite());
     }
 }

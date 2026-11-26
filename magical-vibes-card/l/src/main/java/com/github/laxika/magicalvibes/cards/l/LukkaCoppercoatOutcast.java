@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsWithLukkaPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -52,8 +54,8 @@ public class LukkaCoppercoatOutcast extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new ControlledCreaturesDealPowerDamageToEachOpponentEffect(
-                        new PermanentIsCreaturePredicate())),
+                List.of(DealDamageEffect.to(Subjects.eachOpponent(), new SourcePower())
+                        .dealtBy(Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate()))),
                 "\u22127: Each creature you control deals damage equal to its power to each opponent."
         ));
     }

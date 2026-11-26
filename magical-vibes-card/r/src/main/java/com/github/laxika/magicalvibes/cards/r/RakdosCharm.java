@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -44,8 +44,8 @@ public class RakdosCharm extends Card {
                                 "Target must be an artifact.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each creature deals 1 damage to its controller",
-                        TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.allCreatures(), 1,
-                                Subjects.controllerOf(Subjects.allCreatures())))
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.allCreatures()), 1)
+                                .dealtBy(Subjects.allCreatures()))
         )));
     }
 }
