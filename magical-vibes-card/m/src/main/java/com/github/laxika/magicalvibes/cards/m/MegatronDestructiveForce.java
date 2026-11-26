@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureWithExcessToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,8 +38,10 @@ public class MegatronDestructiveForce extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
-                                new DealDamageToTargetCreatureWithExcessToControllerEffect(
-                                AmountThisWay.sacrificedManaValue(), true)))),
+                                SequenceEffect.of(
+                                        DealDamageEffect.toTargetCreature(AmountThisWay.sacrificedManaValue())
+                                                .excessToControllerInstead(),
+                                        new ConditionalEffect(new EventValueAtLeast(1), new TransformSelfEffect()))))),
                 "Sacrifice another artifact?"));
     }
 }

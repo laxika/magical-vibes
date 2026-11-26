@@ -496,6 +496,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Defect run D13. Sure.
 - ~~Cut the Tethers (`ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler`) bounces at each owner's answer, not together after the last (CR 101.4). Defect run D13. Sure.~~ Fixed in step 10 run U6 (`UnlessPaysEffect.forEach`).
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h). Defect run D13. Low.
+- Flame Spill, Pigment Storm, Ravenous Tyrannosaurus, Megatron, Ram Through: the excess ignores damage from other sources dealt at the same time (a simultaneous step's damage to the same creature, CR 120.4a); only `SequenceEffect.simultaneous` could combine them, and none of these cards does. Step 10 run X. Sure of the code, low.
 
 **4. Missing events or records (searches, coin flips, seeks, shuffles, counters, draws).**
 

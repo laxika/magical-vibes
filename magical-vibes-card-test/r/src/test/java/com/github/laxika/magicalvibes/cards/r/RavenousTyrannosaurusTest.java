@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RavenousTyrannosaurus.class, GrizzlyBears.class})
+@CardUsed({RavenousTyrannosaurus.class, GrizzlyBears.class, Unsummon.class})
 class RavenousTyrannosaurusTest extends BaseCardTest {
 
     @Test
@@ -75,6 +77,27 @@ class RavenousTyrannosaurusTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, tyrannosaurus.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returned to hand before its attack trigger resolves, it still deals damage equal to its last-known power")
+    void leavingBeforeTheTriggerResolvesDealsItsLastKnownPower() {
+        Permanent tyrannosaurus = addCreatureReady(player1, new RavenousTyrannosaurus());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, tyrannosaurus.getId());
+        harness.assertInHand(player1, "Ravenous Tyrannosaurus");
+        harness.passBothPriorities();
+
+        // It deals 6 as it last existed (CR 608.2h): 2 lethal to the 2/2, the 4 excess to its controller.
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+        harness.assertLife(player2, 16);
     }
 
 }

@@ -46,7 +46,8 @@ import java.util.Objects;
  * {@link #toAnyTargetChosenAtRandom}, {@link #toAnyTargetInGroup}), and the riders chained after one
  * ({@link #byTriggeringPermanent}, {@link #unpreventable}, {@link #unpreventableWhen}, {@link #cantBeRegenerated},
  * {@link #withUnconditionalRegenerationPrevention}, {@link #exilingDamagedCreaturesThatWouldDie},
- * {@link #exilingIfItWouldDie}, {@link #exilingPermanentsDealtDamage}, {@link #recordingDamageDealt}).
+ * {@link #exilingIfItWouldDie}, {@link #exilingPermanentsDealtDamage}, {@link #recordingDamageDealt},
+ * {@link #excessToControllerInstead}, {@link #excessToControllerInsteadIfDealerHasTrample}).
  *
  * <p>Damage another permanent deals ("target creature you control deals damage equal to its power to …", "each Wolf
  * you control deals …", "enchanted creature deals 1 damage to its owner") is the rider {@link #dealtBy} on any of
@@ -109,6 +110,8 @@ import java.util.Objects;
  * @param dealers                           the permanents that deal the damage themselves, each its own source with its
  *                                          own amount ({@link #dealtBy}); {@code null}: the ability's source, or the
  *                                          permanent {@code damageSource} names
+ * @param excessRedirect                    the target creature's excess damage is dealt to its controller instead
+ *                                          ({@link #excessToControllerInstead}, CR 120.4a); one target creature only
  */
 public record DealDamageEffect(DynamicAmount damage, Recipient recipient, PermanentSubject subject,
                                PermanentPredicate targetFilter, PlayerRelation playerRelation, int targetGroup,
@@ -116,7 +119,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
                                boolean cantBeRedirectedWhenUnpreventable, boolean cantRegenerate,
                                boolean preventRegenerationWithoutDamage, ExileIfItWouldDie exile,
                                boolean recordDamageDealt, PlayerSubject players, boolean amountForEachRecipient,
-                               PermanentSubject dealers)
+                               PermanentSubject dealers, ExcessRedirect excessRedirect)
         implements DamageDealingEffect, BoardWipeEffect {
 
     /** What a damage effect may be dealt to; each fixes its target spec. */
@@ -164,6 +167,24 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         }
     }
 
+    /**
+     * Whether the excess of the damage to the target creature is dealt to that creature's controller instead
+     * (CR 120.4a): the excess is worked out from the amount before any replacement or prevention applies, against
+     * lethal damage (1 with the dealer's deathtouch), the loyalty of a creature that is a planeswalker too, or a
+     * battle's defense, the greatest of them; then the creature and its controller are dealt their parts in the
+     * effect's one damage event (the rulings of Flame Spill and Ram Through).
+     */
+    public enum ExcessRedirect {
+        NONE,
+        /** "Excess damage is dealt to that creature's controller instead." */
+        TO_CONTROLLER,
+        /**
+         * "If the creature you control has trample, excess damage is dealt to that creature's controller instead":
+         * the dealer's trample as the effect resolves (Ram Through).
+         */
+        TO_CONTROLLER_IF_DEALER_HAS_TRAMPLE
+    }
+
     /** Which permanent a damage effect exiles instead if it would die this turn. */
     public enum ExileIfItWouldDie {
         NONE,
@@ -190,6 +211,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         playerRelation = playerRelation == null ? PlayerRelation.ANY : playerRelation;
         damageSource = damageSource == null ? DamageSource.ABILITY_SOURCE : damageSource;
         exile = exile == null ? ExileIfItWouldDie.NONE : exile;
+        excessRedirect = excessRedirect == null ? ExcessRedirect.NONE : excessRedirect;
         if (recipient.namesPlayers()) {
             if (players == null || subject != null) {
                 throw new IllegalArgumentException("Player damage names its players and no permanent subject");
@@ -220,6 +242,15 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
             requirePermanentRecipientComponents(recipient, subject, targetFilter, playerRelation, targetGroup,
                     damageSource, alwaysUnpreventable, unpreventableWhen, cantRegenerate,
                     preventRegenerationWithoutDamage, exile, recordDamageDealt);
+        }
+        if (excessRedirect != ExcessRedirect.NONE && (recipient != Recipient.CREATURE
+                || !(subject instanceof PermanentSubject.Target)
+                || dealers != null && !(dealers instanceof PermanentSubject.Target))) {
+            throw new IllegalArgumentException("Excess damage is redirected from one target creature, dealt by the "
+                    + "source or a target creature: " + recipient + " " + subject);
+        }
+        if (excessRedirect == ExcessRedirect.TO_CONTROLLER_IF_DEALER_HAS_TRAMPLE && dealers == null) {
+            throw new IllegalArgumentException("The trample condition reads a dealing target creature");
         }
         if (dealers != null) {
             requireDealerComponents(recipient, subject, dealers, damageSource, alwaysUnpreventable, unpreventableWhen,
@@ -340,7 +371,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
 
     private static DealDamageEffect of(DynamicAmount damage, Recipient recipient) {
         return new DealDamageEffect(damage, recipient, Subjects.target(), null, PlayerRelation.ANY, -1,
-                DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false, null, false, null);
+                DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false, null, false, null, ExcessRedirect.NONE);
     }
 
     /** "Deals N damage to any target." */
@@ -427,7 +458,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     /** {@code damage} to the one permanent the non-target {@code subject} names. */
     public static DealDamageEffect to(PermanentSubject subject, DynamicAmount damage) {
         return new DealDamageEffect(damage, Recipient.CREATURE, subject, null, PlayerRelation.ANY, -1,
-                DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false, null, false, null);
+                DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false, null, false, null, ExcessRedirect.NONE);
     }
 
     /**
@@ -443,7 +474,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     public static DealDamageEffect toTargetPermanentOfGroup(int targetGroup, DynamicAmount damage) {
         return new DealDamageEffect(damage, Recipient.PERMANENT, Subjects.target(targetGroup), null,
                 PlayerRelation.ANY, -1, DamageSource.ABILITY_SOURCE, false, null, false, false, false,
-                ExileIfItWouldDie.NONE, false, null, false, null);
+                ExileIfItWouldDie.NONE, false, null, false, null, ExcessRedirect.NONE);
     }
 
     /**
@@ -526,7 +557,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     public static DealDamageEffect toTargetOpponentOrPlaneswalker(DynamicAmount damage) {
         return new DealDamageEffect(damage, Recipient.PLAYER_OR_PLANESWALKER, Subjects.target(), null,
                 PlayerRelation.OPPONENT, -1, DamageSource.ABILITY_SOURCE, false, null, false, false, false,
-                ExileIfItWouldDie.NONE, false, null, false, null);
+                ExileIfItWouldDie.NONE, false, null, false, null, ExcessRedirect.NONE);
     }
 
     /** "Deals N damage to target permanent" (one that can be dealt damage, CR 120.1). */
@@ -599,7 +630,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     public static DealDamageEffect toEach(PermanentSubject set, DynamicAmount damage) {
         return new DealDamageEffect(damage, Recipient.EACH_PERMANENT, Objects.requireNonNull(set, "set"), null,
                 PlayerRelation.ANY, -1, DamageSource.ABILITY_SOURCE, false, null, false, false, false,
-                ExileIfItWouldDie.NONE, false, null, false, null);
+                ExileIfItWouldDie.NONE, false, null, false, null, ExcessRedirect.NONE);
     }
 
     /** "Deals N damage to each creature" (every player's). */
@@ -659,7 +690,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         DealDamageEffect each = toEach(set, damage);
         return new DealDamageEffect(each.damage, each.recipient, each.subject, null, PlayerRelation.ANY, -1,
                 DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false, null,
-                true, null);
+                true, null, ExcessRedirect.NONE);
     }
 
     /**
@@ -673,7 +704,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
                 preventRegenerationWithoutDamage, exile, recordDamageDealt,
-                Objects.requireNonNull(alsoDealt, "alsoDealt"), amountForEachRecipient, dealers);
+                Objects.requireNonNull(alsoDealt, "alsoDealt"), amountForEachRecipient, dealers, excessRedirect);
     }
 
     /**
@@ -738,7 +769,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
                                               boolean amountForEachRecipient) {
         return new DealDamageEffect(damage, recipient, null, null, PlayerRelation.ANY, -1,
                 DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false,
-                Objects.requireNonNull(players, "players"), amountForEachRecipient, null);
+                Objects.requireNonNull(players, "players"), amountForEachRecipient, null, ExcessRedirect.NONE);
     }
 
     /**
@@ -750,7 +781,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 DamageSource.EVENT_DAMAGE_SOURCE, alwaysUnpreventable, unpreventableWhen,
                 cantBeRedirectedWhenUnpreventable, cantRegenerate, preventRegenerationWithoutDamage, exile,
-                recordDamageDealt, players, amountForEachRecipient, dealers);
+                recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /**
@@ -766,7 +797,31 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
                 preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient,
-                Objects.requireNonNull(newDealers, "dealers"));
+                Objects.requireNonNull(newDealers, "dealers"), excessRedirect);
+    }
+
+    /**
+     * Target creature damage only: "excess damage is dealt to that creature's controller instead" (Flame Spill,
+     * Ravenous Tyrannosaurus, Megatron; CR 120.4a). The excess is the entry's event value for a later step that reads
+     * it ("if excess damage would be dealt …, you convert Megatron").
+     */
+    public DealDamageEffect excessToControllerInstead() {
+        return withExcessRedirect(ExcessRedirect.TO_CONTROLLER);
+    }
+
+    /**
+     * The bite only: "if the creature you control has trample, excess damage is dealt to that creature's controller
+     * instead" (Ram Through), the dealer's trample read as the effect resolves.
+     */
+    public DealDamageEffect excessToControllerInsteadIfDealerHasTrample() {
+        return withExcessRedirect(ExcessRedirect.TO_CONTROLLER_IF_DEALER_HAS_TRAMPLE);
+    }
+
+    private DealDamageEffect withExcessRedirect(ExcessRedirect newExcessRedirect) {
+        return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
+                damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers,
+                newExcessRedirect);
     }
 
     /** Whether the dealer and the recipient are the targets of two target groups (the bite). */
@@ -779,19 +834,19 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     public DealDamageEffect withDamage(DynamicAmount newDamage) {
         return new DealDamageEffect(newDamage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     private DealDamageEffect withTargetGroup(int newTargetGroup) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, newTargetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     private DealDamageEffect withTargetFilter(PermanentPredicate newTargetFilter) {
         return new DealDamageEffect(damage, recipient, subject, newTargetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /**
@@ -802,35 +857,35 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     public DealDamageEffect byTriggeringPermanent() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 DamageSource.TRIGGERING_PERMANENT, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable,
-                cantRegenerate, preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                cantRegenerate, preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /** "The damage can't be prevented" (CR 615.12), for this one damage event. */
     public DealDamageEffect unpreventable() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, true, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /** "If [condition], the damage can't be prevented" (Banefire's X of 5 or more, Urza's Rage kicked). */
     public DealDamageEffect unpreventableWhen(Condition condition) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, condition, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /** "If [condition], the damage can't be prevented or redirected" (Lava Burst). */
     public DealDamageEffect unpreventableAndUnredirectableWhen(Condition condition) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, condition, true, cantRegenerate, preventRegenerationWithoutDamage, exile,
-                recordDamageDealt, players, amountForEachRecipient, dealers);
+                recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /** "A creature dealt damage this way can't be regenerated this turn" (Incinerate, CR 701.19c). */
     public DealDamageEffect cantBeRegenerated() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, true,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /**
@@ -841,7 +896,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, true, true,
                 exile == ExileIfItWouldDie.DAMAGED_CREATURE ? ExileIfItWouldDie.TARGET : exile, recordDamageDealt,
-                players, amountForEachRecipient, dealers);
+                players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /** "If a creature dealt damage this way would die this turn, exile it instead" (Red Sun's Zenith). */
@@ -862,14 +917,14 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     private DealDamageEffect withExile(ExileIfItWouldDie newExile) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, newExile, recordDamageDealt, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, newExile, recordDamageDealt, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /** The damage actually dealt is the entry's event value for the following effects (Corrupt's life gain). */
     public DealDamageEffect recordingDamageDealt() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, true, players, amountForEachRecipient, dealers);
+                preventRegenerationWithoutDamage, exile, true, players, amountForEachRecipient, dealers, excessRedirect);
     }
 
     /** Whether the any-target damage goes to the entry's non-targeting event object (Ghyrson Starn). */
@@ -1016,8 +1071,15 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
                 && !recipient.dealsToSeveral() && !(subject instanceof PermanentSubject.Source);
     }
 
+    /**
+     * A target creature whose excess goes to its controller (Flame Spill) answers yes too: the AI scores it as damage
+     * that can reach a player.
+     */
     @Override
     public boolean canDamagePlayers() {
+        if (excessRedirect != ExcessRedirect.NONE && dealers == null) {
+            return true;
+        }
         if (dealers != null && dealers.declaresTarget() && !recipient.namesPlayers()) {
             return false;
         }

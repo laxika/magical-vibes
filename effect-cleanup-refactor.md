@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (X, S, G, D, P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (S, G, D, P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,893 / 2,273 (after step 10 run Damage R) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,887 / 2,267 (after step 10 run X) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -466,7 +466,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   event), `exilingDamagedCreaturesThatWouldDie()` / `exilingPermanentsDealtDamage()` / `cantBeRegenerated()` on a set; `sweepsBoard()` for
   an all-player set (`BoardWipeEffect`). Run Damage R: the rider `dealtBy(PermanentSubject dealers)` (each dealer deals its own
   damage through `entryDealtByPermanent`, amount per dealer, recipients found once; a target dealer nothing once gone, CR 608.2b), factories
-  `bite([g, g'[, n]])`, `toTargetOfGroup`, `toTargetPermanentOfGroup`, `targetCreatureToItself(n)`, `toEachOther(dealer, set, amount)`. Every kind: one permanent-damage path (D24), DEAL_DAMAGE
+  `bite([g, g'[, n]])`, `toTargetOfGroup`, `toTargetPermanentOfGroup`, `targetCreatureToItself(n)`, `toEachOther(dealer, set, amount)`. Run X: the
+  rider `excessToControllerInstead()` / `excessToControllerInsteadIfDealerHasTrample()` (one target creature; excess worked out before the
+  damage, dealt to the controller in the same event, the event value; CR 120.4a). Every kind: one permanent-damage path (D24), DEAL_DAMAGE
   begun, one excess tracker (CR 120.4a, 120.10; the dealer's deathtouch), the win check. The creature kinds loop over the effect's
   targets; the any-target kind can't (Magma Burst kicked: its unbound part would hit the kicked target too).
 - `DamageSupport.entryDealtByTriggeringPermanent` is the one "it deals" carrier: a departed dealer is its departure snapshot first (its
@@ -956,11 +958,9 @@ there and updates them when it lands.
   pre-pool checks into the pools and begins their DEAL_DAMAGE steps; run M1 folded the four set records (`toEach`, `toEachTarget`); run
   M2 folded `MassDamageEffect` (Falling Star's tap a step; left out: `DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCountEffect`,
   an amount per recipient's controller, and `DiscardRandomCardThenMassDamageEffect`, its own repeat loop). Next (orchestrator's decisions
-  2026-11-26): run R folded the other-dealer records (`dealtBy`); left out of R: Ram Through (`TargetCreatureDealsPowerDamageToAnyTargetEffect`,
-  with the excess redirect below), fight (CR 701.14b), `EachCreatureDealsPowerDamageToItselfEffect` (each dealer to itself),
+  2026-11-26): run R folded the other-dealer records (`dealtBy`); run X the excess redirect with Ram Through (`excessToControllerInstead`); left out of R: fight (CR 701.14b), `EachCreatureDealsPowerDamageToItselfEffect` (each dealer to itself),
   the one-card dealer records (Mage Slayer, Aura Barbs, Grim Contest, Spinning Wheel Kick, the target land, the two enchanted-creature
-  and the up-to-one source records: own chains, specs or markers) and Enchanter's Bane / Star Athlete (an "unless" ransom); divided damage (`DealDividedDamageEffect`, CR 601.2d); excess redirected
-  (`DealDamageToTargetCreatureWithExcessToControllerEffect`); the cost combinators (`PayXManaDealXDamageToAnyTargetEffect`, the "unless
+  and the up-to-one source records: own chains, specs or markers) and Enchanter's Bane / Star Athlete (an "unless" ransom); divided damage (`DealDividedDamageEffect`, CR 601.2d); the cost combinators (`PayXManaDealXDamageToAnyTargetEffect`, the "unless
   takes damage" records) for the "unless" runs.
 - **Destroy**: `DestroyEachTargetPermanentEffect` and `DestroyAllPermanentsEffect` (`sparing`, `readingTarget`).
 - **Tokens and conjure**: `CreateTokenCopyOfSourceEffect`; the two multi-card battlefield conjure records
@@ -1177,6 +1177,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run Damage M2 (2026-11-26): `MassDamageEffect` absorbed into `DealDamageEffect`'s set kind (`toEachCreature`, `toEachCreatureAndPlaneswalker`, `eachEvaluatedFor`, `andTo`; 241 card files by script); Riveteers Confluence spares its controller's planeswalkers
 - Step 10, run Damage R (2026-11-26): ten other-dealer records absorbed into `DealDamageEffect.dealtBy(dealers)` (`bite`, `targetCreatureToItself`, `toEachOther`; 138 card files by script); the bite's pre-pool checks are pool options (CR 616.1); Vengeful Ancestor's attacker deals as the triggering permanent
 - Step 10, run A (2026-11-26): the four graveyard card movers absorbed into `PutCardsIntoHandEffect` and `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()` (122 card files by script); the survivors' log lines
+- Step 10, run X (2026-11-26): the excess redirect absorbed into `DealDamageEffect.excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()` (5 card files by hand); a creature-planeswalker's greatest excess, the damage step begun anew
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2643,6 +2644,47 @@ stays in exile). `StepResultsTest`, `MayAbilityHandlerServiceTest`, `ClassKeyedR
 names no deleted class.
 
 **For the next run.** X (the excess redirect with Ram Through, `s10-rest` plan section 4), then S.
+
+### Step 10, run X (excess redirect) (2026-11-26)
+
+Run X of the plan `s10-rest`. `DealDamageEffect` gains `ExcessRedirect excessRedirect` (`NONE`, `TO_CONTROLLER`,
+`TO_CONTROLLER_IF_DEALER_HAS_TRAMPLE`), riders `excessToControllerInstead()` / `excessToControllerInsteadIfDealerHasTrample()`, valid on one
+target creature dealt by the source or a target creature. Absorbed with their handlers: `DealDamageToTargetCreatureWithExcessToControllerEffect`,
+`TargetCreatureDealsPowerDamageToAnyTargetEffect`. Ledger: 2 absorbed, 1 survivor. Ratchet 2,889 / 2,269 → 2,887 / 2,267. No bump.
+
+**Premises.** Held: the excess is worked out before the damage from the amount, ignoring prevention, replacement and indestructible (the
+four cards' rulings; the Obosh and prevention-shield pins); `readsExcessDamage` already knows Megatron's condition. Not held: (a) the plan's
+`Keyword` component became one enum value (one card reads a keyword); (b) "one event" and the dealer's last-known power already held (both
+old handlers dealt inside one effect's damage event; `SourcePower` read the snapshot), so their tests are pins; (c) the excess comes before
+the source's replacements (Obosh), not after them as the plan says.
+
+**Handler.** `DealDamageEffectHandler.excessToController`, on the target path and the bite path: the dealer's trample (trample form), the
+controller found at resolution, the excess from `ExcessBaseline` on the raw amount (greatest over creature / planeswalker / battle, the
+dealer's deathtouch); the creature is dealt the rest, the controller the excess, in the effect's damage event; the redirected excess is the
+event value when a later step reads it. AI: `canDamagePlayers()` true for the plain rider (the old record's view); Ram Through is a bite.
+
+**Cards by hand** (5): Flame Spill / Pigment Storm `toTargetCreature(4 | 5)`, Ravenous Tyrannosaurus `toTargetCreature(new SourcePower())`,
+each `.excessToControllerInstead()`; Megatron `SequenceEffect.of(… .excessToControllerInstead(), new ConditionalEffect(new
+EventValueAtLeast(1), new TransformSelfEffect()))`; Ram Through `bite().excessToControllerInsteadIfDealerHasTrample()`. Oracle text checked
+with `get_card` for all 5, rulings for 4. 3 agent-docs files.
+
+**Behaviour changes** (failing-first, each failed on the old code): a creature that is also a planeswalker takes the greatest excess
+(CR 120.4a; `FlameSpillTest.creaturePlaneswalkerTakesTheGreatestExcess`); the DEAL_DAMAGE step is begun anew, an earlier damage step not
+counted (`ExcessDamageRedirectTest.theDamageStepBeginsAnew`). Code only: Ram Through's "prevented from dealing damage" is the pool's (CR 616.1).
+
+**Pins** (passed before and after): `RamThroughTest.lifelinkDeathtouchTramplerDealsOneEvent` (one gain, one Pridemate counter),
+`RavenousTyrannosaurusTest.leavingBeforeTheTriggerResolvesDealsItsLastKnownPower` (CR 608.2h), `FlameSpillTest.preventionOfThePlayersDamage…`,
+`ExcessDamageRedirectTest.creatureAndControllerDamageIsTheDamageStep`, the five cards' tests; new after: `theExcessIsTheEventValue`.
+
+**Tests changed.** `FlameSpillTest` (7), `RamThroughTest` (8): `@DisplayName`s only. `ExcessDamageRedirectTest`'s failing-first tests moved
+to the factory. **Tests run** (one Gradle run, XML of this run): 3,020 result files, 25,914 tests, 0 failures (every `DealDamageEffect`
+card's class, the 7 naming a changed card, the `Damage|Excess|Lifelink|Deathtouch|Trample|Prevent|Redirect` classes, the AI module,
+`DealerDamageTest`, `StepResultsTest`, the ratchets); `ExcessDamageRedirectTest` (untracked, missed by the list) alone: 3, 0 failures.
+
+**Seen, not changed** (defect queue): the excess ignores other sources' damage dealt at the same time (CR 120.4a). AGENTS.md names no
+deleted class.
+
+**For the next run.** S, then G (`s10-rest` plan section 2). The Damage family's step-10 records are done; the rest are under Step-10 hand-offs.
 
 ## Prompt
 

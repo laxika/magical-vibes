@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect.ExcessRedirect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect.ExileIfItWouldDie;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect.Recipient;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -68,7 +69,9 @@ import java.util.UUID;
  *   <li><b>Excess</b> (CR 120.4a, 120.10): written to the entry's event value when a later step of the entry reads it
  *       and the amount doesn't itself read the event value: over lethal damage for a creature (1 with the dealer's
  *       deathtouch), over loyalty for a planeswalker (its toughness when that is its loyalty), over defense for a
- *       battle, the greatest for several types.</li>
+ *       battle, the greatest for several types. With {@link ExcessRedirect} the excess, worked out before the damage,
+ *       is dealt to the target creature's controller instead in the same damage event (CR 120.4a) and is the event
+ *       value.</li>
  *   <li><b>Players</b> ({@link Recipient#PLAYERS}, {@link Recipient#PLAYER_OR_THEIR_PLANESWALKER}): see
  *       {@link #damagePlayers}.</li>
  *   <li><b>Non-target subjects</b> (creature kind): {@code source()} through the same path; {@code triggering()} and
@@ -175,9 +178,11 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        ExcessBaseline excess = single && tracksExcess(entry, e)
+        boolean redirectsExcess = e.excessRedirect() != ExcessRedirect.NONE;
+        ExcessBaseline excess = single && !redirectsExcess && tracksExcess(entry, e)
                 ? excessBaseline(gameData, dealing, targets.getFirst())
                 : null;
+        int redirected = 0;
         Map<UUID, Integer> damageBefore = e.exile() == ExileIfItWouldDie.DAMAGED_PERMANENT
                 ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
         UUID damageSourceId = dealing.getSourcePermanentId() != null
@@ -197,8 +202,10 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         int damageDealt = 0;
         try {
             for (UUID targetId : targets) {
-                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, dealing, targetId, damage, cantRegenerate,
-                        cantBeRedirected);
+                ExcessToController toController = excessToController(gameData, dealing, e, dealer, targetId, damage);
+                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, dealing, targetId,
+                        damage - toController.excess(), cantRegenerate, cantBeRedirected);
+                redirected = toController.deal(damageSupport, gameData, dealing);
             }
         } finally {
             gameData.unpreventableDamageInProgress = previousUnpreventable;
@@ -218,7 +225,49 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         if (excess != null) {
             entry.setEventValue(excess.excessOf(damageSupport, damageDealt));
         }
+        if (redirectsExcess && single && tracksExcess(entry, e)) {
+            entry.setEventValue(redirected);
+        }
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * The part of {@code damage} to target {@code targetId} dealt to its controller instead (CR 120.4a): worked out
+     * before the damage from the amount itself, ignoring replacement and prevention, indestructible and damage
+     * already lethal aside (the rulings of Flame Spill, Ram Through and Megatron), the greatest over the creature,
+     * planeswalker and battle it is, with the dealer's deathtouch; none without the rider, or with
+     * {@link ExcessRedirect#TO_CONTROLLER_IF_DEALER_HAS_TRAMPLE} when the dealer, as it is or last existed, lacks
+     * trample (CR 608.2h). The creature's part and the controller's part are dealt in the effect's one damage event.
+     */
+    private ExcessToController excessToController(GameData gameData, StackEntry dealing, DealDamageEffect e,
+                                                  Permanent dealer, UUID targetId, int damage) {
+        if (e.excessRedirect() == ExcessRedirect.NONE || damage <= 0 || gameData.playerIds.contains(targetId)) {
+            return ExcessToController.NONE;
+        }
+        if (e.excessRedirect() == ExcessRedirect.TO_CONTROLLER_IF_DEALER_HAS_TRAMPLE
+                && !gameQueryService.sourceHasKeyword(gameData, dealing, dealer, Keyword.TRAMPLE)) {
+            return ExcessToController.NONE;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null) {
+            return ExcessToController.NONE;
+        }
+        int excess = excessBaseline(gameData, dealing, targetId).excessOf(damageSupport, damage);
+        return new ExcessToController(controllerId, Math.min(excess, damage));
+    }
+
+    /** The excess of one target creature's damage, dealt to its controller ({@code controllerId}) instead. */
+    private record ExcessToController(UUID controllerId, int excess) {
+
+        static final ExcessToController NONE = new ExcessToController(null, 0);
+
+        /** Deals the excess to the controller through {@code dealing}; returns the excess. */
+        int deal(DamageSupport damageSupport, GameData gameData, StackEntry dealing) {
+            if (excess > 0) {
+                damageSupport.dealDamageToPlayer(gameData, dealing, controllerId, excess);
+            }
+            return excess;
+        }
     }
 
     /**
@@ -547,10 +596,17 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             }
             default -> {
                 for (UUID targetId : targets) {
-                    ExcessBaseline baseline = excess ? excessBaseline(gameData, dealing, targetId) : null;
-                    int dealt = damageSupport.resolveAnyTargetDamage(gameData, dealing, targetId, damage, false);
+                    boolean redirects = e.excessRedirect() != ExcessRedirect.NONE;
+                    ExcessBaseline baseline = excess && !redirects ? excessBaseline(gameData, dealing, targetId) : null;
+                    ExcessToController toController = excessToController(gameData, dealing, e, dealer, targetId,
+                            damage);
+                    int dealt = damageSupport.resolveAnyTargetDamage(gameData, dealing, targetId,
+                            damage - toController.excess(), false);
+                    int redirected = toController.deal(damageSupport, gameData, dealing);
                     if (baseline != null) {
                         entry.setEventValue(baseline.excessOf(damageSupport, dealt));
+                    } else if (excess) {
+                        entry.setEventValue(redirected);
                     }
                 }
             }
