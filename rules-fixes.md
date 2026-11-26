@@ -107,6 +107,8 @@ no sync patch, no merge). So the shared-docs rule changes: the agent of a run do
 - It deletes from `refactors-to-do.md` entry 18 every line it fixed or dropped. For a line it fixed only partly, it edits the line
   down to what is left. It updates the group's count in the heading.
 - It appends each new owner question to entry 17's "Open questions", dated, with the run ID.
+- It adds each new defect it saw and did not fix to the later run that owns that area, as the next free `N<n>` line (one
+  sentence, "seen in <RUN>"), or to MC-2 if no run fits.
 - It adds the ledger rows and moves the `EffectCountRatchetTest` baselines if it deleted or added effect classes.
 
 The orchestrator reviews the diff, runs the architecture tests and a compile of every module, then commits and pushes the run. A
@@ -534,6 +536,9 @@ cards off the battlefield or spells), F11 (`layeredQueryReads`' `matchesLeaf` us
 Likely touches: `GameQueryService`.
 Avoid: PP-1.
 
+New line N1 (seen in DM-1): `GameQueryService.hasAuraWithEffect` reads an attachment's printed statics with no lost-ability
+check, so the other Aura and Equipment prevention steps share F7's defect.
+
 Outcome:
 
 #### FD-2. Hidden faces
@@ -721,6 +726,8 @@ Addle and Intuition before), H5 (`SetBasePowerToughnessEffectHandler` prints "nu
 
 Avoid: CB-1 (H8 is there).
 
+New line N2 (seen in DM-1): the Healing Grace shield's order-prompt label says "(Healing Grace)" for Errant Minion's shield too.
+
 Outcome:
 
 #### CL-1. Dead code and a misnamed test
@@ -728,6 +735,9 @@ Outcome:
 Lines: O46 (`RevealedHandChoice.bottomThenDrawMode` / `discardThenDrawMode` are dead), O100 (`ActivatedAbilityExecutionService`'s
 inline mana-ability draw branch is likely dead), O96 (`BoostEffectHandler`'s snapshot refresh changes nothing), O104
 (`TheGrimCaptainsLockerTest.doesNotGrantEscapeToNonCreatureCards` doesn't test what its name says).
+
+New line N3 (seen in DM-1): unused fields left in `DamageSupport`, `MultiPermanentChoiceHandlerService` and
+`PermanentChoiceBattlefieldHandlerService`.
 
 Outcome:
 
