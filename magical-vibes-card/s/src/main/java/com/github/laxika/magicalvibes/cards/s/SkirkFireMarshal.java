@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -26,7 +27,7 @@ public class SkirkFireMarshal extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(5, new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)),
-                        new MassDamageEffect(10, true)
+                        DealDamageEffect.toEachCreature(10).andTo(Subjects.eachPlayer())
                 ),
                 "Tap five untapped Goblins you control: This creature deals 10 damage to each creature and each player."
         ));

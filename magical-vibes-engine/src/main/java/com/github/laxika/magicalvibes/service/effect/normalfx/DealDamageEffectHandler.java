@@ -344,12 +344,17 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * "Deals N damage to each [permanent of a set]": the set is found once through {@link SubjectResolutionService} as
-     * the effect is applied (CR 608.2h) and the amount evaluated once, against the dealer as it is or last existed;
-     * each of its creatures, planeswalkers and battles (CR 120.1) is dealt the damage in the effect's one damage event,
-     * every prevention (protection included) an option of its damage pool (CR 616.1). With {@link DamageSource#TRIGGERING_PERMANENT} the permanent the trigger
-     * event was about deals it ("it deals 4 damage to each creature blocking it", Ib Halfheart): the set is then found
-     * with that permanent as the source, and its damage is this step's.
+     * "Deals N damage to each [permanent of a set] [and each player]": the set is found once through
+     * {@link SubjectResolutionService} as the effect is applied (CR 608.2h) and the amount evaluated once, against the
+     * dealer as it is or last existed and the resolving entry's values ("that much"), or with
+     * {@code amountForEachRecipient} for each permanent with it as the amount's source, every amount fixed before any
+     * damage; each of its creatures, planeswalkers and battles (CR 120.1), then each player {@code players} names, is
+     * dealt the damage in the effect's one damage event, every prevention (protection included) an option of its
+     * damage pool (CR 616.1). With {@link DamageSource#TRIGGERING_PERMANENT} the permanent the trigger event was about
+     * deals it ("it deals 4 damage to each creature blocking it", Ib Halfheart; "it deals that much damage to each
+     * other creature and each player", Arcbond): the set is then found with that permanent as the source, and its
+     * damage is this step's. The riders: a creature (a permanent) dealt damage this way is exiled instead if it would
+     * die this turn, and a creature dealt damage this way can't be regenerated this turn (CR 701.19c).
      */
     private void damageEachPermanent(GameData gameData, StackEntry entry, DealDamageEffect e) {
         StackEntry dealing = e.damageSource() == DamageSource.TRIGGERING_PERMANENT
@@ -361,14 +366,38 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
                 && subjectResolutionService.players(gameData, dealing, e, set.players()).isEmpty()) {
             return;
         }
-        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
-                AmountContext.forStackEntry(dealing, dealerOf(gameData, dealing)));
-        for (Permanent permanent : subjectResolutionService.permanents(gameData, dealing, e, e.subject())) {
-            // Only a creature, planeswalker or battle can be dealt damage (CR 120.1): a set whose filter admits a land
-            // ("each creature without flying" written without the creature filter) deals it none.
-            if (damageSupport.isAnyTargetDamageRecipient(gameData, permanent)) {
-                damageSupport.dealCreatureDamage(gameData, dealing, permanent, damage);
+        Permanent dealer = dealerOf(gameData, dealing);
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(), AmountContext.forStackEntry(entry, dealer));
+        // Only a creature, planeswalker or battle can be dealt damage (CR 120.1): a set whose filter admits a land
+        // ("each creature without flying" written without the creature filter) deals it none.
+        List<Permanent> recipients = subjectResolutionService.permanents(gameData, dealing, e, e.subject()).stream()
+                .filter(permanent -> damageSupport.isAnyTargetDamageRecipient(gameData, permanent))
+                .toList();
+        Map<UUID, Integer> amounts = new HashMap<>();
+        for (Permanent permanent : recipients) {
+            amounts.put(permanent.getId(), e.amountForEachRecipient()
+                    ? amountEvaluationService.evaluate(gameData, e.damage(), AmountContext.forStackEntry(entry, permanent))
+                    : damage);
+        }
+        boolean exileCreatures = e.exile() == ExileIfItWouldDie.DAMAGED_CREATURE
+                || e.exile() == ExileIfItWouldDie.DAMAGED_PERMANENT;
+        Map<UUID, Integer> damageBefore = e.exile() == ExileIfItWouldDie.DAMAGED_PERMANENT
+                ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
+        boolean previousExilesCreaturesDamaged = dealing.isExilesCreaturesDamaged();
+        dealing.setExilesCreaturesDamaged(previousExilesCreaturesDamaged || exileCreatures);
+        try {
+            damageSupport.damageFilteredCreatures(gameData, dealing, permanent -> amounts.get(permanent.getId()),
+                    recipients, permanent -> true, exileCreatures, e.cantRegenerate());
+            if (e.players() != null) {
+                for (UUID playerId : subjectResolutionService.players(gameData, dealing, e, e.players())) {
+                    damageSupport.dealDamageToPlayer(gameData, dealing, playerId, damage);
+                }
             }
+        } finally {
+            dealing.setExilesCreaturesDamaged(previousExilesCreaturesDamaged);
+        }
+        if (e.exile() == ExileIfItWouldDie.DAMAGED_PERMANENT) {
+            markDamagedPermanentsForExile(gameData, dealing, damageBefore);
         }
         if (dealing != entry) {
             entry.addToStep(StepKind.DEAL_DAMAGE, dealing.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
@@ -505,7 +534,7 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
      * resolving entry.
      *
      * <p>The amount is evaluated for each player dealt damage, every player's before any damage is dealt (CR 608.2h):
-     * with that player as the controller for {@code eachPlayer()} and with {@code amountForEachPlayer}, as the target
+     * with that player as the controller for {@code eachPlayer()} and with {@code amountForEachRecipient}, as the target
      * for {@code defendingPlayer()}, else in the resolving entry's own context. Every prevention is an option of each
      * player's damage pool, ordered by that player (CR 616.1).
      */
@@ -617,7 +646,7 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             source = entry.getSourcePermanentSnapshot();
         }
         AmountContext context = AmountContext.forStackEntry(entry, source);
-        if (e.amountForEachPlayer()
+        if (e.amountForEachRecipient()
                 || e.players() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL) {
             context = context.withControllerId(playerId);
         } else if (e.players() instanceof PlayerSubject.DefendingPlayer) {

@@ -113,7 +113,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -2762,7 +2761,7 @@ class EasyAiDecisionEngineTest {
         pyroclasm.setName("Pyroclasm");
         pyroclasm.setType(CardType.SORCERY);
         pyroclasm.setManaCost("{1}{R}");
-        pyroclasm.addSpellEffect(new MassDamageEffect(2));
+        pyroclasm.addSpellEffect(DealDamageEffect.toEachCreature(2));
         gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -2782,7 +2781,7 @@ class EasyAiDecisionEngineTest {
         pyroclasm.setName("Pyroclasm");
         pyroclasm.setType(CardType.SORCERY);
         pyroclasm.setManaCost("{1}{R}");
-        pyroclasm.addSpellEffect(new MassDamageEffect(2));
+        pyroclasm.addSpellEffect(DealDamageEffect.toEachCreature(2));
         gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
 
         UUID opponentId = gd.orderedPlayerIds.get(1);
@@ -2825,7 +2824,7 @@ class EasyAiDecisionEngineTest {
         pyroclasm.setName("Pyroclasm");
         pyroclasm.setType(CardType.SORCERY);
         pyroclasm.setManaCost("{1}{R}");
-        pyroclasm.addSpellEffect(new MassDamageEffect(2));
+        pyroclasm.addSpellEffect(DealDamageEffect.toEachCreature(2));
         gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
 
         UUID opponentId = gd.orderedPlayerIds.get(1);

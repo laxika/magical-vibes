@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "270")
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class Hurricane extends Card {
 
     public Hurricane() {
-        addSpellEffect(new MassDamageEffect(0, true, true, new PermanentHasKeywordPredicate(Keyword.FLYING)));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(),
+                new PermanentHasKeywordPredicate(Keyword.FLYING)).andTo(Subjects.eachPlayer()));
     }
 }

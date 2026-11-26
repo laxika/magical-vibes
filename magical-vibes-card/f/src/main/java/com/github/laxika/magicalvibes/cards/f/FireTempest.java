@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "POR", collectorNumber = "128")
 @CardRegistration(set = "S99", collectorNumber = "97")
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class FireTempest extends Card {
 
     public FireTempest() {
-        addSpellEffect(new MassDamageEffect(6, true));
+        addSpellEffect(DealDamageEffect.toEachCreature(6).andTo(Subjects.eachPlayer()));
     }
 }

@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,6 +29,7 @@ public class Cloudthresher extends Card {
 
         // When this creature enters, it deals 2 damage to each creature with flying and each player.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MassDamageEffect(2, false, true, new PermanentHasKeywordPredicate(Keyword.FLYING)));
+                DealDamageEffect.toEachCreature(2,
+                        new PermanentHasKeywordPredicate(Keyword.FLYING)).andTo(Subjects.eachPlayer()));
     }
 }

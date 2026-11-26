@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TMP", collectorNumber = "134")
 @CardRegistration(set = "TPR", collectorNumber = "104")
@@ -19,7 +20,7 @@ public class EvincarsJustice extends Card {
         // card into your hand as it resolves.)
         // Evincar's Justice deals 2 damage to each creature and each player.
         addStaticEffect(new BuybackEffect("{3}"));
-        addSpellEffect(new MassDamageEffect(2, true));
+        addSpellEffect(DealDamageEffect.toEachCreature(2).andTo(Subjects.eachPlayer()));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

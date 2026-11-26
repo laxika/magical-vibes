@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDrawsThatManyEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -40,7 +39,7 @@ public class IncendiaryCommand extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Incendiary Command deals 2 damage to each creature",
-                        new MassDamageEffect(2)),
+                        DealDamageEffect.toEachCreature(2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target nonbasic land",
                         new DestroyTargetPermanentEffect(),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,7 +30,8 @@ public class Magmasaur extends Card {
                 "Remove a +1/+1 counter from it?",
                 SequenceEffect.of(
                         new SacrificeSelfEffect(),
-                        new MassDamageEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), true, false,
-                                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))))));
+                        DealDamageEffect.toEachCreature(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
+                                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
+                                .andTo(Subjects.eachPlayer()))));
     }
 }

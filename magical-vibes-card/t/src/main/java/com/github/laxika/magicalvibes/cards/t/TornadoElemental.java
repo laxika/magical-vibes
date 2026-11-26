@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +17,7 @@ public class TornadoElemental extends Card {
 
     public TornadoElemental() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MassDamageEffect(6, false, false, new PermanentHasKeywordPredicate(Keyword.FLYING)));
+                DealDamageEffect.toEachCreature(6, new PermanentHasKeywordPredicate(Keyword.FLYING)));
         addStaticEffect(new AssignCombatDamageAsThoughUnblockedEffect());
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -26,7 +26,7 @@ import java.util.List;
 public class KozileksReturn extends Card {
 
     public KozileksReturn() {
-        addSpellEffect(new MassDamageEffect(2));
+        addSpellEffect(DealDamageEffect.toEachCreature(2));
 
         addTrigger(new TriggerCondition(Triggers.youCastSpell()
                         .withFilter(new CardAllOfPredicate(List.of(
@@ -38,7 +38,7 @@ public class KozileksReturn extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new ExileSourceCardFromGraveyardEffect(),
-                                new MassDamageEffect(5)),
+                                DealDamageEffect.toEachCreature(5)),
                         "Exile Kozilek's Return from your graveyard?"));
     }
 }

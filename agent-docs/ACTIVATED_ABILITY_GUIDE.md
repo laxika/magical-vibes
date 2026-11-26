@@ -496,7 +496,7 @@ A cap of 0 blocks activation entirely. Composes with the fixed `maxActivationsPe
 ```java
 // {B}: This enchantment deals 1 damage to each creature and each player.
 // Activate no more times each turn than the number of snow Swamps you control.
-new ActivatedAbility(false, "{B}", List.of(new MassDamageEffect(1, true)), "{B}: …")
+new ActivatedAbility(false, "{B}", List.of(DealDamageEffect.toEachCreature(1).andTo(Subjects.eachPlayer())), "{B}: …")
     .withMaxActivationsPerTurn(
         new PermanentCount(new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP),

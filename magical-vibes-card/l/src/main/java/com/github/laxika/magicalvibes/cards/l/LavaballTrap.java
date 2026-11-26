@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentEnteredThisTurn;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -27,7 +27,7 @@ public class LavaballTrap extends Card {
                 .addSpellEffect(new DestroyTargetPermanentEffect());
         target(landFilter("Second target must be a land"))
                 .addSpellEffect(new DestroyTargetPermanentEffect());
-        addSpellEffect(new MassDamageEffect(4));
+        addSpellEffect(DealDamageEffect.toEachCreature(4));
     }
 
     private static PermanentPredicateTargetFilter landFilter(String description) {

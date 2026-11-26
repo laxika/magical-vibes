@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +28,7 @@ public class BurnDownTheHouse extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Burn Down the House deals 5 damage to each creature and each planeswalker",
-                        new MassDamageEffect(5, false, false, true, null)),
+                        DealDamageEffect.toEachCreatureAndPlaneswalker(5)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create three 1/1 red Devil creature tokens with haste",
                         new CreateTokenEffect(

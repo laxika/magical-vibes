@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "149")
@@ -12,7 +12,7 @@ public class SwelteringSuns extends Card {
 
     public SwelteringSuns() {
         // Sweltering Suns deals 3 damage to each creature. (Non-targeting board sweep.)
-        addSpellEffect(new MassDamageEffect(3));
+        addSpellEffect(DealDamageEffect.toEachCreature(3));
 
         // Cycling {3} ({3}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{3}");

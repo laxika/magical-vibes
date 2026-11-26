@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDamagedCreatureDeathTriggerEffect;
 
 @CardRegistration(set = "TLE", collectorNumber = "124")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDamagedCreatur
 public class RecklessBlaze extends Card {
 
     public RecklessBlaze() {
-        addSpellEffect(new MassDamageEffect(5));
+        addSpellEffect(DealDamageEffect.toEachCreature(5));
         addSpellEffect(new RegisterDelayedDamagedCreatureDeathTriggerEffect(
                 new AwardManaEffect(ManaColor.RED)));
     }

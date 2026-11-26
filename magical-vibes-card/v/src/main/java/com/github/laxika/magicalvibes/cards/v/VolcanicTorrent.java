@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,9 +23,7 @@ public class VolcanicTorrent extends Card {
 
         // Volcanic Torrent deals damage to each creature and planeswalker opponents control equal
         // to the number of spells its controller has cast this turn.
-        addSpellEffect(new MassDamageEffect(
-                new SpellsCastThisTurn(CountScope.CONTROLLER), false, true,
-                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))
-                .withFilterAppliedToPlaneswalkers());
+        addSpellEffect(DealDamageEffect.toEachCreatureAndPlaneswalker(new SpellsCastThisTurn(CountScope.CONTROLLER),
+                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }
 }

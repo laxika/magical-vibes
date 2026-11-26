@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,6 +21,6 @@ public class TheWesternCloud extends Card {
 
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 CreateTokenEffect.ofTappedTreasureToken(3),
-                new MassDamageEffect(3, false, false, true, null)));
+                DealDamageEffect.toEachCreatureAndPlaneswalker(3)));
     }
 }

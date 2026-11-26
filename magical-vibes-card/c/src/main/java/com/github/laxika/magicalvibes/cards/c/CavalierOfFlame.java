@@ -11,14 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -45,10 +41,7 @@ public class CavalierOfFlame extends Card {
                 new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.simultaneous(
                 DealDamageEffect.to(Subjects.eachOpponent(), landsInGraveyard),
-                new MassDamageEffect(landsInGraveyard, false, true,
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsPlaneswalkerPredicate(),
-                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))
-                        .withFilterAppliedToPlaneswalkers()));
+                DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachOpponent(),
+                        new PermanentIsPlaneswalkerPredicate()), landsInGraveyard)));
     }
 }

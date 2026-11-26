@@ -989,7 +989,10 @@ entwine with two modes (P09).
 - The hard AI gives set damage no value: `DealDamageEffect.toEach` / `toEachTarget` answer `canDamageCreatures()` and
   `canDamagePlayers()` false (as the absorbed records were no `DamageDealingEffect`), so Simoon scores the same with or without an
   opposing creature (`SpellEvaluatorTest.setDamageSweeperIsNotScoredAsTargetedDamage` pins it) and no sweeper branch reads them; M2's
-  `BoardWipeEffect` view could cover `toEach`. Step 10 run Damage M1 (seen, not changed: AI parity). Sure.
+  `BoardWipeEffect` view could cover `toEach`. Step 10 run Damage M1 (seen, not changed: AI parity). Sure. Step 10 run Damage M2: a set over
+  every player's permanents (`controlledBy(eachPlayer(), …)`, M1's all-player each-matching cards included) is now the AI's board
+  sweep (`DealDamageEffect.sweepsBoard()`, the hard AI's board-wipe value, `BoardEvaluator`, the easy AI); a set over one player's
+  permanents or each target (Simoon) is still unscored.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

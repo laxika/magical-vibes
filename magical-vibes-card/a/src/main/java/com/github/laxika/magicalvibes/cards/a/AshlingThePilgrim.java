@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class AshlingThePilgrim extends Card {
                         new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
                                 new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
-                                new MassDamageEffect(new EventValue(), true))
+                                DealDamageEffect.toEachCreature(new EventValue()).andTo(Subjects.eachPlayer()))
                 ),
                 "{1}{R}: Put a +1/+1 counter on Ashling the Pilgrim. If this is the third time this ability has resolved this turn, remove all +1/+1 counters from Ashling the Pilgrim, and it deals that much damage to each creature and each player."
         ));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RollTwoDiceChooseOneEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2177")
@@ -14,7 +14,7 @@ public class RecklessEndeavor extends Card {
 
     public RecklessEndeavor() {
         addSpellEffect(new RollTwoDiceChooseOneEffect(12));
-        addSpellEffect(new MassDamageEffect(new XValue(), false));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue()));
         addSpellEffect(CreateTokenEffect.ofTreasureToken(1).withAmount(new EventValue()));
     }
 }

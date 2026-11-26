@@ -69,7 +69,6 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -955,8 +954,8 @@ public class SpellEvaluator {
         }
 
         // Board wipes
-        if (effect instanceof MassDamageEffect aoe) {
-            int damage = estimateDamageAmount(gameData, card, aoe.amount(), aiPlayerId);
+        if (effect instanceof DealDamageEffect aoe && aoe.sweepsBoard()) {
+            int damage = estimateDamageAmount(gameData, card, aoe.damage(), aiPlayerId);
             return evaluateBoardWipeDamage(gameData, damage, aiPlayerId, opponentId,
                     aiBattlefield, oppBattlefield);
         }

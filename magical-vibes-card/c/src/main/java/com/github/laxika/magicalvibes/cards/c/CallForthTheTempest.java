@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfOtherSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -28,7 +28,7 @@ public class CallForthTheTempest extends Card {
 
         addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
         addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
-        addSpellEffect(new MassDamageEffect(
-                new TotalManaValueOfOtherSpellsCastThisTurn(), false, false, opponentCreature));
+        addSpellEffect(DealDamageEffect.toEachCreature(new TotalManaValueOfOtherSpellsCastThisTurn(),
+                opponentCreature));
     }
 }

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -15,10 +16,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 public class ThunderOfHooves extends Card {
 
     public ThunderOfHooves() {
-        addSpellEffect(new MassDamageEffect(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.BEAST), CountScope.ANY_PLAYER),
-                true,
-                false,
-                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        addSpellEffect(DealDamageEffect.toEachCreature(new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.BEAST), CountScope.ANY_PLAYER),
+                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
+                .andTo(Subjects.eachPlayer()));
     }
 }

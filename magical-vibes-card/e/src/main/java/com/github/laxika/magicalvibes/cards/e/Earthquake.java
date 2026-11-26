@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -29,6 +31,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class Earthquake extends Card {
 
     public Earthquake() {
-        addSpellEffect(new MassDamageEffect(0, true, true, new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(),
+                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
+                .andTo(Subjects.eachPlayer()));
     }
 }

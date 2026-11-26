@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -18,6 +18,6 @@ public class CalamitousCaveIn extends Card {
         var damage = new Sum(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.CAVE), CountScope.CONTROLLER),
                 new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.CAVE), CountScope.CONTROLLER));
-        addSpellEffect(new MassDamageEffect(damage, false, true, null));
+        addSpellEffect(DealDamageEffect.toEachCreatureAndPlaneswalker(damage));
     }
 }

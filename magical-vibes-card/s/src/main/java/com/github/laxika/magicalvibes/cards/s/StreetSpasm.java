@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -37,7 +36,7 @@ public class StreetSpasm extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 DealDamageEffect.toTargetCreature(new XValue()),
-                new MassDamageEffect(new XValue(), false, false, notYoursAndWithoutFlying())));
+                DealDamageEffect.toEachCreature(new XValue(), notYoursAndWithoutFlying())));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), notYoursAndWithoutFlying())),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 
 @CardRegistration(set = "C13", collectorNumber = "124")
@@ -14,8 +14,7 @@ public class SuddenDemise extends Card {
 
     public SuddenDemise() {
         addSpellEffect(new ChooseColorAtResolutionEffect());
-        addSpellEffect(new MassDamageEffect(new XValue(), false, false,
-                new PermanentHasChosenSpellColorPredicate()));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(), new PermanentHasChosenSpellColorPredicate()));
         addSpellEffect(new ClearChosenColorEffect());
     }
 }

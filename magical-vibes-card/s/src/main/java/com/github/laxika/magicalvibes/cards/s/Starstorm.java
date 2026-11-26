@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "238")
 @CardRegistration(set = "VMA", collectorNumber = "189")
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class Starstorm extends Card {
 
     public Starstorm() {
-        addSpellEffect(new MassDamageEffect(new XValue(), false));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue()));
         addCycling("{3}");
     }
 }

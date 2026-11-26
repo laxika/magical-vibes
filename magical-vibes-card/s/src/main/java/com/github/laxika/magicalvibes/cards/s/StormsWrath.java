@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "157")
 @CardRegistration(set = "THB", collectorNumber = "322")
@@ -11,6 +11,6 @@ public class StormsWrath extends Card {
 
     public StormsWrath() {
         // Storm's Wrath deals 4 damage to each creature and each planeswalker.
-        addSpellEffect(new MassDamageEffect(4, false, false, true, null));
+        addSpellEffect(DealDamageEffect.toEachCreatureAndPlaneswalker(4));
     }
 }

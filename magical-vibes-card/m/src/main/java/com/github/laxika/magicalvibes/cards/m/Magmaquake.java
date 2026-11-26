@@ -3,9 +3,17 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "140")
 @CardRegistration(set = "C14", collectorNumber = "180")
@@ -19,7 +27,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class Magmaquake extends Card {
 
     public Magmaquake() {
-        addSpellEffect(new MassDamageEffect(0, true, false, true,
-                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        // "Magmaquake deals X damage to each creature without flying and each planeswalker."
+        addSpellEffect(DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))),
+                        new PermanentIsPlaneswalkerPredicate()))), new XValue()));
     }
 }

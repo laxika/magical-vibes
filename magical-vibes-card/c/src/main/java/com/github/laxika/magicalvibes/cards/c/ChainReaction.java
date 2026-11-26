@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "74")
@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class ChainReaction extends Card {
 
     public ChainReaction() {
-        addSpellEffect(new MassDamageEffect(
-                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER), false));
+        addSpellEffect(DealDamageEffect.toEachCreature(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
     }
 }

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -23,14 +25,11 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class BattleOfFrostAndFire extends Card {
 
     public BattleOfFrostAndFire() {
-        addTrigger(Triggers.chapter(1), new MassDamageEffect(
-                4,
-                false,
-                false,
-                true,
+        addTrigger(Triggers.chapter(1), DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(),
                 new PermanentAnyOfPredicate(List.of(
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),
-                        new PermanentIsPlaneswalkerPredicate()))));
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT)))),
+                        new PermanentIsPlaneswalkerPredicate()))), 4));
         addTrigger(Triggers.chapter(2), new ScryEffect(3));
         addTrigger(Triggers.chapter(3),
                 RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(null, List.of(

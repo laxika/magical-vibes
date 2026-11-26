@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -22,8 +24,9 @@ import java.util.Objects;
  * planeswalker", "to target player or planeswalker", "to target permanent", to the one permanent a non-target
  * {@code subject} names ("to itself", "to it", "to enchanted creature"), to the players a {@link PlayerSubject} names
  * ("to each opponent", "to you", "to that player or a planeswalker that player controls"), to each permanent of a set
- * ("to each creature target player controls", {@link #toEach}) or to each of its targets ("to each of up to three
- * targets", {@link #toEachTarget}), the set or the targets in one damage event. The amount is a {@link DynamicAmount} evaluated as it resolves, against the dealing permanent as it is
+ * ("to each creature target player controls", {@link #toEach}; "to each creature [and each player]",
+ * {@link #toEachCreature}) or to each of its targets ("to each of up to three targets", {@link #toEachTarget}), the set
+ * (with its players) or the targets in one damage event. The amount is a {@link DynamicAmount} evaluated as it resolves, against the dealing permanent as it is
  * or last existed.
  *
  * <p>Build it with the factories, which read like the wording: {@link #toAnyTarget}, {@link #toTargetCreature},
@@ -33,12 +36,18 @@ import java.util.Objects;
  * and the rider {@link #byEventDamageSource}), the set factories ({@link #toEach(PermanentSubject, int)},
  * {@link #toEachCreatureOfTargetedPlayer}, {@link #toEachControlledByTargetedPlayer(int, PermanentPredicate)},
  * {@link #toCreaturesOfTargetedPlayer}, {@link #toEachTarget(int)}, {@link #toEachTargetCreature},
- * {@link #toEachTargetCreatureOrPlaneswalker}), the
+ * {@link #toEachTargetCreatureOrPlaneswalker}, the mass factories {@link #toEachCreature(int)},
+ * {@link #toEachCreature(int, PermanentPredicate)}, {@link #toEachCreatureAndPlaneswalker(int)},
+ * {@link #toEachCreatureAndPlaneswalker(int, PermanentPredicate)}, {@link #eachEvaluatedFor(DynamicAmount,
+ * PermanentSubject)} and the rider {@link #andTo}), the
  * any-target markers ({@link #toAnyOtherTarget}, {@link #toEventObject}, {@link #toAnyTargetOfAnOpponentsChoice},
  * {@link #toAnyTargetChosenAtRandom}, {@link #toAnyTargetInGroup}), and the riders chained after one
  * ({@link #byTriggeringPermanent}, {@link #unpreventable}, {@link #unpreventableWhen}, {@link #cantBeRegenerated},
  * {@link #withUnconditionalRegenerationPrevention}, {@link #exilingDamagedCreaturesThatWouldDie},
  * {@link #exilingIfItWouldDie}, {@link #exilingPermanentsDealtDamage}, {@link #recordingDamageDealt}).
+ *
+ * <p>A set over every player's permanents ({@code controlledBy(eachPlayer(), …)}) is a board sweep for the AI
+ * ({@link #sweepsBoard()}).
  *
  * <p>Subjects other than {@link Subjects#target()} (creature recipient only) target nothing (CR 115.10a), so
  * protection's targeting half and hexproof don't stop them:
@@ -75,24 +84,28 @@ import java.util.Objects;
  * @param cantBeRedirectedWhenUnpreventable damage made unpreventable by {@code unpreventableWhen} also can't be
  *                                          redirected (Lava Burst)
  * @param cantRegenerate                    a creature dealt damage this way can't be regenerated this turn
- *                                          (Incinerate); any target only
+ *                                          (Incinerate, Flamebreak); any target and each permanent of a set only
  * @param preventRegenerationWithoutDamage  the targeted creature can't be regenerated even if no damage is dealt
  *                                          (Disintegrate); any target only
  * @param exile                             which permanent is exiled instead if it would die this turn
  * @param recordDamageDealt                 any target and players only: the damage actually dealt is the entry's
  *                                          event value for later effects (Corrupt, Syphon Soul)
- * @param players                           the player kinds only: the players dealt the damage, resolved by
- *                                          {@code SubjectResolutionService} (several in APNAP order)
- * @param amountForEachPlayer               the player kinds only: the amount is evaluated for each player dealt the
- *                                          damage with that player as the controller ({@link #eachEvaluatedFor})
+ * @param players                           the player kinds: the players dealt the damage, resolved by
+ *                                          {@code SubjectResolutionService} (several in APNAP order);
+ *                                          {@link Recipient#EACH_PERMANENT}: the players also dealt the damage in the
+ *                                          set's damage event ("and each player", {@link #andTo}), else {@code null}
+ * @param amountForEachRecipient            the amount is evaluated for each recipient before any damage is dealt
+ *                                          (CR 608.2h): for the player kinds with that player as the controller, for
+ *                                          {@link Recipient#EACH_PERMANENT} with that permanent as the amount's source
+ *                                          ({@link #eachEvaluatedFor})
  */
 public record DealDamageEffect(DynamicAmount damage, Recipient recipient, PermanentSubject subject,
                                PermanentPredicate targetFilter, PlayerRelation playerRelation, int targetGroup,
                                DamageSource damageSource, boolean alwaysUnpreventable, Condition unpreventableWhen,
                                boolean cantBeRedirectedWhenUnpreventable, boolean cantRegenerate,
                                boolean preventRegenerationWithoutDamage, ExileIfItWouldDie exile,
-                               boolean recordDamageDealt, PlayerSubject players, boolean amountForEachPlayer)
-        implements DamageDealingEffect {
+                               boolean recordDamageDealt, PlayerSubject players, boolean amountForEachRecipient)
+        implements DamageDealingEffect, BoardWipeEffect {
 
     /** What a damage effect may be dealt to; each fixes its target spec. */
     public enum Recipient {
@@ -153,6 +166,9 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         DAMAGED_PERMANENT
     }
 
+    private static final PermanentPredicate CREATURE_OR_PLANESWALKER = new PermanentAnyOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate()));
+
     private static final int ANY_OTHER_TARGET = -2;
     private static final int EVENT_OBJECT = -3;
     private static final int OF_AN_OPPONENTS_CHOICE = -4;
@@ -174,15 +190,18 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
                         + "regeneration or exile rider: " + recipient);
             }
         } else if (recipient.dealsToSeveral()) {
-            if (players != null || amountForEachPlayer) {
-                throw new IllegalArgumentException("Only player damage names players: " + recipient);
+            if (recipient == Recipient.EACH_TARGET && (players != null || amountForEachRecipient)) {
+                throw new IllegalArgumentException("Damage to each target names no players: " + recipient);
+            }
+            if (players != null && amountForEachRecipient) {
+                throw new IllegalArgumentException("A per-permanent amount is dealt to no players beside the set");
             }
             subject = subject == null ? Subjects.target() : subject;
             requireSetComponents(recipient, subject, targetFilter, playerRelation, targetGroup, damageSource,
                     alwaysUnpreventable, unpreventableWhen, cantRegenerate, preventRegenerationWithoutDamage, exile,
                     recordDamageDealt);
         } else {
-            if (players != null || amountForEachPlayer) {
+            if (players != null || amountForEachRecipient) {
                 throw new IllegalArgumentException("Only player damage names players: " + recipient);
             }
             subject = subject == null ? Subjects.target() : subject;
@@ -209,11 +228,14 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         if (recipient == Recipient.EACH_PERMANENT && targetFilter != null) {
             throw new IllegalArgumentException("Damage to each permanent of a set takes its filter in the set");
         }
+        if (recipient == Recipient.EACH_TARGET && (cantRegenerate || exile != ExileIfItWouldDie.NONE)) {
+            throw new IllegalArgumentException("Damage to each target takes no regeneration or exile rider");
+        }
         if (damageSource == DamageSource.EVENT_DAMAGE_SOURCE || playerRelation != PlayerRelation.ANY
-                || targetGroup != -1 || alwaysUnpreventable || unpreventableWhen != null || cantRegenerate
-                || preventRegenerationWithoutDamage || exile != ExileIfItWouldDie.NONE || recordDamageDealt) {
+                || targetGroup != -1 || alwaysUnpreventable || unpreventableWhen != null
+                || preventRegenerationWithoutDamage || exile == ExileIfItWouldDie.TARGET || recordDamageDealt) {
             throw new IllegalArgumentException("Damage to several permanents or targets takes no relation, target "
-                    + "group, unpreventable, regeneration, exile or recording rider: " + recipient);
+                    + "group, unpreventable, target exile or recording rider: " + recipient);
         }
     }
 
@@ -471,6 +493,80 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
                 ExileIfItWouldDie.NONE, false, null, false);
     }
 
+    /** "Deals N damage to each creature" (every player's). */
+    public static DealDamageEffect toEachCreature(int damage) {
+        return toEachCreature(new Fixed(damage));
+    }
+
+    /** {@link #toEachCreature(int)} of an amount evaluated once as it resolves. */
+    public static DealDamageEffect toEachCreature(DynamicAmount damage) {
+        return toEach(Subjects.allCreatures(), damage);
+    }
+
+    /**
+     * "Deals N damage to each [creature matching {@code filter}]": "each creature without flying", "each other
+     * creature", "each creature your opponents control"; the filter is judged with the effect's source as its source.
+     */
+    public static DealDamageEffect toEachCreature(int damage, PermanentPredicate filter) {
+        return toEachCreature(new Fixed(damage), filter);
+    }
+
+    /** {@link #toEachCreature(int, PermanentPredicate)} of an amount evaluated once as it resolves. */
+    public static DealDamageEffect toEachCreature(DynamicAmount damage, PermanentPredicate filter) {
+        return toEach(Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(), Objects.requireNonNull(filter, "filter")))), damage);
+    }
+
+    /** "Deals N damage to each creature and each planeswalker". */
+    public static DealDamageEffect toEachCreatureAndPlaneswalker(int damage) {
+        return toEachCreatureAndPlaneswalker(new Fixed(damage));
+    }
+
+    /** {@link #toEachCreatureAndPlaneswalker(int)} of an amount evaluated once as it resolves. */
+    public static DealDamageEffect toEachCreatureAndPlaneswalker(DynamicAmount damage) {
+        return toEach(Subjects.controlledBy(Subjects.eachPlayer(), CREATURE_OR_PLANESWALKER), damage);
+    }
+
+    /**
+     * "Deals N damage to each creature and planeswalker [matching {@code filter}]": the filter narrows both ("each
+     * creature and planeswalker you don't control", "each non-Bolas planeswalker").
+     */
+    public static DealDamageEffect toEachCreatureAndPlaneswalker(int damage, PermanentPredicate filter) {
+        return toEachCreatureAndPlaneswalker(new Fixed(damage), filter);
+    }
+
+    /** {@link #toEachCreatureAndPlaneswalker(int, PermanentPredicate)} of an amount evaluated once as it resolves. */
+    public static DealDamageEffect toEachCreatureAndPlaneswalker(DynamicAmount damage, PermanentPredicate filter) {
+        return toEach(Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
+                CREATURE_OR_PLANESWALKER, Objects.requireNonNull(filter, "filter")))), damage);
+    }
+
+    /**
+     * "Deals 2 damage to each creature for each Aura attached to that creature": {@code damage} is evaluated for each
+     * permanent of the non-target {@code set} with that permanent as the amount's source, every amount fixed before
+     * any damage (CR 608.2h), all in one damage event.
+     */
+    public static DealDamageEffect eachEvaluatedFor(DynamicAmount damage, PermanentSubject set) {
+        DealDamageEffect each = toEach(set, damage);
+        return new DealDamageEffect(each.damage, each.recipient, each.subject, null, PlayerRelation.ANY, -1,
+                DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false, null,
+                true);
+    }
+
+    /**
+     * Damage to each permanent of a set only: the players {@code alsoDealt} names are dealt the same damage in the
+     * same damage event ("deals 3 damage to each creature and each player": {@code andTo(Subjects.eachPlayer())}).
+     */
+    public DealDamageEffect andTo(PlayerSubject alsoDealt) {
+        if (recipient != Recipient.EACH_PERMANENT) {
+            throw new IllegalArgumentException("Only damage to each permanent of a set is also dealt to players");
+        }
+        return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
+                damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
+                preventRegenerationWithoutDamage, exile, recordDamageDealt,
+                Objects.requireNonNull(alsoDealt, "alsoDealt"), amountForEachRecipient);
+    }
+
     /**
      * "That player or that planeswalker's controller": the player target another effect or the card declares, or the
      * controller of the targeted planeswalker.
@@ -530,10 +626,10 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     }
 
     private static DealDamageEffect ofPlayers(DynamicAmount damage, Recipient recipient, PlayerSubject players,
-                                              boolean amountForEachPlayer) {
+                                              boolean amountForEachRecipient) {
         return new DealDamageEffect(damage, recipient, null, null, PlayerRelation.ANY, -1,
                 DamageSource.ABILITY_SOURCE, false, null, false, false, false, ExileIfItWouldDie.NONE, false,
-                Objects.requireNonNull(players, "players"), amountForEachPlayer);
+                Objects.requireNonNull(players, "players"), amountForEachRecipient);
     }
 
     /**
@@ -545,26 +641,26 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 DamageSource.EVENT_DAMAGE_SOURCE, alwaysUnpreventable, unpreventableWhen,
                 cantBeRedirectedWhenUnpreventable, cantRegenerate, preventRegenerationWithoutDamage, exile,
-                recordDamageDealt, players, amountForEachPlayer);
+                recordDamageDealt, players, amountForEachRecipient);
     }
 
     /** The same effect dealing {@code newDamage} instead (an amount fixed as it triggers). */
     public DealDamageEffect withDamage(DynamicAmount newDamage) {
         return new DealDamageEffect(newDamage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     private DealDamageEffect withTargetGroup(int newTargetGroup) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, newTargetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     private DealDamageEffect withTargetFilter(PermanentPredicate newTargetFilter) {
         return new DealDamageEffect(damage, recipient, subject, newTargetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     /**
@@ -575,35 +671,35 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     public DealDamageEffect byTriggeringPermanent() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 DamageSource.TRIGGERING_PERMANENT, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable,
-                cantRegenerate, preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachPlayer);
+                cantRegenerate, preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     /** "The damage can't be prevented" (CR 615.12), for this one damage event. */
     public DealDamageEffect unpreventable() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, true, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     /** "If [condition], the damage can't be prevented" (Banefire's X of 5 or more, Urza's Rage kicked). */
     public DealDamageEffect unpreventableWhen(Condition condition) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, condition, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     /** "If [condition], the damage can't be prevented or redirected" (Lava Burst). */
     public DealDamageEffect unpreventableAndUnredirectableWhen(Condition condition) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, condition, true, cantRegenerate, preventRegenerationWithoutDamage, exile,
-                recordDamageDealt, players, amountForEachPlayer);
+                recordDamageDealt, players, amountForEachRecipient);
     }
 
     /** "A creature dealt damage this way can't be regenerated this turn" (Incinerate, CR 701.19c). */
     public DealDamageEffect cantBeRegenerated() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, true,
-                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, exile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     /**
@@ -614,7 +710,7 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, true, true,
                 exile == ExileIfItWouldDie.DAMAGED_CREATURE ? ExileIfItWouldDie.TARGET : exile, recordDamageDealt,
-                players, amountForEachPlayer);
+                players, amountForEachRecipient);
     }
 
     /** "If a creature dealt damage this way would die this turn, exile it instead" (Red Sun's Zenith). */
@@ -635,14 +731,14 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     private DealDamageEffect withExile(ExileIfItWouldDie newExile) {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, newExile, recordDamageDealt, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, newExile, recordDamageDealt, players, amountForEachRecipient);
     }
 
     /** The damage actually dealt is the entry's event value for the following effects (Corrupt's life gain). */
     public DealDamageEffect recordingDamageDealt() {
         return new DealDamageEffect(damage, recipient, subject, targetFilter, playerRelation, targetGroup,
                 damageSource, alwaysUnpreventable, unpreventableWhen, cantBeRedirectedWhenUnpreventable, cantRegenerate,
-                preventRegenerationWithoutDamage, exile, true, players, amountForEachPlayer);
+                preventRegenerationWithoutDamage, exile, true, players, amountForEachRecipient);
     }
 
     /** Whether the any-target damage goes to the entry's non-targeting event object (Ghyrson Starn). */
@@ -748,6 +844,16 @@ public record DealDamageEffect(DynamicAmount damage, Recipient recipient, Perman
     public boolean canDamagePlayers() {
         return recipient == Recipient.ANY_TARGET || recipient == Recipient.PLAYER_OR_PLANESWALKER
                 || recipient.namesPlayers();
+    }
+
+    /**
+     * Damage to each permanent a set over every player's permanents names ("each creature", "each creature without
+     * flying and each player") sweeps the board.
+     */
+    @Override
+    public boolean sweepsBoard() {
+        return recipient == Recipient.EACH_PERMANENT && subject instanceof PermanentSubject.ControlledBy set
+                && set.players() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL;
     }
 
     /** "Deals N damage to you" (a pain land's mana ability, Volcano Hellion). */

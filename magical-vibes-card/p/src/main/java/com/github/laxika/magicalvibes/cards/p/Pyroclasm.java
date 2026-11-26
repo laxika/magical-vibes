@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "208")
 @CardRegistration(set = "10E", collectorNumber = "222")
@@ -21,6 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class Pyroclasm extends Card {
 
     public Pyroclasm() {
-        addSpellEffect(new MassDamageEffect(2));
+        addSpellEffect(DealDamageEffect.toEachCreature(2));
     }
 }

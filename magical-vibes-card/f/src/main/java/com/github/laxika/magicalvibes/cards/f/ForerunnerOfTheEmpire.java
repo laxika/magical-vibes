@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -29,7 +29,7 @@ public class ForerunnerOfTheEmpire extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))),
                         ObjectRelation.YOU_CONTROL),
-                new MayEffect(new MassDamageEffect(1),
+                new MayEffect(DealDamageEffect.toEachCreature(1),
                         "Have Forerunner of the Empire deal 1 damage to each creature?"));
     }
 }

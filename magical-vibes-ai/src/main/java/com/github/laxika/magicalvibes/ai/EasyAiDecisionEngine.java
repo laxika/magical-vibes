@@ -18,9 +18,9 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
@@ -596,10 +596,10 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         // Mass damage spells are only beneficial if they kill more opponent creatures than our own
         for (var effect : card.getCastingCostsAndSpellEffects()) {
-            if (effect instanceof MassDamageEffect aoe) {
+            if (effect instanceof DealDamageEffect aoe && aoe.sweepsBoard()) {
                 // Easy AI only reasons about fixed damage; dynamic amounts (X, event value)
                 // estimate as 0, matching the former int-field behavior for X spells.
-                int aoeDamage = aoe.amount() instanceof Fixed fixed ? fixed.value() : 0;
+                int aoeDamage = aoe.damage() instanceof Fixed fixed ? fixed.value() : 0;
                 UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
                 List<Permanent> oppField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
                 List<Permanent> aiField = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 import java.util.List;
@@ -22,7 +23,8 @@ public class SilklashSpider extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}{G}{G}",
-                List.of(new MassDamageEffect(0, true, false, new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                List.of(DealDamageEffect.toEachCreature(new XValue(),
+                        new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 "{X}{G}{G}: This creature deals X damage to each creature with flying."
         ));
     }

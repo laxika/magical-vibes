@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +15,7 @@ public class MagmaGiant extends Card {
 
     public MagmaGiant() {
         // When this creature enters, it deals 2 damage to each creature and each player.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MassDamageEffect(2, true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toEachCreature(2)
+                .andTo(Subjects.eachPlayer()));
     }
 }

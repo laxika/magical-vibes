@@ -1340,7 +1340,7 @@ class SpellEvaluatorTest {
     }
 
     @Test
-    @DisplayName("Board wipe with MassDamageEffect gets survival urgency when facing lethal")
+    @DisplayName("A damage board wipe gets survival urgency when facing lethal")
     void massDamageSurvivalUrgencyWhenFacingLethal() {
         // Opponent has three 2/2 bears (6 total damage)
         for (int i = 0; i < 3; i++) {

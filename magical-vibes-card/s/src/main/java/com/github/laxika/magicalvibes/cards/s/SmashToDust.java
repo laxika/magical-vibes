@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -35,8 +35,7 @@ public class SmashToDust extends Card {
                                 "Target must be a creature with defender.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Smash to Dust deals 1 damage to each creature your opponents control",
-                        new MassDamageEffect(1, false, false,
-                                new PermanentAllOfPredicate(List.of(
+                        DealDamageEffect.toEachCreature(1, new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))))
         )));

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "151")
 @CardRegistration(set = "PIO", collectorNumber = "377")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class RadiantFlames extends Card {
 
     public RadiantFlames() {
-        addSpellEffect(new MassDamageEffect(new XValue(), false));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue()));
     }
 }

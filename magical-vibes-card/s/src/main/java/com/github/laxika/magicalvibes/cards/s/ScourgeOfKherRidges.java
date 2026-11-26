@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -24,7 +24,7 @@ public class ScourgeOfKherRidges extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",
-                List.of(new MassDamageEffect(2, false, false,
+                List.of(DealDamageEffect.toEachCreature(2,
                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))),
                 "{1}{R}: This creature deals 2 damage to each creature without flying."
         ));
@@ -32,7 +32,7 @@ public class ScourgeOfKherRidges extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{R}",
-                List.of(new MassDamageEffect(6, false, false, otherFlyingCreatures)),
+                List.of(DealDamageEffect.toEachCreature(6, otherFlyingCreatures)),
                 "{5}{R}: This creature deals 6 damage to each other creature with flying."
         ));
     }

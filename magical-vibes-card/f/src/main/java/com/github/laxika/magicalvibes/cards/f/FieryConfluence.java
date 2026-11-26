@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -27,7 +26,7 @@ public class FieryConfluence extends Card {
         addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Fiery Confluence deals 1 damage to each creature",
-                        new MassDamageEffect(1)),
+                        DealDamageEffect.toEachCreature(1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Fiery Confluence deals 2 damage to each opponent",
                         DealDamageEffect.to(Subjects.eachOpponent(), 2)),

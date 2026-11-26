@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -22,8 +22,7 @@ import java.util.Set;
 public class SubterraneanTremors extends Card {
 
     public SubterraneanTremors() {
-        addSpellEffect(new MassDamageEffect(
-                new XValue(), false, false,
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(),
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4),

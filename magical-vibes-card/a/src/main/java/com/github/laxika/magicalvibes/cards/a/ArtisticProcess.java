@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -26,7 +25,7 @@ public class ArtisticProcess extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Artistic Process deals 2 damage to each creature you don't control",
-                        new MassDamageEffect(2, false, false, false,
+                        DealDamageEffect.toEachCreature(2,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))
                 ),
                 new ChooseOneEffect.ChooseOneOption(

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 public class BarrageOfBoulders extends Card {
 
     public BarrageOfBoulders() {
-        addSpellEffect(new MassDamageEffect(1, false, false,
+        addSpellEffect(DealDamageEffect.toEachCreature(1,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(java.util.List.of(

@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  *
  * <p>Scope note: this covers the "deal a {@link DynamicAmount} to a single target category"
  * shape. Damage effects that split a total among many targets ({@code DealDividedDamageEffect})
- * or hit every creature/player at once ({@code MassDamageEffect}) do not fit that shape and
- * deliberately do not implement this interface.
+ * do not fit that shape and deliberately do not implement this interface; {@code DealDamageEffect}'s damage to each
+ * permanent of a set or each target answers no to {@code canDamageCreatures()} and {@code canDamagePlayers()}.
  */
 public interface DamageDealingEffect extends CardEffect {
 

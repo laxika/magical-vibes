@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class StalwartSpeartail extends Card {
 
         // Whenever this creature attacks, Stalwart Speartail deals 1 damage to each creature and each
         // planeswalker.
-        addTrigger(Triggers.attacks(), new MassDamageEffect(1, false, false, true, null));
+        addTrigger(Triggers.attacks(), DealDamageEffect.toEachCreatureAndPlaneswalker(1));
     }
 }

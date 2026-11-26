@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "POR", collectorNumber = "90")
 @CardRegistration(set = "6ED", collectorNumber = "124")
@@ -13,6 +14,6 @@ public class DrySpell extends Card {
 
     public DrySpell() {
         // Dry Spell deals 1 damage to each creature and each player.
-        addSpellEffect(new MassDamageEffect(1, true));
+        addSpellEffect(DealDamageEffect.toEachCreature(1).andTo(Subjects.eachPlayer()));
     }
 }

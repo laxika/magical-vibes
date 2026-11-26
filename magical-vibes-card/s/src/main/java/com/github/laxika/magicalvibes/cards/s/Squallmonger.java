@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 import java.util.List;
@@ -17,8 +18,8 @@ public class Squallmonger extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new MassDamageEffect(1, false, true,
-                        new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                List.of(DealDamageEffect.toEachCreature(1,
+                        new PermanentHasKeywordPredicate(Keyword.FLYING)).andTo(Subjects.eachPlayer())),
                 "{2}: This creature deals 1 damage to each creature with flying and each player. Any player may activate this ability."
         ).withActivatableByAnyPlayer());
     }

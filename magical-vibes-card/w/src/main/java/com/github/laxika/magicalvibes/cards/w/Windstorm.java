@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "205")
@@ -14,6 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class Windstorm extends Card {
 
     public Windstorm() {
-        addSpellEffect(new MassDamageEffect(0, true, false, new PermanentHasKeywordPredicate(Keyword.FLYING)));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(), new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

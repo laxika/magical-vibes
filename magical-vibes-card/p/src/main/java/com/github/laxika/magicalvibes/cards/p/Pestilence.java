@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -34,7 +35,7 @@ public class Pestilence extends Card {
 
         // {B}: This enchantment deals 1 damage to each creature and each player.
         addActivatedAbility(new ActivatedAbility(false, "{B}",
-                List.of(new MassDamageEffect(1, true)),
+                List.of(DealDamageEffect.toEachCreature(1).andTo(Subjects.eachPlayer())),
                 "{B}: This enchantment deals 1 damage to each creature and each player."));
     }
 }

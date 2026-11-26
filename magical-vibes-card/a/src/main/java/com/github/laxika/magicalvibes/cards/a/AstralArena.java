@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +12,6 @@ public class AstralArena extends Card {
 
     public AstralArena() {
         addStaticEffect(new MaximumCombatCreaturesEffect(1, 1));
-        addTrigger(Triggers.chaosEnsues(), new MassDamageEffect(2));
+        addTrigger(Triggers.chaosEnsues(), DealDamageEffect.toEachCreature(2));
     }
 }

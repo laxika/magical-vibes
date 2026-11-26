@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -13,6 +13,6 @@ public class DestructiveForce extends Card {
     public DestructiveForce() {
         addSpellEffect(new SacrificePermanentsEffect(
                 5, new PermanentIsLandPredicate(), Subjects.eachPlayer()));
-        addSpellEffect(new MassDamageEffect(5));
+        addSpellEffect(DealDamageEffect.toEachCreature(5));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -15,8 +14,7 @@ public class AvacynThePurifier extends Card {
         // When this creature transforms into Avacyn, the Purifier, it deals 3 damage to each other
         // creature and each opponent.
         addSimultaneousTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
-                new MassDamageEffect(3, false, false,
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
+                DealDamageEffect.toEachCreature(3, new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
                 DealDamageEffect.to(Subjects.eachOpponent(), 3));
     }
 }

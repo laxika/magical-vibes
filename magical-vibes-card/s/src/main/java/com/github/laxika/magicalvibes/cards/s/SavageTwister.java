@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "280")
 @CardRegistration(set = "GPT", collectorNumber = "127")
@@ -16,6 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class SavageTwister extends Card {
 
     public SavageTwister() {
-        addSpellEffect(new MassDamageEffect(0, true, false, null));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue()));
     }
 }

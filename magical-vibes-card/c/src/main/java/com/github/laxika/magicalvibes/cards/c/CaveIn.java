@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 import java.util.List;
@@ -19,6 +20,6 @@ public class CaveIn extends Card {
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.RED), "red"))));
 
         // Cave-In deals 2 damage to each creature and each player.
-        addSpellEffect(new MassDamageEffect(2, true));
+        addSpellEffect(DealDamageEffect.toEachCreature(2).andTo(Subjects.eachPlayer()));
     }
 }

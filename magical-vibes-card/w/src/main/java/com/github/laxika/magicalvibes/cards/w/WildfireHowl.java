@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -29,7 +28,7 @@ public class WildfireHowl extends Card {
                 DealDamageEffect.toAnyTarget(1));
         targetWhenGiftPromised(anyTarget(), 0, 1, 1)
                 .bindEffect(giftTargetDamage);
-        addSimultaneousSpellEffects(giftTargetDamage, new MassDamageEffect(2));
+        addSimultaneousSpellEffects(giftTargetDamage, DealDamageEffect.toEachCreature(2));
     }
 
     private static AnyTargetPredicateTargetFilter anyTarget() {

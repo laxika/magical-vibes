@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ import java.util.Set;
 public class DragonbackAssault extends Card {
 
     public DragonbackAssault() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MassDamageEffect(3, false, false, true, null));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toEachCreatureAndPlaneswalker(3));
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,
                         List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of()));

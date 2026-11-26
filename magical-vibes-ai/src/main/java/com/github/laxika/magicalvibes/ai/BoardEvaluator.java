@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
@@ -299,15 +299,15 @@ public class BoardEvaluator {
                     || predicateEvaluationService.matchesPermanentPredicate(perm, wipe.filter(), filterContext);
         }
 
-        if (effect instanceof MassDamageEffect aoe) {
+        if (effect instanceof DealDamageEffect aoe && aoe.sweepsBoard()
+                && aoe.subject() instanceof PermanentSubject.ControlledBy set) {
             if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
                 return false;
             }
-            if (aoe.filter() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(perm, aoe.filter(), filterContext)) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(perm, set.filter(), filterContext)) {
                 return false;
             }
-            int damage = amountEvaluationService.evaluate(gameData, aoe.amount(),
+            int damage = amountEvaluationService.evaluate(gameData, aoe.damage(),
                     AmountContext.forStackEntry(entry, null));
             int remaining = gameQueryService.getEffectiveToughness(gameData, perm) - perm.getMarkedDamage();
             return damage >= remaining;

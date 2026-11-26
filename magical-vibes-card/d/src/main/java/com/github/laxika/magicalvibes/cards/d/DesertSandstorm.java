@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "107")
 public class DesertSandstorm extends Card {
 
     public DesertSandstorm() {
         // Desert Sandstorm deals 1 damage to each creature.
-        addSpellEffect(new MassDamageEffect(1));
+        addSpellEffect(DealDamageEffect.toEachCreature(1));
     }
 }

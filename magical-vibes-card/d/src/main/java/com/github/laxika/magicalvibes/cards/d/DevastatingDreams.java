@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -16,6 +16,6 @@ public class DevastatingDreams extends Card {
         addCastingCost(DiscardXCardsCost.random());
         addSpellEffect(new SacrificePermanentsEffect(
                 new XValue(), new PermanentIsLandPredicate(), Subjects.eachPlayer()));
-        addSpellEffect(new MassDamageEffect(new XValue(), false));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue()));
     }
 }

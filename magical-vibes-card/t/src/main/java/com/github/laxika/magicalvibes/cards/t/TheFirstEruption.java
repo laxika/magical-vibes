@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -30,10 +30,8 @@ public class TheFirstEruption extends Card {
 
     public TheFirstEruption() {
         // Chapter I: deal 1 damage to each creature without flying
-        addTrigger(Triggers.chapter(1), new MassDamageEffect(
-                1, false, false,
-                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))
-        ));
+        addTrigger(Triggers.chapter(1), DealDamageEffect.toEachCreature(1,
+                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
 
         // Chapter II: add {R}{R}
         addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.RED, 2));
@@ -41,6 +39,6 @@ public class TheFirstEruption extends Card {
         // Chapter III: sacrifice a Mountain; if you do, deal 3 damage to each creature
         addTrigger(Triggers.chapter(3), SequenceEffect.of(
                 new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), Subjects.you()),
-                new ConditionalEffect(HappenedThisWay.sacrificed(), new MassDamageEffect(3))));
+                new ConditionalEffect(HappenedThisWay.sacrificed(), DealDamageEffect.toEachCreature(3))));
     }
 }

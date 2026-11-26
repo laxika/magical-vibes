@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.DesertManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 
 @CardRegistration(set = "OTC", collectorNumber = "24")
 @CardRegistration(set = "OTC", collectorNumber = "60")
 public class CataclysmicProspecting extends Card {
 
     public CataclysmicProspecting() {
-        addSpellEffect(new MassDamageEffect(new XValue(), false));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue()));
         addSpellEffect(CreateTokenEffect.ofTappedTreasureToken(new DesertManaSpentToCast()));
     }
 }

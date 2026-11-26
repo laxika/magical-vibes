@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class CalderaHellion extends Card {
         addStaticEffect(new DevourEffect(1));
 
         // When this creature enters, it deals 3 damage to each creature.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MassDamageEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toEachCreature(3));
     }
 }

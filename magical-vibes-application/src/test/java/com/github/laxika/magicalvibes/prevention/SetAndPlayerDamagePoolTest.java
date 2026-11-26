@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -107,7 +106,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("Prevents a red ability's damage to each creature (mass damage)")
         void mass() {
             Permanent knight = addCreatureReady(player2, new SilverKnight());
-            redAbility(null, new MassDamageEffect(2));
+            redAbility(null, DealDamageEffect.toEachCreature(2));
             assertThat(knight.getMarkedDamage()).isZero();
         }
     }
@@ -155,7 +154,7 @@ class SetAndPlayerDamagePoolTest extends BaseCardTest {
         @DisplayName("Mass damage")
         void mass() {
             Permanent knight = shieldedKnight();
-            redAbility(null, new MassDamageEffect(2));
+            redAbility(null, DealDamageEffect.toEachCreature(2));
             chooseShieldFirst(knight, 3);
         }
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -33,7 +33,7 @@ public class MegatonsFate extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Megaton's Fate deals 8 damage to each creature. Each player gets four rad counters.",
                         List.of(
-                                new MassDamageEffect(8),
+                                DealDamageEffect.toEachCreature(8),
                                 new GiveRadCountersEffect(4, Subjects.eachPlayer())
                         ))
         )));

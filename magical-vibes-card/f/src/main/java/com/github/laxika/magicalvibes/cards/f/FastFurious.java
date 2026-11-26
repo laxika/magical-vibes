@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -28,7 +28,7 @@ public class FastFurious extends Card {
                 ).withManaCost("{2}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Furious - Deals 3 damage to each creature without flying",
-                        new MassDamageEffect(3, false, false,
+                        DealDamageEffect.toEachCreature(3,
                                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
                 ).withManaCost("{3}{R}{R}")
         )));

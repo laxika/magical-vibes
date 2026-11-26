@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -24,6 +25,7 @@ public class VolcanicEruption extends Card {
                 "Targets must be Mountains"
         ), 100).addSpellEffect(new DestroyEachTargetPermanentEffect());
 
-        addSpellEffect(new MassDamageEffect(AmountThisWay.died(StepKind.DESTROY), true));
+        addSpellEffect(DealDamageEffect.toEachCreature(AmountThisWay.died(StepKind.DESTROY))
+                .andTo(Subjects.eachPlayer()));
     }
 }

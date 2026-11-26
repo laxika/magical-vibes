@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -14,7 +14,7 @@ public class RagingSwordtooth extends Card {
 
     public RagingSwordtooth() {
         // When this creature enters, it deals 1 damage to each other creature.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MassDamageEffect(1, false, false,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toEachCreature(1,
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
     }
 }

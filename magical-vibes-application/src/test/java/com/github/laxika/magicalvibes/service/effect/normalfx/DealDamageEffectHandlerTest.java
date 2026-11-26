@@ -718,4 +718,129 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             }
         }
     }
+
+    @Nested
+    @DisplayName("Mass damage to each creature, planeswalker or battle and each player")
+    class Mass {
+
+        private DealDamageEffectHandler handler;
+
+        @BeforeEach
+        void setUpMassHandler() {
+            handler = new DealDamageEffectHandler(damageSupport, gameQueryService, gameOutcomeService,
+                    amountEvaluationService, conditionEvaluationService,
+                    new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                            mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)),
+                    gameLogService, mock(PlayerInputService.class));
+            // The set's filter ("each creature") admits every permanent of these tests.
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), any(), any()))
+                    .thenReturn(true);
+        }
+
+        @Test
+        @DisplayName("Deals damage to all creatures; lethal amounts are marked for the state-based check")
+        void damagesAllCreatures() {
+            Card pyroCard = createCard("Pyroclasm");
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+            Permanent elves = addPermanent(player2Id, createCreature("Llanowar Elves", 1, 1));
+            StackEntry entry = createEntry(pyroCard, player1Id, null);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+            when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentController(eq(gd), eq(elves.getId()))).thenReturn(player2Id);
+            when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
+            stubNoKeywordsOnSource(entry);
+
+            handler.resolve(gd, entry, DealDamageEffect.toEachCreature(2));
+
+            assertThat(bears.getMarkedDamage()).isEqualTo(2);
+            assertThat(elves.getMarkedDamage()).isEqualTo(2);
+            assertDamageToPermanent(bears, 2, player1Id, pyroCard, null);
+            assertDamageToPermanent(elves, 2, player1Id, pyroCard, null);
+        }
+
+        @Test
+        @DisplayName("Does not destroy a creature whose toughness is greater than the damage")
+        void doesNotKillHighToughnessCreatures() {
+            Card pyroCard = createCard("Pyroclasm");
+            Permanent angel = addPermanent(player1Id, createCreature("Serra Angel", 4, 4));
+            StackEntry entry = createEntry(pyroCard, player1Id, null);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+            when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player1Id);
+            when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
+            stubNoKeywordsOnSource(entry);
+
+            handler.resolve(gd, entry, DealDamageEffect.toEachCreature(2));
+
+            assertThat(angel.getMarkedDamage()).isEqualTo(2);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            assertDamageToPermanent(angel, 2, player1Id, pyroCard, null);
+        }
+
+        @Test
+        @DisplayName("Deals X damage to each creature and each player in one resolution")
+        void dealsXDamageToCreaturesAndPlayers() {
+            Card hurricaneCard = createCard("Hurricane");
+            hurricaneCard.setColor(com.github.laxika.magicalvibes.model.CardColor.GREEN);
+            Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntryWithXValue(hurricaneCard, player1Id, 4, null);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+            when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player2Id);
+            when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
+            when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            stubNoKeywordsOnSource(entry);
+            stubPlayerDamageCore(player1Id);
+            stubPlayerDamageCore(player2Id);
+
+            handler.resolve(gd, entry, DealDamageEffect.toEachCreature(new XValue()).andTo(Subjects.eachPlayer()));
+
+            assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(16);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
+            verify(gameOutcomeService).checkWinCondition(gd);
+            assertDamageToPermanent(angel, 4, player1Id, hurricaneCard, null);
+            assertDamageToPermanent(bears, 4, player1Id, hurricaneCard, null);
+            verify(lifeSupport).lifeLost(gd, player1Id, 4);
+            verify(lifeSupport).lifeLost(gd, player2Id, 4);
+            assertDamageToPlayer(player1Id, 4);
+            assertDamageToPlayer(player2Id, 4);
+        }
+
+        @Test
+        @DisplayName("Removes defense counters from a battle in the set")
+        void damagesBattles() {
+            Card intoTheFireCard = createCard("Into the Fire");
+            Card battleCard = createCard("Battle");
+            battleCard.setType(com.github.laxika.magicalvibes.model.CardType.BATTLE);
+            Permanent battle = addPermanent(player1Id, battleCard);
+            battle.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.DEFENSE, 5);
+            StackEntry entry = createEntry(intoTheFireCard, player1Id, null);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
+            when(gameQueryService.findPermanentController(eq(gd), eq(battle.getId()))).thenReturn(player1Id);
+            when(gameQueryService.findPermanentById(gd, battle.getId())).thenReturn(battle);
+            stubNoKeywordsOnSource(entry);
+
+            handler.resolve(gd, entry, DealDamageEffect.toEach(Subjects.allPermanents(), 2));
+
+            assertThat(battle.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.DEFENSE)).isEqualTo(3);
+            verify(battleDefeatSupport).checkAfterDefenseRemoved(gd, battle);
+        }
+    }
 }

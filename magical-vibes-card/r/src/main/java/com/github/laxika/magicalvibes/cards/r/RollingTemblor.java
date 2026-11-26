@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class RollingTemblor extends Card {
 
     public RollingTemblor() {
-        addSpellEffect(new MassDamageEffect(2, false, false, new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        addSpellEffect(DealDamageEffect.toEachCreature(2,
+                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
         addCastingOption(new FlashbackCast("{4}{R}{R}"));
     }
 }

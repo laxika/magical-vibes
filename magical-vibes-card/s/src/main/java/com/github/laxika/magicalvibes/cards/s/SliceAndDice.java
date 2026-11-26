@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,13 +14,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SliceAndDice extends Card {
 
     public SliceAndDice() {
-        addSpellEffect(new MassDamageEffect(4));
+        addSpellEffect(DealDamageEffect.toEachCreature(4));
 
         addCycling("{2}{R}");
         // "When you cycle this card" is its own triggered ability, so it goes on the stack above the
         // cycling draw and resolves first.
         addTrigger(Triggers.youCycleThisCard(), new MayEffect(
-                new MassDamageEffect(1),
+                DealDamageEffect.toEachCreature(1),
                 "Have Slice and Dice deal 1 damage to each creature?"));
     }
 }

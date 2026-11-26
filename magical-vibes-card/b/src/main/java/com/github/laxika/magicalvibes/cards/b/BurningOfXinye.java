@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDestroysPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -27,6 +27,6 @@ public class BurningOfXinye extends Card {
         )).addSpellEffect(new PlayerDestroysPermanentsEffect(
                 4, new PermanentIsLandPredicate(), Subjects.targetPlayer()));
         // ...then Burning of Xinye deals 4 damage to each creature.
-        addSpellEffect(new MassDamageEffect(4));
+        addSpellEffect(DealDamageEffect.toEachCreature(4));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "102")
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class GatesAblaze extends Card {
 
     public GatesAblaze() {
-        addSpellEffect(new MassDamageEffect(new PermanentCount(
-                new PermanentHasSubtypePredicate(CardSubtype.GATE), CountScope.CONTROLLER), false));
+        addSpellEffect(DealDamageEffect.toEachCreature(new PermanentCount(
+                new PermanentHasSubtypePredicate(CardSubtype.GATE), CountScope.CONTROLLER)));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class CalamityOfCinders extends Card {
 
     public CalamityOfCinders() {
-        addSpellEffect(new MassDamageEffect(
-                6, false, false, new PermanentNotPredicate(new PermanentIsTappedPredicate())));
+        addSpellEffect(DealDamageEffect.toEachCreature(6, new PermanentNotPredicate(new PermanentIsTappedPredicate())));
     }
 }

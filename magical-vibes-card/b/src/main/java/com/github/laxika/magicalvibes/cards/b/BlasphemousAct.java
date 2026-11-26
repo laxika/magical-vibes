@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -51,6 +51,6 @@ public class BlasphemousAct extends Card {
         // Blasphemous Act costs {1} less to cast for each creature on the battlefield.
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
-        addSpellEffect(new MassDamageEffect(13));
+        addSpellEffect(DealDamageEffect.toEachCreature(13));
     }
 }

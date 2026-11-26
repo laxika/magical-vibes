@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 /**
@@ -17,6 +17,6 @@ public class SpontaneousCombustion extends Card {
         // As an additional cost to cast this spell, sacrifice a creature.
         addCastingCost(new SacrificeCreatureCost());
         // Spontaneous Combustion deals 3 damage to each creature.
-        addSpellEffect(new MassDamageEffect(3));
+        addSpellEffect(DealDamageEffect.toEachCreature(3));
     }
 }

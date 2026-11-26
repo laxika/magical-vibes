@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class PyroclastConsul extends Card {
         // If it shares a creature type with this creature, you may reveal it. If you do, this
         // creature deals 2 damage to each creature.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new KinshipEffect(List.of(
-                new MassDamageEffect(2))));
+                DealDamageEffect.toEachCreature(2))));
     }
 }

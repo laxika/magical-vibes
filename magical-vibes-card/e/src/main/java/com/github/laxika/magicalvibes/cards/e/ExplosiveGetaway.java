@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +21,6 @@ public class ExplosiveGetaway extends Card {
                         new PermanentIsCreaturePredicate())),
                 "Target must be an artifact or creature"), 0, 1)
                 .addSpellEffect(FlickerEffect.exileTargetReturnAtEndStep())
-                .addSpellEffect(new MassDamageEffect(4));
+                .addSpellEffect(DealDamageEffect.toEachCreature(4));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -33,7 +33,7 @@ public class KlauthsWill extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Klauth's Will deals X damage to each creature without flying",
-                        new MassDamageEffect(new XValue(), false, false, withoutFlying)),
+                        DealDamageEffect.toEachCreature(new XValue(), withoutFlying)),
                 ChooseOneEffect.ChooseOneOption.upToXTargets(
                         "Destroy up to X target artifacts and/or enchantments",
                         new DestroyEachTargetPermanentEffect(), artifactOrEnchantment, Integer.MAX_VALUE)

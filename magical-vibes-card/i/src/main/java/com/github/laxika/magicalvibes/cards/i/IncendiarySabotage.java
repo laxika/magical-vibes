@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -11,6 +11,6 @@ public class IncendiarySabotage extends Card {
 
     public IncendiarySabotage() {
         addCastingCost(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
-        addSpellEffect(new MassDamageEffect(3));
+        addSpellEffect(DealDamageEffect.toEachCreature(3));
     }
 }

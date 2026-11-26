@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class BloodfireInfusion extends Card {
                                 "the enchanted creature",
                                 true,
                                 true),
-                        new MassDamageEffect(new XValue(), false)),
+                        DealDamageEffect.toEachCreature(new XValue())),
                 "{R}, Sacrifice enchanted creature: This Aura deals damage equal to the sacrificed "
                         + "creature's power to each creature."
         ));

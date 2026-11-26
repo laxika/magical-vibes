@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ALL", collectorNumber = "95")
@@ -13,9 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class HailStorm extends Card {
 
     public HailStorm() {
-        addSimultaneousSpellEffects(new MassDamageEffect(2, false, false, new PermanentIsAttackingPredicate()),
-                new MassDamageEffect(
-                        1, false, false, new PermanentControlledBySourceControllerPredicate()),
+        addSimultaneousSpellEffects(DealDamageEffect.toEachCreature(2, new PermanentIsAttackingPredicate()),
+                DealDamageEffect.toEachCreature(1, new PermanentControlledBySourceControllerPredicate()),
                 DealDamageEffect.to(Subjects.you(), 1));
     }
 }

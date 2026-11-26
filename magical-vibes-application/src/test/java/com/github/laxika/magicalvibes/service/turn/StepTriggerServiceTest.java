@@ -1471,7 +1471,7 @@ class StepTriggerServiceTest {
                     (DealDamageEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
             assertThat(effect.players()).isEqualTo(Subjects.triggeringPlayer());
             assertThat(effect.damage()).isEqualTo(curses);
-            assertThat(effect.amountForEachPlayer()).isTrue();
+            assertThat(effect.amountForEachRecipient()).isTrue();
         }
 
         @Test

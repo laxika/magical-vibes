@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,7 +33,7 @@ public class BoilingEarth extends Card {
     public BoilingEarth() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{6}{R}"))));
 
-        addSpellEffect(new MassDamageEffect(1, false, false,
+        addSpellEffect(DealDamageEffect.toEachCreature(1,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
         target(TargetFilters.landYouControl(), 0, 1)

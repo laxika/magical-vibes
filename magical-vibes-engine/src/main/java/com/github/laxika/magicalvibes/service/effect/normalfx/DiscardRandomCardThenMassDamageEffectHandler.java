@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardThenMassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class DiscardRandomCardThenMassDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final MassDamageEffectHandler massDamageEffectHandler;
+    private final DealDamageEffectHandler dealDamageEffectHandler;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -47,8 +47,8 @@ public class DiscardRandomCardThenMassDamageEffectHandler implements NormalEffec
         gameData.discardCausedByOpponent = false;
         playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceName, 1);
 
-        massDamageEffectHandler.resolve(gameData, entry,
-                new MassDamageEffect(new LastDiscardedCardManaValue(), false));
+        dealDamageEffectHandler.resolve(gameData, entry,
+                DealDamageEffect.toEachCreature(new LastDiscardedCardManaValue()));
 
         if (!gameData.playerHands.get(controllerId).isEmpty()) {
             entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex + 1,

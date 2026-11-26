@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -35,8 +36,10 @@ public class GangrenousZombies extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new ConditionalEffect(new NotCondition(controlsSnowSwamp), new MassDamageEffect(1, true)),
-                        new ConditionalEffect(controlsSnowSwamp, new MassDamageEffect(2, true))
+                        new ConditionalEffect(new NotCondition(controlsSnowSwamp), DealDamageEffect.toEachCreature(1)
+                                .andTo(Subjects.eachPlayer())),
+                        new ConditionalEffect(controlsSnowSwamp, DealDamageEffect.toEachCreature(2)
+                                .andTo(Subjects.eachPlayer()))
                 ),
                 "{T}, Sacrifice this creature: This creature deals 1 damage to each creature and each player. "
                         + "If you control a snow Swamp, this creature deals 2 damage to each creature and each player instead."

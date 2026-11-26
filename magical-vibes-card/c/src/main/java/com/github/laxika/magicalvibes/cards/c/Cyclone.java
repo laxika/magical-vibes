@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
@@ -28,6 +28,7 @@ public class Cyclone extends Card {
                 // damage to each creature and each player.
                 new UnlessPaysEffect(Subjects.you(), PayManaCost.perAmount("{G}", new CountersOnSource(CounterType.WIND)),
                         new SacrificeSelfEffect(),
-                        new MassDamageEffect(new CountersOnSource(CounterType.WIND), true))));
+                        DealDamageEffect.toEachCreature(new CountersOnSource(CounterType.WIND))
+                                .andTo(Subjects.eachPlayer()))));
     }
 }

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class NoxiousField extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new MassDamageEffect(1, true)),
+                        List.of(DealDamageEffect.toEachCreature(1).andTo(Subjects.eachPlayer())),
                         "{T}: This land deals 1 damage to each creature and each player."
                 ),
                 Subjects.attached()

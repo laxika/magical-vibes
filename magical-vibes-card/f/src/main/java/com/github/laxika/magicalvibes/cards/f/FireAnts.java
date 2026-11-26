@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -25,7 +25,7 @@ public class FireAnts extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MassDamageEffect(1, false, false, otherNonFlyers)),
+                List.of(DealDamageEffect.toEachCreature(1, otherNonFlyers)),
                 "{T}: This creature deals 1 damage to each other creature without flying."
         ));
     }

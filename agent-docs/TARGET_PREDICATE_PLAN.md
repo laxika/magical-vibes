@@ -1000,7 +1000,7 @@ will be enumerated in one place and rejected in another:
 | `SpellCastingService` (~:1786) | cast-time validation of each divided-damage **assignment** target — would throw on a battle before resolution ever ran |
 | `DamageTargetValidators.validateDealDividedDamage` (~:66) | the `@ValidatesTarget` escape hatch for `DealDividedDamageEffect`; message reads "Target must be a creature, planeswalker, or player" |
 
-`MassDamageEffectHandler:62` also pairs the two types, but that one is correct — it implements
+`MassDamageEffectHandler:62` (now `DealDamageEffect`'s mass factories, step 10 run Damage M2) also pairs the two types, but that one is correct — it implements
 "damage to each creature and planeswalker", not "any target".
 
 Row 5 of the review (`TargetValidationService.describe` needing a `"battle"` arm) is untouched and
@@ -1097,7 +1097,7 @@ these paths has a real card.
   battle leaf. Unchanged by this step.
 - **No hand-rolled any-target enumeration is left.** Re-grepped after the change: across all of
   `magical-vibes-engine/src/main`, the `isCreature(gameData, p) || p.getCard().hasType(PLANESWALKER)`
-  pair now appears in exactly two places, both deliberate — `MassDamageEffectHandler:62`, which
+  pair now appears in exactly two places, both deliberate — `MassDamageEffectHandler:62` (now `DealDamageEffect`'s mass factories, step 10 run Damage M2), which
   implements "damage to each creature and planeswalker" and is not an any target, and
   `DamageSupport.isAnyTargetDamageRecipient`, which Step 8a made printed-type on purpose so it agrees
   with the CR 120.3c / CR 120.3h destinations it feeds. Every other surviving

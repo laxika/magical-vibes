@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -33,7 +33,7 @@ public class GruulCharm extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Gruul Charm deals 3 damage to each creature with flying",
-                        new MassDamageEffect(3, false, false, new PermanentHasKeywordPredicate(Keyword.FLYING))
+                        DealDamageEffect.toEachCreature(3, new PermanentHasKeywordPredicate(Keyword.FLYING))
                 )
         )));
     }

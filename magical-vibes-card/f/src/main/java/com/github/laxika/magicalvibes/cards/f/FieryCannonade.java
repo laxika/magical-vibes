@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class FieryCannonade extends Card {
 
     public FieryCannonade() {
-        addSpellEffect(new MassDamageEffect(2, false, false, new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.PIRATE))));
+        addSpellEffect(DealDamageEffect.toEachCreature(2,
+                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.PIRATE))));
     }
 }

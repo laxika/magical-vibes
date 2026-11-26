@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
@@ -621,7 +620,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, cards) -> test.opponentVictimIsDealtDamage(cards, 1)),
                 watch("a permanent you control is dealt damage", "permanentYouControlDealtDamage", Triggers::permanentYouControlDealtDamage,
                         CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards, new MassDamageEffect(1))),
+                        (test, cards) -> test.helperAbilityResolves(cards, DealDamageEffect.toEachCreature(1))),
                 watch("a creature an opponent controls is dealt damage", "creatureOpponentControlsDealtDamage",
                         Triggers::creatureOpponentControlsDealtDamage, CardType.ENCHANTMENT,
                         (test, cards) -> test.opponentVictimIsDealtDamage(cards, 1)),
@@ -2937,7 +2936,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
 
     private void fixturesAreDealtNoncombatDamage(List<Card> cards) {
         fixtureCreatures(cards);
-        helperEntersAndItsAbilityResolves(new MassDamageEffect(1));
+        helperEntersAndItsAbilityResolves(DealDamageEffect.toEachCreature(1));
     }
 
     /**
@@ -2946,7 +2945,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
      */
     private void opponentVictimIsDealtDamage(List<Card> cards, int damage) {
         addCreatureReady(player2, card("Victim", CardType.CREATURE, CardSubtype.GOBLIN));
-        helperAbilityResolves(cards, new MassDamageEffect(damage, false, false,
+        helperAbilityResolves(cards, DealDamageEffect.toEachCreature(damage,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
     }
 

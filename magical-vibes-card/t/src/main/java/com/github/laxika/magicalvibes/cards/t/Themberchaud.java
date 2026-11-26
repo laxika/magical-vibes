@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "728")
@@ -36,7 +37,7 @@ public class Themberchaud extends Card {
 
         // When Themberchaud enters, he deals damage to each other creature without flying and each player.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MassDamageEffect(mountains, true, false, otherNonflyingCreature));
+                DealDamageEffect.toEachCreature(mountains, otherNonflyingCreature).andTo(Subjects.eachPlayer()));
 
         addStaticEffect(new ExertAsItAttacksEffect());
         addTrigger(Triggers.exertedAsItAttacks(), new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));

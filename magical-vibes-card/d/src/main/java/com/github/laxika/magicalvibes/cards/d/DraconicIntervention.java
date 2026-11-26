@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -16,10 +16,9 @@ public class DraconicIntervention extends Card {
 
     public DraconicIntervention() {
         addCastingCost(ExileCardFromGraveyardCost.trackingExiledManaValue(CardType.INSTANT, CardType.SORCERY));
-        addSpellEffect(new MassDamageEffect(
-                new XValue(), false, false,
-                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                false, true));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(),
+                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)))
+                .exilingDamagedCreaturesThatWouldDie());
         addSpellEffect(new ExileSpellEffect());
     }
 }

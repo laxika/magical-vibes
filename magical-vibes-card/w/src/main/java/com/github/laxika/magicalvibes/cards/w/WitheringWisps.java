@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -39,7 +40,7 @@ public class WitheringWisps extends Card {
         ));
 
         addActivatedAbility(new ActivatedAbility(false, "{B}",
-                List.of(new MassDamageEffect(1, true)),
+                List.of(DealDamageEffect.toEachCreature(1).andTo(Subjects.eachPlayer())),
                 "{B}: This enchantment deals 1 damage to each creature and each player. "
                         + "Activate no more times each turn than the number of snow Swamps you control.")
                 .withMaxActivationsPerTurn(

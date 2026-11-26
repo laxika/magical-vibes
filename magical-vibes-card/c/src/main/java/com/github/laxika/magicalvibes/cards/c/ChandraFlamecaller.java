@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +39,7 @@ public class ChandraFlamecaller extends Card {
         ));
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new MassDamageEffect(new XValue(), false)),
+                List.of(DealDamageEffect.toEachCreature(new XValue())),
                 "\u2212X: Chandra deals X damage to each creature.",
                 null
         ));

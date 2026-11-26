@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class ScattershotArcher extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MassDamageEffect(1, false, false, new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                List.of(DealDamageEffect.toEachCreature(1, new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 "{T}: This creature deals 1 damage to each creature with flying."
         ));
     }

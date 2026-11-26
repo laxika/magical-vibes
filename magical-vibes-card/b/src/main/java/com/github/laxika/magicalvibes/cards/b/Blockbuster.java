@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 
 import java.util.List;
@@ -18,7 +19,8 @@ public class Blockbuster extends Card {
                 "{1}{R}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new MassDamageEffect(3, false, true, new PermanentIsTappedPredicate())
+                        DealDamageEffect.toEachCreature(3,
+                                new PermanentIsTappedPredicate()).andTo(Subjects.eachPlayer())
                 ),
                 "{1}{R}, Sacrifice this enchantment: It deals 3 damage to each tapped creature and each player."
         ));

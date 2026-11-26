@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +28,7 @@ public class ThundermawHellkite extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MassDamageEffect(1, false, false, opponentFliers),
+                DealDamageEffect.toEachCreature(1, opponentFliers),
                 new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), opponentFliers)))));
     }

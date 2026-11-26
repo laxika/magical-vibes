@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "5ED", collectorNumber = "243")
 @CardRegistration(set = "4ED", collectorNumber = "205")
@@ -13,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class Inferno extends Card {
 
     public Inferno() {
-        addSpellEffect(new MassDamageEffect(6, true));
+        addSpellEffect(DealDamageEffect.toEachCreature(6).andTo(Subjects.eachPlayer()));
     }
 }

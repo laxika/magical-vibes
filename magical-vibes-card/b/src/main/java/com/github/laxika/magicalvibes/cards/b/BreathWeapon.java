@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -16,8 +16,7 @@ import java.util.List;
 public class BreathWeapon extends Card {
 
     public BreathWeapon() {
-        addSpellEffect(new MassDamageEffect(2, false, false,
-                new PermanentAllOfPredicate(List.of(
+        addSpellEffect(DealDamageEffect.toEachCreature(2, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON))
                 ))));

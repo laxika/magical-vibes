@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class LetTheGalaxyBurn extends Card {
                 new PermanentNotPredicate(new PermanentEnteredBattlefieldThisTurnPredicate())));
 
         addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
-        addSpellEffect(new MassDamageEffect(
-                new Sum(new XValue(), new Fixed(2)), false, false, creatureNotEnteredThisTurn));
+        addSpellEffect(DealDamageEffect.toEachCreature(new Sum(new XValue(), new Fixed(2)),
+                creatureNotEnteredThisTurn));
     }
 }

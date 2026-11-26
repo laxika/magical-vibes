@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -27,7 +27,7 @@ public class NyleasIntervention extends Card {
                                 LibrarySearchDestination.HAND)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Nylea's Intervention deals twice X damage to each creature with flying",
-                        new MassDamageEffect(new Scaled(new XValue(), 2), false, false,
+                        DealDamageEffect.toEachCreature(new Scaled(new XValue(), 2),
                                 new PermanentHasKeywordPredicate(Keyword.FLYING))
                 )
         )));

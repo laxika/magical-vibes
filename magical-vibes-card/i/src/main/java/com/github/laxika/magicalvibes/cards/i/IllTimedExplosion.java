@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,7 +21,7 @@ public class IllTimedExplosion extends Card {
                 SequenceEffect.of(
                         new DiscardEffect(2, Subjects.you()),
                         new QueueReflexiveAbilityEffect(
-                                new MassDamageEffect(new GreatestDiscardedCardManaValue(), false))),
+                                DealDamageEffect.toEachCreature(new GreatestDiscardedCardManaValue()))),
                 "Discard two cards?"));
     }
 }

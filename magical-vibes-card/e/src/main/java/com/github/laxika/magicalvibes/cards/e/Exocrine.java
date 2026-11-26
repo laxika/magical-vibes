@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,7 +24,7 @@ public class Exocrine extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SpellXAtLeast(5)),
                 new DrawCardEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MassDamageEffect(new XValue(), true, false,
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
+                DealDamageEffect.toEachCreature(new XValue(),
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())).andTo(Subjects.eachPlayer()));
     }
 }

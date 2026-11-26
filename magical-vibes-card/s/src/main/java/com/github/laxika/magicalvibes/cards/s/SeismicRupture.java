@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class SeismicRupture extends Card {
 
     public SeismicRupture() {
-        addSpellEffect(new MassDamageEffect(2, false, false,
+        addSpellEffect(DealDamageEffect.toEachCreature(2,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

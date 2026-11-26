@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -42,8 +41,7 @@ public class ChandraAwakenedInferno extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new MassDamageEffect(
-                        3, false, false, false,
+                List.of(DealDamageEffect.toEachCreature(3,
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL)))),
                 "\u22123: Chandra, Awakened Inferno deals 3 damage to each non-Elemental creature."
         ));

@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -18,8 +19,7 @@ public class Earth extends Card {
 
     public Earth() {
         // Earth deals X damage to each creature without flying.
-        addSpellEffect(new MassDamageEffect(
-                0, true, false,
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(),
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.

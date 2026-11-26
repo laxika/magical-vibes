@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -25,7 +25,7 @@ public class TiborAndLumia extends Card {
 
         // Whenever you cast a red spell, Tibor and Lumia deals 1 damage to each creature without flying.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
-                new MassDamageEffect(1, false, false,
+                DealDamageEffect.toEachCreature(1,
                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

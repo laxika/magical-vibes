@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -15,7 +15,7 @@ public class SwirlingSandstorm extends Card {
     public SwirlingSandstorm() {
         addSpellEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new MassDamageEffect(5, false, false,
+                DealDamageEffect.toEachCreature(5,
                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "BNG", collectorNumber = "140")
@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class Skyreaping extends Card {
 
     public Skyreaping() {
-        addSpellEffect(new MassDamageEffect(
-                new ColorManaSymbolsAmongControlledPermanents(ManaColor.GREEN),
-                false, false, new PermanentHasKeywordPredicate(Keyword.FLYING)));
+        addSpellEffect(DealDamageEffect.toEachCreature(new ColorManaSymbolsAmongControlledPermanents(ManaColor.GREEN),
+                new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

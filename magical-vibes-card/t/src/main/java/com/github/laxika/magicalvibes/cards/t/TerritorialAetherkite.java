@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -29,7 +29,7 @@ public class TerritorialAetherkite extends Card {
                         EachPlayerPaysAnyManaEffect.byYou(Resource.ENERGY),
                         new ConditionalEffect(new HappenedThisWay(StepKind.PAY_ENERGY),
                                 QueueReflexiveAbilityEffect.withEventValue(
-                                        new MassDamageEffect(new EventValue(), false, false,
+                                        DealDamageEffect.toEachCreature(new EventValue(),
                                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
                                         AmountThisWay.energyPaid()))));
     }

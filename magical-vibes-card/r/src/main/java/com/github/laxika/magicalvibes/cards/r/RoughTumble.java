@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -19,13 +19,12 @@ public class RoughTumble extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Rough deals 2 damage to each creature without flying",
-                        new MassDamageEffect(2, false, false,
+                        DealDamageEffect.toEachCreature(2,
                                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))))
                         .withManaCost("{1}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tumble deals 6 damage to each creature with flying",
-                        new MassDamageEffect(6, false, false,
-                                new PermanentHasKeywordPredicate(Keyword.FLYING)))
+                        DealDamageEffect.toEachCreature(6, new PermanentHasKeywordPredicate(Keyword.FLYING)))
                         .withManaCost("{5}{R}")
         )));
     }

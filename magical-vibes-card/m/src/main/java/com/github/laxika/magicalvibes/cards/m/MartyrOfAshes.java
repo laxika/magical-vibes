@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealXCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -25,7 +25,7 @@ public class MartyrOfAshes extends Card {
                 List.of(
                         new RevealXCardsFromHandCost(new CardColorPredicate(CardColor.RED)),
                         new SacrificeSelfCost(),
-                        new MassDamageEffect(new XValue(), false, false,
+                        DealDamageEffect.toEachCreature(new XValue(),
                                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
                 ),
                 "{2}, Reveal X red cards from your hand, Sacrifice this creature: This creature deals X damage to each creature without flying."

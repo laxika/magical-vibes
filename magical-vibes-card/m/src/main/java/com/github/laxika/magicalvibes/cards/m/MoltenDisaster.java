@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToKickedSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -18,7 +19,8 @@ public class MoltenDisaster extends Card {
     public MoltenDisaster() {
         addStaticEffect(new KickerEffect("{R}"));
         addStaticEffect(new GrantKeywordsToKickedSpellEffect(Keyword.SPLIT_SECOND));
-        addSpellEffect(new MassDamageEffect(new XValue(), true, false,
-                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        addSpellEffect(DealDamageEffect.toEachCreature(new XValue(),
+                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
+                .andTo(Subjects.eachPlayer()));
     }
 }

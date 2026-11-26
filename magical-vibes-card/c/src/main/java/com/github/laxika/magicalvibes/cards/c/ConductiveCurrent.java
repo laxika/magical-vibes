@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualNoncombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -15,7 +15,7 @@ import java.util.List;
 public class ConductiveCurrent extends Card {
 
     public ConductiveCurrent() {
-        addSpellEffect(new MassDamageEffect(3));
+        addSpellEffect(DealDamageEffect.toEachCreature(3));
         addSpellEffect(new ChooseCardFromHandAndApplyPerpetualNoncombatDamageEffect(
                 new CardAllOfPredicate(List.of(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

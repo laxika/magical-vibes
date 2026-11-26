@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,9 +28,9 @@ public class UltimateMagicMeteor extends Card {
                 new PermanentIsLandPredicate()));
         addSpellEffect(new ConditionalReplacementEffect(
                 new CastFromZone(Zone.EXILE),
-                new MassDamageEffect(7),
+                DealDamageEffect.toEachCreature(7),
                 SequenceEffect.of(
-                        new MassDamageEffect(7),
+                        DealDamageEffect.toEachCreature(7),
                         ChoosePermanentsEffect.oneForEach(Subjects.eachOpponent(),
                                 Subjects.controlledBy(Subjects.eachOpponent(), artifactOrLand),
                                 "an artifact or land"),

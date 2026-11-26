@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,10 +25,7 @@ public class PiruTheVolatile extends Card {
                 UnlessPaysEffect.unlessYouPay("{R}{W}{B}", new SacrificeSelfEffect()));
 
         // When Piru dies, it deals 7 damage to each nonlegendary creature.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new MassDamageEffect(
-                7,
-                false,
-                false,
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.toEachCreature(7,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))))));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
@@ -1117,7 +1116,7 @@ class StepResultsTest extends BaseCardTest {
         @Test
         @DisplayName("Mass damage begins its own step: \"that much\" reads only its damage")
         void massDamageBeginsItsOwnStep() {
-            assertSetDamageBeginsItsOwnStep(null, new MassDamageEffect(1));
+            assertSetDamageBeginsItsOwnStep(null, DealDamageEffect.toEachCreature(1));
         }
 
         /**

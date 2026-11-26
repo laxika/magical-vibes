@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -47,7 +47,7 @@ public class Lithobraking extends Card {
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
-                                new MassDamageEffect(2)))),
+                                DealDamageEffect.toEachCreature(2)))),
                 "Sacrifice an artifact?"));
     }
 }

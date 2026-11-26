@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +36,7 @@ public class JiwariTheEarthAflame extends Card {
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{X}{R}{R}{R}",
-                List.of(new MassDamageEffect(0, true, false, withoutFlying)),
+                List.of(DealDamageEffect.toEachCreature(new XValue(), withoutFlying)),
                 "Channel — {X}{R}{R}{R}, Discard this card: It deals X damage to each creature without flying."
         ));
     }

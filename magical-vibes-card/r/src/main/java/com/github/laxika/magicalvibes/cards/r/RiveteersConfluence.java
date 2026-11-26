@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOrGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -37,7 +37,7 @@ public class RiveteersConfluence extends Card {
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Riveteers Confluence deals 1 damage to each creature and planeswalker you don't control",
-                        new MassDamageEffect(1, false, false, true, opposingCreatureOrPlaneswalker)),
+                        DealDamageEffect.toEachCreatureAndPlaneswalker(1, opposingCreatureOrPlaneswalker)),
                 new ChooseOneEffect.ChooseOneOption(
                         "You may put a land card from your hand or graveyard onto the battlefield tapped",
                         new PutUpToCardsFromHandOrGraveyardOntoBattlefieldEffect(

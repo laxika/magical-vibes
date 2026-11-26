@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -49,6 +50,19 @@ class RiveteersConfluenceTest extends BaseCardTest {
         assertThat(ownCreature.getMarkedDamage()).isZero();
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(3);
         assertThat(opposingPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The damage mode deals no damage to a planeswalker its controller controls")
+    void damageModeSparesOwnPlaneswalker() {
+        harness.setHand(player1, List.of(new RiveteersConfluence()));
+        Permanent ownPlaneswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        ownPlaneswalker.setCounterCount(CounterType.LOYALTY, 4);
+
+        cast(new int[]{1, 1, 1});
+        harness.passBothPriorities();
+
+        assertThat(ownPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
 
     @Test

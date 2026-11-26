@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files). Next: Damage M2, R (Step-10 hand-offs); the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files). Next: Damage R (Step-10 hand-offs); the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,910 / 2,290 (after step 10 run Boost B2) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,903 / 2,283 (after step 10 run Damage M2) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -460,7 +460,11 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   DynamicAmount)`, `eachEvaluatedFor(amount, players)` (each amount fixed first, CR 608.2h), `toPlayerOrTheirPlaneswalker`, rider
   `byEventDamageSource()`; `subject` is null for them. Run Damage M1: the set kinds `toEach(PermanentSubject set, n)` (found once, CR
   608.2h; `toEachCreatureOfTargetedPlayer`, `toEachControlledByTargetedPlayer`, `toCreaturesOfTargetedPlayer`) and `toEachTarget`
-  (`toEachTargetCreature`, `toEachTargetCreatureOrPlaneswalker`), one damage event, no AI one-target view. Every kind: one permanent-damage path (D24), DEAL_DAMAGE
+  (`toEachTargetCreature`, `toEachTargetCreatureOrPlaneswalker`), one damage event, no AI one-target view. Run Damage M2: the mass factories
+  `toEachCreature(n[, filter])`, `toEachCreatureAndPlaneswalker(n[, filter])` (the filter narrows both) over `controlledBy(eachPlayer(), …)`,
+  `eachEvaluatedFor(amount, set)` (per permanent, the permanent the amount's source), riders `andTo(PlayerSubject)` (players in the set's
+  event), `exilingDamagedCreaturesThatWouldDie()` / `exilingPermanentsDealtDamage()` / `cantBeRegenerated()` on a set; `sweepsBoard()` for
+  an all-player set (`BoardWipeEffect`). Every kind: one permanent-damage path (D24), DEAL_DAMAGE
   begun, one excess tracker (CR 120.4a, 120.10; the dealer's deathtouch), the win check. The creature kinds loop over the effect's
   targets; the any-target kind can't (Magma Burst kicked: its unbound part would hit the kicked target too).
 - `DamageSupport.entryDealtByTriggeringPermanent` is the one "it deals" carrier: a departed dealer is its departure snapshot first (its
@@ -940,9 +944,10 @@ there and updates them when it lands.
   `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a batched
   path in `PutCountersEffect` first (owner's decision 2026-11-25).
 - **Damage**: run Damage P folded the player record (`to(PlayerSubject)`); defect run D26 moved the player kinds' and the set handlers'
-  pre-pool checks into the pools and begins their DEAL_DAMAGE steps; run M1 folded the four set records (`toEach`, `toEachTarget`). Next,
-  in order (orchestrator's decisions 2026-11-26): M2 (`MassDamageEffect`: players beside permanents in one event, per-creature amounts,
-  tap and exile riders, `BoardWipeEffect`; its set can be a `toEach` subject), R (another dealer); another dealer (bite, fight, `TargetCreatureDealsPowerDamageToAnyTargetEffect`, the `ControlledCreaturesDeal…` records: a
+  pre-pool checks into the pools and begins their DEAL_DAMAGE steps; run M1 folded the four set records (`toEach`, `toEachTarget`); run
+  M2 folded `MassDamageEffect` (Falling Star's tap a step; left out: `DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCountEffect`,
+  an amount per recipient's controller, and `DiscardRandomCardThenMassDamageEffect`, its own repeat loop). Next (orchestrator's decisions
+  2026-11-26): R (another dealer); another dealer (bite, fight, `TargetCreatureDealsPowerDamageToAnyTargetEffect`, the `ControlledCreaturesDeal…` records: a
   "dealer" run); divided damage (`DealDividedDamageEffect`, CR 601.2d); excess redirected
   (`DealDamageToTargetCreatureWithExcessToControllerEffect`); the cost combinators (`PayXManaDealXDamageToAnyTargetEffect`, the "unless
   takes damage" records) for the "unless" runs.
@@ -1158,6 +1163,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run Damage P (2026-11-26): `DealDamageEffect` takes the player recipients; `DealDamageToPlayersEffect` and `DealDamageToEachOpponentEqualToControlledPermanentCountEffect` absorbed (704 card files by script)
 - Step 9, defect run D26 (2026-11-26): the set handlers' and the player kinds' preventions, protection and Aegis of Honor's redirect applied in the damage pools (CR 616.1); DEAL_DAMAGE begun by the set handlers; no face-down source named
 - Step 10, run Damage M1 (2026-11-26): `DealDamageEffect` takes the set recipients (`toEach`, `toEachTarget`); the four set records absorbed (112 card files by script)
+- Step 10, run Damage M2 (2026-11-26): `MassDamageEffect` absorbed into `DealDamageEffect`'s set kind (`toEachCreature`, `toEachCreatureAndPlaneswalker`, `eachEvaluatedFor`, `andTo`; 241 card files by script); Riveteers Confluence spares its controller's planeswalkers
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2482,6 +2488,57 @@ ratchets and the named application classes); after the CR 120.1 guard, 373 class
 
 **For the next run.** M2: `MassDamageEffect` onto `toEach` (players beside permanents in one event, a per-creature amount, the tap
 and exile riders, `BoardWipeEffect` for the AI); then R (another dealer).
+
+### Step 10, run Damage M2 (mass damage) (2026-11-26)
+
+Run M2 of the plan `s10-damage2` (orchestrator's decisions 2026-11-26). `MassDamageEffect` and its handler are absorbed into
+`DealDamageEffect`'s `EACH_PERMANENT` kind over `controlledBy(eachPlayer(), filter)`; the kind takes `players` dealt the same damage in the
+same event (`andTo`), the exile and can't-regenerate riders, and a per-permanent amount (`amountForEachPlayer` renamed
+`amountForEachRecipient`: for a set, the permanent is the amount's source, every amount fixed first, CR 608.2h). Factories under Shared
+pieces. `DealDamageEffect` implements `BoardWipeEffect` (`sweepsBoard()`: an all-player set). Ledger: 1 absorbed, 1 survivor. Ratchet
+2,904 / 2,284 → 2,903 / 2,283. No `CONVERSION_VERSION` bump.
+
+**Card rewrite.** 241 card files (1 in `shared`), 266 calls, by a scratch script (balanced parentheses, the 11 constructor arities and four
+factories resolved to components, typed locals, loud failure on any other shape, leftover-name check, imports added and sorted; written,
+run, deleted): `toEachCreature(n)` 112, `toEachCreature(n, filter)` 127, `toEachCreatureAndPlaneswalker(n)` 17, `(n, filter)` 3,
+`eachEvaluatedFor` 1, riders `andTo(eachPlayer())` 72, exile 6, `cantBeRegenerated` 1, `byTriggeringPermanent` 1. By hand: Falling Star
+(the tap a step, `TapPermanentsEffect(thisWay(DEAL_DAMAGE, creature))`), Into the Fire and Magmaquake and Battle of Frost and Fire
+(`toEach(controlledBy(eachPlayer(), anyOf(...)))`), Cavalier of Flame ("each planeswalker they control": `controlledBy(eachOpponent(),
+planeswalker)`), Riveteers Confluence; the Kindle the Carnage handler, 3 AI sites, 7 test files, 7 agent-docs files. Oracle text checked
+with `get_card` for 42 of 241 files: every hand-rewritten and specially shaped card (exile, can't regenerate, per creature, triggering
+dealer, filter on planeswalkers) and 22 sampled; all match the new expression.
+
+**Behaviour changes:**
+- Riveteers Confluence ("each creature and planeswalker you don't control", Oracle) dealt damage to its controller's planeswalkers: the
+  filter applied to creatures only. Failing-first: `RiveteersConfluenceTest.damageModeSparesOwnPlaneswalker`.
+- The set kind's amount reads the resolving entry with the dealer as source (the carrier of a triggering dealer has no event value):
+  Arcbond's "that much" (CR 608.2h); M1's Ib Halfheart (fixed 4) unchanged.
+- AI only: an all-player set is a board sweep for the hard AI's board-wipe value, `BoardEvaluator` and the easy AI, so M1's all-player
+  each-matching cards are read as sweeps too; the set's spec is harmful with no target (read only by `GameSimulator.rankAbilityTargets`).
+- Code only: players in APNAP order (one event), planeswalkers and battles by the layered type in the set filter, then the printed-type
+  recipient guard; Falling Star taps after the damage instead of between creatures.
+
+**Pins added first** (passed on the old code and after): `MassDamageTest` (application, 8: a creature arriving after the entry went on the
+stack is dealt damage and one gone isn't; a lifelink dealer gains the total for creatures and players once with one Pridemate counter;
+Fungus Sliver once; Chandra's Spitfire once beside the creatures; one Magmatic Galleon excess trigger for two creatures; deathtouch kills
+each; a face-down dealer is named by no card); the existing card tests of Baki's Curse, Falling Star, Anger of the Gods, Underworld Fires,
+Flamebreak, Arcbond, Into the Fire and the AI's `SpellEvaluatorTest` / `EasyAiDecisionEngineTest` sweeper cases.
+
+**Tests changed.** `MassDamageEffectHandlerTest` is `DealDamageEffectHandlerTest.Mass` (4); `SetAndPlayerDamagePoolTest`,
+`StepResultsTest`, `TriggerRouteRecordTest`, `EasyAiDecisionEngineTest`: the factories; `SpellEvaluatorTest`: one `@DisplayName` named the
+deleted record; `StepTriggerServiceTest`: the renamed component.
+
+**Tests run** (one Gradle run, XML of this run): 3,163 result files, 29,603 tests, 0 failures: every card test class of a
+`DealDamageEffect` card (back faces through their front), the 513 classes naming a rewritten card, the
+`Damage|Prevent|Protection|Redirect|Lifelink|Infect|Deathtouch|Excess|Sweep|Wrath|FaceDown` classes, the AI module's 59 classes, both
+ratchets and the named application classes.
+
+**Seen, not changed** (defect queue): a set over one player's permanents or each target is still unscored by the hard AI (M1's line,
+updated). AGENTS.md names no deleted class.
+
+**For the next run.** R (another dealer: bite, fight-like power damage, `TargetCreatureDealsPowerDamageToEachOtherCreatureEffect`, the
+`ControlledCreaturesDeal…` records). Left out of M2: `DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCountEffect` (an
+amount per recipient's controller) and `DiscardRandomCardThenMassDamageEffect` (its repeat loop; it builds `toEachCreature`).
 
 ## Prompt
 

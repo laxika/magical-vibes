@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -47,7 +46,7 @@ public class MjLnirHammerOfThor extends Card {
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new MassDamageEffect(2)),
+                List.of(DealDamageEffect.toEachCreature(2)),
                 "{2}{R}, Discard this card: It deals 2 damage to each creature."
         ));
     }

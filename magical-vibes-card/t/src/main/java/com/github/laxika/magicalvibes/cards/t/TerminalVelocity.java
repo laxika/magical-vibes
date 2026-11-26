@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -29,8 +29,7 @@ import java.util.List;
 public class TerminalVelocity extends Card {
 
     public TerminalVelocity() {
-        MassDamageEffect leavesDamage = new MassDamageEffect(
-                new Sum(new SourceManaValueMinusOne(), new Fixed(1)), false, false, null);
+        DealDamageEffect leavesDamage = DealDamageEffect.toEachCreature(new Sum(new SourceManaValueMinusOne(), new Fixed(1)));
         addSpellEffect(new MayEffect(
                 new PutCardToBattlefieldThenEffect(
                         new CardAnyOfPredicate(List.of(

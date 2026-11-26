@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -41,7 +41,8 @@ public class JayaBallardTaskMage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}{R}{R}",
-                List.of(new DiscardCardTypeCost(null, null), new MassDamageEffect(6, true)),
+                List.of(new DiscardCardTypeCost(null, null), DealDamageEffect.toEachCreature(6)
+                        .andTo(Subjects.eachPlayer())),
                 "{5}{R}{R}, {T}, Discard a card: Jaya Ballard deals 6 damage to each creature and each player."
         ));
     }

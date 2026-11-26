@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -40,7 +40,7 @@ public class ExtinguisherBattleship extends Card {
                 noncreaturePermanent,
                 "Target must be a noncreature permanent"
         )).bindEffect(destroyTargetPermanent);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), destroyTargetPermanent, new MassDamageEffect(4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), destroyTargetPermanent, DealDamageEffect.toEachCreature(4));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

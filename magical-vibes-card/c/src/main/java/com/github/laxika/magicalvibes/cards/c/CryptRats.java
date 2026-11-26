@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class CryptRats extends Card {
     public CryptRats() {
         // {X}: This creature deals X damage to each creature and each player. (Pestilence on a body.)
         addActivatedAbility(new ActivatedAbility(false, "{X}",
-                List.of(new MassDamageEffect(new XValue(), true)),
+                List.of(DealDamageEffect.toEachCreature(new XValue()).andTo(Subjects.eachPlayer())),
                 "{X}: This creature deals X damage to each creature and each player. Spend only black mana on X.")
                 .withXColorRestriction(ManaColor.BLACK));
     }

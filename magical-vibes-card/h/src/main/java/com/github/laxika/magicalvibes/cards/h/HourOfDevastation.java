@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -23,10 +23,8 @@ public class HourOfDevastation extends Card {
         addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.allCreatures()));
 
         // Deals 5 damage to each creature and each non-Bolas planeswalker.
-        addSpellEffect(new MassDamageEffect(5, false, false, true,
-                new PermanentAnyOfPredicate(List.of(
+        addSpellEffect(DealDamageEffect.toEachCreatureAndPlaneswalker(5, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.BOLAS)))))
-                .withFilterAppliedToPlaneswalkers());
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.BOLAS))))));
     }
 }

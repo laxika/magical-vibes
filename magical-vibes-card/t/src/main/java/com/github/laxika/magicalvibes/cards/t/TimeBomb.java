@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +30,8 @@ public class TimeBomb extends Card {
                 "{1}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new MassDamageEffect(new CountersOnSource(CounterType.TIME), true)
+                        DealDamageEffect.toEachCreature(new CountersOnSource(CounterType.TIME))
+                                .andTo(Subjects.eachPlayer())
                 ),
                 "{1}, {T}, Sacrifice Time Bomb: It deals damage equal to the number of time counters on it to each creature and each player."
         ));

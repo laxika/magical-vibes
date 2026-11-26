@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,7 +15,7 @@ public class LastLaugh extends Card {
     public LastLaugh() {
         // Whenever a permanent other than this enchantment is put into a graveyard from the battlefield, ...
         addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER),
-                new MassDamageEffect(1, true));
+                DealDamageEffect.toEachCreature(1).andTo(Subjects.eachPlayer()));
 
         addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentIsCreaturePredicate()), new SacrificeSelfEffect());
     }

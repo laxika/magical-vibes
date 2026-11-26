@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -27,7 +27,7 @@ public class ShardPhoenix extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(),
-                        new MassDamageEffect(2, false, false,
+                        DealDamageEffect.toEachCreature(2,
                                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))),
                 "Sacrifice Shard Phoenix: It deals 2 damage to each creature without flying."
         ));
