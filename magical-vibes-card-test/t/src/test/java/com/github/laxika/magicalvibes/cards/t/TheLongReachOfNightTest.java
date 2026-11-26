@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AnimusOfNightsReach;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BearerOfMemory;
 import com.github.laxika.magicalvibes.cards.v.VoltageSurge;
@@ -26,7 +27,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheLongReachOfNight.class, AnimusOfNightsReach.class, Forest.class, BearerOfMemory.class, VoltageSurge.class})
+@CardUsed({TheLongReachOfNight.class, AnimusOfNightsReach.class, Forest.class, BearerOfMemory.class, VoltageSurge.class,
+        FieryTemper.class})
 class TheLongReachOfNightTest extends BaseCardTest {
 
     @Test
@@ -247,6 +249,80 @@ class TheLongReachOfNightTest extends BaseCardTest {
         harness.assertInGraveyard(player3, "Bearer of Memory");
         harness.assertInHand(player2, "Voltage Surge");
         harness.assertInHand(player3, "Voltage Surge");
+    }
+
+    @Test
+    @DisplayName("A discarded madness card is exiled and its madness triggers")
+    void discardedMadnessCardTriggersMadness() {
+        FieryTemper temper = new FieryTemper();
+        harness.addToBattlefield(player2, new BearerOfMemory());
+        harness.setHand(player2, List.of(temper));
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card.getId().equals(temper.getId()));
+        assertThat(gd.stack).anyMatch(entry -> entry.getDescription().contains("madness"));
+        harness.assertOnBattlefield(player2, "Bearer of Memory");
+    }
+
+    @Test
+    @DisplayName("Every opponent chooses before anyone discards; then the discards, then the others' sacrifices (CR 101.4)")
+    void everyOpponentChoosesBeforeAnyoneDiscards() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new BearerOfMemory());
+        harness.addToBattlefield(player3, new BearerOfMemory());
+        harness.setHand(player2, List.of(new VoltageSurge()));
+        harness.setHand(player3, List.of(new VoltageSurge()));
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player2, true);
+
+        // Player 2's card stays in hand while player 3 chooses: the actions come after every choice.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.assertInHand(player2, "Voltage Surge");
+        harness.handleMayAbilityChosen(player3, false);
+        harness.assertOnBattlefield(player3, "Bearer of Memory");
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Voltage Surge");
+        harness.assertOnBattlefield(player2, "Bearer of Memory");
+        harness.assertInGraveyard(player3, "Bearer of Memory");
+        harness.assertInHand(player3, "Voltage Surge");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Madness sees the opponents' discards only after every opponent chose, and they come together")
+    void madnessCardsAreDiscardedTogetherAfterTheLastChoice() {
+        Player player3 = addThirdPlayer();
+        FieryTemper second = new FieryTemper();
+        FieryTemper third = new FieryTemper();
+        harness.addToBattlefield(player2, new BearerOfMemory());
+        harness.addToBattlefield(player3, new BearerOfMemory());
+        harness.setHand(player2, new ArrayList<>(List.of(second)));
+        harness.setHand(player3, new ArrayList<>(List.of(third)));
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(second);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.handleMayAbilityChosen(player3, true);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(second);
+        harness.handleCardChosen(player3, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card.getId().equals(second.getId()));
+        assertThat(gd.getPlayerExiledCards(player3.getId())).anyMatch(card -> card.getId().equals(third.getId()));
+        assertThat(gd.stack).filteredOn(entry -> entry.getDescription().contains("madness")).hasSize(2);
+        harness.assertOnBattlefield(player2, "Bearer of Memory");
+        harness.assertOnBattlefield(player3, "Bearer of Memory");
     }
 
     private Player addThirdPlayer() {

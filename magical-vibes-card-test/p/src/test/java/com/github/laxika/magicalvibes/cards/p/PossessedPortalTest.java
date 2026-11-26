@@ -1,21 +1,24 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.cards.s.StaffOfDomination;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PossessedPortal.class, StaffOfDomination.class, SharedFate.class})
+@CardUsed({PossessedPortal.class, StaffOfDomination.class, SharedFate.class, FieryTemper.class})
 class PossessedPortalTest extends BaseCardTest {
 
     @Test
@@ -232,6 +235,84 @@ class PossessedPortalTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Possessed Portal");
         harness.assertInHand(player1, "Staff of Domination");
         harness.assertNotInGraveyard(player1, "Staff of Domination");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A player who discards a madness card has it exiled and its madness triggers")
+    void discardedMadnessCardTriggersMadness() {
+        FieryTemper temper = new FieryTemper();
+        harness.addToBattlefield(player1, new PossessedPortal());
+        harness.setHand(player1, List.of(temper));
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(temper.getId()));
+        assertThat(gd.stack).anyMatch(entry -> entry.getDescription().contains("madness"));
+        harness.assertOnBattlefield(player1, "Possessed Portal");
+    }
+
+    @Test
+    @DisplayName("Every player chooses before anyone discards, and the chosen cards are discarded together (CR 101.4)")
+    void everyPlayerChoosesBeforeAnyoneDiscards() {
+        FieryTemper first = new FieryTemper();
+        FieryTemper second = new FieryTemper();
+        harness.addToBattlefield(player1, new PossessedPortal());
+        harness.addToBattlefield(player2, new StaffOfDomination());
+        harness.setHand(player1, new ArrayList<>(List.of(first)));
+        harness.setHand(player2, new ArrayList<>(List.of(second)));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        // The active player's card stays in hand while the next player chooses (CR 101.4).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(first.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card.getId().equals(second.getId()));
+        assertThat(gd.stack).filteredOn(entry -> entry.getDescription().contains("madness")).hasSize(2);
+        harness.assertOnBattlefield(player1, "Possessed Portal");
+        harness.assertOnBattlefield(player2, "Staff of Domination");
+    }
+
+    @Test
+    @DisplayName("A player who declined sacrifices after the others' cards are discarded")
+    void declinerSacrificesAfterTheDiscards() {
+        harness.addToBattlefield(player1, new PossessedPortal());
+        harness.addToBattlefield(player2, new StaffOfDomination());
+        harness.setHand(player1, new ArrayList<>(List.of(new StaffOfDomination())));
+        harness.setHand(player2, new ArrayList<>(List.of(new StaffOfDomination())));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Staff of Domination");
+        harness.handleMayAbilityChosen(player2, false);
+        harness.assertOnBattlefield(player2, "Staff of Domination");
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Staff of Domination");
+        harness.assertOnBattlefield(player1, "Possessed Portal");
+        harness.assertNotOnBattlefield(player2, "Staff of Domination");
+        harness.assertInHand(player2, "Staff of Domination");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

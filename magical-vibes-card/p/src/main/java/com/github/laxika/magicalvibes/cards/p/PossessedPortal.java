@@ -17,9 +17,10 @@ public class PossessedPortal extends Card {
     public PossessedPortal() {
         addStaticEffect(new SkipDrawsEffect(Subjects.eachPlayer()));
         // At the beginning of each end step, each player sacrifices a permanent of their choice unless they discard a
-        // card: every player chooses in APNAP order, then those who didn't discard sacrifice together (CR 101.4).
+        // card: every player chooses in APNAP order, then the chosen cards are discarded together and those who
+        // didn't discard sacrifice together (CR 101.4).
         addTrigger(Triggers.endStep(ActivePlayer.ANY), UnlessPaysEffect.eachUnless(Subjects.eachPlayer(),
                 new DiscardCardTypeCost(null, null),
-                players -> new SacrificePermanentsEffect(1, new PermanentTruePredicate(), players)));
+                players -> new SacrificePermanentsEffect(1, new PermanentTruePredicate(), players)).payingTogether());
     }
 }

@@ -17,7 +17,8 @@ public class TheLongReachOfNight extends Card {
     public TheLongReachOfNight() {
         setBackFaceCard(new AnimusOfNightsReach());
 
-        // I, II — Each opponent sacrifices a creature of their choice unless they discard a card.
+        // I, II — Each opponent sacrifices a creature of their choice unless they discard a card: every opponent
+        // chooses first, then the chosen cards are discarded together and the others sacrifice (CR 101.4).
         addTrigger(Triggers.chapter(1), sacrificeUnlessDiscard());
         addTrigger(Triggers.chapter(2), sacrificeUnlessDiscard());
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
@@ -25,7 +26,8 @@ public class TheLongReachOfNight extends Card {
 
     private static UnlessPaysEffect sacrificeUnlessDiscard() {
         return UnlessPaysEffect.eachUnless(Subjects.eachOpponent(), new DiscardCardTypeCost(null, null),
-                opponents -> new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), opponents));
+                opponents -> new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), opponents))
+                .payingTogether();
     }
 
     @Override
