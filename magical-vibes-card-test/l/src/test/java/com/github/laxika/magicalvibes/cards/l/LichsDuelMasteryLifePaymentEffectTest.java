@@ -832,13 +832,15 @@ class LichsDuelMasteryLifePaymentEffectTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        harness.handleMultipleCardsChosen(player2, List.of(revealed.getId()));
+        harness.handleMayAbilityChosen(player2, true);
 
         assertMasteryAsked(player2);
         harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         answerExile(player2, mastery);
+        // The other revealed card is its own question (its ruling): not paid for, it goes to the hand.
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player2, 20);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(revealed);

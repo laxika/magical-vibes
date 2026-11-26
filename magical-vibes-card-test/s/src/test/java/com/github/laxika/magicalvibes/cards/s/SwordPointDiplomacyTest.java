@@ -9,20 +9,25 @@ import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SwordPointDiplomacy.class, ColossalDreadmaw.class, Forest.class, Island.class,
         PlatinumEmperion.class, FontOfAgonies.class})
 class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
+    @DisplayName("An opponent whose life total can't change can't pay, so every card goes to the hand")
     void opponentWhoseLifeCannotChangeCannotDenyCards() {
         Card revealed = new ColossalDreadmaw();
         harness.setLibrary(player1, List.of(revealed));
@@ -41,6 +46,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying the life for a card is a life payment its abilities see")
     void denyingACardTriggersLifePaymentAbilities() {
         Card revealed = new ColossalDreadmaw();
         harness.setLibrary(player1, List.of(revealed));
@@ -51,7 +57,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player2, List.of(revealed.getId()));
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertLife(player2, 17);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(revealed);
@@ -61,6 +67,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cards below the top three stay in the library")
     void cardsBelowTheTopThreeRemainInLibrary() {
         Card first = new ColossalDreadmaw();
         Card second = new Forest();
@@ -73,7 +80,9 @@ class SwordPointDiplomacyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player2, List.of(second.getId()));
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, third);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(second);
@@ -97,7 +106,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -115,8 +124,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Opponent selects no cards to deny
-        harness.handleMultipleCardsChosen(player2, List.of());
+        // Opponent pays for no card
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInHand(player1, "Colossal Dreadmaw");
         harness.assertInHand(player1, "Forest");
@@ -141,8 +152,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Opponent denies Colossal Dreadmaw
-        harness.handleMultipleCardsChosen(player2, List.of(card1.getId()));
+        // Opponent pays for Colossal Dreadmaw only
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertNotInHand(player1, "Colossal Dreadmaw");
         harness.assertInHand(player1, "Forest");
@@ -167,8 +180,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Opponent denies all three cards
-        harness.handleMultipleCardsChosen(player2, List.of(card1.getId(), card2.getId(), card3.getId()));
+        // Opponent pays for all three cards
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
@@ -215,10 +230,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Choice is presented (opponent has exactly 3 life, can pay for one)
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        // Asked (opponent has exactly 3 life, can pay for one); after paying, the other cards aren't asked about
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleMultipleCardsChosen(player2, List.of(card1.getId()));
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -243,10 +258,14 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Opponent tries to deny two cards (would cost 6 life but only has 5)
-        assertThatThrownBy(() ->
-                harness.handleMultipleCardsChosen(player2, List.of(card1.getId(), card2.getId())))
-                .isInstanceOf(IllegalStateException.class);
+        // Paying for the first card leaves 2 life: no payment can be made for the others (CR 119.4), so they aren't
+        // asked about
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player2, 2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(card2, card3);
     }
 
     @Test
@@ -279,14 +298,81 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Choice presented with 2 cards
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        // One question for each of the 2 cards
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        // Opponent denies none
-        harness.handleMultipleCardsChosen(player2, List.of());
+        // Opponent pays for none
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each revealed card is its own question; the paid-for card is exiled with the rest")
+    void eachRevealedCardIsItsOwnQuestion() {
+        Card card1 = new ColossalDreadmaw();
+        Card card2 = new Forest();
+        Card card3 = new Island();
+        harness.setLibrary(player1, List.of(card1, card2, card3));
+        castDiplomacy();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(card2, card3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card1);
+        harness.assertLife(player2, 17);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Every opponent is asked about each card in turn order, even after another paid")
+    void everyOpponentIsAskedForEachCard() {
+        Player player3 = addThirdPlayer();
+        Card card1 = new ColossalDreadmaw();
+        harness.setLibrary(player1, List.of(card1));
+        castDiplomacy();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        // Its ruling: each opponent in turn order chooses whether to pay life for that card.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player3, false);
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player3, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card1);
+    }
+
+    private void castDiplomacy() {
+        harness.setHand(player1, List.of(new SwordPointDiplomacy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     @Test
@@ -304,7 +390,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent makes choice
-        harness.handleMultipleCardsChosen(player2, List.of());
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player1, "Sword-Point Diplomacy");
     }

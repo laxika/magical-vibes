@@ -306,6 +306,29 @@ class UnlessPaysEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("\"Each of them unless they pay\": another payer's payment doesn't make the next one's pointless")
+    void perPayerBranchIsNotPaidByAnotherPayer() {
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+        UnlessPaysEffect effect = UnlessPaysEffect.eachUnless(Subjects.eachPlayer(), new PayManaCost("{1}"),
+                players -> new DrawCardEffect(1, players));
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer()))
+                .thenReturn(List.of(player1Id, player2Id));
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player1Id, "Player1"), true, gd.pendingMayAbilities.removeFirst(), effect);
+
+        assertThat(entry.unlessAnswer(0).anyPaid()).isTrue();
+        assertThat(UnlessPaysEffectHandler.anotherPlayerAlreadyPaid(gd)).isFalse();
+    }
+
+    @Test
     @DisplayName("Paid together: each answer only chooses, and after the last one the damage comes as one step (CR 101.4)")
     void paidTogetherChoosesThenPaysOnceAfterTheLastAnswer() {
         gd.playerIdToName.put(player1Id, "Player1");
@@ -689,5 +712,42 @@ class UnlessPaysEffectHandlerTest {
         assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOTHING);
         assertThat(entry.getResolutionResults().outcome(com.github.laxika.magicalvibes.model.StepKind.CHOOSE)
                 .objectIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("For each card: each card is asked about by name, and the unpaid ones are recorded where they are")
+    void forEachCardAsksAboutEachCardThenRecordsTheUnpaidCardsWhereTheyAre() {
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+        Card lapse = new Card();
+        lapse.setName("Memory Lapse");
+        Card counterspell = new Card();
+        counterspell.setName("Counterspell");
+        UnlessPaysEffect effect = UnlessPaysEffect.forEachCard(Subjects.revealedThisWay(), Subjects.you(),
+                new PayManaCost("{1}"), com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect::new);
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer())).thenReturn(List.of(player1Id));
+        when(subjectResolutionService.locatedCards(gd, entry, effect, effect.forEachCard())).thenReturn(List.of(
+                new SubjectResolutionService.LocatedCard(lapse, com.github.laxika.magicalvibes.model.Zone.HAND,
+                        player1Id),
+                new SubjectResolutionService.LocatedCard(counterspell,
+                        com.github.laxika.magicalvibes.model.Zone.HAND, player1Id)));
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        PendingMayAbility first = gd.pendingMayAbilities.removeFirst();
+        assertThat(first.description()).isEqualTo("Pay {1} for Memory Lapse?");
+        assertThat(first.targetCardId()).isEqualTo(lapse.getId());
+        handler.answer(gd, new Player(player1Id, "Player1"), true, first, effect);
+
+        // The pool is empty now and nothing could make mana: the second card is decided unasked.
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOT_PAID);
+        var chosen = entry.getResolutionResults().outcome(com.github.laxika.magicalvibes.model.StepKind.CHOOSE);
+        assertThat(chosen.objectIds()).containsExactly(counterspell.getId());
+        assertThat(chosen.movedCards()).singleElement().satisfies(moved ->
+                assertThat(moved.zone()).isEqualTo(com.github.laxika.magicalvibes.model.Zone.HAND));
     }
 }

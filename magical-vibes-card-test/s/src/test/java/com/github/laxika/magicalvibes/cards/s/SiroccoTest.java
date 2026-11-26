@@ -91,6 +91,25 @@ class SiroccoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declined blue instants are discarded together after the last decision")
+    void declinedCardsAreDiscardedTogetherAfterTheLastDecision() {
+        Card first = new MemoryLapse();
+        Card second = new MemoryLapse();
+        castSiroccoOn(20, List.of(first, second));
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        // One instruction (CR 608.2c): nothing is discarded while the other card is still asked about.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
     @DisplayName("A player who can't pay 4 life discards with no prompt")
     void cannotPayDiscardsAutomatically() {
         castSiroccoOn(3, List.of(new MemoryLapse(), new StalkingTiger()));

@@ -7,16 +7,21 @@ import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.r.RaffinesInformant;
 import com.github.laxika.magicalvibes.cards.s.SuspiciousBookcase;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -251,6 +256,71 @@ class ObNixilisTheAdversaryTest extends BaseCardTest {
         assertThat(permanents.getFirst().getCard().isToken()).isFalse();
         assertThat(permanents.getFirst().getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Suspicious Bookcase");
+    }
+
+    @Test
+    @DisplayName("Every opponent chooses before any life is lost; the losses come together after the last choice")
+    void everyOpponentChoosesBeforeAnyLifeIsLost() {
+        Player player3 = addThirdPlayer();
+        addReadyOb(player1, 3);
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player3, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        // Each opponent chooses in APNAP order, then the actions happen at once (CR 101.4).
+        harness.assertLife(player2, 20);
+        harness.handleMayAbilityChosen(player3, false);
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player3, 18);
+    }
+
+    @Test
+    @DisplayName("Opponents who chose to discard pick their cards and discard them together")
+    void chosenCardsAreDiscardedTogether() {
+        Player player3 = addThirdPlayer();
+        addReadyOb(player1, 3);
+        Card second = new Forest();
+        Card third = new Forest();
+        harness.setHand(player2, new ArrayList<>(List.of(second)));
+        harness.setHand(player3, new ArrayList<>(List.of(third)));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        // Nothing is discarded until every opponent chose (CR 101.4).
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(second);
+        harness.handleMayAbilityChosen(player3, true);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(second);
+        harness.handleCardChosen(player3, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player3.getId())).containsExactly(third);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 20);
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private void addObMana() {

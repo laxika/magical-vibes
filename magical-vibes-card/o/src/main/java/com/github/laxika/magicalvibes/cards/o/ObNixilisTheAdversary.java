@@ -16,9 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -45,7 +46,7 @@ public class ObNixilisTheAdversary extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new EachOpponentMayDiscardOrLoseLifeEffect(2),
+                        opponentsLoseLifeUnlessTheyDiscard(2),
                         new ConditionalEffect(
                                 new ControlsPermanent(new PermanentAnyOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.DEMON),
@@ -74,5 +75,14 @@ public class ObNixilisTheAdversary extends Card {
                         new PlayerRelationPredicate(PlayerRelation.ANY),
                         "Target must be a player"))
         );
+    }
+
+    /**
+     * "Each opponent loses {@code life} life unless they discard a card": every opponent chooses in APNAP order, then
+     * the chosen cards are discarded at once and the others lose the life at once (CR 101.4; Professor Onyx's ruling).
+     */
+    private static UnlessPaysEffect opponentsLoseLifeUnlessTheyDiscard(int life) {
+        return UnlessPaysEffect.eachUnless(Subjects.eachOpponent(), new DiscardCardTypeCost(null, null),
+                players -> new LoseLifeEffect(life, players)).payingTogether();
     }
 }

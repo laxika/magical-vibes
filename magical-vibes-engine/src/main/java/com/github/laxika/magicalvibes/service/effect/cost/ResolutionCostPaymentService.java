@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCost;
@@ -197,7 +198,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>A ransom paid together after everyone answered ({@code UnlessPaysEffect.payingTogether()}, CR 101.4) is chosen
  * first ({@link #choose}: the permanents picked, {@link #completePick}) and paid once the last player answered
- * ({@link #payTogether}: one sacrifice, tap, damage or draw step for every choice).
+ * ({@link #payTogether}: one sacrifice, tap, damage, draw or discard step for every choice).
  * A payment with a choice ({@link Outcome#ASKING}) is finished by that prompt's completion, which ends through its own
  * epilogue and resumes the asking resolution ({@link #completePermanentChoice}, {@link #completeMultiPermanentChoice},
  * the evidence and discard completions); a life payment that a Lich's Duel Mastery sacrifice would follow asks that
@@ -969,7 +970,9 @@ public class ResolutionCostPaymentService {
      * changes now. The permanents of a sacrifice or tap are picked now, unasked when only that many could be chosen
      * (CR 608.2d); a pick asked ({@link PermanentChoiceContext.AnyPlayerPaymentPick},
      * {@link MultiPermanentChoiceContext.AnyPlayerPaymentPick}) is kept on the resolving entry by {@link #completePick}.
-     * Damage and a draw have nothing to choose.
+     * Damage and a draw have nothing to choose; a discard's cards, hidden in a hand (CR 101.4a), are picked as it is
+     * paid together, every payer in APNAP order, which tells the later payers only what the answers already did
+     * (CR 101.4b).
      */
     public Choice choose(GameData gameData, Player payer, CostEffect cost, Payment payment) {
         UUID payerId = payer.getId();
@@ -994,6 +997,9 @@ public class ResolutionCostPaymentService {
             }
             case DamageFromSourceCost ignored -> Choice.chosen(List.of());
             case SourceControllerDrawsCost ignored -> Choice.chosen(List.of());
+            // The cards are picked after the last answer, hidden (CR 101.4a): the choice now is to discard.
+            case DiscardCardTypeCost discard -> discardableIndices(gameData, payerId, discard, payment.sourceCard())
+                    .size() >= discard.count() ? Choice.chosen(List.of()) : new Choice(Outcome.NOT_PAID, List.of());
             default -> throw new IllegalArgumentException("No payment chosen now and paid later for " + cost);
         };
     }
@@ -1036,7 +1042,9 @@ public class ResolutionCostPaymentService {
      * 608.2e): the chosen permanents sacrificed as one departure (death replacements asked first, CR 616.1; they die
      * together, CR 603.10a) or tapped as one tap step; the source dealing the damage to every payer at once, dealt by
      * the object as it is or last was (CR 608.2h) and paid even if prevented (CR 118.12); the source's controller
-     * drawing once for the round, however many chose it (Development's rulings). A chosen permanent that is gone or no
+     * drawing once for the round, however many chose it (Development's rulings); every payer who chose a discard picking
+     * the cards in APNAP order and all of them discarded at once (the discard action, CR 101.4; Professor Onyx's
+     * ruling). A chosen permanent that is gone or no
      * longer its chooser's, or a payer who left the game, is skipped: nothing else is done instead (CR 609.3), and the
      * branch still follows the choice (CR 118.12).
      */
@@ -1071,6 +1079,12 @@ public class ResolutionCostPaymentService {
                 yield List.of(new DealDamageToPlayersEffect(damage.amount(), Subjects.acceptedPlayers()));
             }
             case SourceControllerDrawsCost draw -> List.of(new DrawCardEffect(draw.count(), Subjects.you()));
+            case DiscardCardTypeCost discard -> {
+                entry.setAcceptedPlayerIds(payers);
+                yield List.of(discard.predicate() == null
+                        ? new DiscardEffect(discard.count(), Subjects.acceptedPlayers(), false)
+                        : DiscardEffect.matching(discard.count(), Subjects.acceptedPlayers(), discard.predicate()));
+            }
             default -> throw new IllegalArgumentException("No payment made together for " + cost);
         };
     }

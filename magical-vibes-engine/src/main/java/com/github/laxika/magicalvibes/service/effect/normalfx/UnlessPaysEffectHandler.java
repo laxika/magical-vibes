@@ -108,11 +108,13 @@ import org.springframework.stereotype.Component;
  * so paying as each player accepts and countering after the last answer, as the plain loop does, can't be told apart
  * from countering at the first payment ("as soon as any player performs the action", the PLC punisher rulings).
  *
- * <p>"For each [object] … unless" ({@link UnlessPaysEffect#forEach}): the objects are found once and asked about one
+     * <p>"For each [object] … unless" ({@link UnlessPaysEffect#forEach}): the objects are found once and asked about one
  * at a time in the APNAP order of their payers ({@link UnlessAnswer#remainingObjects}), each by its own payers (its
  * controller or owner, or every player the subject names); an object that left before its turn is skipped. After the
  * last answer the objects nobody paid for are recorded as the entry's {@code CHOOSE} step and {@code ifNotPaid},
- * which acts on them, resolves once (CR 608.2c, 101.4).
+ * which acts on them, resolves once (CR 608.2c, 101.4). Cards ({@link UnlessPaysEffect#forEachCard}) the same way,
+ * in the subject's order, a card that left the zone it was found in skipped (CR 400.7), the unpaid ones recorded
+ * where they are.
  *
  * <p>What can pay: the payer's mana pool and the mana they could still make (they may activate mana abilities while
  * asked, CR 605.3a); mana that can be spent only on {X} for an announced-X ransom; 2 life for each {B} under K'rrik,
@@ -272,7 +274,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         StackEntry spell = spellAskedAbout(gameData, entry, unless);
         UUID object = state.currentObject();
         String prompt = unless.prompt() != null && alternatives.size() == 1 ? unless.prompt()
-                : ransom.action() + suffix(gameData, entry, unless, spell, payerId) + objectSuffix(gameData, object)
+                : ransom.action() + suffix(gameData, entry, unless, spell, payerId) + objectSuffix(gameData, entry, unless, object)
                 + "?";
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
@@ -304,7 +306,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             }
             state = entry.unlessAnswer(index);
         }
-        if (state == null && unless.forEach() != null) {
+        if (state == null && unless.asksForEachObject()) {
             List<UUID> objects = objectsToAskAbout(gameData, entry, unless);
             state = UnlessAnswer.askingAbout(index, objects,
                     objects.isEmpty() ? List.of() : objectPayers(gameData, entry, unless, objects.getFirst()));
@@ -334,19 +336,20 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             }
             // Every payer answered for this object: on to the next one still on the battlefield.
             state = nextObject(gameData, entry, unless, state, false);
-            while (state.currentObject() != null
-                    && gameQueryService.findPermanentById(gameData, state.currentObject()) == null) {
+            while (state.currentObject() != null && objectGone(gameData, entry, unless, state.currentObject())) {
                 state = nextObject(gameData, entry, unless, state, true);
             }
             if (state.currentObject() == null) {
                 break;
             }
         }
-        if (state.currentPayer() == null && unless.forEach() != null) {
+        if (state.currentPayer() == null && unless.asksForEachObject()) {
             // The branch acts once on every object nobody paid for, together (CR 608.2c, 101.4).
             List<UUID> unpaid = state.unpaidObjectIds();
-            entry.recordStep(StepKind.CHOOSE, unpaid.isEmpty() ? StepOutcome.NONE : StepOutcome.ofObjects(unpaid,
-                    unpaid.stream().map(id -> subjectResolutionService.controllerOf(gameData, entry, unless, id))
+            entry.recordStep(StepKind.CHOOSE, unpaid.isEmpty() ? StepOutcome.NONE
+                    : unless.forEachCard() != null ? unpaidCards(gameData, entry, unless, unpaid)
+                    : StepOutcome.ofObjects(unpaid, unpaid.stream()
+                            .map(id -> subjectResolutionService.controllerOf(gameData, entry, unless, id))
                             .filter(java.util.Objects::nonNull).distinct().toList()));
             entry.clearUnlessAnswer(index);
             return unpaid.isEmpty() ? Step.NOTHING : Step.NOT_PAID;
@@ -372,6 +375,11 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
      * owner for "its owner", in the order the subject names them within one player's.
      */
     private List<UUID> objectsToAskAbout(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
+        if (unless.forEachCard() != null) {
+            // The cards in the order the subject names them; every one is asked about by the same payers.
+            return cardsToAskAbout(gameData, entry, unless).stream().map(located -> located.card().getId())
+                    .distinct().toList();
+        }
         List<UUID> apnap = subjectResolutionService.players(gameData, entry, unless, Subjects.eachPlayer());
         List<UUID> objects = new ArrayList<>(subjectResolutionService.permanentIds(gameData, entry, unless,
                 unless.forEach()).stream()
@@ -386,6 +394,47 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             return place < 0 ? Integer.MAX_VALUE : place;
         }));
         return objects;
+    }
+
+    /** The cards of {@code unless.forEachCard()} where it names them now (CR 400.7: a card that moved isn't named). */
+    private List<SubjectResolutionService.LocatedCard> cardsToAskAbout(GameData gameData, StackEntry entry,
+                                                                     UnlessPaysEffect unless) {
+        return subjectResolutionService.locatedCards(gameData, entry, unless, unless.forEachCard());
+    }
+
+    /**
+     * Whether the object asked about left before its turn came: a permanent no longer on the battlefield, a card no
+     * longer where the subject found it (CR 400.7); nothing is done to it (CR 608.2h).
+     */
+    private boolean objectGone(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UUID objectId) {
+        if (unless.forEachCard() != null) {
+            return cardsToAskAbout(gameData, entry, unless).stream()
+                    .noneMatch(located -> located.card().getId().equals(objectId));
+        }
+        return gameQueryService.findPermanentById(gameData, objectId) == null;
+    }
+
+    /**
+     * The unpaid cards of "for each [card] … unless" as a {@code CHOOSE} step: each where it is, bound to that stay,
+     * so {@code cardsThisWay(CHOOSE)} names it there (as {@code ChooseCardEffect} records its cards).
+     */
+    private StepOutcome unpaidCards(GameData gameData, StackEntry entry, UnlessPaysEffect unless, List<UUID> unpaid) {
+        List<UUID> cardIds = new ArrayList<>();
+        List<UUID> ownerIds = new ArrayList<>();
+        List<com.github.laxika.magicalvibes.model.MovedCard> moved = new ArrayList<>();
+        for (SubjectResolutionService.LocatedCard located : cardsToAskAbout(gameData, entry, unless)) {
+            UUID cardId = located.card().getId();
+            if (!unpaid.contains(cardId) || cardIds.contains(cardId)) {
+                continue;
+            }
+            cardIds.add(cardId);
+            if (located.ownerId() != null && !ownerIds.contains(located.ownerId())) {
+                ownerIds.add(located.ownerId());
+            }
+            moved.add(gameData.boundToStay(new com.github.laxika.magicalvibes.model.MovedCard(cardId, cardId,
+                    located.zone(), located.ownerId())));
+        }
+        return cardIds.isEmpty() ? StepOutcome.NONE : StepOutcome.ofObjects(cardIds, ownerIds, moved);
     }
 
     /**
@@ -410,14 +459,24 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                                     boolean skipped) {
         List<UUID> objects = state.remainingObjects();
         UUID next = objects.size() > 1 ? objects.get(1) : null;
-        return state.nextObject(skipped, next == null || gameQueryService.findPermanentById(gameData, next) == null
+        return state.nextObject(skipped, next == null || objectGone(gameData, entry, unless, next)
                 ? List.of() : objectPayers(gameData, entry, unless, next));
     }
 
-    /** " for Lantern Kami": the object "for each [object] … unless" asks about, by the name every player may read. */
-    private String objectSuffix(GameData gameData, UUID objectId) {
+    /**
+     * " for Lantern Kami": the object "for each [object] … unless" asks about, by the name every player may read; a
+     * card by its name, as the cards it asks about are revealed ({@link UnlessPaysEffect#forEachCard}).
+     */
+    private String objectSuffix(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UUID objectId) {
         if (objectId == null) {
             return "";
+        }
+        if (unless.forEachCard() != null) {
+            return cardsToAskAbout(gameData, entry, unless).stream()
+                    .filter(located -> located.card().getId().equals(objectId))
+                    .findFirst()
+                    .map(located -> " for " + located.card().getName())
+                    .orElse("");
         }
         Permanent object = gameQueryService.findPermanentById(gameData, objectId);
         return object == null ? "" : " for " + FaceDownVisibility.publicName(gameData, object);
@@ -458,7 +517,8 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
     /**
      * Whether a player already chose to pay the "unless" payment the waiting resolution asks about: another payment by
-     * the next player asked changes nothing (an AI declines it).
+     * the next player asked changes nothing (an AI declines it). Never for a branch decided by each payer's own choice
+     * ({@link UnlessPaysEffect#perPayer()}).
      */
     public static boolean anotherPlayerAlreadyPaid(GameData gameData) {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
@@ -468,7 +528,9 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             return false;
         }
         UnlessAnswer state = entry.unlessAnswer(index);
-        return state != null && state.anyPaid();
+        // "Each of them … unless they pay": a payment pays only for its payer (eachUnless).
+        return state != null && state.anyPaid()
+                && !((UnlessPaysEffect) entry.getEffectsToResolve().get(index)).perPayer();
     }
 
     /** Whether the entry's "do this only once each turn" action was already taken this turn (CR 603.2h). */

@@ -11,16 +11,20 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -336,6 +340,59 @@ class ProfessorOnyxTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Obstinate Baloth");
         harness.assertNotInGraveyard(player2, "Obstinate Baloth");
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("-8: each round every opponent chooses before the cards are discarded and the life is lost")
+    void minusEightEveryOpponentChoosesBeforeTheRoundHappens() {
+        Player player3 = addThirdPlayer();
+        addReadyOnyx(player1, 8);
+        harness.setLife(player2, 30);
+        harness.setLife(player3, 30);
+        Card kept = new GiantGrowth();
+        harness.setHand(player2, new ArrayList<>(List.of(kept)));
+        Card discarded = new GiantGrowth();
+        harness.setHand(player3, new ArrayList<>(List.of(discarded)));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        // Its ruling: each opponent chooses in turn order, then the chosen cards are discarded at the same time and
+        // each opponent who didn't discard loses 3 life.
+        harness.assertLife(player2, 30);
+        harness.handleMayAbilityChosen(player3, true);
+        harness.handleCardChosen(player3, 0);
+
+        harness.assertLife(player2, 27);
+        harness.assertLife(player3, 30);
+        assertThat(gd.playerGraveyards.get(player3.getId())).containsExactly(discarded);
+        for (int round = 2; round <= 7; round++) {
+            harness.handleMayAbilityChosen(player2, false);
+        }
+
+        harness.assertLife(player2, 9);
+        harness.assertLife(player3, 12);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private Permanent addReadyOnyx(Player player, int loyalty) {

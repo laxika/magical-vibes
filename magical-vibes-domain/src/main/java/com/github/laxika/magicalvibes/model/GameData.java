@@ -987,11 +987,6 @@ public class GameData {
     public boolean eachPlayerDamageUnlessPaysBatched;
     /** Progress state for Whirlwind Denial's opponent-by-opponent pay-or-counter sequence. */
     public final WhirlwindDenialState whirlwindDenial = new WhirlwindDenialState();
-    /**
-     * RevealHandDiscardMatchingCardsUnlessPaysLife: ids of the revealed cards still to be offered the
-     * pay-or-discard prompt after the one currently being decided. Cleared when the queue drains.
-     */
-    public final List<UUID> revealHandDiscardUnlessPaysRemaining = new ArrayList<>();
 
     /** Remaining individual draws after an interactive replacement, in resolution order. */
     public final Deque<UUID> pendingCardDraws = new ArrayDeque<>();
@@ -10646,7 +10641,6 @@ public class GameData {
         copy.eachPlayerDamageUnlessPaysDeclined.addAll(this.eachPlayerDamageUnlessPaysDeclined);
         copy.eachPlayerDamageUnlessPaysBatched = this.eachPlayerDamageUnlessPaysBatched;
         copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
-        copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.pendingCardDraws.addAll(this.pendingCardDraws);
         copy.pendingReplacementCardDraws.addAll(this.pendingReplacementCardDraws);
         copy.drawsFromAppliedDoubling.putAll(this.drawsFromAppliedDoubling);

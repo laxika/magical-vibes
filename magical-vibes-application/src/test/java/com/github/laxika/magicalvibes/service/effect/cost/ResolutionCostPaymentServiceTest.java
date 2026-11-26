@@ -331,6 +331,37 @@ class ResolutionCostPaymentServiceTest {
         }
 
         @Test
+        @DisplayName("A discard is chosen with nothing picked yet, and only by a payer with a card to discard")
+        void discardIsChosenWithoutPickingTheCard() {
+            ResolutionCostPaymentService.Payment payment = new ResolutionCostPaymentService.Payment(
+                    entry.getCard(), otherId, null, entry);
+            Player payer = new Player(payerId, "Payer");
+            gd.playerHands.put(payerId, new ArrayList<>());
+
+            assertThat(service.choose(gd, payer, new DiscardCardTypeCost(null, null), payment).outcome())
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.NOT_PAID);
+
+            gd.playerHands.get(payerId).add(new GrizzlyBears());
+            ResolutionCostPaymentService.Choice choice = service.choose(gd, payer,
+                    new DiscardCardTypeCost(null, null), payment);
+
+            assertThat(choice.outcome()).isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            assertThat(choice.objectIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Every payer who chose a discard discards by one discard step after the last answer (CR 101.4)")
+        void discardIsOneStepForEveryPayer() {
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> steps = service.payTogether(gd, entry,
+                    new DiscardCardTypeCost(null, null), List.of(
+                            new UnlessAnswer.Choice(payerId, List.of()), new UnlessAnswer.Choice(otherId, List.of())));
+
+            assertThat(steps).singleElement().isEqualTo(
+                    new com.github.laxika.magicalvibes.model.effect.DiscardEffect(1, Subjects.acceptedPlayers(), false));
+            assertThat(entry.getAcceptedPlayerIds()).containsExactly(payerId, otherId);
+        }
+
+        @Test
         @DisplayName("Two players choosing \"has you draw a card\" in one round draw one card")
         void drawIsMadeOnceForTheRound() {
             List<com.github.laxika.magicalvibes.model.effect.CardEffect> steps = service.payTogether(gd, entry, new SourceControllerDrawsCost(1), List.of(

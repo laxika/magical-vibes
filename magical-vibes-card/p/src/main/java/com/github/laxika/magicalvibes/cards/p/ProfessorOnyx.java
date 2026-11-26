@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -58,15 +59,24 @@ public class ProfessorOnyx extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(
-                        new EachOpponentMayDiscardOrLoseLifeEffect(3),
-                        new EachOpponentMayDiscardOrLoseLifeEffect(3),
-                        new EachOpponentMayDiscardOrLoseLifeEffect(3),
-                        new EachOpponentMayDiscardOrLoseLifeEffect(3),
-                        new EachOpponentMayDiscardOrLoseLifeEffect(3),
-                        new EachOpponentMayDiscardOrLoseLifeEffect(3),
-                        new EachOpponentMayDiscardOrLoseLifeEffect(3)),
+                        opponentsLoseLifeUnlessTheyDiscard(3),
+                        opponentsLoseLifeUnlessTheyDiscard(3),
+                        opponentsLoseLifeUnlessTheyDiscard(3),
+                        opponentsLoseLifeUnlessTheyDiscard(3),
+                        opponentsLoseLifeUnlessTheyDiscard(3),
+                        opponentsLoseLifeUnlessTheyDiscard(3),
+                        opponentsLoseLifeUnlessTheyDiscard(3)),
                 "\u22128: Each opponent may discard a card. If they don't, they lose 3 life. Repeat this "
                         + "process six more times."
         ));
+    }
+
+    /**
+     * "Each opponent loses {@code life} life unless they discard a card": every opponent chooses in APNAP order, then
+     * the chosen cards are discarded at once and the others lose the life at once (CR 101.4; Professor Onyx's ruling).
+     */
+    private static UnlessPaysEffect opponentsLoseLifeUnlessTheyDiscard(int life) {
+        return UnlessPaysEffect.eachUnless(Subjects.eachOpponent(), new DiscardCardTypeCost(null, null),
+                players -> new LoseLifeEffect(life, players)).payingTogether();
     }
 }
