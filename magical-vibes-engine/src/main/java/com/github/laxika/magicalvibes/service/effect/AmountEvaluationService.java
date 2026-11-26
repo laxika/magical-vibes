@@ -1257,7 +1257,10 @@ public class AmountEvaluationService {
         }
         boolean sacrifice = thisWay.kind() == StepKind.SACRIFICE;
         Set<UUID> recorded = new HashSet<>(results.outcome(thisWay.kind()).objectIds());
-        if (thisWay.includesUnremoved() && !recorded.equals(results.departures().stream()
+        // A destroy or sacrifice step's own departures, whatever removal step of the other kind followed it.
+        List<DepartureResult> departures = sacrifice || thisWay.kind() == StepKind.DESTROY
+                ? results.departures(thisWay.kind()) : results.departures();
+        if (thisWay.includesUnremoved() && !recorded.equals(departures.stream()
                 .filter(DepartureResult::destroyed).map(DepartureResult::permanentId).collect(Collectors.toSet()))) {
             return 0;
         }
@@ -1265,7 +1268,7 @@ public class AmountEvaluationService {
                 .withSourceControllerId(ctx.controllerId())
                 .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId());
         int total = 0;
-        for (DepartureResult result : results.departures()) {
+        for (DepartureResult result : departures) {
             boolean counted = thisWay.includesUnremoved()
                     ? !result.sacrificed()
                     : (sacrifice ? result.sacrificed() : result.destroyed()) && recorded.contains(result.permanentId());

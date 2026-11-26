@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "CON", collectorNumber = "11")
@@ -32,6 +32,6 @@ public class MartialCoup extends Card {
         // If X is 5 or more, destroy all other creatures (the Soldier tokens just made are spared).
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(5),
-                DestroyAllPermanentsEffect.sparingPermanentsCreatedThisResolution(new PermanentIsCreaturePredicate())));
+                DestroyTargetPermanentEffect.sparingPermanentsCreatedThisResolution(new PermanentIsCreaturePredicate())));
     }
 }

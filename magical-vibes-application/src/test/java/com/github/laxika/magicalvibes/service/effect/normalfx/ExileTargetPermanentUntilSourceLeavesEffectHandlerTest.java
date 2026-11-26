@@ -154,9 +154,6 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
 
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
 
     private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetId) {
                 return TestStackDoor.triggered(sourceCard, controllerId, sourceCard.getName(),

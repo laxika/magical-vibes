@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class DescendUponTheSinful extends Card {
 
     public DescendUponTheSinful() {
-        addSpellEffect(new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(ExileTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
         addSpellEffect(new ConditionalEffect(
                 new Delirium(),
                 new CreateTokenEffect("Angel", 4, 4, CardColor.WHITE,

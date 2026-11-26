@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 public class DecreeOfPain extends Card {
 
     public DecreeOfPain() {
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate(), true));
         addSpellEffect(new DrawCardEffect(new AmountThisWay(StepKind.DESTROY)));
 
         addTrigger(Triggers.youCycleThisCard(), BoostEffect.allCreatures(-2, -2));

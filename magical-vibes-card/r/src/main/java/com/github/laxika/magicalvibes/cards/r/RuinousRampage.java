@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -22,7 +22,7 @@ public class RuinousRampage extends Card {
                         DealDamageEffect.to(Subjects.eachOpponent(), 3)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all artifacts with mana value 3 or less",
-                        new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        ExileTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentMaxManaValuePredicate(3)
                         )))

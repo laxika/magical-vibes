@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
@@ -26,7 +26,7 @@ public class DeathRattleOni extends Card {
     public DeathRattleOni() {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER), 2)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentDealtDamageThisTurnPredicate(),

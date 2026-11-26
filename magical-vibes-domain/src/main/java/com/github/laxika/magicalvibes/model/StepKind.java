@@ -12,7 +12,7 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #EXILE}, {@link #DESTROY}, {@link #SACRIFICE}: the number of permanents, the permanents by their id as
  *       the step acted on them (a sacrifice made outside a departure, as by {@code MakeAnExampleEffect}: the card's
  *       id), their controllers as the step acted on them (CR 608.2h); a sacrifice step's and a batch destroy's
- *       ({@code DestroyAllPermanentsEffect}, {@code DestroyEachTargetPermanentEffect},
+ *       ({@code DestroyTargetPermanentEffect} over a set or several targets, {@code DestroyAllPermanentsEffect},
  *       {@code DestroyTargetPermanentsWithinTotalManaValueEffect}) {@code DepartureResult}s, those that stayed included,
  *       keep each one's last-known controller, power, toughness and mana value and where it went (whether it died); a
  *       removed permanent's {@link StepOutcome#movedCards()} name the card it became in the zone it went to; an

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,6 +25,6 @@ public class ShatterTheSky extends Card {
                 new PermanentPowerAtLeastPredicate(4)));
         addSpellEffect(DrawCardEffect.eachEvaluatedFor(
                 new FixedIfCondition(new ControlsPermanentCount(1, creaturePowerAtLeastFour), 1, 0), Subjects.eachPlayer()));
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
     }
 }

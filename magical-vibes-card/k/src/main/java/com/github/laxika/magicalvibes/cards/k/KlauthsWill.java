@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -36,7 +36,7 @@ public class KlauthsWill extends Card {
                         DealDamageEffect.toEachCreature(new XValue(), withoutFlying)),
                 ChooseOneEffect.ChooseOneOption.upToXTargets(
                         "Destroy up to X target artifacts and/or enchantments",
-                        new DestroyEachTargetPermanentEffect(), artifactOrEnchantment, Integer.MAX_VALUE)
+                        DestroyTargetPermanentEffect.eachTarget(), artifactOrEnchantment, Integer.MAX_VALUE)
         ), new ControlledCommanderAsCast()));
     }
 }

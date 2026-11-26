@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -74,7 +74,7 @@ public class NicolBolasGodPharaoh extends Card {
         // −12: Exile each nonland permanent your opponents control.
         addActivatedAbility(new ActivatedAbility(
                 -12,
-                List.of(new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                List.of(ExileTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )))),

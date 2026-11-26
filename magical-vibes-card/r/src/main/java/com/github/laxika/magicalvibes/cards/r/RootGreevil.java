@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
@@ -22,7 +22,7 @@ public class RootGreevil extends Card {
                 "{2}{G}",
                 List.of(new SacrificeSelfCost(),
                         new ChooseColorAtResolutionEffect(),
-                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsEnchantmentPredicate(), new PermanentHasChosenSpellColorPredicate()))),
                         new ClearChosenColorEffect()),
                 "{2}{G}, {T}, Sacrifice Root Greevil: Destroy all enchantments of the color of your choice."));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -32,7 +32,7 @@ public class ZombieApocalypse extends Card {
                 .returnAll(true)
                 .enterTapped(true)
                 .build());
-        addSpellEffect(new DestroyAllPermanentsEffect(
+        addSpellEffect(DestroyTargetPermanentEffect.all(
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
     }
 }

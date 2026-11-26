@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,6 +17,6 @@ public class GoblinPyromancer extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 BoostEffect.allCreatures(3, 0, new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new DestroyAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
+                DestroyTargetPermanentEffect.all(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
     }
 }

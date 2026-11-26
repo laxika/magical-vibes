@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentWhileSourceControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +38,7 @@ public class ThePhasingOfZhalfir extends Card {
         addChapterPhaseOut(2);
 
         addTrigger(Triggers.chapter(3), SequenceEffect.of(
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()),
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()),
                 new EachPlayerCreatesTokenEffect(new CreateTokenEffect(
                         new AmountThisWay(StepKind.DESTROY).controlledByYou(),
                         "Phyrexian",

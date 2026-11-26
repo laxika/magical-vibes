@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,7 +26,7 @@ public class FinaleOfEternity extends Card {
                         new PermanentToughnessAtMostXPredicate()
                 )),
                 "Targets must be creatures with toughness X or less"
-        ), 0, 3).addSpellEffect(new DestroyEachTargetPermanentEffect());
+        ), 0, 3).addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(10),
                 new ReturnCardsFromControllerGraveyardToBattlefieldEffect(

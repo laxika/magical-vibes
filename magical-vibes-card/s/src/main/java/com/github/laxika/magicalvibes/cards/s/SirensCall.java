@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,12 +31,11 @@ public class SirensCall extends Card {
         // The requirement modifies the rules, so it also binds creatures the active player gains later this turn
         // (CR 611.2c).
         addSpellEffect(new MatchingCreaturesMustAttackThisTurnEffect(new PermanentControlledByActivePlayerPredicate()));
-        addSpellEffect(RegisterDelayedEndStepTriggerEffect.aboutActivePlayer(new DestroyAllPermanentsEffect(
+        addSpellEffect(RegisterDelayedEndStepTriggerEffect.aboutActivePlayer(DestroyTargetPermanentEffect.allTargetPlayerControls(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
                         new PermanentNotPredicate(new PermanentAttackedThisTurnPredicate()),
-                        new PermanentControlledContinuouslySinceBeginningOfTurnPredicate())),
-                EachPermanentScope.TARGET_PLAYER)));
+                        new PermanentControlledContinuouslySinceBeginningOfTurnPredicate())))));
     }
 }

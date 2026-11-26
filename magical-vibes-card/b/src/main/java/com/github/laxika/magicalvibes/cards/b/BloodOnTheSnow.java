@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,10 +23,10 @@ public class BloodOnTheSnow extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all creatures",
-                        new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate())),
+                        DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all planeswalkers",
-                        new DestroyAllPermanentsEffect(new PermanentIsPlaneswalkerPredicate()))
+                        DestroyTargetPermanentEffect.all(new PermanentIsPlaneswalkerPredicate()))
         )));
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

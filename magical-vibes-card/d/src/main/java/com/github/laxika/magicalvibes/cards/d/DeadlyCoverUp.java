@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
@@ -21,7 +21,7 @@ public class DeadlyCoverUp extends Card {
 
     public DeadlyCoverUp() {
         addCastingCost(new CollectEvidenceCost(6, true));
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
         addSpellEffect(new ConditionalEffect(
                 new CollectEvidenceCostPaid(),
                 SequenceEffect.of(

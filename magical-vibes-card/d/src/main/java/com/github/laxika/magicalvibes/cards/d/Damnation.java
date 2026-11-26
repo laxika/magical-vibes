@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "85")
@@ -17,6 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class Damnation extends Card {
 
     public Damnation() {
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate(), true));
     }
 }

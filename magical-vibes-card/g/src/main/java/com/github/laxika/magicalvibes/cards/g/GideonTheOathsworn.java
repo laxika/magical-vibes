@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -54,7 +53,7 @@ public class GideonTheOathsworn extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(
-                        new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        ExileTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))),
                         new ExileTargetPermanentEffect(Subjects.source())),

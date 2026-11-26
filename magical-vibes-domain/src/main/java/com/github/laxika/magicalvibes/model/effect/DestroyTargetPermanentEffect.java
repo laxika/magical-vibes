@@ -13,9 +13,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Several permanents are destroyed as one event, so each sees the others die with it. Optionally creates a creature
  * token for the target's controller (e.g. Beast Within, Pongify, Rapid Hybridization).
  *
+ * <p>"Destroy all [permanents]" is a set subject ({@link #all}, {@link #allTargetPlayerControls}, {@link #sparing},
+ * {@link #readingTarget}): the set is found once as the effect applies, its filter's amounts, the triggering spell's
+ * mana value and "shares a creature type with" read then (CR 608.2h), and it sweeps the board
+ * ({@link #sweepsBoard()}). "Destroy each of the targets" is {@link #eachTarget} over {@link Subjects#allTargets()}.
+ * Every several-permanent destruction is a {@code StepKind.DESTROY} step that records its departures, so a later step
+ * reads what it did through {@code AmountThisWay} ("for each creature that died this way"), {@code HappenedThisWay}
+ * and {@code playersThisWay(StepKind.DESTROY)}; indestructible and regenerated permanents are not destroyed, and one a
+ * replacement exiled instead of putting it into a graveyard was destroyed but didn't die.
+ *
  * <p>Only a subject with a target part targets ({@link #targetSpec()} is then harmful, narrowed by
- * {@code targetFilter}); any other subject declares no target, so protection, shroud and hexproof don't stop it and
- * a permanent that is gone at resolution is simply not destroyed.
+ * {@code targetFilter}); "creatures target player controls" declares the harmful player target; any other subject
+ * declares no target, so protection, shroud and hexproof don't stop it and a permanent that is gone at resolution is
+ * simply not destroyed.
  *
  * @param cannotBeRegenerated whether the destroyed permanents can't be regenerated
  * @param tokenForController  if non-null, creates this token for the destroyed permanent's controller (target only)
@@ -26,6 +36,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param tokenCount           number of tokens to create when {@code tokenForController} is non-null
  * @param targetChosenByActivePlayer whether an upkeep trigger has its target chosen by the active player
  * @param subject             which permanents are destroyed ({@code target()} or {@code target(targetGroup)} by default)
+ * @param referencedTarget    the target a set's filter amount reads but the effect doesn't destroy for being it
+ *                            ("power greater than target creature's power", Fell the Mighty), or {@code null}; the
+ *                            effect declares it, so the spell is countered if it is illegal (CR 608.2b)
  */
 public record DestroyTargetPermanentEffect(
         boolean cannotBeRegenerated,
@@ -35,8 +48,9 @@ public record DestroyTargetPermanentEffect(
         boolean tokenOnlyForSourceController,
         int tokenCount,
         boolean targetChosenByActivePlayer,
-        PermanentSubject subject
-) implements RemovalEffect {
+        PermanentSubject subject,
+        TargetSpec referencedTarget
+) implements RemovalEffect, BoardWipeEffect {
 
     public DestroyTargetPermanentEffect {
         if (subject == null) {
@@ -60,6 +74,18 @@ public record DestroyTargetPermanentEffect(
                 throw new IllegalArgumentException("A target filter needs a subject that targets: " + subject);
             }
         }
+        if (referencedTarget != null && (subject.declaresTarget() || subject.declaresPlayerTarget())) {
+            throw new IllegalArgumentException("A referenced target needs a subject that declares no target: "
+                    + subject);
+        }
+    }
+
+    public DestroyTargetPermanentEffect(boolean cannotBeRegenerated, CreateTokenEffect tokenForController,
+                                        int targetGroup, PermanentPredicate targetFilter,
+                                        boolean tokenOnlyForSourceController, int tokenCount,
+                                        boolean targetChosenByActivePlayer, PermanentSubject subject) {
+        this(cannotBeRegenerated, tokenForController, targetGroup, targetFilter, tokenOnlyForSourceController,
+                tokenCount, targetChosenByActivePlayer, subject, null);
     }
 
     public DestroyTargetPermanentEffect(boolean cannotBeRegenerated, CreateTokenEffect tokenForController,
@@ -123,6 +149,68 @@ public record DestroyTargetPermanentEffect(
         this(false, null, -1, targetFilter, false, 1, false, subject);
     }
 
+    /** "Destroy all [filter]": every matching permanent on every battlefield, found once as the effect applies. */
+    public static DestroyTargetPermanentEffect all(PermanentPredicate filter) {
+        return all(filter, false);
+    }
+
+    /** "Destroy all [filter]. They can't be regenerated." with {@code cannotBeRegenerated}. */
+    public static DestroyTargetPermanentEffect all(PermanentPredicate filter, boolean cannotBeRegenerated) {
+        return new DestroyTargetPermanentEffect(Subjects.controlledBy(Subjects.eachPlayer(), filter),
+                cannotBeRegenerated);
+    }
+
+    /** "Destroy all [filter] target player controls": declares the harmful player target. */
+    public static DestroyTargetPermanentEffect allTargetPlayerControls(PermanentPredicate filter) {
+        return new DestroyTargetPermanentEffect(Subjects.controlledBy(Subjects.targetPlayer(), filter));
+    }
+
+    /**
+     * "Destroy the rest", "destroy all other [filter]": every matching permanent but those {@code spared} names, an
+     * earlier step's result ("destroy all other creatures" after creating tokens, Martial Coup:
+     * {@link Subjects#createdThisResolution()}; "destroy the rest" after a choice, Duneblast).
+     */
+    public static DestroyTargetPermanentEffect sparing(PermanentPredicate filter, PermanentSubject spared) {
+        return new DestroyTargetPermanentEffect(
+                Subjects.except(Subjects.controlledBy(Subjects.eachPlayer(), filter), spared));
+    }
+
+    /**
+     * "Destroy all other creatures" after the tokens this resolution created (Martial Coup): pair it with an
+     * unconditional {@code CreateTokenEffect} resolving before it.
+     */
+    public static DestroyTargetPermanentEffect sparingPermanentsCreatedThisResolution(PermanentPredicate filter) {
+        return sparing(filter, Subjects.createdThisResolution());
+    }
+
+    /**
+     * "Destroy all creatures with power greater than target creature's power": the wipe over {@code filter}, whose
+     * amounts ({@code PermanentPowerAtLeastAmountPredicate} / {@code PermanentPowerAtMostAmountPredicate} over
+     * {@code TargetPower}) read the target {@code target} declares.
+     */
+    public static DestroyTargetPermanentEffect readingTarget(PermanentPredicate filter, TargetPredicate target) {
+        return new DestroyTargetPermanentEffect(false, null, -1, null, false, 1, false,
+                Subjects.controlledBy(Subjects.eachPlayer(), filter), TargetSpec.harmful(target));
+    }
+
+    /** "Destroy each of them": every target of the entry, whichever group declared it, as one event. */
+    public static DestroyTargetPermanentEffect eachTarget() {
+        return new DestroyTargetPermanentEffect(Subjects.allTargets());
+    }
+
+    /** {@link #eachTarget()}; {@code cannotBeRegenerated} for "They can't be regenerated." */
+    public static DestroyTargetPermanentEffect eachTarget(boolean cannotBeRegenerated) {
+        return new DestroyTargetPermanentEffect(Subjects.allTargets(), cannotBeRegenerated);
+    }
+
+    /**
+     * "Destroy any of them that are Walls": the targets that match {@code filter} as the effect applies; the others
+     * stay (the filter is not a target restriction).
+     */
+    public static DestroyTargetPermanentEffect eachTargetMatching(PermanentPredicate filter) {
+        return new DestroyTargetPermanentEffect(Subjects.allTargets(filter));
+    }
+
     public static DestroyTargetPermanentEffect forTargetGroup(int targetGroup) {
         return new DestroyTargetPermanentEffect(false, null, targetGroup, null, false, 1, false);
     }
@@ -135,8 +223,11 @@ public record DestroyTargetPermanentEffect(
 
     @Override
     public TargetSpec targetSpec() {
+        if (subject.declaresPlayerTarget()) {
+            return TargetSpec.harmful(TargetPredicates.player());
+        }
         if (!subject.declaresTarget()) {
-            return TargetSpec.NONE;
+            return referencedTarget != null ? referencedTarget : TargetSpec.NONE;
         }
         return targetFilter == null
                 ? TargetSpec.harmful(TargetPredicates.permanent())
@@ -147,5 +238,20 @@ public record DestroyTargetPermanentEffect(
     @Override
     public RemovalKind removalKind() {
         return subject.declaresTarget() ? RemovalKind.DESTROY : null;
+    }
+
+    /** "Destroy all [permanents]" over any players' battlefields, spared ones or not, sweeps the board. */
+    @Override
+    public boolean sweepsBoard() {
+        return setFilter() != null;
+    }
+
+    /**
+     * The filter of the set a wipe destroys ("all creatures", "the rest" of them), or {@code null} when the subject
+     * is no {@code controlledBy} set.
+     */
+    public PermanentPredicate setFilter() {
+        PermanentSubject set = subject instanceof PermanentSubject.Except except ? except.permanents() : subject;
+        return set instanceof PermanentSubject.ControlledBy controlledBy ? controlledBy.filter() : null;
     }
 }

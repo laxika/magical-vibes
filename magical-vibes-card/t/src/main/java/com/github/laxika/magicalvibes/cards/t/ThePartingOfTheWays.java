@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndSuspendNonlandsWithManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class ThePartingOfTheWays extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         var opponentArtifactFilter = new PermanentPredicateTargetFilter(
                 opponentArtifact, "Target must be an artifact an opponent controls");
-        addTrigger(Triggers.chapter(3), new DestroyEachTargetPermanentEffect(opponentArtifact));
+        addTrigger(Triggers.chapter(3), DestroyTargetPermanentEffect.eachTargetMatching(opponentArtifact));
         setSagaChapterTargetGroups(3,
                 List.of(new SagaChapterTargetGroup(opponentArtifactFilter, 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);

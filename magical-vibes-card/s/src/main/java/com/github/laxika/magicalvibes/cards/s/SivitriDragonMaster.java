@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackLifeTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -35,7 +35,7 @@ public class SivitriDragonMaster extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                List.of(DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON))
                 )))),

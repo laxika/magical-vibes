@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -50,6 +50,6 @@ public class ChainerDementiaMaster extends Card {
 
         // When Chainer leaves the battlefield, exile all Nightmares.
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new ExileAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE)));
+                ExileTargetPermanentEffect.all(new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE)));
     }
 }

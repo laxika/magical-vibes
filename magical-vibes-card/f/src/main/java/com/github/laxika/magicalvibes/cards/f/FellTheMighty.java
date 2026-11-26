@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class FellTheMighty extends Card {
 
     public FellTheMighty() {
         // Destroy all creatures with power greater than target creature's power.
-        target(TargetFilters.creature()).addSpellEffect(DestroyAllPermanentsEffect.readingTarget(
+        target(TargetFilters.creature()).addSpellEffect(DestroyTargetPermanentEffect.readingTarget(
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastAmountPredicate(
                                 new Sum(new TargetPower(true), new Fixed(1))))),

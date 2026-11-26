@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtOrBelowHal
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -22,6 +22,6 @@ public class GameOver extends Card {
                         ControllerLifeAtMost.atHalfStartingLife(),
                         new AnOpponentLifeAtOrBelowHalfStartingLife())),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
     }
 }

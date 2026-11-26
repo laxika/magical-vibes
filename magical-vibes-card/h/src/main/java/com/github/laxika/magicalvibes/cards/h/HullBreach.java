@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -40,7 +39,7 @@ public class HullBreach extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact and target enchantment",
-                        List.<CardEffect>of(new DestroyEachTargetPermanentEffect()),
+                        List.<CardEffect>of(DestroyTargetPermanentEffect.eachTarget()),
                         List.of(artifact, enchantment)
                 )
         )));

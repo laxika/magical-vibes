@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -21,7 +21,7 @@ public class HourOfRevelation extends Card {
                 new AnyPlayerControlsPermanentCount(10, new PermanentNotPredicate(new PermanentIsLandPredicate())),
                 new ReduceOwnCastCostEffect(new Fixed(3))));
         // Destroy all nonland permanents.
-        addSpellEffect(new DestroyAllPermanentsEffect(
+        addSpellEffect(DestroyTargetPermanentEffect.all(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
     }
 }

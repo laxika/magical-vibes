@@ -14,15 +14,15 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +34,14 @@ import org.springframework.stereotype.Component;
  * subject is found by {@link SubjectResolutionService} and its permanents are destroyed as one batch through
  * {@link DestructionSupport#destroyBatch}, which owns indestructible, regeneration and the death replacements. A
  * permanent a non-target subject names that is gone at resolution is simply not destroyed.
+ *
+ * <p>A batch is a destroy step that records the departure of every permanent it was told to destroy, those that stayed
+ * included, so {@code StepKind.DESTROY}'s outcome is what was destroyed (wherever a replacement put it) with the
+ * controllers as they were destroyed (CR 608.2h), and a later step counts those that died, or some of them, from the
+ * departures; it records even when nothing was destroyed. A set's filter is bound as the effect applies (CR 608.2h):
+ * its amounts ("power greater than target creature's power"), the triggering spell's mana value and "shares a creature
+ * type with" the named permanents. A set's dead cards are the entry's event cards ("a creature card put into a graveyard
+ * this way", Necromantic Selection).
  */
 @Component
 @RequiredArgsConstructor
@@ -42,6 +50,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final SubjectResolutionService subjectResolutionService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -92,8 +101,14 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
      * triggering subject, "that permanent's controller" later reads the controller it had as it was destroyed.
      */
     private void destroyNamedPermanents(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
-        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, destroy, destroy.subject());
+        boolean set = destroy.subject().isSet();
+        entry.recordDestroyDepartures(List.of());
+        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, destroy,
+                boundSet(gameData, entry, destroy, destroy.subject()));
         if (named.isEmpty()) {
+            if (set) {
+                entry.setEventCardIds(List.of());
+            }
             return;
         }
         Set<UUID> targeted = new HashSet<>();
@@ -115,33 +130,45 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 entry.setTriggeringPermanentControllerId(controllerId);
             }
         }
-        destroyAndRecord(gameData, entry, named, destroy.cannotBeRegenerated());
+        DestructionSupport.BatchOutcome outcome = destroyAndRecord(gameData, entry, named,
+                destroy.cannotBeRegenerated());
+        if (set) {
+            entry.setEventCardIds(outcome.died().stream().map(permanent -> permanent.getCard().getId()).toList());
+        }
     }
 
     /**
-     * Destroys {@code permanents} as one batch and records the step's result: those actually destroyed (wherever they
-     * went; indestructible and regenerated ones were not) and their controllers as they were destroyed (CR 608.2h).
+     * {@code subject} with a set's filter bound as the effect applies (CR 608.2h): "with that spell's mana value"
+     * (Celestial Kirin) reads the triggering spell, "power greater than target creature's power" and "power at least the
+     * chosen number" their amounts, "that share a creature type with the sacrificed creature" the named permanents'
+     * creature types. Any other subject is returned as it is.
      */
-    private void destroyAndRecord(GameData gameData, StackEntry entry, List<Permanent> permanents,
-                                  boolean cannotBeRegenerated) {
-        Map<UUID, UUID> controllers = new HashMap<>();
-        for (Permanent permanent : permanents) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-            if (controllerId != null) {
-                controllers.put(permanent.getId(), controllerId);
-            }
-        }
+    private PermanentSubject boundSet(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy,
+                                      PermanentSubject subject) {
+        return switch (subject) {
+            case PermanentSubject.ControlledBy controlledBy -> Subjects.controlledBy(controlledBy.players(),
+                    subjectResolutionService.bindPermanentSubjects(gameData, entry, destroy,
+                            amountEvaluationService.bindAmounts(gameData,
+                                    AmountEvaluationService.bindTriggeringSpellManaValue(gameData,
+                                            controlledBy.filter(), entry),
+                                    AmountContext.forStackEntry(entry, null))));
+            case PermanentSubject.Except except when except.permanents() instanceof PermanentSubject.ControlledBy ->
+                    Subjects.except(boundSet(gameData, entry, destroy, except.permanents()), except.excluded());
+            default -> subject;
+        };
+    }
+
+    /**
+     * Destroys {@code permanents} as one batch and records the step: the departure of each (CR 608.2h), so its outcome
+     * is those actually destroyed (wherever they went; indestructible and regenerated ones were not) with their
+     * controllers as they were destroyed.
+     */
+    private DestructionSupport.BatchOutcome destroyAndRecord(GameData gameData, StackEntry entry,
+                                                             List<Permanent> permanents, boolean cannotBeRegenerated) {
         DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(gameData, permanents,
                 FaceDownVisibility.sourceName(gameData, entry), cannotBeRegenerated);
-        List<UUID> destroyed = outcome.destroyed().stream().map(Permanent::getId).toList();
-        List<MovedCard> moved = outcome.results().stream()
-                .filter(result -> result.destroyed() && result.left() && result.newCardId() != null
-                        && result.destination() != null)
-                .map(result -> new MovedCard(result.permanentId(), result.newCardId(), result.destination(),
-                        result.destinationOwnerId()))
-                .toList();
-        entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(destroyed, destroyed.stream()
-                .map(controllers::get).filter(Objects::nonNull).toList(), moved));
+        entry.recordDestroyDepartures(outcome.results());
+        return outcome;
     }
 
     /**

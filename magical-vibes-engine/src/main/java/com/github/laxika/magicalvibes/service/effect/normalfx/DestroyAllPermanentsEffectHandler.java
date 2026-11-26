@@ -7,16 +7,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,13 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Destroys all matching permanents in the effect's scope as one event and records the step on the entry's resolution
+ * Destroys every matching permanent on every battlefield as one event and records the step on the entry's resolution
  * scratchpad: the departure of every permanent it was told to destroy, so {@code StepKind.DESTROY}'s outcome is those
  * actually destroyed (wherever a replacement put them; indestructible and regenerated ones were not) with their
- * controllers as they were destroyed (CR 608.2h), and a later step counts those that died, or only some of them, from
- * the departures ({@code AmountThisWay}). It records even when nothing was destroyed.
+ * controllers as they were destroyed (CR 608.2h). It records even when nothing was destroyed.
  *
- * <p>A per-destroyed-permanent rider ({@code thenEffect}) is resolved after the destruction with the count of
+ * <p>The per-destroyed-permanent rider ({@code thenEffect}) is resolved after the destruction with the count of
  * permanents destroyed, their controllers and mana values stamped onto the entry's event values. When this effect is a
  * step of the resolution, the rider becomes the next step of the same entry; dispatched by another handler, it
  * resolves at once on a derived stack entry carrying those values.
@@ -48,8 +42,6 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
     private final PredicateEvaluationService predicateEvaluationService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameOutcomeService gameOutcomeService;
-    private final SubjectResolutionService subjectResolutionService;
-    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,72 +59,30 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
-                // CR 608.2b: filters that ask about the source (e.g. "creatures blocking it") still
-                // need it after a sacrifice cost removed it from the battlefield.
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
-                // X-relative filters ("each nonland permanent with mana value X or less") read the
-                // X paid when the spell was cast (CR 601.2b).
                 .withXValue(entry.getXValue());
-        // "With that spell's mana value" (Celestial Kirin) reads the triggering spell as the ability resolves.
-        // "Power greater than target creature's power", "power at least the chosen number": the amount is read once,
-        // as the wipe resolves (CR 608.2h). "That share a creature type with the sacrificed creature": the named
-        // permanents' creature types, read once as it resolves too.
-        PermanentPredicate filter = subjectResolutionService.bindPermanentSubjects(gameData, entry, e,
-                amountEvaluationService.bindAmounts(gameData,
-                        AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.filter(), entry),
-                        AmountContext.forStackEntry(entry, null)));
-
-        // "Destroy all other creatures" (Martial Coup), "destroy the rest" (Duneblast): spare what an earlier step of
-        // this resolution created or chose.
-        List<UUID> sparedIds = e.spared() == null
-                ? List.of() : subjectResolutionService.permanentIds(gameData, entry, e, e.spared());
 
         List<Permanent> toDestroy = new ArrayList<>();
         // Controllers are captured before destruction — afterwards the permanents are gone and their
         // controller can no longer be looked up (needed by per-permanent-controller riders).
         Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
         Map<UUID, Integer> manaValueByPermanentId = new HashMap<>();
-        if (e.scope() == EachPermanentScope.TARGET_PLAYER) {
-            UUID targetPlayerId = entry.getTargetId();
-            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-                return;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-            if (battlefield == null) {
-                return;
-            }
-            for (Permanent perm : List.copyOf(battlefield)) {
-                if (!sparedIds.contains(perm.getId())
-                        && predicateEvaluationService.matchesPermanentPredicate(perm, filter, filterContext)) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : battlefield) {
+                if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     toDestroy.add(perm);
-                    controllerByPermanentId.put(perm.getId(), targetPlayerId);
+                    controllerByPermanentId.put(perm.getId(), playerId);
                     manaValueByPermanentId.put(perm.getId(), perm.getCard().getManaValue());
                 }
             }
-        } else {
-            gameData.forEachBattlefield((playerId, battlefield) -> {
-                for (Permanent perm : battlefield) {
-                    if (!sparedIds.contains(perm.getId())
-                            && predicateEvaluationService.matchesPermanentPredicate(perm, filter, filterContext)) {
-                        toDestroy.add(perm);
-                        controllerByPermanentId.put(perm.getId(), playerId);
-                        manaValueByPermanentId.put(perm.getId(), perm.getCard().getManaValue());
-                    }
-                }
-            });
-        }
+        });
 
         DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(
                 gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
         entry.recordDestroyDepartures(outcome.results());
-        entry.setEventCardIds(outcome.died().stream().map(perm -> perm.getCard().getId()).toList());
         // A permanent a replacement exiled or moved elsewhere instead of its graveyard was still destroyed
         // this way (Fumigate and Death Begets Life rulings).
         List<Permanent> destroyed = outcome.destroyed();
-
-        if (e.thenEffect() == null) {
-            return;
-        }
 
         // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
         List<UUID> destroyedControllerIds = new ArrayList<>();

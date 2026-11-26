@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetCreatureUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -43,7 +43,7 @@ public class TheMoment extends Card {
                 true,
                 "{3}",
                 List.of(
-                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 new PermanentManaValueAtMostSourceCountersPredicate(CounterType.TIME)
                         ))),

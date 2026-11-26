@@ -618,7 +618,8 @@ class MediumAiDecisionEngineTest {
     @DisplayName("Medium AI collects evidence for Urgent Necropsy's targets")
     void castsUrgentNecropsyWithTargetEvidence() {
         harness.forceActivePlayer(human);
-        harness.forceStep(TurnStep.END_STEP);
+        // Destroying each target is removal, which the Medium AI casts in the opponent's combat.
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(human.getId());
         gd.status = GameStatus.RUNNING;

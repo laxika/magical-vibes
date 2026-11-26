@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -21,7 +21,7 @@ public class CalmingVerse extends Card {
         var controller = new PermanentControlledBySourceControllerPredicate();
         var enchantment = new PermanentIsEnchantmentPredicate();
 
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                 enchantment,
                 new PermanentNotPredicate(controller)
         ))));
@@ -30,7 +30,7 @@ public class CalmingVerse extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 ))),
-                new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(enchantment, controller)))
+                DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(enchantment, controller)))
         ));
     }
 }

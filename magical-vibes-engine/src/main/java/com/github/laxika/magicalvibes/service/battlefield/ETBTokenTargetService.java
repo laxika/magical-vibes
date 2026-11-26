@@ -893,7 +893,7 @@ public class ETBTokenTargetService {
 
     private List<CardEffect> effectsForTargetGroup(Card card, List<CardEffect> effects, int groupIndex) {
         // A bare positional group — one no effect is bound to — is read by index by an unbound effect
-        // (Goblin Grenadiers' DestroyEachTargetPermanentEffect over "target creature and target land").
+        // (Goblin Grenadiers' DestroyTargetPermanentEffect.eachTarget() over "target creature and target land").
         // Such a group must still be targeted; only a group whose bound effect was gated out below
         // may be skipped.
         if (!card.bindsEffectToTargetGroup(groupIndex)) {

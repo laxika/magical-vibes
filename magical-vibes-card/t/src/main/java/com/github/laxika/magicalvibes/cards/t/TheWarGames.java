@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
@@ -57,7 +57,7 @@ public class TheWarGames extends Card {
                 SequenceEffect.of(
                         ExileChosenPermanentsEffect.youControl(NONTOKEN_CREATURE, "nontoken creature you control"),
                         new ConditionalEffect(HappenedThisWay.exiled(),
-                                new QueueReflexiveAbilityEffect(new ExileAllPermanentsEffect(WARRIOR)))),
+                                new QueueReflexiveAbilityEffect(ExileTargetPermanentEffect.all(WARRIOR)))),
                 "Exile a nontoken creature you control?"));
     }
 }

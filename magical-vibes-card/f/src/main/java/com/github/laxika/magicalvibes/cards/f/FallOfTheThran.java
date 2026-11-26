@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -21,7 +21,7 @@ public class FallOfTheThran extends Card {
 
     public FallOfTheThran() {
         // Chapter I: Destroy all lands
-        addTrigger(Triggers.chapter(1), new DestroyAllPermanentsEffect(new PermanentIsLandPredicate()));
+        addTrigger(Triggers.chapter(1), DestroyTargetPermanentEffect.all(new PermanentIsLandPredicate()));
 
         // Chapter II: Each player returns two land cards from their graveyard to the battlefield
         addTrigger(Triggers.chapter(2),

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,9 +28,9 @@ public class CleansingNova extends Card {
     public CleansingNova() {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Destroy all creatures",
-                        new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate())),
+                        DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate())),
                 new ChooseOneEffect.ChooseOneOption("Destroy all artifacts and enchantments",
-                        new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsEnchantmentPredicate()
                         ))))

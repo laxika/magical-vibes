@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSearchesLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -23,7 +23,7 @@ public class FromTheAshes extends Card {
     public FromTheAshes() {
         // Destroy all nonbasic lands. For each land destroyed this way, its controller may search their library for a
         // basic land card and put it onto the battlefield. Then each player who searched their library this way shuffles.
-        addSpellEffect(new DestroyAllPermanentsEffect(
+        addSpellEffect(DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))

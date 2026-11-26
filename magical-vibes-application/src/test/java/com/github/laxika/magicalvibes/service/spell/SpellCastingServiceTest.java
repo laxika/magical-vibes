@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -38,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
@@ -1153,7 +1153,7 @@ class SpellCastingServiceTest {
             Card instant = createInstant("Test Purge", "{R}");
             instant.setAdditionalLifeCostPerTarget(3);
             instant.target(0, 99);
-            instant.addSpellEffect(new DestroyEachTargetPermanentEffect());
+            instant.addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             gd.playerLifeTotals.put(player1Id, 5);
@@ -1182,7 +1182,7 @@ class SpellCastingServiceTest {
             Card instant = createInstant("Test Purge", "{R}");
             instant.setAdditionalLifeCostPerTarget(3);
             instant.target(0, 99);
-            instant.addSpellEffect(new DestroyEachTargetPermanentEffect());
+            instant.addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             // CR 119.4 allows the payment when the life total is greater than or equal to it,

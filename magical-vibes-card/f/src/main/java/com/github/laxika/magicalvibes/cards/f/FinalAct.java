@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
@@ -24,13 +24,13 @@ public class FinalAct extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all creatures",
-                        new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate())),
+                        DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all planeswalkers",
-                        new DestroyAllPermanentsEffect(new PermanentIsPlaneswalkerPredicate())),
+                        DestroyTargetPermanentEffect.all(new PermanentIsPlaneswalkerPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all battles",
-                        new DestroyAllPermanentsEffect(new PermanentIsBattlePredicate())),
+                        DestroyTargetPermanentEffect.all(new PermanentIsBattlePredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all graveyards",
                         new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS)),

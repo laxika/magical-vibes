@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -14,7 +14,7 @@ import java.util.List;
 public class HeatStroke extends Card {
 
     public HeatStroke() {
-        addTrigger(Triggers.endOfCombat(), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.endOfCombat(), DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentBlockedOrWasBlockedThisTurnPredicate()))));

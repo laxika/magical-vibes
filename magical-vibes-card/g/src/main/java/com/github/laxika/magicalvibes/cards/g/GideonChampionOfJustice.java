@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -63,9 +63,8 @@ public class GideonChampionOfJustice extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -15,
-                List.of(new ExileAllPermanentsEffect(
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                )),
+                List.of(ExileTargetPermanentEffect.all(
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "-15: Exile all other permanents."
         ));
     }

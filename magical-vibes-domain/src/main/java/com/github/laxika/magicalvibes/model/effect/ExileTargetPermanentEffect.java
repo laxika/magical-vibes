@@ -59,6 +59,14 @@ public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController,
         return new ExileTargetPermanentEffect(Subjects.triggering());
     }
 
+    /**
+     * "Exile all [filter]": every matching permanent on every battlefield, found once as the effect applies and exiled
+     * as one event; "creatures exiled this way" is {@code AmountThisWay(StepKind.EXILE)}.
+     */
+    public static ExileTargetPermanentEffect all(PermanentPredicate filter) {
+        return new ExileTargetPermanentEffect(Subjects.controlledBy(Subjects.eachPlayer(), filter));
+    }
+
     /** Removes the source permanent from the game instead of exiling it (Blacker Lotus). */
     public static ExileTargetPermanentEffect sourceOutsideGame() {
         return new ExileTargetPermanentEffect(null, null, Subjects.source(), true);

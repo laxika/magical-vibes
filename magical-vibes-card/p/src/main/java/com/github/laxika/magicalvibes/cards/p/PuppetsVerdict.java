@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -16,11 +16,11 @@ public class PuppetsVerdict extends Card {
 
     public PuppetsVerdict() {
         addSpellEffect(new FlipCoinWinEffect(
-                new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtMostPredicate(2)
                 ))),
-                new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(3)
                 )))

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +18,7 @@ import java.util.List;
 public class Jokulhaups extends Card {
 
     public Jokulhaups() {
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsLandPredicate())), true));

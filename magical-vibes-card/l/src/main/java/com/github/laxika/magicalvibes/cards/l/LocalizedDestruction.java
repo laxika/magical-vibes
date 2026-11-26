@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -33,6 +33,6 @@ public class LocalizedDestruction extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtLeastAmountPredicate(AmountThisWay.energyPaid()),
                                 new PermanentPowerAtMostAmountPredicate(AmountThisWay.energyPaid())))))));
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
     }
 }

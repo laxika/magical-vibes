@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,12 +22,12 @@ public class CruxOfFate extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all Dragon creatures",
-                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON))))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all non-Dragon creatures",
-                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON))))))
         )));

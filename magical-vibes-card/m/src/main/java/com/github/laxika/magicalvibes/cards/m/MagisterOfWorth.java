@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.VoteResult;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.VoteEffect;
@@ -33,7 +33,7 @@ public class MagisterOfWorth extends Card {
                         new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
                                 Integer.MAX_VALUE, new CardTypePredicate(CardType.CREATURE))),
                 new ConditionalEffect(VoteResult.moreVotesOrTied(CONDEMNATION),
-                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))))));
     }

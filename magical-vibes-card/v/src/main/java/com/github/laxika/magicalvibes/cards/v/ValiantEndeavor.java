@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RollTwoDiceChooseOneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class ValiantEndeavor extends Card {
 
     public ValiantEndeavor() {
         addSpellEffect(new RollTwoDiceChooseOneEffect(6));
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastAmountPredicate(new XValue())))));
         addSpellEffect(new CreateTokenEffect(new EventValue(), "Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of()));

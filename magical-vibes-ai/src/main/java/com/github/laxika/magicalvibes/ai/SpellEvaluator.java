@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceControllerDrawsCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
@@ -74,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -923,10 +923,6 @@ public class SpellEvaluator {
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
             return removalScore(gameData, card, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
         }
-        // "Destroy target X and target Y" (Reign of Chaos): scored by its best creature target.
-        if (effect instanceof DestroyEachTargetPermanentEffect) {
-            return removalScore(gameData, card, RemovalKind.DESTROY, oppBattlefield, opponentId, aiPlayerId);
-        }
 
         if (effect instanceof TapPermanentsEffect tap && tap.subject() instanceof PermanentSubject.Target) {
             return evaluateTargetTapValue(gameData, oppBattlefield, opponentId, aiPlayerId);
@@ -980,7 +976,11 @@ public class SpellEvaluator {
                     aiBattlefield, oppBattlefield);
         }
         if (effect instanceof DestroyAllPermanentsEffect wipe) {
-            return evaluateDestroyAllValue(gameData, wipe, aiPlayerId, opponentId,
+            return evaluateDestroyAllValue(gameData, wipe.filter(), aiPlayerId, opponentId,
+                    aiBattlefield, oppBattlefield);
+        }
+        if (effect instanceof DestroyTargetPermanentEffect wipe && wipe.sweepsBoard()) {
+            return evaluateDestroyAllValue(gameData, wipe.setFilter(), aiPlayerId, opponentId,
                     aiBattlefield, oppBattlefield);
         }
 
@@ -1503,13 +1503,13 @@ public class SpellEvaluator {
         return value;
     }
 
-    private double evaluateDestroyAllValue(GameData gameData, DestroyAllPermanentsEffect wipe,
+    private double evaluateDestroyAllValue(GameData gameData, PermanentPredicate wipeFilter,
                                            UUID aiPlayerId, UUID opponentId,
                                            List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
 
         double oppValue = oppBattlefield.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipeFilter, filterContext))
                 .mapToDouble(p -> {
                     if (gameQueryService.isCreature(gameData, p)) {
                         return boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId);
@@ -1519,7 +1519,7 @@ public class SpellEvaluator {
                 .sum();
 
         double aiValue = aiBattlefield.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipeFilter, filterContext))
                 .mapToDouble(p -> {
                     if (gameQueryService.isCreature(gameData, p)) {
                         return boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId);
@@ -1538,7 +1538,7 @@ public class SpellEvaluator {
                 int remainingOppDamage = oppBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .filter(p -> !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER))
-                        .filter(p -> !predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                        .filter(p -> !predicateEvaluationService.matchesPermanentPredicate(p, wipeFilter, filterContext))
                         .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
                         .sum();
                 if (remainingOppDamage < aiLife) {
@@ -1550,7 +1550,7 @@ public class SpellEvaluator {
         // Rebuild potential: if AI has creatures in hand to replay, the effective cost of wiping is lower
         double aiCreatureLosses = aiBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipeFilter, filterContext))
                 .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId))
                 .sum();
         if (aiCreatureLosses > 0) {

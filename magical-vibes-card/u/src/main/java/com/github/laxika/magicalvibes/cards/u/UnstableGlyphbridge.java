@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +36,7 @@ public class UnstableGlyphbridge extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtMostPredicate(2)))),
                         "a creature with power 2 or less"),
-                DestroyAllPermanentsEffect.sparing(new PermanentIsCreaturePredicate(),
+                DestroyTargetPermanentEffect.sparing(new PermanentIsCreaturePredicate(),
                         Subjects.thisWay(StepKind.CHOOSE)));
 
         addActivatedAbility(new ActivatedAbility(

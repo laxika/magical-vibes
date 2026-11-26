@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +22,7 @@ public class MartyrsCry extends Card {
 
     public MartyrsCry() {
         addSpellEffect(SequenceEffect.of(
-                new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                ExileTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE))))),
                 DrawCardEffect.eachEvaluatedFor(new AmountThisWay(StepKind.EXILE).controlledByYou(), Subjects.eachPlayer())));

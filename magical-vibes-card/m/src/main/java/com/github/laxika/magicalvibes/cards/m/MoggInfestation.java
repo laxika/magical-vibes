@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,9 +26,8 @@ public class MoggInfestation extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new DestroyAllPermanentsEffect(
-                new PermanentIsCreaturePredicate(),
-                EachPermanentScope.TARGET_PLAYER))
+        )).addSpellEffect(DestroyTargetPermanentEffect.allTargetPlayerControls(
+                new PermanentIsCreaturePredicate()))
                 .addSpellEffect(new CreateTokenEffect(
                         new Scaled(AmountThisWay.died(StepKind.DESTROY), 2),
                         "Goblin", 1, 1, CardColor.RED,

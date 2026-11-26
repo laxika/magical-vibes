@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,6 +33,6 @@ public class MidnightArsonist extends Card {
                         artifactWithoutManaAbility, "Target must be an artifact without a mana ability"),
                 100
         ).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DestroyEachTargetPermanentEffect(artifactWithoutManaAbility));
+                DestroyTargetPermanentEffect.eachTargetMatching(artifactWithoutManaAbility));
     }
 }

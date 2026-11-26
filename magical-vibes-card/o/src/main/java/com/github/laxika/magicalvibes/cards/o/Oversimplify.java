@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenThenPutCountersEff
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class Oversimplify extends Card {
     public Oversimplify() {
         // "The total power of creatures they controlled that were exiled this way": each as it last existed.
         addSpellEffect(SequenceEffect.of(
-                new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()),
+                ExileTargetPermanentEffect.all(new PermanentIsCreaturePredicate()),
                 new CreateTokenThenPutCountersEffect(
                         new CreateTokenEffect("Fractal", 0, 0, CardColor.GREEN,
                                 Set.of(CardColor.GREEN, CardColor.BLUE), List.of(CardSubtype.FRACTAL))

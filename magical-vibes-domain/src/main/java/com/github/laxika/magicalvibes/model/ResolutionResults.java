@@ -5,7 +5,9 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * The resolution scratchpad of one {@link StackEntry}: what an earlier step of the resolution left for
@@ -17,7 +19,9 @@ import java.util.UUID;
  * outcome of the previous step of that kind, even when nothing happened, so a later step never reads an older
  * step's result. A later step reads it through {@link #outcome}: the {@code HappenedThisWay} condition, the
  * {@code AmountThisWay} amount and the {@code thisWay} / {@code playersThisWay} subjects. A removal step's
- * {@link DepartureResult}s are its {@link StepKind#DESTROY} and {@link StepKind#SACRIFICE} outcomes too.</p>
+ * {@link DepartureResult}s are its {@link StepKind#DESTROY} and {@link StepKind#SACRIFICE} outcomes too, and each of
+ * those kinds keeps the departures of its own latest step ({@link #departures(StepKind)}), so a destroy step between a
+ * sacrifice and "the sacrificed creature's power" doesn't lose the sacrifice's.</p>
  *
  * <p>Immutable, so a {@link StackEntry} copy shares it safely with the live game.</p>
  *
@@ -27,17 +31,23 @@ import java.util.UUID;
  *                   its results even when nothing left, so a later step never reads an older step's departures
  * @param pickedIds  the ids a player picked in an earlier step, for the next step to act on
  * @param outcomes   the outcome of the most recent step of each kind
+ * @param departuresByKind the departures of the most recent {@link StepKind#DESTROY} and {@link StepKind#SACRIFICE}
+ *                   step, each kind's own (a step that removes both ways is the latest step of both)
  */
 public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds,
-                                Map<StepKind, StepOutcome> outcomes) {
+                                Map<StepKind, StepOutcome> outcomes,
+                                Map<StepKind, List<DepartureResult>> departuresByKind) {
 
-    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), Map.of());
+    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), Map.of(), Map.of());
 
     public ResolutionResults {
         departures = List.copyOf(departures);
         pickedIds = List.copyOf(pickedIds);
         outcomes = Collections.unmodifiableMap(outcomes.isEmpty()
                 ? new EnumMap<>(StepKind.class) : new EnumMap<>(outcomes));
+        Map<StepKind, List<DepartureResult>> byKind = new EnumMap<>(StepKind.class);
+        departuresByKind.forEach((kind, results) -> byKind.put(kind, List.copyOf(results)));
+        departuresByKind = Collections.unmodifiableMap(byKind);
     }
 
     /**
@@ -50,7 +60,10 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
         updated.putAll(outcomes);
         updated.put(StepKind.DESTROY, departed(results, true));
         updated.put(StepKind.SACRIFICE, departed(results, false));
-        return new ResolutionResults(results, pickedIds, updated);
+        Map<StepKind, List<DepartureResult>> byKind = new EnumMap<>(StepKind.class);
+        byKind.put(StepKind.DESTROY, results);
+        byKind.put(StepKind.SACRIFICE, results);
+        return new ResolutionResults(results, pickedIds, updated, byKind);
     }
 
     /**
@@ -77,7 +90,7 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
      * are kept.
      */
     public ResolutionResults withSacrificeDepartures(List<DepartureResult> results) {
-        List<DepartureResult> all = new ArrayList<>(departures);
+        List<DepartureResult> all = new ArrayList<>(departures(StepKind.SACRIFICE));
         all.addAll(results);
         return withDepartures(all, StepKind.SACRIFICE);
     }
@@ -86,12 +99,34 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
         Map<StepKind, StepOutcome> updated = new EnumMap<>(StepKind.class);
         updated.putAll(outcomes);
         updated.put(kind, departed(results, kind == StepKind.DESTROY));
-        return new ResolutionResults(results, pickedIds, updated);
+        Map<StepKind, List<DepartureResult>> byKind = new EnumMap<>(StepKind.class);
+        byKind.putAll(departuresByKind);
+        byKind.put(kind, results);
+        return new ResolutionResults(results, pickedIds, updated, byKind);
     }
 
     /** These results with {@code ids} as the latest picks, replacing the earlier ones. */
     public ResolutionResults withPickedIds(List<UUID> ids) {
-        return new ResolutionResults(departures, ids, outcomes);
+        return new ResolutionResults(departures, ids, outcomes, departuresByKind);
+    }
+
+    /**
+     * The departures of the most recent {@code kind} step ({@link StepKind#DESTROY} or {@link StepKind#SACRIFICE}),
+     * those that stayed included, whatever later removal step of another kind followed; none when no such step ran.
+     */
+    public List<DepartureResult> departures(StepKind kind) {
+        return departuresByKind.getOrDefault(kind, List.of());
+    }
+
+    /**
+     * The departure of {@code permanentId} recorded by the most recent removal step that named it: the latest removal
+     * step's, else the latest destroy or sacrifice step's.
+     */
+    public Optional<DepartureResult> departureOf(UUID permanentId) {
+        return Stream.of(departures, departures(StepKind.DESTROY), departures(StepKind.SACRIFICE))
+                .flatMap(List::stream)
+                .filter(departure -> departure.permanentId().equals(permanentId))
+                .findFirst();
     }
 
     /** These results with {@code outcome} as the latest {@code kind} step's outcome, replacing the earlier one. */
@@ -99,7 +134,7 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
         Map<StepKind, StepOutcome> updated = new EnumMap<>(StepKind.class);
         updated.putAll(outcomes);
         updated.put(kind, outcome);
-        return new ResolutionResults(departures, pickedIds, updated);
+        return new ResolutionResults(departures, pickedIds, updated, departuresByKind);
     }
 
     /**
@@ -111,7 +146,7 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
         Map<StepKind, StepOutcome> updated = new EnumMap<>(StepKind.class);
         outcomes.forEach((kind, outcome) -> updated.put(kind,
                 outcome.lastKnownCards().isEmpty() ? outcome : outcome.withLastKnownCards(List.of())));
-        return new ResolutionResults(departures, pickedIds, updated);
+        return new ResolutionResults(departures, pickedIds, updated, departuresByKind);
     }
 
     /** The outcome of the most recent {@code kind} step, or {@link StepOutcome#NONE} when none ran. */

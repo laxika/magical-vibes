@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -55,14 +54,11 @@ public class ApocalypseChime extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new SacrificeSelfCost(), new DestroyAllPermanentsEffect(
+                List.of(new SacrificeSelfCost(), DestroyTargetPermanentEffect.all(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNameInPredicate(HOMELANDS_CARD_NAMES),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                        true,
-                        EachPermanentScope.ALL_PLAYERS,
-                        null,
-                        null)),
+                        true)),
                 "{2}, {T}, Sacrifice Apocalypse Chime: Destroy all nontoken permanents with a name "
                         + "originally printed in the Homelands expansion. They can't be regenerated."));
     }

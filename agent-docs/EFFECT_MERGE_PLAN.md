@@ -56,7 +56,7 @@ reverts one of them is a regression:
 | `AttachSourceEquipmentToTargetCreatureEffectHandler` (absorbed `AttachTargetEquipmentToTargetCreatureEffectHandler` and the other target/triggering Equipment shapes) | Success path logs an attach message, not a fizzle message |
 | `CopyTriggeringSpellEffectHandler` (absorbed `CopySpellForEachOtherSubtypePermanentEffectHandler` and the other copy-for-each handlers, fold run 29) | Has the `isCantBeCopied()` guard (CR 707.10) |
 | `DealDamageEqualToChosenTypeCountEffectHandler` (absorbed the `DealDamageToAnyTargetEqualToChosenTypeCount` / `DealDamageToTargetCreatureEqualToChosenTypeCount` handlers) | Applies `applyDamageMultiplier` |
-| `DestroyEachTargetPermanentEffectHandler`, `DestroyPermanentsTargetPlayerControlsEffectHandler` | Route through `DestructionSupport.destroyBatchCollecting` so deaths are simultaneous |
+| the each-target destroy handler (since effect-cleanup step 10 run K `DestroyTargetPermanentEffect.eachTarget`), `DestroyPermanentsTargetPlayerControlsEffectHandler` | Route through `DestructionSupport.destroyBatchCollecting` so deaths are simultaneous |
 | `UntapPermanentsEffectHandler.resolveChosenControlled` (absorbed the `UntapUpToControlledPermanentsEffect` handler in Step 11) | Prompts the controller via `MultiPermanentChoiceContext.UntapChosenPermanents` — does not untap the first N in battlefield order |
 | `ExileTargetPermanentAndImprintEffect` | `TargetSpec.harmful`, not `benign` |
 
@@ -637,7 +637,7 @@ TARGET_PLAYER, null)` is indeed a straight record swap, but:
   `ActivatedAbility.isNeedsTarget()` (`ActivatedAbility:374`) is derived **only** from the effects'
   `targetSpec()` — it never consults `getTargetFilter()`. Swapping the record without adding a spec
   would have made Ajani's ultimate stop asking for a target, resolve with a null `targetId`, and do
-  nothing. The two sibling effects that share `EachPermanentScope` already branch their spec on the
+  nothing. The two sibling effects that shared its scope enum (gone since effect-cleanup step 10 run K) already branch their spec on the
   scope (the each-matching damage record, now `DealDamageEffect.toEach`,
   `PutCounterOnEachMatchingPermanentEffect:28`); `DestroyAllPermanentsEffect` was the odd one out.
   It now returns `TargetSpec.harmful(TargetPredicates.player())` for `TARGET_PLAYER` and

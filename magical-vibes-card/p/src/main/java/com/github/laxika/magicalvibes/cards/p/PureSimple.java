@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,7 +21,7 @@ public class PureSimple extends Card {
         TargetFilter multicoloredPermanent = new PermanentPredicateTargetFilter(
                 new PermanentIsMulticoloredPredicate(), "Target must be multicolored");
         CardEffect pure = new DestroyTargetPermanentEffect();
-        CardEffect simple = new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+        CardEffect simple = DestroyTargetPermanentEffect.all(new PermanentAnyOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA),
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT))));
 

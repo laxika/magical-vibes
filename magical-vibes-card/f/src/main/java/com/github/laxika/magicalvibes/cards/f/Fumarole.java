@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -30,6 +30,6 @@ public class Fumarole extends Card {
         ));
 
         // Unbound to a group: destroys every chosen target, so both the creature and the land go.
-        addSpellEffect(new DestroyEachTargetPermanentEffect());
+        addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
     }
 }

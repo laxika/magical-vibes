@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseNumberAtResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,7 +35,7 @@ public class Void extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(new ChooseNumberAtResolutionEffect(0, Integer.MAX_VALUE))
-                .addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                .addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentManaValueEqualsXPredicate(),
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
@@ -21,7 +21,7 @@ public class WaveOfTerror extends Card {
 
         // The draw step follows the upkeep, so the age counter added this turn is already on the
         // enchantment when this trigger resolves.
-        addTrigger(Triggers.drawStep(ActivePlayer.YOU), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU), DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentManaValueEqualsSourceCountersPredicate(CounterType.AGE)

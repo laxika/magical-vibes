@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -28,13 +28,13 @@ public class Farewell extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all artifacts",
-                        new ExileAllPermanentsEffect(new PermanentIsArtifactPredicate())),
+                        ExileTargetPermanentEffect.all(new PermanentIsArtifactPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all creatures",
-                        new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate())),
+                        ExileTargetPermanentEffect.all(new PermanentIsCreaturePredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all enchantments",
-                        new ExileAllPermanentsEffect(new PermanentIsEnchantmentPredicate())),
+                        ExileTargetPermanentEffect.all(new PermanentIsEnchantmentPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all graveyards",
                         new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS))

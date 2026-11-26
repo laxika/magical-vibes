@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,7 +31,7 @@ public class Damn extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new DestroyTargetPermanentEffect(true),
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true)));
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate(), true)));
         target(TargetFilters.creature());
     }
 }

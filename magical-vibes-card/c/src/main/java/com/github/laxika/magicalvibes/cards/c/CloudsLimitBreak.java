@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,11 +32,11 @@ public class CloudsLimitBreak extends Card {
                         new DestroyTargetPermanentEffect(), tappedCreatureTarget),
                 new ChooseOneEffect.ChooseOneOption(
                         "Blade Beam - {1} - Destroy any number of target tapped creatures with different controllers",
-                        List.of(new DestroyEachTargetPermanentEffect(tappedCreature)), tappedCreatureTarget,
+                        List.of(DestroyTargetPermanentEffect.eachTargetMatching(tappedCreature)), tappedCreatureTarget,
                         null, 0, 99, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Omnislash - {3}{W} - Destroy all tapped creatures",
-                        new DestroyAllPermanentsEffect(tappedCreature)
+                        DestroyTargetPermanentEffect.all(tappedCreature)
         ))));
         addCastingCost(new TieredManaCost(List.of("", "{1}", "{3}{W}")));
     }

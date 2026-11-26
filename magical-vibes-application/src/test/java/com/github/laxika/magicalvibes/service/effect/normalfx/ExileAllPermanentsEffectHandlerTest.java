@@ -170,7 +170,7 @@ class ExileAllPermanentsEffectHandlerTest {
 
                 Card sourceCard = createSorceryCard("Blast");
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter);
+                ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter, false);
                 StackEntry entry = new StackEntry(
                         StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
                         List.of(effect), 0, (UUID) null, null
@@ -199,7 +199,7 @@ class ExileAllPermanentsEffectHandlerTest {
 
                 Card sourceCard = createSorceryCard("Blast");
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter);
+                ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter, false);
                 StackEntry entry = new StackEntry(
                         StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
                         List.of(effect), 0, (UUID) null, null
@@ -222,7 +222,7 @@ class ExileAllPermanentsEffectHandlerTest {
             void nothingToExile() {
                 Card sourceCard = createSorceryCard("Blast");
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter);
+                ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter, false);
                 StackEntry entry = new StackEntry(
                         StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
                         List.of(effect), 0, (UUID) null, null

@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
@@ -2415,7 +2415,7 @@ class StepTriggerServiceTest {
             Card sourceCard = createCardWithName("Bearer of the Heavens");
             gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     Triggers.endStep(ActivePlayer.ANY), player1Id, sourceCard, null, null,
-                    new DestroyAllPermanentsEffect(new PermanentTruePredicate())));
+                    DestroyTargetPermanentEffect.all(new PermanentTruePredicate())));
 
             sut.handleEndStepTriggers(gd);
 
@@ -2423,7 +2423,7 @@ class StepTriggerServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
-                    .containsExactly(new DestroyAllPermanentsEffect(new PermanentTruePredicate()));
+                    .containsExactly(DestroyTargetPermanentEffect.all(new PermanentTruePredicate()));
         }
 
         @Test

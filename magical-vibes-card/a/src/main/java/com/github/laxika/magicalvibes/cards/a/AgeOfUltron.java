@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -37,7 +37,7 @@ public class AgeOfUltron extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a nonartifact creature an opponent controls");
         target(nonartifactCreatureOpponentControls, 0, 99)
-                .addTrigger(Triggers.chapter(1), new DestroyEachTargetPermanentEffect());
+                .addTrigger(Triggers.chapter(1), DestroyTargetPermanentEffect.eachTarget());
         setSagaChapterTargetFilter(1, Set.of(nonartifactCreatureOpponentControls));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 

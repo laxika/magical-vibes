@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -307,12 +311,26 @@ public final class TextChangeTransformer {
                         exile.perpetualCastCostIncrease(), exile.perpetualEnterTapped(),
                         exile.controllerMayPlayWhileExiled(), exile.controllerMaySpendAnyManaType());
             }
+            // "Destroy all Islands", "exile all Swamps": the set's words.
+            case DestroyTargetPermanentEffect destroy when destroy.subject().isSet() -> {
+                PermanentSubject subject = apply(destroy.subject(), substitution);
+                yield subject == destroy.subject() ? destroy
+                        : new DestroyTargetPermanentEffect(destroy.cannotBeRegenerated(), destroy.tokenForController(),
+                        destroy.targetGroup(), destroy.targetFilter(), destroy.tokenOnlyForSourceController(),
+                        destroy.tokenCount(), destroy.targetChosenByActivePlayer(), subject,
+                        destroy.referencedTarget());
+            }
+            case ExileTargetPermanentEffect exile when exile.subject().isSet() -> {
+                PermanentSubject subject = apply(exile.subject(), substitution);
+                yield subject == exile.subject() ? exile
+                        : new ExileTargetPermanentEffect(exile.tokenForController(), exile.targetFilter(), subject,
+                        exile.outsideGame());
+            }
             case DestroyAllPermanentsEffect destroy -> {
                 PermanentPredicate filter = apply(destroy.filter(), substitution);
                 CardEffect thenEffect = apply(destroy.thenEffect(), substitution);
                 yield filter == destroy.filter() && thenEffect == destroy.thenEffect() ? destroy
-                        : new DestroyAllPermanentsEffect(filter, destroy.cannotBeRegenerated(), destroy.scope(),
-                        thenEffect, destroy.spared(), destroy.referencedTarget());
+                        : new DestroyAllPermanentsEffect(filter, destroy.cannotBeRegenerated(), thenEffect);
             }
             case ChangeColorTextEffect change -> {
                 CardSubtype excluded = replaceSubtype(change.excludedReplacementCreatureType(), substitution);
@@ -611,6 +629,21 @@ public final class TextChangeTransformer {
             result.add(transformed);
         }
         return changed ? result : predicates;
+    }
+
+    /** A set subject with its filter's words changed; any other subject is returned as it is. */
+    private static PermanentSubject apply(PermanentSubject subject, Substitution substitution) {
+        return switch (subject) {
+            case PermanentSubject.ControlledBy set -> {
+                PermanentPredicate filter = apply(set.filter(), substitution);
+                yield filter == set.filter() ? set : Subjects.controlledBy(set.players(), filter);
+            }
+            case PermanentSubject.Except except -> {
+                PermanentSubject permanents = apply(except.permanents(), substitution);
+                yield permanents == except.permanents() ? except : Subjects.except(permanents, except.excluded());
+            }
+            default -> subject;
+        };
     }
 
     private static PermanentPredicate apply(PermanentPredicate predicate, Substitution substitution) {

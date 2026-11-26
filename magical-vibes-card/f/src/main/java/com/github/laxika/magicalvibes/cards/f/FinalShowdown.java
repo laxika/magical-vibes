@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -29,7 +29,7 @@ public class FinalShowdown extends Card {
                         new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.INDESTRUCTIBLE, null)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all creatures",
-                        new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()))
+                        DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()))
         )));
     }
 }

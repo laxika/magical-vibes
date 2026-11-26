@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -28,7 +27,7 @@ public class BoomBust extends Card {
                 ).withManaCost("{1}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Bust — Destroy all lands",
-                        new DestroyAllPermanentsEffect(new PermanentIsLandPredicate())
+                        DestroyTargetPermanentEffect.all(new PermanentIsLandPredicate())
                 ).withManaCost("{5}{R}")
         )));
     }

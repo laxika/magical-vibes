@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -36,6 +36,6 @@ public class ForceOfVigor extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Targets must be artifacts and/or enchantments"
-        ), 0, 2).addSpellEffect(new DestroyEachTargetPermanentEffect());
+        ), 0, 2).addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
@@ -82,7 +82,8 @@ final class ChosenPermanentsAiChoice {
         PermanentSubject chosen = Subjects.thisWay(StepKind.CHOOSE);
         for (CardEffect effect : resolving.getEffectsToResolve()) {
             boolean favors = switch (effect) {
-                case DestroyAllPermanentsEffect wipe -> chosen.equals(wipe.spared());
+                case DestroyTargetPermanentEffect wipe -> wipe.subject() instanceof PermanentSubject.Except except
+                        && chosen.equals(except.excluded());
                 case CantBlockThisTurnEffect restriction -> restriction.subject() instanceof PermanentSubject.Except except
                         && chosen.equals(except.excluded());
                 case GrantKeywordEffect grant -> chosen.equals(grant.subject());

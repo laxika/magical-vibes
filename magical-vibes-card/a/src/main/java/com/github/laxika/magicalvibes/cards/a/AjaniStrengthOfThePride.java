@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -54,7 +54,7 @@ public class AjaniStrengthOfThePride extends Card {
                 0,
                 List.of(new ConditionalEffect(
                         new ControllerLifeAtLeast(15, true),
-                        new ExileAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+                        ExileTargetPermanentEffect.all(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourceCardPredicate(),
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),

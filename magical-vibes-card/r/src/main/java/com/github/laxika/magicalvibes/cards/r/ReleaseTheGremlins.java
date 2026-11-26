@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -20,7 +20,7 @@ public class ReleaseTheGremlins extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
-        ), 100).addSpellEffect(new DestroyEachTargetPermanentEffect());
+        ), 100).addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
         addSpellEffect(new CreateTokenEffect(new XValue(), "Gremlin", 2, 2,
                 CardColor.RED, List.of(CardSubtype.GREMLIN), Set.of(), Set.of()));
     }

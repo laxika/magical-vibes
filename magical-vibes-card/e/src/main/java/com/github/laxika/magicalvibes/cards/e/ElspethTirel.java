@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -40,13 +40,12 @@ public class ElspethTirel extends Card {
         // −5: Destroy all other permanents except for lands and tokens.
         addActivatedAbility(new ActivatedAbility(
                 -5,
-                List.of(new DestroyAllPermanentsEffect(
+                List.of(DestroyTargetPermanentEffect.all(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
-                        ))
-                )),
+                        )))),
                 "\u22125: Destroy all other permanents except for lands and tokens."
         ));
     }

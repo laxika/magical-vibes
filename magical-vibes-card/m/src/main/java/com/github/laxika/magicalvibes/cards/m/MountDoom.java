@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -61,7 +61,7 @@ public class MountDoom extends Card {
                                 true
                         ),
                         ChoosePermanentsEffect.upTo(2, Subjects.allCreatures(), "up to two creatures to keep"),
-                        DestroyAllPermanentsEffect.sparing(
+                        DestroyTargetPermanentEffect.sparing(
                                 new PermanentIsCreaturePredicate(), Subjects.thisWay(StepKind.CHOOSE))
                 ),
                 "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact: Choose up to two creatures, then destroy the rest. Activate only as a sorcery.",

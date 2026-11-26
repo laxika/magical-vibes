@@ -337,7 +337,7 @@ public class TargetPolarityClassifier {
 
         // A wipe that reads the target's power as a threshold and spares the target itself (Fell the Mighty, Mandate of
         // Abaddon) aims at no board.
-        if (effect instanceof com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect wipe
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect wipe
                 && wipe.referencedTarget() != null) {
             return TargetPolarity.NEUTRAL;
         }
@@ -716,7 +716,6 @@ public class TargetPolarityClassifier {
      */
     private static final Map<String, TargetPolarity> FIXED_BY_CLASS_NAME = Map.ofEntries(
             // The target leaves the battlefield (or the board position it holds).
-            entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DisorientingChoiceEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PhaseOutTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),

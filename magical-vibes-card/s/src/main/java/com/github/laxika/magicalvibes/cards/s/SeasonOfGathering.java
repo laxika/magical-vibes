@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -39,9 +39,9 @@ public class SeasonOfGathering extends Card {
                         "Choose artifact or enchantment. Destroy all permanents of the chosen type.",
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption("Destroy all artifacts",
-                                        new DestroyAllPermanentsEffect(new PermanentIsArtifactPredicate())),
+                                        DestroyTargetPermanentEffect.all(new PermanentIsArtifactPredicate())),
                                 new ChooseOneEffect.ChooseOneOption("Destroy all enchantments",
-                                        new DestroyAllPermanentsEffect(new PermanentIsEnchantmentPredicate()))
+                                        DestroyTargetPermanentEffect.all(new PermanentIsEnchantmentPredicate()))
                         ))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Draw cards equal to the greatest power among creatures you control.",

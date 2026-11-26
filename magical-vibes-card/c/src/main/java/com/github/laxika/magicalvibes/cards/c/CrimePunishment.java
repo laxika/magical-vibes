@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -47,7 +47,7 @@ public class CrimePunishment extends Card {
                 ).withManaCost("{3}{W}{B}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Punishment — Destroy each artifact, creature, and enchantment with mana value X",
-                        new DestroyAllPermanentsEffect(artifactCreatureOrEnchantment)
+                        DestroyTargetPermanentEffect.all(artifactCreatureOrEnchantment)
                 ).withManaCost("{X}{B}{G}")
         )));
     }

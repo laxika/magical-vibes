@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -24,16 +24,16 @@ public class MercilessEviction extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all artifacts",
-                        new ExileAllPermanentsEffect(new PermanentIsArtifactPredicate())),
+                        ExileTargetPermanentEffect.all(new PermanentIsArtifactPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all creatures",
-                        new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate())),
+                        ExileTargetPermanentEffect.all(new PermanentIsCreaturePredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all enchantments",
-                        new ExileAllPermanentsEffect(new PermanentIsEnchantmentPredicate())),
+                        ExileTargetPermanentEffect.all(new PermanentIsEnchantmentPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all planeswalkers",
-                        new ExileAllPermanentsEffect(new PermanentIsPlaneswalkerPredicate()))
+                        ExileTargetPermanentEffect.all(new PermanentIsPlaneswalkerPredicate()))
         )));
     }
 }

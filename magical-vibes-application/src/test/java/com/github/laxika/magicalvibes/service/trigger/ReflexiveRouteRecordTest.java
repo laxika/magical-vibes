@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandThenFightEffect;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -131,7 +131,7 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         EXILE_THEN_EXILE_MATCHING(effect -> SequenceEffect.of(
                 ExileChosenPermanentsEffect.youControl(new PermanentIsCreaturePredicate(), "creature"),
                 new ConditionalEffect(HappenedThisWay.exiled(), new QueueReflexiveAbilityEffect(
-                        new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()))))),
+                        ExileTargetPermanentEffect.all(new PermanentIsCreaturePredicate()))))),
         CREATE_TOKEN_THEN(effect -> new CreateTokenThenEffect(CreateTokenEffect.ofTreasureToken(1), effect)),
         CREATE_TOKEN_ABOUT_THAT_TOKEN(effect -> CreateTokenThenEffect.aboutThatToken(
                 CreateTokenEffect.ofTreasureToken(1), effect)),

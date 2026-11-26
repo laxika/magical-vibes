@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 
@@ -24,7 +24,7 @@ public class WireflyHive extends Card {
                 List.of(new FlipCoinWinEffect(
                         new CreateTokenEffect("Wirefly", 2, 2, null,
                                 List.of(CardSubtype.INSECT), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)),
-                        new DestroyAllPermanentsEffect(new PermanentNamedPredicate("Wirefly"))
+                        DestroyTargetPermanentEffect.all(new PermanentNamedPredicate("Wirefly"))
                 )),
                 "{3}, {T}: Flip a coin. If you win the flip, create a 2/2 colorless Insect artifact creature token "
                         + "with flying named Wirefly. If you lose the flip, destroy all permanents named Wirefly."

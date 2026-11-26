@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.model.filter.PermanentTappedForSourceAbilitiesThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -37,7 +37,7 @@ public class VodalianWarMachine extends Card {
                         BoostEffect.self(2, 1)),
                 "Tap an untapped Merfolk you control: This creature gets +2/+1 until end of turn."
         ));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(merfolk,
                         new PermanentTappedForSourceAbilitiesThisTurnPredicate()))));
     }

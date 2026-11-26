@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -21,7 +21,7 @@ import java.util.List;
 public class AngelOfGlorysRise extends Card {
 
     public AngelOfGlorysRise() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ExileTargetPermanentEffect.all(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
                 ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.CREATURE), new CardSubtypePredicate(CardSubtype.HUMAN))))

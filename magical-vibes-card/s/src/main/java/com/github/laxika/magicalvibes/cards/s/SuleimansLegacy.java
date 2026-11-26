@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -18,7 +17,7 @@ public class SuleimansLegacy extends Card {
 
     public SuleimansLegacy() {
         // When this enchantment enters, destroy all Djinns and Efreets. They can't be regenerated.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DestroyTargetPermanentEffect.all(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.DJINN),
                         new PermanentHasSubtypePredicate(CardSubtype.EFREET))),

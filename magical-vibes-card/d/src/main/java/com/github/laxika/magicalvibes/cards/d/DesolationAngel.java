@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -22,10 +22,10 @@ public class DesolationAngel extends Card {
     public DesolationAngel() {
         addStaticEffect(new KickerEffect("{W}{W}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new NotKicked(),
-                new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentControlledBySourceControllerPredicate())))),
                 new ConditionalEffect(new Kicked(),
-                new DestroyAllPermanentsEffect(new PermanentIsLandPredicate())));
+                DestroyTargetPermanentEffect.all(new PermanentIsLandPredicate())));
     }
 }

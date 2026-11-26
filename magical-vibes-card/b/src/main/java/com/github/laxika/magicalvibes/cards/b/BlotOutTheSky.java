@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -49,6 +49,6 @@ public class BlotOutTheSky extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(6),
-                new DestroyAllPermanentsEffect(noncreatureNonland)));
+                DestroyTargetPermanentEffect.all(noncreatureNonland)));
     }
 }

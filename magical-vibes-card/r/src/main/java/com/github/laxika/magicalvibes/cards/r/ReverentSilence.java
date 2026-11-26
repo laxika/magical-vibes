@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
@@ -20,6 +20,6 @@ public class ReverentSilence extends Card {
                 List.of(new EachOpponentGainsLifeCastingCost(6)),
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
                 false));
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsEnchantmentPredicate()));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsEnchantmentPredicate()));
     }
 }

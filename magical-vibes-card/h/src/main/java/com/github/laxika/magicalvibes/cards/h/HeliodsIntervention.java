@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -35,7 +35,7 @@ public class HeliodsIntervention extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 ChooseOneEffect.ChooseOneOption.exactlyXTargets(
                         "Destroy X target artifacts and/or enchantments",
-                        new DestroyEachTargetPermanentEffect(),
+                        DestroyTargetPermanentEffect.eachTarget(),
                         artifactOrEnchantment,
                         1000
                 ),

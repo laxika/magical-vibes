@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -44,15 +43,11 @@ public class OblivionStone extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         SequenceEffect.of(
-                                new DestroyAllPermanentsEffect(
+                                DestroyTargetPermanentEffect.all(
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.FATE))
-                                        )),
-                                        false,
-                                        EachPermanentScope.ALL_PLAYERS,
-                                        null,
-                                        null),
+                                        ))),
                                 RemoveCountersEffect.allFrom(Subjects.allPermanents(), CounterType.FATE)
                         )
                 ),

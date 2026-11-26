@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -33,7 +33,7 @@ public class TheLastRonin extends Card {
 
     public TheLastRonin() {
         addTrigger(Triggers.chapter(1),
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
 
         addTrigger(Triggers.chapter(2), SequenceEffect.of(new MillEffect(4, Subjects.you()),
                 new ConditionalEffect(HappenedThisWay.atLeast(StepKind.MILL, 4),

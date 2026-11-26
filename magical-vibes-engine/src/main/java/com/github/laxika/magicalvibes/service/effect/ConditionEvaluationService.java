@@ -519,7 +519,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.PartyAlwaysFullEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDestroysPermanentsEffect;
@@ -2754,11 +2754,14 @@ public class ConditionEvaluationService {
                             && (effect.targetSpec().predicate() == null
                             || matchesPermanent(gameData, target, effect.targetSpec().predicate(), targetSpellContext)));
         }
-        if (effect instanceof DestroyAllPermanentsEffect destroyAll) {
-            if (destroyAll.scope() == EachPermanentScope.TARGET_PLAYER
+        if (effect instanceof DestroyTargetPermanentEffect destroyAll && destroyAll.sweepsBoard()) {
+            if (destroyAll.subject().declaresPlayerTarget()
                     && !controllerId.equals(targetSpell.getTargetId())) {
                 return false;
             }
+            return controlsMatchingLand(gameData, controllerId, destroyAll.setFilter(), targetSpellContext);
+        }
+        if (effect instanceof DestroyAllPermanentsEffect destroyAll) {
             return controlsMatchingLand(gameData, controllerId, destroyAll.filter(), targetSpellContext);
         }
         if (effect instanceof PlayerDestroysPermanentsEffect playerDestroys) {

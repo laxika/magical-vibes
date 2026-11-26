@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -19,9 +19,9 @@ public class KirtarsWrath extends Card {
     public KirtarsWrath() {
         addSpellEffect(new ConditionalReplacementEffect(
                 new GraveyardCardThreshold(7, null),
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true),
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate(), true),
                 SequenceEffect.of(
-                        new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true),
+                        DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate(), true),
                         CreateTokenEffect.whiteSpirit(2))));
     }
 }

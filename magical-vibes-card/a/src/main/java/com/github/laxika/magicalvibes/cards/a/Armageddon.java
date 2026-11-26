@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -28,6 +28,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Armageddon extends Card {
 
     public Armageddon() {
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsLandPredicate()));
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentIsLandPredicate()));
     }
 }

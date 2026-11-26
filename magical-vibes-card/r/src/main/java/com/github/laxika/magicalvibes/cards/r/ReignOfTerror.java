@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,7 +34,7 @@ public class ReignOfTerror extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentColorInPredicate(Set.of(color))
         ));
-        return SequenceEffect.of(new DestroyAllPermanentsEffect(filter, true),
+        return SequenceEffect.of(DestroyTargetPermanentEffect.all(filter, true),
                 new LoseLifeEffect(new Scaled(AmountThisWay.died(StepKind.DESTROY), 2), Subjects.you()));
     }
 }

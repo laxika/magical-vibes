@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -30,7 +30,7 @@ public class UginTheSpiritDragon extends Card {
         ));
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                List.of(ExileTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsColorlessPredicate()),
                         new PermanentMaxManaValueXPredicate()
                 )))),

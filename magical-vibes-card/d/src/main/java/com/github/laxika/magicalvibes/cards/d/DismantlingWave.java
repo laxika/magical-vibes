@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,11 +32,11 @@ public class DismantlingWave extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrEnchantmentOpponentControls,
                 "Targets must be artifacts or enchantments an opponent controls"), 0, 99)
-                .addSpellEffect(new DestroyEachTargetPermanentEffect());
+                .addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addCycling("{6}{W}{W}");
-        addTrigger(Triggers.youCycleThisCard(), new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCycleThisCard(), DestroyTargetPermanentEffect.all(new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsEnchantmentPredicate()))));
     }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -76,7 +76,7 @@ public class UrzaPlaneswalker extends Card {
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsPlaneswalkerPredicate()))),
-                        new DestroyAllPermanentsEffect(new PermanentNotPredicate(new PermanentIsLandPredicate()))
+                        DestroyTargetPermanentEffect.all(new PermanentNotPredicate(new PermanentIsLandPredicate()))
                 ),
                 "−10: Artifacts and planeswalkers you control gain indestructible until end of turn. "
                         + "Destroy all nonland permanents."

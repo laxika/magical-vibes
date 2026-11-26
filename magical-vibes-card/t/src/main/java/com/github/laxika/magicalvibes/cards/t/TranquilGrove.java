@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -18,7 +18,7 @@ public class TranquilGrove extends Card {
     public TranquilGrove() {
         // {1}{G}{G}: Destroy all other enchantments.
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}{G}",
-                List.of(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                List.of(DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))))),
                 "{1}{G}{G}: Destroy all other enchantments."));

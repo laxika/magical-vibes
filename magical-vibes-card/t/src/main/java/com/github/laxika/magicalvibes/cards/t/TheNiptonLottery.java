@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -24,7 +24,7 @@ public class TheNiptonLottery extends Card {
         addSpellEffect(GainControlOfTargetEffect.of(Subjects.thisWay(StepKind.CHOOSE), Duration.UNTIL_END_OF_TURN));
         addSpellEffect(new UntapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)));
         addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.thisWay(StepKind.CHOOSE)));
-        addSpellEffect(DestroyAllPermanentsEffect.sparing(
+        addSpellEffect(DestroyTargetPermanentEffect.sparing(
                 new PermanentIsCreaturePredicate(), Subjects.thisWay(StepKind.CHOOSE)));
     }
 }

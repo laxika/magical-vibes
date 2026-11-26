@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * and skips opponents' end steps ("At the beginning of your next end step" - Foggy Swamp Visions).
  *
  * <p>Reads {@code StackEntry.createdPermanentIds}, so it only ever touches the tokens this
- * resolution made — the same mechanism {@code DestroyAllPermanentsEffect.sparingPermanentsCreatedThisResolution}
+ * resolution made — the same mechanism {@code DestroyTargetPermanentEffect.sparingPermanentsCreatedThisResolution}
  * and {@code Subjects.createdThisResolution()} use. Sacrifice, not destruction (ignores
  * indestructible and regeneration).
  */

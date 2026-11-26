@@ -146,9 +146,6 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
 
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
 
     @Test
             @DisplayName("Exiles target and tracks exiled card with source permanent")

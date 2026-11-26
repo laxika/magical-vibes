@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +29,7 @@ public class NornsDominion extends Card {
         ));
 
         addTrigger(Triggers.planeswalkAwayFromThis(), SequenceEffect.of(
-                new DestroyAllPermanentsEffect(unmarkedNonland, false, EachPermanentScope.ALL_PLAYERS, null, null),
+                DestroyTargetPermanentEffect.all(unmarkedNonland),
                 RemoveCountersEffect.allFrom(Subjects.allPermanents(), CounterType.FATE)));
 
         target(TargetFilters.permanent()).addTrigger(Triggers.chaosEnsues(),

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -26,7 +26,7 @@ public class SubterraneanTremors extends Card {
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4),
-                new DestroyAllPermanentsEffect(new PermanentIsArtifactPredicate())));
+                DestroyTargetPermanentEffect.all(new PermanentIsArtifactPredicate())));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(8),
                 new CreateTokenEffect("Lizard", 8, 8, CardColor.RED,

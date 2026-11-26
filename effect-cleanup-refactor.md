@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files; run PO: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` per effect with the escape snapshot, `GrantSupertypeToEnchantedPermanentEffect` into `GrantSupertypeEffect(T, attached())`, the scavenge grant into `PerCard.SCAVENGE_FOR_MANA_COST`, `PerpetuallyBoostSourceEffect` into `PerpetuallyBoostCardEffect` (perpetual P/T on a graveyard card in layer 7c), 32 card files; run U: `MakeCreatureUnblockableEffect`'s five who flags into one `PermanentSubject` (`self`, `of`, `targetPermanent`, `.byCreaturesYourOpponentsControl()`), every duration a floating rule, 67 card files; run C1: the three remove-all records into `RemoveCountersEffect.allFromSelf` / `allFrom` / `allFromTarget`, an explicit "all" component replacing `MAX_VALUE`, "that many" read as `AmountThisWay(REMOVE_COUNTERS)`, 42 card files; runs C2-pre and C2: the batched set path in `PutCountersEffect` (a set's amount once, CR 608.2h; one Hero / loyalty event per resolution, CR 603.2c) and the three mass records as `onEachYouControl` / `onEach` / `onEachTargetPlayerControls`, 264 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (D-Destroy and K / K2, then R2, J, T, U8) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files; run PO: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` per effect with the escape snapshot, `GrantSupertypeToEnchantedPermanentEffect` into `GrantSupertypeEffect(T, attached())`, the scavenge grant into `PerCard.SCAVENGE_FOR_MANA_COST`, `PerpetuallyBoostSourceEffect` into `PerpetuallyBoostCardEffect` (perpetual P/T on a graveyard card in layer 7c), 32 card files; run U: `MakeCreatureUnblockableEffect`'s five who flags into one `PermanentSubject` (`self`, `of`, `targetPermanent`, `.byCreaturesYourOpponentsControl()`), every duration a floating rule, 67 card files; run C1: the three remove-all records into `RemoveCountersEffect.allFromSelf` / `allFrom` / `allFromTarget`, an explicit "all" component replacing `MAX_VALUE`, "that many" read as `AmountThisWay(REMOVE_COUNTERS)`, 42 card files; runs C2-pre and C2: the batched set path in `PutCountersEffect` (a set's amount once, CR 608.2h; one Hero / loyalty event per resolution, CR 603.2c) and the three mass records as `onEachYouControl` / `onEach` / `onEachTargetPlayerControls`, 264 card files; runs K-pre, K and K2: the destroy step records its departures beside a sacrifice step's, `DestroyEachTargetPermanentEffect` and the plain `DestroyAllPermanentsEffect` forms into `DestroyTargetPermanentEffect.all` / `allTargetPlayerControls` / `sparing` / `readingTarget` / `eachTarget` / `eachTargetMatching`, the plain `ExileAllPermanentsEffect` into `ExileTargetPermanentEffect.all`, 383 card files). Next: R2, J, T, U8 after their prerequisites |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,870 / 2,255 (after step 10 run C2) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,869 / 2,254 (after step 10 run K) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -481,6 +481,11 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `dealerControllerId` / `entryDealtByPermanent`: a permanent deals damage as itself, live or last known (CR 120.1, 608.2h).
   `PermanentRemovalService` refreshes the resolving entry's source snapshot as the source leaves, and last known information keeps
   lifelink, deathtouch, infect and wither (CR 608.2h).
+- `DestroyTargetPermanentEffect` (run K): wipes are set subjects, `all(filter[, cantRegen])`, `allTargetPlayerControls`, `sparing`,
+  `sparingPermanentsCreatedThisResolution`, `readingTarget` (component `referencedTarget`), each-target `eachTarget([cantRegen])` /
+  `eachTargetMatching(filter)` over `allTargets([filter])` (a resolution-time filter); a set's filter bound as it applies (CR 608.2h);
+  `sweepsBoard()` / `setFilter()`; every batch records DESTROY departures, kept per kind (`ResolutionResults.departures(kind)`,
+  `departureOf(id)`). `ExileTargetPermanentEffect.all(filter)` (run K2): a set exile is one occurrence (CR 603.2c).
 - `DrawCardEffect` (run D): `eachEvaluatedFor(amount, players)` reads each drawing player's own number, all fixed before the first draw
   (CR 608.2h), APNAP (CR 101.4). The AI asks `AiUtils.drawRecipients(draw)` / `drawsForController(effect)` who draws (controller,
   opponents, each player, a target, other); only the controller's draw is its card advantage, an opponents' draw a cost.
@@ -984,7 +989,9 @@ there and updates them when it lands.
 - **Draw**: run D folded `EachPlayerDrawsCardEffect`. Left: `EachOpponentDrawsCardEffect` (Struggle for Project Purity counts a replaced
   draw's extra cards, the owner's replaced-draw question D14 L17; Gandalf's handler), `EachOtherPlayerDrawsCardEffect` (the 11 gift files,
   the owner's gift opponent).
-- **Destroy**: `DestroyEachTargetPermanentEffect` and `DestroyAllPermanentsEffect` (`sparing`, `readingTarget`).
+- **Destroy and exile all**: done in runs K-pre, K and K2. Left on their records: `DestroyAllPermanentsEffect` for its two
+  per-destroyed-permanent riders (Seeds of Innocence, Stench of Evil), `ExileAllPermanentsEffect` for its five one-card riders
+  (source tracking, the upkeep return, perpetual changes, play permissions), `DestroyTargetPermanentThenEffect`, `ExileChosenPermanentsEffect`.
 - **Tokens and conjure**: `CreateTokenCopyOfSourceEffect`; the two multi-card battlefield conjure records
   (`ConjureCardToBattlefieldEffect`, 25 cards; `ConjureCardNamedOntoBattlefieldEffect`, 9).
 - **Register**: `RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect` (Season of the Bold, Nuka-Nuke Launcher): its watched player is a
@@ -1207,6 +1214,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U (2026-11-26): `MakeCreatureUnblockableEffect`'s five who flags become one `PermanentSubject` (67 card files by script); every duration a floating rule, so Ma Chao, Yuan Shao's Infantry and Sly Instigator stay unblockable after losing all abilities
 - Step 10, run C1 (2026-11-26): the three remove-all records absorbed into `RemoveCountersEffect.allFromSelf` / `allFrom` / `allFromTarget` with an explicit "all" component (42 card files by script); "that many" read as `AmountThisWay(REMOVE_COUNTERS)`, Sarulf's exile takes an amount; no rules change
 - Step 10, runs C2-pre and C2 (2026-11-26): the batched set path in `PutCountersEffect`, then the three mass-placement records absorbed into `onEachYouControl` / `onEach` / `onEachTargetPlayerControls` (264 card files by script); one Hero / loyalty trigger per resolution (CR 603.2c), the mass forms order counter replacements (CR 616.1) and raise "counters put on this"
+- Step 10, runs K-pre, K and K2 (2026-11-26): destroy departures kept per kind, the set-filter binding, the player-target spec and the wipe readers on `DestroyTargetPermanentEffect`; `DestroyEachTargetPermanentEffect` and the plain destroy-all / exile-all forms absorbed into `DestroyTargetPermanentEffect` / `ExileTargetPermanentEffect` factories (383 card files by script)
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2988,6 +2996,50 @@ refusal (its 7 tests and the AI module's Spring context); fixed, rerun (AI modul
 **Seen, not changed:** none new. AGENTS.md names no deleted class.
 
 **For the next run.** D-Destroy (the defect run before K, plan section 2), then K / K2.
+
+### Step 10, run K (destroy and exile all) (2026-11-26)
+
+Runs K-pre, K and K2 of the plan `s10-rest`. K-pre: `ResolutionResults` keeps the departures of the latest DESTROY and SACRIFICE
+step apart (`departuresByKind`, `departures(kind)`, `departureOf(id)`; Q7), `AmountThisWay` reads its own kind's and the subject
+lookups any; `DestroyTargetPermanentEffectHandler`'s batch path records DESTROY departures, binds a set's filter (triggering spell's
+mana value, amounts, shared creature types; CR 608.2h) and sets a set's dead cards as event cards (Necromantic Selection, Zero Point
+Ballad); the record gains `referencedTarget`, the harmful player-target spec, `BoardWipeEffect` (`sweepsBoard` / `setFilter`) and the
+factories; `Subjects.allTargets(filter)` is a resolution-time filter; readers: `SpellEvaluator`, `BoardEvaluator`, `TargetPolarityClassifier`,
+`ChosenPermanentsAiChoice`, `ConditionEvaluationService`, `TextChangeTransformer` (set subjects of both survivors). K: `DestroyEachTargetPermanentEffect`
+(+ handler) and `EachPermanentScope` deleted; `DestroyAllPermanentsEffect` reduced to `(filter, cannotBeRegenerated, thenEffect)` for Seeds of
+Innocence and Stench of Evil. K2: `ExileTargetPermanentEffect.all`; a set exile is one occurrence with the simultaneous-removal snapshots
+(as the old handler); `ExileAllPermanentsEffect` keeps its five rider cards. Ledger: 2 absorbed, 2 survivor, 2 unique. Ratchet
+2,870 / 2,255 → 2,869 / 2,254. No `CONVERSION_VERSION` bump.
+
+**Premises.** Held: the survivor's set path already destroyed a set as one batch; `controlledBy(eachPlayer() | targetPlayer(), f)` finds
+what the two scopes did; `except(set, spared)` is `spared`; each-target's targets are `allTargets()` (same spec, same skip of gone ones;
+Oracle en-Vec's delayed destroy reads its declared targets the same way). Not held: `thenEffect` can't fold (Seeds counts indestructible
+matches, Stench asks per land) and ExileAll's riders are one-card parameters, so both records stay, reduced.
+
+**Cards.** 383 files by a scratch script (HEAD text in, balanced parentheses, shape table, loud failure, leftover check, imports in
+place; deleted): `all` 249 + 35 `true` + 3 five-arg + Catastrophe, `allTargetPlayerControls` 9, `sparing` 5, `sparingPermanentsCreatedThisResolution`
+2, `readingTarget` 2, `eachTarget` 54 + 3 `true`, `eachTargetMatching` 5, exile `all` 49 calls; Seeds and Sunfall (`AmountThisWay(EXILE)`)
+by hand. Oracle text checked with `get_card` for 31 (the non-plain shapes and a sample of plain ones); all match.
+
+**Behaviour changes.** K-pre, each failing first on HEAD (`DestroyTargetPermanentEffectTest`): a set destroy's "died this way"
+counts (departures recorded), a destroy step after a sacrifice keeps "the sacrificed creature's power" (Q7), a set filter's amount and
+"shares a creature type with the sacrificed creature" are bound, "creatures target player controls" declares the harmful player target;
+the AI scores a survivor wipe (`SpellEvaluatorTest.destroyAllCreaturesScoresTheOpponentsCreatures`). K / K2: parity for the cards, from
+the survivor's paths: the log source name through `FaceDownVisibility` (log only), Urgent Necropsy and the other each-target cards are
+removal to the AI (`RemovalEffect.removalKind`), "would destroy a land you control" now reads each-target spells, Sunfall counts the
+creatures exiled rather than matched (its Oracle; the same number in every current case).
+
+**Pins** (old code: 30 classes, 536 tests, only the 6 new ones failing). **Tests changed:** `DestroyAllPermanentsEffectHandlerTest`
+(rider-form constructors; the two target-player tests moved to `DestroyTargetPermanentEffectTest`; the null-rider test now asserts the rider
+is required), `MediumAiDecisionEngineTest.castsUrgentNecropsyWithTargetEvidence` (forced step END_STEP → BEGINNING_OF_COMBAT: the spell is
+now removal, cast in the opponent's combat; assertions unchanged), `ExileAllPermanentsEffectHandlerTest` (`(filter, false)`), and
+`SpellCastingServiceTest`, `TriggerRouteRecordTest`, `StepTriggerServiceTest`, `ReflexiveRouteRecordTest`, `MultiPermanentChoiceAiStrategyTest`
+build the survivors. **Tests run** (one run, XML of this run): 5,272 classes plus the AI module, 5,847 result files, 52,262 tests, 0 failures: every card test of a card on either survivor or a changed record, the 5,134 classes naming one, the name-pattern classes, the readers' tests, both ratchets. Earlier K-only run: 997 files, 8,744 tests, 1 failure (Urgent Necropsy, above).
+
+**Seen, not changed** (defect queue): the exile target path and non-set several-permanent subjects aren't one rules-event occurrence;
+the AI scores a target-player wipe over both battlefields. AGENTS.md names no deleted class.
+
+**For the next run.** R2 (graveyard to battlefield), after its prerequisite (an evaluated counter amount, `sourceObjectCard()`).
 
 ## Prompt
 

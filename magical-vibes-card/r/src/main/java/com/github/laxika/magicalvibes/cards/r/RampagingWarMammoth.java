@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -34,6 +34,6 @@ public class RampagingWarMammoth extends Card {
                 0,
                 100
         ).withXScaledTargets().withCyclingTriggerTargets());
-        addTrigger(Triggers.youCycleThisCard(), new DestroyEachTargetPermanentEffect());
+        addTrigger(Triggers.youCycleThisCard(), DestroyTargetPermanentEffect.eachTarget());
     }
 }

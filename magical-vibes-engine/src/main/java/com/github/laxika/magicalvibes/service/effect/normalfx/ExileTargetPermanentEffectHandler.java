@@ -128,8 +128,9 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
 
     /**
      * Exiles what a non-target subject names. Several permanents ("exile this creature and target creature") leave as
-     * one event, so each one's leave abilities see the others leave with it (CR 603.10a); the target part of such a
-     * subject keeps its controller and last-known card and power for later steps, as the target path does.
+     * one event, so each one's leave abilities see the others leave with it (CR 603.10a); a set ("exile all
+     * creatures") is one occurrence of the exile event too (CR 603.2c). The target part of such a subject keeps its
+     * controller and last-known card and power for later steps, as the target path does.
      */
     private void exileSubject(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile) {
         List<UUID> exiled = new java.util.ArrayList<>();
@@ -152,7 +153,15 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
         try {
             // Each as it was before any of them left (CR 608.2h).
             named.forEach(permanent -> known.add(asLastKnown(gameData, permanent)));
-            exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers, moved);
+            if (exile.subject().isSet()) {
+                // "Exile all creatures": one event (CR 603.2c) whose leave abilities look back at everything that
+                // left with them (CR 603.10a).
+                gameData.runAsSingleCardExileBatch(() -> permanentRemovalService.performSimultaneousRemovals(
+                        gameData, named,
+                        () -> exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers, moved)));
+            } else {
+                exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers, moved);
+            }
         } finally {
             if (together) {
                 permanentRemovalService.endPermanentLeaveBatch(gameData);

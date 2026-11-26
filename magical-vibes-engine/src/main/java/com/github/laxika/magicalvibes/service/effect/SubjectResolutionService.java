@@ -535,9 +535,7 @@ public class SubjectResolutionService {
                 types.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
                 continue;
             }
-            entry.getResolutionResults().departures().stream()
-                    .filter(departure -> departure.permanentId().equals(id))
-                    .findFirst()
+            entry.getResolutionResults().departureOf(id)
                     .ifPresentOrElse(departure -> types.addAll(departure.lastKnownCardTypes()), () -> {
                         Permanent snapshot = lastKnownSnapshot(gameData, entry, id);
                         if (snapshot != null) {
@@ -573,9 +571,7 @@ public class SubjectResolutionService {
                 }
                 continue;
             }
-            entry.getResolutionResults().departures().stream()
-                    .filter(departure -> departure.permanentId().equals(id))
-                    .findFirst()
+            entry.getResolutionResults().departureOf(id)
                     .ifPresent(departure -> departure.lastKnownSubtypes().stream()
                             .filter(gameQueryService::isCreatureSubtype)
                             .forEach(types::add));
@@ -604,8 +600,7 @@ public class SubjectResolutionService {
                 return snapshot;
             }
         }
-        if (entry.getResolutionResults().departures().stream()
-                .anyMatch(departure -> departure.permanentId().equals(permanentId))) {
+        if (entry.getResolutionResults().departureOf(permanentId).isPresent()) {
             return null;
         }
         Permanent departed = gameData.departedPermanentSnapshots.values().stream()
@@ -1879,8 +1874,9 @@ public class SubjectResolutionService {
             case PermanentSubject.Target target -> targetIds(ctx, target.group()).stream()
                     .filter(id -> !ctx.gameData().playerIds.contains(id))
                     .toList();
-            case PermanentSubject.AllTargets ignored -> allTargetIds(ctx.entry()).stream()
+            case PermanentSubject.AllTargets allTargets -> allTargetIds(ctx.entry()).stream()
                     .filter(id -> !ctx.gameData().playerIds.contains(id))
+                    .filter(id -> allTargets.filter() == null || matchesNow(ctx, id, allTargets.filter()))
                     .toList();
             case PermanentSubject.Attached attached -> attachedIds(ctx, attached);
             case PermanentSubject.AttachedOrSource ignored -> listOf(attachedOrSourceId(ctx));
@@ -2259,6 +2255,13 @@ public class SubjectResolutionService {
         return targets.isEmpty() ? listOf(entry.getTargetId()) : targets;
     }
 
+    /** Whether the permanent {@code id} is on the battlefield and matches {@code filter} now, as the effect applies. */
+    private boolean matchesNow(Context ctx, UUID id, PermanentPredicate filter) {
+        Permanent permanent = gameQueryService.findPermanentById(ctx.gameData(), id);
+        return permanent != null && predicateEvaluationService.matchesPermanentPredicate(permanent, filter,
+                filterContext(ctx));
+    }
+
     /** Every target of the entry, whichever group it was chosen for; a lone target the entry stores apart. */
     private static List<UUID> allTargetIds(StackEntry entry) {
         return entry.getTargetIds().isEmpty() ? listOf(entry.getTargetId()) : entry.getTargetIds();
@@ -2617,11 +2620,9 @@ public class SubjectResolutionService {
                         thisWay.permanentFilter(), filterContext)) {
                     UUID controllerId = controllerOf(ctx, permanentId);
                     if (controllerId == null) {
-                        controllerId = ctx.entry().getResolutionResults().departures().stream()
-                                .filter(departure -> permanentId.equals(departure.permanentId()))
+                        controllerId = ctx.entry().getResolutionResults().departureOf(permanentId)
                                 .map(DepartureResult::lastKnownControllerId)
-                                .filter(Objects::nonNull)
-                                .findFirst().orElse(null);
+                                .orElse(null);
                     }
                     if (controllerId != null) {
                         controllers.add(controllerId);

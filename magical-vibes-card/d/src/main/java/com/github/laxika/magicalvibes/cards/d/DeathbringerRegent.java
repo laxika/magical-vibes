@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -32,7 +32,7 @@ public class DeathbringerRegent extends Card {
                                 new CastFromZone(Zone.HAND),
                                 new AnyPlayerControlsPermanentCount(5, creature, true)
                         ))),
-                new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 creature,
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                         ))));

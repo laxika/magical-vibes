@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,7 +21,7 @@ import java.util.List;
  *
  * <p>The trigger fires once per combat for any attacking player ({@link
  * Triggers.playerAttacks()}, which stores that player as the non-targeting target), so the
- * sweep is scoped to {@link EachPermanentScope#TARGET_PLAYER}. "Hasn't controlled continuously
+ * sweep is that player's ("target player") set. "Hasn't controlled continuously
  * since the beginning of the turn" is the summoning-sickness signal, so creatures that just arrived
  * are spared even if they have haste and stayed home.
  */
@@ -30,13 +29,12 @@ import java.util.List;
 public class TotalWar extends Card {
 
     public TotalWar() {
-        addTrigger(Triggers.playerAttacks(), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.playerAttacks(), DestroyTargetPermanentEffect.allTargetPlayerControls(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
                         new PermanentNotPredicate(new PermanentIsAttackingPredicate()),
-                        new PermanentControlledContinuouslySinceBeginningOfTurnPredicate())),
-                EachPermanentScope.TARGET_PLAYER));
+                        new PermanentControlledContinuouslySinceBeginningOfTurnPredicate()))));
     }
 }

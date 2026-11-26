@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SOS", collectorNumber = "105")
@@ -18,6 +18,6 @@ public class WitheringCurse extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new GainedLifeThisTurn(),
                 BoostEffect.allCreatures(-2, -2),
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate())));
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate())));
     }
 }

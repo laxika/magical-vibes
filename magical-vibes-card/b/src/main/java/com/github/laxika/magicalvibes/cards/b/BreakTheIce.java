@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -34,7 +33,7 @@ public class BreakTheIce extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new DestroyTargetPermanentEffect(qualifyingLand),
-                new DestroyAllPermanentsEffect(qualifyingLand)));
+                DestroyTargetPermanentEffect.all(qualifyingLand)));
         target(new PermanentPredicateTargetFilter(qualifyingLand,
                 "Target must be a snow land or a land that could produce colorless mana"));
     }

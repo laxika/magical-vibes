@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1576,7 +1576,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.fixturePermanents(cards);
                             test.harness.addToBattlefield(test.player1,
                                     card("Victim", CardType.ARTIFACT, CardSubtype.EQUIPMENT));
-                            test.opponentHelperAbilityResolves(new DestroyAllPermanentsEffect(
+                            test.opponentHelperAbilityResolves(DestroyTargetPermanentEffect.all(
                                     new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.EQUIPMENT))));
                         }),
                 watch("another creature you control leaves the battlefield without dying",

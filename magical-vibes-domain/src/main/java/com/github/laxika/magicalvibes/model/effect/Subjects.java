@@ -30,7 +30,7 @@ public final class Subjects {
     private static final PermanentSubject TARGET_DECLARED_ELSEWHERE = new PermanentSubject.TargetDeclaredElsewhere();
     private static final PermanentSubject PAID_AS_COST = new PermanentSubject.PaidAsCost();
     private static final PermanentSubject CONVOKED = new PermanentSubject.Convoked();
-    private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
+    private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets(null);
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
     private static final PermanentSubject ATTACHED_CREATURE = new PermanentSubject.Attached(true);
     private static final PermanentSubject LAST_ATTACHED_CREATURE = new PermanentSubject.Attached(true, true);
@@ -133,6 +133,14 @@ public final class Subjects {
     /** Every permanent target of the stack entry, across all its target groups ("untap up to four target permanents"). */
     public static PermanentSubject allTargets() {
         return ALL_TARGETS;
+    }
+
+    /**
+     * The targets of the stack entry that match {@code filter} as the effect applies ("destroy any of them that are
+     * Walls"); the filter is no target restriction.
+     */
+    public static PermanentSubject allTargets(PermanentPredicate filter) {
+        return filter == null ? ALL_TARGETS : new PermanentSubject.AllTargets(filter);
     }
 
     /** "Enchanted permanent": what the source Aura or Equipment is attached to, whatever it is. */

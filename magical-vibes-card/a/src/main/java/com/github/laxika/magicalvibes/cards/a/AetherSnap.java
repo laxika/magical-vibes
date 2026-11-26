@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -14,6 +14,6 @@ public class AetherSnap extends Card {
 
     public AetherSnap() {
         addSpellEffect(new RemoveAllCountersFromTargetPermanentEffect(Subjects.allPermanents()));
-        addSpellEffect(new ExileAllPermanentsEffect(new PermanentIsTokenPredicate()));
+        addSpellEffect(ExileTargetPermanentEffect.all(new PermanentIsTokenPredicate()));
     }
 }

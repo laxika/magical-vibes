@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -15,7 +15,7 @@ public class FightToTheDeath extends Card {
 
     public FightToTheDeath() {
         // Destroy all blocking creatures and all blocked creatures.
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentAnyOfPredicate(List.of(
                 new PermanentIsBlockingPredicate(),
                 new PermanentIsBlockedPredicate()))));
     }

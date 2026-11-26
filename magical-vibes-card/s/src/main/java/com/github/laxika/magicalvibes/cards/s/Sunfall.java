@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -20,9 +21,9 @@ import java.util.Set;
 public class Sunfall extends Card {
 
     public Sunfall() {
-        addSpellEffect(new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(ExileTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
         addSpellEffect(new CreateXTokenWithXCountersEffect(
-                incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE));
+                incubatorToken(), new AmountThisWay(StepKind.EXILE), CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     private static CreateTokenEffect incubatorToken() {

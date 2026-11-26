@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToNTargetPermanentsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -21,7 +21,7 @@ public class DevastatingMastery extends Card {
         addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 ReturnUpToNTargetPermanentsToHandEffect.opponentChooses(2, nonland())));
-        addSpellEffect(new DestroyAllPermanentsEffect(nonland()));
+        addSpellEffect(DestroyTargetPermanentEffect.all(nonland()));
     }
 
     private static PermanentNotPredicate nonland() {

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -22,7 +22,7 @@ public class TheElderspell extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be a planeswalker"
-        ), 0, 99).addSpellEffect(new DestroyEachTargetPermanentEffect());
+        ), 0, 99).addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
 
         addSpellEffect(new PutCountersEffect(
                 CounterType.LOYALTY,

@@ -150,9 +150,6 @@ class ExileFromHandToImprintEffectHandlerTest {
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
 
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
 
     private final CardPredicate filter = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
 

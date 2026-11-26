@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -52,7 +52,7 @@ public class TheCurseOfFenric extends Card {
 
     public TheCurseOfFenric() {
         addTrigger(Triggers.chapter(1),
-                new DestroyEachTargetPermanentEffect(),
+                DestroyTargetPermanentEffect.eachTarget(),
                 new EachPlayerCreatesTokenEffect(new CreateTokenEffect("Mutant", 3, 3, CardColor.GREEN,
                         List.of(CardSubtype.MUTANT),
                         Set.of(com.github.laxika.magicalvibes.model.Keyword.DEATHTOUCH), Set.of())

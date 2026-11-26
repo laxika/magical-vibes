@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,6 +15,6 @@ public class BlowYourHouseDown extends Card {
     public BlowYourHouseDown() {
         target(TargetFilters.creature(), 0, 3)
                 .addSpellEffect(new CantBlockThisTurnEffect(Subjects.target()))
-                .addSpellEffect(new DestroyEachTargetPermanentEffect(new PermanentHasSubtypePredicate(CardSubtype.WALL)));
+                .addSpellEffect(DestroyTargetPermanentEffect.eachTargetMatching(new PermanentHasSubtypePredicate(CardSubtype.WALL)));
     }
 }

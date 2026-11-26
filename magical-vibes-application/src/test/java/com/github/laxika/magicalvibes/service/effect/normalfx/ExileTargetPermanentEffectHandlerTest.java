@@ -155,9 +155,6 @@ class ExileTargetPermanentEffectHandlerTest {
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
 
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
 
     @Test
             @DisplayName("Exiles target permanent and logs the exile")

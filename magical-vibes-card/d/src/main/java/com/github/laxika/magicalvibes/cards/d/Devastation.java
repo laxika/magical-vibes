@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import java.util.List;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Devastation extends Card {
 
     public Devastation() {
-        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(
+        addSpellEffect(DestroyTargetPermanentEffect.all(new PermanentAnyOfPredicate(
                 List.of(new PermanentIsCreaturePredicate(), new PermanentIsLandPredicate()))));
     }
 }

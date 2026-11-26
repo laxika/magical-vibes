@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -17,7 +17,7 @@ public class BuildersBane extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
-        ), Integer.MAX_VALUE).addSpellEffect(new DestroyEachTargetPermanentEffect());
+        ), Integer.MAX_VALUE).addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
 
         addSpellEffect(DealDamageEffect.to(Subjects.eachPlayer(),
                 AmountThisWay.died(StepKind.DESTROY).controlledByYou()));

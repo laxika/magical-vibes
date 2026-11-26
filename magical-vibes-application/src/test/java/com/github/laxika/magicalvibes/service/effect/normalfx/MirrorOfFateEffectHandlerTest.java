@@ -152,9 +152,6 @@ class MirrorOfFateEffectHandlerTest {
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
 
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
 
     @Test
             @DisplayName("Exiles library immediately when no exiled cards to choose")

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
@@ -48,6 +48,6 @@ public class WhiteSunsTwilight extends Card {
         ));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(5),
-                DestroyAllPermanentsEffect.sparingPermanentsCreatedThisResolution(new PermanentIsCreaturePredicate())));
+                DestroyTargetPermanentEffect.sparingPermanentsCreatedThisResolution(new PermanentIsCreaturePredicate())));
     }
 }

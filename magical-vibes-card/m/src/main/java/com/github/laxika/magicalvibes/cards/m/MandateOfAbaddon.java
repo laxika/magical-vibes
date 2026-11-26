@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,7 +19,7 @@ public class MandateOfAbaddon extends Card {
 
     public MandateOfAbaddon() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(DestroyAllPermanentsEffect.readingTarget(
+                .addSpellEffect(DestroyTargetPermanentEffect.readingTarget(
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtMostAmountPredicate(
                                         new Sum(new TargetPower(true), new Fixed(-1))))),

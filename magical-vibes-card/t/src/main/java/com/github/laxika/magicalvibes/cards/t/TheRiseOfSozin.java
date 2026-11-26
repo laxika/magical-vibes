@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.f.FireLordSozin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -23,7 +23,7 @@ public class TheRiseOfSozin extends Card {
         setBackFaceCard(new FireLordSozin());
 
         addTrigger(Triggers.chapter(1),
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

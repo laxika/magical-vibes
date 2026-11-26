@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -49,12 +49,12 @@ public class ReignOfChaos extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target Plains and target white creature",
-                        List.<CardEffect>of(new DestroyEachTargetPermanentEffect()),
+                        List.<CardEffect>of(DestroyTargetPermanentEffect.eachTarget()),
                         List.of(plains, whiteCreature)
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target Island and target blue creature",
-                        List.<CardEffect>of(new DestroyEachTargetPermanentEffect()),
+                        List.<CardEffect>of(DestroyTargetPermanentEffect.eachTarget()),
                         List.of(island, blueCreature)
                 )
         )));

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeEffect;
@@ -31,7 +31,7 @@ public class KarnsSylex extends Card {
                 "{X}",
                 List.of(
                         new ExileSelfCost(),
-                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 new PermanentMaxManaValueXPredicate())))),
                 "{X}, {T}, Exile Karn's Sylex: Destroy each nonland permanent with mana value X or less. "

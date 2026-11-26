@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
@@ -27,7 +27,7 @@ public class CullingRitual extends Card {
         PermanentPredicate filter = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 new PermanentMaxManaValuePredicate(2)));
-        addSpellEffect(new DestroyAllPermanentsEffect(filter));
+        addSpellEffect(DestroyTargetPermanentEffect.all(filter));
         addSpellEffect(new AwardManaOfColorsEffect(List.of(ManaColor.BLACK, ManaColor.GREEN),
                 new AmountThisWay(StepKind.DESTROY)));
     }

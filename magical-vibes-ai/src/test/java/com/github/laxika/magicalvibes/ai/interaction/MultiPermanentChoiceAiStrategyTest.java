@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -150,7 +150,7 @@ class MultiPermanentChoiceAiStrategyTest {
         gameData.playerBattlefields.get(opponentId).add(opposing);
 
         ChoosePermanentsEffect choose = ChoosePermanentsEffect.upTo(1, Subjects.allCreatures(), "up to one");
-        answerChoice(choose, List.of(own, opposing), 1, DestroyAllPermanentsEffect.sparing(
+        answerChoice(choose, List.of(own, opposing), 1, DestroyTargetPermanentEffect.sparing(
                 new PermanentIsCreaturePredicate(), Subjects.thisWay(StepKind.CHOOSE)));
 
         assertChosen(List.of(own.getId()));

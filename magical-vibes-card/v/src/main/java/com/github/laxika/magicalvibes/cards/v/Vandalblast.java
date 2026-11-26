@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -49,7 +48,7 @@ public class Vandalblast extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new DestroyTargetPermanentEffect(false),
-                new DestroyAllPermanentsEffect(artifactYouDontControl())));
+                DestroyTargetPermanentEffect.all(artifactYouDontControl())));
         target(new PermanentPredicateTargetFilter(artifactYouDontControl(),
                 "Target must be an artifact you don't control"));
     }

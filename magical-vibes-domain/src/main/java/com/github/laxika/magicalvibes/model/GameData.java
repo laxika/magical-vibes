@@ -80,7 +80,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -3288,7 +3288,7 @@ public class GameData {
             List<UUID> chosenIds = List.copyOf(chosen);
             temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(controllerId, sourceCard,
                     new TriggeredAbility(Triggers.endStep(ActivePlayer.CHOSEN_PLAYER),
-                            new DestroyEachTargetPermanentEffect(new PermanentNotPredicate(
+                            DestroyTargetPermanentEffect.eachTargetMatching(new PermanentNotPredicate(
                                     new PermanentAttackedThisTurnPredicate()))),
                     null, chosenIds.getFirst(), playerId,
                     DelayedReferents.permanents(chosenIds).afterTurn(turnNumber)));

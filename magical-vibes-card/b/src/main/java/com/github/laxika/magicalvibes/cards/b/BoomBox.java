@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class BoomBox extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{6}",
-                List.of(new SacrificeSelfCost(), new DestroyEachTargetPermanentEffect()),
+                List.of(new SacrificeSelfCost(), DestroyTargetPermanentEffect.eachTarget()),
                 "{6}, {T}, Sacrifice this artifact: Destroy up to one target artifact, up to one target creature, and up to one target land.",
                 List.<TargetFilter>of(TargetFilters.artifact(), TargetFilters.creature(), TargetFilters.land()),
                 0,

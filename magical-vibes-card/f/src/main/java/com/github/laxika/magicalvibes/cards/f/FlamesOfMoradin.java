@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAlternateCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,7 @@ public class FlamesOfMoradin extends Card {
 
     public FlamesOfMoradin() {
         target(TargetFilters.artifact(), 0, 3)
-                .addSpellEffect(new DestroyEachTargetPermanentEffect(new PermanentIsArtifactPredicate()));
+                .addSpellEffect(DestroyTargetPermanentEffect.eachTargetMatching(new PermanentIsArtifactPredicate()));
         addSpellEffect(ConjureCardsEffect.duplicateOf(Subjects.departedThisWay(StepKind.DESTROY),
                         ConjureDestination.intoHand())
                 .withAbilities(List.of(new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -21,13 +21,13 @@ import java.util.List;
 public class DecreeOfAnnihilation extends Card {
 
     public DecreeOfAnnihilation() {
-        addSpellEffect(new ExileAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+        addSpellEffect(ExileTargetPermanentEffect.all(new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsLandPredicate()))));
         addSpellEffect(new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));
         addSpellEffect(ExileTargetPlayerHandEffect.handsOf(Subjects.eachPlayer()));
-        addTrigger(Triggers.youCycleThisCard(), new DestroyAllPermanentsEffect(new PermanentIsLandPredicate()));
+        addTrigger(Triggers.youCycleThisCard(), DestroyTargetPermanentEffect.all(new PermanentIsLandPredicate()));
         addCycling("{5}{R}{R}");
     }
 }

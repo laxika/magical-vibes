@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -38,12 +38,11 @@ public class PhyrexianScriptures extends Card {
                 new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true));
 
         // Chapter II: Destroy all nonartifact creatures
-        addTrigger(Triggers.chapter(2), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.chapter(2), DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())
-                ))
-        ));
+                ))));
 
         // Chapter III: Exile all opponents' graveyards
         addTrigger(Triggers.chapter(3), new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS));

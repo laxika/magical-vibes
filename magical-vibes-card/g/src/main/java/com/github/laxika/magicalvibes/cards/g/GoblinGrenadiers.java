@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -34,7 +34,7 @@ public class GoblinGrenadiers extends Card {
         // every chosen target; the ConditionalEffect after the sacrifice is the "if you do" gate.
         addTrigger(Triggers.attacksUnblocked(), new MayEffect(
                 SequenceEffect.of(new SacrificeSelfEffect(),
-                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DestroyEachTargetPermanentEffect())),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), DestroyTargetPermanentEffect.eachTarget())),
                 "Sacrifice Goblin Grenadiers to destroy target creature and target land?"
         ));
     }

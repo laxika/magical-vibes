@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
@@ -36,7 +36,7 @@ public class HakimLoreweaver extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}{U}",
-                List.of(new DestroyAllPermanentsEffect(new PermanentIsAuraAttachedToSourcePredicate())),
+                List.of(DestroyTargetPermanentEffect.all(new PermanentIsAuraAttachedToSourcePredicate())),
                 "{U}{U}, {T}: Destroy all Auras attached to Hakim, Loreweaver."
         ));
     }

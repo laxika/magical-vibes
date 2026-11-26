@@ -85,9 +85,11 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     /**
      * "Up to four target permanents" chosen across several target groups: every permanent target of the stack entry,
      * whichever group or effect it was chosen for (an ability whose targets are declared by its target filter or by
-     * several slots, not bound to one group).
+     * several slots, not bound to one group). A {@code filter} narrows them as the effect applies, not as they are
+     * chosen ("destroy any of them that are Walls", Blow Your House Down): a target that doesn't match it then is left
+     * alone; {@code null} for every target.
      */
-    record AllTargets() implements PermanentSubject {
+    record AllTargets(PermanentPredicate filter) implements PermanentSubject {
 
         @Override
         public boolean declaresTarget() {

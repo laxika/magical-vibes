@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,7 +31,7 @@ public class TetzimocPrimalDeath extends Card {
                 TargetFilters.creature(), null, null, ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
         ).withRevealsSourceFromHand());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasCountersPredicate(CounterType.PREY),

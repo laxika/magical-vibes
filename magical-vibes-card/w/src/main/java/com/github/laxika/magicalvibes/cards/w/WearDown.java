@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -29,6 +29,6 @@ public class WearDown extends Card {
                 )),
                 "Target must be an artifact or enchantment");
         targetWhenGiftPromised(artifactOrEnchantment, 1, 2, 2)
-                .addSpellEffect(new DestroyEachTargetPermanentEffect());
+                .addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
     }
 }

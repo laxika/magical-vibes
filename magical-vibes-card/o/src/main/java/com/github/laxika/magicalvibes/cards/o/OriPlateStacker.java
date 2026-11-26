@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,7 +30,7 @@ public class OriPlateStacker extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new DestroyAllPermanentsEffect(opponentArtifactOrEnchantment),
+                DestroyTargetPermanentEffect.all(opponentArtifactOrEnchantment),
                 new GainLifeEffect(new AmountThisWay(StepKind.DESTROY))));
     }
 }

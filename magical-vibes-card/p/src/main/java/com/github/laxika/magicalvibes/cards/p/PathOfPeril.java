@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
@@ -21,10 +21,10 @@ public class PathOfPeril extends Card {
         addCastingOption(AlternateHandCast.cleave("{4}{W}{B}", null));
         addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate())));
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate())));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()),
-                new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentMaxManaValuePredicate(2))))));
     }

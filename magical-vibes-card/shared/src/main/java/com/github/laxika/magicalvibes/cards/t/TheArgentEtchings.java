@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
@@ -69,7 +69,7 @@ public class TheArgentEtchings extends Card {
                 )))
         ));
         addTrigger(Triggers.chapter(3), SequenceEffect.of(
-                new DestroyAllPermanentsEffect(otherPermanents),
+                DestroyTargetPermanentEffect.all(otherPermanents),
                 new FlickerEffect(Subjects.source(), null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                         false, null, null, 0, false, false)
         ));

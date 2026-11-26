@@ -182,9 +182,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
 
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
 
     @Test
             @DisplayName("Logs and returns when original spell is no longer on the stack")

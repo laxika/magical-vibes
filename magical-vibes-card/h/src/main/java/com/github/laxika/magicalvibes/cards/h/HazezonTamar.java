@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreateTokenAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,7 +34,7 @@ public class HazezonTamar extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new RegisterDelayedCreateTokenAtNextUpkeepEffect(sandWarrior));
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ExileAllPermanentsEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), ExileTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.SAND),
                         new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))));

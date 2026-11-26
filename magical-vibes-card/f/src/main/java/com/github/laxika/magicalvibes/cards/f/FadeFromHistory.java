@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -29,6 +29,6 @@ public class FadeFromHistory extends Card {
                 new CreateTokenEffect(
                         new FixedIfCondition(new ControlsPermanent(artifactOrEnchantment), 1, 0),
                         "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of())));
-        addSpellEffect(new DestroyAllPermanentsEffect(artifactOrEnchantment));
+        addSpellEffect(DestroyTargetPermanentEffect.all(artifactOrEnchantment));
     }
 }

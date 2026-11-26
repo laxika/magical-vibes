@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -287,15 +287,21 @@ public class BoardEvaluator {
                 .withSourceControllerId(entry.getControllerId());
 
         if (effect instanceof DestroyAllPermanentsEffect wipe) {
-            if (wipe.scope() == EachPermanentScope.TARGET_PLAYER
-                    && !controllerId.equals(entry.getTargetId())) {
-                return false;
-            }
             if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
                 return false;
             }
             return wipe.filter() == null
                     || predicateEvaluationService.matchesPermanentPredicate(perm, wipe.filter(), filterContext);
+        }
+        // "Destroy all creatures [target player controls]": the target player's permanents only.
+        if (effect instanceof DestroyTargetPermanentEffect wipe && wipe.sweepsBoard()) {
+            if (wipe.subject().declaresPlayerTarget() && !controllerId.equals(entry.getTargetId())) {
+                return false;
+            }
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                return false;
+            }
+            return predicateEvaluationService.matchesPermanentPredicate(perm, wipe.setFilter(), filterContext);
         }
 
         if (effect instanceof DealDamageEffect aoe && aoe.sweepsBoard()

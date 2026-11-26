@@ -89,7 +89,8 @@ class DestroyTargetPermanentEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         destroyTargetPermanentHandler = new DestroyTargetPermanentEffectHandler(destructionSupport, gameQueryService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class));
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class));
 
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
         lenient().when(permanentControlSupportProvider.getObject()).thenReturn(permanentControlSupport);
@@ -154,10 +155,6 @@ class DestroyTargetPermanentEffectHandlerTest {
             return new StackEntry(StackEntryType.ACTIVATED_ABILITY, card, controllerId,
                     card.getName(), List.of(), targetId, sourcePermanentId);
         }
-
-        // =========================================================================
-        // DestroyAllPermanentsEffect
-        // =========================================================================
 
     @Test
             @DisplayName("Destroys target creature")

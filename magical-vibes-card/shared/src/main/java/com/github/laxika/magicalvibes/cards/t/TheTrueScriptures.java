@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnFrontEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -34,7 +34,7 @@ public class TheTrueScriptures extends Card {
                                 new PermanentIsPlaneswalkerPredicate())),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a creature or planeswalker an opponent controls.");
-        addTrigger(Triggers.chapter(1), new DestroyEachTargetPermanentEffect());
+        addTrigger(Triggers.chapter(1), DestroyTargetPermanentEffect.eachTarget());
         setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);

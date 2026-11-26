@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -58,7 +58,7 @@ public class LordWindgrace extends Card {
                 false,
                 null,
                 List.of(
-                        new DestroyEachTargetPermanentEffect(),
+                        DestroyTargetPermanentEffect.eachTarget(),
                         new CreateTokenEffect(
                                 6, "Cat Warrior", 2, 2, CardColor.GREEN,
                                 List.of(CardSubtype.CAT, CardSubtype.WARRIOR),

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +33,7 @@ public class GrandOssuary extends Card {
                 DistributeCountersAmongCreaturesOnDeathEffect.amongTargetCreaturesItsControllerControls(
                         CounterType.PLUS_ONE_PLUS_ONE, new TriggeringPermanentPower()));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
-                new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()),
+                ExileTargetPermanentEffect.all(new PermanentIsCreaturePredicate()),
                 new EachPlayerCreatesTokenEffect(
                         new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
                                 List.of(CardSubtype.SAPROLING), Set.of(), Set.of())

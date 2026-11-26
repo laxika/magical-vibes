@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
@@ -21,7 +21,7 @@ public class HidetsuguConsumesAll extends Card {
     public HidetsuguConsumesAll() {
         setBackFaceCard(new VesselOfTheAllConsuming());
 
-        addTrigger(Triggers.chapter(1), new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.chapter(1), DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 new PermanentMaxManaValuePredicate(1)))));
         addTrigger(Triggers.chapter(2), new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));

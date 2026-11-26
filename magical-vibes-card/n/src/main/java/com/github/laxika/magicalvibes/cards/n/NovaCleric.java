@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
@@ -17,7 +17,7 @@ public class NovaCleric extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{W}",
-                List.of(new SacrificeSelfCost(), new DestroyAllPermanentsEffect(
+                List.of(new SacrificeSelfCost(), DestroyTargetPermanentEffect.all(
                         new PermanentIsEnchantmentPredicate())),
                 "{2}{W}, {T}, Sacrifice Nova Cleric: Destroy all enchantments."
         ));

@@ -30,8 +30,8 @@ import java.util.Set;
  * is ("create a token whose power is equal to that card's power", Ritual of the Returned, Soul Separator).
  *
  * <p>{@link Stat#DIED}, {@code filter} and {@code yours} count only some of what a removal step that records its
- * departures removed (a sacrifice step, or the destroy step of {@code DestroyAllPermanentsEffect} or
- * {@code DestroyEachTargetPermanentEffect}): "for each creature that died this way" counts those put into a graveyard
+ * departures removed (a sacrifice step, or the destroy step of {@code DestroyTargetPermanentEffect} over a set or
+ * several targets): "for each creature that died this way" counts those put into a graveyard
  * (CR 700.4: one a replacement exiled instead was destroyed but didn't die), "for each nontoken creature destroyed this
  * way" those that, as they last existed on the battlefield, match {@code filter}, and "the number of creatures you
  * controlled that were destroyed this way" those the amount's controller controlled as they left (CR 608.2h). The

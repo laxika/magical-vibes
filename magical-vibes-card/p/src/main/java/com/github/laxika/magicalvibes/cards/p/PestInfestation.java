@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -37,7 +37,7 @@ public class PestInfestation extends Card {
         targetUpTo(new XValue(), new PermanentPredicateTargetFilter(
                 artifactOrEnchantment,
                 "Target must be an artifact or enchantment"
-        ), Integer.MAX_VALUE).addSpellEffect(new DestroyEachTargetPermanentEffect());
+        ), Integer.MAX_VALUE).addSpellEffect(DestroyTargetPermanentEffect.eachTarget());
 
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new Scaled(new XValue(), 2), "Pest", 1, 1,

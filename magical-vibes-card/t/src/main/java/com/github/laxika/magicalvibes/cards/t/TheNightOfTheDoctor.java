@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -26,7 +26,7 @@ public class TheNightOfTheDoctor extends Card {
 
     public TheNightOfTheDoctor() {
         addTrigger(Triggers.chapter(1),
-                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+                DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate()));
 
         addTrigger(Triggers.chapter(2), SequenceEffect.of(
                 ReturnCardFromGraveyardEffect.builder()

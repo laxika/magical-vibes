@@ -1024,6 +1024,13 @@ entwine with two modes (P09).
 - Sarulf, Realm Eater: its exile (`ExileOtherNonlandPermanentsWithManaValueAtMostEffectHandler`) moves each permanent with its own
   `removePermanentToExile`, not as one leave batch, so "whenever one or more ... leave" abilities see several events (one
   instruction moves them as one event: Conventions, "Rules a fold must keep"). Step 10 run C1 (seen, not changed). Sure of the code; no test.
+- `ExileTargetPermanentEffectHandler`: a plain `target()` over several targets ("exile up to two target creatures") exiles them
+  one by one with no leave batch, and a non-set several-permanent subject (`allOf(source(), target())`, `allTargets()`) gets the
+  leave batch but not the one rules-event occurrence a set has since run K2 (CR 603.2c, 603.10a: one instruction, one event).
+  Step 10 run K (seen, not changed). Sure of the code; no card test shows it.
+- The AI scores "destroy all [X] target player controls" (`DestroyTargetPermanentEffect.allTargetPlayerControls`) over both
+  battlefields, its own included (`SpellEvaluator.evaluateDestroyAllValue`, parity with the old wipe record). AI only, no rule.
+  Step 10 run K (seen, not changed). Sure.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

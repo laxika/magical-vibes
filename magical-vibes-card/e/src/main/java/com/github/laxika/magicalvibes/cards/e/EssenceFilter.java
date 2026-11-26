@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -21,9 +21,9 @@ public class EssenceFilter extends Card {
     public EssenceFilter() {
         addSpellEffect(new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Destroy all enchantments",
-                        new DestroyAllPermanentsEffect(new PermanentIsEnchantmentPredicate())),
+                        DestroyTargetPermanentEffect.all(new PermanentIsEnchantmentPredicate())),
                 new ChooseOneEffect.ChooseOneOption("Destroy all nonwhite enchantments",
-                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                        DestroyTargetPermanentEffect.all(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsEnchantmentPredicate(),
                                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE)))))))
         ))));

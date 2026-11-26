@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -35,7 +35,7 @@ public class MyojinOfInfiniteRage extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.DIVINITY),
-                        new DestroyAllPermanentsEffect(new PermanentIsLandPredicate())
+                        DestroyTargetPermanentEffect.all(new PermanentIsLandPredicate())
                 ),
                 "Remove a divinity counter from Myojin of Infinite Rage: Destroy all lands."
         ));

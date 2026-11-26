@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class Worldslayer extends Card {
         // Triggered: whenever equipped creature deals combat damage to a player,
         // destroy all permanents other than this Equipment
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DestroyAllPermanentsEffect(new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
+                DestroyTargetPermanentEffect.all(new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
         // Equip {5}
         addActivatedAbility(new EquipActivatedAbility("{5}"));

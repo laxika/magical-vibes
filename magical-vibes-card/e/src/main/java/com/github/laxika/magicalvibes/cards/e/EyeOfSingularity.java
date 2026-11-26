@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOtherPermanentsWithEnteringNameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -22,7 +22,7 @@ public class EyeOfSingularity extends Card {
         // When this enchantment enters, destroy each permanent with the same name as another
         // permanent, except for basic lands. They can't be regenerated.
         // World rule is an SBA — nothing on the card.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DestroyTargetPermanentEffect.all(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),

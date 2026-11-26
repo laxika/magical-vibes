@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesNonlandPermanentAndPutCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -25,7 +25,7 @@ public class EyeOfDoom extends Card {
                 "{2}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DestroyAllPermanentsEffect(new PermanentHasCountersPredicate(CounterType.DOOM))
+                        DestroyTargetPermanentEffect.all(new PermanentHasCountersPredicate(CounterType.DOOM))
                 ),
                 "{2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it."
         ));

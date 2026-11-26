@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -20,10 +20,10 @@ public class Catastrophe extends Card {
         addSpellEffect(new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all lands",
-                        new DestroyAllPermanentsEffect(new PermanentIsLandPredicate(), false)),
+                        DestroyTargetPermanentEffect.all(new PermanentIsLandPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all creatures",
-                        new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true))
+                        DestroyTargetPermanentEffect.all(new PermanentIsCreaturePredicate(), true))
         ))));
     }
 }

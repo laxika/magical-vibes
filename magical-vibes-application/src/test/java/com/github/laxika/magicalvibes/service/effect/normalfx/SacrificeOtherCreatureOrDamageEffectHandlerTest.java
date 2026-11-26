@@ -163,10 +163,6 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                     card.getName(), List.of(), targetId, sourcePermanentId);
         }
 
-        // =========================================================================
-        // DestroyAllPermanentsEffect
-        // =========================================================================
-
     @Test
             @DisplayName("Deals 7 damage to controller when no other creatures are present")
             void dealsDamageWhenNoOtherCreatures() {

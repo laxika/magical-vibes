@@ -1772,4 +1772,18 @@ class SpellEvaluatorTest {
 
         assertThat(withCreature).isEqualTo(empty);
     }
+
+    @Test
+    @DisplayName("Destroying all creatures is scored by the opponent's creatures it destroys")
+    void destroyAllCreaturesScoresTheOpponentsCreatures() {
+        com.github.laxika.magicalvibes.model.effect.CardEffect wipe =
+                new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect(Subjects.allCreatures());
+        double empty = spellEvaluator.evaluateAbilityEffects(gd, List.of(wipe), player1.getId());
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(angel);
+        double withCreature = spellEvaluator.evaluateAbilityEffects(gd, List.of(wipe), player1.getId());
+
+        assertThat(withCreature).isGreaterThan(empty);
+    }
 }

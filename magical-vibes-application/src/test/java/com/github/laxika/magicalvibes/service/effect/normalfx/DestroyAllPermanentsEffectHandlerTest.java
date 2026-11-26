@@ -47,7 +47,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -64,6 +63,9 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class DestroyAllPermanentsEffectHandlerTest {
+
+    /** A rider with no registered handler: the destruction is the same, the rider is skipped with a warning. */
+    private static final GainLifeEffect RIDER = new GainLifeEffect(new EventValue());
 
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private GraveyardService graveyardService;
@@ -105,21 +107,8 @@ class DestroyAllPermanentsEffectHandlerTest {
         ReflectionTestUtils.setField(destructionSupport, "departureService",
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
                         mock(GrantedTriggeredAbilitySupport.class), gameLogService));
-        com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService =
-                mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class);
-        lenient().when(amountEvaluationService.bindAmounts(org.mockito.ArgumentMatchers.any(),
-                        org.mockito.ArgumentMatchers.any(com.github.laxika.magicalvibes.model.filter.PermanentPredicate.class),
-                        org.mockito.ArgumentMatchers.any()))
-                .thenAnswer(invocation -> invocation.getArgument(1));
-        com.github.laxika.magicalvibes.service.effect.SubjectResolutionService subjectResolutionService =
-                mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class);
-        lenient().when(subjectResolutionService.bindPermanentSubjects(org.mockito.ArgumentMatchers.any(),
-                        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
-                        org.mockito.ArgumentMatchers.any()))
-                .thenAnswer(invocation -> invocation.getArgument(3));
         destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport,
-                predicateEvaluationService, effectHandlerRegistry, gameOutcomeService,
-                subjectResolutionService, amountEvaluationService);
+                predicateEvaluationService, effectHandlerRegistry, gameOutcomeService);
 
     }
 
@@ -208,7 +197,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card wrathCard = createCard("Wrath of God");
                 StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
@@ -232,7 +221,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card wrathCard = createCard("Wrath of God");
                 StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(spellbook), eq(filter), any())).thenReturn(false);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
@@ -253,7 +242,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card wrathCard = createCard("Wrath of God");
                 StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
@@ -274,7 +263,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card wrathCard = createCard("Wrath of God");
                 StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
@@ -293,7 +282,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card plagueWindCard = createCard("Plague Wind");
                 StackEntry entry = sorceryEntry(plagueWindCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(false);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
@@ -316,7 +305,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card wrathCard = createCard("Wrath of God");
                 StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
@@ -338,7 +327,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card plagueWindCard = createCard("Plague Wind");
                 StackEntry entry = sorceryEntry(plagueWindCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false, RIDER);
 
                 // Filter excludes controller's creatures (Plague Wind behavior)
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(myBears), eq(filter), any())).thenReturn(false);
@@ -362,7 +351,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card wrathCard = createCard("Wrath of God");
                 StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
@@ -372,27 +361,6 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
                 verify(gameLogService).append(gd, GameLog.isDestroyed(elves.getCard()));
-            }
-
-            @Test
-            @DisplayName("TARGET_PLAYER scope destroys only the targeted player's matching permanents")
-            void targetPlayerScopeDestroysOnlyTargetsPermanents() {
-                Permanent myBears = addCreature(player1Id, "Grizzly Bears");
-                Permanent angel = addCreature(player2Id, "Serra Angel");
-
-                Card rainCard = createCard("Rain of Daggers");
-                StackEntry entry = sorceryEntry(rainCard, player1Id, player2Id);
-                PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter,
-                        EachPermanentScope.TARGET_PLAYER);
-
-                when(predicateEvaluationService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.hasKeyword(gd, angel, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-
-                destroyAllPermanentsHandler.resolve(gd, entry, effect);
-
-                verifyDestroyed(angel);
-                verifyNotDestroyed(myBears);
             }
 
             @Test
@@ -434,7 +402,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 Card wrathCard = createCard("Wrath of God");
                 StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter);
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, RIDER);
 
                 when(predicateEvaluationService.matchesPermanentPredicate(any(), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
@@ -455,36 +423,10 @@ class DestroyAllPermanentsEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Records an empty destroy step when there is no player to sweep")
-            void recordsAnEmptyDestroyStepWithoutATargetPlayer() {
-                addCreature(player2Id, "Serra Angel");
-
-                Card rainCard = createCard("Rain of Daggers");
-                StackEntry entry = sorceryEntry(rainCard, player1Id, null);
-                entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(UUID.randomUUID()), List.of(player2Id)));
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(),
-                        EachPermanentScope.TARGET_PLAYER);
-
-                destroyAllPermanentsHandler.resolve(gd, entry, effect);
-
-                assertThat(entry.getResolutionResults().outcome(StepKind.DESTROY)).isEqualTo(StepOutcome.NONE);
-            }
-
-            @Test
-            @DisplayName("No rider dispatch when thenEffect is null")
-            void noRiderDispatchWithoutThenEffect() {
-                Permanent bears = addCreature(player1Id, "Grizzly Bears");
-
-                Card wrathCard = createCard("Wrath of God");
-                StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
-                PermanentPredicate filter = new PermanentIsCreaturePredicate();
-                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
-
-                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-
-                destroyAllPermanentsHandler.resolve(gd, entry, effect);
-
-                verify(effectHandlerRegistry, never()).getHandler(any());
+            @DisplayName("Needs a rider: a plain wipe is DestroyTargetPermanentEffect.all")
+            void needsARider() {
+                org.assertj.core.api.Assertions.assertThatThrownBy(
+                                () -> new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true, null))
+                        .isInstanceOf(NullPointerException.class);
             }
 }
