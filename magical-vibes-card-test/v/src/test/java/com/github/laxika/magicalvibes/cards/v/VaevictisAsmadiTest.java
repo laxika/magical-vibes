@@ -53,6 +53,8 @@ class VaevictisAsmadiTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B}{R}{G} at upkeep keeps Vaevictis Asmadi on the battlefield")
     void payingUpkeepKeepsDragon() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addDragon();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -68,6 +70,8 @@ class VaevictisAsmadiTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Vaevictis Asmadi")
     void decliningUpkeepSacrificesDragon() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addDragon();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -81,6 +85,8 @@ class VaevictisAsmadiTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the upkeep payment without enough mana still sacrifices Vaevictis Asmadi")
     void insufficientUpkeepPaymentSacrificesDragon() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addDragon();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -124,6 +130,8 @@ class VaevictisAsmadiTest extends BaseCardTest {
     @Test
     @DisplayName("The controller may decline an affordable upkeep payment")
     void canDeclineAffordableUpkeepPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addDragon();
         advanceToUpkeep(player1);
         harness.passBothPriorities();

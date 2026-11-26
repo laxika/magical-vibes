@@ -16,6 +16,8 @@ class DarbaTest extends BaseCardTest {
     @Test
     @DisplayName("Paying upkeep keeps Darba on the battlefield")
     void payingUpkeepKeepsDarba() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Darba());
 
         advanceToUpkeep(player1);
@@ -32,6 +34,8 @@ class DarbaTest extends BaseCardTest {
     @Test
     @DisplayName("Declining upkeep sacrifices Darba")
     void decliningUpkeepSacrificesDarba() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefieldAndReturn(player1, new Darba());
 
         advanceToUpkeep(player1);
@@ -45,6 +49,8 @@ class DarbaTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting upkeep with only one green mana still sacrifices Darba")
     void acceptingWithInsufficientManaSacrificesDarba() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Darba());
 
         advanceToUpkeep(player1);
@@ -71,6 +77,8 @@ class DarbaTest extends BaseCardTest {
     @Test
     @DisplayName("Declining upkeep with enough mana sacrifices Darba without spending mana")
     void decliningWithEnoughManaDoesNotSpendMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Darba());
 
         advanceToUpkeep(player1);
@@ -86,6 +94,8 @@ class DarbaTest extends BaseCardTest {
     @Test
     @DisplayName("Non-green mana cannot pay Darba's upkeep")
     void wrongManaColorsCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Darba());
 
         advanceToUpkeep(player1);
@@ -103,6 +113,8 @@ class DarbaTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's mana cannot pay Darba's upkeep")
     void opponentsManaCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Darba());
 
         advanceToUpkeep(player1);

@@ -262,6 +262,26 @@ public abstract class BaseCardTest {
      * permanent?", then "Discard a card?"): {@code payer} declines each question until the one starting with
      * {@code action}, which they accept; with {@code action} {@code null} they decline every one (not paying).
      */
+    /**
+     * Answers the pick of a ransom {@code payer} accepted to pay when the permanents it takes are all the candidates (one
+     * creature for "sacrifice a creature" or "put a -1/-1 counter on a creature", exactly two Swamps for "sacrifice two
+     * Swamps"): the shared prompt still asks it.
+     */
+    protected void answerForcedPick(Player payer) {
+        PendingInteraction.PermanentChoice single = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (single != null && payer.getId().equals(single.playerId()) && single.validPermanentIds().size() == 1) {
+            harness.handlePermanentChosen(payer, single.validPermanentIds().getFirst());
+            return;
+        }
+        PendingInteraction.MultiPermanentChoice multi =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        if (multi != null && payer.getId().equals(multi.playerId()) && multi.validIds().size() == multi.maxCount()) {
+            harness.handleMultiplePermanentsChosen(payer, multi.validIds());
+            return;
+        }
+        throw new IllegalStateException(payer.getUsername() + " isn't asked a pick with one possible answer");
+    }
+
     protected void payUnlessAlternative(Player payer, String action) {
         PendingInteraction.MayAbilityChoice asked;
         while ((asked = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)) != null

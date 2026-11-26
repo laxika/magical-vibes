@@ -24,6 +24,8 @@ class DragonTyrantTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Dragon Tyrant")
     void decliningUpkeepPaymentSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DragonTyrant());
 
         advanceToUpkeep(player1);
@@ -39,6 +41,8 @@ class DragonTyrantTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without four red mana still sacrifices Dragon Tyrant")
     void acceptingUpkeepPaymentWithoutEnoughManaSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DragonTyrant());
 
         advanceToUpkeep(player1);
@@ -55,6 +59,8 @@ class DragonTyrantTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {R}{R}{R}{R} keeps Dragon Tyrant on the battlefield")
     void payingUpkeepPaymentKeepsItOnBattlefield() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DragonTyrant());
 
         advanceToUpkeep(player1);
@@ -133,6 +139,8 @@ class DragonTyrantTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep payment can be declined even with enough red mana")
     void decliningAffordableUpkeepPaymentSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DragonTyrant());
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -147,6 +155,8 @@ class DragonTyrantTest extends BaseCardTest {
     @Test
     @DisplayName("Other colors cannot replace red mana in the upkeep payment")
     void upkeepPaymentRequiresFourRedMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DragonTyrant());
         advanceToUpkeep(player1);
         harness.passBothPriorities();

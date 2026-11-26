@@ -17,6 +17,8 @@ class WhipstitchedZombieTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {B} sacrifices Whipstitched Zombie")
     void declineSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WhipstitchedZombie());
 
         advanceToUpkeep(player1);
@@ -32,6 +34,8 @@ class WhipstitchedZombieTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B} keeps Whipstitched Zombie on the battlefield")
     void payKeeps() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WhipstitchedZombie());
 
         advanceToUpkeep(player1);
@@ -46,6 +50,8 @@ class WhipstitchedZombieTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without black mana still sacrifices Whipstitched Zombie")
     void acceptWithoutManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WhipstitchedZombie());
 
         advanceToUpkeep(player1);
@@ -58,6 +64,8 @@ class WhipstitchedZombieTest extends BaseCardTest {
     @Test
     @DisplayName("An upkeep trigger does not sacrifice a new Whipstitched Zombie after the original leaves")
     void triggerDoesNotAffectNewPermanent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent original = harness.addToBattlefieldAndReturn(player1, new WhipstitchedZombie());
 
         advanceToUpkeep(player1);
@@ -88,6 +96,8 @@ class WhipstitchedZombieTest extends BaseCardTest {
     @Test
     @DisplayName("May decline payment even when black mana is available")
     void declineWithManaAvailableSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WhipstitchedZombie());
 
         advanceToUpkeep(player1);
@@ -103,6 +113,8 @@ class WhipstitchedZombieTest extends BaseCardTest {
     @Test
     @DisplayName("Nonblack mana cannot pay the upkeep cost")
     void wrongColorManaCannotPay() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WhipstitchedZombie());
 
         advanceToUpkeep(player1);

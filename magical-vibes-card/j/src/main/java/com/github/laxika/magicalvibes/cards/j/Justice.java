@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,10 +25,7 @@ public class Justice extends Card {
     public Justice() {
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {W}{W}.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{W}{W}"),
-                        List.of(new SacrificeSelfEffect()),
-                        true));
+                UnlessPaysEffect.unlessYouPay("{W}{W}", new SacrificeSelfEffect()));
 
         // Whenever a red creature or spell deals damage, this enchantment deals that much
         // damage to that creature's or spell's controller.

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -49,6 +50,8 @@ class TombBladeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player2, true);
+
+        answerForcedPick(player2);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -142,6 +145,7 @@ class TombBladeTest extends BaseCardTest {
         resolveCombat(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(15);
         harness.assertNotOnBattlefield(player1, "Tomb Blade");
@@ -149,5 +153,25 @@ class TombBladeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Tomb Blade"));
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(LeylineOfSanctity.class)
+    @DisplayName("The ability doesn't target the damaged player: a player with hexproof is still asked and loses life")
+    void damagedPlayerWithHexproofIsStillAsked() {
+        Permanent blade = addCreatureReady(player1, new TombBlade());
+        blade.setAttacking(true);
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(13);
     }
 }

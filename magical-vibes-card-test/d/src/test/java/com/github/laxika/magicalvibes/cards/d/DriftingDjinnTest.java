@@ -19,6 +19,8 @@ class DriftingDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{U} at upkeep keeps Drifting Djinn on the battlefield")
     void payAtUpkeepKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DriftingDjinn());
 
         advanceToUpkeep(player1);
@@ -36,6 +38,8 @@ class DriftingDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay at upkeep sacrifices Drifting Djinn")
     void declineAtUpkeepSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DriftingDjinn());
 
         advanceToUpkeep(player1);
@@ -48,6 +52,8 @@ class DriftingDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still sacrifices Drifting Djinn")
     void acceptingWithoutEnoughManaSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DriftingDjinn());
 
         advanceToUpkeep(player1);
@@ -73,6 +79,8 @@ class DriftingDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Two colorless mana cannot pay the upkeep's blue requirement")
     void colorlessManaCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DriftingDjinn());
 
         advanceToUpkeep(player1);

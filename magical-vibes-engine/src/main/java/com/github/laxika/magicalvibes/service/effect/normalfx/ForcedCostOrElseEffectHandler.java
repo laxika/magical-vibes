@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -1061,7 +1060,6 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         return elseEffect instanceof SacrificeSelfEffect sacrifice && (sacrifice.sacrificesSource()
                 || sacrifice.subject() instanceof PermanentSubject.Attached
                 || sacrifice.subject() instanceof PermanentSubject.AttachedAtTrigger)
-                || elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect
                 || elseEffect instanceof DestroyTargetPermanentEffect destroy
                 && destroy.subject() instanceof PermanentSubject.Source;
     }

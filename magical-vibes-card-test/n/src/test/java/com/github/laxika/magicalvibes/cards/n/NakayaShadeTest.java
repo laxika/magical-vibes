@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NakayaShadeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Gets boost when no player pays")
     void getsBoostWhenNoPlayerPays() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shade = addShade();
 
         activateAbility();
@@ -29,7 +33,10 @@ class NakayaShadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Any player can pay to prevent the boost")
     void anyPlayerCanPayToPreventTheBoost() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shade = addShade();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
@@ -43,12 +50,19 @@ class NakayaShadeTest extends BaseCardTest {
     }
 
     @Test
-    void currentPlayerCanPayBeforeOtherPlayersAreAsked() {
+    @DisplayName("The other player is still asked after the current player paid, and the Shade gets no boost")
+    void currentPlayerPaysAndTheOtherPlayerIsStillAsked() {
         Permanent shade = addShade();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        giveManaSource(player2);
 
         activateAbility();
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class))
+                .isNotNull()
+                .satisfies(asked -> assertThat(asked.playerId()).isEqualTo(player2.getId()));
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
@@ -57,7 +71,10 @@ class NakayaShadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the activated shade gets boosted")
     void onlyTheActivatedShadeGetsBoosted() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shade = addShade();
         Permanent otherShade = harness.addToBattlefieldAndReturn(player1, new NakayaShade());
 
@@ -72,7 +89,10 @@ class NakayaShadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boosts source even if it changes controller before resolution")
     void boostsSourceEvenIfItChangesControllerBeforeResolution() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shade = addShade();
 
         activateAbilityWithoutResolving();
@@ -89,7 +109,10 @@ class NakayaShadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shade = addShade();
 
         activateAbility();
@@ -105,7 +128,10 @@ class NakayaShadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Repeated activations give cumulative boosts")
     void repeatedActivationsGiveCumulativeBoosts() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shade = addShade();
 
         activateAbility();

@@ -111,6 +111,8 @@ class CarnophageTest extends BaseCardTest {
     @CardUsed({Carnophage.class, Seizures.class})
     @DisplayName("Declining upkeep payment triggers an attached Seizures")
     void decliningPaymentTriggersAttachedAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent carnophage = addCarnophage();
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new Seizures());
         aura.setAttachedTo(carnophage.getId());

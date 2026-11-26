@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -38,12 +39,9 @@ public class GarzasAssassin extends Card {
 
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.YOU_OWN),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new ForcedCostOrElseEffect(
-                        PayLifeCost.halfLife(),
-                        List.of(new ExileSourceCardFromGraveyardEffect()),
-                        true,
-                        List.of(new ReturnSourceCardFromGraveyardToOwnerHandEffect())
-                ));
+                new UnlessPaysEffect(Subjects.you(), PayLifeCost.halfLife(),
+                        new ExileSourceCardFromGraveyardEffect(),
+                        new ReturnSourceCardFromGraveyardToOwnerHandEffect()));
     }
 
     private static PermanentPredicateTargetFilter nonblackCreatureTarget() {

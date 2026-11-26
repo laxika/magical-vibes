@@ -15,6 +15,8 @@ class PalladiaMorsTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {R}{G}{W} during upkeep keeps Palladia-Mors on the battlefield")
     void payingUpkeepCostKeepsPalladiaMors() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new PalladiaMors());
 
         advanceToUpkeep(player1);
@@ -31,6 +33,8 @@ class PalladiaMorsTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Palladia-Mors")
     void decliningUpkeepCostSacrificesPalladiaMors() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new PalladiaMors());
 
         advanceToUpkeep(player1);
@@ -45,6 +49,8 @@ class PalladiaMorsTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the upkeep payment without enough mana sacrifices Palladia-Mors")
     void acceptingUpkeepCostWithoutEnoughManaSacrificesPalladiaMors() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new PalladiaMors());
 
         advanceToUpkeep(player1);
@@ -71,6 +77,8 @@ class PalladiaMorsTest extends BaseCardTest {
     @Test
     @DisplayName("Three mana of the wrong colors cannot pay the upkeep cost")
     void wrongColorsCannotPayUpkeepCost() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new PalladiaMors());
 
         advanceToUpkeep(player1);
@@ -85,6 +93,8 @@ class PalladiaMorsTest extends BaseCardTest {
     @Test
     @DisplayName("An unpaid upkeep sacrifices Palladia-Mors controlled by the second player")
     void secondPlayersUnpaidUpkeepSacrificesPalladiaMors() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player2, new PalladiaMors());
 
         advanceToUpkeep(player2);

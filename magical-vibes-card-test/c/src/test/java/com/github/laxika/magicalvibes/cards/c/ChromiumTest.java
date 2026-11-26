@@ -99,6 +99,8 @@ class ChromiumTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Chromium")
     void decliningUpkeepPaymentSacrificesChromium() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Chromium());
 
         advanceToUpkeep(player1);
@@ -113,6 +115,8 @@ class ChromiumTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {W}{U}{B} during upkeep keeps Chromium")
     void payingUpkeepPaymentKeepsChromium() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Chromium());
 
         advanceToUpkeep(player1);
@@ -129,6 +133,8 @@ class ChromiumTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing to pay without enough mana still sacrifices Chromium")
     void insufficientUpkeepPaymentSacrificesChromium() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Chromium());
 
         advanceToUpkeep(player1);
@@ -155,6 +161,8 @@ class ChromiumTest extends BaseCardTest {
     @Test
     @DisplayName("Chromium may be sacrificed even when its upkeep payment is available")
     void canDeclineWithEnoughMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Chromium());
         gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(TurnStep.UPKEEP));
         gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.of(TurnStep.UPKEEP));
@@ -174,6 +182,8 @@ class ChromiumTest extends BaseCardTest {
     @Test
     @DisplayName("Three mana of the wrong colors cannot pay Chromium's upkeep")
     void wrongColorsCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Chromium());
 
         advanceToUpkeep(player1);

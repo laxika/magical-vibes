@@ -84,6 +84,7 @@ class TourachsChantTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(phalanx.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertLife(player1, 20);
@@ -141,8 +142,8 @@ class TourachsChantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
@@ -152,6 +153,8 @@ class TourachsChantTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B} during upkeep keeps Tourach's Chant")
     void payingUpkeepKeepsChant() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new TourachsChant());
 
         advanceToUpkeep(player1);
@@ -165,6 +168,8 @@ class TourachsChantTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Tourach's Chant")
     void decliningUpkeepPaymentSacrificesChant() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new TourachsChant());
 
         advanceToUpkeep(player1);

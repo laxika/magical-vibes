@@ -114,6 +114,8 @@ class VeiledApparitionTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{U} keeps the Illusion on the battlefield during upkeep")
     void payingUpkeepKeepsIllusion() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent apparition = addVeiledApparition();
         animate(apparition);
 
@@ -130,6 +132,8 @@ class VeiledApparitionTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {1}{U} sacrifices the Illusion during upkeep")
     void decliningUpkeepPaymentSacrificesIllusion() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent apparition = addVeiledApparition();
         animate(apparition);
 
@@ -175,6 +179,8 @@ class VeiledApparitionTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep payment can use one blue and one colorless mana")
     void upkeepPaymentAcceptsGenericMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent apparition = addVeiledApparition();
         animate(apparition);
         advanceToUpkeep(player1);
@@ -191,6 +197,8 @@ class VeiledApparitionTest extends BaseCardTest {
     @Test
     @DisplayName("Changing the animated creature's type does not remove its upkeep ability")
     void retainsUpkeepAbilityAfterCreatureTypeChanges() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent apparition = addVeiledApparition();
         animate(apparition);
         resolveAllTriggers();

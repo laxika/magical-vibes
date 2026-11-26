@@ -15,6 +15,8 @@ class SpindriftDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U} sacrifices Spindrift Drake")
     void declineSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SpindriftDrake());
 
         advanceToUpkeep(player1);
@@ -30,6 +32,8 @@ class SpindriftDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U} keeps Spindrift Drake on the battlefield")
     void payKeeps() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SpindriftDrake());
 
         advanceToUpkeep(player1);
@@ -44,6 +48,8 @@ class SpindriftDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without blue mana still sacrifices Spindrift Drake")
     void acceptWithoutManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SpindriftDrake());
 
         advanceToUpkeep(player1);
@@ -56,6 +62,8 @@ class SpindriftDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting with only nonblue mana still sacrifices Spindrift Drake")
     void acceptWithWrongColorManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SpindriftDrake());
 
         advanceToUpkeep(player1);
@@ -82,6 +90,8 @@ class SpindriftDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Payment remains optional when blue mana is available")
     void canDeclineWithBlueManaAvailable() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SpindriftDrake());
 
         advanceToUpkeep(player1);
@@ -96,6 +106,8 @@ class SpindriftDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Each Drake requires its own upkeep payment")
     void twoDrakesRequireSeparatePayments() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SpindriftDrake());
         harness.addToBattlefield(player1, new SpindriftDrake());
 

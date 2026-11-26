@@ -30,6 +30,8 @@ class FettergeistTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1} for each other creature you control keeps Fettergeist")
     void payingPerOtherCreatureKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Fettergeist());
         harness.addToBattlefield(player1, new MoorlandInquisitor());
         harness.addToBattlefield(player1, new MoorlandInquisitor());
@@ -46,6 +48,8 @@ class FettergeistTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana sacrifices Fettergeist")
     void notEnoughManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Fettergeist());
         harness.addToBattlefield(player1, new MoorlandInquisitor());
         harness.addToBattlefield(player1, new MoorlandInquisitor());
@@ -61,6 +65,8 @@ class FettergeistTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment sacrifices Fettergeist")
     void decliningSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Fettergeist());
         harness.addToBattlefield(player1, new MoorlandInquisitor());
 

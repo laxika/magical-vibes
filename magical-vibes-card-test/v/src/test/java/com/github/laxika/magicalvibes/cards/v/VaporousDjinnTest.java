@@ -19,6 +19,8 @@ class VaporousDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U}{U} phases the Djinn out")
     void declinePhasesOut() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);
@@ -34,6 +36,8 @@ class VaporousDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U}{U} keeps the Djinn on the battlefield and spends the mana")
     void payKeepsItOnBattlefield() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);
@@ -48,6 +52,8 @@ class VaporousDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough blue mana still phases the Djinn out")
     void acceptWithoutManaPhasesOut() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);
@@ -61,6 +67,8 @@ class VaporousDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting with only nonblue mana still phases the Djinn out")
     void acceptWithOnlyNonblueManaPhasesOut() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);
@@ -74,6 +82,8 @@ class VaporousDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("A phased-out Djinn phases in during its controller's next untap step")
     void phasesBackIn() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);
@@ -104,6 +114,8 @@ class VaporousDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Payment remains optional when enough blue mana is available")
     void canDeclineWithEnoughMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);
@@ -118,6 +130,8 @@ class VaporousDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Djinn phases in before untapping and triggers again that upkeep")
     void phasesInUntapsAndTriggersAgain() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);

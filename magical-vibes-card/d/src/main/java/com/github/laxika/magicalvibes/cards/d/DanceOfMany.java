@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCreatedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,10 +41,7 @@ public class DanceOfMany extends Card {
                 .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ExileTokensCreatedWithSourceEffect())
                 // "At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}{U}."
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new ForcedCostOrElseEffect(
-                                new PayManaCost("{U}{U}"),
-                                List.of(new SacrificeSelfEffect()),
-                                true));
+                        UnlessPaysEffect.unlessYouPay("{U}{U}", new SacrificeSelfEffect()));
         // "When the token leaves the battlefield, sacrifice this enchantment."
         addTrigger(Triggers.leavesBattlefield(new PermanentCreatedBySourcePredicate(), ObjectRelation.ANOTHER),
                 new SacrificeSelfEffect());

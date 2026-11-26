@@ -24,6 +24,8 @@ class DroughtTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {W}{W} at upkeep keeps Drought")
     void payAtUpkeepKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Drought());
 
         advanceToUpkeep(player1);
@@ -37,6 +39,8 @@ class DroughtTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay at upkeep sacrifices Drought")
     void declineAtUpkeepSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Drought());
 
         advanceToUpkeep(player1);

@@ -72,6 +72,8 @@ class SeizuresTest extends BaseCardTest {
     @Test
     @DisplayName("Declining payment deals 3 damage to the enchanted creature's controller")
     void declineDamagesController() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachSeizures(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -86,6 +88,8 @@ class SeizuresTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana applies the penalty")
     void cannotPayAppliesPenalty() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachSeizures(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -113,6 +117,8 @@ class SeizuresTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers when another effect taps the enchanted creature")
     void triggersWhenAnotherEffectTapsEnchantedCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachSeizures(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -161,6 +167,8 @@ class SeizuresTest extends BaseCardTest {
     @Test
     @DisplayName("Declining payment damages the creature's controller at resolution after a control change")
     void newControllerTakesDamageAfterControlChanges() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachSeizures(creature);
         int newControllerLife = gd.playerLifeTotals.get(player1.getId());
@@ -197,6 +205,8 @@ class SeizuresTest extends BaseCardTest {
     @Test
     @DisplayName("Seizures also triggers on its controller's own enchanted creature")
     void damagesAuraControllerWhenEnchantingOwnCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new BalduvianBears());
         attachSeizures(creature);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());

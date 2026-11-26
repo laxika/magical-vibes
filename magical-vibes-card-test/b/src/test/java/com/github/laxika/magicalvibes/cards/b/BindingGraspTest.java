@@ -56,6 +56,8 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {1}{U} sacrifices Binding Grasp")
     void decliningPaymentSacrificesAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
@@ -72,6 +74,8 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{U} keeps Binding Grasp on the battlefield")
     void payingKeepsAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
@@ -87,6 +91,8 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana sacrifices Binding Grasp")
     void insufficientManaSacrificesAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
@@ -103,6 +109,8 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Binding Grasp returns the creature to its previous controller")
     void sacrificingAuraReturnsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new BindingGrasp()));
@@ -147,6 +155,8 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep payment accepts one blue mana and one mana of another color")
     void upkeepPaymentAcceptsMixedColors() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
@@ -164,6 +174,8 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Two mana without blue cannot pay Binding Grasp's upkeep")
     void upkeepPaymentRequiresBlueMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
@@ -179,6 +191,8 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Binding Grasp removes only its enchanted creature's toughness bonus")
     void sacrificingAuraEndsToughnessBonus() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         int baseToughness = gqs.getEffectiveToughness(gd, creature);

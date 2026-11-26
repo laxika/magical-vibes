@@ -86,6 +86,8 @@ class ConversionTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {W}{W} sacrifices Conversion")
     void decliningPaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Conversion());
 
         advanceToUpkeep(player1);
@@ -101,6 +103,8 @@ class ConversionTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing to pay without enough mana sacrifices Conversion")
     void unableToPaySacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Conversion());
 
         advanceToUpkeep(player1);
@@ -114,6 +118,8 @@ class ConversionTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {W}{W} keeps Conversion on the battlefield")
     void payingKeepsEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Conversion());
 
         advanceToUpkeep(player1);
@@ -140,6 +146,8 @@ class ConversionTest extends BaseCardTest {
     @Test
     @DisplayName("The second player pays during their own upkeep")
     void secondPlayerPaysDuringOwnUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new Conversion());
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -154,6 +162,8 @@ class ConversionTest extends BaseCardTest {
     @Test
     @DisplayName("One white mana and one red cannot pay the upkeep and are not spent")
     void insufficientWhiteManaIsNotSpent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Conversion());
         advanceToUpkeep(player1);
         harness.passBothPriorities();

@@ -23,6 +23,8 @@ class HeavyweightDemolisherTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {3} during upkeep keeps Heavyweight Demolisher untapped")
     void payingUpkeepCostKeepsItUntapped() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent demolisher = addCreatureReady(player1, new HeavyweightDemolisher());
 
         advanceToUpkeep(player1);
@@ -37,6 +39,8 @@ class HeavyweightDemolisherTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment taps Heavyweight Demolisher")
     void decliningUpkeepCostTapsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent demolisher = addCreatureReady(player1, new HeavyweightDemolisher());
 
         advanceToUpkeep(player1);
@@ -50,6 +54,8 @@ class HeavyweightDemolisherTest extends BaseCardTest {
     @Test
     @DisplayName("Being unable to pay the upkeep cost taps Heavyweight Demolisher")
     void insufficientManaTapsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent demolisher = addCreatureReady(player1, new HeavyweightDemolisher());
 
         advanceToUpkeep(player1);
@@ -157,7 +163,10 @@ class HeavyweightDemolisherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying upkeep cost does not untap the creature")
     void payingUpkeepCostDoesNotUntapTheCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent demolisher = addCreatureReady(player1, new HeavyweightDemolisher());
         advanceToUpkeep(player1);
         demolisher.tap();

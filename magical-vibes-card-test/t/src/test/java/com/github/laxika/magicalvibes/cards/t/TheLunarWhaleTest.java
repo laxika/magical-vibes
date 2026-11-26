@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -160,6 +161,7 @@ class TheLunarWhaleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature Midnight Crusader Shuttle makes attacking wasn't declared, so it grants no library permission")
     void becomingAttackingWithoutBeingDeclaredDoesNotGrantLibraryPermission() {
         addCreatureReady(player1, new MidnightCrusaderShuttle());
         addCreatureReady(player1, new ScorpionSentinel());
@@ -174,7 +176,7 @@ class TheLunarWhaleTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, "You gain control of a creature that player controls");
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
                 () -> harness.handlePermanentChosen(player1, whale.getId()));
 

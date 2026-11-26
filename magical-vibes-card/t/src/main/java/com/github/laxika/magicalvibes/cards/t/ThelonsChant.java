@@ -5,17 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "76")
 public class ThelonsChant extends Card {
@@ -23,14 +21,14 @@ public class ThelonsChant extends Card {
     public ThelonsChant() {
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {G}.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(new PayManaCost("{G}"), List.of(new SacrificeSelfEffect()), true));
+                UnlessPaysEffect.unlessYouPay("{G}", new SacrificeSelfEffect()));
 
         // Whenever a player puts a Swamp onto the battlefield, this enchantment deals 3 damage
         // to that player unless they put a -1/-1 counter on a creature they control.
         addTrigger(Triggers.enters(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), ObjectRelation.ANY),
-                ForcedCostOrElseEffect.enchantedControllerMayPay(
+                UnlessPaysEffect.unlessPays(Subjects.controllerOf(Subjects.triggering()),
                         new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1),
-                        List.of(new DealDamageToPlayersEffect(3,
-                                Subjects.controllerOf(Subjects.triggering())))));
+                        new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.triggering())))
+                        .withPrompt("Put a -1/-1 counter on a creature you control?"));
     }
 }

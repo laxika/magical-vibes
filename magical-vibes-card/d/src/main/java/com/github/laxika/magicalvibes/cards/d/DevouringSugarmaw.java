@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.h.HaveForDinner;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -25,14 +25,12 @@ public class DevouringSugarmaw extends Card {
         setBackFaceCard(new HaveForDinner());
         addCastingOption(new AdventureCast("{1}{W}"));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
-                new SacrificePermanentCost(
-                        new PermanentAnyOfPredicate(List.of(
-                                new PermanentIsArtifactPredicate(),
-                                new PermanentIsEnchantmentPredicate(),
-                                new PermanentIsTokenPredicate())),
-                        "an artifact, enchantment, or token", false),
-                List.of(new TapPermanentsEffect(Subjects.source())), true));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay(new SacrificePermanentCost(
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentIsArtifactPredicate(),
+                                        new PermanentIsEnchantmentPredicate(),
+                                        new PermanentIsTokenPredicate())),
+                                "an artifact, enchantment, or token", false), new TapPermanentsEffect(Subjects.source())));
     }
 
     @Override

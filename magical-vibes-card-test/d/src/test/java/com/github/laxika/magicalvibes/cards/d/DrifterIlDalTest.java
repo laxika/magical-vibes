@@ -20,6 +20,8 @@ class DrifterIlDalTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U} sacrifices Drifter il-Dal")
     void decliningPaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DrifterIlDal());
 
         advanceToUpkeep(player1);
@@ -35,6 +37,8 @@ class DrifterIlDalTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U} keeps Drifter il-Dal on the battlefield")
     void payingKeepsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DrifterIlDal());
 
         advanceToUpkeep(player1);
@@ -49,6 +53,8 @@ class DrifterIlDalTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without blue mana sacrifices Drifter il-Dal")
     void acceptWithoutManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DrifterIlDal());
 
         advanceToUpkeep(player1);
@@ -99,6 +105,8 @@ class DrifterIlDalTest extends BaseCardTest {
     @Test
     @DisplayName("Non-blue mana cannot pay the upkeep cost")
     void nonBlueManaCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DrifterIlDal());
 
         advanceToUpkeep(player1);
@@ -113,6 +121,8 @@ class DrifterIlDalTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep payment can be declined even when blue mana is available")
     void mayDeclineWithManaAvailable() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new DrifterIlDal());
 
         advanceToUpkeep(player1);

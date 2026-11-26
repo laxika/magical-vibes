@@ -176,14 +176,22 @@ class HecatombTest extends BaseCardTest {
         castHecatomb();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
-        for (int i = 0; i < 4; i++) {
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-            harness.handlePermanentChosen(player1, player2.getId());
+        int targetsChosen = 0;
+        for (int i = 0; i < 12 && targetsChosen < 4; i++) {
+            if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+                harness.handlePermanentChosen(player1, player2.getId());
+                targetsChosen++;
+            } else {
+                harness.passBothPriorities();
+            }
         }
         for (int i = 0; i < 4; i++) {
             harness.passBothPriorities();
         }
+
+        assertThat(targetsChosen).isEqualTo(4);
 
         harness.assertLife(player1, 24);
         harness.assertLife(player2, 16);
@@ -202,6 +210,8 @@ class HecatombTest extends BaseCardTest {
         castHecatomb();
 
         harness.handleMayAbilityChosen(player1, true);
+
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Llanowar Elves")).isEqualTo(0);

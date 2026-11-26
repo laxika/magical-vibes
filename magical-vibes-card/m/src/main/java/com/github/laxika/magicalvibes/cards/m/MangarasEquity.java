@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
@@ -29,10 +28,7 @@ public class MangarasEquity extends Card {
 
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {1}{W}.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{1}{W}"),
-                        List.of(new SacrificeSelfEffect()),
-                        true));
+                UnlessPaysEffect.unlessYouPay("{1}{W}", new SacrificeSelfEffect()));
 
         // Whenever a creature of the chosen color deals damage to you or a white creature you
         // control, this enchantment deals that much damage to that creature.

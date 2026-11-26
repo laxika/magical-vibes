@@ -23,6 +23,8 @@ class PiruTheVolatileTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Piru")
     void decliningUpkeepPaymentSacrificesPiru() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PiruTheVolatile());
 
         advanceToUpkeep(player1);
@@ -37,6 +39,8 @@ class PiruTheVolatileTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {R}{W}{B} during upkeep keeps Piru")
     void payingUpkeepPaymentKeepsPiru() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PiruTheVolatile());
 
         advanceToUpkeep(player1);
@@ -87,6 +91,8 @@ class PiruTheVolatileTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Piru for its upkeep triggers its damage ability")
     void upkeepSacrificeTriggersDeathDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new PiruTheVolatile());
         harness.addToBattlefield(player2, new GrizzlyBears());

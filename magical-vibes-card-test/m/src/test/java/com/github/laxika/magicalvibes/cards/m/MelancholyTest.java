@@ -63,6 +63,8 @@ class MelancholyTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {B} sacrifices Melancholy")
     void decliningPaymentSacrificesAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new AetherMembrane());
         attachMelancholy(player1, creature);
 
@@ -79,6 +81,8 @@ class MelancholyTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B} keeps Melancholy on the battlefield")
     void payingKeepsAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new AetherMembrane());
         attachMelancholy(player1, creature);
 
@@ -155,6 +159,8 @@ class MelancholyTest extends BaseCardTest {
     @Test
     @DisplayName("Controller may decline upkeep payment even when black mana is available")
     void canDeclineAffordablePayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new AetherMembrane());
         attachMelancholy(player1, creature);
         advanceToUpkeep(player1);

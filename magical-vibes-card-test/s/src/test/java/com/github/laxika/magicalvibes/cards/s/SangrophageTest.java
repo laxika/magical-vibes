@@ -41,14 +41,18 @@ class SangrophageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot pay 2 life at 1 life, so Sangrophage is tapped")
+    @DisplayName("At 1 life its controller can't pay 2 life, isn't asked, and Sangrophage is tapped")
     void insufficientLifeTapsSangrophage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent sangrophage = addSangrophage();
         harness.setLife(player1, 1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class))
+                .isNull();
 
         assertThat(sangrophage.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);

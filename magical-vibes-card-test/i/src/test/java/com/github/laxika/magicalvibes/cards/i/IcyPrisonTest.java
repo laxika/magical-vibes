@@ -125,6 +125,8 @@ class IcyPrisonTest extends BaseCardTest {
     @Test
     @DisplayName("Both players declining to pay sacrifices Icy Prison and returns the creature")
     void bothPlayersDecliningSacrificesAndReturns() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new BalduvianBears());
         castAndResolveIcyPrison(harness.getPermanentId(player2, "Balduvian Bears"));
 
@@ -146,6 +148,8 @@ class IcyPrisonTest extends BaseCardTest {
     @Test
     @DisplayName("Controller paying {3} keeps Icy Prison and the exile")
     void controllerPayingKeepsPrison() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new BalduvianBears());
         castAndResolveIcyPrison(harness.getPermanentId(player2, "Balduvian Bears"));
 
@@ -160,8 +164,33 @@ class IcyPrisonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Every player is asked to pay {3}, even after the controller paid")
+    void everyPlayerIsAskedEvenAfterOnePaid() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+        harness.addToBattlefield(player2, new BalduvianBears());
+        castAndResolveIcyPrison(harness.getPermanentId(player2, "Balduvian Bears"));
+        giveManaSource(player2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull()
+                .satisfies(asked -> assertThat(asked.playerId()).isEqualTo(player2.getId()));
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertOnBattlefield(player1, "Icy Prison");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Opponent paying {3} after controller declines keeps Icy Prison")
     void opponentPayingKeepsPrison() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new BalduvianBears());
         castAndResolveIcyPrison(harness.getPermanentId(player2, "Balduvian Bears"));
 
@@ -179,6 +208,8 @@ class IcyPrisonTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled creature returns under its owner's control")
     void exiledCreatureReturnsToItsOwner() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new BalduvianBears());
         UUID bearsId = harness.getPermanentId(player2, "Balduvian Bears");
         gd.stolenCreatures.put(bearsId, player1.getId());
@@ -237,6 +268,8 @@ class IcyPrisonTest extends BaseCardTest {
     @CardUsed({Opalescence.class, KalitasTraitorOfGhet.class, NecromancersMagemark.class})
     @DisplayName("The last player's decline asks for an animated Icy Prison's death replacement before it is sacrificed")
     void lastDeclineAsksForTheDeathReplacementBeforeIcyPrisonIsSacrificed() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Opalescence());
         Permanent prison = harness.addToBattlefieldAndReturn(player1, new IcyPrison());
         harness.addToBattlefield(player2, new KalitasTraitorOfGhet());

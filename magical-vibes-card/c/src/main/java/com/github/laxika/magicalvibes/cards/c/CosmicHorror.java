@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "126")
 @CardRegistration(set = "LEG", collectorNumber = "92")
@@ -19,9 +22,7 @@ public class CosmicHorror extends Card {
         // At the beginning of your upkeep, destroy this creature unless you pay {3}{B}{B}{B}.
         // If this creature is destroyed this way, it deals 7 damage to you.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{3}{B}{B}{B}"),
-                        List.of(new DestroySourceAndDamageControllerIfDestroyedEffect(7)),
-                        true));
+                UnlessPaysEffect.unlessYouPay("{3}{B}{B}{B}", SequenceEffect.of(new DestroyTargetPermanentEffect(Subjects.source()), new ConditionalEffect(HappenedThisWay.destroyed(),
+                                new DealDamageToPlayersEffect(7, Subjects.you())))));
     }
 }

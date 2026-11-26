@@ -74,6 +74,8 @@ class PitSpawnTest extends BaseCardTest {
     @Test
     @DisplayName("Paying Pit Spawn's upkeep cost keeps it on the battlefield")
     void payingUpkeepCostKeepsPitSpawn() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitSpawn());
 
         advanceToUpkeep(player1);
@@ -88,6 +90,8 @@ class PitSpawnTest extends BaseCardTest {
     @Test
     @DisplayName("Declining Pit Spawn's upkeep cost sacrifices it")
     void decliningUpkeepCostSacrificesPitSpawn() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitSpawn());
 
         advanceToUpkeep(player1);
@@ -100,6 +104,8 @@ class PitSpawnTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the upkeep cost without enough mana still sacrifices Pit Spawn")
     void acceptingUpkeepCostWithoutEnoughManaSacrificesPitSpawn() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitSpawn());
 
         advanceToUpkeep(player1);
@@ -144,6 +150,8 @@ class PitSpawnTest extends BaseCardTest {
     @Test
     @DisplayName("One black mana and one green mana cannot pay the upkeep cost")
     void upkeepPaymentRequiresTwoBlackMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitSpawn());
 
         advanceToUpkeep(player1);

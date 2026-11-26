@@ -18,6 +18,8 @@ class BreedingPitTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {B}{B} sacrifices Breeding Pit")
     void decliningPaymentSacrificesEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new BreedingPit());
 
         advanceToUpkeep(player1);
@@ -33,6 +35,8 @@ class BreedingPitTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B}{B} keeps Breeding Pit on the battlefield")
     void payingKeepsEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new BreedingPit());
 
         advanceToUpkeep(player1);
@@ -47,6 +51,8 @@ class BreedingPitTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without {B}{B} still sacrifices Breeding Pit")
     void acceptingPaymentWithoutEnoughManaSacrificesEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new BreedingPit());
 
         advanceToUpkeep(player1);
@@ -61,6 +67,8 @@ class BreedingPitTest extends BaseCardTest {
     @Test
     @DisplayName("Colorless mana cannot pay the second black mana of the upkeep cost")
     void colorlessManaCannotPayBlackUpkeepCost() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new BreedingPit());
 
         advanceToUpkeep(player1);
@@ -123,6 +131,8 @@ class BreedingPitTest extends BaseCardTest {
     @Test
     @DisplayName("The controller may decline the upkeep payment even with enough black mana")
     void canDeclinePaymentWithEnoughMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new BreedingPit());
 
         advanceToUpkeep(player1);

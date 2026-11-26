@@ -1,20 +1,18 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "119")
 public class Withercrown extends Card {
@@ -26,11 +24,7 @@ public class Withercrown extends Card {
                 // this creature."
                 .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(
                         Triggers.upkeep(ActivePlayer.YOU),
-                        new ForcedCostOrElseEffect(
-                                new SacrificePermanentCost(new PermanentIsSourcePermanentPredicate(),
-                                        "Sacrifice this creature", false),
-                                List.of(new LoseLifeEffect(1, Subjects.you())),
-                                true)),
+                        UnlessPaysEffect.unlessYouPay(new SacrificeSelfCost(), new LoseLifeEffect(1, Subjects.you()))),
                         Subjects.attachedCreature()));
     }
 }

@@ -69,6 +69,8 @@ class ThirstTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U} sacrifices Thirst")
     void decliningPaymentSacrificesAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BayFalcon());
         attachThirst(player1, creature);
 
@@ -85,6 +87,8 @@ class ThirstTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U} keeps Thirst on the battlefield")
     void payingKeepsAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BayFalcon());
         attachThirst(player1, creature);
 

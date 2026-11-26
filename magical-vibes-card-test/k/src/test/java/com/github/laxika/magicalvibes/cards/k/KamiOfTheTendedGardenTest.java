@@ -26,6 +26,8 @@ class KamiOfTheTendedGardenTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {G} sacrifices Kami of the Tended Garden")
     void declineSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KamiOfTheTendedGarden());
 
         advanceToUpkeep(player1);
@@ -41,6 +43,8 @@ class KamiOfTheTendedGardenTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G} keeps Kami of the Tended Garden on the battlefield")
     void payKeeps() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KamiOfTheTendedGarden());
 
         advanceToUpkeep(player1);
@@ -139,6 +143,8 @@ class KamiOfTheTendedGardenTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Kami during upkeep triggers Soulshift")
     void upkeepSacrificeTriggersSoulshift() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KamiOfTheTendedGarden());
         Card spirit = new NikkoOnna();
         harness.setGraveyard(player1, List.of(spirit));

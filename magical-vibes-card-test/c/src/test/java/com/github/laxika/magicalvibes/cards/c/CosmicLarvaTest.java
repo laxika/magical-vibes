@@ -56,6 +56,7 @@ class CosmicLarvaTest extends BaseCardTest {
         mountain.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Cosmic Larva");
         harness.assertInGraveyard(player1, "Forest");
@@ -108,6 +109,7 @@ class CosmicLarvaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(landCount(player1)).isZero();
         harness.assertOnBattlefield(player1, "Cosmic Larva");

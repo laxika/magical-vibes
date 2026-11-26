@@ -67,6 +67,8 @@ class GlaciersTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {W}{U} sacrifices Glaciers")
     void decliningPaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Glaciers());
 
         advanceToUpkeep(player1);
@@ -82,6 +84,8 @@ class GlaciersTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {W}{U} keeps Glaciers on the battlefield")
     void payingKeepsEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Glaciers());
 
         advanceToUpkeep(player1);
@@ -127,6 +131,8 @@ class GlaciersTest extends BaseCardTest {
     @Test
     @DisplayName("Two white mana cannot pay the white and blue upkeep cost")
     void missingBlueManaSacrificesWithoutPartialPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Glaciers());
 
         advanceToUpkeep(player1);

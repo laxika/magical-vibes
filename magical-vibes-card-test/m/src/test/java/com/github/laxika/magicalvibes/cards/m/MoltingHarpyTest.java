@@ -16,6 +16,8 @@ class MoltingHarpyTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2} at upkeep keeps Molting Harpy on the battlefield")
     void payingUpkeepCostKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MoltingHarpy());
 
         advanceToUpkeep(player1);
@@ -30,6 +32,8 @@ class MoltingHarpyTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay at upkeep sacrifices Molting Harpy")
     void decliningUpkeepPaymentSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MoltingHarpy());
 
         advanceToUpkeep(player1);
@@ -44,6 +48,8 @@ class MoltingHarpyTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana sacrifices Molting Harpy")
     void notEnoughManaSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MoltingHarpy());
 
         advanceToUpkeep(player1);
@@ -69,6 +75,8 @@ class MoltingHarpyTest extends BaseCardTest {
     @Test
     @DisplayName("Colored mana can pay the generic upkeep cost")
     void coloredManaPaysUpkeepCost() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MoltingHarpy());
 
         advanceToUpkeep(player1);
@@ -85,6 +93,8 @@ class MoltingHarpyTest extends BaseCardTest {
     @Test
     @DisplayName("Payment remains optional when sufficient mana is available")
     void decliningWithEnoughManaSacrificesWithoutSpendingMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MoltingHarpy());
 
         advanceToUpkeep(player1);

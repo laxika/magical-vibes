@@ -79,6 +79,8 @@ class ForethoughtAmuletTest extends BaseCardTest {
     @Test
     @DisplayName("Paying three mana during upkeep keeps Forethought Amulet")
     void payingUpkeepKeepsAmulet() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent amulet = harness.addToBattlefieldAndReturn(player1, new ForethoughtAmulet());
 
         advanceToUpkeep(player1);
@@ -94,6 +96,8 @@ class ForethoughtAmuletTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Forethought Amulet")
     void decliningUpkeepSacrificesAmulet() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent amulet = harness.addToBattlefieldAndReturn(player1, new ForethoughtAmulet());
 
         advanceToUpkeep(player1);

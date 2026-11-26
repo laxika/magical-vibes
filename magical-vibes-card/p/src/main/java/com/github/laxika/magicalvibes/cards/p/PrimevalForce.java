@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "POR", collectorNumber = "182")
 @CardRegistration(set = "8ED", collectorNumber = "273")
@@ -18,9 +17,6 @@ public class PrimevalForce extends Card {
 
     public PrimevalForce() {
         // When Primeval Force enters, sacrifice it unless you sacrifice three Forests.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ForcedCostOrElseEffect(
-                new SacrificeMultiplePermanentsCost(3, new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
-                List.of(new SacrificeSelfEffect()),
-                true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.unlessYouPay(new SacrificeMultiplePermanentsCost(3, new PermanentHasSubtypePredicate(CardSubtype.FOREST), "Forests"), new SacrificeSelfEffect()));
     }
 }

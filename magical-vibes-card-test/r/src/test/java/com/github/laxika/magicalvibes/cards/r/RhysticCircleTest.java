@@ -24,6 +24,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("If no player pays, the ability prompts for a source choice")
     void noPlayerPaysPromptsForSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addReadyCircle(player1);
         Permanent griffin = addReadyGriffin(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -41,6 +43,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("A player paying prevents the source-choice effect")
     void paymentPreventsSourceChoice() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addReadyCircle(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLUE, 1);
@@ -55,14 +59,20 @@ class RhysticCircleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The Circle's controller may pay the optional cost")
+    @DisplayName("The Circle's controller may pay, and the other player is still asked")
     void controllerCanPayOptionalCost() {
         addReadyCircle(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
+        giveManaSource(player2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull()
+                .satisfies(asked -> assertThat(asked.playerId()).isEqualTo(player2.getId()));
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
@@ -71,6 +81,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen source's next damage to the controller is prevented")
     void chosenSourceDamageIsPrevented() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setLife(player1, 20);
         addReadyCircle(player1);
         Permanent griffin = addReadyGriffin(player2);
@@ -89,6 +101,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("Damage from the chosen source to a creature you control is not prevented")
     void chosenSourceDamageToControlledCreatureIsNotPrevented() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setLife(player1, 20);
         addReadyCircle(player1);
         Permanent blocker = addReadyGriffin(player1);
@@ -114,6 +128,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("A different source still deals damage and leaves the shield unused")
     void differentSourceStillDealsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setLife(player1, 20);
         addReadyCircle(player1);
         Permanent chosen = addReadyGriffin(player2);
@@ -134,6 +150,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("A spell on the stack can be chosen as the damage source")
     void spellOnStackCanBeChosenAsSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setLife(player1, 20);
         addReadyCircle(player1);
         SearingWind searingWind = new SearingWind();
@@ -160,6 +178,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("The prevention shield expires at the end of the turn")
     void shieldClearedAtEndOfTurn() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addReadyCircle(player1);
         Permanent griffin = addReadyGriffin(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -177,6 +197,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's Circle protects its controller when the active player declines first")
     void opponentsCircleProtectsItsController() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setLife(player2, 20);
         addReadyCircle(player2);
         Permanent griffin = addReadyGriffin(player1);
@@ -198,6 +220,8 @@ class RhysticCircleTest extends BaseCardTest {
     @Test
     @DisplayName("Two activations for one source consume only one shield for its next damage")
     void overlappingShieldsLeaveOneForLaterDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setLife(player1, 20);
         addReadyCircle(player1);
         Permanent griffin = addReadyGriffin(player2);

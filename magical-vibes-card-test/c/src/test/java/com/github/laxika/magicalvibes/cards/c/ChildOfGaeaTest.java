@@ -21,6 +21,8 @@ class ChildOfGaeaTest extends BaseCardTest {
     @Test
     @DisplayName("Child of Gaea survives its upkeep when its controller pays {G}{G}")
     void survivesUpkeepWhenPaymentIsMade() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent child = addCreatureReady(player1, new ChildOfGaea());
 
         advanceToUpkeep(player1);
@@ -35,6 +37,8 @@ class ChildOfGaeaTest extends BaseCardTest {
     @Test
     @DisplayName("Child of Gaea is sacrificed when its controller declines the upkeep payment")
     void isSacrificedWhenUpkeepPaymentIsDeclined() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent child = addCreatureReady(player1, new ChildOfGaea());
 
         advanceToUpkeep(player1);
@@ -49,6 +53,8 @@ class ChildOfGaeaTest extends BaseCardTest {
     @Test
     @DisplayName("Child of Gaea is sacrificed when its controller accepts but cannot pay")
     void isSacrificedWhenAcceptedPaymentCannotBePaid() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent child = addCreatureReady(player1, new ChildOfGaea());
 
         advanceToUpkeep(player1);
@@ -85,7 +91,10 @@ class ChildOfGaeaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration cannot prevent upkeep sacrifice")
     void regenerationCannotPreventUpkeepSacrifice() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent child = addCreatureReady(player1, new ChildOfGaea());
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

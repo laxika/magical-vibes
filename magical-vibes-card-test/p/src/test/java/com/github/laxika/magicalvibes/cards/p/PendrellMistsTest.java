@@ -27,6 +27,8 @@ class PendrellMistsTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {1} sacrifices the creature")
     void decliningPaymentSacrificesCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addMists(player1);
         addInfantry(player1);
 
@@ -43,6 +45,8 @@ class PendrellMistsTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1} keeps the creature on the battlefield")
     void payingKeepsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addMists(player1);
         addInfantry(player1);
 
@@ -58,6 +62,8 @@ class PendrellMistsTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still sacrifices the creature")
     void acceptingWithoutEnoughManaSacrificesCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addMists(player1);
         addInfantry(player1);
 
@@ -73,6 +79,8 @@ class PendrellMistsTest extends BaseCardTest {
     @Test
     @DisplayName("Grant is global: an opponent's Pendrell Mists still taxes your creature")
     void opponentsMistsTaxesYourCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addMists(player2);
         addInfantry(player1);
 
@@ -114,6 +122,8 @@ class PendrellMistsTest extends BaseCardTest {
     @Test
     @DisplayName("Two Mists require two separate payments for the same creature")
     void multipleMistsRequireSeparatePayments() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addMists(player1);
         addMists(player2);
         addInfantry(player1);
@@ -136,6 +146,8 @@ class PendrellMistsTest extends BaseCardTest {
     @Test
     @DisplayName("Each creature receives its own independently payable trigger")
     void eachCreatureHasIndependentPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addMists(player1);
         addInfantry(player1);
         addInfantry(player1);
@@ -157,6 +169,8 @@ class PendrellMistsTest extends BaseCardTest {
     @Test
     @DisplayName("Removing Mists after upkeep begins does not remove the creature's trigger")
     void triggerSurvivesMistsLeavingBattlefield() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent mists = harness.addToBattlefieldAndReturn(player1, new PendrellMists());
         addInfantry(player1);
 

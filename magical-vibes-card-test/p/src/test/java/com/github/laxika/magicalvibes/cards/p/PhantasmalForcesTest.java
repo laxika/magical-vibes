@@ -20,6 +20,8 @@ class PhantasmalForcesTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U} sacrifices Phantasmal Forces")
     void decliningPaymentSacrificesCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PhantasmalForces());
 
         advanceToUpkeep(player1);
@@ -35,6 +37,8 @@ class PhantasmalForcesTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U} keeps Phantasmal Forces on the battlefield")
     void payingKeepsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PhantasmalForces());
 
         advanceToUpkeep(player1);
@@ -47,7 +51,10 @@ class PhantasmalForcesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting with only non blue mana sacrifices creature")
     void acceptingWithOnlyNonBlueManaSacrificesCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PhantasmalForces());
 
         advanceToUpkeep(player1);
@@ -85,7 +92,10 @@ class PhantasmalForcesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each copy requires its own payment")
     void eachCopyRequiresItsOwnPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PhantasmalForces());
         harness.addToBattlefield(player1, new PhantasmalForces());
 
@@ -106,6 +116,8 @@ class PhantasmalForcesTest extends BaseCardTest {
     @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
     @DisplayName("Declining to pay asks for Phantasmal Forces' death replacement before it is sacrificed")
     void decliningAsksForTheDeathReplacementBeforePhantasmalForcesIsSacrificed() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent forces = harness.addToBattlefieldAndReturn(player1, new PhantasmalForces());
         harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
         harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(forces.getId());
@@ -137,6 +149,8 @@ class PhantasmalForcesTest extends BaseCardTest {
     @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
     @DisplayName("Accepting without blue mana asks for Phantasmal Forces' death replacement before it is sacrificed")
     void acceptingWithoutBlueManaAsksForTheDeathReplacementBeforePhantasmalForcesIsSacrificed() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent forces = harness.addToBattlefieldAndReturn(player1, new PhantasmalForces());
         harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
         harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(forces.getId());
@@ -166,4 +180,18 @@ class PhantasmalForcesTest extends BaseCardTest {
     }
 
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    @Test
+    @DisplayName("A controller with no way to make mana isn't asked to pay {U}, and Phantasmal Forces is sacrificed")
+    void controllerWithNoManaSourceIsNotAsked() {
+        harness.addToBattlefield(player1, new PhantasmalForces());
+        harness.setHand(player1, java.util.List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "Phantasmal Forces");
+        harness.assertInGraveyard(player1, "Phantasmal Forces");
+    }
 }

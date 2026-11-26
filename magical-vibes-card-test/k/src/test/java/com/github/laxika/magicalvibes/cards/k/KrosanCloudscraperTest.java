@@ -41,6 +41,8 @@ class KrosanCloudscraperTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Krosan Cloudscraper")
     void decliningUpkeepPaymentSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KrosanCloudscraper());
 
         advanceToUpkeep(player1);
@@ -56,6 +58,8 @@ class KrosanCloudscraperTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G}{G} keeps Krosan Cloudscraper on the battlefield")
     void payingUpkeepPaymentKeepsItOnBattlefield() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KrosanCloudscraper());
 
         advanceToUpkeep(player1);
@@ -82,6 +86,8 @@ class KrosanCloudscraperTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing to pay without green mana sacrifices Krosan Cloudscraper")
     void acceptingUpkeepPaymentWithoutGreenManaSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KrosanCloudscraper());
 
         advanceToUpkeep(player1);
@@ -117,6 +123,8 @@ class KrosanCloudscraperTest extends BaseCardTest {
     @Test
     @DisplayName("Turning face up restores the upkeep payment ability")
     void turnedFaceUpCloudscraperTriggersAtUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setHand(player1, List.of(new KrosanCloudscraper()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
@@ -144,6 +152,8 @@ class KrosanCloudscraperTest extends BaseCardTest {
     @Test
     @DisplayName("One green mana cannot pay the upkeep cost, even with additional colorless mana")
     void insufficientGreenManaCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KrosanCloudscraper());
 
         advanceToUpkeep(player1);
@@ -159,6 +169,8 @@ class KrosanCloudscraperTest extends BaseCardTest {
     @Test
     @DisplayName("The controller may decline the upkeep payment even when they can afford it")
     void canDeclineAffordableUpkeepPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KrosanCloudscraper());
 
         advanceToUpkeep(player1);

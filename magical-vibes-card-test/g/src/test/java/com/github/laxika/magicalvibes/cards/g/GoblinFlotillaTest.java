@@ -60,6 +60,8 @@ class GoblinFlotillaTest extends BaseCardTest {
     @Test
     @DisplayName("Paying the beginning-of-combat cost prevents the first-strike trigger")
     void payingPreventsFirstStrikeTrigger() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent flotilla = addCreatureReady(player1, new GoblinFlotilla());
         flotilla.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new RiverMerfolk());
@@ -119,6 +121,8 @@ class GoblinFlotillaTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the beginning-of-combat payment without mana still uses the fallback")
     void acceptingPaymentWithoutManaUsesFallback() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent flotilla = addCreatureReady(player2, new GoblinFlotilla());
         Permanent attacker = addCreatureReady(player1, new RiverMerfolk());
         attacker.setAttacking(true);
@@ -220,6 +224,8 @@ class GoblinFlotillaTest extends BaseCardTest {
     }
 
     private void beginCombat(Player activePlayer) {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -77,6 +78,7 @@ class DevouringSugarmawTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing nontoken artifact leaves sugarmaw untapped")
     void sacrificingNontokenArtifactLeavesSugarmawUntapped() {
         Permanent sugarmaw = harness.addToBattlefieldAndReturn(player1, new DevouringSugarmaw());
         harness.addToBattlefield(player1, new CandyTrail());
@@ -84,6 +86,7 @@ class DevouringSugarmawTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertInGraveyard(player1, "Candy Trail");
         harness.assertNotOnBattlefield(player1, "Candy Trail");
@@ -91,6 +94,7 @@ class DevouringSugarmawTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing nontoken enchantment leaves sugarmaw untapped")
     void sacrificingNontokenEnchantmentLeavesSugarmawUntapped() {
         Permanent sugarmaw = harness.addToBattlefieldAndReturn(player1, new DevouringSugarmaw());
         harness.addToBattlefield(player1, new HopefulVigil());
@@ -99,6 +103,7 @@ class DevouringSugarmawTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertInGraveyard(player1, "Hopeful Vigil");
         harness.assertNotOnBattlefield(player1, "Hopeful Vigil");

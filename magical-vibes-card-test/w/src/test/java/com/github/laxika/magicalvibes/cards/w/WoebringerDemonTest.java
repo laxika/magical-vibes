@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.s.SigardaHostOfHerons;
 import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.l.LastGasp;
 import com.github.laxika.magicalvibes.cards.y.YasharnImplacableEarth;
@@ -160,5 +161,20 @@ class WoebringerDemonTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Watchwolf");
         harness.assertOnBattlefield(player1, "Woebringer Demon");
         harness.assertOnBattlefield(player1, "Yasharn, Implacable Earth");
+    }
+
+    @Test
+    @CardUsed(SigardaHostOfHerons.class)
+    @DisplayName("A player Sigarda keeps from sacrificing can't sacrifice, so Woebringer Demon is sacrificed")
+    void sigardaPlayerCantSacrificeSoTheDemonIsSacrificed() {
+        harness.addToBattlefield(player2, new WoebringerDemon());
+        addCreatureReady(player1, new SigardaHostOfHerons());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sigarda, Host of Herons");
+        harness.assertNotOnBattlefield(player2, "Woebringer Demon");
+        harness.assertInGraveyard(player2, "Woebringer Demon");
     }
 }

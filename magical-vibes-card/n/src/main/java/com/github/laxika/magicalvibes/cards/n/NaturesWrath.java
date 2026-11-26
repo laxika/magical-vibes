@@ -5,11 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +26,7 @@ public class NaturesWrath extends Card {
     public NaturesWrath() {
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {G}.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(new PayManaCost("{G}"), List.of(new SacrificeSelfEffect()), true));
+                UnlessPaysEffect.unlessYouPay("{G}", new SacrificeSelfEffect()));
 
         // Whenever a player puts an Island or blue permanent onto the battlefield, that player
         // sacrifices an Island or blue permanent of their choice. Same for Swamp/black permanents.

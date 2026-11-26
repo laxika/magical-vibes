@@ -207,6 +207,8 @@ class MangarasEquityTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{W} at upkeep keeps it on the battlefield")
     void payAtUpkeepKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addEquity(player1, CardColor.RED);
 
         advanceToUpkeep(player1);
@@ -220,6 +222,8 @@ class MangarasEquityTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay at upkeep sacrifices it")
     void declineAtUpkeepSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addEquity(player1, CardColor.RED);
 
         advanceToUpkeep(player1);

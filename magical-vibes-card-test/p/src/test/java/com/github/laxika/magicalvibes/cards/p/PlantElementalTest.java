@@ -56,6 +56,8 @@ class PlantElementalTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
+        answerForcedPick(player1);
+
         // The lone Forest is sacrificed without a further choice; Plant Elemental stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Forest")).isZero();
@@ -71,6 +73,8 @@ class PlantElementalTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
+        answerForcedPick(player1);
+
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Forest")).isZero();
         harness.assertOnBattlefield(player1, "Plant Elemental");
@@ -85,11 +89,10 @@ class PlantElementalTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // More Forests than needed — a multi-permanent choice is required.
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        // More Forests than needed: the controller chooses one.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        List<UUID> forestIds = List.of(findPermanent(player1, "Forest").getId());
-        harness.handleMultiplePermanentsChosen(player1, forestIds);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Forest").getId());
 
         // One Forest sacrificed, one remains; Plant Elemental stays.
         assertThat(countPermanents(player1, "Forest")).isEqualTo(1);

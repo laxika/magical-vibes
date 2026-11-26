@@ -23,6 +23,8 @@ class HaazdaShieldMateTest extends BaseCardTest {
     @Test
     @DisplayName("Declining its upkeep payment sacrifices Haazda Shield Mate")
     void decliningUpkeepPaymentSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shieldMate = harness.addToBattlefieldAndReturn(player1, new HaazdaShieldMate());
 
         advanceToUpkeep(player1);
@@ -36,6 +38,8 @@ class HaazdaShieldMateTest extends BaseCardTest {
     @Test
     @DisplayName("Paying its upkeep cost keeps Haazda Shield Mate on the battlefield")
     void payingUpkeepPaymentKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shieldMate = harness.addToBattlefieldAndReturn(player1, new HaazdaShieldMate());
 
         advanceToUpkeep(player1);
@@ -123,6 +127,8 @@ class HaazdaShieldMateTest extends BaseCardTest {
     @Test
     @DisplayName("Its upkeep payment is optional even when the controller can pay")
     void canDeclineUpkeepPaymentWithManaAvailable() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new HaazdaShieldMate());
 
         advanceToUpkeep(player1);

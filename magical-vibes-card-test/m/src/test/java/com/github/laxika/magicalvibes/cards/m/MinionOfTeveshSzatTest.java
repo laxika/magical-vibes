@@ -31,6 +31,8 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {B}{B} deals 2 damage to you")
     void decliningPaymentDealsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MinionOfTeveshSzat());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -46,6 +48,8 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B}{B} prevents the damage and spends the mana")
     void payingPreventsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MinionOfTeveshSzat());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -210,6 +214,8 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
     @Test
     @DisplayName("One black mana and other colors cannot pay the upkeep cost")
     void insufficientBlackManaDoesNotPartiallyPay() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MinionOfTeveshSzat());
         advanceToUpkeep(player1);
         harness.passBothPriorities();

@@ -429,6 +429,10 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 String manaCost = triggeringSpellManaCost(gameData, entry);
                 yield manaCost == null ? Ransom.unpayableMana() : Ransom.ofManaAndLife(manaCost, false, 0);
             }
+            case PayManaCost mana when mana.useSourceManaCost() -> {
+                String manaCost = sourceManaCost(gameData, entry);
+                yield manaCost == null ? Ransom.unpayableMana() : Ransom.ofManaAndLife(manaCost, false, 0);
+            }
             case PayManaCost mana -> Ransom.ofManaAndLife(manaCost(gameData, entry, mana), mana.announcedX(),
                     mana.lifeAmount());
             case PayLifeCost life -> Ransom.ofManaAndLife(null, false, Math.max(0,
@@ -450,7 +454,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
             }
             case SacrificeMultiplePermanentsCost sacrifice -> {
-                String what = sacrifice.count() + " "
+                String what = countWord(sacrifice.count()) + " "
                         + (sacrifice.description() == null ? "permanents" : sacrifice.description());
                 yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
             }
@@ -553,6 +557,27 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         return spell.getCard().getManaCost().replace("{X}", "{" + spell.getXValue() + "}");
     }
 
+    /**
+     * "Its mana cost" of the source ("sacrifice this artifact unless you pay its mana cost"): the source permanent's, on
+     * the battlefield or as it last existed (CR 608.2h), an {X} in it being 0; {@code null} when it can't be paid: a
+     * face-down permanent has no mana cost (CR 708.2), and no mana cost can't be paid (CR 118.6).
+     */
+    private String sourceManaCost(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        if (source != null && source.isFaceDown()) {
+            return null;
+        }
+        String manaCost = source != null ? source.getCard().getManaCost() : entry.getCard().getManaCost();
+        if (manaCost == null || manaCost.isEmpty()) {
+            return null;
+        }
+        return manaCost.replace("{X}", "{0}");
+    }
+
     /** "two", "three" … for the small counts a ransom names, else the digits. */
     private static String countWord(int count) {
         return switch (count) {
@@ -564,7 +589,11 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         };
     }
 
+    /** "a creature", "an Island"; a description that already reads with its determiner ("another creature") as it is. */
     private static String article(String noun) {
+        if (noun.startsWith("another ") || noun.startsWith("a ") || noun.startsWith("an ")) {
+            return noun;
+        }
         return ("aeiou".indexOf(Character.toLowerCase(noun.charAt(0))) >= 0 ? "an " : "a ") + noun;
     }
 

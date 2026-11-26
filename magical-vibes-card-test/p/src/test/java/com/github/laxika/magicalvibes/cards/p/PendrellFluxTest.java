@@ -21,6 +21,8 @@ class PendrellFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature is sacrificed when its mana cost is not paid")
     void declineSacrificesEnchantedCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         castPendrellFluxOnPendrellDrake();
 
         advanceToUpkeep(player1);
@@ -37,6 +39,8 @@ class PendrellFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Paying the enchanted creature's mana cost keeps it on the battlefield")
     void payingEnchantedCreatureManaCostKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         castPendrellFluxOnPendrellDrake();
 
         advanceToUpkeep(player1);
@@ -54,6 +58,8 @@ class PendrellFluxTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted creature's controller gets the upkeep payment choice")
     void enchantedCreatureControllerGetsUpkeepChoice() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new PendrellDrake());
         harness.setHand(player1, List.of(new PendrellFlux()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -95,6 +101,8 @@ class PendrellFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Removing the Aura after upkeep begins does not remove the triggered ability")
     void removingAuraAfterTriggerStillRequiresPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         castPendrellFluxOnPendrellDrake();
         advanceToUpkeep(player1);
 

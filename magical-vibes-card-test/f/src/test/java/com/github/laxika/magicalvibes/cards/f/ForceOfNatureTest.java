@@ -22,6 +22,8 @@ class ForceOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay deals 8 damage to its controller")
     void declineDealsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ForceOfNature());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -37,6 +39,8 @@ class ForceOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G}{G}{G}{G} avoids the damage and spends the mana")
     void payAvoidsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ForceOfNature());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -52,6 +56,8 @@ class ForceOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough green mana still applies the 8 damage")
     void acceptWithoutManaDealsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ForceOfNature());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -79,6 +85,8 @@ class ForceOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("The controller may decline even with enough green mana")
     void canDeclineWithEnoughMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ForceOfNature());
         harness.setLife(player1, 20);
 
@@ -95,6 +103,8 @@ class ForceOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("Other colors cannot replace the fourth green mana and failed payment spends nothing")
     void wrongColorCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ForceOfNature());
         harness.setLife(player1, 20);
 
@@ -112,6 +122,8 @@ class ForceOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("A Force of Nature controlled by the second player damages only that player")
     void secondPlayerControlsUpkeepTrigger() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new ForceOfNature());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

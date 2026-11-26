@@ -178,6 +178,8 @@ class JusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {W}{W} at upkeep keeps Justice on the battlefield")
     void payAtUpkeepKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Justice());
 
         advanceToUpkeep(player1);
@@ -191,6 +193,8 @@ class JusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay at upkeep sacrifices Justice")
     void declineAtUpkeepSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Justice());
 
         advanceToUpkeep(player1);
@@ -242,7 +246,10 @@ class JusticeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Insufficient white mana cannot pay upkeep")
     void insufficientWhiteManaCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Justice());
         advanceToUpkeep(player1);
         harness.passBothPriorities();

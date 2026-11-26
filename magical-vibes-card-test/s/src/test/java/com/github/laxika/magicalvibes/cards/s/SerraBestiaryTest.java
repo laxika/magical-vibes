@@ -84,6 +84,8 @@ class SerraBestiaryTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {W}{W} sacrifices Serra Bestiary")
     void decliningPaymentSacrificesAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent walkers = addCreatureReady(player1, new BeastWalkers());
         attachSerraBestiary(player1, walkers);
 
@@ -100,6 +102,8 @@ class SerraBestiaryTest extends BaseCardTest {
     @Test
     @DisplayName("Aura controller sacrifices Serra Bestiary when it enchants an opponent's creature")
     void auraControllerSacrificesAuraWhenEnchantedCreatureIsOpponent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent walkers = addCreatureReady(player2, new BeastWalkers());
         attachSerraBestiary(player1, walkers);
 
@@ -116,6 +120,8 @@ class SerraBestiaryTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana sacrifices Serra Bestiary")
     void acceptingWithoutEnoughManaSacrificesAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent walkers = addCreatureReady(player1, new BeastWalkers());
         attachSerraBestiary(player1, walkers);
 
@@ -132,6 +138,8 @@ class SerraBestiaryTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {W}{W} keeps Serra Bestiary on the battlefield")
     void payingKeepsAura() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent walkers = addCreatureReady(player2, new BeastWalkers());
         attachSerraBestiary(player1, walkers);
 
@@ -199,6 +207,8 @@ class SerraBestiaryTest extends BaseCardTest {
     @Test
     @DisplayName("One white and one green mana cannot pay the upkeep cost")
     void wrongColorsCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent walkers = addCreatureReady(player2, new BeastWalkers());
         attachSerraBestiary(player1, walkers);
         advanceToUpkeep(player1);
@@ -217,6 +227,8 @@ class SerraBestiaryTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Serra Bestiary restores the enchanted creature's tap ability")
     void sacrificingAuraRestoresTapAbility() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shaman = addCreatureReady(player1, new AnabaShaman());
         attachSerraBestiary(player1, shaman);
         advanceToUpkeep(player1);

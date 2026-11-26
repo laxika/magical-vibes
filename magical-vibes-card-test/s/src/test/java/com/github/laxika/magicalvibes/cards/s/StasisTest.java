@@ -101,6 +101,8 @@ class StasisTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U} sacrifices Stasis")
     void decliningPaymentSacrificesStasis() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new Stasis());
 
         advanceToUpkeep(player1);
@@ -116,6 +118,8 @@ class StasisTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U} keeps Stasis on the battlefield")
     void payingKeepsStasis() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new Stasis());
 
         advanceToUpkeep(player1);
@@ -139,7 +143,10 @@ class StasisTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot pay upkeep with green mana")
     void cannotPayUpkeepWithGreenMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Stasis());
 
         advanceToUpkeep(player1);
@@ -152,7 +159,10 @@ class StasisTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May decline upkeep even with blue mana available")
     void mayDeclineUpkeepEvenWithBlueManaAvailable() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Stasis());
 
         advanceToUpkeep(player1);
@@ -165,7 +175,10 @@ class StasisTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing during upkeep does not retroactively untap permanents")
     void sacrificingDuringUpkeepDoesNotRetroactivelyUntapPermanents() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Stasis());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();

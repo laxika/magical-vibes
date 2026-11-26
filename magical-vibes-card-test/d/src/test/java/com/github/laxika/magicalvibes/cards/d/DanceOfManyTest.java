@@ -159,6 +159,8 @@ class DanceOfManyTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U}{U} sacrifices the enchantment and exiles the token")
     void decliningUpkeepPaymentSacrificesEnchantmentAndExilesToken() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new GrizzlyBears());
         castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
 
@@ -175,6 +177,8 @@ class DanceOfManyTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U}{U} keeps the enchantment and its token")
     void payingUpkeepKeepsEnchantmentAndToken() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new GrizzlyBears());
         castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
 
@@ -190,6 +194,8 @@ class DanceOfManyTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the upkeep payment without enough mana sacrifices the enchantment")
     void acceptingUpkeepPaymentWithoutEnoughManaSacrificesEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new GrizzlyBears());
         castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
 

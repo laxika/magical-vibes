@@ -26,6 +26,8 @@ class PeacekeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{W} during your upkeep keeps Peacekeeper")
     void payingKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
 
         advanceToUpkeep(player1);
@@ -41,6 +43,8 @@ class PeacekeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment sacrifices Peacekeeper")
     void decliningSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
 
         advanceToUpkeep(player1);
@@ -55,6 +59,8 @@ class PeacekeeperTest extends BaseCardTest {
     @Test
     @DisplayName("An old upkeep trigger does not sacrifice a replacement Peacekeeper")
     void oldTriggerDoesNotSacrificeReplacement() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent original = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
 
         advanceToUpkeep(player1);
@@ -84,6 +90,8 @@ class PeacekeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana sacrifices Peacekeeper")
     void notEnoughManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
 
         advanceToUpkeep(player1);
@@ -159,6 +167,8 @@ class PeacekeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Two generic mana cannot replace the white upkeep payment")
     void paymentRequiresWhiteMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
 
         advanceToUpkeep(player1);

@@ -90,6 +90,8 @@ class SoulTitheTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still sacrifices the enchanted permanent")
     void cannotPaySacrificesPermanent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachSoulTithe(creature);
 
@@ -116,6 +118,8 @@ class SoulTitheTest extends BaseCardTest {
     @Test
     @DisplayName("Can enchant and sacrifice a noncreature artifact")
     void canEnchantAndSacrificeArtifact() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PithingNeedle());
         harness.setHand(player1, List.of(new SoulTithe()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -163,6 +167,8 @@ class SoulTitheTest extends BaseCardTest {
     @Test
     @DisplayName("Destroying the Aura in response does not reduce the payment to zero")
     void paymentUsesLastKnownAttachmentAfterAuraIsDestroyed() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachSoulTithe(creature);
         Permanent aura = findPermanent(player1, "Soul Tithe");
@@ -184,6 +190,8 @@ class SoulTitheTest extends BaseCardTest {
     @Test
     @DisplayName("Moving the Aura before resolution still sacrifices the permanent it enchanted as it triggered")
     void sacrificeUsesAttachmentAtTrigger() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent original = addCreatureReady(player2, new GrizzlyBears());
         Permanent replacement = addCreatureReady(player2, new GrizzlyBears());
         attachSoulTithe(original);
@@ -224,6 +232,8 @@ class SoulTitheTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep player cannot sacrifice a permanent whose controller has changed")
     void decliningAfterControlChangeDoesNotSacrificePermanent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachSoulTithe(creature);
         advanceToUpkeep(player2);

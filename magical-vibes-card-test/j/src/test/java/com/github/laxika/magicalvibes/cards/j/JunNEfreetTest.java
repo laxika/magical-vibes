@@ -16,6 +16,8 @@ class JunNEfreetTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {B}{B} sacrifices Junún Efreet")
     void decliningPaymentSacrificesEfreet() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new JunNEfreet());
 
         advanceToUpkeep(player1);
@@ -31,6 +33,8 @@ class JunNEfreetTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B}{B} keeps Junún Efreet on the battlefield")
     void payingKeepsEfreet() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new JunNEfreet());
 
         advanceToUpkeep(player1);
@@ -45,6 +49,8 @@ class JunNEfreetTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without two black mana still sacrifices Junún Efreet")
     void acceptingWithoutEnoughBlackManaSacrificesEfreet() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new JunNEfreet());
 
         advanceToUpkeep(player1);
@@ -68,7 +74,10 @@ class JunNEfreetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can decline payment even with enough black mana")
     void canDeclinePaymentEvenWithEnoughBlackMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new JunNEfreet());
 
         advanceToUpkeep(player1);
@@ -83,7 +92,10 @@ class JunNEfreetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Other colors cannot pay the upkeep cost")
     void otherColorsCannotPayTheUpkeepCost() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new JunNEfreet());
 
         advanceToUpkeep(player1);

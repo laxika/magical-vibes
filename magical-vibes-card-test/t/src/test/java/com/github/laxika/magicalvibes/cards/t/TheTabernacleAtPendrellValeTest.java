@@ -27,6 +27,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {1} destroys the creature")
     void decliningPaymentDestroysCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player1);
         addWolves(player1);
 
@@ -43,6 +45,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1} keeps the creature on the battlefield")
     void payingKeepsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player1);
         addWolves(player1);
 
@@ -58,6 +62,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("Grant is global: an opponent's Tabernacle still taxes your creature")
     void opponentsTabernacleTaxesYourCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player2);
         addWolves(player1);
 
@@ -99,6 +105,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay cannot destroy an indestructible creature")
     void decliningPaymentCannotDestroyIndestructibleCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player1);
         Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new DarksteelSentinel());
 
@@ -112,6 +120,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("A creature is taxed during its own controller's upkeep")
     void creatureIsTaxedDuringItsControllersUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player1);
         addWolves(player2);
 
@@ -128,6 +138,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("Each controlled creature gets its own upkeep trigger")
     void eachControlledCreatureGetsItsOwnUpkeepTrigger() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player1);
         addWolves(player1);
         addWolves(player1);
@@ -150,6 +162,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("Paying for one creature does not pay for another creature")
     void eachCreatureRequiresItsOwnPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player1);
         addWolves(player1);
         addWolves(player1);
@@ -171,6 +185,8 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
     @Test
     @DisplayName("A creature entering after upkeep begins does not get an upkeep trigger")
     void creatureEnteringAfterUpkeepBeginsIsNotTaxed() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addTabernacle(player1);
         Permanent original = addWolves(player1);
 

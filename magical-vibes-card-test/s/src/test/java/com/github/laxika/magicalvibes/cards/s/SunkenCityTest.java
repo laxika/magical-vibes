@@ -50,6 +50,8 @@ class SunkenCityTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U}{U} sacrifices Sunken City")
     void decliningPaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SunkenCity());
 
         advanceToUpkeep(player1);
@@ -79,6 +81,8 @@ class SunkenCityTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough blue mana still sacrifices Sunken City")
     void insufficientPaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SunkenCity());
 
         advanceToUpkeep(player1);
@@ -130,6 +134,7 @@ class SunkenCityTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Sunken City removes its bonus from both players' blue creatures")
     void sacrificingRemovesBonuses() {
+        giveManaSource(player1);
         harness.addToBattlefield(player1, new SunkenCity());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new MerfolkOfThePearlTrident());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new MerfolkOfThePearlTrident());
@@ -150,6 +155,8 @@ class SunkenCityTest extends BaseCardTest {
     @Test
     @DisplayName("Nonblue mana cannot pay the upkeep and an unsuccessful payment spends no mana")
     void wrongColorPaymentSacrificesWithoutSpendingMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SunkenCity());
 
         advanceToUpkeep(player1);

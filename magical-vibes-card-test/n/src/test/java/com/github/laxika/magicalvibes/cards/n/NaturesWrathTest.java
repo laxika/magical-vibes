@@ -122,6 +122,8 @@ class NaturesWrathTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {G} at upkeep sacrifices Nature's Wrath")
     void decliningUpkeepPaymentSacrificesEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         putWrathOnBattlefield(player1);
 
         advanceToUpkeep(player1);
@@ -136,6 +138,8 @@ class NaturesWrathTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G} at upkeep keeps Nature's Wrath on the battlefield")
     void payingUpkeepKeepsEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         putWrathOnBattlefield(player1);
 
         advanceToUpkeep(player1);

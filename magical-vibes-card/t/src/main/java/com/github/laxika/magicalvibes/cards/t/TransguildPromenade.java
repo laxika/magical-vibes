@@ -4,13 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "249")
 @CardRegistration(set = "C13", collectorNumber = "330")
@@ -24,10 +22,7 @@ public class TransguildPromenade extends Card {
 
         // When this land enters, sacrifice it unless you pay {1}.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{1}"),
-                        List.of(new SacrificeSelfEffect()),
-                        true));
+                UnlessPaysEffect.unlessYouPay("{1}", new SacrificeSelfEffect()));
 
         // {T}: Add one mana of any color.
         addActivatedAbility(ManaAbilities.tapForAnyColor());

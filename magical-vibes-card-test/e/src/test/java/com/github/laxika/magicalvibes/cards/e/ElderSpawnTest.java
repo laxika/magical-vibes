@@ -89,7 +89,8 @@ class ElderSpawnTest extends BaseCardTest {
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
                         choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(elderSpawn);
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")
+                && !entry.plainText().contains("declines")).isEmpty();
         harness.assertLife(player1, 20);
 
         harness.handleListChoice(player1, MAGEMARK_RETURN);
@@ -100,7 +101,8 @@ class ElderSpawnTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .doesNotContain("Zombie");
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).hasSize(1);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")
+                && !entry.plainText().contains("declines")).hasSize(1);
         harness.assertLife(player1, 14);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -147,6 +149,7 @@ class ElderSpawnTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Elder Spawn");
         harness.assertNotOnBattlefield(player1, "Island");

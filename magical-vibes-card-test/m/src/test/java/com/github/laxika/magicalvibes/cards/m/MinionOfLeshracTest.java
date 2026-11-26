@@ -56,6 +56,7 @@ class MinionOfLeshracTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertNotOnBattlefield(player1, "Balduvian Bears");
         assertThat(findPermanent(player1, "Minion of Leshrac").isTapped()).isFalse();

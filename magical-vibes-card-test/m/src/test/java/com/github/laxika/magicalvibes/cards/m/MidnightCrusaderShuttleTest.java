@@ -22,7 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
         YasharnImplacableEarth.class})
 class MidnightCrusaderShuttleTest extends BaseCardTest {
 
+    private static final String SACRIFICE = "That player sacrifices a creature";
+    private static final String GAIN_CONTROL = "You gain control of a creature that player controls";
+
     @Test
+    @DisplayName("The defending player may choose to sacrifice a creature")
     void defenderSacrificesCreature() {
         addReadyShuttle();
         addCreatureReady(player1, new AdiposeOffspring());
@@ -32,15 +36,16 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, SACRIFICE);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(defendingCreature);
     }
 
     @Test
+    @DisplayName("Choosing the other option, the attacker takes a creature of its choice, tapped and attacking that player")
     void defenderDeclinesAndAttackerTakesCreatureTappedAndAttacking() {
         Permanent shuttle = addReadyShuttle();
         addCreatureReady(player1, new AdiposeOffspring());
@@ -50,7 +55,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
         crewShuttle();
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, GAIN_CONTROL);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -65,6 +70,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A defending player with no creature still faces the villainous choice (CR 701.55b)")
     void defenderStillFacesChoiceWithoutCreatures() {
         addReadyShuttle();
         addCreatureReady(player1, new AdiposeOffspring());
@@ -73,10 +79,12 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly(SACRIFICE, GAIN_CONTROL);
     }
 
     @Test
+    @DisplayName("The Valeyard makes the defending player face the choice again")
     void valeyardMakesDefenderFaceChoiceAgainAfterSacrificing() {
         addReadyShuttle();
         addCreatureReady(player1, new AdiposeOffspring());
@@ -86,13 +94,14 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, SACRIFICE);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
     @Test
+    @DisplayName("A lone tapped, summoning-sick creature can be taken and is attacking")
     void soleTappedSummoningSickCreatureCanBeTakenAndAttack() {
         addReadyShuttle();
         addCreatureReady(player1, new AdiposeOffspring());
@@ -104,7 +113,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player2, false);
+            harness.handleListChoice(player2, GAIN_CONTROL);
         });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -115,6 +124,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Yasharn does not stop the sacrifice the choice makes")
     void yasharnDoesNotPreventSacrificeDuringResolution() {
         addReadyShuttle();
         addCreatureReady(player1, new AdiposeOffspring());
@@ -124,7 +134,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, SACRIFICE);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Adipose Offspring");
@@ -132,7 +142,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
 
     @Test
     @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
-    @DisplayName("Accepting the sacrifice with a lone Zombie asks for its death replacement before it is sacrificed")
+    @DisplayName("Choosing the sacrifice with a lone Zombie asks for its death replacement before it is sacrificed")
     void acceptedLoneSacrificeAsksForTheDeathReplacementBeforeTheZombieIsSacrificed() {
         Card filler = new GravebaneZombie();
         harness.setLibrary(player2, List.of(filler));
@@ -144,7 +154,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, SACRIFICE);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");

@@ -33,6 +33,8 @@ class MegatheriumTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1} for each card in hand keeps Megatherium on the battlefield")
     void payingForCardsInHandKeepsMegatherium() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         castMegatheriumWithTwoCardsLeftInHand();
 
         harness.passBothPriorities();
@@ -49,6 +51,8 @@ class MegatheriumTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana sacrifices Megatherium")
     void acceptingWithoutEnoughManaSacrificesMegatherium() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         castMegatheriumWithTwoCardsLeftInHand();
 
         harness.passBothPriorities();
@@ -79,6 +83,8 @@ class MegatheriumTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay sacrifices Megatherium")
     void decliningPaymentSacrificesMegatherium() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         castMegatheriumWithTwoCardsLeftInHand();
 
         harness.passBothPriorities();
@@ -107,6 +113,8 @@ class MegatheriumTest extends BaseCardTest {
     @Test
     @DisplayName("Cards gained before the trigger resolves increase the payment")
     void paymentUsesIncreasedHandSizeAtResolution() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         castMegatheriumWithNoCardsLeftInHand();
         harness.passBothPriorities();
 

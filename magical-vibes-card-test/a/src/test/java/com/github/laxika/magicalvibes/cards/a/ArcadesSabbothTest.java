@@ -107,6 +107,8 @@ class ArcadesSabbothTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G}{W}{U} during upkeep keeps Arcades Sabboth on the battlefield")
     void payingUpkeepCostKeepsArcadesSabboth() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new ArcadesSabboth());
 
         advanceToUpkeep(player1);
@@ -123,6 +125,8 @@ class ArcadesSabbothTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Arcades Sabboth")
     void decliningUpkeepCostSacrificesArcadesSabboth() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new ArcadesSabboth());
 
         advanceToUpkeep(player1);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +16,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RhysticShieldTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Adds both toughness bonuses when no player pays")
     void addsBothToughnessBonusesWhenNoPlayerPays() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new PygmyRazorback());
 
@@ -29,7 +33,10 @@ class RhysticShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Any player can pay to prevent additional bonus")
     void anyPlayerCanPayToPreventAdditionalBonus() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
 
         castShield();
@@ -42,12 +49,21 @@ class RhysticShieldTest extends BaseCardTest {
     }
 
     @Test
-    void currentPlayerCanPayBeforeOtherPlayersAreAsked() {
+    @DisplayName("The other player is still asked after the current player paid, and the bonus is kept off")
+    void currentPlayerPaysAndTheOtherPlayerIsStillAsked() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
+        giveManaSource(player2);
 
         castShield();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull()
+                .satisfies(asked -> assertThat(asked.playerId()).isEqualTo(player2.getId()));
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -55,7 +71,10 @@ class RhysticShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creatures entering after resolution do not get either bonus")
     void creaturesEnteringAfterResolutionDoNotGetEitherBonus() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
 
         castShield();
@@ -69,7 +88,10 @@ class RhysticShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bonuses wear off at end of turn")
     void bonusesWearOffAtEndOfTurn() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
 
         castShield();
@@ -84,7 +106,10 @@ class RhysticShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boosts every controlled creature on opponents turn when nobody pays")
     void boostsEveryControlledCreatureOnOpponentsTurnWhenNobodyPays() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
         Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new PygmyRazorback());

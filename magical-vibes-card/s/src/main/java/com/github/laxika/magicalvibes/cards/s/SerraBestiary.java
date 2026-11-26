@@ -4,15 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "60")
 @CardRegistration(set = "HML", collectorNumber = "15")
@@ -23,10 +21,7 @@ public class SerraBestiary extends Card {
         target(TargetFilters.creature())
                 // At the beginning of your upkeep, sacrifice this Aura unless you pay {W}{W}.
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new ForcedCostOrElseEffect(
-                                new PayManaCost("{W}{W}"),
-                                List.of(new SacrificeSelfEffect()),
-                                true))
+                        UnlessPaysEffect.unlessYouPay("{W}{W}", new SacrificeSelfEffect()))
                 // Enchanted creature can't attack or block, and its activated abilities with {T} in
                 // their costs can't be activated.
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())

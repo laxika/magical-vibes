@@ -29,6 +29,8 @@ class WarpingWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Phasing back in puts a +1/+1 counter on the Wurm")
     void phasesInWithCounter() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent wurm = phasedOutWurm();
 
         advanceTurn();
@@ -43,6 +45,8 @@ class WarpingWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Phasing in again puts another +1/+1 counter on the Wurm")
     void phasesInAgainWithAnotherCounter() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent wurm = phasedOutWurm();
 
         advanceTurn();
@@ -65,6 +69,8 @@ class WarpingWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {2}{G}{U} at upkeep phases the Wurm out")
     void declinePhasesOut() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent wurm = phasedOutWurm();
 
         advanceTurn();
@@ -79,6 +85,8 @@ class WarpingWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2}{G}{U} keeps the Wurm on the battlefield and spends the mana")
     void payKeepsItOnBattlefield() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent wurm = phasedOutWurm();
 
         advanceTurn();
@@ -126,6 +134,8 @@ class WarpingWurmTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Wurm phases in before untapping and receives its counter only on trigger resolution")
     void phasesInBeforeUntappingAndCounterResolution() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent wurm = phasedOutWurm();
         wurm.tap();
 

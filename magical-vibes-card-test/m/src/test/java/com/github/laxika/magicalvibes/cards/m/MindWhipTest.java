@@ -88,6 +88,8 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana applies the penalty")
     void cannotPayAppliesPenalty() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachMindWhip(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -118,6 +120,8 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger still taps the last enchanted creature if Mind Whip leaves before resolution")
     void triggerUsesLastEnchantedCreatureAfterAuraLeaves() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MindWhip());
         aura.setAttachedTo(creature.getId());
@@ -137,6 +141,8 @@ class MindWhipTest extends BaseCardTest {
     @DisplayName("The penalty triggers abilities when the enchanted creature becomes tapped")
     @CardUsed({Betrayal.class})
     void penaltyTriggersBecomesTappedAbilities() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachMindWhip(creature);
         Permanent betrayal = harness.addToBattlefieldAndReturn(player1, new Betrayal());
@@ -156,6 +162,8 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger still damages the upkeep player after the enchanted creature leaves")
     void triggerStillDamagesAfterCreatureLeaves() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachMindWhip(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -173,6 +181,8 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Mind Whip can enchant its controller's creature and penalizes that controller")
     void ownCreatureControllerTakesPenalty() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreatureReady(player1, new BalduvianBears());
         harness.setHand(player1, List.of(new MindWhip()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -192,5 +202,26 @@ class MindWhipTest extends BaseCardTest {
     private void attachMindWhip(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MindWhip());
         aura.setAttachedTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("After a control change, the upkeep player is still the one asked and damaged")
+    void controlChangeKeepsTheUpkeepPlayerAsTheOneAsked() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        attachMindWhip(creature);
+        giveManaSource(player2);
+        giveManaSource(player1);
+
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
     }
 }

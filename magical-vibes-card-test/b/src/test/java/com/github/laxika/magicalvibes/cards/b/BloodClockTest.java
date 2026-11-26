@@ -70,7 +70,7 @@ class BloodClockTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A player who cannot pay 2 life still chooses a permanent to return")
+    @DisplayName("A player who can't pay 2 life isn't asked, and returns a permanent")
     void cannotPayLifeReturnsPermanent() {
         harness.addToBattlefield(player1, new BloodClock());
         Permanent scout = harness.addToBattlefieldAndReturn(player2, new SakuraTribeScout());
@@ -78,7 +78,6 @@ class BloodClockTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, scout.getId());

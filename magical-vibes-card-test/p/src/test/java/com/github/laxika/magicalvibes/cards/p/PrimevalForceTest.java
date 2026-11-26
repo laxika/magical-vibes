@@ -60,6 +60,8 @@ class PrimevalForceTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
+        answerForcedPick(player1);
+
         // All three Forests sacrificed without a further choice; Primeval Force stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Forest")).isEqualTo(0);
@@ -78,6 +80,8 @@ class PrimevalForceTest extends BaseCardTest {
         castPrimevalForce();
 
         harness.handleMayAbilityChosen(player1, true);
+
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Forest")).isZero();
@@ -165,6 +169,7 @@ class PrimevalForceTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Forest")).isZero();

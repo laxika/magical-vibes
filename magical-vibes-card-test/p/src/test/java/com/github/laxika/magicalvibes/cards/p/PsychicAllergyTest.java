@@ -83,6 +83,7 @@ class PsychicAllergyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Psychic Allergy");
         assertThat(gd.playerBattlefields.get(player1.getId()))

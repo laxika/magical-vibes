@@ -4,11 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -23,10 +22,7 @@ public class KamiOfTheTendedGarden extends Card {
 
     public KamiOfTheTendedGarden() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{G}"),
-                        List.of(new SacrificeSelfEffect()),
-                        true));
+                UnlessPaysEffect.unlessYouPay("{G}", new SacrificeSelfEffect()));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

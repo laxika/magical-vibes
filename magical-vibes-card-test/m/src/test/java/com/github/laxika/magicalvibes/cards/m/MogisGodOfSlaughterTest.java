@@ -61,6 +61,7 @@ class MogisGodOfSlaughterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
+        answerForcedPick(player2);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(creature.getId()));

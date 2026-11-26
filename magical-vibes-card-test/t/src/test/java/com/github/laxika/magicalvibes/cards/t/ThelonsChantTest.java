@@ -29,6 +29,7 @@ class ThelonsChantTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertLife(player1, 20);
@@ -87,8 +88,8 @@ class ThelonsChantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
@@ -98,6 +99,8 @@ class ThelonsChantTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G} during upkeep keeps Thelon's Chant")
     void payingUpkeepKeepsChant() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ThelonsChant());
 
         advanceToUpkeep(player1);
@@ -123,6 +126,8 @@ class ThelonsChantTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Thelon's Chant")
     void decliningUpkeepPaymentSacrificesChant() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ThelonsChant());
 
         advanceToUpkeep(player1);

@@ -3,13 +3,11 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DRB", collectorNumber = "10")
@@ -24,10 +22,7 @@ public class NicolBolas extends Card {
     public NicolBolas() {
         // At the beginning of your upkeep, sacrifice Nicol Bolas unless you pay {U}{B}{R}.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{U}{B}{R}"),
-                        List.of(new SacrificeSelfEffect()),
-                        true));
+                UnlessPaysEffect.unlessYouPay("{U}{B}{R}", new SacrificeSelfEffect()));
 
         // Whenever Nicol Bolas deals damage to an opponent, that player discards their hand.
         addTrigger(Triggers.dealsDamageToOpponent(),

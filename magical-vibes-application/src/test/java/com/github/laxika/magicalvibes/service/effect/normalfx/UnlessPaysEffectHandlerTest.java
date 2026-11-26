@@ -422,4 +422,81 @@ class UnlessPaysEffectHandlerTest {
         assertThat(UnlessPaysEffect.unlessPaysLife(Subjects.you(), 3, new DrawCardEffect(1)).targetSpec())
                 .isEqualTo(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE);
     }
+
+    private StackEntry upkeepEntry(UnlessPaysEffect effect, Permanent source) {
+        return TestStackDoor.triggered(source.getCard(), player1Id, source.getCard().getName(), List.of(effect), 0,
+                source.getId());
+    }
+
+    private static Permanent permanentCosting(String name, String manaCost) {
+        Card card = new Card();
+        card.setName(name);
+        card.setManaCost(manaCost);
+        return new Permanent(card);
+    }
+
+    @Test
+    @DisplayName("\"Unless you pay its mana cost\" reads the source permanent's mana cost, an {X} in it being 0")
+    void itsManaCostReadsTheSourcesManaCost() {
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessYouPay(PayManaCost.forSourceManaCost(),
+                new SacrificeSelfEffect());
+        Permanent ornithopter = permanentCosting("Endless One", "{X}{G}");
+        StackEntry entry = upkeepEntry(effect, ornithopter);
+        when(gameQueryService.findPermanentById(gd, ornithopter.getId())).thenReturn(ornithopter);
+
+        UnlessPaysEffectHandler.Ransom ransom = handler.ransom(gd, entry, effect);
+
+        assertThat(ransom.unpayable()).isFalse();
+        assertThat(ransom.manaCost()).isEqualTo("{0}{G}");
+    }
+
+    @Test
+    @DisplayName("\"Its mana cost\" of a source that left reads the source as it last existed (CR 608.2h)")
+    void itsManaCostReadsTheSourceAsItLastExisted() {
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessYouPay(PayManaCost.forSourceManaCost(),
+                new SacrificeSelfEffect());
+        Permanent bauble = permanentCosting("Mox Opal", "{2}");
+        StackEntry entry = upkeepEntry(effect, bauble);
+        entry.setSourcePermanentSnapshot(bauble);
+
+        assertThat(handler.ransom(gd, entry, effect).manaCost()).isEqualTo("{2}");
+    }
+
+    @Test
+    @DisplayName("A source with no mana cost, or a face-down one, has an unpayable cost: the payer isn't asked (CR 118.6)")
+    void noManaCostIsUnpayableAndNotAsked() {
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessYouPay(PayManaCost.forSourceManaCost(),
+                new SacrificeSelfEffect());
+        Permanent token = permanentCosting("Construct", null);
+        StackEntry entry = upkeepEntry(effect, token);
+        when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer())).thenReturn(List.of(player1Id));
+
+        assertThat(handler.ransom(gd, entry, effect).unpayable()).isTrue();
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOT_PAID);
+
+        Permanent faceDown = permanentCosting("Krosan Cloudscraper", "{7}{G}{G}{G}");
+        faceDown.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
+        StackEntry faceDownEntry = upkeepEntry(effect, faceDown);
+        when(gameQueryService.findPermanentById(gd, faceDown.getId())).thenReturn(faceDown);
+        assertThat(handler.ransom(gd, faceDownEntry, effect).unpayable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A life-only ransom, \"another\" and a counted sacrifice ask in the Oracle text's words")
+    void lifeAnotherAndCountedSacrificesAskInTheirWords() {
+        StackEntry entry = counterEntry(UnlessPaysEffect.counterUnlessPays(1));
+        java.util.function.Function<UnlessPaysEffect, String> action = effect -> handler.ransom(gd, entry, effect)
+                .action();
+        when(amountEvaluationService.evaluate(eq(gd), eq(new com.github.laxika.magicalvibes.model.amount.Fixed(1)), any()))
+                .thenReturn(1);
+
+        assertThat(action.apply(UnlessPaysEffect.unlessYouPayLife(1, new SacrificeSelfEffect()))).isEqualTo("Pay 1 life");
+        assertThat(action.apply(UnlessPaysEffect.unlessYouPay(new com.github.laxika.magicalvibes.model.effect
+                .SacrificePermanentCost(new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate(),
+                "another creature"), new SacrificeSelfEffect()))).isEqualTo("Sacrifice another creature");
+        assertThat(action.apply(UnlessPaysEffect.unlessYouPay(new com.github.laxika.magicalvibes.model.effect
+                .SacrificeMultiplePermanentsCost(2, new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(),
+                "Swamps"), new SacrificeSelfEffect()))).isEqualTo("Sacrifice two Swamps");
+    }
 }

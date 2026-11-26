@@ -74,6 +74,7 @@ class ApocalypseDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertNotOnBattlefield(player1, "Defiant Khenra");
         assertThat(demon(player1).isTapped()).isFalse();
@@ -149,6 +150,7 @@ class ApocalypseDemonTest extends BaseCardTest {
         perm.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(perm.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player1, "Defiant Khenra");

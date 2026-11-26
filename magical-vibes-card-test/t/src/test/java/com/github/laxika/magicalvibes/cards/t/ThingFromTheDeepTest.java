@@ -54,6 +54,8 @@ class ThingFromTheDeepTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
+        answerForcedPick(player1);
+
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Island")).isEqualTo(0);
         harness.assertOnBattlefield(player1, "Thing from the Deep");
@@ -68,6 +70,8 @@ class ThingFromTheDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
+
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Island")).isEqualTo(0);
@@ -84,10 +88,9 @@ class ThingFromTheDeepTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handleMultiplePermanentsChosen(player1,
-                List.of(findPermanents(player1, "Island").getFirst().getId()));
+        harness.handlePermanentChosen(player1, findPermanents(player1, "Island").getFirst().getId());
 
         assertThat(countPermanents(player1, "Island")).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Thing from the Deep");
@@ -132,6 +135,7 @@ class ThingFromTheDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Island")).isZero();

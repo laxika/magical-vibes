@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import java.util.Map;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.s.SigardaHostOfHerons;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -149,5 +152,25 @@ class OgreMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, ogre)).isFalse();
+    }
+
+    @Test
+    @CardUsed(JaceBeleren.class)
+    @DisplayName("Attacking a planeswalker asks its controller, the defending player")
+    void attackOnAPlaneswalkerAsksItsController() {
+        addCreatureReady(player1, new OgreMarauder());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        addCreatureReady(player2, new OgreMarauder());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, jace.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
     }
 }

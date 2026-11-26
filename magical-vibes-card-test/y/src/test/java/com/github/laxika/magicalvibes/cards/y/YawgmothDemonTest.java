@@ -48,6 +48,7 @@ class YawgmothDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger → may prompt
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isFalse();

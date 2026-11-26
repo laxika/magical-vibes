@@ -22,6 +22,8 @@ class SlowMotionTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted creature's controller may pay {2} to keep it")
     void enchantedControllerMayPayToKeepCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreature(player2);
         attachSlowMotion(player1, creature);
 
@@ -40,6 +42,8 @@ class SlowMotionTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted creature is sacrificed when its controller cannot pay")
     void sacrificesEnchantedCreatureWhenControllerCannotPay() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreature(player1);
         attachSlowMotion(player1, creature);
 
@@ -91,6 +95,8 @@ class SlowMotionTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the upkeep payment without enough mana sacrifices the creature")
     void acceptingWithoutEnoughManaSacrificesEnchantedCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreature(player2);
         attachSlowMotion(player1, creature);
 
@@ -136,6 +142,8 @@ class SlowMotionTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep player cannot sacrifice a creature they no longer control")
     void doesNotSacrificeAfterCreatureChangesController() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreature(player2);
         attachSlowMotion(player1, creature);
 
@@ -155,6 +163,8 @@ class SlowMotionTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep trigger still sacrifices the creature after Slow Motion leaves")
     void upkeepTriggerSurvivesAuraLeavingBattlefield() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent creature = addCreature(player2);
         Permanent aura = attachSlowMotion(player1, creature);
 
@@ -186,6 +196,8 @@ class SlowMotionTest extends BaseCardTest {
     @Test
     @DisplayName("Moving Slow Motion in response leaves the creature it enchanted as it triggered as the one sacrificed")
     void sacrificesCreatureEnchantedAtTriggerAfterAuraMoves() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent original = addCreature(player2);
         Permanent other = addCreature(player2);
         Permanent aura = attachSlowMotion(player1, original);

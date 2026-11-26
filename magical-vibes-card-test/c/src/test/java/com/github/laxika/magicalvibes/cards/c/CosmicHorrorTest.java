@@ -19,6 +19,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay destroys Cosmic Horror and deals 7 damage to its controller")
     void declineDestroysAndDamages() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -36,6 +38,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {3}{B}{B}{B} keeps it on the battlefield and deals no damage")
     void payKeepsItAlive() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -52,6 +56,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("The generic portion of the upkeep cost can be paid with other colors")
     void paysWithMixedMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -70,6 +76,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Six mana with fewer than three black cannot pay the upkeep cost")
     void insufficientBlackManaDestroysAndDamages() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -91,6 +99,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's Cosmic Horror damages that opponent on their upkeep")
     void opponentControlledHorrorDamagesOpponent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         int otherLifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -108,6 +118,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still destroys it and deals 7 damage")
     void acceptWithoutManaDestroysAndDamages() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -123,6 +135,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("A regenerated Cosmic Horror survives and deals no damage (only 'destroyed this way' triggers it)")
     void regeneratedSurvivesWithoutDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new CosmicHorror());
         gd.addRegenerationShields(horror.getId(), 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -139,6 +153,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @CardUsed({CosmicHorror.class, DarksteelPlate.class})
     @DisplayName("An indestructible Cosmic Horror survives without dealing damage")
     void indestructibleSurvivesWithoutDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new CosmicHorror());
         Permanent plate = harness.addToBattlefieldAndReturn(player1, new DarksteelPlate());
         plate.setAttachedTo(horror.getId());
@@ -169,6 +185,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("If Cosmic Horror leaves before its trigger resolves, it deals no damage")
     void sourceLeavingBeforeResolutionPreventsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -186,6 +204,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @CardUsed({CosmicHorror.class, Phyresis.class})
     @DisplayName("A destroyed Horror with infect gives seven poison counters instead of causing life loss")
     void infectAppliesToDamageAfterDestruction() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new CosmicHorror());
         Permanent phyresis = harness.addToBattlefieldAndReturn(player1, new Phyresis());
         phyresis.setAttachedTo(horror.getId());
@@ -205,6 +225,8 @@ class CosmicHorrorTest extends BaseCardTest {
     @CardUsed({CosmicHorror.class, CircleOfProtectionBlack.class})
     @DisplayName("Circle of Protection Black prevents upkeep damage from the chosen Horror after it dies")
     void chosenSourcePreventionAppliesAfterDestruction() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new CircleOfProtectionBlack());
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new CosmicHorror());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());

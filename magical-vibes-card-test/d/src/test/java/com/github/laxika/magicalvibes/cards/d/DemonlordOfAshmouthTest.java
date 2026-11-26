@@ -39,6 +39,7 @@ class DemonlordOfAshmouthTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertNotOnBattlefield(player1, "Moorland Inquisitor");
         harness.assertOnBattlefield(player1, "Demonlord of Ashmouth");
@@ -116,6 +117,7 @@ class DemonlordOfAshmouthTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         var returned = findPermanent(player1, "Demonlord of Ashmouth");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -174,6 +176,7 @@ class DemonlordOfAshmouthTest extends BaseCardTest {
                 assertThat(trigger.getControllerId()).isEqualTo(player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertInGraveyard(player1, "Moorland Inquisitor");
         harness.assertOnBattlefield(player1, "Demonlord of Ashmouth");

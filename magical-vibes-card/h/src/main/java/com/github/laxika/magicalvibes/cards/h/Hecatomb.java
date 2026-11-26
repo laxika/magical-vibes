@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -24,10 +24,7 @@ public class Hecatomb extends Card {
 
     public Hecatomb() {
         // When Hecatomb enters, sacrifice it unless you sacrifice four creatures.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ForcedCostOrElseEffect(
-                new SacrificeMultiplePermanentsCost(4, new PermanentIsCreaturePredicate()),
-                List.of(new SacrificeSelfEffect()),
-                true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.unlessYouPay(new SacrificeMultiplePermanentsCost(4, new PermanentIsCreaturePredicate(), "creatures"), new SacrificeSelfEffect()));
 
         // Tap an untapped Swamp you control: This enchantment deals 1 damage to any target.
         addActivatedAbility(new ActivatedAbility(

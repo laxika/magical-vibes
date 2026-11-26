@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "74")
 @CardRegistration(set = "ME2", collectorNumber = "50")
@@ -26,10 +25,6 @@ public class IcyPrison extends Card {
                         new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true, true))
                 // "At the beginning of your upkeep, sacrifice this enchantment unless any player pays {3}."
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new ForcedCostOrElseEffect(
-                                new PayManaCost("{3}"),
-                                List.of(new SacrificeSelfEffect()),
-                                true,
-                                true));
+                        UnlessPaysEffect.unlessPays(Subjects.eachPlayer(), "{3}", new SacrificeSelfEffect()));
     }
 }

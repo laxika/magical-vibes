@@ -21,6 +21,8 @@ class KuroPitlordTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B}{B}{B}{B} at upkeep keeps Kuro on the battlefield")
     void payingKeepsKuro() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KuroPitlord());
 
         advanceToUpkeep(player1);
@@ -35,6 +37,8 @@ class KuroPitlordTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Kuro")
     void decliningSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KuroPitlord());
 
         advanceToUpkeep(player1);
@@ -47,6 +51,8 @@ class KuroPitlordTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still sacrifices Kuro")
     void notEnoughManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KuroPitlord());
 
         advanceToUpkeep(player1);
@@ -203,6 +209,8 @@ class KuroPitlordTest extends BaseCardTest {
     @Test
     @DisplayName("Four mana of the wrong color cannot pay the upkeep cost")
     void wrongColorCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KuroPitlord());
 
         advanceToUpkeep(player1);

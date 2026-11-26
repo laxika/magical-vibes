@@ -32,6 +32,7 @@ class JokulmorderTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(jokulmorder.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -212,6 +213,7 @@ class JokulmorderTest extends BaseCardTest {
 
         castAndResolveJokulmorder();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Jokulmorder");
         assertThat(countPermanents(player1, "Snow-Covered Forest")).isZero();

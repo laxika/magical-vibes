@@ -33,6 +33,8 @@ class AuraFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {2} sacrifices another enchantment")
     void decliningPaymentSacrificesAnotherEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent auraFlux = addAuraFlux(player1);
         Permanent knighthood = addKnighthood(player1);
 
@@ -51,6 +53,8 @@ class AuraFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2} keeps another enchantment on the battlefield")
     void payingKeepsAnotherEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent auraFlux = addAuraFlux(player1);
         Permanent knighthood = addKnighthood(player1);
 
@@ -92,6 +96,8 @@ class AuraFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Aura Flux taxes enchantments controlled by an opponent")
     void taxesOpponentsEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addAuraFlux(player2);
         addKnighthood(player1);
 
@@ -119,6 +125,8 @@ class AuraFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Two Aura Fluxes tax each other")
     void twoAuraFluxesTaxEachOther() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent firstAuraFlux = addAuraFlux(player1);
         Permanent secondAuraFlux = addAuraFlux(player1);
 
@@ -139,6 +147,8 @@ class AuraFluxTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple Aura Fluxes give another enchantment multiple upkeep abilities")
     void multipleAuraFluxesGiveAnotherEnchantmentMultipleUpkeepAbilities() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent firstAuraFlux = addAuraFlux(player1);
         Permanent secondAuraFlux = addAuraFlux(player1);
         Permanent knighthood = addKnighthood(player1);
@@ -167,6 +177,8 @@ class AuraFluxTest extends BaseCardTest {
     @CardUsed({AuraFlux.class, CourserOfKruphix.class, Humility.class})
     @DisplayName("Later Humility removes the upkeep ability from an enchantment creature")
     void laterHumilityRemovesGrantedUpkeepAbility() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.enterBattlefieldAndReturn(player2, new AuraFlux());
         Permanent courser = harness.enterBattlefieldAndReturn(player1, new CourserOfKruphix());
         harness.enterBattlefieldAndReturn(player1, new Humility());
@@ -187,6 +199,8 @@ class AuraFluxTest extends BaseCardTest {
     @CardUsed({AuraFlux.class, CourserOfKruphix.class, Humility.class})
     @DisplayName("Later Aura Flux grants its upkeep ability after Humility removes abilities")
     void laterAuraFluxGrantsAbilityAfterHumility() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent courser = harness.enterBattlefieldAndReturn(player1, new CourserOfKruphix());
         Permanent humility = harness.enterBattlefieldAndReturn(player1, new Humility());
         harness.enterBattlefieldAndReturn(player2, new AuraFlux());
@@ -209,6 +223,8 @@ class AuraFluxTest extends BaseCardTest {
     @CardUsed({AuraFlux.class, Knighthood.class, Erase.class})
     @DisplayName("Removing Aura Flux does not remove an already triggered upkeep ability")
     void upkeepAbilitySurvivesAuraFluxLeavingBattlefield() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent auraFlux = addAuraFlux(player1);
         addKnighthood(player1);
 

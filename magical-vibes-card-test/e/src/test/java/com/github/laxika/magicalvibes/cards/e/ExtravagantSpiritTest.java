@@ -20,6 +20,8 @@ class ExtravagantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Paying one generic mana for each card in hand keeps Extravagant Spirit")
     void paysForCardsInHand() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new ExtravagantSpirit());
         harness.setHand(player1, List.of(new FreshVolunteers(), new FreshVolunteers()));
 
@@ -37,6 +39,8 @@ class ExtravagantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment sacrifices Extravagant Spirit")
     void declinePaymentSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ExtravagantSpirit());
         harness.setHand(player1, List.of(new FreshVolunteers()));
 
@@ -67,6 +71,8 @@ class ExtravagantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana sacrifices Extravagant Spirit")
     void acceptWithoutEnoughManaSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ExtravagantSpirit());
         harness.setHand(player1, List.of(new FreshVolunteers()));
 
@@ -95,6 +101,8 @@ class ExtravagantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep cost uses the hand size when the ability resolves")
     void handSizeIsEvaluatedAtResolution() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new ExtravagantSpirit());
         harness.setHand(player1, List.of(new FreshVolunteers(), new FreshVolunteers()));
 
@@ -138,6 +146,8 @@ class ExtravagantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Insufficient mana is not partially spent on the upkeep payment")
     void insufficientManaIsNotPartiallySpent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new ExtravagantSpirit());
         harness.setHand(player1, List.of(new FreshVolunteers(), new FreshVolunteers()));
 

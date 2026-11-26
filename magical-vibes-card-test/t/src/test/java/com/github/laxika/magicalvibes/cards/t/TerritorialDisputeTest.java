@@ -51,6 +51,7 @@ class TerritorialDisputeTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Territorial Dispute");
         harness.assertNotOnBattlefield(player1, "Forest");
@@ -160,6 +161,7 @@ class TerritorialDisputeTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Territorial Dispute");
         harness.assertNotOnBattlefield(player1, "Forest");

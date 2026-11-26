@@ -82,6 +82,8 @@ class DemonicHordesTest extends BaseCardTest {
     @Test
     @DisplayName("If unpaid without a land, only taps the creature")
     void unpaidUpkeepWithoutLandOnlyTapsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent hordes = addCreatureReady(player1, new DemonicHordes());
 
         advanceToUpkeep(player1);

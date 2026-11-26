@@ -46,6 +46,7 @@ class DemandingDragonTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
+        answerForcedPick(player2);
 
         harness.assertLife(player2, 20);
         harness.assertNotOnBattlefield(player2, "Greenwood Sentinel");

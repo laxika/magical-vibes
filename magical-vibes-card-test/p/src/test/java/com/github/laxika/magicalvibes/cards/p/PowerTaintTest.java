@@ -139,6 +139,8 @@ class PowerTaintTest extends BaseCardTest {
     @Test
     @DisplayName("Power Taint triggers when it enchants its controller's own enchantment")
     void triggersOnOwnEnchantment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new OpalCaryatid());
         attachPowerTaint(enchantment);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -155,6 +157,8 @@ class PowerTaintTest extends BaseCardTest {
     @Test
     @DisplayName("Only the enchanted enchantment's controller can fund the payment")
     void cannotUseAuraControllersManaToPay() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new OpalCaryatid());
         attachPowerTaint(enchantment);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());

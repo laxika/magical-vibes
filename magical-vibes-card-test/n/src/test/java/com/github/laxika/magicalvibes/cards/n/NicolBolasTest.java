@@ -33,6 +33,8 @@ class NicolBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Three mana of the wrong colors cannot pay the upkeep cost")
     void wrongColorsCannotPayUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new NicolBolas());
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -83,6 +85,8 @@ class NicolBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {U}{B}{R} sacrifices Nicol Bolas")
     void declineSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new NicolBolas());
 
         advanceToUpkeep(player1);
@@ -97,6 +101,8 @@ class NicolBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U}{B}{R} keeps Nicol Bolas and spends the mana")
     void payKeeps() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new NicolBolas());
 
         advanceToUpkeep(player1);

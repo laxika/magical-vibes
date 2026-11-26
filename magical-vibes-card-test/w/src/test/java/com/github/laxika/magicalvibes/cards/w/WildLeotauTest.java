@@ -16,6 +16,8 @@ class WildLeotauTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {G} sacrifices Wild Leotau")
     void decliningPaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WildLeotau());
 
         advanceToUpkeep(player1);
@@ -31,6 +33,8 @@ class WildLeotauTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G} keeps Wild Leotau on the battlefield and spends the mana")
     void payingKeepsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WildLeotau());
 
         advanceToUpkeep(player1);
@@ -45,6 +49,8 @@ class WildLeotauTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without green mana still sacrifices Wild Leotau")
     void acceptWithoutManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WildLeotau());
 
         advanceToUpkeep(player1);
@@ -68,6 +74,8 @@ class WildLeotauTest extends BaseCardTest {
     @Test
     @DisplayName("Payment may be declined even when green mana is available")
     void canDeclineWithGreenManaAvailable() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WildLeotau());
 
         advanceToUpkeep(player1);
@@ -83,6 +91,8 @@ class WildLeotauTest extends BaseCardTest {
     @Test
     @DisplayName("Non-green mana cannot pay the upkeep cost")
     void wrongColorCannotPay() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new WildLeotau());
 
         advanceToUpkeep(player1);

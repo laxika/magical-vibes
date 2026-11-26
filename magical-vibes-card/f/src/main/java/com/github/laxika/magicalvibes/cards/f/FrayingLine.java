@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
@@ -33,20 +35,19 @@ public class FrayingLine extends Card {
         // Each upkeep, the active player may pay {2} to put a rope counter on one of their
         // creatures. Otherwise, exile this artifact and every creature without a rope counter,
         // then remove all rope counters from the creatures that remain.
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ForcedCostOrElseEffect(
-                new PayManaCost("{2}"),
-                List.of(
-                        new ExileTargetPermanentEffect(Subjects.source()),
-                        new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ROPE))))),
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new UnlessPaysEffect(Subjects.activePlayer(), new PayManaCost("{2}"),
+                SequenceEffect.of(
+                        new ExileTargetPermanentEffect(Subjects.allOf(Subjects.source(),
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ROPE))))))),
                         new RemoveAllCountersFromMatchingPermanentsEffect(CounterType.ROPE,
                                 new PermanentIsCreaturePredicate())),
-                true,
-                false,
-                true,
-                false,
-                List.of(new PutCountersEffect(
-                        CounterType.ROPE, 1, new PermanentIsCreaturePredicate()))));
+                SequenceEffect.of(
+                        ChoosePermanentsEffect.exactly(1,
+                                        Subjects.controlledBy(Subjects.activePlayer(), new PermanentIsCreaturePredicate()),
+                                        "Choose a creature to put a rope counter on.")
+                                .chosenBy(Subjects.activePlayer()),
+                        new PutCountersEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.ROPE))));
     }
 }

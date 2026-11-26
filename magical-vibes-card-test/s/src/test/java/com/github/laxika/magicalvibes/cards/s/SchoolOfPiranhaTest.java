@@ -15,6 +15,8 @@ class SchoolOfPiranhaTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {1}{U} sacrifices School of Piranha")
     void declineSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SchoolOfPiranha());
 
         advanceToUpkeep(player1);
@@ -30,6 +32,8 @@ class SchoolOfPiranhaTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{U} keeps School of Piranha on the battlefield")
     void payKeeps() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SchoolOfPiranha());
 
         advanceToUpkeep(player1);
@@ -46,6 +50,8 @@ class SchoolOfPiranhaTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still sacrifices School of Piranha")
     void acceptWithoutManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SchoolOfPiranha());
 
         advanceToUpkeep(player1);
@@ -69,6 +75,8 @@ class SchoolOfPiranhaTest extends BaseCardTest {
     @Test
     @DisplayName("Declining an affordable upkeep payment still sacrifices the creature")
     void declineAffordablePaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SchoolOfPiranha());
 
         advanceToUpkeep(player1);
@@ -88,6 +96,8 @@ class SchoolOfPiranhaTest extends BaseCardTest {
     @Test
     @DisplayName("Two colorless mana cannot pay the blue upkeep requirement")
     void missingBlueManaSacrificesWithoutSpendingMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new SchoolOfPiranha());
 
         advanceToUpkeep(player1);

@@ -24,6 +24,8 @@ class EarthlinkTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2} at upkeep keeps Earthlink on the battlefield")
     void payAtUpkeepKeepsIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Earthlink());
 
         advanceToUpkeep(player1);
@@ -49,6 +51,8 @@ class EarthlinkTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay at upkeep sacrifices Earthlink")
     void declineAtUpkeepSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Earthlink());
 
         advanceToUpkeep(player1);
@@ -157,6 +161,8 @@ class EarthlinkTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting upkeep payment with insufficient mana sacrifices Earthlink")
     void insufficientManaAtUpkeepSacrificesIt() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new Earthlink());
 
         advanceToUpkeep(player1);

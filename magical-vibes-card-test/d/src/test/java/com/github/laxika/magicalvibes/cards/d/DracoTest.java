@@ -120,6 +120,8 @@ class DracoTest extends BaseCardTest {
         @Test
         @DisplayName("Paying the full upkeep cost with no land types keeps Draco")
         void payFullCostWithoutLands() {
+        giveManaSource(player1);
+        giveManaSource(player2);
             harness.addToBattlefield(player1, new Draco());
 
             advanceToUpkeep(player1);
@@ -164,6 +166,8 @@ class DracoTest extends BaseCardTest {
         @Test
         @DisplayName("Declining the payment sacrifices Draco")
         void declineSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
             harness.addToBattlefield(player1, new Draco());
 
             advanceToUpkeep(player1);
@@ -225,6 +229,8 @@ class DracoTest extends BaseCardTest {
         @Test
         @DisplayName("Accepting without enough mana still sacrifices Draco")
         void cannotPayUpkeepCostSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
             harness.addToBattlefield(player1, new Draco());
 
             advanceToUpkeep(player1);
@@ -237,6 +243,8 @@ class DracoTest extends BaseCardTest {
         @Test
         @DisplayName("Opponent-controlled land types do not reduce the upkeep cost")
         void opponentLandTypesDoNotReduceUpkeepCost() {
+        giveManaSource(player1);
+        giveManaSource(player2);
             harness.addToBattlefield(player1, new Draco());
             addAllBasicLandTypes(player2);
 

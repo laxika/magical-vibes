@@ -17,6 +17,8 @@ class MagusOfTheTabernacleTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {1} sacrifices the Magus itself")
     void decliningPaymentSacrificesMagus() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefieldAndReturn(player1, new MagusOfTheTabernacle());
 
         advanceToUpkeep(player1);
@@ -32,6 +34,8 @@ class MagusOfTheTabernacleTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1} keeps the Magus on the battlefield")
     void payingKeepsMagus() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefieldAndReturn(player1, new MagusOfTheTabernacle());
 
         advanceToUpkeep(player1);
@@ -46,6 +50,8 @@ class MagusOfTheTabernacleTest extends BaseCardTest {
     @Test
     @DisplayName("Each creature gets an independent pay-or-sacrifice choice")
     void eachCreatureGetsIndependentChoice() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefieldAndReturn(player1, new MagusOfTheTabernacle());
         harness.addToBattlefieldAndReturn(player1, new GossamerPhantasm());
 
@@ -64,6 +70,8 @@ class MagusOfTheTabernacleTest extends BaseCardTest {
     @Test
     @DisplayName("The ability triggers during each creature controller's upkeep")
     void triggersDuringEachCreatureControllersUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefieldAndReturn(player1, new MagusOfTheTabernacle());
         harness.addToBattlefieldAndReturn(player2, new GossamerPhantasm());
 
@@ -97,6 +105,8 @@ class MagusOfTheTabernacleTest extends BaseCardTest {
     @Test
     @DisplayName("Granted upkeep triggers still resolve after the Magus is sacrificed")
     void pendingTriggerSurvivesMagusLeaving() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GossamerPhantasm());
         harness.addToBattlefield(player1, new MagusOfTheTabernacle());
 
@@ -116,6 +126,8 @@ class MagusOfTheTabernacleTest extends BaseCardTest {
     @Test
     @DisplayName("Two Magi require two independent payments for each creature")
     void multipleMagiGrantMultipleUpkeepAbilities() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new MagusOfTheTabernacle());
         harness.addToBattlefield(player2, new MagusOfTheTabernacle());
 

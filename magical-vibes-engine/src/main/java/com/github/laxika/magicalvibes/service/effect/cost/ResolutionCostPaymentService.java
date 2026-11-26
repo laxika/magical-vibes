@@ -507,7 +507,7 @@ public class ResolutionCostPaymentService {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.SacrificePermanentThen(payerId, payment.sourceCard(), null));
                 playerInputService.beginPermanentChoice(gameData, payerId, candidates,
-                        "Choose " + (sacrifice.description() == null ? "a permanent" : "a " + sacrifice.description())
+                        "Choose " + (sacrifice.description() == null ? "a permanent" : withArticle(sacrifice.description()))
                                 + " to sacrifice.");
                 yield Outcome.ASKING;
             }
@@ -989,9 +989,8 @@ public class ResolutionCostPaymentService {
                                 gameQueryService.findPermanentController(gameData, permanent.getId())))
                         .toList();
                 destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, chosen);
-                for (Permanent permanent : chosen) {
-                    destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
-                }
+                // Sacrificed at the same time, one event (CR 603.10a): each sees the others leave with it.
+                destructionSupport.sacrificeTogether(gameData, chosen, playerId);
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
             case SacrificeCreaturesWithTotalPowerCost ignored -> {
@@ -1098,6 +1097,14 @@ public class ResolutionCostPaymentService {
     /** A payment made at once is paid, unless one of its actions stopped to ask (a replacement's choice). */
     private static Outcome afterImmediatePayment(GameData gameData) {
         return gameData.interaction.isAwaitingInput() ? Outcome.ASKING : Outcome.PAID;
+    }
+
+    /** "a creature", "an Island"; a description that reads with its determiner ("another creature") as it is. */
+    private static String withArticle(String noun) {
+        if (noun.startsWith("another ") || noun.startsWith("a ") || noun.startsWith("an ")) {
+            return noun;
+        }
+        return ("aeiou".indexOf(Character.toLowerCase(noun.charAt(0))) >= 0 ? "an " : "a ") + noun;
     }
 
     /** The creatures {@code payerId} controls that can get -1/-1 counters and be chosen (CR 701.68b). */

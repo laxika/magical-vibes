@@ -141,6 +141,8 @@ class OrcishFarmerTest extends BaseCardTest {
     @Test
     @DisplayName("The Swamp effect survives a skipped untap step")
     void overrideSurvivesSkippedUntapStep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent forest = becomeSwamp(player1);
         harness.addToBattlefield(player2, new Stasis());
         harness.setHand(player1, List.of());

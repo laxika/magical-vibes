@@ -17,6 +17,8 @@ class KatakiWarsWageTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1} keeps your artifact on the battlefield")
     void paysToKeepArtifact() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ONaginata());
         harness.addToBattlefield(player1, new KatakiWarsWage());
 
@@ -34,6 +36,8 @@ class KatakiWarsWageTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment sacrifices your artifact but not Kataki")
     void declinesAndSacrificesArtifact() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ONaginata());
         harness.addToBattlefield(player1, new KatakiWarsWage());
 
@@ -49,6 +53,8 @@ class KatakiWarsWageTest extends BaseCardTest {
     @Test
     @DisplayName("Each artifact gets its own upkeep payment")
     void eachArtifactGetsItsOwnUpkeepPayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new ONaginata());
         Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new ONaginata());
         harness.addToBattlefield(player1, new KatakiWarsWage());
@@ -72,6 +78,8 @@ class KatakiWarsWageTest extends BaseCardTest {
     @Test
     @DisplayName("Kataki affects artifacts controlled by an opponent")
     void affectsOpponentsArtifact() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KatakiWarsWage());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ONaginata());
 
@@ -87,6 +95,8 @@ class KatakiWarsWageTest extends BaseCardTest {
     @Test
     @DisplayName("An artifact is sacrificed when its controller cannot pay")
     void cannotPayAndSacrificesArtifact() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KatakiWarsWage());
         harness.addToBattlefield(player1, new ONaginata());
 
@@ -102,6 +112,8 @@ class KatakiWarsWageTest extends BaseCardTest {
     @Test
     @DisplayName("Two Katakis require two separate payments for the same artifact")
     void twoKatakisRequireTwoPayments() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KatakiWarsWage());
         harness.addToBattlefield(player2, new KatakiWarsWage());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ONaginata());
@@ -125,6 +137,8 @@ class KatakiWarsWageTest extends BaseCardTest {
     @Test
     @DisplayName("Only the active player's artifacts trigger during upkeep")
     void doesNotChargeInactivePlayersArtifacts() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new KatakiWarsWage());
         harness.addToBattlefield(player1, new ONaginata());
         Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new ONaginata());

@@ -56,6 +56,8 @@ class RathiDragonTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
+        answerForcedPick(player1);
+
         // Both Mountains sacrificed without a further choice; Rathi Dragon stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Mountain")).isEqualTo(0);
@@ -71,6 +73,8 @@ class RathiDragonTest extends BaseCardTest {
         castRathiDragon();
 
         harness.handleMayAbilityChosen(player1, true);
+
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Mountain")).isEqualTo(0);
@@ -139,6 +143,8 @@ class RathiDragonTest extends BaseCardTest {
         castRathiDragon();
 
         harness.handleMayAbilityChosen(player1, true);
+
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Mountain")).isZero();

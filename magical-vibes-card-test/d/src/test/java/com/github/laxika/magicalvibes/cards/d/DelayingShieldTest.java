@@ -44,6 +44,8 @@ class DelayingShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Declining each upkeep payment causes one life loss per delay counter")
     void decliningPaymentsLosesLifePerCounter() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shield = shield();
         dealThreeDamageTo(player1);
 
@@ -62,6 +64,8 @@ class DelayingShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{W} for each counter avoids all upkeep life loss")
     void payingEachCounterAvoidsLifeLoss() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shield = shield();
         dealThreeDamageTo(player1);
 
@@ -103,7 +107,9 @@ class DelayingShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Every delay counter is removed before the first payment is offered")
     void removesAllCountersBeforeOfferingPayments() {
+        giveManaSource(player1);
         Permanent shield = shield();
         dealThreeDamageTo(player1);
 
@@ -120,7 +126,10 @@ class DelayingShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can pay for only some removed counters")
     void canPayForOnlySomeRemovedCounters() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         Permanent shield = shield();
         dealThreeDamageTo(player1);
         advanceToUpkeep(player1);

@@ -20,6 +20,8 @@ class EssenceLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay sacrifices an enchanted red permanent")
     void decliningSacrificesRedPermanent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         enchantOpponent(new GoblinSpy());
 
         advanceToUpkeep(player2);
@@ -34,6 +36,8 @@ class EssenceLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Paying the enchanted green permanent's mana cost keeps it on the battlefield")
     void payingManaCostKeepsGreenPermanent() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         enchantOpponent(new LlanowarElite());
 
         advanceToUpkeep(player2);
@@ -47,6 +51,8 @@ class EssenceLeakTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted permanent's colored mana cost is required")
     void coloredManaCostIsRequired() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         enchantOpponent(new LlanowarElite());
 
         advanceToUpkeep(player2);
@@ -84,6 +90,8 @@ class EssenceLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Removing the Aura after upkeep begins does not remove the sacrifice trigger")
     void removingAuraDoesNotStopPendingTrigger() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         enchantOpponent(new LlanowarElite());
 
         advanceToUpkeep(player2);
@@ -99,6 +107,8 @@ class EssenceLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Paying the upkeep cost actually spends the enchanted permanent controller's mana")
     void paymentSpendsMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         enchantOpponent(new LlanowarElite());
 
         advanceToUpkeep(player2);

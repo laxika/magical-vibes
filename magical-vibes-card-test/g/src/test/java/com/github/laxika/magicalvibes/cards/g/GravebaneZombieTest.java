@@ -1020,6 +1020,7 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
@@ -1055,6 +1056,7 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");

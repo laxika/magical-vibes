@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -139,9 +138,7 @@ class RavenousDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.ForcedCostOrElse.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(first.getId(), second.getId())
                 .doesNotContain(bear.getId());
     }
@@ -237,7 +234,7 @@ class RavenousDemonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MidnightGuard());
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, human.getId());
+        harness.handleMultiplePermanentsChosen(player1, java.util.List.of(human.getId()));
 
         harness.assertInGraveyard(player1, "Thraben Heretic");
         harness.assertOnBattlefield(player1, "Midnight Guard");

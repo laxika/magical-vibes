@@ -46,6 +46,7 @@ class PillarTombsOfAkuTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertLife(player1, 20);
         harness.assertNotOnBattlefield(player1, "Warthog");
@@ -124,6 +125,7 @@ class PillarTombsOfAkuTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
+        answerForcedPick(player2);
 
         harness.assertNotOnBattlefield(player2, "Warthog");
         harness.assertOnBattlefield(player1, "Pillar Tombs of Aku");
@@ -162,6 +164,7 @@ class PillarTombsOfAkuTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Pillar Tombs of Aku");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
+        answerForcedPick(player2);
 
         harness.assertInGraveyard(player2, "Warthog");
         harness.assertNotOnBattlefield(player2, "Warthog");

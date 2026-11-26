@@ -18,10 +18,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -931,10 +929,6 @@ public class DestructionSupport {
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof ControllerLosesGameEffect) {
                 controllerLosesGameHandler.resolve(gameData, entry, elseEffect);
-            } else if (elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect destroyDamage) {
-                destroySourceAndDamageControllerIfDestroyed(gameData, entry, destroyDamage.damage());
-            } else if (elseEffect instanceof DealDamageToControllerThenTapSourceIfDamageDealtEffect damageThenTap) {
-                dealDamageToControllerThenTapSourceIfDealt(gameData, entry, damageThenTap.damage());
             } else if (elseEffect instanceof DestroyTargetPermanentEffect destroySource
                     && destroySource.subject() instanceof PermanentSubject.Source) {
                 destroySource(gameData, entry, destroySource.cannotBeRegenerated());
@@ -1012,34 +1006,6 @@ public class DestructionSupport {
             return;
         }
         tryDestroyAndLog(gameData, source, entry.getCard().getName(), cannotBeRegenerated);
-    }
-
-    private void destroySourceAndDamageControllerIfDestroyed(GameData gameData, StackEntry entry, int damage) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            return;
-        }
-        Permanent lastKnownSource = new Permanent(source);
-        lastKnownSource.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, source));
-        entry.setSourcePermanentSnapshot(lastKnownSource);
-        boolean destroyed = tryDestroyAndLog(gameData, source, entry.getCard().getName());
-        if (destroyed) {
-            damageSupportProvider.getObject().dealDamageToPlayer(
-                    gameData, entry, entry.getControllerId(), damage);
-            gameOutcomeService.checkWinCondition(gameData);
-        }
-    }
-
-    private void dealDamageToControllerThenTapSourceIfDealt(GameData gameData, StackEntry entry, int damage) {
-        UUID controllerId = entry.getControllerId();
-        int damageBefore = gameData.damageDealtToPlayersThisTurn.getOrDefault(controllerId, 0);
-        damageSupportProvider.getObject().dealDamageToPlayer(gameData, entry, controllerId, damage);
-        gameOutcomeService.checkWinCondition(gameData);
-        // "If this creature deals damage to you this way, tap it" — prevention/redirect leaves it untapped,
-        // while damage that causes no life change (Platinum Emperion) was still dealt.
-        if (gameData.damageDealtToPlayersThisTurn.getOrDefault(controllerId, 0) > damageBefore) {
-            tapSourcePermanent(gameData, entry);
-        }
     }
 
     private void sacrificeSource(GameData gameData, StackEntry entry) {

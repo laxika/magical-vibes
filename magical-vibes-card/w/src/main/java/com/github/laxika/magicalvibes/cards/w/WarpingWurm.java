@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 /**
  * Warping Wurm — {2}{G}{U} Creature — Wurm 1/1.
@@ -27,10 +25,7 @@ public class WarpingWurm extends Card {
 
     public WarpingWurm() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{2}{G}{U}"),
-                        List.of(new PhaseOutEffect(Subjects.source())),
-                        true));
+                UnlessPaysEffect.unlessYouPay("{2}{G}{U}", new PhaseOutEffect(Subjects.source())));
         addTrigger(Triggers.phasesIn(null, ObjectRelation.THIS), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

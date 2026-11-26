@@ -222,6 +222,8 @@ class EnergyFluxTest extends BaseCardTest {
     @Test
     @DisplayName("An artifact that cannot be sacrificed survives declining the upkeep payment")
     void sacrificeProhibitionPreventsUnpaidPenalty() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addEnergyFlux(player1);
         harness.addToBattlefield(player1, new HithlainRope());
 

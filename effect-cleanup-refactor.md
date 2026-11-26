@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (210 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1 and U3b2 (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone). Next: "unless" runs U4, U5, U6, U7; then the other verbs under Step-10 hand-offs |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone; U4a moved 121 `ForcedCostOrElseEffect` card files). Next: "unless" runs U4b, U4c, U4d, U5, U6, U7; then the other verbs under Step-10 hand-offs |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -494,7 +494,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `anotherPlayerAlreadyPaid` is the AI's read (`AiDecisionEngine.anyPlayerManaPaymentAlreadyMade`). The chosen branch is put next
   (`spliceSequenceSteps`) and resolved through the loop, so a wrapper in it is judged as at the top level; `Card.bindEffectToTargetGroup`
   binds both branches. The hard AI scores it as value(`ifPaid`) − value(`ifNotPaid`) for the payer (`SpellEvaluator`), a branch making the payer lose life or take damage (named by the payer's own subject) on the ransom's life scale, an any-of ransom priced by the alternative asked (U3b1). Card tests answer an any-of ransom with `BaseCardTest.payUnlessAlternative(payer, action)` (U3b1). U3b2: `eachUnless(payers, ransom, players -> X(players))` is "each of them [does X] unless they pay": every payer chooses, then X happens to those who didn't, together (CR 101.4), `UnlessAnswer.paidPlayerIds` being the entry's accepted players at the branch; a payer `targetPlayer()` declares the target when no branch does (harmful); ransoms `ReturnPermanentToHandCost.youControl` / `.anyPlayers`, `PutCardFromHandOnTopOfLibraryCost`, `LandDropCost`, `SacrificeCreaturesWithTotalPowerCost`, `PayManaCost.perAmount(symbols, amount)`; amount `PlayerCount(PlayerSubject)`. Engine-built
-  "you may pay" steps insert an `UnlessPaysEffect`.
+  "you may pay" steps insert an `UnlessPaysEffect`. U4a: `PayManaCost.forSourceManaCost()` is "its mana cost" (the source live, else as it
+  last existed, {X} as 0; face down or none is unpayable and not asked, CR 708.2, 118.6); a sacrifice description may carry its
+  determiner ("another creature"); "do X. If you can't, Y" is `SacrificePermanentsEffect` + `ConditionalEffect(NotCondition(sacrificed()), Y)`.
 - `ResolutionCostPaymentService` (`service/effect/cost`, D25): a cost a resolving effect asks any player for (CR 118.12, 118.12a). A new
   ransom kind is a case here. `couldPossiblyPay(gd, payerId, cost, sourceCard)` (takes the resolving entry) answers "no" only when it
   is certain (owner's rule): life alone that `canPayLife` refuses (CR 119.4, 119.8); mana the pool can't pay ({B} as life under K'rrik
@@ -804,6 +806,15 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
   hard AI subtracts an estimate of a non-mana ransom and never pays life or damage at or above its life total; (5) the sacrifice-candidate
   guards (Sigarda, "can't be sacrificed", The Master's tokens) are fixed in U3c, U2's ward included.
 
+  **U4** (orchestrator's decisions for U4 (owner to review)): (1) split U4a to U4d, the record and its handlers go at the end of
+  U4d; (2) the mandatory "do X. If you can't, Y" forms are steps plus a conditional, not `UnlessPaysEffect` (CR 118.12); (3) "that
+  player" with no "target" (Tomb Blade, Pillar Tombs of Aku) is the event's player, not a declared target (CR 115.1); (4) Satya (U4b):
+  its mana value read as the delayed ability resolves, from last-known information once the token left (CR 608.2h), the payer still
+  asked; (5) Fraying Line's exile is one event (CR 608.2c, 603.10a); (6) the hard AI keeps scoring a source-sacrifice branch as nothing
+  in U4 (parity), a defect-queue line to score it as the source's value; (7) Balduvian Fallen in U4d, Flash in U4b reduced by the full
+  {2}; (8) U4a's defects fixed failing-first: "any player may pay" asks every player even after one paid (Icy Prison, Nakaya Shade,
+  Rhystic Circle, Rhystic Shield; CR 101.4, their rulings), an upkeep mana payer with no mana source isn't asked (owner's strict rule).
+
   **U3b** (orchestrator's decisions for U3b, owner to review): (Q3) Spelltithe Enforcer asks only the opponent who cast the spell ("that
   player"); (Q4) at an amount of 0, Tymna and Madame Null keep not asking; (Q5) the special-action delayed payments (Quenchable Fire, the
   Asps, Sabertooth Cobra) stay as they are, a defect-queue line for the owner (no tax-paid event; it changes play only with Tax Taker);
@@ -856,10 +867,14 @@ there and updates them when it lands.
   is gone), and 25 single-verb records with existing factories (U3b1), and 15 with the per-payer branch `eachUnless`, the payer-declared target and four new ransoms (U3b2; Lim-Dûl's Hex's card too; Lurking Spinecrawler, Read the Runes and The Dalek Emperor fixed). Left: **U6**, "for each [object] … unless" (Sirocco, Giant Albatross, Cut the Tethers, Cleansing, Stench of Evil with `EachPlayerTakesDamageUnlessPaysEffect` (Lim-Dûl's Hex's card is `eachUnless` now), Fade
   Away, Tidal Flats, Heroism, Sword-Point Diplomacy, Decoy Gambit, Killing Wave): a per-object iteration with the outcomes batched;
   **U7**, the `XOrY…Cost` records as a cast-time `AnyOfCost` (the `ForageCost` rename, the engine fold with the AI, the client chooser);
-  U4, `ForcedCostOrElseEffect` (its else / paid effects as
-  entry steps first, Koya; Satya's `PayEnergyCost` ransom, its mana value read as the delayed ability resolves; its per-cost payments onto the service, whose mana tax and life check it already has, and whose sacrifice
-  candidates now honour Sigarda and "can't be sacrificed"; ask every player in "any player may pay", `.payingTogether()` where its payments
-  are chosen first); U5, "unless takes damage" (`DamageFromSourceCost`, a case in the service, dealt by the resolving entry;
+  U4a moved `ForcedCostOrElseEffect`'s 121 card files on paid ransoms, the mandatory "if you can't" files (steps) and Midnight Crusader
+  Shuttle (a villainous choice); **U4b**, the 34 new-ransom files (`ReturnMultiplePermanentsToHandCost` into `ReturnPermanentToHandCost`
+  with a count, `PayEnergyCost`, the graveyard, mill and source-counter costs, each a service case), Egon / Charnel Troll / Greenbelt
+  Rampager as steps, Satya (`PayEnergyCost` of the token's mana value read as it resolves), Koya's split, Ashling, Flash, and Ogre
+  Marauder (its "gains 'this creature can't be blocked' until end of turn" needs a one-shot timed ability grant over a subject; today's
+  `MakeCreatureUnblockableEffect` grants the rule effect); **U4c**, echo (51 cards, a `PayEchoCost` case, "when echo is paid" stays a
+  trigger); **U4d**, cumulative upkeep (84 cards, its 12 cost kinds, `AmountThisWay.manaPaid(colours)` for Balduvian Fallen), then the
+  record, both handlers, `MayPenaltyChoiceHandlerService`'s branch and `DestructionSupport.resolveForcedCostElseEffects` go; U5, "unless takes damage" (`DamageFromSourceCost`, a case in the service, dealt by the resolving entry;
   `DestroyTargetPermanentUnlessControllerTakesDamageEffect` belongs here). Whirlwind Denial stays its own record (owner's decision U2; its
   payment is on the service). `PendingMayAbility.tapPermanentsCost` is null everywhere (a component to drop with the record's next change).
 - **Cost combinators beside `MayEffect`** (CR 118.12: their "if you do" is the choice to pay): `ForcedCostOrElseEffect` (158 cards; its
@@ -1082,6 +1097,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U3c (2026-11-25, `11b14b7f88`): `UnlessPaysEffect.payingTogether()` absorbs `MayPayManaEffect` and `MayPayPayer` (19 cards); `SourceControllerDrawsCost`; the sacrifice-candidate guards
 - Step 10, run U3b1 (2026-11-26): 25 single-verb "unless" / "may pay" records (44 card files) onto `UnlessPaysEffect`'s existing factories; Erosion's, Arcum's Whistle's, Aether Rift's and Spelltithe Enforcer's payers fixed
 - Step 10, run U3b2 (2026-11-26): 15 single-verb records (24 card files) onto `UnlessPaysEffect` with `eachUnless`, the payer's target and four ransoms; Spinecrawler, Read the Runes, The Dalek Emperor, Overencumbered fixed
+- Step 10, run U4a (2026-11-26): 121 `ForcedCostOrElseEffect` card files onto `UnlessPaysEffect` and steps (Cosmic Horror's and Minion of Leshrac's fused records split); every player asked in "any player may pay", a payer with no mana source left unasked, Fraying Line's exile one event
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -1740,6 +1756,52 @@ ratchet with the new baselines. Compiled every module's main and test sources an
 observable); `nextStep` setting the accepted players could overwrite a Tempting Offer's list in one entry (no card has both).
 
 **For the next run.** U4 (`ForcedCostOrElseEffect`) or U6: "for each [object] … unless" can build on `eachUnless` and `UnlessAnswer.paidPlayerIds`.
+
+### Step 10, run U4a ("unless": forced costs, part A) (2026-11-26)
+
+The plan's part A (`scratchpad/s10-unless/u4-plan.md`, survey `u4/inv.tsv`) with the orchestrator's U4 decisions (owner's decisions, "the
+unless runs", U4). 121 card files moved off `ForcedCostOrElseEffect`: 54 literal "sacrifice unless you pay {cost}" by a scratch script
+(one shape, balanced parentheses, failed on any other; deleted), 67 by hand. Ogre Marauder stays (its granted "can't be blocked" ability
+needs a one-shot timed ability grant; U4b). Absorbed (split into steps): `DestroySourceAndDamageControllerIfDestroyedEffect` (Cosmic
+Horror), `DealDamageToControllerThenTapSourceIfDamageDealtEffect` (Minion of Leshrac), their `DestructionSupport` branches. Ratchet
+2,939 / 2,318 → 2,937 / 2,318. Ledger: 2 absorbed, `ForcedCostOrElseEffect` re-noted "U4b-d". No `CONVERSION_VERSION` bump. **Engine.** k1: `PayManaCost.forSourceManaCost()` as a ransom ("its mana cost": live, else last known, {X} as 0; face down or none
+unpayable and not asked, CR 708.2, 118.6). k2: Carnophage, Sangrophage, Vile Consumption are `unlessYouPayLife`. Ransom words: a
+description may carry its determiner ("another creature"), counts as words ("Sacrifice two Swamps"). `ResolutionCostPaymentService`: a
+`SacrificeMultiplePermanentsCost` ransom sacrifices its picks together (`sacrificeTogether`, one event). Harness: `BaseCardTest.answerForcedPick`.
+**Cards.** Payers: `you()`; `eachPlayer()` (Icy Prison, Nakaya Shade, Rhystic Circle, Rhystic Shield); `activePlayer()` for "that player" of
+an upkeep (Mind Whip, Power Taint, Soul Tithe, Slow Motion, Mogis, Pillar Tombs, Blood Clock, Umbilicus, Fraying Line, Woebringer; the
+Mind Whip pin shows today's handler asks the upkeep player too); `controllerOf(triggering())` (Seizures, the Chants, their prompt kept as
+Oracle words); `triggeringPlayer()` (Tomb Blade); `targetPlayerDeclaredElsewhere()` (Demanding Dragon). Mandatory "do X. If you can't, Y"
+(Archdemon of Greed, Eldrazi Monument, Infernal Denizen, Invoke Despair, Lair of the Ashen Idol, Rust Elemental, Woebringer):
+`SacrificePermanentsEffect` + `ConditionalEffect(NotCondition(sacrificed()), Y)`; Infernal Denizen sacrifices only with two Swamps
+(`ControlsPermanentCount`, CR 118.3, 118.12). Shuttle: `TargetPlayerChoosesOneEffect.villainousChoiceFacedBy(defendingPlayer(), …)`
+(CR 701.55b). Oracle text checked with `get_card` for all 122 files; rulings for 13 (Mind Whip, Icy Prison, the Rhystics, Invoke Despair, …).
+**Behaviour changes** (failing-first, seen failing on the old code unless marked):
+- "Any player may pay" asks every player even after one paid (CR 101.4; Rhystic Shield's, Nakaya Shade's rulings): Icy Prison
+  `everyPlayerIsAskedEvenAfterOnePaid`, Rhystic Shield / Nakaya Shade `currentPlayerPaysAndTheOtherPlayerIsStillAsked`, Rhystic Circle
+  `controllerCanPayOptionalCost` (4 failed first).
+- A payer with no mana source isn't asked (owner's rule, CR 118.3, 608.2d): `PhantasmalForcesTest.controllerWithNoManaSourceIsNotAsked`.
+  A payer who can't pay the life isn't asked (Blood Clock, Umbilicus, Sangrophage at 1 life; CR 119.4): tests changed, not failing-first.
+- Hecatomb's four creatures (and a "sacrifice N" ward) leave together (CR 603.10a): `HecatombTest.sacrificedCreatureSeesAllFourDeaths`
+  failed on the service's one-at-a-time loop, passes with `sacrificeTogether`.
+- Not failing-first: Fraying Line's exile is one event over `allOf(source(), creatures without a rope counter)` (CR 608.2c, 603.10a; no card
+  in the pool observes the difference); prompts read the ransom ("Pay {U}?"); a lone sacrifice / -1/-1 candidate is the shared pick (U3c).
+**Pins** (passed before and after): Tomb Blade and Pillar Tombs against hexproof (today's code already resolves: only the subject changed),
+Mind Whip after a control change, Woebringer under Sigarda, Ogre Marauder attacking a planeswalker, `UpkeepRansomAiTest` (parity); the
+existing death-replacement, Soul Tithe, Draco, Disruption Aura, Hecatomb, Garza's recover, Shuttle and Valeyard tests.
+**Tests changed** (owner's rule, U3c's pick line, the Oracle text): `giveManaSource` in about 360 methods of 100 classes whose payer was
+asked with no source; `answerForcedPick` in 44 methods; the Chants, Thing from the Deep, Plant Elemental, Rust Elemental, Archdemon answer
+the pick the new prompt asks; Shuttle 7 and The Lunar Whale 1 answer the villainous list; Blood Clock, Umbilicus, Sangrophage not asked;
+Elder Spawn's log filter skips the decline line; Hecatomb's trigger loop; DisplayNames added to about 30 touched methods.
+**Tests run** (XML of this run): 2,177 files, 20,569 tests, 0 failures: every rewritten card's class and the classes naming one, every
+`UnlessPaysEffect` card's, `u4/cardtests.txt`, the name-pattern classes, the readers of `DestructionSupport` / both handlers /
+`ResolutionCostPaymentService`, the application tests the plan lists, both ratchets, the whole AI module (first run 424 failures, all from
+the payer rule and the pick, fixed). Compiled every module's main and test sources and all card-test modules.
+**Seen, not changed** (defect queue, "step 10 run U4a"): the hard AI scores a source-sacrifice branch as nothing (decision 6); Ogre's grant.
+
+**For the next run.** U4b: the 34 new-ransom files (each kind a case in the record's check, the handler's words, the service and
+`SpellEvaluator.ransomCost`), Egon / Charnel / Greenbelt as steps, Satya, Koya, Ashling, Flash, Ogre Marauder. Tests whose payer is asked
+with an empty pool need `giveManaSource`; a lone-candidate pick needs `answerForcedPick`.
 
 ## Prompt
 

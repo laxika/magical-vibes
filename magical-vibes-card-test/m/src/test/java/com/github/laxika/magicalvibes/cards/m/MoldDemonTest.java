@@ -48,6 +48,7 @@ class MoldDemonTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Swamp")).isZero();
@@ -124,6 +125,8 @@ class MoldDemonTest extends BaseCardTest {
         castMoldDemon();
 
         harness.handleMayAbilityChosen(player1, true);
+
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Swamp")).isZero();

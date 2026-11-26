@@ -17,6 +17,8 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("At the beginning of your end step, paying {1} mills target player for each Shrine you control")
     void payingManaMillsForEachShrine() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GoShintaiOfLostWisdom());
         harness.addToBattlefield(player1, new HondenOfSeeingWinds());
 
@@ -34,6 +36,8 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment does not mill")
     void decliningPaymentDoesNotMill() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GoShintaiOfLostWisdom());
 
         advanceToEndStep();
@@ -47,6 +51,8 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger targets a player")
     void triggerRequiresAPlayerTarget() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GoShintaiOfLostWisdom());
 
         advanceToEndStep();
@@ -62,6 +68,8 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("Payment creates a separate milling trigger that players can respond to")
     void paymentCreatesSeparateMillingTrigger() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GoShintaiOfLostWisdom());
         advanceToEndStep();
         int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
@@ -84,6 +92,8 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's Shrines do not increase the milling amount")
     void opponentShrinesDoNotCount() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GoShintaiOfLostWisdom());
         harness.addToBattlefield(player2, new GoShintaiOfLostWisdom());
         advanceToEndStep();
@@ -103,6 +113,8 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("The Shrine count is evaluated when the milling trigger resolves")
     void shrineCountIsEvaluatedAtResolution() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GoShintaiOfLostWisdom());
         advanceToEndStep();
         int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
@@ -136,6 +148,8 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana does not mill or ask for a target")
     void cannotMillWithoutPaying() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new GoShintaiOfLostWisdom());
         advanceToEndStep();
         int librarySizeBefore = gd.playerDecks.get(player1.getId()).size();

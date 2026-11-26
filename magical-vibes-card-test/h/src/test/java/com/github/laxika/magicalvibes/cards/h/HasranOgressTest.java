@@ -15,6 +15,8 @@ class HasranOgressTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking without paying deals 3 damage to its controller")
     void attackingWithoutPayingDealsDamageToController() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new HasranOgress());
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -31,6 +33,8 @@ class HasranOgressTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2} prevents the attack trigger damage")
     void payingManaPreventsDamage() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new HasranOgress());
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -47,6 +51,8 @@ class HasranOgressTest extends BaseCardTest {
     @Test
     @DisplayName("Controller may decline payment even with enough mana")
     void mayDeclineAffordablePayment() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new HasranOgress());
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -61,6 +67,8 @@ class HasranOgressTest extends BaseCardTest {
     @Test
     @DisplayName("Colored mana can pay the generic attack trigger cost")
     void coloredManaPaysGenericCost() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player1, new HasranOgress());
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -76,6 +84,8 @@ class HasranOgressTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's Ogress offers payment to and damages that opponent")
     void opponentsOgressDamagesItsController() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         addCreatureReady(player2, new HasranOgress());
         int controllerLife = gd.getLife(player2.getId());
         int defenderLife = gd.getLife(player1.getId());

@@ -15,6 +15,8 @@ class PitRaptorTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {2}{B}{B} sacrifices Pit Raptor")
     void decliningPaymentSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitRaptor());
 
         advanceToUpkeep(player1);
@@ -30,6 +32,8 @@ class PitRaptorTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2}{B}{B} keeps Pit Raptor and spends the mana")
     void payingKeepsCreature() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitRaptor());
 
         advanceToUpkeep(player1);
@@ -45,6 +49,8 @@ class PitRaptorTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana still sacrifices Pit Raptor")
     void acceptWithoutManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitRaptor());
 
         advanceToUpkeep(player1);
@@ -68,6 +74,8 @@ class PitRaptorTest extends BaseCardTest {
     @Test
     @DisplayName("Four mana with only one black cannot pay the upkeep cost")
     void insufficientBlackManaSacrificesWithoutSpendingMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitRaptor());
 
         advanceToUpkeep(player1);
@@ -85,6 +93,8 @@ class PitRaptorTest extends BaseCardTest {
     @Test
     @DisplayName("The controller can decline upkeep payment even with enough mana")
     void decliningAffordablePaymentDoesNotSpendMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new PitRaptor());
 
         advanceToUpkeep(player1);

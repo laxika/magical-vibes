@@ -71,7 +71,7 @@ class UmbilicusTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A player who cannot pay 2 life still resolves the return fallback")
+    @DisplayName("A player who can't pay 2 life isn't asked, and returns a permanent")
     void cannotPayLifeReturnsPermanent() {
         harness.addToBattlefield(player1, new Umbilicus());
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -79,7 +79,6 @@ class UmbilicusTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, forest.getId());

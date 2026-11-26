@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -67,7 +68,7 @@ class RustElementalTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(elemental, first).doesNotContain(second);
         harness.assertInGraveyard(player1, "Ornithopter");

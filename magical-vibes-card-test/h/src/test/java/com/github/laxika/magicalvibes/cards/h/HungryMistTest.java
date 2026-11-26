@@ -20,6 +20,8 @@ class HungryMistTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {G}{G} sacrifices Hungry Mist")
     void declineSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new HungryMist());
 
         advanceToUpkeep(player1);
@@ -35,6 +37,8 @@ class HungryMistTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G}{G} keeps Hungry Mist on the battlefield")
     void payKeeps() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new HungryMist());
 
         advanceToUpkeep(player1);
@@ -49,6 +53,8 @@ class HungryMistTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough green mana still sacrifices Hungry Mist")
     void acceptWithoutManaSacrifices() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new HungryMist());
 
         advanceToUpkeep(player1);
@@ -75,6 +81,8 @@ class HungryMistTest extends BaseCardTest {
     @Test
     @DisplayName("Payment can be declined even when enough green mana is available")
     void declineWithEnoughManaSacrificesWithoutSpendingMana() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new HungryMist());
 
         advanceToUpkeep(player1);
@@ -90,6 +98,8 @@ class HungryMistTest extends BaseCardTest {
     @Test
     @DisplayName("Other colors cannot replace the second green mana in the upkeep payment")
     void wrongColorManaCannotPay() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player1, new HungryMist());
 
         advanceToUpkeep(player1);
@@ -107,6 +117,8 @@ class HungryMistTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers during the controller's upkeep")
     void triggersDuringControllerUpkeep() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.addToBattlefield(player2, new HungryMist());
 
         advanceToUpkeep(player2);
@@ -122,6 +134,8 @@ class HungryMistTest extends BaseCardTest {
     @Test
     @DisplayName("Does not sacrifice it if another player gains control before resolution")
     void doesNotSacrificeAfterControlChanges() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         var mist = harness.addToBattlefieldAndReturn(player1, new HungryMist());
 
         advanceToUpkeep(player1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "151")
@@ -31,10 +30,7 @@ public class MogisGodOfSlaughter extends Card {
                         Set.of(ManaColor.BLACK, ManaColor.RED), 7)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
-                ForcedCostOrElseEffect.enchantedControllerMayPay(
-                        new SacrificePermanentCost(
-                                new PermanentIsCreaturePredicate(), "Sacrifice a creature", false),
-                        List.of(new DealDamageToPlayersEffect(2,
-                                Subjects.triggeringPlayer()))));
+                UnlessPaysEffect.unlessPays(Subjects.activePlayer(), new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "creature", false),
+                        new DealDamageToPlayersEffect(2, Subjects.activePlayer())));
     }
 }
