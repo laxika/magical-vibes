@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "219")
@@ -26,7 +27,7 @@ public class OtherworldAtlas extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new EachPlayerDrawsCardEffect(new CountersOnSource(CounterType.CHARGE))),
+                List.of(new DrawCardEffect(new CountersOnSource(CounterType.CHARGE), Subjects.eachPlayer())),
                 "{T}: Each player draws a card for each charge counter on Otherworld Atlas."
         ));
     }

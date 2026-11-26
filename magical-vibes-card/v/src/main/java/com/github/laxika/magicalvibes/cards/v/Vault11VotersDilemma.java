@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VoteEffect;
@@ -44,7 +44,7 @@ public class Vault11VotersDilemma extends Card {
         return SequenceEffect.of(
                 VoteEffect.forPermanents(Subjects.allCreatures()).castSecretly().forUpToOne(),
                 new ConditionalEffect(new NotCondition(new HappenedThisWay(StepKind.VOTE, 1)),
-                        new EachPlayerDrawsCardEffect(1)),
+                        new DrawCardEffect(1, Subjects.eachPlayer())),
                 new DestroyTargetPermanentEffect(Subjects.mostVoted()));
     }
 }

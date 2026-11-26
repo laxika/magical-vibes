@@ -555,6 +555,24 @@ class SpellEvaluatorTest {
     }
 
     @Test
+    @DisplayName("Making each opponent draw is scored as a cost, not as the AI's own card advantage")
+    void opponentDrawScoredAsACost() {
+        double value = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new DrawCardEffect(1, Subjects.eachOpponent())), player1.getId());
+
+        assertThat(value).isLessThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Each player drawing the same number gives the AI no card advantage")
+    void eachPlayerDrawScoredAsNoAdvantage() {
+        double value = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new DrawCardEffect(2, Subjects.eachPlayer())), player1.getId());
+
+        assertThat(value).isEqualTo(0.0);
+    }
+
+    @Test
     @DisplayName("Multiple non-cost effects are summed")
     void multipleEffectsAreSummed() {
         double boostOnly = spellEvaluator.evaluateAbilityEffects(

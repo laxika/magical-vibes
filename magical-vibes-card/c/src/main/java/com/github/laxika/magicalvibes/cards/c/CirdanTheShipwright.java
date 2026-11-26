@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.VotesReceived;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class CirdanTheShipwright extends Card {
     private static CardEffect secretCouncil() {
         return SequenceEffect.of(
                 VoteEffect.forPlayers(Subjects.eachPlayer()).castSecretly(),
-                new EachPlayerDrawsCardEffect(VotesReceived.byPlayer()),
+                DrawCardEffect.eachEvaluatedFor(VotesReceived.byPlayer(), Subjects.eachPlayer()),
                 EachPlayerMayPutCardFromHandToBattlefieldEffect.by(Subjects.playersWithNoVotes(),
                         new CardIsPermanentPredicate(), "permanent"));
     }

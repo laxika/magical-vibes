@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WinterMisanthropicGuide extends Card {
 
     public WinterMisanthropicGuide() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new EachPlayerDrawsCardEffect(2));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(2, Subjects.eachPlayer()));
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
         addStaticEffect(new ConditionalEffect(new Delirium(),
                 SetControllerMaximumHandSizeEffect.set(Subjects.eachOpponent(),

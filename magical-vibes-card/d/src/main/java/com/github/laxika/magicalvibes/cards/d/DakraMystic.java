@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
@@ -25,7 +25,7 @@ public class DakraMystic extends Card {
                         new MayEffect(
                                 new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.cardsThisWay(StepKind.REVEAL)),
                                 "Put the revealed cards into their owners' graveyards? If you don't, each player draws a card.",
-                                new EachPlayerDrawsCardEffect(1)))),
+                                new DrawCardEffect(1, Subjects.eachPlayer())))),
                 "{U}, {T}: Each player reveals the top card of their library. You may put the revealed cards into their owners' graveyards. If you don't, each player draws a card."
         ));
     }

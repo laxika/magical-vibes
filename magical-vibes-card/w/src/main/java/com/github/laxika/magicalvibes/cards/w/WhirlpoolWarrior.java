@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +29,7 @@ public class WhirlpoolWarrior extends Card {
                 "{R}",
                 List.of(new SacrificeSelfCost(), SequenceEffect.of(
                         EachPlayerShufflesZonesIntoLibraryEffect.handsOf(Subjects.eachPlayer()),
-                        new EachPlayerDrawsCardEffect(AmountThisWay.shuffledAwayByYou()))),
+                        DrawCardEffect.eachEvaluatedFor(AmountThisWay.shuffledAwayByYou(), Subjects.eachPlayer()))),
                 "{R}, Sacrifice this creature: Each player shuffles the cards from their hand into their library, then draws that many cards."
         ));
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.UnlessAnswer;
 import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
-import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -32,7 +31,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -2261,8 +2259,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 || effect instanceof BoostEffect boost && boost.amountsRead() == BoostEffect.AmountsRead.SOURCE
                         && !boost.isMassBoost());
         boolean isPump = isSelfPump || isTargetedPump;
-        boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof CardDrawingEffect draw
-                && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer));
+        boolean isDraw = nonCostEffects.stream().anyMatch(AiUtils::drawsForController);
         boolean isRegen = nonCostEffects.stream().anyMatch(e -> e instanceof RegenerationEffect);
 
         TurnStep step = gameData.currentStep;
@@ -2838,12 +2835,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Returns true if the card has a {@link CardDrawingEffect} in its
+     * Returns true if the card has a draw for its controller ({@link AiUtils#drawsForController}) in its
      * enter-the-battlefield effects (useful for prioritizing draw-first casting).
      */
     private boolean hasCardDrawEtb(Card card) {
         for (CardEffect effect : card.getOwnEntryEffects()) {
-            if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
+            if (AiUtils.drawsForController(effect)) {
                 return true;
             }
         }

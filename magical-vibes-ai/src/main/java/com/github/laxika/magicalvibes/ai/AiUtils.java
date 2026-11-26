@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
@@ -24,6 +27,47 @@ import java.util.UUID;
 public final class AiUtils {
 
     private AiUtils() {}
+
+    /** Who a card draw gives cards to, as the AI scores it ({@link #drawRecipients}). */
+    public enum DrawRecipients {
+        /** Only the drawing effect's controller: the AI's own card advantage. */
+        CONTROLLER,
+        /** Only the controller's opponents: a cost to the AI. */
+        OPPONENTS,
+        /** Every player alike: no card advantage for anyone. */
+        EACH_PLAYER,
+        /** A target player, chosen as the spell or ability goes on the stack. */
+        TARGET_PLAYER,
+        /** A player the event or the resolution names (the triggering, defending or a chosen player): not known ahead. */
+        OTHER
+    }
+
+    /**
+     * Who {@code draw} makes draw: the controller ({@code you()}, the source's controller), the opponents
+     * ({@code eachOpponent()}, the opponents of you), every player ({@code eachPlayer()}), a target player, or a player
+     * only the resolution knows. Only {@link DrawRecipients#CONTROLLER} is the AI's own card advantage.
+     */
+    public static DrawRecipients drawRecipients(CardDrawingEffect draw) {
+        PlayerSubject player = draw.drawingPlayer();
+        if (player instanceof PlayerSubject.You
+                || player instanceof PlayerSubject.ControllerOf controller
+                && controller.permanent() instanceof PermanentSubject.Source) {
+            return DrawRecipients.CONTROLLER;
+        }
+        if (player instanceof PlayerSubject.Each each) {
+            return each.relation() == PlayerSubject.Relation.OPPONENTS
+                    ? DrawRecipients.OPPONENTS : DrawRecipients.EACH_PLAYER;
+        }
+        if (player instanceof PlayerSubject.OpponentsOf opponents && opponents.player() instanceof PlayerSubject.You) {
+            return DrawRecipients.OPPONENTS;
+        }
+        return player instanceof PlayerSubject.TargetPlayer ? DrawRecipients.TARGET_PLAYER : DrawRecipients.OTHER;
+    }
+
+    /** Whether {@code effect} is a card draw for its controller alone: the AI's own card advantage. */
+    public static boolean drawsForController(CardEffect effect) {
+        return effect instanceof CardDrawingEffect draw && drawRecipients(draw) == DrawRecipients.CONTROLLER;
+    }
 
     /**
      * {@code effects} with the effects of each delayed ability about the target they make ("this creature deals 2

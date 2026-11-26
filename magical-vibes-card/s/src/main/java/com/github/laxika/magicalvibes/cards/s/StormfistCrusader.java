@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -18,7 +18,7 @@ public class StormfistCrusader extends Card {
     public StormfistCrusader() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 SequenceEffect.of(
-                        new EachPlayerDrawsCardEffect(1),
+                        new DrawCardEffect(1, Subjects.eachPlayer()),
                         new LoseLifeEffect(1, Subjects.eachPlayer())));
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TalesOfTheAncestors.class, Island.class, Plains.class})
+@CardUsed({TalesOfTheAncestors.class, Island.class, Plains.class, ThoughtReflection.class})
 class TalesOfTheAncestorsTest extends BaseCardTest {
 
     @Test
@@ -49,5 +49,24 @@ class TalesOfTheAncestorsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Every player's number is fixed before anyone draws, so a doubled draw doesn't raise a later player's difference")
+    void amountsAreFixedBeforeAnyoneDraws() {
+        harness.addToBattlefield(player1, new ThoughtReflection());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(),
+                new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Plains(), new Plains()));
+        harness.setHand(player1, List.of(new TalesOfTheAncestors(), new Island()));
+        harness.setHand(player2, List.of(new Plains(), new Plains(), new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
     }
 }

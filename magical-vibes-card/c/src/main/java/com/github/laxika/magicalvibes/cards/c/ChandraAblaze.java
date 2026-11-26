@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -39,7 +39,7 @@ public class ChandraAblaze extends Card {
                 -2,
                 List.of(
                         new DiscardHandEffect(Subjects.eachPlayer()),
-                        new EachPlayerDrawsCardEffect(3)),
+                        new DrawCardEffect(3, Subjects.eachPlayer())),
                 "−2: Each player discards their hand, then draws three cards."
         ));
 

@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "217")
@@ -18,7 +19,7 @@ public class TempleBell extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new EachPlayerDrawsCardEffect(1)),
+                List.of(new DrawCardEffect(1, Subjects.eachPlayer())),
                 "{T}: Each player draws a card."
         ));
     }

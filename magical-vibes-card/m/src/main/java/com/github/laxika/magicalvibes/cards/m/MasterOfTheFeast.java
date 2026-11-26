@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MasterOfTheFeast extends Card {
 
     public MasterOfTheFeast() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new EachOtherPlayerDrawsCardEffect(1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1, Subjects.eachOpponent()));
     }
 }

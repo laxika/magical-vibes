@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +24,7 @@ public class JaceBeleren extends Card {
         // +2: Each player draws a card.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new EachPlayerDrawsCardEffect(1)),
+                List.of(new DrawCardEffect(1, Subjects.eachPlayer())),
                 "+2: Each player draws a card."
         ));
 

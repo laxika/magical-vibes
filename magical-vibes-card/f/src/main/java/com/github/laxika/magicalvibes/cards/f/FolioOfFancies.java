@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 
@@ -24,7 +24,7 @@ public class FolioOfFancies extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}{X}",
-                List.of(new EachPlayerDrawsCardEffect(new XValue())),
+                List.of(new DrawCardEffect(new XValue(), Subjects.eachPlayer())),
                 "{X}{X}, {T}: Each player draws X cards."
         ));
 

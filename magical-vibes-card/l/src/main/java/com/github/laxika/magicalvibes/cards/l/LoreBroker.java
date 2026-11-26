@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -14,7 +14,7 @@ public class LoreBroker extends Card {
 
     public LoreBroker() {
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new EachPlayerDrawsCardEffect(1), new DiscardEffect(1, Subjects.eachPlayer())),
+                List.of(new DrawCardEffect(1, Subjects.eachPlayer()), new DiscardEffect(1, Subjects.eachPlayer())),
                 "{T}: Each player draws a card, then discards a card."));
     }
 }

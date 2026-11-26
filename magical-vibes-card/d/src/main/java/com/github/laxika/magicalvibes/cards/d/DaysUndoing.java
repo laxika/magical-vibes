@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ORI", collectorNumber = "51")
 @CardRegistration(set = "SLD", collectorNumber = "2153")
@@ -18,7 +19,7 @@ public class DaysUndoing extends Card {
     public DaysUndoing() {
         // Each player shuffles their hand and graveyard into their library, then draws seven cards.
         addSpellEffect(new EachPlayerShufflesZonesIntoLibraryEffect());
-        addSpellEffect(new EachPlayerDrawsCardEffect(7));
+        addSpellEffect(new DrawCardEffect(7, Subjects.eachPlayer()));
 
         // If it's your turn, end the turn.
         addSpellEffect(new ConditionalEffect(new ControllerTurn(), new EndTurnEffect()));

@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "623")
@@ -33,7 +34,7 @@ public class ImmortusMasterOfEternity extends Card {
                 "{5}{U}{U}",
                 List.of(
                         new EachPlayerShufflesZonesIntoLibraryEffect(),
-                        new EachPlayerDrawsCardEffect(7),
+                        new DrawCardEffect(7, Subjects.eachPlayer()),
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Power-up — {5}{U}{U}: Each player shuffles their hand and graveyard into their library, then draws seven cards. "

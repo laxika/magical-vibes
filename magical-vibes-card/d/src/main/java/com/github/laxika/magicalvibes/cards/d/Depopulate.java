@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
@@ -18,13 +19,13 @@ import java.util.List;
 public class Depopulate extends Card {
 
     public Depopulate() {
-        addSpellEffect(new EachPlayerDrawsCardEffect(new Min(
+        addSpellEffect(DrawCardEffect.eachEvaluatedFor(new Min(
                 new Fixed(1),
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsMulticoloredPredicate())),
-                        CountScope.CONTROLLER))));
+                        CountScope.CONTROLLER)), Subjects.eachPlayer()));
         addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
     }
 }

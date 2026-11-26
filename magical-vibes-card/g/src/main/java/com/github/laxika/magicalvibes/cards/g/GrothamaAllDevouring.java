@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourceByControllerThisTurn;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,6 +25,6 @@ public class GrothamaAllDevouring extends Card {
                         null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new EachPlayerDrawsCardEffect(new DamageDealtToSourceByControllerThisTurn()));
+                DrawCardEffect.eachEvaluatedFor(new DamageDealtToSourceByControllerThisTurn(), Subjects.eachPlayer()));
     }
 }

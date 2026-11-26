@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +17,6 @@ public class RunedServitor extends Card {
 
     public RunedServitor() {
         // "When this creature dies, each player draws a card."
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new EachPlayerDrawsCardEffect(1));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1, Subjects.eachPlayer()));
     }
 }

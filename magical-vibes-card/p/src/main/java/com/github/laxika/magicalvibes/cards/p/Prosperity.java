@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "POR", collectorNumber = "66")
 @CardRegistration(set = "6ED", collectorNumber = "89")
@@ -14,6 +15,6 @@ public class Prosperity extends Card {
 
     public Prosperity() {
         // Each player draws X cards.
-        addSpellEffect(new EachPlayerDrawsCardEffect(new XValue()));
+        addSpellEffect(new DrawCardEffect(new XValue(), Subjects.eachPlayer()));
     }
 }

@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "32")
@@ -16,12 +17,12 @@ import java.util.List;
 public class Skyscribing extends Card {
 
     public Skyscribing() {
-        addSpellEffect(new EachPlayerDrawsCardEffect(new XValue()));
+        addSpellEffect(new DrawCardEffect(new XValue(), Subjects.eachPlayer()));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(new EachPlayerDrawsCardEffect(1)),
+                List.of(new DrawCardEffect(1, Subjects.eachPlayer())),
                 "Forecast — {2}{U}, Reveal this card from your hand: Each player draws a card. "
                         + "Activate only during your upkeep and only once each turn.",
                 null,

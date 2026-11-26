@@ -16,17 +16,41 @@ import java.util.Objects;
 /**
  * {@code player} draws {@code amount} cards, one at a time (so draw-replacement effects and "whenever you draw"
  * triggers see each individual draw). The player is {@link Subjects#you()} unless a constructor names another; several
- * players draw in APNAP order, each the same evaluated number.
+ * players draw in APNAP order (CR 101.4), each the same evaluated number, or with {@link #eachEvaluatedFor} each their
+ * own number.
  *
  * <p>Only {@link Subjects#targetPlayer()} declares a target (benign, any player). A controller draw whose amount reads
  * a target player ("cards equal to the number of cards in target opponent's hand") also declares one.
+ *
+ * @param amountPerPlayer the amount is evaluated once for each drawing player, player-relative scopes
+ *                        ({@code CountScope.CONTROLLER}) reading that player, every player's number fixed before the
+ *                        first card is drawn (CR 608.2h; {@link #eachEvaluatedFor}); otherwise once, for the effect's
+ *                        controller
  */
 public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount,
-                             PlayerSubject player)
+                             PlayerSubject player, boolean amountPerPlayer)
         implements ManaAbilityCardDrawingEffect, CastTimeXValueEffect {
 
     public DrawCardEffect {
         Objects.requireNonNull(player, "player");
+        if (amountPerPlayer && (rememberAmount || castTimeXValue != null || player.declaresTarget())) {
+            throw new IllegalArgumentException("An amount per player is for players named without targeting, with no "
+                    + "remembered or cast-time amount: " + player);
+        }
+    }
+
+    public DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount,
+                          PlayerSubject player) {
+        this(amount, castTimeXValue, rememberAmount, player, false);
+    }
+
+    /**
+     * "[Players] each draw [amount]" where the amount reads the drawing player ("each player draws a card for each
+     * creature card in their graveyard", "each player draws cards equal to the difference"): every player's number is
+     * worked out first, then they draw in APNAP order (CR 608.2h, 101.4).
+     */
+    public static DrawCardEffect eachEvaluatedFor(DynamicAmount amount, PlayerSubject players) {
+        return new DrawCardEffect(amount, null, false, players, true);
     }
 
     public DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount) {

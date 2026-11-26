@@ -16,4 +16,10 @@ public record EachOtherPlayerDrawsCardEffect(DynamicAmount amount) implements Ca
     public DynamicAmount drawnCardAmount() {
         return amount;
     }
+
+    /** The other players: the controller's opponents, so the AI doesn't read the draw as its own. */
+    @Override
+    public PlayerSubject drawingPlayer() {
+        return Subjects.eachOpponent();
+    }
 }

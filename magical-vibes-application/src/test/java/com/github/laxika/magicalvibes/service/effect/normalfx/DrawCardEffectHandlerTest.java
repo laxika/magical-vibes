@@ -4,16 +4,21 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -119,4 +124,60 @@ class DrawCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
                 verify(drawService).resolveDrawCards(gd, player1Id, 3);
                 verify(drawService, never()).resolveDrawCards(eq(gd), eq(player2Id), anyInt());
             }
+
+    @Test
+    @DisplayName("Each player draws the same number, starting with the active player (CR 101.4)")
+    void eachPlayerDrawsInApnapOrder() {
+        gd.activePlayerId = player2Id;
+        Card card = createCard("Howling Mine");
+        DrawCardEffect effect = new DrawCardEffect(2, Subjects.eachPlayer());
+
+        resolveEffect(gd, createEntry(card, player1Id, List.of(effect)), effect);
+
+        var order = inOrder(drawService);
+        order.verify(drawService).resolveDrawCards(gd, player2Id, 2);
+        order.verify(drawService).resolveDrawCards(gd, player1Id, 2);
+    }
+
+    @Test
+    @DisplayName("The opponents draw in APNAP order, not in seating order (CR 101.4)")
+    void opponentsDrawInApnapOrder() {
+        UUID player3Id = UUID.randomUUID();
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.activePlayerId = player3Id;
+        Card card = createCard("Wingbright Thief");
+        DrawCardEffect effect = new DrawCardEffect(1, Subjects.eachOpponent());
+
+        resolveEffect(gd, createEntry(card, player1Id, List.of(effect)), effect);
+
+        var order = inOrder(drawService);
+        order.verify(drawService).resolveDrawCards(gd, player3Id, 1);
+        order.verify(drawService).resolveDrawCards(gd, player2Id, 1);
+        verify(drawService, never()).resolveDrawCards(eq(gd), eq(player1Id), anyInt());
+    }
+
+    @Test
+    @DisplayName("An amount evaluated for each player counts each drawing player's own cards")
+    void eachEvaluatedForReadsEachDrawingPlayer() {
+        gd.playerHands.get(player1Id).addAll(List.of(createCard("Island"), createCard("Island")));
+        gd.playerHands.get(player2Id).clear();
+        Card card = createCard("Words of Wind");
+        DrawCardEffect effect = DrawCardEffect.eachEvaluatedFor(new CardsInHand(CountScope.CONTROLLER),
+                Subjects.eachPlayer());
+
+        resolveEffect(gd, createEntry(card, player1Id, List.of(effect)), effect);
+
+        verify(drawService).resolveDrawCards(gd, player1Id, gd.playerHands.get(player1Id).size());
+        verify(drawService).resolveDrawCards(gd, player2Id, 0);
+    }
+
+    @Test
+    @DisplayName("An amount per player is refused for a targeted player")
+    void eachEvaluatedForRefusesATargetedPlayer() {
+        assertThatThrownBy(() -> DrawCardEffect.eachEvaluatedFor(new CardsInHand(CountScope.CONTROLLER),
+                Subjects.targetPlayer()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }

@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "4")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MutualEpiphany extends Card {
 
     public MutualEpiphany() {
-        addTrigger(Triggers.encounterThis(), new EachPlayerDrawsCardEffect(4));
+        addTrigger(Triggers.encounterThis(), new DrawCardEffect(4, Subjects.eachPlayer()));
     }
 }

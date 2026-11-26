@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INR", collectorNumber = "167")
@@ -18,6 +18,6 @@ public class ReforgeTheSoul extends Card {
 
         // Each player discards their hand, then draws seven cards.
         addSpellEffect(new DiscardHandEffect(Subjects.eachPlayer()));
-        addSpellEffect(new EachPlayerDrawsCardEffect(7));
+        addSpellEffect(new DrawCardEffect(7, Subjects.eachPlayer()));
     }
 }

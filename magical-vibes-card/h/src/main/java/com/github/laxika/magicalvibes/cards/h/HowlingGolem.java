@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +19,6 @@ public class HowlingGolem extends Card {
         // Whenever this creature attacks or blocks, each player draws a card.
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
                 TriggerOptions.ONE_OR_MORE,
-                new EachPlayerDrawsCardEffect(1));
+                new DrawCardEffect(1, Subjects.eachPlayer()));
     }
 }

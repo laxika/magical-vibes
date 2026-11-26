@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class Fascination extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player draws X cards.",
-                        new EachPlayerDrawsCardEffect(new XValue())),
+                        new DrawCardEffect(new XValue(), Subjects.eachPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player mills X cards.",
                         List.of(

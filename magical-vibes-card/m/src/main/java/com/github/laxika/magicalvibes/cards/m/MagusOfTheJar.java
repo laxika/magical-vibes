@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
@@ -30,7 +30,7 @@ public class MagusOfTheJar extends Card {
                                         new DiscardHandEffect(Subjects.eachPlayer()),
                                         new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.EXILE)))
                                 .evenIfNothingHappened(),
-                        new EachPlayerDrawsCardEffect(7)
+                        new DrawCardEffect(7, Subjects.eachPlayer())
                 ),
                 "{T}, Sacrifice Magus of the Jar: Each player exiles all cards from their hand face down and draws seven cards. At the beginning of the next end step, each player discards their hand and returns to their hand each card they exiled this way."
         ));

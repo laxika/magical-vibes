@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -38,7 +38,7 @@ public class WingbrightThief extends Card {
                         new ConditionalEffect(new HappenedThisWay(StepKind.CHOOSE),
                                 new PerpetuallyGrantAbilitiesEffect(Subjects.cardsThisWay(StepKind.CHOOSE),
                                         List.of(new TriggeredAbility(Triggers.youCastThisSpell(),
-                                                new EachOpponentDrawsCardEffect(1),
+                                                new DrawCardEffect(1, Subjects.eachOpponent()),
                                                 new GainLifeEffect(new Fixed(3), Subjects.eachOpponent())))))));
     }
 }

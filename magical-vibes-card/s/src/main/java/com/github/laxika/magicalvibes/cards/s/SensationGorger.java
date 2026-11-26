@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class SensationGorger extends Card {
         // discards their hand, then draws four cards.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new KinshipEffect(List.of(
                 new DiscardHandEffect(Subjects.eachPlayer()),
-                new EachPlayerDrawsCardEffect(4))));
+                new DrawCardEffect(4, Subjects.eachPlayer()))));
     }
 }

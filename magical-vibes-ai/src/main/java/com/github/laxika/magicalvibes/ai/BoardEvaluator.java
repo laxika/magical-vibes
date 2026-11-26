@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -420,7 +419,7 @@ public class BoardEvaluator {
                     bonus += 9.0;
                 } else if (effect instanceof RemovalEffect rem && rem.removalKind() == RemovalKind.DESTROY) {
                     bonus += 8.0;
-                } else if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
+                } else if (effect instanceof CardDrawingEffect draw && AiUtils.drawsForController(draw)) {
                     int drawAmount = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                             new AmountContext(controllerId, perm, null, 0, 0));
                     bonus += drawAmount * 4.0;

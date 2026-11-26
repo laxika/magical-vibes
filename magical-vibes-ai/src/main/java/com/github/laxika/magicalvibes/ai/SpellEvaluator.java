@@ -617,6 +617,23 @@ public class SpellEvaluator {
         return 1.0;
     }
 
+    /**
+     * A draw's worth to the AI: its own draw is card advantage, an opponents' draw the same as a cost, a draw for every
+     * player alike nothing; null for a draw whose players aren't known ahead (a target, an event's player).
+     */
+    private Double drawScore(GameData gameData, CardDrawingEffect draw, UUID aiPlayerId) {
+        AiUtils.DrawRecipients recipients = AiUtils.drawRecipients(draw);
+        if (recipients == AiUtils.DrawRecipients.EACH_PLAYER) {
+            return 0.0;
+        }
+        if (recipients != AiUtils.DrawRecipients.CONTROLLER && recipients != AiUtils.DrawRecipients.OPPONENTS) {
+            return null;
+        }
+        double cards = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
+                AmountContext.forEstimation(aiPlayerId)) * 6.0;
+        return recipients == AiUtils.DrawRecipients.CONTROLLER ? cards : -cards;
+    }
+
     private boolean hasCardDrawEffect(Card card) {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isDrawEffect(effect)) return true;
@@ -628,7 +645,7 @@ public class SpellEvaluator {
     }
 
     private boolean isDrawEffect(CardEffect effect) {
-        if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) return true;
+        if (AiUtils.drawsForController(effect)) return true;
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream()
                     .flatMap(option -> option.effects().stream())
@@ -804,9 +821,11 @@ public class SpellEvaluator {
                 && Duration.PERMANENT.equals(steal.controlDuration())) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
-        if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
-            return amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
-                    AmountContext.forEstimation(aiPlayerId)) * 6.0;
+        if (effect instanceof CardDrawingEffect draw) {
+            Double score = drawScore(gameData, draw, aiPlayerId);
+            if (score != null) {
+                return score;
+            }
         }
         if (effect instanceof TokenCreatingEffect token && token.tokenController() instanceof PlayerSubject.You) {
             int tokenAmount = amountEvaluationService.evaluate(gameData, token.tokenAmount(),
@@ -965,9 +984,11 @@ public class SpellEvaluator {
         }
 
         // Draw
-        if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
-            return amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
-                    AmountContext.forEstimation(aiPlayerId)) * 6.0;
+        if (effect instanceof CardDrawingEffect draw) {
+            Double score = drawScore(gameData, draw, aiPlayerId);
+            if (score != null) {
+                return score;
+            }
         }
 
         // Bounce (single-target bounce is handled by the removal branch above; this is the

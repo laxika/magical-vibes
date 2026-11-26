@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ public class MoltenPsyche extends Card {
         // Each player shuffles the cards from their hand into their library, then draws that many cards.
         addSpellEffect(SequenceEffect.of(
                 EachPlayerShufflesZonesIntoLibraryEffect.handsOf(Subjects.eachPlayer()),
-                new EachPlayerDrawsCardEffect(AmountThisWay.shuffledAwayByYou())));
+                DrawCardEffect.eachEvaluatedFor(AmountThisWay.shuffledAwayByYou(), Subjects.eachPlayer())));
 
         // Metalcraft — If you control three or more artifacts, Molten Psyche deals damage to each
         // opponent equal to the number of cards that player has drawn this turn.

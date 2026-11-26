@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
@@ -31,7 +31,7 @@ public class MagusOfTheWheel extends Card {
                         new SacrificeSelfCost(),
                         SequenceEffect.of(
                                 new DiscardHandEffect(Subjects.eachPlayer()),
-                                new EachPlayerDrawsCardEffect(7))
+                                new DrawCardEffect(7, Subjects.eachPlayer()))
                 ),
                 "{1}{R}, {T}, Sacrifice this creature: Each player discards their hand, then draws seven cards."
         ));

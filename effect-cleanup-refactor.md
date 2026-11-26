@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (D, P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,881 / 2,265 (after step 10 run G) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,880 / 2,264 (after step 10 run D) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -477,6 +477,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `dealerControllerId` / `entryDealtByPermanent`: a permanent deals damage as itself, live or last known (CR 120.1, 608.2h).
   `PermanentRemovalService` refreshes the resolving entry's source snapshot as the source leaves, and last known information keeps
   lifelink, deathtouch, infect and wither (CR 608.2h).
+- `DrawCardEffect` (run D): `eachEvaluatedFor(amount, players)` reads each drawing player's own number, all fixed before the first draw
+  (CR 608.2h), APNAP (CR 101.4). The AI asks `AiUtils.drawRecipients(draw)` / `drawsForController(effect)` who draws (controller,
+  opponents, each player, a target, other); only the controller's draw is its card advantage, an opponents' draw a cost.
 - `BoostEffect` (run Boost B1): "[permanent] gets +X/+Y [and gains K] [for a duration]", a layer-7c floating effect per permanent
   (CR 613.4c, 611.2a). Factories `self`, `of(subject, …[, keywords])` (amounts read the boosted permanent, `AmountsRead.BOOSTED`),
   `target`, `targetInGroup`, `withCastTimeXValue`, `targetPermanent` (creature or Vehicle, harmful spec), `each(subject, …)` (only creatures,
@@ -968,6 +971,9 @@ there and updates them when it lands.
   the one-card dealer records (Mage Slayer, Aura Barbs, Grim Contest, Spinning Wheel Kick, the target land, the two enchanted-creature
   and the up-to-one source records: own chains, specs or markers) and Enchanter's Bane / Star Athlete (an "unless" ransom); divided damage (`DealDividedDamageEffect`, CR 601.2d); the cost combinators (`PayXManaDealXDamageToAnyTargetEffect`, the "unless
   takes damage" records) for the "unless" runs.
+- **Draw**: run D folded `EachPlayerDrawsCardEffect`. Left: `EachOpponentDrawsCardEffect` (Struggle for Project Purity counts a replaced
+  draw's extra cards, the owner's replaced-draw question D14 L17; Gandalf's handler), `EachOtherPlayerDrawsCardEffect` (the 11 gift files,
+  the owner's gift opponent).
 - **Destroy**: `DestroyEachTargetPermanentEffect` and `DestroyAllPermanentsEffect` (`sparing`, `readingTarget`).
 - **Tokens and conjure**: `CreateTokenCopyOfSourceEffect`; the two multi-card battlefield conjure records
   (`ConjureCardToBattlefieldEffect`, 25 cards; `ConjureCardNamedOntoBattlefieldEffect`, 9).
@@ -1186,6 +1192,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run X (2026-11-26): the excess redirect absorbed into `DealDamageEffect.excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()` (5 card files by hand); a creature-planeswalker's greatest excess, the damage step begun anew
 - Step 10, run S (2026-11-26): the attack and block restrictions absorbed into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest lock into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, Evil Eye's lock into `CreaturesCantAttackUnlessPredicateEffect.youControl` (145 card files by script); no behaviour change
 - Step 10, run G (2026-11-26): the two goad-set records absorbed into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` (10 card files by hand); their goads are a GOAD step under the CR 701.15d check
+- Step 10, run D (2026-11-26): `EachPlayerDrawsCardEffect` absorbed into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (61 card files by script), 8 opponent-draw files onto `DrawCardEffect`; every amount fixed before the first draw (CR 608.2h), Baleful Mastery's chosen opponent, the AI's own-draw rule
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2769,6 +2776,46 @@ later creatures) and `GoadEquippedCreatureEffect` (static) stay out.
 
 **For the next run.** D (draw, `s10-rest` plan section 2): the AI own-draw helper first, then `DrawCardEffect.eachEvaluatedFor` with every amount
 fixed before the first draw (CR 608.2h).
+
+### Step 10, run D (draw) (2026-11-26)
+
+Run D of the plan `s10-rest` (orchestrator's decisions Q2, Q3). Absorbed with its handler: `EachPlayerDrawsCardEffect` (61 card files) into `new
+DrawCardEffect(n | amount, eachPlayer())` (50) and the new `DrawCardEffect.eachEvaluatedFor(amount, players)` (11 player-relative amounts; component
+`amountPerPlayer`, refused with a target, a remembered or a cast-time amount). Moved onto `DrawCardEffect`: 4 of 5 `EachOpponentDrawsCardEffect`
+files, the 4 non-gift `EachOtherPlayerDrawsCardEffect` files. Ledger: 1 absorbed, 2 blocked-other, 1 survivor. Ratchet 2,881 / 2,265 → 2,880 / 2,264.
+No `CONVERSION_VERSION` bump.
+
+**Premises.** Held: the survivor already drew for several players in APNAP order; only Tales of the Ancestors reads what a draw changes; none of the
+61 reads a DRAW step, is a mana ability or cycles. Not held: (a) Struggle for Project Purity's "for each card drawn this way" reads
+`CardsDrawnThisResolution`, which its record fills with a replacement's extra cards and the survivor leaves empty for a replaced draw (the owner's D14
+L17), so Struggle and Gandalf's handler keep the record; (b) Baleful Mastery says "an opponent" (its ruling: you choose which as it resolves).
+
+**AI** (Q3). `AiUtils.drawRecipients(draw)` (controller: `you()`, `controllerOf(source())`; opponents; each player; target; other) and
+`drawsForController(effect)` replace the eight `!(drawingPlayer() instanceof TargetPlayer)` reads; `SpellEvaluator.drawScore` scores an opponents'
+draw as minus its cards, an each-player draw 0; `EachOtherPlayerDrawsCardEffect.drawingPlayer()` is `eachOpponent()`. An each-player, opponent or
+event-player draw (`triggeringPlayer()` 40 files) is no longer the AI's card advantage.
+
+**Cards.** 68 by a scratch script (balanced parentheses, int / amount shapes, loud failure otherwise, imports, leftover-name check; written, run,
+deleted), the 6 player-invariant amounts on the plain form; Baleful Mastery by hand. Oracle text checked with `get_card` for all 69 (Memory via Commit
+// Memory); Baleful Mastery's, Struggle's and Tales' rulings read.
+
+**Behaviour changes.** (1) Every player's number is fixed before anyone draws (CR 608.2h): `TalesOfTheAncestorsTest.amountsAreFixedBeforeAnyoneDraws`
+(Thought Reflection; the opponent drew 3 on the old code). (2) Baleful Mastery's caster chooses the one opponent who draws (ruling):
+`BalefulMasteryTest.casterChoosesTheOpponentWhoDraws`. (3) AI: `SpellEvaluatorTest.opponentDrawScoredAsACost`, `eachPlayerDrawScoredAsNoAdvantage`,
+`InstantCategoryClassifierTest.flashCreatureMakingOpponentsDrawIsNotCardAdvantage`. All failed first. Code only: the 61 cards record a DRAW step and
+drawn cards and skip a player who left; Words of Wisdom, Deadpool and Master of the Feast draw in APNAP order (CR 101.4).
+
+**Pins** (old code and after): `DrawCardEffectHandlerTest.eachPlayerDrawsInApnapOrder`, `opponentsDrawInApnapOrder`, the existing Nature's Resurgence,
+Martyr's Cry, Struggle, Words of Wisdom, Master of the Feast tests; new `eachEvaluatedForReadsEachDrawingPlayer`,
+`eachEvaluatedForRefusesATargetedPlayer`. **Tests changed:** none edited; `EachPlayerDrawsCardEffectHandlerTest` deleted with its handler. **Tests
+run** (one Gradle run, XML of this run, plus Commit // Memory's): 3,548 classes, 3,726 result files, 31,337 tests, 0 failures (every `DrawCardEffect`
+card's class, the 297 classes naming a changed card, the gift and Gandalf cards, `Draw|Card|Wheel|Replacement|Hand|Gift`, the AI module, the handler
+tests, `TriggerRouteRecordTest`, both ratchets).
+
+**Seen, not changed** (defect queue): the inline mana-ability draw ignores `DrawCardEffect.player()` (latent); the gift record draws in seating order
+(CR 101.4); the AI prices "each opponent draws" for one opponent. AGENTS.md names no deleted class.
+
+**For the next run.** P, O and U (`s10-rest` plan section 2). Draw leaves `EachOpponentDrawsCardEffect` (Struggle, D14 L17) and the 11 gift files.
 
 ## Prompt
 

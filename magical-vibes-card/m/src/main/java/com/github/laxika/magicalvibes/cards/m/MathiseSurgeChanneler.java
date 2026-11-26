@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -29,7 +29,7 @@ public class MathiseSurgeChanneler extends Card {
 
         addTrigger(Triggers.youCastSpell().withFilter(qualifyingSpell),
                 new RollD20Effect(
-                        new EachPlayerDrawsCardEffect(1),
+                        new DrawCardEffect(1, Subjects.eachPlayer()),
                         new DrawCardEffect(1),
                         new CopyTriggeringSpellEffect()));
     }

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WTH", collectorNumber = "137")
@@ -14,10 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class NaturesResurgence extends Card {
 
     public NaturesResurgence() {
-        // Each player draws a card for each creature card in their graveyard.
-        // EachPlayerDrawsCardEffect re-evaluates the amount per drawing player, so
-        // CONTROLLER scope counts each player's own graveyard.
-        addSpellEffect(new EachPlayerDrawsCardEffect(
-                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
+        // Each player draws a card for each creature card in their graveyard: the amount is evaluated
+        // for each drawing player, so CONTROLLER scope counts each player's own graveyard.
+        addSpellEffect(DrawCardEffect.eachEvaluatedFor(
+                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER), Subjects.eachPlayer()));
     }
 }

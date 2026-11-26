@@ -525,7 +525,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - ~~Aven Riftwatcher, Calciderm, Chronozoa, Regenerations Restored carry Vanishing and their own last-counter trigger: Aether Snap or Thief of Blood may put two sacrifice triggers on the stack. Defect run 2. Unverified. Fold run 23: Aether Snap now runs the vanishing check once and raises no counters-removed event (one sacrifice trigger); Thief of Blood unchanged.~~ Fixed in defect run D14.
 - ~~`GraveyardReturnSupport.exileCardFromAnyGraveyard` doesn't clear the "put into a graveyard from the battlefield this turn" sets (CR 400.7); `ExileGraveyardCardsEffect`'s own-all sweep unverified. Run 5. Code.~~ Not a defect (defect run D14): every later graveyard entry rewrites the card's id in those sets, and the readers only look at cards still in the graveyard.
 - ~~The Parley handlers and Officious Interrogation `return` when token creation pauses for a replacement offer, which may drop draws, the boost or Clues. P13. Unverified.~~ Fixed in defect run D14.
-- `DrawCardEffectHandler` records no cards (DRAW outcome amount 0) when a draw is replaced by drawing more (Alhammarret's Archive), so `AmountThisWay(DRAW)` and `HappenedThisWay.drew()` read nothing drawn where cards were drawn because of the instruction; it keeps Malignant Growth on its own handler. Fold run 2. Fairly sure (the modified event, drawing two, occurs instead of the draw and is still this instruction's, CR 614.6). Defect run D14: 'that card' is right as coded (Pact Weapon ruling); 'if you do' / 'that many' after a draw replaced by draws (Baral, Trade Route Envoy, The Royal Scions) waits for the owner.
+- `DrawCardEffectHandler` records no cards (DRAW outcome amount 0) when a draw is replaced by drawing more (Alhammarret's Archive), so `AmountThisWay(DRAW)` and `HappenedThisWay.drew()` read nothing drawn where cards were drawn because of the instruction; it keeps Malignant Growth on its own handler. Fold run 2. Fairly sure (the modified event, drawing two, occurs instead of the draw and is still this instruction's, CR 614.6). Defect run D14: 'that card' is right as coded (Pact Weapon ruling); 'if you do' / 'that many' after a draw replaced by draws (Baral, Trade Route Envoy, The Royal Scions) waits for the owner; Struggle for Project Purity's "for each card drawn this way" is the same question (its record, `EachOpponentDrawsCardEffect`, counts a replacement's extra cards; step 10 run D left it there).
 - The library-search flows handled before the generic path (same-name, subtype and colour picks, basic-land queues, held-out pools, `HAND_OR_GRAVEYARD`) record no found cards in SEARCH. Sure of the code; no card reads it yet. Fold run 13. Defect run D14: left; no reader (all 19 SEARCH readers search through the generic path).
 - ~~Sovereigns of Lost Alara, Light-Paws, Curse of Misfortunes, Bitterheart Witch and Doubling Chant still shuffle under a search prohibition, though "you may search" can't be chosen then and nothing is shuffled (Leonin Arbiter ruling). Fold run 13b. Sure.~~ Fixed in defect run D14.
 - ~~Firemind's Foresight's mana-value picks ignore a top-N search limit (Aven Mindcensor). Fold run 21. Sure of the code.~~ Fixed in fold run 50b (one search's searchable cards).
@@ -1001,6 +1001,14 @@ entwine with two modes (P09).
   stay, so a card that left the graveyard and came back before the reflexive ability resolves is still exiled; it is a new object
   (CR 400.7). Record the stay as the ability is made (`setTriggeringCard(id, graveyardEntryVersion)`), failing-first. Step 10 run A
   (seen, not changed: the absorbed record behaved the same). Sure of the code, not tested.
+- `ActivatedAbilityExecutionService`'s inline mana-ability branch for `DrawCardEffect` / `ManaAbilityCardDrawingEffect` draws for the
+  activating player only, ignoring `player()`; latent (an ability with a card draw is never a mana ability here,
+  `AbilityActivationService.movesCardToOrFromLibrary`, CR 605.1a), so likely dead code to delete. Step 10 run D (seen, not changed). Sure
+  of the code.
+- `EachOtherPlayerDrawsCardEffectHandler` (the 11 gift cards) draws in seating order from the first seat, not in APNAP order (CR 101.4);
+  fold with the gift opponent. Step 10 run D (seen, not changed). Sure of the code.
+- The hard AI prices "each opponent draws" (`SpellEvaluator.drawScore`) as one opponent's cards, not one set per opponent in a
+  multiplayer game. AI only. Step 10 run D (seen, not changed). Sure.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

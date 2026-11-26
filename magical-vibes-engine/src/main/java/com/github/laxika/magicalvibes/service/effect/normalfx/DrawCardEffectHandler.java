@@ -22,7 +22,8 @@ import java.util.UUID;
 
 /**
  * Resolves {@link DrawCardEffect}: the players its subject names (through {@link SubjectResolutionService}) each draw
- * the amount, evaluated once, in APNAP order. The cards each player actually drew from the library are recorded as
+ * the amount, evaluated once (or once per player for {@link DrawCardEffect#amountPerPlayer()}, every number fixed before
+ * the first draw, CR 608.2h), in APNAP order. The cards each player actually drew from the library are recorded as
  * the step's result.
  */
 @Component
@@ -63,20 +64,30 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+        AmountContext context = AmountContext.forStackEntry(entry, source);
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(), context);
 
         if (e.rememberAmount()) entry.setEventValue(amount);
 
+        List<UUID> players = subjectResolutionService.players(gameData, entry, effect, e.player()).stream()
+                .filter(gameData.playerIds::contains)
+                .toList();
+        // Every player's own number is worked out before anyone draws (CR 608.2h): an earlier player's draw, doubled
+        // by a replacement, never changes a later player's count.
+        List<Integer> amounts = players.stream()
+                .map(playerId -> e.amountPerPlayer()
+                        ? amountEvaluationService.evaluate(gameData, e.amount(), context.withControllerId(playerId))
+                        : amount)
+                .toList();
+
         List<UUID> drawnCardIds = new ArrayList<>();
         List<UUID> drawingPlayerIds = new ArrayList<>();
-        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
-            if (gameData.playerIds.contains(playerId)) {
-                List<UUID> drawn = draw(gameData, entry, playerId, amount);
-                drawnCardIds.addAll(drawn);
-                if (!drawn.isEmpty()) {
-                    drawingPlayerIds.add(playerId);
-                }
+        for (int i = 0; i < players.size(); i++) {
+            UUID playerId = players.get(i);
+            List<UUID> drawn = draw(gameData, entry, playerId, amounts.get(i));
+            drawnCardIds.addAll(drawn);
+            if (!drawn.isEmpty()) {
+                drawingPlayerIds.add(playerId);
             }
         }
         entry.recordStep(StepKind.DRAW, StepOutcome.ofObjects(drawnCardIds, drawingPlayerIds));

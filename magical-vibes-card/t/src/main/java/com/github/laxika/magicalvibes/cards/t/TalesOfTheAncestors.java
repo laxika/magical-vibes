@@ -8,15 +8,16 @@ import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KHC", collectorNumber = "8")
 public class TalesOfTheAncestors extends Card {
 
     public TalesOfTheAncestors() {
         CardsInHand ownHand = new CardsInHand(CountScope.CONTROLLER);
-        addSpellEffect(new EachPlayerDrawsCardEffect(new Sum(
+        addSpellEffect(DrawCardEffect.eachEvaluatedFor(new Sum(
                 new Max(ownHand, new GreatestOpponentHandSize()),
-                new Scaled(ownHand, -1))));
+                new Scaled(ownHand, -1)), Subjects.eachPlayer()));
     }
 }

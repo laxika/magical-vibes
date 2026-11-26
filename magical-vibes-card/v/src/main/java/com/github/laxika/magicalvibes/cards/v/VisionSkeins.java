@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DIS", collectorNumber = "36")
 @CardRegistration(set = "C13", collectorNumber = "65")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 public class VisionSkeins extends Card {
 
     public VisionSkeins() {
-        addSpellEffect(new EachPlayerDrawsCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2, Subjects.eachPlayer()));
     }
 }

@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "162")
@@ -22,7 +23,7 @@ public class MikokoroCenterOfTheSea extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new EachPlayerDrawsCardEffect(1)),
+                List.of(new DrawCardEffect(1, Subjects.eachPlayer())),
                 "{2}, {T}: Each player draws a card."
         ));
     }

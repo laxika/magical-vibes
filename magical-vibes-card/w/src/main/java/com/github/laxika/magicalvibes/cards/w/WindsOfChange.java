@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,6 +23,6 @@ public class WindsOfChange extends Card {
         // Each player shuffles the cards from their hand into their library, then draws that many cards.
         addSpellEffect(SequenceEffect.of(
                 EachPlayerShufflesZonesIntoLibraryEffect.handsOf(Subjects.eachPlayer()),
-                new EachPlayerDrawsCardEffect(AmountThisWay.shuffledAwayByYou())));
+                DrawCardEffect.eachEvaluatedFor(AmountThisWay.shuffledAwayByYou(), Subjects.eachPlayer())));
     }
 }

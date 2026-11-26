@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "52")
@@ -20,7 +21,7 @@ public class TemporalCascade extends Card {
                         new EachPlayerShufflesZonesIntoLibraryEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player draws seven cards",
-                        new EachPlayerDrawsCardEffect(7))
+                        new DrawCardEffect(7, Subjects.eachPlayer()))
         )));
     }
 }

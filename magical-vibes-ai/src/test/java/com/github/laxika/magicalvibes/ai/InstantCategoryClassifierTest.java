@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -94,6 +95,18 @@ class InstantCategoryClassifierTest {
 
             assertThat(InstantCategoryClassifier.classifyFlashCreature(flashDraw))
                     .isEqualTo(InstantCategory.CARD_ADVANTAGE);
+        }
+
+        @Test
+        @DisplayName("A flash creature whose enters trigger makes each opponent draw is not card advantage")
+        void flashCreatureMakingOpponentsDrawIsNotCardAdvantage() {
+            Card flashGift = new Card();
+            flashGift.setType(CardType.CREATURE);
+            flashGift.setKeywords(Set.of(Keyword.FLASH));
+            flashGift.addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1, Subjects.eachOpponent()));
+
+            assertThat(InstantCategoryClassifier.classifyFlashCreature(flashGift))
+                    .isNotEqualTo(InstantCategory.CARD_ADVANTAGE);
         }
 
         @Test

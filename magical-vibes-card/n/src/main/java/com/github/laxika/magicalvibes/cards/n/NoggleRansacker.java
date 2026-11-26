@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -16,7 +16,7 @@ public class NoggleRansacker extends Card {
     public NoggleRansacker() {
         // When this creature enters, each player draws two cards, then discards a card at random.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new EachPlayerDrawsCardEffect(2),
+                new DrawCardEffect(2, Subjects.eachPlayer()),
                 new DiscardEffect(1, Subjects.eachPlayer(), true));
     }
 }

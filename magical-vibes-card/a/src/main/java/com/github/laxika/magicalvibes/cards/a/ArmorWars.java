@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControl
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +29,7 @@ public class ArmorWars extends Card {
                 SequenceEffect.of(
                         new DrawCardEffect(new PermanentCount(
                                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)),
-                        new EachOpponentDrawsCardEffect(1)),
+                        new DrawCardEffect(1, Subjects.eachOpponent())),
                 "Draw cards for each artifact you control?"));
 
         addTrigger(Triggers.chapter(2),

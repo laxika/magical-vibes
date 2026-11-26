@@ -8,13 +8,14 @@ import java.util.Set;
 /**
  * Each player {@code players} names shuffles the named zones into their library: their hand, their graveyard and, for
  * {@link Zone#BATTLEFIELD}, every permanent they own across all battlefields. The step records how many cards and
- * permanents each of them shuffled away ({@code StepKind.SHUFFLE_INTO_LIBRARY}): "then draws that many cards" is an
- * {@link EachPlayerDrawsCardEffect} of {@code AmountThisWay.shuffledAwayByYou()} (The Great Aurora).
+ * permanents each of them shuffled away ({@code StepKind.SHUFFLE_INTO_LIBRARY}): "then draws that many cards" is a
+ * {@link DrawCardEffect#eachEvaluatedFor} of {@code AmountThisWay.shuffledAwayByYou()} over {@code eachPlayer()} (The
+ * Great Aurora).
  *
  * <p>The no-argument form is the Timetwister family (Time Reversal, Diminishing Returns, Memory,
  * Jace, the Living Guildpact). {@code new EachPlayerShufflesZonesIntoLibraryEffect(true)} adds the
- * permanent sweep, which is Sway of the Stars. Pair either with an
- * {@link EachPlayerDrawsCardEffect} for the "then draws seven cards" half. An empty zone's library is shuffled all
+ * permanent sweep, which is Sway of the Stars. Pair either with a
+ * {@code DrawCardEffect(7, eachPlayer())} for the "then draws seven cards" half. An empty zone's library is shuffled all
  * the same (CR 701.24d).
  *
  * @param players who shuffles; never a target
