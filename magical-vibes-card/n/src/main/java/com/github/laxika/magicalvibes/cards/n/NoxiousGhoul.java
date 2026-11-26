@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class NoxiousGhoul extends Card {
         var nonZombieCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))));
-        var debuff = new BoostAllCreaturesEffect(-1, -1, nonZombieCreature);
+        var debuff = BoostEffect.allCreatures(-1, -1, nonZombieCreature);
 
         // Whenever this creature or another Zombie enters, all non-Zombie creatures get -1/-1 until end of turn.
         addTriggeredAbility(new TriggeredAbility(List.of(

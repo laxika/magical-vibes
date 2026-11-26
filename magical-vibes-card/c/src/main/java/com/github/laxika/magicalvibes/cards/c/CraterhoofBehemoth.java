@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,6 +28,6 @@ public class CraterhoofBehemoth extends Card {
         var creatureCount = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()),
-                new BoostAllOwnCreaturesEffect(creatureCount, creatureCount));
+                BoostEffect.creaturesYouControl(creatureCount, creatureCount));
     }
 }

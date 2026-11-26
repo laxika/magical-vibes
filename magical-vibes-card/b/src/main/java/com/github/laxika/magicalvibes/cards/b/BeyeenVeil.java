@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -19,7 +19,7 @@ public class BeyeenVeil extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures your opponents control get -2/-0 until end of turn",
-                        new BoostAllCreaturesEffect(-2, 0,
+                        BoostEffect.allCreatures(-2, 0,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 new ChooseOneEffect.ChooseOneOption("Beyeen Coast", List.of())
         )));

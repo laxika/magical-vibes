@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnChosenPermanentsToHandE
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SOK", collectorNumber = "4")
@@ -19,6 +19,6 @@ public class ChargeAcrossTheAraba extends Card {
                         Subjects.controlledBy(Subjects.you(), new PermanentHasSubtypePredicate(CardSubtype.PLAINS)), "Plains permanent"));
 
         // Creatures you control get +1/+1 until end of turn for each Plains returned this way.
-        addSpellEffect(new BoostAllOwnCreaturesEffect(new AmountThisWay(StepKind.RETURN), new AmountThisWay(StepKind.RETURN)));
+        addSpellEffect(BoostEffect.creaturesYouControl(new AmountThisWay(StepKind.RETURN), new AmountThisWay(StepKind.RETURN)));
     }
 }

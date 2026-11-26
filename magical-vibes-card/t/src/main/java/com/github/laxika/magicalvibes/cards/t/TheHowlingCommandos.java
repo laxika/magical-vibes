@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -21,7 +21,7 @@ public class TheHowlingCommandos extends Card {
                 false,
                 "{5}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 1),
+                        BoostEffect.creaturesYouControl(1, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl(),
                                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER)))
                 ),

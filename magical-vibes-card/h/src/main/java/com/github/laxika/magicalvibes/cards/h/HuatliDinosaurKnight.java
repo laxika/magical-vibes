@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -66,7 +66,7 @@ public class HuatliDinosaurKnight extends Card {
         // −7: Dinosaurs you control get +4/+4 until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new BoostAllOwnCreaturesEffect(4, 4, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))),
+                List.of(BoostEffect.creaturesYouControl(4, 4, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))),
                 "\u22127: Dinosaurs you control get +4/+4 until end of turn."
         ));
     }

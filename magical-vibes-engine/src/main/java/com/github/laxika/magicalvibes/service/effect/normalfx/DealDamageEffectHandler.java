@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -259,7 +260,9 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         if (effect instanceof ExileTopCardMayPlayThisTurnEffect exile) {
             return amountEvaluationService.referencesEventValue(exile.count());
         }
-        if (effect instanceof BoostAllOwnCreaturesEffect boost) {
+        if (effect instanceof BoostEffect boost && (boost.subject() instanceof PermanentSubject.TriggeringAttackers
+                || boost.subject() instanceof PermanentSubject.ControlledBy set
+                        && set.players() instanceof PlayerSubject.You)) {
             return amountEvaluationService.referencesEventValue(boost.powerBoost())
                     || amountEvaluationService.referencesEventValue(boost.toughnessBoost());
         }

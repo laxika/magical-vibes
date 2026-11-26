@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -43,7 +43,7 @@ public class TheWanderingMinstrel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}{U}{B}{R}{G}",
-                List.of(new BoostAllOwnCreaturesEffect(
+                List.of(BoostEffect.creaturesYouControl(
                         towns,
                         towns,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),

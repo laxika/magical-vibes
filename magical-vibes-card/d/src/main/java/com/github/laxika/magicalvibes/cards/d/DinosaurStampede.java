@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -15,7 +15,7 @@ public class DinosaurStampede extends Card {
 
     public DinosaurStampede() {
         // Attacking creatures get +2/+0 until end of turn.
-        addSpellEffect(new BoostAllCreaturesEffect(2, 0, new PermanentIsAttackingPredicate()));
+        addSpellEffect(BoostEffect.allCreatures(2, 0, new PermanentIsAttackingPredicate()));
         // Dinosaurs you control gain trample until end of turn.
         addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
     }

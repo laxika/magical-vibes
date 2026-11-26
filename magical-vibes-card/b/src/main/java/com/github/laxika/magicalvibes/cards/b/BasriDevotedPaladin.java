@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
@@ -43,7 +43,7 @@ public class BasriDevotedPaladin extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(2, 2),
+                        BoostEffect.creaturesYouControl(2, 2),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl())
                 ),
                 "−6: Creatures you control get +2/+2 and gain flying until end of turn."));

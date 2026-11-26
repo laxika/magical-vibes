@@ -316,6 +316,34 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @DisplayName("Hard AI activates a mass pump ability while its creature attacks")
+    void activatesMassPumpDuringCombat() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        bears.setAttacking(true);
+        bears.setAttackTarget(player2.getId());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent phalanx = new Permanent(new com.github.laxika.magicalvibes.cards.a.AkroanPhalanx());
+        phalanx.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(phalanx);
+        givePlayerMountains(player1, 3);
+        harness.setHand(player1, List.of());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Akroan Phalanx");
+    }
+
+    @Test
     @DisplayName("Hard AI keeps Crown of Vigor in the precombat main phase")
     void keepsCrownOfVigorDuringMain() {
         pinLibrariesAndHands();

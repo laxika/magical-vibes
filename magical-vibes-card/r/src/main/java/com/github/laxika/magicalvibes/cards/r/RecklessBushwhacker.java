@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -31,7 +31,7 @@ public class RecklessBushwhacker extends Card {
         var otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new BoostAllOwnCreaturesEffect(1, 0, otherCreature),
+                BoostEffect.creaturesYouControl(1, 0, otherCreature),
                 new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl()));
     }
 }

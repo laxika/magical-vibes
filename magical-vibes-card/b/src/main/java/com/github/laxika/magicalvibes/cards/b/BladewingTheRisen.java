@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -36,7 +36,7 @@ public class BladewingTheRisen extends Card {
 
         // {B}{R}: Dragon creatures get +1/+1 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{B}{R}",
-                List.of(new BoostAllCreaturesEffect(1, 1, new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
+                List.of(BoostEffect.allCreatures(1, 1, new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                 "{B}{R}: Dragon creatures get +1/+1 until end of turn."));
     }
 }

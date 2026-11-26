@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -26,7 +24,7 @@ public class NightDay extends Card {
                 ).withManaCost("{B}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Day — Creatures target player controls get +1/+1 until end of turn",
-                        new BoostAllCreaturesEffect(1, 1, EachPermanentScope.TARGET_PLAYER),
+                        BoostEffect.creaturesTargetPlayerControls(1, 1),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player")

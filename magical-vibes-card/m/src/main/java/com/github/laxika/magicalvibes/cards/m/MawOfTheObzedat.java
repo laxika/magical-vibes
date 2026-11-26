@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class MawOfTheObzedat extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(),
-                        new BoostAllOwnCreaturesEffect(1, 1)
+                        BoostEffect.creaturesYouControl(1, 1)
                 ),
                 "Sacrifice a creature: Creatures you control get +1/+1 until end of turn."
         ));

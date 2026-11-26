@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -31,7 +31,7 @@ public class SwarmyardMassacre extends Card {
                 CardSubtype.SQUIRREL
         ));
         var swarmyardCreatureCount = new PermanentCount(swarmyardTypes, CountScope.CONTROLLER);
-        addSpellEffect(new BoostAllCreaturesEffect(
+        addSpellEffect(BoostEffect.allCreatures(
                 new Scaled(swarmyardCreatureCount, -1),
                 new Scaled(swarmyardCreatureCount, -1),
                 new PermanentNotPredicate(swarmyardTypes)));

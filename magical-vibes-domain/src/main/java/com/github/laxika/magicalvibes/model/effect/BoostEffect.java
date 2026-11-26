@@ -24,7 +24,11 @@ import java.util.Set;
  *       permanent target (CR 301.7a, 208.3);</li>
  *   <li>{@link #each} — the target and the creatures named with it, or what an earlier step named ("target creature
  *       and all other creatures with the same name", "that creature gets +7/+0" after a token step): only creatures,
- *       the set found once as the effect resolves (CR 611.2c).</li>
+ *       the set found once as the effect resolves (CR 611.2c);</li>
+ *   <li>{@link #creaturesYouControl} / {@link #allCreatures} / {@link #creaturesTargetPlayerControls} — "creatures you
+ *       control get", "all creatures get", "creatures target player controls get", the optional filter narrowing the
+ *       set ({@link Subjects#narrowed}); the set is found once as the effect resolves (CR 611.2c), and "those
+ *       creatures get" after an attack trigger is {@link #each} over {@link Subjects#triggeringAttackers()}.</li>
  * </ul>
  *
  * <p>{@code amountsRead} says which permanent the amounts read as their source (CR 608.2h: found once, as the
@@ -62,7 +66,7 @@ public record BoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost
             throw new IllegalArgumentException("A boost reading the boosted permanent names one permanent without "
                     + "targeting it: " + subject);
         }
-        if (amountsRead == AmountsRead.SOURCE && !subject.declaresTarget()
+        if (amountsRead == AmountsRead.SOURCE && !subject.declaresTarget() && !isMassBoost(subject)
                 && !(subject instanceof PermanentSubject.ThisWay)
                 && !(subject instanceof PermanentSubject.Except)
                 && !(subject instanceof PermanentSubject.CreatedThisResolution)
@@ -189,6 +193,90 @@ public record BoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost
                 Set.of(), null, false, UNBOUND_TARGET_GROUP, null);
     }
 
+    /** "Creatures you control get +p/+t until end of turn." */
+    public static BoostEffect creaturesYouControl(int powerBoost, int toughnessBoost) {
+        return creaturesYouControl(new Fixed(powerBoost), new Fixed(toughnessBoost));
+    }
+
+    /** "[Filter] creatures you control get +p/+t until end of turn" ("other creatures you control", "Goblins you control"). */
+    public static BoostEffect creaturesYouControl(int powerBoost, int toughnessBoost, PermanentPredicate filter) {
+        return creaturesYouControl(new Fixed(powerBoost), new Fixed(toughnessBoost), filter);
+    }
+
+    /** "Creatures you control get +p/+t until your next turn." */
+    public static BoostEffect creaturesYouControl(int powerBoost, int toughnessBoost, Duration duration) {
+        return set(Subjects.creaturesYouControl(), new Fixed(powerBoost), new Fixed(toughnessBoost), duration);
+    }
+
+    /** "Creatures you control get +X/+Y until end of turn", X and Y found once, from the source (CR 608.2h). */
+    public static BoostEffect creaturesYouControl(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
+        return creaturesYouControl(powerBoost, toughnessBoost, null);
+    }
+
+    public static BoostEffect creaturesYouControl(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                                  PermanentPredicate filter) {
+        return set(Subjects.narrowed(Subjects.creaturesYouControl(), filter), powerBoost, toughnessBoost,
+                Duration.UNTIL_END_OF_TURN);
+    }
+
+    /** "All creatures get +p/+t until end of turn." */
+    public static BoostEffect allCreatures(int powerBoost, int toughnessBoost) {
+        return allCreatures(new Fixed(powerBoost), new Fixed(toughnessBoost));
+    }
+
+    /** "[Filter] creatures get +p/+t until end of turn" ("attacking creatures", "creatures your opponents control"). */
+    public static BoostEffect allCreatures(int powerBoost, int toughnessBoost, PermanentPredicate filter) {
+        return allCreatures(new Fixed(powerBoost), new Fixed(toughnessBoost), filter);
+    }
+
+    /** "[Filter] creatures get +p/+t" for {@code duration} ("creatures your opponents control get -3/-0 until your next turn"). */
+    public static BoostEffect allCreatures(int powerBoost, int toughnessBoost, PermanentPredicate filter,
+                                           Duration duration) {
+        return set(Subjects.narrowed(Subjects.allCreatures(), filter), new Fixed(powerBoost), new Fixed(toughnessBoost),
+                duration);
+    }
+
+    /** "All creatures get +X/+Y until end of turn", X and Y found once, from the source (CR 608.2h). */
+    public static BoostEffect allCreatures(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
+        return allCreatures(powerBoost, toughnessBoost, null);
+    }
+
+    public static BoostEffect allCreatures(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                           PermanentPredicate filter) {
+        return set(Subjects.narrowed(Subjects.allCreatures(), filter), powerBoost, toughnessBoost,
+                Duration.UNTIL_END_OF_TURN);
+    }
+
+    /** "Creatures target player controls get +p/+t until end of turn": declares the player target. */
+    public static BoostEffect creaturesTargetPlayerControls(int powerBoost, int toughnessBoost) {
+        return creaturesTargetPlayerControls(new Fixed(powerBoost), new Fixed(toughnessBoost), null);
+    }
+
+    /** "[Filter] creatures target player controls get +X/+Y until end of turn" ("each other creature that player controls"). */
+    public static BoostEffect creaturesTargetPlayerControls(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                                            PermanentPredicate filter) {
+        return set(Subjects.narrowed(Subjects.creaturesTargetPlayerControls(), filter), powerBoost, toughnessBoost,
+                Duration.UNTIL_END_OF_TURN);
+    }
+
+    private static BoostEffect set(PermanentSubject set, DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                   Duration duration) {
+        return new BoostEffect(powerBoost, toughnessBoost, set, AmountsRead.SOURCE, duration, Set.of(), null, false,
+                UNBOUND_TARGET_GROUP, null);
+    }
+
+    /**
+     * Whether this boost gives one bonus to the creatures a set names ("creatures you control get", "all creatures
+     * get", "those creatures get" of the attackers), found once as it resolves (CR 611.2c), and logs one summary line.
+     */
+    public boolean isMassBoost() {
+        return isMassBoost(subject);
+    }
+
+    private static boolean isMassBoost(PermanentSubject subject) {
+        return subject instanceof PermanentSubject.ControlledBy || subject instanceof PermanentSubject.TriggeringAttackers;
+    }
+
     /** This boost with {@code powerBoost}, {@code toughnessBoost}, {@code filter} and {@code castTimeXValue} replaced. */
     public BoostEffect withAmounts(DynamicAmount powerBoost, DynamicAmount toughnessBoost, PermanentPredicate filter,
                                    DynamicAmount castTimeXValue) {
@@ -204,12 +292,15 @@ public record BoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost
     /**
      * The self-targeting marker for the source (and the source-or-host) form; a target subject declares a creature
      * target (benign), or a permanent target (harmful) for "target creature or Vehicle"; any other subject declares
-     * nothing.
+     * nothing, save the player target of "creatures target player controls".
      */
     @Override
     public TargetSpec targetSpec() {
         if (subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.AttachedOrSource) {
             return new TargetSpec(null, false, null, true, 1);
+        }
+        if (subject.declaresPlayerTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
         }
         if (!subject.declaresTarget()) {
             return TargetSpec.NONE;

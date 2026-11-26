@@ -308,7 +308,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   / "that player" non-targeting. "Whenever you attack" records its attackers (the band's for `EACH_BAND`; "they gain …"
   is `Subjects.triggeringAttackers()`); a filtered `youAttack()` records the matching ones as triggering permanents and
   attacking snapshots (`TotalPowerOfControlledCreatures.declaredAttackers`,
-  `BoostAllOwnCreaturesEffect.forDeclaredAttackers`, `Subjects.target()`).
+  `BoostEffect.each(Subjects.triggeringAttackers(), …)`, `Subjects.target()`).
 - Block record (`BlockTriggers`): the creature on the other side as triggering permanent (id, controller, last-known
   copy) and non-targeting `targetId`, with its power and toughness as it triggered; an Aura or Equipment keeps the
   attached creature as triggering permanent and the other as `targetId`. A declared target (Elite Javelineer) is

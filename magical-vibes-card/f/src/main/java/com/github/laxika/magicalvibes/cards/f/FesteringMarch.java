@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -16,7 +16,7 @@ import java.util.List;
 public class FesteringMarch extends Card {
 
     public FesteringMarch() {
-        addSpellEffect(new BoostAllCreaturesEffect(-1, -1,
+        addSpellEffect(BoostEffect.allCreatures(-1, -1,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addSpellEffect(new ExileSpellEffect(3));
 

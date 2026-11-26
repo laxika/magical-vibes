@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -38,7 +38,7 @@ public class ThreeBlindMice extends Card {
         setSagaChapterTargetRequired(3);
 
         addTrigger(Triggers.chapter(4),
-                new BoostAllOwnCreaturesEffect(1, 1),
+                BoostEffect.creaturesYouControl(1, 1),
                 new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl()));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOwnCreaturesAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
@@ -21,7 +21,7 @@ public class TearsOfRage extends Card {
         // attacking creatures.
         PermanentIsAttackingPredicate attacking = new PermanentIsAttackingPredicate();
         PermanentCount attackingCreatures = new PermanentCount(attacking, CountScope.ANY_PLAYER);
-        addSpellEffect(new BoostAllOwnCreaturesEffect(attackingCreatures, new Fixed(0), attacking));
+        addSpellEffect(BoostEffect.creaturesYouControl(attackingCreatures, new Fixed(0), attacking));
 
         // Sacrifice those creatures at the beginning of the next end step.
         addSpellEffect(new SacrificeOwnCreaturesAtEndStepEffect(attacking));

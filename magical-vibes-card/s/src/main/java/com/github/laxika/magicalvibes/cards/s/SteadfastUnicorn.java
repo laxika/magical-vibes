@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +21,7 @@ public class SteadfastUnicorn extends Card {
                 false,
                 "{3}{W}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 1),
+                        BoostEffect.creaturesYouControl(1, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())
                 ),
                 "{3}{W}: Creatures you control get +1/+1 and gain vigilance until end of turn. "

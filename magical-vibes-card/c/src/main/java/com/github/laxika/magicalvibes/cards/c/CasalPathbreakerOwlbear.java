@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -26,7 +26,7 @@ public class CasalPathbreakerOwlbear extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
         addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
-                new BoostAllOwnCreaturesEffect(2, 2, otherLegendary),
+                BoostEffect.creaturesYouControl(2, 2, otherLegendary),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), legendary));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new TransformSelfEffect());
     }

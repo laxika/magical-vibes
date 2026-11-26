@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -22,7 +22,7 @@ public class Jubilation extends Card {
 
     public Jubilation() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostAllOwnCreaturesEffect(2, 2),
+                BoostEffect.creaturesYouControl(2, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

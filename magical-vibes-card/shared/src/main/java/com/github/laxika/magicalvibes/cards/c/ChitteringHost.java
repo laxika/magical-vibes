@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -22,7 +22,7 @@ public class ChitteringHost extends Card {
         // When this creature enters, other creatures you control get +1/+0 and gain menace until end of turn.
         var otherOwnCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostAllOwnCreaturesEffect(1, 0, otherOwnCreatures),
+                BoostEffect.creaturesYouControl(1, 0, otherOwnCreatures),
                 new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl(), otherOwnCreatures));
     }
 }

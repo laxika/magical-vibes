@@ -35,14 +35,14 @@ Also covers: pump + conditional keyword (fateful hour, morbid, raid, etc.) — s
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SET", collectorNumber = "NUM")
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        addSpellEffect(BoostEffect.creaturesYouControl(POWER_BOOST, TOUGHNESS_BOOST));
     }
 }
 ```
@@ -61,7 +61,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -479,7 +479,7 @@ package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -488,7 +488,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        addSpellEffect(BoostEffect.creaturesYouControl(POWER_BOOST, TOUGHNESS_BOOST));
         addSpellEffect(new GrantKeywordEffect(Keyword.KEYWORD, Subjects.otherCreaturesYouControl()));
     }
 }

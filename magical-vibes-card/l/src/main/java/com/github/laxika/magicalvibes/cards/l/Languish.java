@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "105")
 @CardRegistration(set = "GNT", collectorNumber = "31")
@@ -14,6 +14,6 @@ public class Languish extends Card {
 
     public Languish() {
         // All creatures get -4/-4 until end of turn.
-        addSpellEffect(new BoostAllCreaturesEffect(-4, -4));
+        addSpellEffect(BoostEffect.allCreatures(-4, -4));
     }
 }

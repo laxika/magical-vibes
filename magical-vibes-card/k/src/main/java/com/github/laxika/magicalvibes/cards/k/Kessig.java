@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
@@ -28,7 +28,7 @@ public class Kessig extends Card {
                 .combatOnly());
 
         addTrigger(Triggers.chaosEnsues(),
-                new BoostAllOwnCreaturesEffect(2, 2),
+                BoostEffect.creaturesYouControl(2, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()),
                 new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.WEREWOLF, Subjects.creaturesYouControl()));
     }

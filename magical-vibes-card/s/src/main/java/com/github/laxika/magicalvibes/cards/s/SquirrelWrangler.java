@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,7 +37,7 @@ public class SquirrelWrangler extends Card {
                 "{1}{G}",
                 List.of(
                         new SacrificePermanentCost(new PermanentIsLandPredicate(), "a land", false),
-                        new BoostAllCreaturesEffect(1, 1,
+                        BoostEffect.allCreatures(1, 1,
                                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL))
                 ),
                 "{1}{G}, Sacrifice a land: Squirrel creatures get +1/+1 until end of turn."

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.DuringCombat;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -47,7 +47,7 @@ public class GreatTrainHeist extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +1/+0 and gain first strike until end of turn.",
                         List.of(
-                                new BoostAllOwnCreaturesEffect(1, 0),
+                                BoostEffect.creaturesYouControl(1, 0),
                                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose target opponent. Whenever a creature you control deals combat damage to that player this turn, create a tapped Treasure token.",

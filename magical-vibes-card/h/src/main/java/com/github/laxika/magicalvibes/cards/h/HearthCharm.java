@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -30,7 +30,7 @@ public class HearthCharm extends Card {
                                 "Target must be an artifact creature.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Attacking creatures get +1/+0 until end of turn",
-                        new BoostAllCreaturesEffect(1, 0, new PermanentIsAttackingPredicate())),
+                        BoostEffect.allCreatures(1, 0, new PermanentIsAttackingPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature with power 2 or less can't be blocked this turn",
                         new MakeCreatureUnblockableEffect(),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "80")
 @CardRegistration(set = "ONS", collectorNumber = "157")
@@ -12,6 +12,6 @@ public class Infest extends Card {
 
     public Infest() {
         // All creatures get -2/-2 until end of turn.
-        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(BoostEffect.allCreatures(-2, -2));
     }
 }

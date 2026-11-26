@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +38,7 @@ public class AssaultFormation extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{G}",
-                List.of(new BoostAllOwnCreaturesEffect(0, 1)),
+                List.of(BoostEffect.creaturesYouControl(0, 1)),
                 "{2}{G}: Creatures you control get +0/+1 until end of turn."
         ));
     }

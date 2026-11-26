@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -20,7 +20,7 @@ public class ThorinsLastStand extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +2/+1 until end of turn",
-                        new BoostAllOwnCreaturesEffect(2, 1)),
+                        BoostEffect.creaturesYouControl(2, 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact or enchantment. You gain 2 life",
                         List.of(new DestroyTargetPermanentEffect(), new GainLifeEffect(2)),

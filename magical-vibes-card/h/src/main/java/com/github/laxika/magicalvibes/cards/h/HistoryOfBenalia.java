@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,7 +40,7 @@ public class HistoryOfBenalia extends Card {
         ));
 
         // Chapter III: Knights you control get +2/+1 until end of turn
-        addTrigger(Triggers.chapter(3), new BoostAllOwnCreaturesEffect(
+        addTrigger(Triggers.chapter(3), BoostEffect.creaturesYouControl(
                 2, 1, new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)
         ));
     }

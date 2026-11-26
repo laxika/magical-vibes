@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -42,7 +42,7 @@ public class VivienOfTheArkbow extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(4, 4),
+                        BoostEffect.creaturesYouControl(4, 4),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "\u22129: Creatures you control get +4/+4 and gain trample until end of turn."

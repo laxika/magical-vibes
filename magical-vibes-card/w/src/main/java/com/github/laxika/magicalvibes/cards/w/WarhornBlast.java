@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ForetellCast;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "38")
 public class WarhornBlast extends Card {
 
     public WarhornBlast() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 1));
         addCastingOption(new ForetellCast("{2}{W}"));
     }
 }

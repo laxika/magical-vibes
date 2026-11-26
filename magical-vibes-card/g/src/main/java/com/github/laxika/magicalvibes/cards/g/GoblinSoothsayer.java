@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,7 +25,7 @@ public class GoblinSoothsayer extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         "Sacrifice a Goblin",
                         false
-                ), new BoostAllCreaturesEffect(1, 1, new PermanentColorInPredicate(Set.of(CardColor.RED)))),
+                ), BoostEffect.allCreatures(1, 1, new PermanentColorInPredicate(Set.of(CardColor.RED)))),
                 "{R}, {T}, Sacrifice a Goblin: Red creatures get +1/+1 until end of turn."
         ));
     }

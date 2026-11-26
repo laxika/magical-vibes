@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToBattlefieldEffect;
@@ -31,7 +31,7 @@ public class FinaleOfDevastation extends Card {
                         new CardMaxManaValueXPredicate()))));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(10),
-                new BoostAllOwnCreaturesEffect(new XValue(), new XValue())));
+                BoostEffect.creaturesYouControl(new XValue(), new XValue())));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(10),
                 new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())));

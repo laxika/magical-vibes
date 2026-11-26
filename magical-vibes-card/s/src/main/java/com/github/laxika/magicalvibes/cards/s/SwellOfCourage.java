@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class SwellOfCourage extends Card {
 
     public SwellOfCourage() {
         // Creatures you control get +2/+2 until end of turn.
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 2));
 
         // Reinforce X—{X}{W}{W} ({X}{W}{W}, Discard this card: Put X +1/+1 counters on target creature.)
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{X}{W}{W}",

@@ -1368,10 +1368,25 @@ public class SubjectResolutionService {
                         : new PermanentAnyOfPredicate(excluded))));
     }
 
+    /**
+     * {@code predicate} with its target leaves bound to the entry's target permanent; with none, a
+     * {@link PermanentIsTargetCardPredicate} names the permanents of the cards a rider was handed in the entry's target
+     * cards (Public Execution's "each other creature that player controls" after the destruction, whose rider targets
+     * the player).
+     */
     private PermanentPredicate bindTarget(Context ctx, PermanentPredicate predicate) {
         return switch (predicate) {
             case PermanentIsTargetCardPredicate ignored -> {
-                List<PermanentPredicate> targets = ids(ctx, Subjects.target()).stream()
+                List<UUID> targetIds = ids(ctx, Subjects.target());
+                if (targetIds.isEmpty() && ctx.entry().getTargetCardIds() != null) {
+                    targetIds = ctx.gameData().playerBattlefields.values().stream()
+                            .flatMap(List::stream)
+                            .filter(permanent -> ctx.entry().getTargetCardIds()
+                                    .contains(permanent.getOriginalCard().getId()))
+                            .map(Permanent::getId)
+                            .toList();
+                }
+                List<PermanentPredicate> targets = targetIds.stream()
                         .<PermanentPredicate>map(PermanentIsSpecificPermanentPredicate::new)
                         .toList();
                 yield targets.size() == 1 ? targets.getFirst() : new PermanentAnyOfPredicate(targets);

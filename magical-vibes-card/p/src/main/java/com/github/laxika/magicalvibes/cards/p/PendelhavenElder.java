@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -26,7 +26,7 @@ public class PendelhavenElder extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new BoostAllOwnCreaturesEffect(1, 2, oneOne)),
+                List.of(BoostEffect.creaturesYouControl(1, 2, oneOne)),
                 "{T}: Each 1/1 creature you control gets +1/+2 until end of turn."
         ));
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "127")
@@ -15,6 +15,6 @@ public class TerrorTide extends Card {
     public TerrorTide() {
         Scaled minusPermanentCards = new Scaled(
                 new CardsInGraveyard(new CardIsPermanentPredicate(), CountScope.CONTROLLER), -1);
-        addSpellEffect(new BoostAllCreaturesEffect(minusPermanentCards, minusPermanentCards));
+        addSpellEffect(BoostEffect.allCreatures(minusPermanentCards, minusPermanentCards));
     }
 }

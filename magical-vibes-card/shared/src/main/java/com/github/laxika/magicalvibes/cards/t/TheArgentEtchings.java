@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -56,7 +56,7 @@ public class TheArgentEtchings extends Card {
                 new TransformAllEffect(incubatorTokens)
         ));
         addTrigger(Triggers.chapter(2), SequenceEffect.of(
-                new BoostAllOwnCreaturesEffect(1, 1),
+                BoostEffect.creaturesYouControl(1, 1),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.creaturesYouControl())
         ));
 

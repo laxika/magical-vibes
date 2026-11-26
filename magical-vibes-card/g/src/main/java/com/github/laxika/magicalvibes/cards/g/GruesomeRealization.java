@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -23,7 +23,7 @@ public class GruesomeRealization extends Card {
                         List.of(new DrawCardEffect(2), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures your opponents control get -1/-1 until end of turn",
-                        new BoostAllCreaturesEffect(-1, -1, opponentCreatures))
+                        BoostEffect.allCreatures(-1, -1, opponentCreatures))
         )));
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -88,7 +87,7 @@ public class KarlachRagingTiefling extends Card {
             case WHITE -> SequenceEffect.of(
                     new CreateTokenEffect(1, "Knight", 2, 2, CardColor.WHITE,
                             List.of(CardSubtype.KNIGHT), Set.of(), Set.of()),
-                    new BoostAllOwnCreaturesEffect(1, 1),
+                    BoostEffect.creaturesYouControl(1, 1),
                     new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()));
         };
     }

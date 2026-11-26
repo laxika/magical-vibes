@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
@@ -22,7 +22,7 @@ public class HustleBustle extends Card {
 
     public HustleBustle() {
         List<CardEffect> bustle = List.of(
-                new BoostAllOwnCreaturesEffect(2, 2),
+                BoostEffect.creaturesYouControl(2, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()),
                 new MayEffect(new TurnOwnCreatureFaceUpEffect(), "Turn a creature you control face up?"));
 

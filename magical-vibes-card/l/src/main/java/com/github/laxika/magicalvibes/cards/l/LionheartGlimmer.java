@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,6 +11,6 @@ public class LionheartGlimmer extends Card {
 
     public LionheartGlimmer() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
-        addTrigger(Triggers.youAttack(), new BoostAllOwnCreaturesEffect(1, 1));
+        addTrigger(Triggers.youAttack(), BoostEffect.creaturesYouControl(1, 1));
     }
 }

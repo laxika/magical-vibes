@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class NightIncarnate extends Card {
 
     public NightIncarnate() {
         // When this creature leaves the battlefield, all creatures get -3/-3 until end of turn.
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new BoostAllCreaturesEffect(-3, -3));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), BoostEffect.allCreatures(-3, -3));
 
         // Evoke {3}{B}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{B}"))));

@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -19,9 +18,8 @@ public class PublicExecution extends Card {
         // survives destruction (regeneration), so the rider filters out the target card by identity.
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        new BoostAllCreaturesEffect(new Fixed(-2), new Fixed(0),
-                                new PermanentNotPredicate(new PermanentIsTargetCardPredicate()),
-                                EachPermanentScope.TARGET_PLAYER),
+                        BoostEffect.creaturesTargetPlayerControls(new Fixed(-2), new Fixed(0),
+                                new PermanentNotPredicate(new PermanentIsTargetCardPredicate())),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class SelesnyaGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 1)),
+                List.of(BoostEffect.creaturesYouControl(1, 1)),
                 "{3}{W}: Creatures you control get +1/+1 until end of turn."
         ));
     }

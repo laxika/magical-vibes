@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class TriceratonCommander extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, otherDinosaur),
+        addTrigger(Triggers.attacks(), BoostEffect.creaturesYouControl(1, 1, otherDinosaur),
                 new GrantKeywordEffect(
                 Keyword.FLYING, Subjects.otherCreaturesYouControl(), otherDinosaur));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(

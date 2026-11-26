@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -23,6 +23,6 @@ public class ShuriTheBlackPanther extends Card {
                         new DrawCardEffect()),
                 new ConditionalEffect(
                         new ControlsPermanentCount(6, new PermanentIsArtifactPredicate()),
-                        new BoostAllOwnCreaturesEffect(2, 2))));
+                        BoostEffect.creaturesYouControl(2, 2))));
     }
 }

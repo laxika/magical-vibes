@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -37,7 +37,7 @@ public class ChongAndLilyNomads extends Card {
                         sagaTarget, null, 0, Integer.MAX_VALUE, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         BOOST_CREATURES,
-                        new BoostAllOwnCreaturesEffect(loreCountersOnSagas, new Fixed(0)))));
+                        BoostEffect.creaturesYouControl(loreCountersOnSagas, new Fixed(0)))));
 
         addTrigger(Triggers.youAttack().withFilter(new PermanentHasSubtypePredicate(CardSubtype.BARD)),
                 new ChooseOneAtTriggerTimeEffect(choice));

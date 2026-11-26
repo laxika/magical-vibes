@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -20,6 +20,6 @@ public class PerimeterSergeant extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 0, otherHumansFilter));
+        addTrigger(Triggers.attacks(), BoostEffect.creaturesYouControl(1, 0, otherHumansFilter));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
@@ -43,7 +43,7 @@ public class DownInTheValley extends Card {
 
     private void addBuffChapter(int chapter) {
         addTrigger(Triggers.chapter(chapter),
-                new BoostAllOwnCreaturesEffect(1, 0, ELVES),
+                BoostEffect.creaturesYouControl(1, 0, ELVES),
                 new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl(), ELVES));
     }
 }

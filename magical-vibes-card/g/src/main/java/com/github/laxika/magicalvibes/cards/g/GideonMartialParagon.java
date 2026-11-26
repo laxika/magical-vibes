@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -29,7 +29,7 @@ public class GideonMartialParagon extends Card {
                 List.of(
                         new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
                                 new PermanentIsCreaturePredicate())),
-                        new BoostAllOwnCreaturesEffect(1, 1)
+                        BoostEffect.creaturesYouControl(1, 1)
                 ),
                 "+2: Untap all creatures you control. Those creatures get +1/+1 until end of turn."
         ));
@@ -50,7 +50,7 @@ public class GideonMartialParagon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(2, 2),
+                        BoostEffect.creaturesYouControl(2, 2),
                         new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))))

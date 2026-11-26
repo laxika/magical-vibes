@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "DMU", collectorNumber = "91")
 public class DragToTheBottom extends Card {
@@ -14,7 +14,7 @@ public class DragToTheBottom extends Card {
     public DragToTheBottom() {
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
         Sum debuff = new Sum(new Fixed(1), domain);
-        addSpellEffect(new BoostAllCreaturesEffect(
+        addSpellEffect(BoostEffect.allCreatures(
                 new Scaled(debuff, -1), new Scaled(debuff, -1)));
     }
 }

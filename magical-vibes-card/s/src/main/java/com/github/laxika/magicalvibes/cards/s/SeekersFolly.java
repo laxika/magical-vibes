@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -27,7 +27,7 @@ public class SeekersFolly extends Card {
                                 "Target must be an opponent")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures your opponents control get -1/-1 until end of turn",
-                        new BoostAllCreaturesEffect(-1, -1,
+                        BoostEffect.allCreatures(-1, -1,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))
         )));
     }

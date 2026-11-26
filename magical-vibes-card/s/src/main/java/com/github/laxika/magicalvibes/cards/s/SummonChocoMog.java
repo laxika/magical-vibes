@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -13,7 +13,7 @@ public class SummonChocoMog extends Card {
 
     public SummonChocoMog() {
         var otherCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
-        var stampede = new BoostAllOwnCreaturesEffect(1, 0, otherCreatures);
+        var stampede = BoostEffect.creaturesYouControl(1, 0, otherCreatures);
         addTrigger(Triggers.chapter(1), stampede);
         addTrigger(Triggers.chapter(2), stampede);
         addTrigger(Triggers.chapter(3), stampede);

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BringBack;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class OakhameRangerBringBack extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new BoostAllOwnCreaturesEffect(1, 1)),
+                List.of(BoostEffect.creaturesYouControl(1, 1)),
                 "{T}: Creatures you control get +1/+1 until end of turn."
         ));
     }

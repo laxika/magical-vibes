@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -17,7 +17,7 @@ public class WarScreecher extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}{W}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 1,
+                List.of(BoostEffect.creaturesYouControl(1, 1,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "{5}{W}, {T}: Other creatures you control get +1/+1 until end of turn."
         ));

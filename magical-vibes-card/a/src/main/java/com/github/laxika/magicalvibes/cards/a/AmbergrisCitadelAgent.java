@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTur
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -87,7 +86,7 @@ public class AmbergrisCitadelAgent extends Card {
     private static CardEffect specializedAttackRider(CardColor color) {
         CardsDiscardedOrCycledThisTurn discardedCount = new CardsDiscardedOrCycledThisTurn();
         return switch (color) {
-            case WHITE -> new BoostAllOwnCreaturesEffect(discardedCount, discardedCount,
+            case WHITE -> BoostEffect.creaturesYouControl(discardedCount, discardedCount,
                     new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()));
             case BLACK -> BoostEffect.target(new Scaled(discardedCount, -1),
                     new Scaled(discardedCount, -1), TargetFilters.creatureAnOpponentControls().predicate());

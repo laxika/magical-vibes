@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "28")
 @CardRegistration(set = "INR", collectorNumber = "37")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 public class RallyThePeasants extends Card {
 
     public RallyThePeasants() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 0));
         addCastingOption(new FlashbackCast("{2}{R}"));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +18,6 @@ public class ZhaoRuthlessAdmiral extends Card {
         addTrigger(Triggers.sacrificed(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BoostAllOwnCreaturesEffect(1, 0));
+                BoostEffect.creaturesYouControl(1, 0));
     }
 }

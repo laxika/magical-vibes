@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "58")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class WarriorsHonor extends Card {
 
     public WarriorsHonor() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 1));
     }
 }

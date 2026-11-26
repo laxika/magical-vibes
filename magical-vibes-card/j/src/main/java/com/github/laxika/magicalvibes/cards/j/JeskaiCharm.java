@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -40,7 +40,7 @@ public class JeskaiCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +1/+1 and gain lifelink until end of turn",
                         List.of(
-                                new BoostAllOwnCreaturesEffect(1, 1),
+                                BoostEffect.creaturesYouControl(1, 1),
                                 new GrantKeywordEffect(Keyword.LIFELINK, Subjects.otherCreaturesYouControl())))
         )));
     }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -43,7 +43,7 @@ public class UmaroRagingYeti extends Card {
         ChooseOneEffect.ChooseOneOption pump = new ChooseOneEffect.ChooseOneOption(
                 "Other creatures you control get +3/+0 and gain trample until end of turn",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(3, 0, otherCreatures),
+                        BoostEffect.creaturesYouControl(3, 0, otherCreatures),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), otherCreatures)));
         ChooseOneEffect.ChooseOneOption discardAndDraw = new ChooseOneEffect.ChooseOneOption(
                 "Discard your hand, then draw four cards",

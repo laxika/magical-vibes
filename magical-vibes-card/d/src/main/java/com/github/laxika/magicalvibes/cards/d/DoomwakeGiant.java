@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class DoomwakeGiant extends Card {
                         new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
                         new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
                                 ObjectRelation.ANOTHER_YOU_CONTROL))),
-                TriggerOptions.DEFAULT, List.of(new EffectRegistration(new BoostAllCreaturesEffect(-1, -1,
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(BoostEffect.allCreatures(-1, -1,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))));
     }
 }

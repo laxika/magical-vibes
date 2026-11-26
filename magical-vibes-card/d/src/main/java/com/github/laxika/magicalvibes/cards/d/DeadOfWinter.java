@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class DeadOfWinter extends Card {
         // permanents you control.
         PermanentCount snowPermanentsYouControl = new PermanentCount(
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW), CountScope.CONTROLLER);
-        addSpellEffect(new BoostAllCreaturesEffect(
+        addSpellEffect(BoostEffect.allCreatures(
                 new Scaled(snowPermanentsYouControl, -1),
                 new Scaled(snowPermanentsYouControl, -1),
                 new PermanentAllOfPredicate(List.of(

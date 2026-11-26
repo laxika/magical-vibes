@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -41,7 +41,7 @@ public class GlacierGodmaw extends Card {
     public GlacierGodmaw() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), LANDER);
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new BoostAllOwnCreaturesEffect(1, 1),
+                BoostEffect.creaturesYouControl(1, 1),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE),
                         Subjects.creaturesYouControl()));
     }

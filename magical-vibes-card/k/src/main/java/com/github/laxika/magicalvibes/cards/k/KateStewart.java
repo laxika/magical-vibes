@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,7 @@ public class KateStewart extends Card {
         // until end of turn, where X is the number of time counters among permanents you control.
         PermanentCounterSum timeCounters = new PermanentCounterSum(
                 CounterType.TIME, null, CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{8}", new BoostAllCreaturesEffect(timeCounters, timeCounters,
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{8}", BoostEffect.allCreatures(timeCounters, timeCounters,
                         new PermanentIsAttackingPredicate())).withPrompt("Pay {8} to boost attacking creatures?"));
     }
 }

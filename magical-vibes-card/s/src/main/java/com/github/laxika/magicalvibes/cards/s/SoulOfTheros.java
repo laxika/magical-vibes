@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -20,7 +20,7 @@ public class SoulOfTheros extends Card {
 
     public SoulOfTheros() {
         List<CardEffect> abilityEffects = List.of(
-                new BoostAllOwnCreaturesEffect(2, 2),
+                BoostEffect.creaturesYouControl(2, 2),
                 new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), Subjects.creaturesYouControl())
         );
 
@@ -39,7 +39,7 @@ public class SoulOfTheros extends Card {
                 "{4}{W}{W}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new BoostAllOwnCreaturesEffect(2, 2),
+                        BoostEffect.creaturesYouControl(2, 2),
                         new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), Subjects.creaturesYouControl())
                 ),
                 "{4}{W}{W}, Exile this card from your graveyard: Creatures you control get +2/+2 and gain first strike and lifelink until end of turn."

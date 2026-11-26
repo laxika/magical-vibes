@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THB", collectorNumber = "31")
@@ -13,6 +12,6 @@ public class PhalanxTactics extends Card {
     public PhalanxTactics() {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(BoostEffect.target(1, 0));
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 1));
     }
 }

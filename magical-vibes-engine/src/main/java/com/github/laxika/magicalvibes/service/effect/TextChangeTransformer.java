@@ -326,9 +326,9 @@ public final class TextChangeTransformer {
                 yield filter == bounce.filter() ? bounce : bounce.withFilter(filter);
             }
             // The amounts and target filter of a boost read against its source; a boost of the boosted permanent
-            // and the creature-or-Vehicle target are left as they are (CR 612.2 would reach them too).
+            // the creature-or-Vehicle target and a mass boost are left as they are (CR 612.2 would reach them too).
             case BoostEffect boost when boost.amountsRead() == BoostEffect.AmountsRead.SOURCE
-                    && !boost.targetsPermanent() -> {
+                    && !boost.targetsPermanent() && !boost.isMassBoost() -> {
                 DynamicAmount power = apply(boost.powerBoost(), substitution);
                 DynamicAmount toughness = apply(boost.toughnessBoost(), substitution);
                 PermanentPredicate filter = apply(boost.filter(), substitution);

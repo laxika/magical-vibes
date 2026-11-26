@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -101,7 +100,7 @@ public class CombatAttackService {
 
     /** Battle cry: "Whenever this creature attacks, each other attacking creature gets +1/+0" (CR 702.91a). */
     private static final TriggeredAbility BATTLE_CRY_ABILITY = new TriggeredAbility(Triggers.attacks(),
-            new BoostAllOwnCreaturesEffect(1, 0, new PermanentAllOfPredicate(List.of(
+            BoostEffect.creaturesYouControl(1, 0, new PermanentAllOfPredicate(List.of(
                     new PermanentIsAttackingPredicate(),
                     new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
 

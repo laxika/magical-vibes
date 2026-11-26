@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
@@ -23,7 +23,7 @@ public class KagemaroFirstToSuffer extends Card {
                 "{B}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostAllCreaturesEffect(new Scaled(handSize, -1), new Scaled(handSize, -1))
+                        BoostEffect.allCreatures(new Scaled(handSize, -1), new Scaled(handSize, -1))
                 ),
                 "{B}, Sacrifice Kagemaro: All creatures get -X/-X until end of turn, where X is the number of cards in your hand."
         ));

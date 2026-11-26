@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -16,7 +16,7 @@ import java.util.List;
 public class ShefetArchfiend extends Card {
 
     public ShefetArchfiend() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllCreaturesEffect(-2, -2,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), BoostEffect.allCreatures(-2, -2,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));

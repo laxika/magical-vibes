@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,7 +19,7 @@ public class IvoryCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "All creatures get -2/-0 until end of turn",
-                        new BoostAllCreaturesEffect(-2, 0)),
+                        BoostEffect.allCreatures(-2, 0)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap target creature",
                         new TapPermanentsEffect(Subjects.target()),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "134")
 @CardRegistration(set = "RNA", collectorNumber = "93")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 public class BurnBright extends Card {
 
     public BurnBright() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 0));
     }
 }

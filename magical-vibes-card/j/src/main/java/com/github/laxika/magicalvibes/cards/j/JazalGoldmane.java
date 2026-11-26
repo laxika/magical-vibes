@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class JazalGoldmane extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}{W}",
-                List.of(new BoostAllOwnCreaturesEffect(attackingCreatures, attackingCreatures, attacking)),
+                List.of(BoostEffect.creaturesYouControl(attackingCreatures, attackingCreatures, attacking)),
                 "{3}{W}{W}: Attacking creatures you control get +X/+X until end of turn, where X is the number of attacking creatures."
         ));
     }

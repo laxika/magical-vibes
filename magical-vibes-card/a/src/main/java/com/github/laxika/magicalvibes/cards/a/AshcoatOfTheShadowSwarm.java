@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
@@ -35,7 +35,7 @@ public class AshcoatOfTheShadowSwarm extends Card {
         var otherRats = new PermanentAllOfPredicate(List.of(
                 rat,
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
-        var attackOrBlockBoost = new BoostAllOwnCreaturesEffect(ratsYouControl, ratsYouControl, otherRats);
+        var attackOrBlockBoost = BoostEffect.creaturesYouControl(ratsYouControl, ratsYouControl, otherRats);
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, attackOrBlockBoost);
 
         var ratCreatureCard = new CardAllOfPredicate(List.of(

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class PatronOfTheAkki extends Card {
                 new ManaCastingCost("{4}{R}{R}"),
                 new SacrificePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.GOBLIN))
         )));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(2, 0));
+        addTrigger(Triggers.attacks(), BoostEffect.creaturesYouControl(2, 0));
     }
 }

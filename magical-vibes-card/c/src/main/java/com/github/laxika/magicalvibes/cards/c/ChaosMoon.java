@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect;
@@ -26,10 +26,10 @@ public class ChaosMoon extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ConditionalReplacementEffect(
                 new TotalPermanentCountEven(),
                 SequenceEffect.of(
-                        new BoostAllCreaturesEffect(1, 1, new PermanentColorInPredicate(Set.of(CardColor.RED))),
+                        BoostEffect.allCreatures(1, 1, new PermanentColorInPredicate(Set.of(CardColor.RED))),
                         new LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect(CardSubtype.MOUNTAIN, ManaColor.RED)),
                 SequenceEffect.of(
-                        new BoostAllCreaturesEffect(-1, -1, new PermanentColorInPredicate(Set.of(CardColor.RED))),
+                        BoostEffect.allCreatures(-1, -1, new PermanentColorInPredicate(Set.of(CardColor.RED))),
                         new ReplaceLandManaWithColorEffect(ManaColor.COLORLESS)
                                 .forLands(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))
                                 .lasting(Duration.UNTIL_END_OF_TURN))));

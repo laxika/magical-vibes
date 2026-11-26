@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 
@@ -18,7 +18,7 @@ public class PestilentHaze extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "All creatures get -2/-2 until end of turn",
-                        new BoostAllCreaturesEffect(-2, -2)),
+                        BoostEffect.allCreatures(-2, -2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove two loyalty counters from each planeswalker",
                         new RemoveCountersEffect(

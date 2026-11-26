@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -30,7 +30,7 @@ public class DeadBeforeSunrise extends Card {
     public DeadBeforeSunrise() {
         PermanentHasAnySubtypePredicate outlaws = new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES);
 
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 0, outlaws));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 0, outlaws));
         addSpellEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,

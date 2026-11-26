@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class NuclearFallout extends Card {
 
     public NuclearFallout() {
-        addSpellEffect(new BoostAllCreaturesEffect(
+        addSpellEffect(BoostEffect.allCreatures(
                 new Scaled(new XValue(), -2), new Scaled(new XValue(), -2)));
         addSpellEffect(new GiveRadCountersEffect(new XValue(), Subjects.eachPlayer()));
     }

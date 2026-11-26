@@ -3,11 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -60,7 +59,7 @@ public class TrystansCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures target player controls get +3/+3 until end of turn. Untap them",
                         List.of(
-                                new BoostAllCreaturesEffect(3, 3, EachPermanentScope.TARGET_PLAYER),
+                                BoostEffect.creaturesTargetPlayerControls(3, 3),
                                 new UntapPermanentsEffect(
                                         Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(),
                                                 new PermanentIsCreaturePredicate()))),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class MoonstoneHarbinger extends Card {
     public MoonstoneHarbinger() {
         PermanentHasSubtypePredicate bats = new PermanentHasSubtypePredicate(CardSubtype.BAT);
         SequenceEffect lifeChangeEffect = SequenceEffect.of(
-                new BoostAllOwnCreaturesEffect(1, 0, bats),
+                BoostEffect.creaturesYouControl(1, 0, bats),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.creaturesYouControl(), bats));
 
         addTrigger(List.of(Triggers.youGainLife(), Triggers.youLoseLife()),

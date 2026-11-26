@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -52,7 +51,7 @@ public class CabarettiConfluence extends Card {
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Creatures target player controls get +1/+1 and gain first strike until end of turn",
                         () -> SequenceEffect.of(
-                                new BoostAllCreaturesEffect(1, 1, EachPermanentScope.TARGET_PLAYER),
+                                BoostEffect.creaturesTargetPlayerControls(1, 1),
                                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesTargetPlayerControls())),
                         anyPlayer)
         ), 3));

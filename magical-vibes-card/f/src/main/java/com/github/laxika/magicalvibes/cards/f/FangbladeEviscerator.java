@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +24,7 @@ public class FangbladeEviscerator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{R}",
-                List.of(new BoostAllOwnCreaturesEffect(2, 0)),
+                List.of(BoostEffect.creaturesYouControl(2, 0)),
                 "{4}{R}: Creatures you control get +2/+0 until end of turn."
         ));
     }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class GnawingCrescendo extends Card {
 
     public GnawingCrescendo() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 0));
         addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
                 ratToken())));

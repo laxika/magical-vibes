@@ -882,6 +882,7 @@ public class TriggeredAbilityQueueService {
                 instanceof com.github.laxika.magicalvibes.model.effect.BoostEffect boost
                 && boost.amountsRead() == com.github.laxika.magicalvibes.model.effect.BoostEffect.AmountsRead.SOURCE
                 && !boost.targetsPermanent()
+                && !boost.isMassBoost()
                 && boost.powerBoost() instanceof com.github.laxika.magicalvibes.model.amount.Fixed power
                 && boost.toughnessBoost() instanceof com.github.laxika.magicalvibes.model.amount.Fixed toughness) {
             return entry.getCard().getName() + " - target creature gets "

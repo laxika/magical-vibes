@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,6 +12,6 @@ public class BlightGrenade extends Card {
     public BlightGrenade() {
         target(TargetFilters.creature())
                 .addSpellEffect(new DestroyTargetPermanentEffect());
-        addSpellEffect(new BoostAllCreaturesEffect(-3, -3));
+        addSpellEffect(BoostEffect.allCreatures(-3, -3));
     }
 }

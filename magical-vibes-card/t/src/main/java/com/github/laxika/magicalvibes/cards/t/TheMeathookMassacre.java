@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ public class TheMeathookMassacre extends Card {
     public TheMeathookMassacre() {
         // When The Meathook Massacre enters, each creature gets -X/-X until end of turn.
         var minusX = new Scaled(new XValue(), -1);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllCreaturesEffect(minusX, minusX));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), BoostEffect.allCreatures(minusX, minusX));
 
         // Whenever a creature you control dies, each opponent loses 1 life.
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),

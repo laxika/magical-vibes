@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -36,7 +35,7 @@ public class UrzasCommand extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you don't control get -2/-0 until end of turn",
-                        new BoostAllCreaturesEffect(-2, 0,
+                        BoostEffect.allCreatures(-2, 0,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a tapped Powerstone token",

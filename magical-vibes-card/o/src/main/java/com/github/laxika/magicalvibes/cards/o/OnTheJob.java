@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "30")
@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 public class OnTheJob extends Card {
 
     public OnTheJob() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 1));
         addSpellEffect(CreateTokenEffect.ofClueToken(1));
     }
 }

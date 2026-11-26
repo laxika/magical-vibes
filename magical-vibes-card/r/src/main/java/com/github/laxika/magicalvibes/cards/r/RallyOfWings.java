@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -16,7 +16,7 @@ public class RallyOfWings extends Card {
     public RallyOfWings() {
         addSpellEffect(new UntapPermanentsEffect(
                 Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())));
-        addSpellEffect(new BoostAllOwnCreaturesEffect(
+        addSpellEffect(BoostEffect.creaturesYouControl(
                 2,
                 2,
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));

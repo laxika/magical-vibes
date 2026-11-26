@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -31,7 +31,7 @@ public class GeneralTazri extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}{U}{B}{R}{G}",
-                List.of(new BoostAllOwnCreaturesEffect(
+                List.of(BoostEffect.creaturesYouControl(
                         new ColorsAmongControlledPermanents(ally),
                         new ColorsAmongControlledPermanents(ally),
                         ally)),

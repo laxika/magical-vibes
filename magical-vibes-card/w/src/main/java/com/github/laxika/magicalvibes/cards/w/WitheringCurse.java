@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -17,7 +17,7 @@ public class WitheringCurse extends Card {
         // destroy all creatures instead.
         addSpellEffect(new ConditionalReplacementEffect(
                 new GainedLifeThisTurn(),
-                new BoostAllCreaturesEffect(-2, -2),
+                BoostEffect.allCreatures(-2, -2),
                 new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate())));
     }
 }

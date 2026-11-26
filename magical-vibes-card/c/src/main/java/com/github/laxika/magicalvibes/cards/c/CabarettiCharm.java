@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -38,7 +38,7 @@ public class CabarettiCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +1/+1 and gain trample until end of turn",
                         List.of(
-                                new BoostAllOwnCreaturesEffect(1, 1),
+                                BoostEffect.creaturesYouControl(1, 1),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create two 1/1 green and white Citizen creature tokens",

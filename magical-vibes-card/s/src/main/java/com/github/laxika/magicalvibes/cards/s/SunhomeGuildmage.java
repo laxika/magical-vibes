@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
@@ -24,7 +24,7 @@ public class SunhomeGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}{W}",
-                List.of(new BoostAllCreaturesEffect(1, 0, new PermanentControlledBySourceControllerPredicate())),
+                List.of(BoostEffect.allCreatures(1, 0, new PermanentControlledBySourceControllerPredicate())),
                 "{1}{R}{W}: Creatures you control get +1/+0 until end of turn."
         ));
 

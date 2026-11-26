@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -39,7 +39,7 @@ public class NemataGroveGuardian extends Card {
                                 )),
                                 "Sacrifice a Saproling", false
                         ),
-                        new BoostAllCreaturesEffect(1, 1,
+                        BoostEffect.allCreatures(1, 1,
                                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING))
                 ),
                 "Sacrifice a Saproling: Saproling creatures get +1/+1 until end of turn."

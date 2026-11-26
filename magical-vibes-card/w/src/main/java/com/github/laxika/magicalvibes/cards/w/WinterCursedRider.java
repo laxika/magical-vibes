@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -38,7 +38,7 @@ public class WinterCursedRider extends Card {
                 "{2}{U}{B}",
                 List.of(
                         new ExileXCardsFromGraveyardCost(CardType.ARTIFACT),
-                        new BoostAllCreaturesEffect(
+                        BoostEffect.allCreatures(
                                 new Scaled(new XValue(), -1),
                                 new Scaled(new XValue(), -1),
                                 new PermanentAllOfPredicate(List.of(

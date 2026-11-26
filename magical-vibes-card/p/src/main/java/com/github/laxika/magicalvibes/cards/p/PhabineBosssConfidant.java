@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -45,7 +45,7 @@ public class PhabineBosssConfidant extends Card {
                 new CreateTokenEffect(1, "Citizen", 1, 1, CardColor.GREEN,
                         Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN))
                         .withAmount(AmountThisWay.revealedCards(land)),
-                new BoostAllOwnCreaturesEffect(nonlandsRevealed, nonlandsRevealed),
+                BoostEffect.creaturesYouControl(nonlandsRevealed, nonlandsRevealed),
                 new DrawCardEffect(1, Subjects.eachPlayer())));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -26,7 +26,7 @@ public class ArlinnEmbracedByTheMoon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 1),
+                        BoostEffect.creaturesYouControl(1, 1),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "+1: Creatures you control get +1/+1 and gain trample until end of turn."

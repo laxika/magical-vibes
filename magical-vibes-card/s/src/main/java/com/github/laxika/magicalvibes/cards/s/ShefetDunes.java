@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -41,7 +41,7 @@ public class ShefetDunes extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.DESERT),
                                 "Sacrifice a Desert",
                                 false),
-                        new BoostAllOwnCreaturesEffect(1, 1)),
+                        BoostEffect.creaturesYouControl(1, 1)),
                 "{2}{W}{W}, {T}, Sacrifice a Desert: Creatures you control get +1/+1 until end of turn. "
                         + "Activate only as a sorcery.",
                 null,

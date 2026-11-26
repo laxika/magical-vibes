@@ -97,6 +97,21 @@ class InfestTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
+    @Test
+    @DisplayName("Every creature it reduces to 0 toughness dies together, whoever controls it")
+    void killsEveryShrunkCreatureTogether() {
+        harness.addToBattlefield(player1, new GlorySeeker()); // 2/2
+        harness.addToBattlefield(player2, new GlorySeeker()); // 2/2
+        harness.addToBattlefield(player2, new GluttonousZombie()); // 3/3
+
+        castInfest();
+
+        harness.assertInGraveyard(player1, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Glory Seeker");
+        Permanent zombie = findPermanent(player2, "Gluttonous Zombie");
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(1);
+    }
+
     private void castInfest() {
         harness.castFromHand(player1, new Infest(), "{1}{B}{B}");
         harness.passBothPriorities();

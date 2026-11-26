@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerToughnessPredicate;
@@ -33,7 +33,7 @@ public class BessSoulNourisher extends Card {
                 TriggerOptions.ONE_OR_MORE,
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.attacks(),
-                new BoostAllOwnCreaturesEffect(
+                BoostEffect.creaturesYouControl(
                         new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                         new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                         OTHER_BASE_ONE_ONE));

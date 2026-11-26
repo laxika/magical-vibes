@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "31")
@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Steadfastness extends Card {
 
     public Steadfastness() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(0, 3));
+        addSpellEffect(BoostEffect.creaturesYouControl(0, 3));
     }
 }

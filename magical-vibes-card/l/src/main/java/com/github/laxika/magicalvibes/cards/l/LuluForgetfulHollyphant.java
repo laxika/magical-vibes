@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -85,7 +85,7 @@ public class LuluForgetfulHollyphant extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         if (color == CardColor.GREEN) {
             card.addTrigger(Triggers.youAttack().withFilter(otherFlyers),
-                    new BoostAllOwnCreaturesEffect(2, 2).forDeclaredAttackers());
+                    BoostEffect.each(Subjects.triggeringAttackers(), 2, 2));
             return;
         }
         CardEffect effect = switch (color) {

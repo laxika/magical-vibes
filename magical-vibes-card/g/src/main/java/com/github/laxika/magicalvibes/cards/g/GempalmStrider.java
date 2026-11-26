@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ public class GempalmStrider extends Card {
 
     public GempalmStrider() {
         addTrigger(Triggers.youCycleThisCard(),
-                new BoostAllCreaturesEffect(2, 2,
+                BoostEffect.allCreatures(2, 2,
                         new PermanentHasSubtypePredicate(CardSubtype.ELF)));
         addCycling("{2}{G}{G}");
     }

@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -25,8 +24,8 @@ public class BolgEreborsReckoning extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN, CardSubtype.ORC)),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                new BoostAllOwnCreaturesEffect(2, 2, otherGoblinOrOrc),
-                new BoostAllCreaturesEffect(-1, -1,
+                BoostEffect.creaturesYouControl(2, 2, otherGoblinOrOrc),
+                BoostEffect.allCreatures(-1, -1,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }
 }

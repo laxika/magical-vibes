@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -56,7 +56,7 @@ public class NissaAscendedAnimist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(forests, forests),
+                        BoostEffect.creaturesYouControl(forests, forests),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "−7: Until end of turn, creatures you control get +1/+1 for each Forest you control "

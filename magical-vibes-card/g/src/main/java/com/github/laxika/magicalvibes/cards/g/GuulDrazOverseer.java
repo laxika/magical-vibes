@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,8 +25,8 @@ public class GuulDrazOverseer extends Card {
 
     public GuulDrazOverseer() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new BoostAllOwnCreaturesEffect(1, 0, OTHER_CREATURES),
+                BoostEffect.creaturesYouControl(1, 0, OTHER_CREATURES),
                 new ConditionalEffect(new TriggeringPermanentHasSubtype(CardSubtype.SWAMP),
-                        new BoostAllOwnCreaturesEffect(1, 0, OTHER_CREATURES)));
+                        BoostEffect.creaturesYouControl(1, 0, OTHER_CREATURES)));
     }
 }

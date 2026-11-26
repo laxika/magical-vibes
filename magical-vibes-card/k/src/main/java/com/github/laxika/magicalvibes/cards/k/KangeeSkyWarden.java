@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -17,12 +17,12 @@ import java.util.List;
 public class KangeeSkyWarden extends Card {
 
     public KangeeSkyWarden() {
-        addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(2, 0,
+        addTrigger(Triggers.attacks(), BoostEffect.allCreatures(2, 0,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 ))));
-        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BoostAllCreaturesEffect(0, 2,
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, BoostEffect.allCreatures(0, 2,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsBlockingPredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING)

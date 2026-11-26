@@ -1943,7 +1943,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 
 | Merge | Cards touched | Why it needs a decision |
 |---|---|---|
-| `BoostAllOwnCreaturesEffect` → `BoostAllCreaturesEffect` + `EachPermanentScope.CONTROLLER` | **81** | Handlers are the most literal copies in the codebase (byte-identical log format string); purely mechanical, but 81 card-file edits plus `CombatAttackService` and `InnerFlameIgniterEffectHandler`. Schedule alone so it can't hide a real diff |
+| `BoostAllOwnCreaturesEffect` and `BoostAllCreaturesEffect` → one record | **609** | **DONE** (effect-cleanup step 10, run Boost B2, 2026-11-26): both are `BoostEffect.creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls` (a `controlledBy` subject) |
 | `TransformSelfEffect` → `TransformPermanentEffect(scope)` | **81** | 81 import edits to delete 1 class. Poor ratio. Do **not** fold in `TransformToBackFaceEffect` — it deliberately skips `isTransformPrevented` |
 | The two source-counter records → `PutCountersEffect.onSelf` | **~215** | **DONE** (effect-cleanup step 10, run Counters, 2026-11-25): both records and the target record are one `PutCountersEffect`; the engine sites build `PutCountersEffect.onSelf(...)` |
 

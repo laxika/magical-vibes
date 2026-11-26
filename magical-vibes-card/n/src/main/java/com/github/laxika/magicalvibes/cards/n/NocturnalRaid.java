@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -15,7 +15,7 @@ public class NocturnalRaid extends Card {
 
     public NocturnalRaid() {
         // Black creatures get +2/+0 until end of turn.
-        addSpellEffect(new BoostAllCreaturesEffect(2, 0,
+        addSpellEffect(BoostEffect.allCreatures(2, 0,
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
     }
 }

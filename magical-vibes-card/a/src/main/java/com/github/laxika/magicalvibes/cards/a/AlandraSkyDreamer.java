@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class AlandraSkyDreamer extends Card {
 
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addTrigger(Triggers.youDrawNthCardEachTurn(5),
-                new BoostAllOwnCreaturesEffect(cardsInHand, cardsInHand,
+                BoostEffect.creaturesYouControl(cardsInHand, cardsInHand,
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourcePermanentPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAKE)))));

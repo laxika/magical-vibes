@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -18,12 +17,12 @@ public class UnnervingAssault extends Card {
         // spell (opponents' creatures = every creature not controlled by this spell's controller).
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLUE),
-                new BoostAllCreaturesEffect(-1, 0,
+                BoostEffect.allCreatures(-1, 0,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
 
         // Creatures you control get +1/+0 until end of turn if {R} was spent to cast this spell.
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.RED),
-                new BoostAllOwnCreaturesEffect(1, 0)));
+                BoostEffect.creaturesYouControl(1, 0)));
     }
 }

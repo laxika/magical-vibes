@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class RoilmagesTrick extends Card {
 
     public RoilmagesTrick() {
-        addSpellEffect(new BoostAllCreaturesEffect(
+        addSpellEffect(BoostEffect.allCreatures(
                 new Scaled(new XValue(), -1),
                 new Fixed(0),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));

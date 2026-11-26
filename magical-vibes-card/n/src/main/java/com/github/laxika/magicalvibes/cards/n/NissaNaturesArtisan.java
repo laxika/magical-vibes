@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -40,7 +40,7 @@ public class NissaNaturesArtisan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -12,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(5, 5),
+                        BoostEffect.creaturesYouControl(5, 5),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl())
                 ),
                 "\u221212: Creatures you control get +5/+5 and gain trample until end of turn."

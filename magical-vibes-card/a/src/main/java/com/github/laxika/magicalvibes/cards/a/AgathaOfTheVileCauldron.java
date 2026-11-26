@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,7 +35,7 @@ public class AgathaOfTheVileCauldron extends Card {
                 false,
                 "{4}{R}{G}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 1, otherCreature),
+                        BoostEffect.creaturesYouControl(1, 1, otherCreature),
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.otherCreaturesYouControl(),
                                 otherCreature)
                 ),

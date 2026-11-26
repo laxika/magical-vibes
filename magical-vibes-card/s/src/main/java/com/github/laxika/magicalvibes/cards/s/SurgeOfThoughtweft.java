@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -14,7 +14,7 @@ public class SurgeOfThoughtweft extends Card {
 
     public SurgeOfThoughtweft() {
         // Creatures you control get +1/+1 until end of turn.
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 1));
         // If you control a Kithkin, draw a card.
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.KITHKIN)),

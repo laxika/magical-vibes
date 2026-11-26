@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -51,7 +51,7 @@ public class KavaronMemorialWorld extends Card {
                         new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land", false),
                         new CreateTokenEffect("Robot", 2, 2, null,
                                 List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT)),
-                        new BoostAllOwnCreaturesEffect(1, 0),
+                        BoostEffect.creaturesYouControl(1, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())
                 ),
                 "{1}{R}, {T}, Sacrifice a land: Create a 2/2 colorless Robot artifact creature token, then "

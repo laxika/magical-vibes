@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -16,6 +16,6 @@ public class TrompTheDomains extends Card {
     public TrompTheDomains() {
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
         addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
-        addSpellEffect(new BoostAllOwnCreaturesEffect(domain, domain));
+        addSpellEffect(BoostEffect.creaturesYouControl(domain, domain));
     }
 }

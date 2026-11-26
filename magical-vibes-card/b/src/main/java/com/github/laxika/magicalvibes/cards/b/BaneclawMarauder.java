@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
@@ -12,7 +12,7 @@ public class BaneclawMarauder extends Card {
 
     public BaneclawMarauder() {
         addTrigger(Triggers.becomesBlocked(),
-                new BoostAllCreaturesEffect(-1, -1, new PermanentBlockingSourcePredicate()));
+                BoostEffect.allCreatures(-1, -1, new PermanentBlockingSourcePredicate()));
         addTrigger(Triggers.creatureDies(new PermanentBlockingSourcePredicate(), ObjectRelation.ANY),
                 new LoseLifeEffect(1, Subjects.controllerOf(Subjects.triggering())));
     }

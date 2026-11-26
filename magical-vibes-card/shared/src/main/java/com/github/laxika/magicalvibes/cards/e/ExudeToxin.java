@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -13,7 +13,7 @@ public class ExudeToxin extends Card {
 
     public ExudeToxin() {
         var minusX = new Scaled(new XValue(), -1);
-        addSpellEffect(new BoostAllCreaturesEffect(
+        addSpellEffect(BoostEffect.allCreatures(
                 minusX,
                 minusX,
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON))));

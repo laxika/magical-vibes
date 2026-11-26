@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -13,7 +13,7 @@ public class EyeblightMassacre extends Card {
 
     public EyeblightMassacre() {
         // "Non-Elf creatures" hits both sides of the battlefield; the subtype check is Changeling-aware.
-        addSpellEffect(new BoostAllCreaturesEffect(-2, -2,
+        addSpellEffect(BoostEffect.allCreatures(-2, -2,
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ELF))));
     }
 }

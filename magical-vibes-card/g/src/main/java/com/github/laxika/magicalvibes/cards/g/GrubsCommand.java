@@ -8,11 +8,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -55,7 +54,7 @@ public class GrubsCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures target player controls get +1/+1 and gain haste until end of turn",
                         List.of(
-                                new BoostAllCreaturesEffect(1, 1, EachPermanentScope.TARGET_PLAYER),
+                                BoostEffect.creaturesTargetPlayerControls(1, 1),
                                 new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesTargetPlayerControls())),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "115")
@@ -11,7 +11,7 @@ public class HideousLaughter extends Card {
 
     public HideousLaughter() {
         // All creatures get -2/-2 until end of turn.
-        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(BoostEffect.allCreatures(-2, -2));
 
         // Splice onto Arcane {3}{B}{B}
         addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{3}{B}{B}"));

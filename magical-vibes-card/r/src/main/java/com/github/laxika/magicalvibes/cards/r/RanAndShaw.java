@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -40,7 +40,7 @@ public class RanAndShaw extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}",
-                List.of(new BoostAllOwnCreaturesEffect(2, 0,
+                List.of(BoostEffect.creaturesYouControl(2, 0,
                         new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                 "{3}{R}: Dragons you control get +2/+0 until end of turn."
         ));

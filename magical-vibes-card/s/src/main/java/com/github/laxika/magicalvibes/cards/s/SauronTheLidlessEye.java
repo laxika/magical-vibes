@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -32,7 +32,7 @@ public class SauronTheLidlessEye extends Card {
                 false,
                 "{1}{B}{R}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(2, 0),
+                        BoostEffect.creaturesYouControl(2, 0),
                         new LoseLifeEffect(2, Subjects.eachOpponent())),
                 "{1}{B}{R}: Creatures you control get +2/+0 until end of turn. Each opponent loses 2 life."
         ));

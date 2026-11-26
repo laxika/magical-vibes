@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -39,7 +38,7 @@ public class MuYanlingCelestialWind extends Card {
         // −7: Creatures you control with flying get +5/+5 until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new BoostAllOwnCreaturesEffect(5, 5,
+                List.of(BoostEffect.creaturesYouControl(5, 5,
                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 "−7: Creatures you control with flying get +5/+5 until end of turn."
         ));

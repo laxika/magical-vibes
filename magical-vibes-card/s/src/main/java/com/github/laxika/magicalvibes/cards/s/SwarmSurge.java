@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate
 public class SwarmSurge extends Card {
 
     public SwarmSurge() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 0));
         addSpellEffect(new GrantKeywordEffect(
                 Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(), new PermanentIsColorlessPredicate()));
     }

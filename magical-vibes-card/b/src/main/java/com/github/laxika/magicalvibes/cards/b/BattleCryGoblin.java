@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
@@ -29,7 +29,7 @@ public class BattleCryGoblin extends Card {
                 false,
                 "{1}{R}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 0, goblins),
+                        BoostEffect.creaturesYouControl(1, 0, goblins),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl(), goblins)
                 ),
                 "{1}{R}: Goblins you control get +1/+0 and gain haste until end of turn."

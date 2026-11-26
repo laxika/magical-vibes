@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -21,7 +21,7 @@ public class AllStarKicker extends Card {
         addStaticEffect(new KickerEffect("{3}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
                 SequenceEffect.of(
-                        new BoostAllOwnCreaturesEffect(1, 1),
+                        BoostEffect.creaturesYouControl(1, 1),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()))));
     }
 }

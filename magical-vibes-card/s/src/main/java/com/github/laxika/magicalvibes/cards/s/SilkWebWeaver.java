@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -46,7 +46,7 @@ public class SilkWebWeaver extends Card {
                 false,
                 "{3}{G}{W}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(2, 2),
+                        BoostEffect.creaturesYouControl(2, 2),
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())),
                 "{3}{G}{W}: Creatures you control get +2/+2 and gain vigilance until end of turn."));
     }

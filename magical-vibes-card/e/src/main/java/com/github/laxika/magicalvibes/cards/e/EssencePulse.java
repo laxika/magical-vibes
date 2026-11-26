@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "C21", collectorNumber = "39")
@@ -16,6 +16,6 @@ public class EssencePulse extends Card {
         // of life you gained this turn.
         addSpellEffect(new GainLifeEffect(2));
         var minusLifeGained = new Scaled(new LifeGainedThisTurn(CountScope.CONTROLLER), -1);
-        addSpellEffect(new BoostAllCreaturesEffect(minusLifeGained, minusLifeGained));
+        addSpellEffect(BoostEffect.allCreatures(minusLifeGained, minusLifeGained));
     }
 }

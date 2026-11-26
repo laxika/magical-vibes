@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -16,9 +16,9 @@ public class GoldenDemise extends Card {
     public GoldenDemise() {
         addSpellEffect(new AscendEffect());
         addSpellEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new BoostAllCreaturesEffect(-2, -2,
+                BoostEffect.allCreatures(-2, -2,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
         addSpellEffect(new ConditionalEffect(new NotCondition(new ControllerHasCityBlessing()),
-                new BoostAllCreaturesEffect(-2, -2)));
+                BoostEffect.allCreatures(-2, -2)));
     }
 }

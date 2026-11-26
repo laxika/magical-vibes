@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ import java.util.List;
 public class StormTheCitadel extends Card {
 
     public StormTheCitadel() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 2));
         addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrPlaneswalker(),
                 new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -28,7 +28,7 @@ public class BlackPantherMostDangerous extends Card {
                 "{5}{W}{W}",
                 List.of(
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        new BoostAllOwnCreaturesEffect(2, 2,
+                        BoostEffect.creaturesYouControl(2, 2,
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))
                 ),
                 "Power-up — {5}{W}{W}: Put two +1/+1 counters on Black Panther. Other creatures you control get +2/+2 "

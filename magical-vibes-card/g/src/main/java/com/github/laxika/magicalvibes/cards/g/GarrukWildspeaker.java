@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -55,7 +55,7 @@ public class GarrukWildspeaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -4,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(3, 3),
+                        BoostEffect.creaturesYouControl(3, 3),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "\u22124: Creatures you control get +3/+3 and gain trample until end of turn."

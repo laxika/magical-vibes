@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -22,7 +22,7 @@ public class PoisonTheWaters extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "All creatures get -1/-1 until end of turn",
-                        new BoostAllCreaturesEffect(-1, -1)),
+                        BoostEffect.allCreatures(-1, -1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player reveals their hand. You choose an artifact or creature card from it. That player discards that card",
                         new ChooseCardsFromTargetHandEffect(

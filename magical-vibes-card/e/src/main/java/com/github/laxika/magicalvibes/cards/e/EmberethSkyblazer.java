@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +21,7 @@ public class EmberethSkyblazer extends Card {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
-        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{2}{R}", new BoostAllOwnCreaturesEffect(
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{2}{R}", BoostEffect.creaturesYouControl(
                         new Sum(new PlayersInGame(), new Fixed(-1)), new Fixed(0))).withPrompt("Pay {2}{R} to boost creatures you control?"));
     }
 }

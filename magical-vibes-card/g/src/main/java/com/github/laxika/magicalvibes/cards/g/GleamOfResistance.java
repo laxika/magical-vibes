@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -19,7 +19,7 @@ public class GleamOfResistance extends Card {
 
     public GleamOfResistance() {
         // Creatures you control get +1/+2 until end of turn. Untap those creatures.
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 2));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 2));
         addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
                 new PermanentIsCreaturePredicate())));
 

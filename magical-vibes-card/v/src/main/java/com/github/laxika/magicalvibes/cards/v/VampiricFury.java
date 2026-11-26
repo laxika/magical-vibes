@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -15,7 +15,7 @@ public class VampiricFury extends Card {
 
     public VampiricFury() {
         PermanentHasSubtypePredicate vampireFilter = new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE);
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0, vampireFilter));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 0, vampireFilter));
         addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl(), vampireFilter));
     }
 }

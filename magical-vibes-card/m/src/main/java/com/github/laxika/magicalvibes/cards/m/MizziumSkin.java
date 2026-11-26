@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,7 +34,7 @@ public class MizziumSkin extends Card {
                         BoostEffect.target(0, 1),
                         new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())),
                 SequenceEffect.of(
-                        new BoostAllOwnCreaturesEffect(0, 1),
+                        BoostEffect.creaturesYouControl(0, 1),
                         new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherCreaturesYouControl()))));
         target(TargetFilters.creatureYouControl());
     }

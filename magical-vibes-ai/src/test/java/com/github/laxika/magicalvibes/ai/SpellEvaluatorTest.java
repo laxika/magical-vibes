@@ -1710,4 +1710,36 @@ class SpellEvaluatorTest {
         assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.DrawCardsCost(1),
                 payer)).isZero();
     }
+
+    @Test
+    @DisplayName("A mass pump spell is scored the same whatever creatures it would boost")
+    void massPumpScoreIgnoresTheBoard() {
+        double empty = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.i.InspiredCharge(), player1.getId());
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+        }
+        double withCreatures = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.i.InspiredCharge(), player1.getId());
+
+        assertThat(withCreatures).isEqualTo(empty);
+    }
+
+    @Test
+    @DisplayName("A mass debuff spell is scored the same whatever creatures it would shrink")
+    void massDebuffScoreIgnoresTheBoard() {
+        double empty = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.i.Infest(), player1.getId());
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(bears);
+        }
+        double withCreatures = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.i.Infest(), player1.getId());
+
+        assertThat(withCreatures).isEqualTo(empty);
+    }
 }

@@ -1102,6 +1102,20 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("With a player target, \"each other creature\" leaves out the permanent of the card the rider was handed")
+        void otherThanTheHandedTargetCard() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            StackEntry entry = entry(player1, player2.getId(), null);
+            entry.setTargetCardIds(List.of(bears.getOriginalCard().getId()));
+
+            assertThat(permanents(entry, controlledBy(Subjects.targetPlayer(),
+                    new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                            new PermanentNotPredicate(new PermanentIsTargetCardPredicate()))))))
+                    .containsExactly(giant);
+        }
+
+        @Test
         @DisplayName("Finds every matching permanent the players control")
         void controlledByPlayers() {
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class AmbushParatrooper extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 1)),
+                List.of(BoostEffect.creaturesYouControl(1, 1)),
                 "{5}: Creatures you control get +1/+1 until end of turn."
         ));
     }

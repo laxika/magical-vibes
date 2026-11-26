@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
@@ -33,7 +33,7 @@ public class FortifiedBeachhead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 1, soldier)),
+                List.of(BoostEffect.creaturesYouControl(1, 1, soldier)),
                 "{5}, {T}: Soldiers you control get +1/+1 until end of turn."
         ));
     }

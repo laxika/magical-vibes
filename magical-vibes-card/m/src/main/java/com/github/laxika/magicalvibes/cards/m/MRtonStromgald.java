@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -24,7 +24,7 @@ public class MRtonStromgald extends Card {
         // until end of turn for each attacking creature other than Marton Stromgald.
         PermanentCount otherAttackers = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER, true);
-        addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(
+        addTrigger(Triggers.attacks(), BoostEffect.allCreatures(
                 otherAttackers,
                 otherAttackers,
                 new PermanentAllOfPredicate(List.of(
@@ -38,7 +38,7 @@ public class MRtonStromgald extends Card {
                 new PermanentIsBlockingPredicate(), CountScope.ANY_PLAYER, true);
         addTrigger(Triggers.blocks(),
                 TriggerOptions.ONE_OR_MORE,
-                new BoostAllCreaturesEffect(
+                BoostEffect.allCreatures(
                         otherBlockers,
                         otherBlockers,
                         new PermanentAllOfPredicate(List.of(

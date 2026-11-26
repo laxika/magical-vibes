@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
@@ -209,7 +209,8 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         }
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         thenEntry.setTriggeringPermanentId(entry.getTriggeringPermanentId());
-        if ((thenEffect instanceof SacrificePermanentsEffect || thenEffect instanceof BoostAllCreaturesEffect)
+        if ((thenEffect instanceof SacrificePermanentsEffect
+                || thenEffect instanceof BoostEffect boost && boost.isMassBoost())
                 && targetCardId != null) {
             thenEntry.setTargetCardIds(List.of(targetCardId));
         }

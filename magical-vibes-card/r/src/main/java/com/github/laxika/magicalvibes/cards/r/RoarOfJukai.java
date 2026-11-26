@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -19,7 +19,7 @@ public class RoarOfJukai extends Card {
     public RoarOfJukai() {
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
-                new BoostAllCreaturesEffect(2, 2, new PermanentIsBlockedPredicate())));
+                BoostEffect.allCreatures(2, 2, new PermanentIsBlockedPredicate())));
         addStaticEffect(new SpliceEffect(CardSubtype.ARCANE,
                 List.of(new EachOpponentGainsLifeCastingCost(5))));
     }

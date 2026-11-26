@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,7 @@ public class ThunderscapeMaster extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{G}{G}",
-                List.of(new BoostAllOwnCreaturesEffect(2, 2)),
+                List.of(BoostEffect.creaturesYouControl(2, 2)),
                 "{G}{G}, {T}: Creatures you control get +2/+2 until end of turn."
         ));
     }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -25,7 +25,7 @@ public class RabbleRouser extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new BoostAllCreaturesEffect(
+                List.of(BoostEffect.allCreatures(
                         new SourcePower(), new Fixed(0), new PermanentIsAttackingPredicate())),
                 "{R}, {T}: Attacking creatures get +X/+0 until end of turn, where X is this creature's power."
         ));

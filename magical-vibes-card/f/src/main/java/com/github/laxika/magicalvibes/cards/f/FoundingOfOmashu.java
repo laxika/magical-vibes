@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -25,6 +25,6 @@ public class FoundingOfOmashu extends Card {
                 new DiscardAndDrawCardEffect(1, 1),
                 "Discard a card?"));
 
-        addTrigger(Triggers.chapter(3), new BoostAllOwnCreaturesEffect(1, 0));
+        addTrigger(Triggers.chapter(3), BoostEffect.creaturesYouControl(1, 0));
     }
 }

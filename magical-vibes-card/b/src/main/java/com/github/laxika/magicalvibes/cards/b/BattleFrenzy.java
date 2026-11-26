@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -16,9 +16,9 @@ public class BattleFrenzy extends Card {
         var green = new PermanentColorInPredicate(Set.of(CardColor.GREEN));
 
         // Green creatures you control get +1/+1 until end of turn.
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1, green));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 1, green));
 
         // Nongreen creatures you control get +1/+0 until end of turn.
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 0, new PermanentNotPredicate(green)));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 0, new PermanentNotPredicate(green)));
     }
 }

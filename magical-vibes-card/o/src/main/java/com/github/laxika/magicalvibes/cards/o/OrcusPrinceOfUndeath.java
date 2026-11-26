@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -27,7 +27,7 @@ public class OrcusPrinceOfUndeath extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each other creature gets -X/-X until end of turn. You lose X life",
                         List.of(
-                                new BoostAllCreaturesEffect(
+                                BoostEffect.allCreatures(
                                         new Scaled(new XValue(), -1),
                                         new Scaled(new XValue(), -1),
                                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),

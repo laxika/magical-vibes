@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -32,7 +32,7 @@ public class SorinSolemnVisitor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 0, Duration.UNTIL_YOUR_NEXT_TURN),
+                        BoostEffect.creaturesYouControl(1, 0, Duration.UNTIL_YOUR_NEXT_TURN),
                         new GrantKeywordEffect(Set.of(Keyword.LIFELINK), Subjects.creaturesYouControl(),
                                 Duration.UNTIL_YOUR_NEXT_TURN)
                 ),

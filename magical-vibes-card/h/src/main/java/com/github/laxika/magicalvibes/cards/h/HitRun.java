@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -37,7 +37,7 @@ public class HitRun extends Card {
                         anyPlayer).withManaCost("{1}{B}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Run — Attacking creatures you control get +1/+0 until end of turn for each other attacking creature.",
-                        new BoostAllOwnCreaturesEffect(
+                        BoostEffect.creaturesYouControl(
                                 new Sum(new PermanentCount(attacking, CountScope.ANY_PLAYER), new Fixed(-1)),
                                 new Fixed(0), attacking)).withManaCost("{3}{R}{G}")
         )));

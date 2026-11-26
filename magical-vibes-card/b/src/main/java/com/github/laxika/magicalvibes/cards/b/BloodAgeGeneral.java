@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -19,7 +19,7 @@ public class BloodAgeGeneral extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new BoostAllCreaturesEffect(1, 0, new PermanentAllOfPredicate(List.of(
+                List.of(BoostEffect.allCreatures(1, 0, new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)
                 )))),

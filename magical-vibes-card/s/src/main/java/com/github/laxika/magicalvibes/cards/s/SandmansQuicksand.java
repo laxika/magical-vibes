@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -20,11 +20,11 @@ public class SandmansQuicksand extends Card {
     public SandmansQuicksand() {
         addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
-                new BoostAllCreaturesEffect(-2, -2,
+                BoostEffect.allCreatures(-2, -2,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()),
-                new BoostAllCreaturesEffect(-2, -2)));
+                BoostEffect.allCreatures(-2, -2)));
         addCastingOption(new GraveyardCast(null, "{3}{B}", List.of(), new CardDiscardedThisTurn()));
     }
 }

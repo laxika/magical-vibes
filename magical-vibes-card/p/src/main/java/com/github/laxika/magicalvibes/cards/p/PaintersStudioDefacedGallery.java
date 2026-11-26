@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -30,6 +30,6 @@ public class PaintersStudioDefacedGallery extends Card {
                 .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN));
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceRoomDoorUnlocked(1)),
-                new BoostAllOwnCreaturesEffect(1, 0, new PermanentIsAttackingPredicate()));
+                BoostEffect.creaturesYouControl(1, 0, new PermanentIsAttackingPredicate()));
     }
 }

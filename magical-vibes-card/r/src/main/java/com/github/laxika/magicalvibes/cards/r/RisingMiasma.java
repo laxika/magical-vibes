@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -31,7 +31,7 @@ public class RisingMiasma extends Card {
     public RisingMiasma() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{B}{B}"))));
 
-        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(BoostEffect.allCreatures(-2, -2));
 
         target(TargetFilters.landYouControl(), 0, 1)
                 .addSpellEffect(new ConditionalEffect(

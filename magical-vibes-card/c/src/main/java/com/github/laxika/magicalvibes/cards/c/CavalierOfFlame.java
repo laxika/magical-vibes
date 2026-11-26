@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -32,7 +32,7 @@ public class CavalierOfFlame extends Card {
                 false,
                 "{1}{R}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 0),
+                        BoostEffect.creaturesYouControl(1, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())
                 ),
                 "{1}{R}: Creatures you control get +1/+0 and gain haste until end of turn."

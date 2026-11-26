@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +21,7 @@ public class BloodlineCulling extends Card {
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creature tokens get -2/-2 until end of turn",
-                        new BoostAllCreaturesEffect(-2, -2, new PermanentIsTokenPredicate()))
+                        BoostEffect.allCreatures(-2, -2, new PermanentIsTokenPredicate()))
         )));
     }
 }

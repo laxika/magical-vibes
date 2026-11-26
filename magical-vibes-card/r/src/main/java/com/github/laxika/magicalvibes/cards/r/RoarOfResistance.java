@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,7 +27,7 @@ public class RoarOfResistance extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTokenPredicate()))));
 
-        addTrigger(Triggers.playerAttacks(), UnlessPaysEffect.youMayPay("{1}{R}", new BoostAllCreaturesEffect(
+        addTrigger(Triggers.playerAttacks(), UnlessPaysEffect.youMayPay("{1}{R}", BoostEffect.allCreatures(
                         2, 0, new PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate())).withPrompt("Pay {1}{R} to boost attacking creatures?"));
     }
 }

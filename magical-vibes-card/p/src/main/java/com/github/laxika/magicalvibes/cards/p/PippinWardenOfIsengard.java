@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -51,7 +51,7 @@ public class PippinWardenOfIsengard extends Card {
                 List.of(
                         new SacrificeMultiplePermanentsCost(4,
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD)),
-                        new BoostAllOwnCreaturesEffect(3, 3, otherCreatures),
+                        BoostEffect.creaturesYouControl(3, 3, otherCreatures),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl(), otherCreatures)
                 ),
                 "{T}, Sacrifice four Foods: Other creatures you control get +3/+3 and gain haste until end of turn. "

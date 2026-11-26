@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -21,7 +21,7 @@ public class InnerFlameIgniter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 0),
+                List.of(BoostEffect.creaturesYouControl(1, 0),
                         new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
                                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(),
                                         Duration.UNTIL_END_OF_TURN))),

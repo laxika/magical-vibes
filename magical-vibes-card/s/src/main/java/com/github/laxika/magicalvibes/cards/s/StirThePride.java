@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -23,7 +23,7 @@ public class StirThePride extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +2/+2 until end of turn",
-                        new BoostAllOwnCreaturesEffect(2, 2)),
+                        BoostEffect.creaturesYouControl(2, 2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, creatures you control gain \"Whenever this creature deals damage, you gain that much life.\"",
                         new GrantEffectToTargetUntilEndOfTurnEffect(

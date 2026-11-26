@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -62,7 +62,7 @@ public class PallidMycoderm extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(saproling, "a Saproling", false),
-                        new BoostAllOwnCreaturesEffect(1, 1, fungusOrSaproling)
+                        BoostEffect.creaturesYouControl(1, 1, fungusOrSaproling)
                 ),
                 "Sacrifice a Saproling: Each creature you control that's a Fungus or a Saproling gets +1/+1 until end of turn."
         ));

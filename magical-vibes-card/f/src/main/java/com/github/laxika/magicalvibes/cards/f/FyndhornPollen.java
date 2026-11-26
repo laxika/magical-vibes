@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class FyndhornPollen extends Card {
 
         // {1}{G}: All creatures get -1/-0 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}",
-                List.of(new BoostAllCreaturesEffect(-1, 0)),
+                List.of(BoostEffect.allCreatures(-1, 0)),
                 "{1}{G}: All creatures get -1/-0 until end of turn."));
     }
 }

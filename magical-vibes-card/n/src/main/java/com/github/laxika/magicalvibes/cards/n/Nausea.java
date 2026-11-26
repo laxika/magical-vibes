@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "148")
 @CardRegistration(set = "7ED", collectorNumber = "148")
@@ -12,6 +12,6 @@ public class Nausea extends Card {
 
     public Nausea() {
         // All creatures get -1/-1 until end of turn.
-        addSpellEffect(new BoostAllCreaturesEffect(-1, -1));
+        addSpellEffect(BoostEffect.allCreatures(-1, -1));
     }
 }

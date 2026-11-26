@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -20,6 +20,6 @@ public class RamosianRally extends Card {
                 List.of(new TapUntappedPermanentsCost(1, new PermanentIsCreaturePredicate())),
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
                 false));
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 1));
     }
 }

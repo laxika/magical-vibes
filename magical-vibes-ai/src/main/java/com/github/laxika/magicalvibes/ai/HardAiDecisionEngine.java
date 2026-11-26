@@ -2255,9 +2255,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         boolean isSelfPump = nonCostEffects.stream().anyMatch(effect -> selfBoost(effect) != null);
         // A boost reading its source that names no target (a Crown's "enchanted creature and the creatures that share
-        // a creature type with it") is timed like a targeted pump: with no target it has no boosted permanent here.
+        // a creature type with it") is timed like a targeted pump: with no target it has no boosted permanent here. A
+        // mass boost ("creatures you control get +1/+0") is neither.
         boolean isTargetedPump = nonCostEffects.stream().anyMatch(effect -> CreatureBoostEffect.targetedBoost(effect) != null
-                || effect instanceof BoostEffect boost && boost.amountsRead() == BoostEffect.AmountsRead.SOURCE);
+                || effect instanceof BoostEffect boost && boost.amountsRead() == BoostEffect.AmountsRead.SOURCE
+                        && !boost.isMassBoost());
         boolean isPump = isSelfPump || isTargetedPump;
         boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof CardDrawingEffect draw
                 && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +17,7 @@ import java.util.List;
 public class HarvesterOfMisery extends Card {
 
     public HarvesterOfMisery() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllCreaturesEffect(-2, -2,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), BoostEffect.allCreatures(-2, -2,
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{B}",

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -48,7 +48,7 @@ public class GoreclawTerrorOfQalSisma extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentPowerAtLeastPredicate(4)
         ));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, qualifyingCreature),
+        addTrigger(Triggers.attacks(), BoostEffect.creaturesYouControl(1, 1, qualifyingCreature),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.allCreatures(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),

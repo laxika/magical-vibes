@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,7 @@ public class DragonThroneOfTarkir extends Card {
                         true,
                         "{2}",
                         List.of(
-                                new BoostAllOwnCreaturesEffect(new SourcePower(), new SourcePower(), otherCreatures),
+                                BoostEffect.creaturesYouControl(new SourcePower(), new SourcePower(), otherCreatures),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), otherCreatures)
                         ),
                         "{2}, {T}: Other creatures you control gain trample and get +X/+X until end of turn, where X is this creature's power."

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -42,7 +42,7 @@ public class AzlaskTheSwellingScourge extends Card {
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(experienceCounters, experienceCounters),
+                        BoostEffect.creaturesYouControl(experienceCounters, experienceCounters),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl(),
                                 scionsAndSpawns),
                         new GrantEffectToTargetUntilEndOfTurnEffect(

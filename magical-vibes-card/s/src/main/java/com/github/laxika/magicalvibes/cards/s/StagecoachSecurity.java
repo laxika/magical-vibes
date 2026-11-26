@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +18,7 @@ public class StagecoachSecurity extends Card {
 
     public StagecoachSecurity() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostAllOwnCreaturesEffect(1, 1),
+                BoostEffect.creaturesYouControl(1, 1),
                 new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl()));
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{W}"))));
     }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -46,7 +45,7 @@ public class BetrothedOfFire extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentIsHostOfSourceAuraPredicate(),
                                 "enchanted creature", false),
-                        new BoostAllOwnCreaturesEffect(2, 0)),
+                        BoostEffect.creaturesYouControl(2, 0)),
                 "Sacrifice enchanted creature: Creatures you control get +2/+0 until end of turn."
         ));
     }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class MartialImpetus extends Card {
                 .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()))
                 .addStaticEffect(new GoadEquippedCreatureEffect());
 
-        addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(1, 1,
+        addTrigger(Triggers.attacks(), BoostEffect.allCreatures(1, 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
                         new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate())

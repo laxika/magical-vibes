@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -43,7 +43,7 @@ public class GoddricCloakedReveler extends Card {
                         new ActivatedAbility(
                                 false,
                                 "{R}",
-                                List.of(new BoostAllOwnCreaturesEffect(
+                                List.of(BoostEffect.creaturesYouControl(
                                         1, 0, new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                                 "{R}: Dragons you control get +1/+0 until end of turn."),
                         Subjects.source())));

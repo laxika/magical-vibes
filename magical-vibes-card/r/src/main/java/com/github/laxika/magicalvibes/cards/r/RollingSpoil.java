@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,6 +17,6 @@ public class RollingSpoil extends Card {
                 .addSpellEffect(new DestroyTargetPermanentEffect());
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK),
-                new BoostAllCreaturesEffect(-1, -1)));
+                BoostEffect.allCreatures(-1, -1)));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -39,7 +39,7 @@ public class NightOfTheSweetsRevenge extends Card {
                 "{5}{G}{G}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostAllOwnCreaturesEffect(foodsYouControl, foodsYouControl)
+                        BoostEffect.creaturesYouControl(foodsYouControl, foodsYouControl)
                 ),
                 "{5}{G}{G}, Sacrifice this enchantment: Creatures you control get +X/+X until end of turn, "
                         + "where X is the number of Foods you control. Activate only as a sorcery.",

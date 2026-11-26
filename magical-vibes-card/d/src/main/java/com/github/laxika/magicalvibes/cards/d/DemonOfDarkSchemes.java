@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -25,7 +25,7 @@ public class DemonOfDarkSchemes extends Card {
 
     public DemonOfDarkSchemes() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostAllCreaturesEffect(-2, -2,
+                BoostEffect.allCreatures(-2, -2,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new EnergyCountersEffect(1));

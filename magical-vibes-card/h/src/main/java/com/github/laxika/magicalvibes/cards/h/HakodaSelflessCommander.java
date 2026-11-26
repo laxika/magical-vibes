@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -27,7 +27,7 @@ public class HakodaSelflessCommander extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new BoostAllOwnCreaturesEffect(0, 5),
+                        BoostEffect.creaturesYouControl(0, 5),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl())
                 ),
                 "Sacrifice Hakoda: Creatures you control get +0/+5 and gain indestructible until end of turn."

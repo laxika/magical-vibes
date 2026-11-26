@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -21,7 +21,7 @@ public class LetsPlayAGame extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures your opponents control get -1/-1 until end of turn",
-                        new BoostAllCreaturesEffect(-1, -1,
+                        BoostEffect.allCreatures(-1, -1,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent discards two cards",

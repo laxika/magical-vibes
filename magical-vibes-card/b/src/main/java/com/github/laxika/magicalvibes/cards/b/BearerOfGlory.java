@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
@@ -21,7 +21,7 @@ public class BearerOfGlory extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 1)),
+                List.of(BoostEffect.creaturesYouControl(1, 1)),
                 "{4}{W}: Creatures you control get +1/+1 until end of turn."
         ));
     }

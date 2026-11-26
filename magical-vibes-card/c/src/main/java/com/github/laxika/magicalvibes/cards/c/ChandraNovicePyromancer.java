@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -18,7 +18,7 @@ public class ChandraNovicePyromancer extends Card {
     public ChandraNovicePyromancer() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new BoostAllOwnCreaturesEffect(
+                List.of(BoostEffect.creaturesYouControl(
                         2,
                         0,
                         new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL))),

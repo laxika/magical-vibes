@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -26,7 +25,7 @@ public class StirringAddress extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 BoostEffect.target(2, 2),
-                new BoostAllOwnCreaturesEffect(2, 2)));
+                BoostEffect.creaturesYouControl(2, 2)));
         target(TargetFilters.creatureYouControl());
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +29,7 @@ public class LabyrinthRaptor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}{R}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 0, menace)),
+                List.of(BoostEffect.creaturesYouControl(1, 0, menace)),
                 "{B}{R}: Creatures you control with menace get +1/+0 until end of turn."
         ));
     }

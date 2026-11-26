@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,7 +28,7 @@ public class Dynacharge extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 BoostEffect.target(2, 0),
-                new BoostAllCreaturesEffect(2, 0,
+                BoostEffect.allCreatures(2, 0,
                         new PermanentControlledBySourceControllerPredicate())));
         target(TargetFilters.creatureYouControl());
     }

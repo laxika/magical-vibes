@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesExceptChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class BoostAllCreaturesExceptChosenTypeEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
-    private final BoostAllCreaturesEffectHandler boostAllCreaturesEffectHandler;
+    private final BoostEffectHandler boostEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,8 +37,8 @@ public class BoostAllCreaturesExceptChosenTypeEffectHandler implements NormalEff
         CardSubtype chosenSubtype = gameData.chosenSpellSubtype;
         gameData.chosenSpellSubtype = null;
 
-        boostAllCreaturesEffectHandler.resolve(gameData, entry,
-                new BoostAllCreaturesEffect(boost.powerBoost(), boost.toughnessBoost(),
+        boostEffectHandler.resolve(gameData, entry,
+                BoostEffect.allCreatures(boost.powerBoost(), boost.toughnessBoost(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(chosenSubtype))));
     }
 }

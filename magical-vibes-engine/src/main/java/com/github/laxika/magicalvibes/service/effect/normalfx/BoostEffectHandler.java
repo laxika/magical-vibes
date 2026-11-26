@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  *       the amounts read with it as their source.</li>
  *   <li>{@link BoostEffect.AmountsRead#SOURCE}: the amounts read from the effect's source, live or as it last existed;
  *       a target subject boosts each of the effect's targets still there (CR 608.2b), any other subject the creatures
- *       it names, found once (CR 611.2c).</li>
+ *       it names, found once (CR 611.2c); a mass boost ({@link BoostEffect#isMassBoost()}) logs one summary line.</li>
  * </ul>
  */
 @Slf4j
@@ -76,11 +76,20 @@ public class BoostEffectHandler implements NormalEffectHandlerBean {
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
 
         if (!(boost.subject() instanceof PermanentSubject.Target)) {
-            // The target and the creatures named with it, found once as the effect resolves (CR 611.2c).
+            // The target and the creatures named with it, or a set, found once as the effect resolves (CR 611.2c).
+            int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, boost.subject())) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
-                    applyBoost(gameData, entry, permanent, boost, powerBoost, toughnessBoost);
+                    applyBoost(gameData, entry, permanent, boost, powerBoost, toughnessBoost, !boost.isMassBoost());
+                    count++;
                 }
+            }
+            if (boost.isMassBoost()) {
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(entry.getCard())
+                        .text(String.format(" gives %+d/%+d to %d creature(s) %s.", powerBoost, toughnessBoost, count,
+                                durationText(boost.duration())))
+                        .build());
             }
             return;
         }
@@ -111,6 +120,11 @@ public class BoostEffectHandler implements NormalEffectHandlerBean {
 
     private void applyBoost(GameData gameData, StackEntry entry, Permanent boosted, BoostEffect boost,
                             int powerBoost, int toughnessBoost) {
+        applyBoost(gameData, entry, boosted, boost, powerBoost, toughnessBoost, true);
+    }
+
+    private void applyBoost(GameData gameData, StackEntry entry, Permanent boosted, BoostEffect boost,
+                            int powerBoost, int toughnessBoost, boolean logged) {
         gameData.addPowerToughnessBoost(FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                 entry.getControllerId(), boosted.getId(), powerBoost, toughnessBoost, boost.duration());
         if (!boost.keywords().isEmpty()) {
@@ -121,10 +135,12 @@ public class BoostEffectHandler implements NormalEffectHandlerBean {
             refreshWaitingAbilitiesOf(gameData, boosted);
         }
 
-        gameLogService.append(gameData, GameLog.builder()
-                .card(boosted.getCard())
-                .text(logText(boost, powerBoost, toughnessBoost))
-                .build());
+        if (logged) {
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(boosted.getCard())
+                    .text(logText(boost, powerBoost, toughnessBoost))
+                    .build());
+        }
         log.info("Game {} - {} gets {}/{}", gameData.id, boosted.getCard().getName(), powerBoost, toughnessBoost);
     }
 

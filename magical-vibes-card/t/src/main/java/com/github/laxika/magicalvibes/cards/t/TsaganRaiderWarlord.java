@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +33,7 @@ public class TsaganRaiderWarlord extends Card {
             ));
 
     public TsaganRaiderWarlord() {
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(
+        addTrigger(Triggers.attacks(), BoostEffect.creaturesYouControl(
                 new PermanentCount(CREATURE_WITH_FIRST_OR_DOUBLE_STRIKE, CountScope.CONTROLLER),
                 new Fixed(0)));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),

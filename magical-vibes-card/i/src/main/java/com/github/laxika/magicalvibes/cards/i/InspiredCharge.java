@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "19")
@@ -15,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class InspiredCharge extends Card {
 
     public InspiredCharge() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 1));
     }
 }

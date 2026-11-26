@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -40,7 +40,7 @@ public class ZarielArchdukeOfAvernus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 0),
+                        BoostEffect.creaturesYouControl(1, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())),
                 "+1: Creatures you control get +1/+0 and gain haste until end of turn."));
 

@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files). Next: Boost B2 (the two mass records), the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files). Next: the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,912 / 2,292 (after step 10 run Boost B1) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,910 / 2,290 (after step 10 run Boost B2) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -468,7 +468,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
 - `BoostEffect` (run Boost B1): "[permanent] gets +X/+Y [and gains K] [for a duration]", a layer-7c floating effect per permanent
   (CR 613.4c, 611.2a). Factories `self`, `of(subject, …[, keywords])` (amounts read the boosted permanent, `AmountsRead.BOOSTED`),
   `target`, `targetInGroup`, `withCastTimeXValue`, `targetPermanent` (creature or Vehicle, harmful spec), `each(subject, …)` (only creatures,
-  the set found once, CR 611.2c) (amounts read the source, `AmountsRead.SOURCE`, CR 608.2h). The static self bonus is `self` in the
+  the set found once, CR 611.2c) (amounts read the source, `AmountsRead.SOURCE`, CR 608.2h). B2's mass forms `creaturesYouControl`,
+  `allCreatures`, `creaturesTargetPlayerControls` (`[, filter]`, a `controlledBy` subject; `isMassBoost()`: one summary log line, left out of
+  the AI's pump timing, the trigger label and text changes) and `each(triggeringAttackers(), …)`. The static self bonus is `self` in the
   `STATIC` slot. `CreatureBoostEffect.targetedBoost(effect)` is the AI's targeted shape (a `BoostEffect` only with a target subject).
 - `UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid)` (runs U1 to U3b'): "[X] unless [P]
   pays [cost]" (CR 118.12a) and "[P] may pay. If they do" (`ifNotPaid` null). Counter factories `counterUnlessPays(int | String |
@@ -917,12 +919,11 @@ there and updates them when it lands.
   `Return*ToHandCost`, `PutCounterOn*Cost`.
 - **Static restrictions**: `CantAttackUnlessEffect` (66), `CantBlockUnlessEffect` (28), `CantAttackOrBlockUnlessEffect` (25) and the three
   `…CantAttack…UnlessPredicateEffect` records; can't-activate, unblockable, goad and must-block pairs.
-- **Boost**: B1 done (`BoostEffect`). **B2**: `BoostAllOwnCreaturesEffect` (419 files) and `BoostAllCreaturesEffect` (195) as
-  `controlledBy` subjects (`creaturesYouControl`, `allCreatures`, `creaturesTargetPlayerControls`, `narrowed`; `except(…,
-  targetDeclaredElsewhere())` for Exhilarating Elocution, `triggeringAttackers()` for the declared-attacker calls), amounts read once from the
-  source before any boost lands, the summary log line kept, `BoostEffect`'s SOURCE guard widened to them; readers `readsExcessDamage` and
-  `DestroyTargetPermanentThenEffectHandler`, battle cry. Out (more than the subject): the `StaticBoostEffect` family, the while-tapped record,
-  the chosen-type / Hand of Vecna records, the per-creature and other-target amounts, the composites (they hold a `BoostEffect`).
+- **Boost**: B1 and B2 done (`BoostEffect`; the mass records are `controlledBy` subjects). Stay out (more than the subject): the
+  `StaticBoostEffect` family (per-creature amounts, a layered set, CR 611.3a), the while-tapped record, the chosen-type / Hand of Vecna
+  records (a choice at resolution), the per-creature and other-target amounts (`BoostOpponentCreaturesByPoisonCountersEffect`,
+  `BoostOwnCreaturesAttackingPlayersByDefendingPlayerCreatureCountEffect`: a follow-on fold once `BOOSTED` reads over a set), the
+  composites (they hold a `BoostEffect`), `BoostControllerDamageThisTurnEffect` (not a boost).
 - **Counters**: left the remove-all records (`RemoveAllCountersEffect`, `RemoveAllCountersFromTargetPermanentEffect`, the matching /
   of-type / fusion forms) for a "remove all" run, and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
   `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a batched
@@ -1142,6 +1143,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U7b (2026-11-26): the five mana `XOrY…Cost` records (16 card files) onto `AnyOfCost` with a `PayManaCost` alternative paid in the total cost (CR 601.2f); free Eaten Alive and Bogslither's Embrace offered their alternatives, Eaten Alive cast from exile sacrifices (CR 601.2b)
 - Step 10, run U7c (2026-11-26): `ForageOrPayManaCost` replaced by `ForageCost` (CR 701.61a); Feed the Cycle an `AnyOfCost`, castable free for {B}
 - Step 10, run Boost B1 (2026-11-26): `BoostTargetCreatureEffect` renamed `BoostEffect` with factories, `BoostSelfEffect` and `BoostTargetPermanentEffect` absorbed (2,542 card files by script); `AmountsRead`, `CreatureBoostEffect.targetedBoost`
+- Step 10, run Boost B2 (2026-11-26): `BoostAllOwnCreaturesEffect` and `BoostAllCreaturesEffect` absorbed into `BoostEffect.creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls` (609 card files by script); the resolver binds a rider's target card
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2282,6 +2284,47 @@ target says "target creature".
 (plan section 3: `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls` factories, Exhilarating Elocution's `except`, the
 declared attackers, Strategic Intervention), widening the SOURCE guard, the summary log line for a set, `readsExcessDamage`, the destroy-then
 handler and battle cry; the AI's `targetedBoost` already leaves non-targeting sets out.
+
+### Step 10, run Boost B2 (2026-11-26)
+
+"[set of creatures] get +X/+Y", orchestrator's decisions under Standing knowledge (Q4 summary log, Q7 / Q8 parity). `BoostAllOwnCreaturesEffect`
+and `BoostAllCreaturesEffect` (records and handlers) are gone: `BoostEffect.creaturesYouControl`, `allCreatures`,
+`creaturesTargetPlayerControls` (`[, filter]`, a `narrowed` `controlledBy` subject, amounts read once from the source, the set found once,
+CR 611.2c, 608.2h). Ledger: 2 absorbed. Ratchet 2,912 / 2,292 -> 2,910 / 2,290. No `CONVERSION_VERSION` bump.
+**Premise.** The handlers differed from `BoostEffectHandler` in the filter context (AO: no defending player; AC: no triggering permanent,
+`targetCardIds[0]` as the target card), the log (one summary line), AO's all-battlefield search for declared attackers and a triggering filter,
+and AC's early return without a target player. `BoostEffect.isMassBoost()` (`ControlledBy` or `TriggeringAttackers`) gives the summary line and
+keeps the B1 readers' meaning: the AI's pump timing (else a mass pump ability looked like a targeted pump with no target and was never
+activated), the trigger-order label, text changes (Q8). `targetSpec` declares the player of `creaturesTargetPlayerControls` (benign, as AC).
+**Card rewrite.** 609 card files, 642 calls (scratch script: balanced parentheses, 6 shapes, loud failure on any other or a chained call,
+leftover check, imports in place; deleted): `creaturesYouControl` 432, `allCreatures` 189, `creaturesTargetPlayerControls` 15; by hand 6:
+Exhilarating Elocution (`excludeTargets` = filter `Not(PermanentIsTargetCardPredicate)`, keeps the summary line), Champions from Beyond, Lulu,
+Sabotage Strategist (`each(triggeringAttackers(), …)`), Strategic Intervention (`of(triggering(), 1, 1)`), Public Execution. Engine: battle cry,
+`BoostAllCreaturesExceptChosenTypeEffectHandler`, `readsExcessDamage` (you-controlled sets and the attackers, as AO), the destroy-then handler.
+Oracle text checked for all 609: 597 with the MCP `get_card` implementation (570 automatically, 27 by hand: "those creatures get",
+"additional", kicker, the specialize faces' own text), 11 back faces and constructed cards through their front card, Plane-Merge Elf (MB1, in
+no feed) against its code text. None differed.
+**Behaviour changes** (none in play):
+- `SubjectResolutionService.bindTarget`: with no permanent target, `PermanentIsTargetCardPredicate` names the permanents of the entry's
+  target cards (the rider of Public Execution targets the player). Without it the regenerated target got -2/-0: `PublicExecutionTest`
+  "A regenerating target is excluded" and the new `SubjectResolutionServiceTest` case both failed with the binding switched off.
+- Log: Strategic Intervention logs "gets +1/+1 until end of turn" for its creature (was the summary line); a mass boost's floating effect is
+  labelled through `FaceDownVisibility.sourceName` (B1's rule) and +0/+0 adds nothing.
+- Set filters read the resolver's filter context (defending player, X, triggering permanent for every set); no test changed meaning.
+**Pins** (passed on the old code and after): `InfestTest` "dies together" (CR 704.5f); `SpellEvaluatorTest` mass pump and mass debuff scores;
+`HardAiAbilityAndInteractionTest` "activates a mass pump ability while its creature attacks" (Akroan Phalanx; not run against the code
+without the timing guard). Existing: Inspired Charge and Gruesome Realization (CR 611.2c), Earthshaker Giant and Kodama ("other"), Baru and Elvish Warmaster
+(colour, type), Shields of Velis Vel, Gnashing of Teeth, Public Execution, Overwhelming Stampede, Cultivator of Blades, Sorin, Mouth of the
+Storm, Signal Pest (battle cry), Exhilarating Elocution, Champions from Beyond, Lulu, Sabotage Strategist, Strategic Intervention.
+**Tests changed.** None changed; 4 pins and 1 resolver test added.
+**Tests run** (one Gradle run, XML of this run): 6,568 classes (every `BoostEffect` card's class, the classes naming one, the
+`Boost|Pump|Layer|Polarity|TextChange|BattleCry|Anthem|Wrath|Sweep|Ratchet` classes, the whole AI module, the readers' application and engine
+tests), 61,859 tests, 0 failures; then the resolver, Public Execution and ratchet classes again. Compiled every module's main and test sources.
+**Seen, not changed** (defect queue, "step 10 run Boost B2"): "attacking creatures get" written over your creatures (Iroh, Kangee's
+Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain), as battle cry (Q7).
+
+**For the next run.** The Boost family is done but for what stays out (Step-10 hand-offs); next the rest of the "unless" family or another
+verb there. A follow-on fold can take `BoostOpponentCreaturesByPoisonCountersEffect` and its sibling once `BOOSTED` reads over a set.
 
 ## Prompt
 

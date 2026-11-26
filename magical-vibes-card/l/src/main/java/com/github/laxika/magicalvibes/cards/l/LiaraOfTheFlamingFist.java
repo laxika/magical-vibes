@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -26,7 +26,7 @@ public class LiaraOfTheFlamingFist extends Card {
 
     public LiaraOfTheFlamingFist() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                new BoostAllOwnCreaturesEffect(1, 1,
+                BoostEffect.creaturesYouControl(1, 1,
                         new PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate()));
 
         PermanentAllOfPredicate anotherNontokenCreature = new PermanentAllOfPredicate(List.of(

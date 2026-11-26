@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
@@ -16,7 +16,7 @@ public class HenrikaInfernalSeer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}{B}",
-                List.of(new BoostAllOwnCreaturesEffect(1, 0, new PermanentAnyOfPredicate(List.of(
+                List.of(BoostEffect.creaturesYouControl(1, 0, new PermanentAnyOfPredicate(List.of(
                         new PermanentHasKeywordPredicate(Keyword.FLYING),
                         new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
                         new PermanentHasKeywordPredicate(Keyword.LIFELINK))))),

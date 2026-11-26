@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -35,7 +35,7 @@ public class OrcGeneral extends Card {
                                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ORC, CardSubtype.GOBLIN)),
                                 "another Orc or Goblin"
                         ),
-                        new BoostAllCreaturesEffect(1, 1, otherOrc)
+                        BoostEffect.allCreatures(1, 1, otherOrc)
                 ),
                 "{T}, Sacrifice another Orc or Goblin: Other Orc creatures get +1/+1 until end of turn."
         ));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -46,8 +46,8 @@ public class SummonEsperRamuh extends Card {
         setSagaChapterTargetRequired(1);
 
         addTrigger(Triggers.chapter(2),
-                new BoostAllOwnCreaturesEffect(1, 0, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
+                BoostEffect.creaturesYouControl(1, 0, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
         addTrigger(Triggers.chapter(3),
-                new BoostAllOwnCreaturesEffect(1, 0, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
+                BoostEffect.creaturesYouControl(1, 0, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
     }
 }

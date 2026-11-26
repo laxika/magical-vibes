@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "TDC", collectorNumber = "29")
@@ -21,7 +21,7 @@ public class TipTheScales extends Card {
         addSpellEffect(SequenceEffect.of(
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
                 new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
-                        new BoostAllCreaturesEffect(
+                        BoostEffect.allCreatures(
                         new Scaled(AmountThisWay.sacrificedToughness(), -1),
                         new Scaled(AmountThisWay.sacrificedToughness(), -1))))));
     }

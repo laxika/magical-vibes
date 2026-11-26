@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -26,7 +26,7 @@ public class RegalSliver extends Card {
                 new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
                         new ConditionalEffect(new ControllerIsMonarch(),
-                                new BoostAllOwnCreaturesEffect(1, 1, sliver)),
+                                BoostEffect.creaturesYouControl(1, 1, sliver)),
                         new ConditionalEffect(new NotCondition(new ControllerIsMonarch()),
                                 new BecomeMonarchEffect()))),
                 Subjects.creaturesYouControl(),

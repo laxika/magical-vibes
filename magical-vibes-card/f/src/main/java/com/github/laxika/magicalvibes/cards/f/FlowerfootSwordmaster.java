@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,7 +23,7 @@ public class FlowerfootSwordmaster extends Card {
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1));
         addTrigger(Triggers.becomesTargetOfYourSpellOrAbility(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new BoostAllOwnCreaturesEffect(1, 0,
+                BoostEffect.creaturesYouControl(1, 0,
                         new PermanentHasSubtypePredicate(CardSubtype.MOUSE)));
     }
 }

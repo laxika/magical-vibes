@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -26,7 +26,7 @@ public class SalvationColossus extends Card {
     public SalvationColossus() {
         var otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.youAttack(),
-                new BoostAllOwnCreaturesEffect(2, 2, otherCreature),
+                BoostEffect.creaturesYouControl(2, 2, otherCreature),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl(), otherCreature));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

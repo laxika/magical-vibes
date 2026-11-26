@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesCreatureTypeWithSource;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -45,6 +45,6 @@ public class PlaneMergeElf extends Card {
         // with Plane-Merge Elf, creatures you control get +1/+1 until end of turn.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentSharesCreatureTypeWithSource()),
-                new BoostAllOwnCreaturesEffect(1, 1));
+                BoostEffect.creaturesYouControl(1, 1));
     }
 }

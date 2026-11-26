@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -23,7 +23,7 @@ public class MishrasOnslaught extends Card {
                                 List.of(CardSubtype.SOLDIER), Set.of(), Set.of(CardType.ARTIFACT))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +2/+0 until end of turn",
-                        new BoostAllOwnCreaturesEffect(2, 0))
+                        BoostEffect.creaturesYouControl(2, 0))
         )));
     }
 }

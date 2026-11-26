@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,7 +34,7 @@ public class KamahlFistOfKrosa extends Card {
                 false,
                 "{2}{G}{G}{G}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(3, 3),
+                        BoostEffect.creaturesYouControl(3, 3),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "{2}{G}{G}{G}: Creatures you control get +3/+3 and gain trample until end of turn."

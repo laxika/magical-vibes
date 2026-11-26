@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -31,7 +31,7 @@ public class FindFinality extends Card {
                         new PutCountersEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate()),
                         "Put two +1/+1 counters on a creature you control?"),
-                new BoostAllCreaturesEffect(-4, -4));
+                BoostEffect.allCreatures(-4, -4));
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

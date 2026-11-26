@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTurnedFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,6 +19,6 @@ public class KarlovWatchdog extends Card {
                 new CantBeTurnedFaceUpEffect(Subjects.controlledBy(Subjects.eachOpponent()))));
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
-                new BoostAllOwnCreaturesEffect(1, 1));
+                BoostEffect.creaturesYouControl(1, 1));
     }
 }

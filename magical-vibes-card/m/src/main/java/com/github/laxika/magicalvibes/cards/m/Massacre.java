@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -22,6 +22,6 @@ public class Massacre extends Card {
                         new OpponentControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)))),
                 false));
-        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(BoostEffect.allCreatures(-2, -2));
     }
 }

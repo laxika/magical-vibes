@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -27,7 +27,7 @@ public class YouMeetInATavern extends Card {
                                 LibrarySearchDestination.HAND, true)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Start a Brawl — Creatures you control get +2/+2 until end of turn",
-                        new BoostAllOwnCreaturesEffect(2, 2))
+                        BoostEffect.creaturesYouControl(2, 2))
         )));
     }
 }

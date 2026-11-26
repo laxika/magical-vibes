@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class BecomeTheAvalanche extends Card {
 
         addSpellEffect(new DrawCardEffect(new PermanentCount(
                 qualifyingCreature, CountScope.CONTROLLER)));
-        addSpellEffect(new BoostAllOwnCreaturesEffect(
+        addSpellEffect(BoostEffect.creaturesYouControl(
                 new CardsInHand(CountScope.CONTROLLER),
                 new CardsInHand(CountScope.CONTROLLER)));
     }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -34,7 +34,7 @@ public class GloriousSunrise extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +1/+1 and gain trample until end of turn.",
                         List.of(
-                                new BoostAllOwnCreaturesEffect(1, 1),
+                                BoostEffect.creaturesYouControl(1, 1),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target land gains \"{T}: Add {G}{G}{G}\" until end of turn.",

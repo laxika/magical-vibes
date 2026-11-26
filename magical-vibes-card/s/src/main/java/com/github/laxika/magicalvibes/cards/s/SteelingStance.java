@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -15,7 +14,7 @@ import java.util.List;
 public class SteelingStance extends Card {
 
     public SteelingStance() {
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 1));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

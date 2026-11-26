@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class HamperingSnare extends Card {
 
     public HamperingSnare() {
-        addSpellEffect(new BoostAllCreaturesEffect(-2, 0,
+        addSpellEffect(BoostEffect.allCreatures(-2, 0,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addCycling("{2}");
     }

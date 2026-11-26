@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class DreyKeeper extends Card {
                 false,
                 "{3}{B}",
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 0, squirrels),
+                        BoostEffect.creaturesYouControl(1, 0, squirrels),
                         new GrantKeywordEffect(Set.of(Keyword.MENACE), Subjects.creaturesYouControl(), squirrels)
                 ),
                 "{3}{B}: Squirrels you control get +1/+0 and gain menace until end of turn."

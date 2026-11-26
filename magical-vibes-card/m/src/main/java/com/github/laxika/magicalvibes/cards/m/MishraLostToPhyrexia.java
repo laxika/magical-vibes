@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -79,7 +79,7 @@ public class MishraLostToPhyrexia extends Card {
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you don't control get -1/-1 until end of turn",
-                        new BoostAllCreaturesEffect(-1, -1,
+                        BoostEffect.allCreatures(-1, -1,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create two tapped Powerstone tokens", CreateTokenEffect.ofPowerstoneToken(new Fixed(2))

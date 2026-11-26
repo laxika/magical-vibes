@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +39,7 @@ public class JyotiMoagAncient extends Card {
         ));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                new BoostAllOwnCreaturesEffect(
+                BoostEffect.creaturesYouControl(
                         new SourcePower(),
                         new SourcePower(),
                         new PermanentAllOfPredicate(List.of(

@@ -971,6 +971,10 @@ entwine with two modes (P09).
 - `BoostEffectHandler`'s refresh of the boosted permanent's waiting abilities' snapshots changes nothing observable: a departing
   permanent refreshes every waiting entry's snapshot itself (`PermanentRemovalService`), and a live source is read live. Cleanup
   candidate, not a defect (step 10 run Boost B1's Q3 test passed on the old code). Sure.
+- "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh,
+  Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's
+  attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it. Same in two-player games. Step 10
+  run Boost B2 (seen, not changed: parity); sure of the wording.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,7 +12,7 @@ public class ViolentOutburst extends Card {
 
     public ViolentOutburst() {
         // Creatures you control get +1/+0 until end of turn.
-        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 0));
+        addSpellEffect(BoostEffect.creaturesYouControl(1, 0));
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser mana
         // value, may cast it for free, rest to the bottom in a random order (CascadeEffectHandler).

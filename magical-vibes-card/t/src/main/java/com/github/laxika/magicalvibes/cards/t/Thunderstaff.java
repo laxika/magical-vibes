@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
@@ -22,7 +22,7 @@ public class Thunderstaff extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new BoostAllCreaturesEffect(1, 0, new PermanentIsAttackingPredicate())),
+                List.of(BoostEffect.allCreatures(1, 0, new PermanentIsAttackingPredicate())),
                 "{2}, {T}: Attacking creatures get +1/+0 until end of turn."
         ));
     }

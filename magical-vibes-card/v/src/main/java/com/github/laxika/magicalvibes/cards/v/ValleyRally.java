@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -26,7 +26,7 @@ public class ValleyRally extends Card {
         addStaticEffect(new GiftEffect(0));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(foodToken())));
-        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(BoostEffect.creaturesYouControl(2, 0));
 
         targetWhenGiftPromised(TargetFilters.creatureYouControl(), 0, 1, 1)
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),

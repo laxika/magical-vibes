@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -58,7 +58,7 @@ public class TourachsGate extends Card {
                 null,
                 List.of(
                         new TapEnchantedPermanentCost(),
-                        new BoostAllOwnCreaturesEffect(2, -1, new PermanentIsAttackingPredicate())
+                        BoostEffect.creaturesYouControl(2, -1, new PermanentIsAttackingPredicate())
                 ),
                 "Tap enchanted land: Attacking creatures you control get +2/-1 until end of turn. "
                         + "Activate only if enchanted land is untapped."

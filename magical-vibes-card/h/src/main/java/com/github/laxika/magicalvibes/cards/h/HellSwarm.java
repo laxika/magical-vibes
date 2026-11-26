@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "103")
 public class HellSwarm extends Card {
 
     public HellSwarm() {
         // All creatures get -1/-0 until end of turn.
-        addSpellEffect(new BoostAllCreaturesEffect(-1, 0));
+        addSpellEffect(BoostEffect.allCreatures(-1, 0));
     }
 }

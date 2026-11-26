@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
@@ -25,7 +25,7 @@ public class SerraTheBenevolent extends Card {
         // +2: Creatures you control with flying get +1/+1 until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new BoostAllOwnCreaturesEffect(1, 1,
+                List.of(BoostEffect.creaturesYouControl(1, 1,
                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 "+2: Creatures you control with flying get +1/+1 until end of turn."
         ));

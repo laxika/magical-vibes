@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +23,7 @@ public class RegalLeosaur extends Card {
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
                 "Mutate requires a non-Human creature with the spell's owner")));
-        addTrigger(Triggers.mutates(), new BoostAllOwnCreaturesEffect(
+        addTrigger(Triggers.mutates(), BoostEffect.creaturesYouControl(
                 2, 1, new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
     }
 }

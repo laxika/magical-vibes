@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -28,7 +28,7 @@ public class SarkhanVol extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new BoostAllOwnCreaturesEffect(1, 1),
+                        BoostEffect.creaturesYouControl(1, 1),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())
                 ),
                 "+1: Creatures you control get +1/+1 and gain haste until end of turn."

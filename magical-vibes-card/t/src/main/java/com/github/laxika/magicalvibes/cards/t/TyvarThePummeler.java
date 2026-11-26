@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -30,7 +30,7 @@ public class TyvarThePummeler extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}{G}",
-                List.of(new BoostAllOwnCreaturesEffect(
+                List.of(BoostEffect.creaturesYouControl(
                         new GreatestPowerAmongControlled(), new GreatestPowerAmongControlled())),
                 "{3}{G}{G}: Creatures you control get +X/+X until end of turn, where X is the greatest power among creatures you control."));
     }

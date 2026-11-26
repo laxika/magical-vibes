@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +33,7 @@ public class ReturnOfTheWildspeaker extends Card {
                         new DrawCardEffect(new GreatestPowerAmongControlled(nonHuman))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Non-Human creatures you control get +3/+3 until end of turn",
-                        new BoostAllOwnCreaturesEffect(3, 3, nonHuman))
+                        BoostEffect.creaturesYouControl(3, 3, nonHuman))
         )));
     }
 }

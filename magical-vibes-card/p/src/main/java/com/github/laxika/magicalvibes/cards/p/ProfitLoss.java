@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -28,8 +27,8 @@ import java.util.List;
 public class ProfitLoss extends Card {
 
     public ProfitLoss() {
-        CardEffect profit = new BoostAllOwnCreaturesEffect(1, 1);
-        CardEffect loss = new BoostAllCreaturesEffect(-1, -1,
+        CardEffect profit = BoostEffect.creaturesYouControl(1, 1);
+        CardEffect loss = BoostEffect.allCreatures(-1, -1,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()));
 
         addSpellEffect(new ChooseOneEffect(List.of(

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,7 +39,7 @@ public class HaldirLRienLieutenant extends Card {
                 "{5}{G}",
                 List.of(
                         new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl(), otherElf),
-                        new BoostAllOwnCreaturesEffect(plusOneCounters, plusOneCounters, otherElf)
+                        BoostEffect.creaturesYouControl(plusOneCounters, plusOneCounters, otherElf)
                 ),
                 "{5}{G}: Until end of turn, other Elves you control gain vigilance and get +1/+1 for each "
                         + "+1/+1 counter on Haldir."
