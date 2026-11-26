@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.model.amount;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StepKind;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * "That many", "that much", "equal to the number of cards [drawn | milled | discarded] this way", "equal to the damage
@@ -73,9 +75,12 @@ import java.util.Objects;
  * @param cardFilter         "for each land card exiled this way" ({@link #exiledCards}): only the exiled cards that
  *                           match it count, each judged as the card is now (as {@code HappenedThisWay.toACard} judges
  *                           them); {@code null} for all of them
+ * @param manaColors         "for each {B} or {R} spent this way" ({@link #manaPaid(ManaColor...)}): only the mana of
+ *                           these types a payment step paid counts; empty for all of it
  */
 public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours,
-                            boolean includesUnremoved, boolean negativeKept, CardPredicate cardFilter)
+                            boolean includesUnremoved, boolean negativeKept, CardPredicate cardFilter,
+                            Set<ManaColor> manaColors)
         implements DynamicAmount {
 
     /** What {@link AmountThisWay} reads from the step. */
@@ -99,6 +104,10 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     public AmountThisWay {
         Objects.requireNonNull(kind, "kind");
         Objects.requireNonNull(stat, "stat");
+        manaColors = manaColors == null ? Set.of() : Set.copyOf(manaColors);
+        if (!manaColors.isEmpty() && (kind != StepKind.PAY_MANA || stat != Stat.AMOUNT || yours)) {
+            throw new IllegalArgumentException("Only a mana payment step's amount is read by mana type: " + kind);
+        }
         boolean removal = kind == StepKind.SACRIFICE || kind == StepKind.DESTROY;
         if ((stat == Stat.POWER || stat == Stat.TOUGHNESS || stat == Stat.MANA_VALUE)
                 && !removal && kind != StepKind.EXILE && kind != StepKind.RETURN && kind != StepKind.REVEAL
@@ -136,6 +145,12 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         if (negativeKept && stat != Stat.POWER && stat != Stat.TOUGHNESS) {
             throw new IllegalArgumentException("Only a power or toughness can be negative: " + stat);
         }
+    }
+
+    /** The amount over every mana type. */
+    public AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours,
+                         boolean includesUnremoved, boolean negativeKept, CardPredicate cardFilter) {
+        this(kind, stat, filter, yours, includesUnremoved, negativeKept, cardFilter, Set.of());
     }
 
     /** The amount over every card or removed permanent the other components count. */
@@ -286,6 +301,17 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     /** "The total amount of mana paid this way" after a payment step. */
     public static AmountThisWay manaPaid() {
         return new AmountThisWay(StepKind.PAY_MANA);
+    }
+
+    /**
+     * "For each {B} or {R} spent this way" after a mana payment step: the mana of those types it paid (Balduvian
+     * Fallen's cumulative upkeep).
+     */
+    public static AmountThisWay manaPaid(ManaColor... colors) {
+        if (colors.length == 0) {
+            throw new IllegalArgumentException("Name the mana types counted, or use manaPaid()");
+        }
+        return new AmountThisWay(StepKind.PAY_MANA, Stat.AMOUNT, null, false, false, false, null, Set.of(colors));
     }
 
     /** "That many", "the amount of {E} paid this way" after an energy payment step. */

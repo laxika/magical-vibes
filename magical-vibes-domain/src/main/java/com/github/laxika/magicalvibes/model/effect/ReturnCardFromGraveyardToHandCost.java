@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * "Return a [predicate] card from your graveyard to your hand" as the payable side of a
- * {@link ForcedCostOrElseEffect} ("sacrifice this creature unless you return a basic land card
+ * {@link UnlessPaysEffect} ("sacrifice this creature unless you return a basic land card
  * from your graveyard to your hand" — Harvest Wurm).
  *
  * <p>No matching card in the graveyard makes the cost unpayable, so the fallback effects resolve

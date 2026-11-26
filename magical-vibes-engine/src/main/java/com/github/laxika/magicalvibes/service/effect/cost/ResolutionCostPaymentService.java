@@ -4,7 +4,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinsCost;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipCostSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryExileSupport;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
@@ -18,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardTopExileS
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -167,6 +179,16 @@ import org.springframework.stereotype.Component;
  *   <li>{@link SacrificeCreaturesWithTotalPowerCost}: any number of the payer's creatures they could sacrifice, whose
  *   total power reaches the amount, chosen together and sacrificed together with their death replacements asked
  *   first (CR 616.1).</li>
+ *   <li>The cumulative upkeep costs (CR 702.24a: each choice made once for each age counter, all or none paid):
+ *   {@link FlipCoinsCost} (the coin-flip action, its win and loss events, inside the Krark's Thumb window of the
+ *   answer); {@link OpponentCreatesTokensCost} (the opponent creates the tokens through the token action);
+ *   {@link PutCounterOnOpponentCreatureCost} (one creature an opponent controls chosen for each counter, the same one
+ *   again allowed, through the counter action); {@link DrawCardsCost} (the draw action, payable unless the payer
+ *   can't draw; a replaced draw still pays it, Psychic Vortex's ruling); {@link ExileTopCardOfLibraryCost} (while
+ *   the library has that many cards); {@link PutCardsFromSingleGraveyardOnBottomOfLibraryCost} (each payment's cards
+ *   chosen from one graveyard, Jötun Grunt's ruling); {@link OpponentGainsLifeCost} (the life-gain action, payable
+ *   while the opponent can gain life); {@link GainControlOfPermanentsCost} (a different matching permanent the payer
+ *   doesn't control for each counter, Herald of Leshrac's ruling, chosen one at a time).</li>
  * </ul>
  * A sacrifice is offered only the permanents the payer could sacrifice for that effect (CR 608.2d, 701.21a): none while
  * an effect of an opponent can't make them sacrifice (Sigarda, Host of Herons: "you can't take that option"), never one
@@ -296,6 +318,15 @@ public class ResolutionCostPaymentService {
     @Autowired
     @Lazy
     private GraveyardTopExileSupport graveyardTopExileSupport;
+    @Autowired
+    @Lazy
+    private CoinFlipCostSupport coinFlipCostSupport;
+    @Autowired
+    @Lazy
+    private CoinFlipService coinFlipService;
+    @Autowired
+    @Lazy
+    private LibraryExileSupport libraryExileSupport;
 
     public ResolutionCostPaymentService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
@@ -363,6 +394,21 @@ public class ResolutionCostPaymentService {
             case LandDropCost ignored -> hasLandDropLeft(gameData, payerId);
             case SacrificeCreaturesWithTotalPowerCost power ->
                     reachablePower(gameData, powerCandidates(gameData, payerId, entry)) >= power.totalPower();
+            case FlipCoinsCost ignored -> true;
+            case OpponentCreatesTokensCost ignored -> gameQueryService.getOpponentId(gameData, payerId) != null;
+            case PutCounterOnOpponentCreatureCost counters ->
+                    !opponentCreaturesForCounter(gameData, payerId, counters.counterType()).isEmpty();
+            case DrawCardsCost ignored -> !drawService.isDrawPrevented(gameData, payerId);
+            case ExileTopCardOfLibraryCost exile -> libraryExileSupport.hasAtLeast(gameData, payerId, exile.count());
+            case PutCardsFromSingleGraveyardOnBottomOfLibraryCost bottom -> singleGraveyardPayments(gameData, bottom)
+                    >= bottom.payments();
+            case OpponentGainsLifeCost ignored -> {
+                UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
+                yield opponentId != null && gameQueryService.canPlayerGainLife(gameData, opponentId);
+            }
+            case GainControlOfPermanentsCost control ->
+                    destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId, control.filter()).size()
+                            >= control.count();
             case AnyOfCost anyOf -> anyOf.alternatives().stream()
                     .anyMatch(alternative -> canPay(gameData, payerId, alternative, sourceCard, entry));
             case AllOfCost allOf -> allOf.parts().stream()
@@ -833,6 +879,85 @@ public class ResolutionCostPaymentService {
                         "Choose creatures with total power " + power.totalPower() + " or greater to sacrifice.");
                 yield Outcome.ASKING;
             }
+            case FlipCoinsCost flip -> flipCoins(gameData, payer, flip, payment);
+            case OpponentCreatesTokensCost tokens -> {
+                UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
+                if (opponentId == null) {
+                    yield Outcome.NOT_PAID;
+                }
+                for (int i = 0; i < tokens.count(); i++) {
+                    destructionSupport.createTokenForPlayer(gameData, opponentId, tokens.tokenTemplate(),
+                            payment.sourceCard().getName(), payment.sourceCard().getSetCode());
+                }
+                yield afterImmediatePayment(gameData);
+            }
+            case PutCounterOnOpponentCreatureCost counters -> {
+                List<UUID> candidates = opponentCreaturesForCounter(gameData, payerId, counters.counterType());
+                if (candidates.isEmpty()) {
+                    yield Outcome.NOT_PAID;
+                }
+                if (candidates.size() == 1) {
+                    // One creature to choose for every counter (CR 608.2d): all of them go on it.
+                    StackEntry placement = payment.entry() == null
+                            ? new StackEntry(payment.sourceCard(), payerId) : new StackEntry(payment.entry());
+                    placement.setControllerId(payerId);
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, placement,
+                            gameQueryService.findPermanentById(gameData, candidates.getFirst()),
+                            counters.counterType(), counters.count());
+                    yield afterImmediatePayment(gameData);
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, 1,
+                        new MultiPermanentChoiceContext.OpponentCreatureCounterPlacement(counters.counterType(),
+                                counters.count(), payerId),
+                        "Choose a creature to put a counter on.");
+                yield Outcome.ASKING;
+            }
+            case DrawCardsCost draw -> {
+                if (drawService.isDrawPrevented(gameData, payerId)) {
+                    yield Outcome.NOT_PAID;
+                }
+                for (int i = 0; i < draw.count(); i++) {
+                    drawService.resolveDrawCard(gameData, payerId);
+                }
+                yield afterImmediatePayment(gameData);
+            }
+            case ExileTopCardOfLibraryCost exile -> {
+                if (!libraryExileSupport.hasAtLeast(gameData, payerId, exile.count())) {
+                    yield Outcome.NOT_PAID;
+                }
+                libraryExileSupport.exileTopCards(gameData, payerId, exile.count());
+                yield afterImmediatePayment(gameData);
+            }
+            case PutCardsFromSingleGraveyardOnBottomOfLibraryCost bottom -> {
+                if (singleGraveyardPayments(gameData, bottom) < bottom.payments()) {
+                    yield Outcome.NOT_PAID;
+                }
+                gameData.graveyardTargetOperation.cumulativeUpkeepPayment =
+                        new GraveyardTargetOperationState.CumulativeUpkeepPaymentContext(payerId,
+                                bottom.cardsPerPayment(), bottom.payments(), List.of());
+                gameData.graveyardTargetOperation.singleGraveyard = true;
+                playerInputService.beginMultiGraveyardChoice(gameData, payerId, graveyardCardsExcept(gameData, List.of()),
+                        bottom.cardsPerPayment(), bottom.cardsPerPayment(), "Choose " + bottom.cardsPerPayment()
+                                + " cards from a single graveyard for the first cumulative upkeep payment.");
+                yield Outcome.ASKING;
+            }
+            case OpponentGainsLifeCost life -> {
+                UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
+                if (opponentId == null || !gameQueryService.canPlayerGainLife(gameData, opponentId)) {
+                    yield Outcome.NOT_PAID;
+                }
+                lifeSupport.applyGainLife(gameData, opponentId, life.amount(), null, payment.sourceCard(),
+                        payment.entry() == null ? null : payment.entry().getEntryType());
+                yield afterImmediatePayment(gameData);
+            }
+            case GainControlOfPermanentsCost control -> {
+                if (destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId, control.filter()).size()
+                        < control.count()) {
+                    yield Outcome.NOT_PAID;
+                }
+                yield gainControlOrAsk(gameData, payerId, control, control.count(), payment.sourceCard(),
+                        payment.sourceControllerId());
+            }
             case AllOfCost ignored -> throw new IllegalArgumentException(
                     "An all-of cost is paid one part at a time, after canPayNow: " + cost);
             default -> throw new IllegalArgumentException("No resolution-time payment for " + cost);
@@ -996,6 +1121,10 @@ public class ResolutionCostPaymentService {
             completeReturnToHand(gameData, payerId, permanentId, toHand);
             return;
         }
+        if (context.cost() instanceof GainControlOfPermanentsCost control) {
+            completeGainControlPick(gameData, payerId, permanentId, context, control);
+            return;
+        }
         if (!(context.cost() instanceof PutCounterOnControlledCreatureCost blight)) {
             throw new IllegalStateException("No permanent choice pays " + context.cost());
         }
@@ -1007,6 +1136,98 @@ public class ResolutionCostPaymentService {
                 ? gameData.pendingEffectResolutionEntry : new StackEntry(context.sourceCard(), payerId);
         permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData, entry, creature,
                 CounterType.MINUS_ONE_MINUS_ONE, blight.count(), payerId);
+    }
+
+    /**
+     * Flips the coins of a {@link FlipCoinsCost}: every coin first, then the results and their win and loss events
+     * ({@link CoinFlipCostSupport#pay}). Flipping is the first thing the answer changes, so a Krark's Thumb choice on a
+     * flip stops it ({@link Outcome#ASKING}) and the answer is completed again once the kept results are chosen.
+     */
+    private Outcome flipCoins(GameData gameData, Player payer, FlipCoinsCost flip, Payment payment) {
+        Runnable pay = () -> coinFlipCostSupport.pay(gameData, payer.getId(), payment.sourceCard(), flip.count());
+        if (payment.answering() == null) {
+            pay.run();
+            return afterImmediatePayment(gameData);
+        }
+        boolean stopped = coinFlipService.answerChoosingResultsFirst(gameData, pay,
+                new GameData.MayAnswerReplay(payer, payment.answering(), true));
+        return stopped ? Outcome.ASKING : afterImmediatePayment(gameData);
+    }
+
+    /** The creatures {@code payerId}'s opponent controls that can get a counter of {@code kind}. */
+    private List<UUID> opponentCreaturesForCounter(GameData gameData, UUID payerId, CounterType kind) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
+        if (opponentId == null) {
+            return List.of();
+        }
+        return gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
+                .filter(permanent -> kind != CounterType.MINUS_ONE_MINUS_ONE
+                        || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                .filter(permanent -> kind != CounterType.PLUS_ONE_PLUS_ONE
+                        || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+    }
+
+    /** How many payments of {@code bottom}'s size the graveyards hold, each from one graveyard. */
+    private static int singleGraveyardPayments(GameData gameData, PutCardsFromSingleGraveyardOnBottomOfLibraryCost bottom) {
+        int payments = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            payments += gameData.playerGraveyards.getOrDefault(playerId, List.of()).size() / bottom.cardsPerPayment();
+        }
+        return payments;
+    }
+
+    /** Every graveyard card but {@code chosen}, in turn order. */
+    public static List<Card> graveyardCardsExcept(GameData gameData, List<UUID> chosen) {
+        List<Card> cards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(card -> !chosen.contains(card.getId()))
+                    .forEach(cards::add);
+        }
+        return cards;
+    }
+
+    /**
+     * Gains control of the next of {@code remaining} permanents for {@code control}: all of them unasked when only that
+     * many are left to choose (CR 608.2d), else the payer picks the next one
+     * ({@link PermanentChoiceContext.ResolutionCostPayment}).
+     */
+    private Outcome gainControlOrAsk(GameData gameData, UUID payerId, GainControlOfPermanentsCost control,
+                                     int remaining, Card sourceCard, UUID sourceControllerId) {
+        List<UUID> candidates = destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId,
+                control.filter());
+        if (candidates.size() <= remaining) {
+            for (UUID id : candidates) {
+                destructionSupport.gainPermanentControl(gameData, gameQueryService.findPermanentById(gameData, id),
+                        payerId, sourceCard.getName());
+            }
+            return afterImmediatePayment(gameData);
+        }
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ResolutionCostPayment(
+                control, payerId, sourceCard, sourceControllerId, null, remaining));
+        playerInputService.beginPermanentChoice(gameData, payerId, candidates, "Choose a permanent to gain control of"
+                + (remaining > 1 ? " (" + remaining + " remaining)." : "."));
+        return Outcome.ASKING;
+    }
+
+    /** One pick of a gain-control cost: the payer gains control of it, then the next pick is asked while more are due. */
+    private void completeGainControlPick(GameData gameData, UUID payerId, UUID permanentId,
+                                         PermanentChoiceContext.ResolutionCostPayment context,
+                                         GainControlOfPermanentsCost control) {
+        if (!destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId, control.filter())
+                .contains(permanentId)) {
+            throw new IllegalStateException("You can't gain control of that permanent for this cost");
+        }
+        destructionSupport.gainPermanentControl(gameData, gameQueryService.findPermanentById(gameData, permanentId),
+                payerId, context.sourceCard().getName());
+        if (context.remaining() > 1) {
+            gainControlOrAsk(gameData, payerId, control, context.remaining() - 1, context.sourceCard(),
+                    context.sourceControllerId());
+        }
     }
 
     /** The payer returns the permanent they chose to its owner's hand (a {@link ReturnPermanentToHandCost} ransom). */
@@ -1559,17 +1780,39 @@ public class ResolutionCostPaymentService {
         Runnable payManaThenLife = () -> {
             if (toPay != null) {
                 int before = pool.getTotalAllMana();
+                Map<ManaColor, Integer> typesBefore = pool.getAllManaTotals();
                 if (toPay.hasPhyrexianMana()) {
                     toPay.payPhyrexianManaAuto(pool, 0);
                 }
                 toPay.payResolutionCost(pool);
                 ActionEvents.taxPaid(gameData, payerId, payment.sourceControllerId(), before - pool.getTotalAllMana());
+                recordManaPaid(payment.entry(), payerId, typesBefore, pool.getAllManaTotals());
             }
             if (life > 0) {
                 lifeSupport.applyLifePayment(gameData, payerId, life, payment.sourceCard().getName());
             }
         };
         return payAskingDeathReplacementsFirst(gameData, payer, life, payment, payManaThenLife);
+    }
+
+    /**
+     * Records the mana {@code payerId} just spent as the resolving entry's {@code PAY_MANA} step, in all and of each type
+     * ("for each {B} or {R} spent this way": Balduvian Fallen's cumulative upkeep), so a later step or the reflexive
+     * ability the payment makes reads it.
+     */
+    private static void recordManaPaid(StackEntry entry, UUID payerId, Map<ManaColor, Integer> before,
+                                       Map<ManaColor, Integer> after) {
+        if (entry == null) {
+            return;
+        }
+        Map<ManaColor, Integer> spent = new java.util.EnumMap<>(ManaColor.class);
+        before.forEach((color, amount) -> {
+            int paid = amount - after.getOrDefault(color, 0);
+            if (paid > 0) {
+                spent.put(color, paid);
+            }
+        });
+        entry.recordStep(StepKind.PAY_MANA, StepOutcome.ofManaPaid(payerId, spent));
     }
 
     private Outcome payLife(GameData gameData, Player payer, int life, Payment payment) {

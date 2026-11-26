@@ -45,7 +45,7 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
     }
 
     /**
-     * Starts the opponent may-steal interaction (also used as a {@code ForcedCostOrElse} fallback).
+     * Starts the opponent may-steal interaction (also used as a {@code UnlessPaysEffect} branch).
      */
     public void offer(GameData gameData, StackEntry entry, OpponentMayGainControlOfCreatureYouControlEffect effect) {
         UUID victimControllerId = entry.getControllerId();

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Gallowbraid.class, GoblinGrenadiers.class})
 class GallowbraidTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Paying cumulative upkeep costs 1 life per age counter")
@@ -60,7 +68,8 @@ class GallowbraidTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        // A payer who can't pay the life isn't asked (CR 119.4, 118.3).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Gallowbraid");
         harness.assertInGraveyard(player1, "Gallowbraid");

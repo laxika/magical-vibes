@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link OpponentGainsControlOfSourceCreatureEffect}: an opponent of the ability's
  * controller gains control of the source permanent. Also reachable as a
- * {@link com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect} fallback.
+ * {@link com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect} branch.
  */
 @Component
 @RequiredArgsConstructor

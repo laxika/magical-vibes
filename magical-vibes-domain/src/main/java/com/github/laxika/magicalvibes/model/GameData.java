@@ -973,17 +973,6 @@ public class GameData {
      */
     public final List<UUID> tariffPendingSacrificeIds = new ArrayList<>();
     /**
-     * ForcedCostOrElse ({@code anyPlayerMayPay}): players still to be offered the pay prompt after
-     * the one currently deciding (APNAP remainder). Cleared when someone pays or the queue drains.
-     */
-    public final List<UUID> forcedCostOrElseRemainingPlayers = new ArrayList<>();
-    /**
-     * ForcedCostOrElse ({@code anyPlayerMayPay}): controller of the source permanent when the
-     * APNAP pay sequence began — used for the sacrifice/penalty synthetic entry after everyone
-     * declines (the pending ability's {@code controllerId} is the deciding player, not the source).
-     */
-    public UUID forcedCostOrElseSourceControllerId;
-    /**
      * EachPlayerTakesDamageUnlessPays: players still to be offered the pay-or-take-damage prompt
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
      */
@@ -10670,8 +10659,6 @@ public class GameData {
         copy.pendingGemstoneCavernsChoice = this.pendingGemstoneCavernsChoice;
         copy.tariffRemainingPlayers.addAll(this.tariffRemainingPlayers);
         copy.tariffPendingSacrificeIds.addAll(this.tariffPendingSacrificeIds);
-        copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
-        copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.eachPlayerDamageUnlessPaysDeclined.addAll(this.eachPlayerDamageUnlessPaysDeclined);
         copy.eachPlayerDamageUnlessPaysBatched = this.eachPlayerDamageUnlessPaysBatched;
@@ -10713,8 +10700,6 @@ public class GameData {
         copy.graveyardTargetOperation.giftPromised = this.graveyardTargetOperation.giftPromised;
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
         copy.graveyardTargetOperation.cumulativeUpkeepPayment = this.graveyardTargetOperation.cumulativeUpkeepPayment;
-        copy.graveyardTargetOperation.controllerGraveyardPayment =
-                this.graveyardTargetOperation.controllerGraveyardPayment;
         copy.graveyardTargetOperation.replacementGraveyardExile =
                 this.graveyardTargetOperation.replacementGraveyardExile;
         copy.graveyardTargetOperation.resolutionCostLibraryBottom =

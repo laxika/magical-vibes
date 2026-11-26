@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PhyrexianSoulgorger.class, BorealCentaur.class, BorealShelf.class})
 class PhyrexianSoulgorgerTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Insufficient creatures cannot be sacrificed as a partial cumulative upkeep payment")
@@ -63,6 +70,8 @@ class PhyrexianSoulgorgerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        // Only that many creatures: they are the shared sacrifice pick.
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(soulgorger, centaur);
@@ -111,6 +120,8 @@ class PhyrexianSoulgorgerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        // Only that many creatures: they are the shared sacrifice pick.
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(soulgorger);

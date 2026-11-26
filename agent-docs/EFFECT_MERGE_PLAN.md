@@ -786,7 +786,7 @@ payment arm and its graveyard-cast reject arm, and `AbilityActivationService` lo
 is not the one-field addition the audit describes: the two are separate `ExtractedCosts` fields fed by
 separate `AdditionalSpellCostService` accumulation and validation paths, are paid through different
 `SpellCastingService` methods against different `CostSelection` fields (`sacrificePermanentId` vs
-`sacrificePermanentIds`), and branch to genuinely different flows in `ForcedCostOrElseEffectHandler`
+`sacrificePermanentIds`), and branch to genuinely different flows in the forced-cost handler of the time
 (`:124` vs `:134`) and `MayPenaltyChoiceHandlerService` (`:1340` vs `:1369`). `SacrificePermanentCost`
 would also grow to seven components. It needs its own step, not a stretch on this one.
 
@@ -1210,7 +1210,7 @@ the survivor rather than against it:
   `EventValue`.
 
 **Other call sites updated**
-- `DestructionSupport:560` gates its `ForcedCostOrElse` fallback on `subject == SOURCE` (Step 9's
+- `DestructionSupport:560` gates its forced-cost fallback (gone since effect-cleanup step 10 run U4d) on `subject == SOURCE` (Step 9's
   precedent), so a `TARGET` form there falls through to the existing unsupported-fallback
   `log.warn` instead of silently reading the payer as a permanent id. Rogue Skycaptain unchanged.
 - Primal Amulet's may-transform built the record at runtime in the counter-threshold handler (gone since
@@ -1229,7 +1229,7 @@ so a `TARGET` branch reading `sourcePermanentId` is caught),
 `ExemplarOfStrengthTest.attackTriggerLeavesOtherCreaturesCountersAlone` (the `SOURCE` mirror) and
 `HapatrasMarkTest.leavesTheUntargetedCreaturesCountersAlone`. The `SOURCE_SELF` trigger context is
 already pinned by `AmmitEternalTest.combatDamageRemovesCounters`, the event-value snapshot by
-`AshlingThePilgrimTest`, the `ForcedCostOrElse` fallback by `RogueSkycaptainTest`, and the `amount`
+`AshlingThePilgrimTest`, the forced-cost fallback by `RogueSkycaptainTest`, and the `amount`
 bound by `GremlinMineTest`'s up-to-four pair.
 
 **Kept separate**: `RemoveAllCountersAsCostEffect` (paid at activation, snapshots into xValue, no

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SplinteringWind.class, ElvishBard.class, RayOfCommand.class})
 class SplinteringWindTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     private Permanent splinterToken() {
         return findPermanent(player1, "Splinter");

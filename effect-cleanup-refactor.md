@@ -26,8 +26,8 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
-| 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (210 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a, U4b and U4c (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone; U4a and U4b moved 159 `ForcedCostOrElseEffect` card files and its four engine builders, U4c echo). Next: "unless" runs U4d, U5, U6, U7; then the other verbs under Step-10 hand-offs |
+| 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (211 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep). Next: "unless" runs U5, U6, U7; then the other verbs under Step-10 hand-offs |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,939 / 2,318 (after step 10 run U3b2) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,935 / 2,316 (after step 10 run U4d) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -502,7 +502,7 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   counter, `ChoiceContext.ResolutionCostCounterRemoval`), `PutCardsFromGraveyardOnBottomOfLibraryCost(n)`, `ReturnCardFromGraveyardToHandCost`,
   `MillControllerCost`, `PutTypedCounterOnSourceCost` (put by the payer), `ReturnPermanentToHandCost.youControl(count, filter, words)`; a
   Phyrexian symbol is paid with its colour or 2 life (CR 107.4f); mandatory "pay {E}{E}. If you can't" is `PayEnergyEffect` +
-  `ConditionalEffect(NotCondition(new HappenedThisWay(PAY_ENERGY)), …)`. U4c: `PayEchoCost` (echo, `KeywordTriggers.echo`) is read by
+  `ConditionalEffect(NotCondition(new HappenedThisWay(PAY_ENERGY)), …)`. U4d: the cumulative upkeep ransoms `FlipCoinsCost` (in the answer's Krark's Thumb window), `OpponentCreatesTokensCost`, `PutCounterOnOpponentCreatureCost` (a pick per counter), `DrawCardsCost`, `ExileTopCardOfLibraryCost`, `PutCardsFromSingleGraveyardOnBottomOfLibraryCost` (a graveyard per payment), `OpponentGainsLifeCost`, `GainControlOfPermanentsCost` (a different permanent per counter); `CumulativeUpkeepEffectHandler` puts `UnlessPaysEffect(you(), cost x age counters, sacrifice, paid)` next (`spliceSequenceSteps`), a mana ransom keeping `forCumulativeUpkeep` through the answer; every mana ransom payment records PAY_MANA by type (`StepOutcome.manaByColor`, `AmountThisWay.manaPaid(ManaColor...)`). U4c: `PayEchoCost` (echo, `KeywordTriggers.echo`) is read by
   `UnlessPaysEffectHandler.alternatives` as the cost it names and paid through that cost's case; an `AlternativeEchoCostEffect` makes it
   `AnyOfCost({0}, echo cost)`; "when its echo cost is paid" is `ifPaid` = `QueueReflexiveAbilityEffect` (a trigger on the stack).
 - `ResolutionCostPaymentService` (`service/effect/cost`, D25): a cost a resolving effect asks any player for (CR 118.12, 118.12a). A new
@@ -731,7 +731,7 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
 |---|---|---|
 | First half prompts mid-step (`blocked-step-model`) | 140 | moving the handler onto the step model (`leave-battlefield-redesign.md` step 14) |
 | Each player chooses, then all act (`blocked-player-loop`) | 97 | a choose-then-act loop (not in this plan) |
-| Cost combinators, "unless", cost heads | fewer than 85 (about 85 before run U1) | step 10's "unless" runs U4, U5, U6, U7 (Step-10 hand-offs) |
+| Cost combinators, "unless", cost heads | fewer than 85 (about 85 before run U1) | step 10's "unless" runs U5, U6, U7 (Step-10 hand-offs) |
 | A delayed trigger shape (end-of-combat, coin flip, the old delayed mechanism) | about 20 | the delayed-mechanism unification onto `RegisterDelayedStepTriggerEffect` / `RegisterDelayedEventTriggerEffect` |
 | Planar deck cards | 9 | a card subject for the planar deck with its reveal, bottom-order and planeswalk steps |
 | Next-draw replacement payloads (`DrawService`'s inline payloads) | about 20 | a "this draw was replaced" record in `DrawService` |
@@ -864,7 +864,7 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
 ### Fold and defect queues
 
 The fold queue, the defect queue and the re-triage list are in `effect-cleanup-queues.md`. The fold queue is closed (no class's latest
-ledger row is `step-9`). The defect queue has 210 lines not struck through, each with what it needs; a defect run reads its own lines
+ledger row is `step-9`). The defect queue has 211 lines not struck through, each with what it needs; a defect run reads its own lines
 there and updates them when it lands.
 
 ### Step-10 hand-offs
@@ -881,14 +881,10 @@ there and updates them when it lands.
   beside it: Confiscation Coup (`UnlessPaysEffect.youMayPay(new PayEnergyCost(new TargetManaValue()), …)` now expresses it) and Behemoth
   of Vault 0 (its "when you do, destroy that permanent" is about the declared target, which `QueueReflexiveAbilityEffect` would choose
   again), and `ReturnMultiplePermanentsToHandCost`'s 26 activation-cost cards (fold into `ReturnPermanentToHandCost.count` with the
-  activation path); U4c moved echo (`KeywordTriggers.echo` builds `UnlessPaysEffect` with `PayEchoCost`, the ForcedCostOrElseEffectHandler echo branch
-  is gone); **U4d**, cumulative upkeep (84 cards, its 12 cost kinds, `AmountThisWay.manaPaid(colours)` for Balduvian Fallen), then the
-  record, both handlers, `MayPenaltyChoiceHandlerService`'s branch and `DestructionSupport.resolveForcedCostElseEffects` go; U5, "unless takes damage" (`DamageFromSourceCost`, a case in the service, dealt by the resolving entry;
+  activation path); U4c moved echo (`KeywordTriggers.echo` builds `UnlessPaysEffect` with `PayEchoCost`); U4d moved cumulative upkeep (84 cards, eight new ransom cases, `AmountThisWay.manaPaid(colours)` for Balduvian Fallen) and deleted the record, both handlers, `MayPenaltyChoiceHandlerService`'s branch and `DestructionSupport.resolveForcedCostElseEffects`; left: U5, "unless takes damage" (`DamageFromSourceCost`, a case in the service, dealt by the resolving entry;
   `DestroyTargetPermanentUnlessControllerTakesDamageEffect` belongs here). Whirlwind Denial stays its own record (owner's decision U2; its
   payment is on the service). `PendingMayAbility.tapPermanentsCost` is null everywhere (a component to drop with the record's next change).
-- **Cost combinators beside `MayEffect`** (CR 118.12: their "if you do" is the choice to pay): `ForcedCostOrElseEffect` (158 cards; its
-  fallback runs through a per-class list in `DestructionSupport.resolveForcedCostElseEffects` on a carrier entry, so a fallback not on
-  the list, or one reading a step result, silently does nothing: Koya),
+- **Cost combinators beside `MayEffect`** (CR 118.12: their "if you do" is the choice to pay): the old forced-cost record is gone (U4d);
   May's 11 (owner's decisions; six went in U3b1, `MayPayLandDropEffect` and Overencumbered's in U3b2),
   `TargetPermanentControllerMaySacrificeOrDamageEffect` (Star Athlete, Enchanter's Bane), the cost pairs `Sacrifice*Cost`, `Exile*Cost`,
   `Return*ToHandCost`, `PutCounterOn*Cost`.
@@ -1109,6 +1105,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U4a (2026-11-26): 121 `ForcedCostOrElseEffect` card files onto `UnlessPaysEffect` and steps (Cosmic Horror's and Minion of Leshrac's fused records split); every player asked in "any player may pay", a payer with no mana source left unasked, Fraying Line's exile one event
 - Step 10, run U4b (2026-11-26): the last 38 `ForcedCostOrElseEffect` card files and its Satya, Ashling and Flash builders onto `UnlessPaysEffect` (nine new ransom cases) and steps, Koya's record split; Satya pays the token's mana value as it resolves, a Phyrexian symbol in a ransom is paid with its colour or 2 life
 - Step 10, run U4c (2026-11-26): echo (51 cards) onto `UnlessPaysEffect` with `PayEchoCost` read as the cost it names; Thick-Skinned Goblin's {0} offered beside the echo cost (its ruling), an echo mana payer with no mana source left unasked
+- Step 10, run U4d (2026-11-26): cumulative upkeep (84 cards) onto `UnlessPaysEffect` with eight new ransom cases and a coloured PAY_MANA reading (Balduvian Fallen); `ForcedCostOrElseEffect`, both its handlers and `DestructionSupport.resolveForcedCostElseEffects` deleted; a payer with no way to pay unasked
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -1905,6 +1902,50 @@ cards U4a moved (docs only); the hard AI still never pays echo (decision 6's lin
 **For the next run.** U4d (cumulative upkeep): `CumulativeUpkeepEffectHandler` is the last builder; its paid trigger ("whenever ... is
 paid") can be `ifPaid` = `QueueReflexiveAbilityEffect` as echo's is; Braid of Fire's mana is the payment itself. Then the record, both
 handlers, `MayPenaltyChoiceHandlerService`'s branch and `DestructionSupport.resolveForcedCostElseEffects` go.
+
+### Step 10, run U4d ("unless": cumulative upkeep) (2026-11-26)
+
+The plan (`scratchpad/s10-unless/u4d-plan.md`) with the orchestrator's U4 decisions (the strict "could possibly pay" rule, hard AI
+parity). `CumulativeUpkeepEffectHandler` puts the age counter, reads the counters then (CR 702.24b) and splices
+`UnlessPaysEffect(you(), cost x age counters, SacrificeSelfEffect, paid)` as the next step of the same resolution (CR 702.24a,
+118.12a); the "doesn't pay" / "is paid" abilities are `QueueReflexiveAbilityEffect`s (triggers, CR 603.2, 603.12), Braid of Fire's
+`AwardManaEffect` the payment itself (its ruling). Deleted: `ForcedCostOrElseEffect`, `ForcedCostOrElseEffectHandler`,
+`mayfx/ForcedCostOrElseHandler`, `MayPenaltyChoiceHandlerService`'s branch, `DestructionSupport.resolveForcedCostElseEffects` /
+`completeForcedCostOrElse` (and 26 collaborators only they used), their choice contexts, `GameData` fields and readers, four unit tests. Ratchet 2,936 / 2,318 -> 2,935 / 2,316.
+Ledger: `ForcedCostOrElseEffect` absorbed, eight ransom costs survivor. No `CONVERSION_VERSION` bump (no mapper or enum change).
+**Cases.** Eight new ransom cases (record check, handler words, `canPay`, `pay`, completion, `SpellEvaluator.ransomCost`), each through
+the action it used: `FlipCoinsCost` (`CoinFlipCostSupport`, in the answer's Krark's Thumb window; `CoinFlipService` replays an "unless"
+answer through `MayAbilityHandlerService`), `OpponentCreatesTokensCost`, `PutCounterOnOpponentCreatureCost` (the existing per-counter
+`OpponentCreatureCounterPlacement` pick), `DrawCardsCost`, `ExileTopCardOfLibraryCost`, `PutCardsFromSingleGraveyardOnBottomOfLibraryCost`
+(the existing per-payment graveyard choice, its context without the record), `OpponentGainsLifeCost`, `GainControlOfPermanentsCost`
+(a different land per counter, Herald's ruling, `PermanentChoiceContext.ResolutionCostPayment` picks). Mana, life, discard, sacrifice,
+-1/-1 on self use their existing cases; a mana ransom keeps `forCumulativeUpkeep` through the answer (Snowfall, Adarkar Unicorn);
+generic mana is summed ("Pay {4}", the rulings' wording); `CumulativeUpkeepEffect.sacrifice(filter, noun)` names its permanents.
+**Paid mana.** `payMana` records PAY_MANA by player and type (`StepOutcome.manaByColor`), read by `AmountThisWay.manaPaid(ManaColor...)` (Fallen).
+**Cards.** Oracle text of all 83 card files and Dreams of the Dead checked (`get_card`), rulings of 10; card files changed: Balduvian Fallen, Polar Kraken,
+Phyrexian Soulgorger. CR 101.4, 115.1, 118.3, 118.12(a), 119.4, 603.2, 603.4, 603.10a, 603.12, 608.2d, 608.2h, 701.55b, 702.24a/b verified.
+**Behaviour changes:**
+- A cumulative upkeep mana payer with no mana source isn't asked and the permanent is sacrificed (owner's rule, CR 118.3, 608.2d):
+  `MysticRemoraTest.CumulativeUpkeepPayment.payerWithNoManaSourceIsNotAsked` (failed first).
+- A payer who can't pay the life isn't asked (CR 119.4): `GlacialChasmTest.cannotPayUpkeepWhenLifeIsInsufficient` (changed, failed first);
+  Gallowbraid, Morinfen, Inner Sanctum, Decomposition likewise (tests changed).
+- Prompts and log lines are the ransom's ("Pay {2}?", "Flip two coins?", "Add {R}{R}?"); an exact-count sacrifice is the shared pick
+  (U3c's line, Polar Kraken, Phyrexian Soulgorger); the hard AI prices the new ransoms (opponent's life 0.5, a token 2, a counter 1).
+**Pins** (passed before and after): a counter removed while the ability waits, Mana Flare's extra mana (Mystic Remora), Krark's Thumb
++ Karplusan Minotaur, Jotun Grunt, Sheltering Ancient, Heart of Bogardan, Thought Lash, Braid, Hibernation's End, Snowfall, Balduvian Fallen.
+**Tests changed** (owner's rule, U3c's pick line): a `@BeforeEach` `giveManaSource` for both players in 70 cumulative upkeep classes (Dreams of the Dead's, a granted upkeep, after the orchestrator's sweep 196),
+`giveManaSource` in 5 Mystic Remora methods; the 5 life tests above; `answerForcedPick` in 2 Polar Kraken and 2 Soulgorger methods;
+`StepTriggerServiceTest` and `ReflexiveRouteRecordTest` build `UnlessPaysEffect`. Added: 7 `ResolutionCostPaymentServiceTest.CumulativeUpkeepRansoms`,
+`UnlessPaysEffectHandlerTest.cumulativeUpkeepRansomsAskInTheirWords`, `SpellEvaluatorTest.cumulativeUpkeepRansomsArePriced`, 3 Mystic Remora.
+**Tests run** (XML of this run): 433 classes (`u4/cardtests.txt`, the 83 cards' classes and the 144 naming one, the
+`Unless|ForcedCost|Upkeep|CumulativeUpkeep|AgeCounter|Sacrifice|Rhystic|IcyPrison|ManaFlare|Mastery|DeathReplacement` classes, the readers of
+the changed services, every architecture test, the plan's application tests) and the whole AI module: 656 files, 6,333 tests, 0 failures
+(first run 269 failures in 72 classes, the owner's rule, the pick line and a lost `forCumulativeUpkeep`, fixed); after sweep 196's three Dreams of the Dead failures (the owner's rule), it and the 11 granting / granted-upkeep classes: 12 files, 137 tests, 0 failures. Compiled every module's main
+and test sources and all card-test modules.
+**Seen, not changed** (defect queue, "step 10 run U4d"): Varchild's War-Riders and Wall of Shards pay to the first opponent (multiplayer,
+their rulings); Demonic Hordes' and Infernal Denizen's blocked folds are open now that their branches are resolution steps.
+**For the next run.** U5 ("unless takes damage": `DamageFromSourceCost`, `DestroyTargetPermanentUnlessControllerTakesDamageEffect`), then U6
+and U7. No reader of the old forced-cost record is left; an "unless" ransom that pays mana records PAY_MANA for any later step.
 
 ## Prompt
 

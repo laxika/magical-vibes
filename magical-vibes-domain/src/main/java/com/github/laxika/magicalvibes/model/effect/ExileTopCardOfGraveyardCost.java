@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.CardType;
  * means any card.</p>
  *
  * <p>Used by Alms ({@code {1}}, Exile the top card of your graveyard) as an activation cost and by
- * Barrow Ghoul ({@code CREATURE}) as the payable side of a {@code ForcedCostOrElseEffect}.</p>
+ * Barrow Ghoul ({@code CREATURE}) as the payable side of a {@code UnlessPaysEffect}.</p>
  */
 public record ExileTopCardOfGraveyardCost(CardType requiredType) implements CostEffect {
 

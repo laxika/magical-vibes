@@ -560,4 +560,33 @@ class UnlessPaysEffectHandlerTest {
         assertThat(actions.apply(new com.github.laxika.magicalvibes.model.effect.PayEchoCost("{0}")))
                 .containsExactly("Pay {0}");
     }
+
+    @Test
+    @DisplayName("Cumulative upkeep ransoms ask in their words, each counted once for each age counter")
+    void cumulativeUpkeepRansomsAskInTheirWords() {
+        StackEntry entry = counterEntry(UnlessPaysEffect.counterUnlessPays(1));
+        java.util.function.Function<com.github.laxika.magicalvibes.model.effect.CostEffect, String> action =
+                cost -> handler.ransom(gd, entry, UnlessPaysEffect.unlessYouPay(cost, new SacrificeSelfEffect()))
+                        .action();
+
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.FlipCoinsCost(2)))
+                .isEqualTo("Flip two coins");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.DrawCardsCost(1)))
+                .isEqualTo("Draw a card");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost(3)))
+                .isEqualTo("Exile the top three cards of your library");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost(2)))
+                .isEqualTo("Have an opponent gain 2 life");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost(
+                com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 1)))
+                .isEqualTo("Put a +1/+1 counter on a creature an opponent controls");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost(2,
+                new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate())))
+                .isEqualTo("Gain control of two permanents you don't control");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost(2, 1)))
+                .isEqualTo("Put two cards from a single graveyard on the bottom of their owner's library");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost(1,
+                new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(), "land")))
+                .isEqualTo("Sacrifice a land");
+    }
 }

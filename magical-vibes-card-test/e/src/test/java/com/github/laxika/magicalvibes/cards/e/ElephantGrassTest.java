@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ElephantGrass.class, RiverBoa.class, UrborgMindsucker.class, ImmovableRod.class, VraskaTheUnseen.class})
 class ElephantGrassTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Cumulative upkeep sacrifices Elephant Grass when the cost is not paid")

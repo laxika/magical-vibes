@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -53,25 +52,22 @@ public class GraveyardTargetOperationState {
     public Integer totalManaValueCap;
     /** In-progress cumulative-upkeep payments, one single-graveyard choice per age counter. */
     public CumulativeUpkeepPaymentContext cumulativeUpkeepPayment;
-    /** In-progress payment that moves a fixed number of cards from the controller's graveyard. */
-    public ControllerGraveyardPaymentContext controllerGraveyardPayment;
     /** In-progress replacement effect that exiles a chosen number of cards from a player's graveyard. */
     public ReplacementGraveyardExileContext replacementGraveyardExile;
     /** In-progress resolution ransom that puts cards from the payer's graveyard on the bottom of their library. */
     public ResolutionCostLibraryBottomContext resolutionCostLibraryBottom;
 
-    public record CumulativeUpkeepPaymentContext(UUID sourceControllerId, Card sourceCard,
-                                                  UUID sourcePermanentId, ForcedCostOrElseEffect forcedCost,
-                                                  int cardsPerPayment, int remainingPayments,
+    /**
+     * The payer of a cumulative upkeep "put {@code cardsPerPayment} cards from a single graveyard on the bottom of their
+     * owner's library" chooses each payment's cards from one graveyard, {@code remainingPayments} of them still to
+     * choose ({@code ResolutionCostPaymentService}); the cards are moved and the asking resolution resumes after the
+     * last.
+     */
+    public record CumulativeUpkeepPaymentContext(UUID payerId, int cardsPerPayment, int remainingPayments,
                                                   List<UUID> selectedCardIds) {
         public CumulativeUpkeepPaymentContext {
             selectedCardIds = List.copyOf(selectedCardIds);
         }
-    }
-
-    public record ControllerGraveyardPaymentContext(UUID sourceControllerId, Card sourceCard,
-                                                     UUID sourcePermanentId,
-                                                     ForcedCostOrElseEffect forcedCost, int count) {
     }
 
     /**

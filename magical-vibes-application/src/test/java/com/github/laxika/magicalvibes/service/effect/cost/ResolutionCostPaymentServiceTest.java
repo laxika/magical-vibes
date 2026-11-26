@@ -7,6 +7,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.UnlessAnswer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinsCost;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipCostSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryExileSupport;
 import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DepartPermanentsEffect;
@@ -583,6 +593,130 @@ class ResolutionCostPaymentServiceTest {
             assertThat(service.pay(gd, payer, new PayManaCost("{W/P}"), payment(null)))
                     .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
             verify(lifeSupport).applyLifePayment(eq(gd), eq(payerId), eq(2), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Cumulative upkeep ransoms (CR 702.24a)")
+    class CumulativeUpkeepRansoms {
+
+        private Player payer;
+        private UUID opponentId;
+
+        @BeforeEach
+        void withCollaborators() {
+            payer = new Player(payerId, "Payer");
+            opponentId = UUID.randomUUID();
+            gd.orderedPlayerIds.add(payerId);
+            gd.orderedPlayerIds.add(opponentId);
+        }
+
+        private ResolutionCostPaymentService.Payment payment(StackEntry entry) {
+            return new ResolutionCostPaymentService.Payment(new GrizzlyBears(), payerId, null, entry);
+        }
+
+        @Test
+        @DisplayName("A mana payment records the mana spent, in all and of each type, as the entry's PAY_MANA step")
+        void manaPaymentRecordsTheTypesSpent() {
+            gd.playerManaPools.get(payerId).add(ManaColor.BLACK, 1);
+            gd.playerManaPools.get(payerId).add(ManaColor.RED, 1);
+            gd.playerManaPools.get(payerId).add(ManaColor.GREEN, 1);
+            StackEntry entry = new StackEntry(new GrizzlyBears(), payerId);
+
+            assertThat(service.pay(gd, payer, new PayManaCost("{1}{B}"), payment(entry)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+
+            var paid = entry.getResolutionResults().outcome(com.github.laxika.magicalvibes.model.StepKind.PAY_MANA);
+            assertThat(paid.amount()).isEqualTo(2);
+            assertThat(paid.manaOf(List.of(ManaColor.BLACK)) + paid.manaOf(List.of(ManaColor.RED))
+                    + paid.manaOf(List.of(ManaColor.GREEN))).isEqualTo(2);
+            assertThat(paid.manaOf(List.of(ManaColor.BLACK))).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(payerId).getTotalAllMana()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Drawing is payable unless the payer can't draw, and draws once for each card")
+        void drawingIsPayableUnlessDrawsArePrevented() {
+            DrawService draws = org.mockito.Mockito.mock(DrawService.class);
+            ReflectionTestUtils.setField(service, "drawService", draws);
+            when(draws.isDrawPrevented(gd, payerId)).thenReturn(true, false, false);
+
+            assertThat(service.canPay(gd, payerId, new DrawCardsCost(2), null)).isFalse();
+            assertThat(service.canPay(gd, payerId, new DrawCardsCost(2), null)).isTrue();
+            assertThat(service.pay(gd, payer, new DrawCardsCost(2), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(draws, org.mockito.Mockito.times(2)).resolveDrawCard(gd, payerId);
+        }
+
+        @Test
+        @DisplayName("Exiling the top cards of the library needs that many cards there")
+        void exilingTheTopCardsNeedsTheCards() {
+            LibraryExileSupport library = org.mockito.Mockito.mock(LibraryExileSupport.class);
+            ReflectionTestUtils.setField(service, "libraryExileSupport", library);
+            when(library.hasAtLeast(gd, payerId, 3)).thenReturn(false, true);
+
+            assertThat(service.pay(gd, payer, new ExileTopCardOfLibraryCost(3), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.NOT_PAID);
+            assertThat(service.pay(gd, payer, new ExileTopCardOfLibraryCost(3), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(library).exileTopCards(gd, payerId, 3);
+        }
+
+        @Test
+        @DisplayName("An opponent gaining life is payable only while that opponent can gain life")
+        void opponentGainingLifeNeedsAnOpponentWhoCanGainLife() {
+            when(gameQueryService.getOpponentId(gd, payerId)).thenReturn(opponentId);
+            when(gameQueryService.canPlayerGainLife(gd, opponentId)).thenReturn(false, true);
+
+            assertThat(service.canPay(gd, payerId, new OpponentGainsLifeCost(2), null)).isFalse();
+            assertThat(service.pay(gd, payer, new OpponentGainsLifeCost(2), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(lifeSupport).applyGainLife(eq(gd), eq(opponentId), eq(2), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Each payment of two cards comes from one graveyard: three and one cards can't pay twice")
+        void singleGraveyardPaymentsAreCountedPerGraveyard() {
+            gd.playerGraveyards.put(payerId, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears(),
+                    new GrizzlyBears())));
+            gd.playerGraveyards.put(opponentId, new ArrayList<>(List.of(new GrizzlyBears())));
+            var twoPayments = new PutCardsFromSingleGraveyardOnBottomOfLibraryCost(2, 2);
+
+            assertThat(service.canPay(gd, payerId, twoPayments, null)).isFalse();
+
+            gd.playerGraveyards.get(opponentId).add(new GrizzlyBears());
+            assertThat(service.canPay(gd, payerId, twoPayments, null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Gaining control of two lands takes both unasked when only two can be taken")
+        void gainingControlOfOnlyThatManyIsUnasked() {
+            DestructionSupport destruction = org.mockito.Mockito.mock(DestructionSupport.class);
+            ReflectionTestUtils.setField(service, "destructionSupport", destruction);
+            Permanent first = new Permanent(new GrizzlyBears());
+            Permanent second = new Permanent(new GrizzlyBears());
+            var cost = new GainControlOfPermanentsCost(2, new PermanentTruePredicate());
+            when(destruction.collectPermanentIdsNotControlledBy(gd, payerId, cost.filter()))
+                    .thenReturn(List.of(first.getId(), second.getId()));
+            when(gameQueryService.findPermanentById(gd, first.getId())).thenReturn(first);
+            when(gameQueryService.findPermanentById(gd, second.getId())).thenReturn(second);
+
+            assertThat(service.pay(gd, payer, cost, payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(destruction).gainPermanentControl(eq(gd), eq(first), eq(payerId), any());
+            verify(destruction).gainPermanentControl(eq(gd), eq(second), eq(payerId), any());
+        }
+
+        @Test
+        @DisplayName("Flipping coins asked by no answer flips them all through the coin-flip action")
+        void flippingCoinsFlipsEveryCoin() {
+            CoinFlipCostSupport coins = org.mockito.Mockito.mock(CoinFlipCostSupport.class);
+            ReflectionTestUtils.setField(service, "coinFlipCostSupport", coins);
+
+            assertThat(service.canPay(gd, payerId, new FlipCoinsCost(3), null)).isTrue();
+            assertThat(service.pay(gd, payer, new FlipCoinsCost(3), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(coins).pay(eq(gd), eq(payerId), any(), eq(3));
         }
     }
 

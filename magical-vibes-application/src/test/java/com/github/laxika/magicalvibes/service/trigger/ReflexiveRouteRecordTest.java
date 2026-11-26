@@ -31,7 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -140,8 +140,7 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 new ConditionalEffect(HappenedThisWay.exiled(), new QueueReflexiveAbilityEffect(effect))),
                 "Exile a creature card?")),
         MAY_THEN(effect -> new MayEffect(new QueueReflexiveAbilityEffect(effect), "Do it?")),
-        PAID_COST_THEN(effect -> new ForcedCostOrElseEffect(new PayLifeCost(1), List.of(), true,
-                List.of(new QueueReflexiveAbilityEffect(effect)))),
+        PAID_COST_THEN(effect -> UnlessPaysEffect.youMayPayLife(1, new QueueReflexiveAbilityEffect(effect))),
         LIBRARY_FOLLOW_UP(effect -> LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(3,
                 new CardTypePredicate(CardType.CREATURE), new LibrarySelectionFollowUp() {
                     @Override

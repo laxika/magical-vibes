@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MesmericTrance.class, BalduvianBears.class})
 class MesmericTranceTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("{U}, Discard a card: Draw a card")

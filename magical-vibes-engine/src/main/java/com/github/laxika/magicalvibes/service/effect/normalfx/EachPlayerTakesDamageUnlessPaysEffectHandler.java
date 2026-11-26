@@ -116,7 +116,7 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
 
     private void offerPay(GameData gameData, StackEntry entry,
             EachPlayerTakesDamageUnlessPaysEffect effect, UUID playerId, UUID sourceControllerId) {
-        // Always prompt — paying mana is a choice (same as ForcedCostOrElse / Force of Nature).
+        // Always prompt — paying mana is a choice (as an UnlessPaysEffect mana ransom is).
         // Accept-without-mana falls through to damage in the may-choice handler.
         String prompt = "Pay " + effect.manaCost() + "? If you don't, " + entry.getCard().getName()
                 + " deals " + effect.damage() + " damage to you.";

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
- * "Pay {cost}" as the payable side of a {@link ForcedCostOrElseEffect}. Because paying mana is
+ * "Pay {cost}" as the payable side of a {@link UnlessPaysEffect}. Because paying mana is
  * inherently a choice, it is only meaningful with {@code optional = true} ("you may pay {cost};
  * if you don't, [penalty]"). Used by Force of Nature ("pay {G}{G}{G}{G} or take 8 damage"), and as the
  * ransom of an {@link UnlessPaysEffect} ("counter target spell unless its controller pays {3}").

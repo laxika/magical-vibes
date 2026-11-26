@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({BreathOfDreams.class, FyndhornElves.class, ZuranSpellcaster.class,
         Opalescence.class, Lifelace.class})
 class BreathOfDreamsTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Paying own cumulative upkeep keeps Breath of Dreams")

@@ -14,53 +14,21 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
-import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedBlockOrBecomesBlockedTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
-import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -86,41 +54,15 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class DestructionSupport {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final CreatureControlService creatureControlService;
-    private final EffectHandlerRegistry effectHandlerRegistry;
-    private final GraveyardService graveyardService;
-    private final DamagePreventionService damagePreventionService;
-    private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
     private final DepartureService departureService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
-    private final LifeSupport lifeSupport;
-    private final OpponentMayGainControlOfCreatureYouControlEffectHandler opponentMayGainControlHandler;
-    private final OpponentGainsControlOfSourceCreatureEffectHandler opponentGainsControlOfSourceHandler;
-    private final RemoveAllCountersEffectHandler removeAllCountersHandler;
-    private final PhasingService phasingService;
-    private final ExileSourceCardFromGraveyardEffectHandler exileSourceCardFromGraveyardEffectHandler;
-    private final LibraryExileSupport libraryExileSupport;
-    private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
-    private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
-    private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
-    private final ReturnToHandEffectHandler returnToHandEffectHandler;
-    private final ControllerLosesGameEffectHandler controllerLosesGameHandler;
-    private final RegisterDelayedBlockOrBecomesBlockedTriggerEffectHandler registerDelayedBlockOrBecomesBlockedTriggerHandler;
-    private final PreventDamageFromChosenSourceEffectHandler preventDamageFromChosenSourceHandler;
-    private final BoostAllOwnCreaturesEffectHandler boostAllOwnCreaturesHandler;
-    private final BounceSupport bounceSupport;
-    private final EnergyCountersEffectHandler energyCountersEffectHandler;
-    private final DrawCardEffectHandler drawCardEffectHandler;
     private final ObjectProvider<DamageSupport> damageSupportProvider;
-    private final ObjectProvider<ExileTargetPermanentEffectHandler> exileTargetPermanentEffectHandlerProvider;
-    private final ObjectProvider<TapUntapSupport> tapUntapSupportProvider;
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
-    private final ObjectProvider<SacrificeSelfEffectHandler> sacrificeSelfEffectHandlerProvider;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -742,318 +684,10 @@ public class DestructionSupport {
                 "Choose a creature to sacrifice.");
     }
 
-    public void completeForcedCostOrElse(GameData gameData, UUID permanentId,
-                                         PermanentChoiceContext.ForcedCostOrElse context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            // The fallback effects may change the game before they kill, so they can't stop and be redone.
-            gameData.deathReplacementsCanRerunEffect = false;
-            StackEntry syntheticEntry = StackEntry.carrier(context.sourceCard(),
-                    context.controllerId(),
-                    context.sourceCard().getName() + "'s ability",
-                    List.of(context.effect()),
-                    null,
-                    context.sourcePermanentId());
-            resolveForcedCostElseEffects(gameData, syntheticEntry, context.effect());
-            gameData.forcedCostOrElseSourceControllerId = null;
-            gameData.forcedCostOrElseRemainingPlayers.clear();
-            return;
-        }
-
-        if (context.effect().forcedCost() instanceof GainControlOfPermanentsCost gainCost) {
-            UUID payerId = context.controllerId();
-            UUID currentControllerId = gameData.findControllerOf(target);
-            FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(payerId);
-            if (currentControllerId == null || currentControllerId.equals(payerId)
-                    || !predicateEvaluationService.matchesPermanentPredicate(
-                    target, gainCost.filter(), filterContext)) {
-                resolveForcedCostElseEffectsFromContext(gameData, context);
-                clearForcedCostOrElseState(gameData);
-                return;
-            }
-
-            gainPermanentControl(gameData, target, payerId, context.sourceCard().getName());
-            int remaining = gainCost.count() - 1;
-            if (remaining <= 0) {
-                clearForcedCostOrElseState(gameData);
-                return;
-            }
-
-            List<UUID> remainingIds = collectPermanentIdsNotControlledBy(gameData, payerId, gainCost.filter());
-            if (remainingIds.size() < remaining) {
-                resolveForcedCostElseEffectsFromContext(gameData, context);
-                clearForcedCostOrElseState(gameData);
-                return;
-            }
-
-            ForcedCostOrElseEffect remainingEffect = new ForcedCostOrElseEffect(
-                    new GainControlOfPermanentsCost(remaining, gainCost.filter()), context.effect().elseEffects(),
-                    false, false, false, false, context.effect().paidEffects());
-            if (remainingIds.size() == 1) {
-                Permanent remainingTarget = gameQueryService.findPermanentById(gameData, remainingIds.getFirst());
-                if (remainingTarget != null) {
-                    gainPermanentControl(gameData, remainingTarget, payerId, context.sourceCard().getName());
-                }
-                clearForcedCostOrElseState(gameData);
-                return;
-            }
-
-            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ForcedCostOrElse(
-                    payerId, context.sourcePermanentId(), context.sourceCard(), remainingEffect));
-            playerInputService.beginPermanentChoice(gameData, payerId, remainingIds,
-                    "Choose a permanent to gain control of.");
-            clearForcedCostOrElseState(gameData);
-            return;
-        }
-
-        if (context.effect().forcedCost() instanceof RemoveCounterFromControlledPermanentCost) {
-            // "unless you remove a counter from a permanent you control" — the chosen permanent
-            // sheds a counter instead of being sacrificed.
-            removeOneCounterAndLog(gameData, target, context.controllerId());
-        } else {
-            sacrificeAndLog(gameData, target, context.controllerId());
-        }
-        gameData.forcedCostOrElseSourceControllerId = null;
-        gameData.forcedCostOrElseRemainingPlayers.clear();
-    }
-
     public void gainPermanentControl(GameData gameData, Permanent target, UUID controllerId, String sourceCardName) {
         creatureControlService.applyControlEffect(gameData, controllerId, target,
                 new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT, null,
                 sourceCardName);
-    }
-
-    private void resolveForcedCostElseEffectsFromContext(GameData gameData,
-            PermanentChoiceContext.ForcedCostOrElse context) {
-        StackEntry syntheticEntry = StackEntry.carrier(context.sourceCard(), context.controllerId(), context.sourceCard().getName() + "'s ability",
-                List.of(context.effect()), null, context.sourcePermanentId());
-        resolveForcedCostElseEffects(gameData, syntheticEntry, context.effect());
-    }
-
-    private void clearForcedCostOrElseState(GameData gameData) {
-        gameData.forcedCostOrElseSourceControllerId = null;
-        gameData.forcedCostOrElseRemainingPlayers.clear();
-    }
-
-    /**
-     * Whether {@code player} is "that player" an enchanted-controller-may-pay ability asks: the player whose upkeep it
-     * is, the controller of the permanent the trigger was about, or the opponent its target filter declared.
-     */
-    private static boolean isPayingPlayer(PlayerSubject player) {
-        return player instanceof PlayerSubject.TriggeringPlayer
-                || player.equals(Subjects.controllerOf(Subjects.triggering()))
-                || player.equals(Subjects.targetPlayerDeclaredElsewhere());
-    }
-
-    /**
-     * Resolves the unpaid branch ({@link ForcedCostOrElseEffect#elseEffects()}) in order. Only the first
-     * fallback effect runs inside a death replacement rerun window its caller opened; each later one runs with
-     * it closed, since a rerun would repeat what came before.
-     */
-    public void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
-        for (var elseEffect : effect.elseEffects()) {
-            if (elseEffect instanceof TapPermanentsEffect tap && tap.subject() instanceof PermanentSubject.Source) {
-                tapSourcePermanent(gameData, entry);
-            } else if (elseEffect instanceof TapPermanentsEffect tap && tap.subject() instanceof PermanentSubject.Attached) {
-                // Mind Whip: "you tap that creature" — tap the permanent the source Aura enchants.
-                tapEnchantedPermanent(gameData, entry);
-            } else if (elseEffect instanceof DealDamageToPlayersEffect damage
-                    && damage.player() instanceof PlayerSubject.You
-                    && damage.amount() instanceof Fixed fixed) {
-                dealNoncombatDamageToPlayer(gameData, entry, entry.getControllerId(), fixed.value());
-                gameOutcomeService.checkWinCondition(gameData);
-            } else if (elseEffect instanceof DealDamageToPlayersEffect damage
-                    && isPayingPlayer(damage.player())
-                    && damage.amount() instanceof Fixed fixed) {
-                // "Deals N damage to that player unless they pay" (Mind Whip, Seizures, Demanding Dragon): the player
-                // who was asked to pay, which the trigger recorded as the entry's target.
-                UUID victim = entry.getTargetId();
-                if (victim != null) {
-                    dealNoncombatDamageToPlayer(gameData, entry, victim, fixed.value());
-                    gameOutcomeService.checkWinCondition(gameData);
-                }
-            } else if (elseEffect instanceof SacrificeSelfEffect sacrifice && sacrifice.sacrificesSource()) {
-                sacrificeSource(gameData, entry);
-            } else if (elseEffect instanceof DrawCardEffect draw) {
-                drawCardEffectHandler.resolve(gameData, entry, draw);
-            } else if (elseEffect instanceof ReturnToHandEffect returnToHand
-                    && returnToHand.subject() instanceof PermanentSubject.Source) {
-                bounceSupport.applyReturnSelfToHand(gameData, entry);
-            } else if (elseEffect instanceof EnergyCountersEffect energyCounters) {
-                energyCountersEffectHandler.resolve(gameData, entry, energyCounters);
-            } else if (elseEffect instanceof SacrificeSelfEffect sacrificeEnchanted
-                    && (sacrificeEnchanted.subject() instanceof PermanentSubject.Attached
-                    || sacrificeEnchanted.subject() instanceof PermanentSubject.AttachedAtTrigger)) {
-                // "that player sacrifices it unless they pay {X}" (Soul Tithe) — the enchanted
-                // permanent, not the Aura, is sacrificed by its own controller.
-                sacrificeSelfEffectHandlerProvider.getObject().resolve(gameData, entry, sacrificeEnchanted);
-            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect unblockable) {
-                // "it gains 'this creature can't be blocked' until end of turn unless defending
-                // player sacrifices a creature" (Ogre Marauder) — the attacking source.
-                Permanent grantedTo = entry.getSourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                makeCreatureUnblockableHandler.grantCantBeBlocked(gameData, grantedTo, entry, unblockable.duration());
-            } else if (elseEffect instanceof ExileTargetPermanentEffect exileSelf
-                    && exileSelf.subject() instanceof PermanentSubject.Source) {
-                // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
-                exileTargetPermanentEffectHandlerProvider.getObject().resolve(gameData, entry, exileSelf);
-            } else if (elseEffect instanceof ExileSourceCardFromGraveyardEffect exileSource) {
-                exileSourceCardFromGraveyardEffectHandler.resolve(gameData, entry, exileSource);
-            } else if (elseEffect instanceof PhaseOutEffect phaseOut
-                    && phaseOut.subject() instanceof PermanentSubject.Source) {
-                // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).
-                phaseOutSource(gameData, entry);
-            } else if (elseEffect instanceof LoseLifeEffect loseLife
-                    && loseLife.player() instanceof PlayerSubject.You
-                    && loseLife.amount() instanceof Fixed lifeAmount) {
-                // "unless you pay {cost}, you lose N life" (Nafs Asp). Life loss, not damage
-                // (CR 119.3) — never routed through damage plumbing.
-                lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), lifeAmount.value(), entry.getCard().getName());
-                gameOutcomeService.checkWinCondition(gameData);
-            } else if (elseEffect instanceof LoseLifeEffect loseLife
-                    && loseLife.player() instanceof PlayerSubject.TargetPlayer
-                    && loseLife.amount() instanceof Fixed lifeAmount) {
-                // "that player loses N life" (Pillar Tombs of Aku) — targetId is the acting player.
-                UUID victim = entry.getTargetId();
-                if (victim != null) {
-                    lifeSupport.applyLifeLoss(gameData, victim, lifeAmount.value(), entry.getCard().getName());
-                    gameOutcomeService.checkWinCondition(gameData);
-                }
-            } else if (elseEffect instanceof GivePoisonCountersEffect poison
-                    && poison.player() instanceof PlayerSubject.You
-                    && poison.amount() instanceof Fixed poisonAmount) {
-                // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the
-                // entry controller is the player who owes the payment.
-                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poisonAmount.value(),
-                        entry.getCard().getName(), entry.getControllerId());
-                gameOutcomeService.checkWinCondition(gameData);
-            } else if (elseEffect instanceof ControllerLosesGameEffect) {
-                controllerLosesGameHandler.resolve(gameData, entry, elseEffect);
-            } else if (elseEffect instanceof DestroyTargetPermanentEffect destroySource
-                    && destroySource.subject() instanceof PermanentSubject.Source) {
-                destroySource(gameData, entry, destroySource.cannotBeRegenerated());
-            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect damageAndCreatures) {
-                // "When a player doesn't pay this enchantment's cumulative upkeep, this enchantment
-                // deals X damage to target player or planeswalker and each creature that player
-                // controls" (Heart of Bogardan). The companion trigger has no target on this path,
-                // so the source controller's opponent takes it.
-                UUID victim = gameQueryService.getOpponentId(gameData, entry.getControllerId());
-                if (victim != null) {
-                    UUID previousTarget = entry.getTargetId();
-                    entry.setTargetId(victim);
-                    damageTargetAndTheirCreaturesHandler.resolve(gameData, entry, damageAndCreatures);
-                    entry.setTargetId(previousTarget);
-                }
-            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect exileLibrary) {
-                // "When a player doesn't pay this enchantment's cumulative upkeep, that player
-                // exiles all cards from their library" (Thought Lash).
-                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId(), exileLibrary.faceDown());
-            } else if (elseEffect instanceof RemoveAllCountersEffect removeCounters
-                    && removeCounters.subject() instanceof PermanentSubject.Source) {
-                // "remove all wage counters from this creature" (Rogue Skycaptain).
-                removeAllCountersHandler.resolve(gameData, entry, removeCounters);
-            } else if (elseEffect instanceof RegisterDelayedBlockOrBecomesBlockedTriggerEffect delayed) {
-                registerDelayedBlockOrBecomesBlockedTriggerHandler.resolve(gameData, entry, delayed);
-            } else if (elseEffect instanceof OpponentGainsControlOfSourceCreatureEffect gainControl) {
-                // "an opponent gains control of it" (Rogue Skycaptain).
-                opponentGainsControlOfSourceHandler.resolve(gameData, entry, gainControl);
-            } else if (elseEffect instanceof OpponentMayGainControlOfCreatureYouControlEffect steal) {
-                opponentMayGainControlHandler.offer(gameData, entry, steal);
-                // Interaction started — further else-effects would race the may-prompt.
-                return;
-            } else if (elseEffect instanceof BouncePermanentOnUpkeepEffect bounce) {
-                bouncePermanentOnUpkeepEffectHandler.resolve(gameData, entry, bounce);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            } else if (elseEffect instanceof PreventDamageFromChosenSourceEffect preventDamage) {
-                preventDamageFromChosenSourceHandler.resolve(gameData, entry, preventDamage);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            } else if (elseEffect instanceof BoostAllOwnCreaturesEffect boost) {
-                boostAllOwnCreaturesHandler.resolve(gameData, entry, boost);
-            } else if (elseEffect instanceof ReturnToHandEffect returnToHand) {
-                returnToHandEffectHandler.resolve(gameData, entry, returnToHand);
-            } else {
-                var handler = effectHandlerRegistry.getHandler(elseEffect);
-                if (handler == null) {
-                    log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
-                            gameData.id, elseEffect.getClass().getSimpleName());
-                } else {
-                    handler.resolve(gameData, entry, elseEffect);
-                    if (gameData.interaction.isAwaitingInput()) {
-                        return;
-                    }
-                }
-            }
-            // CR 616.1: a caller may open the rerun window for the first fallback effect only.
-            gameData.deathReplacementsCanRerunEffect = false;
-        }
-    }
-
-    private void phaseOutSource(GameData gameData, StackEntry entry) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            return;
-        }
-        phasingService.phaseOut(gameData, List.of(source));
-    }
-
-    private void destroySource(GameData gameData, StackEntry entry, boolean cannotBeRegenerated) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            return;
-        }
-        tryDestroyAndLog(gameData, source, entry.getCard().getName(), cannotBeRegenerated);
-    }
-
-    private void sacrificeSource(GameData gameData, StackEntry entry) {
-        if (entry.getSourcePermanentId() == null) {
-            return;
-        }
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self == null) {
-            return;
-        }
-        UUID currentControllerId = gameQueryService.findPermanentController(gameData, self.getId());
-        if (!entry.getControllerId().equals(currentControllerId)
-                || gameQueryService.cantBeSacrificed(gameData, self)) {
-            return;
-        }
-        // The fallback effects resolve one after another inside this effect, so the sacrifice can't end the
-        // step; inside the effect's rerun window a CR 616.1 question stops and reruns it instead.
-        departureService.departAsStep(gameData, entry, null,
-                DepartureBatch.of(List.of(DepartureIntent.sacrifice(self.getId()))));
-    }
-
-    private void tapSourcePermanent(GameData gameData, StackEntry entry) {
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (sourcePermanent != null) {
-            tapUntapSupportProvider.getObject().tapPermanent(gameData, sourcePermanent, entry.getControllerId());
-            gameLogService.append(gameData, GameLog.cardThen(sourcePermanent.getCard(), " is tapped."));
-            log.info("Game {} - {} is tapped (no matching creature to sacrifice)",
-                    gameData.id, sourcePermanent.getCard().getName());
-        }
-    }
-
-    private void tapEnchantedPermanent(GameData gameData, StackEntry entry) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null) {
-            aura = entry.getSourcePermanentSnapshot();
-        }
-        if (aura == null || !aura.isAttached()) {
-            return;
-        }
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-        if (enchanted == null) {
-            return;
-        }
-        tapUntapSupportProvider.getObject().tapPermanent(gameData, enchanted, entry.getControllerId());
-        gameLogService.append(gameData,
-                GameLog.cardTextCard(entry.getCard(), " taps ", enchanted.getCard(), "."));
-        log.info("Game {} - {} taps enchanted permanent {}",
-                gameData.id, entry.getCard().getName(), enchanted.getCard().getName());
     }
 
     public void createTokenForPlayer(GameData gameData, UUID controllerId,

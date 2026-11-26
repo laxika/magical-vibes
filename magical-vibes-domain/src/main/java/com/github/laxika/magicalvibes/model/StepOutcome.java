@@ -32,10 +32,13 @@ import java.util.UUID;
  *                       amount of mana they paid this way"); empty for every other step
  * @param votes          for a vote step, each vote in the order it was cast, who cast it and for what (CR 701.38a);
  *                       empty for every other step
+ * @param manaByColor    for a mana payment step, how much of the mana paid was of each type ("for each {B} or {R}
+ *                       spent this way"); empty for every other step
  */
 public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
                           List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents,
-                          int fromHand, Map<UUID, Integer> amountByPlayer, List<Vote> votes) {
+                          int fromHand, Map<UUID, Integer> amountByPlayer, List<Vote> votes,
+                          Map<ManaColor, Integer> manaByColor) {
 
     /**
      * One vote of a vote step: {@code voterId} chose {@code choice}, one of the options the vote listed (CR 701.38b). A
@@ -78,6 +81,15 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         lastKnownPermanents = lastKnownPermanents == null ? List.of() : List.copyOf(lastKnownPermanents);
         amountByPlayer = amountByPlayer == null ? Map.of() : Map.copyOf(amountByPlayer);
         votes = votes == null ? List.of() : List.copyOf(votes);
+        manaByColor = manaByColor == null ? Map.of() : Map.copyOf(manaByColor);
+    }
+
+    /** An outcome that recorded no mana by type. */
+    public StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
+                       List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents,
+                       int fromHand, Map<UUID, Integer> amountByPlayer, List<Vote> votes) {
+        this(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, fromHand, amountByPlayer,
+                votes, Map.of());
     }
 
     /** An outcome that recorded no vote. */
@@ -145,6 +157,32 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         return new StepOutcome(total, List.of(), payers, List.of(), List.of(), List.of(), 0, amounts);
     }
 
+    /**
+     * A mana payment by {@code payerId}: the mana they spent, in all and of each type ({@code spent}, the types with
+     * none left out).
+     */
+    public static StepOutcome ofManaPaid(UUID payerId, Map<ManaColor, Integer> spent) {
+        int total = 0;
+        Map<ManaColor, Integer> byColor = new HashMap<>();
+        for (Map.Entry<ManaColor, Integer> part : spent.entrySet()) {
+            if (part.getValue() > 0) {
+                total = SaturatingMath.add(total, part.getValue());
+                byColor.put(part.getKey(), part.getValue());
+            }
+        }
+        return new StepOutcome(total, List.of(), total > 0 ? List.of(payerId) : List.of(), List.of(), List.of(),
+                List.of(), 0, total > 0 ? Map.of(payerId, total) : Map.of(), List.of(), byColor);
+    }
+
+    /** How much of this payment step's mana was of one of {@code colors}. */
+    public int manaOf(java.util.Collection<ManaColor> colors) {
+        int total = 0;
+        for (ManaColor color : colors) {
+            total = SaturatingMath.add(total, manaByColor.getOrDefault(color, 0));
+        }
+        return total;
+    }
+
     /** A vote step's outcome: the votes cast, in order, and the players who cast them. */
     public static StepOutcome ofVotes(List<Vote> votes) {
         List<UUID> voters = votes.stream().map(Vote::voterId).toList();
@@ -165,19 +203,19 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
     /** This outcome with {@code cards}, the cards it exiled from a graveyard as each last existed there. */
     public StepOutcome withLastKnownCards(List<LastKnownCardStats> cards) {
         return new StepOutcome(amount, objectIds, playerIds, movedCards, cards, lastKnownPermanents, fromHand,
-                amountByPlayer, votes);
+                amountByPlayer, votes, manaByColor);
     }
 
     /** This outcome with {@code permanents}, the permanents it exiled as each last existed on the battlefield. */
     public StepOutcome withLastKnownPermanents(List<LastKnownCardStats> permanents) {
         return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, permanents, fromHand,
-                amountByPlayer, votes);
+                amountByPlayer, votes, manaByColor);
     }
 
     /** This outcome with {@code count} of its cards exiled from a hand. */
     public StepOutcome withFromHand(int count) {
         return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, count,
-                amountByPlayer, votes);
+                amountByPlayer, votes, manaByColor);
     }
 
     /** {@code permanentId} as it last existed on the battlefield this step exiled it from, if the step recorded it. */
@@ -197,7 +235,7 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
 
     /**
      * This outcome with {@code more} added: amounts summed, objects, players, moved cards, last-known cards and votes
-     * appended.
+     * appended, mana by type summed.
      */
     public StepOutcome plus(StepOutcome more) {
         List<UUID> objects = new ArrayList<>(objectIds);
@@ -214,7 +252,9 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         more.amountByPlayer.forEach((playerId, part) -> byPlayer.merge(playerId, part, SaturatingMath::add));
         List<Vote> allVotes = new ArrayList<>(votes);
         allVotes.addAll(more.votes);
+        Map<ManaColor, Integer> byColor = new HashMap<>(manaByColor);
+        more.manaByColor.forEach((color, part) -> byColor.merge(color, part, SaturatingMath::add));
         return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players, moved, known,
-                knownPermanents, SaturatingMath.add(fromHand, more.fromHand), byPlayer, allVotes);
+                knownPermanents, SaturatingMath.add(fromHand, more.fromHand), byPlayer, allVotes, byColor);
     }
 }

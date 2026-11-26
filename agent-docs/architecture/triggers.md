@@ -787,7 +787,7 @@ graveyard card's ability with `setSourceGraveyardEntryVersion`, carried by `Atta
 and `PendingMayAbility.sourceGraveyardEntryVersion`, else the triggering card's when the source is the triggering card),
 so leaving and returning can't satisfy an older Bridge from Below ability (CR 400.7). Every "this card" effect
 (`ReturnSourceCard…`, `ExileSourceCard…`, `ShuffleSelfFromGraveyardIntoLibrary`, a `CardIsSelfPredicate` return,
-persist, `ForcedCostOrElseEffect`) reads the source's stay; `getTriggeringCardGraveyardEntryVersion()` is the event
+persist) reads the source's stay; `getTriggeringCardGraveyardEntryVersion()` is the event
 card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
 
 ## Delayed abilities

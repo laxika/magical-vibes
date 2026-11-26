@@ -826,8 +826,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record AnyPlayerPaymentPick(UUID playerId) implements PermanentChoiceContext {}
 
-    record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
-                            com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}
 
     /**
      * An activated ability whose permanent-choice cost is being paid one choice at a time.

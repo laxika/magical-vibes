@@ -2,7 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinsCost;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
@@ -160,9 +168,17 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
         /** A mana and / or life ransom: {@code manaCost} ({@code null} for none), X-only mana, and the life. */
         static Ransom ofManaAndLife(String manaCost, boolean xCost, int life) {
+            return ofManaAndLife(manaCost, xCost, life, false);
+        }
+
+        /**
+         * {@link #ofManaAndLife(String, boolean, int)} for a cumulative upkeep when {@code cumulativeUpkeep}: mana spendable
+         * only on cumulative upkeep costs may pay it (Snowfall, Adarkar Unicorn).
+         */
+        static Ransom ofManaAndLife(String manaCost, boolean xCost, int life, boolean cumulativeUpkeep) {
             String text = manaCost == null ? life + " life" : life > 0 ? manaCost + " and " + life + " life" : manaCost;
             CostEffect cost = manaCost == null ? new PayLifeCost(life)
-                    : new PayManaCost(manaCost, null, null, false, life, false, xCost);
+                    : new PayManaCost(manaCost, null, null, cumulativeUpkeep, life, false, xCost);
             return new Ransom(cost, "Pay " + text, "pays " + text, "pay " + text);
         }
 
@@ -176,6 +192,11 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         /** Whether mana spendable only on {X} may pay it. */
         public boolean xCost() {
             return cost instanceof PayManaCost mana && mana.announcedX();
+        }
+
+        /** Whether mana spendable only on cumulative upkeep costs may pay it. */
+        public boolean cumulativeUpkeep() {
+            return cost instanceof PayManaCost mana && mana.forCumulativeUpkeep();
         }
 
         /** The life paid with or instead of mana. */
@@ -468,7 +489,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 yield manaCost == null ? Ransom.unpayableMana() : Ransom.ofManaAndLife(manaCost, false, 0);
             }
             case PayManaCost mana -> Ransom.ofManaAndLife(manaCost(gameData, entry, mana), mana.announcedX(),
-                    mana.lifeAmount());
+                    mana.lifeAmount(), mana.forCumulativeUpkeep());
             case PayLifeCost life -> Ransom.ofManaAndLife(null, false, Math.max(0,
                     amountEvaluationService.evaluate(gameData, life.amount(),
                             amountContext(gameData, entry).withControllerId(payerId))));
@@ -488,8 +509,10 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
             }
             case SacrificeMultiplePermanentsCost sacrifice -> {
-                String what = countWord(sacrifice.count()) + " "
-                        + (sacrifice.description() == null ? "permanents" : sacrifice.description());
+                String what = sacrifice.count() == 1 && sacrifice.description() != null
+                        ? article(sacrifice.description())
+                        : countWord(sacrifice.count()) + " "
+                                + (sacrifice.description() == null ? "permanents" : sacrifice.description());
                 yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
             }
             case PutCounterOnControlledCreatureCost blight -> new Ransom(cost, "Blight " + blight.count(),
@@ -603,6 +626,47 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             case SacrificeCreaturesWithTotalPowerCost power -> {
                 String what = "creatures with total power " + power.totalPower() + " or greater";
                 yield new Ransom(cost, "Sacrifice " + what, "sacrifices " + what, "sacrifice " + what);
+            }
+            case FlipCoinsCost flip -> {
+                String coins = flip.count() == 1 ? "a coin" : countWord(flip.count()) + " coins";
+                yield new Ransom(cost, "Flip " + coins, "flips " + coins, "flip " + coins);
+            }
+            case OpponentCreatesTokensCost tokens -> {
+                String what = tokens.count() == 1 ? article(tokens.tokenTemplate().tokenName() + " token")
+                        : countWord(tokens.count()) + " " + tokens.tokenTemplate().tokenName() + " tokens";
+                yield new Ransom(cost, "Have an opponent create " + what, "has an opponent create " + what,
+                        "have an opponent create " + what);
+            }
+            case PutCounterOnOpponentCreatureCost counters -> {
+                String what = counters.count() == 1
+                        ? counters(1, counters.counterType()) + " on a creature an opponent controls"
+                        : counters(counters.count(), counters.counterType())
+                                + " on creatures an opponent controls, one at a time";
+                yield new Ransom(cost, "Put " + what, "puts " + what, "put " + what);
+            }
+            case DrawCardsCost draw -> {
+                String cards = draw.count() == 1 ? "a card" : countWord(draw.count()) + " cards";
+                yield new Ransom(cost, "Draw " + cards, "draws " + cards, "draw " + cards);
+            }
+            case ExileTopCardOfLibraryCost exile -> {
+                String what = exile.count() == 1 ? "the top card" : "the top " + countWord(exile.count()) + " cards";
+                yield new Ransom(cost, "Exile " + what + " of your library", "exiles " + what + " of their library",
+                        "exile " + what + " of their library");
+            }
+            case PutCardsFromSingleGraveyardOnBottomOfLibraryCost bottom -> {
+                String what = countWord(bottom.cardsPerPayment()) + " cards from a single graveyard"
+                        + (bottom.payments() == 1 ? "" : ", " + countWord(bottom.payments()) + " times,");
+                yield new Ransom(cost, "Put " + what + " on the bottom of their owner's library",
+                        "puts " + what + " on the bottom of their owner's library",
+                        "put " + what + " on the bottom of their owner's library");
+            }
+            case OpponentGainsLifeCost life -> new Ransom(cost, "Have an opponent gain " + life.amount() + " life",
+                    "has an opponent gain " + life.amount() + " life", "have an opponent gain " + life.amount()
+                            + " life");
+            case GainControlOfPermanentsCost control -> {
+                String what = control.count() == 1 ? "a permanent" : countWord(control.count()) + " permanents";
+                yield new Ransom(cost, "Gain control of " + what + " you don't control",
+                        "gains control of " + what, "gain control of " + what);
             }
             case AllOfCost allOf -> {
                 List<Ransom> parts = allOf.parts().stream().map(part -> ransom(gameData, entry, part, payerId))
@@ -764,7 +828,8 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         Ransom ransom = alternatives.get(asked);
         if (ransom.manaOrLife()) {
             // The mana and life as the question carried them: the payer may have tapped for it while asked.
-            ransom = Ransom.ofManaAndLife(ability.manaCost(), ransom.xCost(), ability.additionalLifeCost());
+            ransom = Ransom.ofManaAndLife(ability.manaCost(), ransom.xCost(), ability.additionalLifeCost(),
+                    ransom.cumulativeUpkeep());
         }
         StackEntry spell = unless.counters() || unless.retargets()
                 ? spellOnStack(gameData, ability.targetCardId()) : null;
@@ -797,8 +862,10 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 }
             } else {
                 outcome = costPayment.pay(gameData, player, ransom.cost(), payment);
-                if (outcome == ResolutionCostPaymentService.Outcome.ASKING && ransom.manaOrLife()) {
-                    // Lich's Duel Mastery's death replacements are chosen first; this answer is completed again.
+                if (outcome == ResolutionCostPaymentService.Outcome.ASKING
+                        && (ransom.manaOrLife() || ransom.cost() instanceof FlipCoinsCost)) {
+                    // Lich's Duel Mastery's death replacements, or Krark's Thumb's kept results, are chosen first;
+                    // this answer is completed again.
                     return false;
                 }
                 if (outcome != ResolutionCostPaymentService.Outcome.NOT_PAID) {

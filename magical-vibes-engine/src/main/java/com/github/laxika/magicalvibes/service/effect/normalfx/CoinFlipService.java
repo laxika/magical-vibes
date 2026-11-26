@@ -64,6 +64,10 @@ public class CoinFlipService {
     @Lazy
     private InputCompletionService inputCompletionService;
 
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService mayAbilityHandlerService;
+
     public CoinFlipResult flip(GameData gameData, UUID playerId) {
         return flipCoins(gameData, playerId, 1).getFirst();
     }
@@ -206,6 +210,11 @@ public class CoinFlipService {
         }
         gameData.pendingCoinFlipChoiceReplay = null;
         switch (replay) {
+            case GameData.MayAnswerReplay answerReplay
+                    when mayEffectHandlerRegistry.getHandler(answerReplay.ability().effects().getFirst()) == null ->
+                    // An "unless" answer (a cumulative upkeep's coin flips) is answered for the resolution waiting on it.
+                    mayAbilityHandlerService.completeResolutionTimeMayChoiceAgain(gameData, answerReplay.player(),
+                            answerReplay.accepted(), answerReplay.ability());
             case GameData.MayAnswerReplay answerReplay ->
                     mayEffectHandlerRegistry.getHandler(answerReplay.ability().effects().getFirst())
                             .handle(gameData, answerReplay.player(), answerReplay.accepted(), answerReplay.ability());

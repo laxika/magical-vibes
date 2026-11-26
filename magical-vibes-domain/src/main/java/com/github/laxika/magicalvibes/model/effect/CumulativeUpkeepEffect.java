@@ -51,6 +51,7 @@ import java.util.List;
  *     permanent-based cost
  * @param opponentCreatureCounterTypePerAge counter put on an opponent's creature once per age
  *     counter, or null for other costs
+ * @param sacrificeNoun what a sacrifice cost sacrifices, in the singular ("land", "creature"), for its words
  */
 public record CumulativeUpkeepEffect(
         String costPerAge,
@@ -67,7 +68,8 @@ public record CumulativeUpkeepEffect(
         List<CardEffect> unpaidEffects,
         List<CardEffect> paidEffects,
         boolean flipCoinPerAge,
-        CounterType opponentCreatureCounterTypePerAge)
+        CounterType opponentCreatureCounterTypePerAge,
+        String sacrificeNoun)
         implements CardEffect {
 
     public CumulativeUpkeepEffect {
@@ -184,7 +186,7 @@ public record CumulativeUpkeepEffect(
             int opponentLifeGainPerAge, List<CardEffect> unpaidEffects, List<CardEffect> paidEffects) {
         this(costPerAge, sacrificeFilter, null, lifePerAge, exileTopCardsPerAge, opponentTokenPerAge,
                 drawCardsPerAge, counterTypePerAge, discardCardsPerAge, putCardsFromSingleGraveyardPerAge,
-                opponentLifeGainPerAge, unpaidEffects, paidEffects, false, null);
+                opponentLifeGainPerAge, unpaidEffects, paidEffects, false, null, null);
     }
 
     /** Compatibility constructor for the current full cumulative-upkeep shape. */
@@ -195,7 +197,7 @@ public record CumulativeUpkeepEffect(
             List<CardEffect> unpaidEffects, List<CardEffect> paidEffects) {
         this(costPerAge, sacrificeFilter, gainControlFilter, lifePerAge, exileTopCardsPerAge,
                 opponentTokenPerAge, drawCardsPerAge, counterTypePerAge, discardCardsPerAge,
-                putCardsFromSingleGraveyardPerAge, opponentLifeGainPerAge, unpaidEffects, paidEffects, false, null);
+                putCardsFromSingleGraveyardPerAge, opponentLifeGainPerAge, unpaidEffects, paidEffects, false, null, null);
     }
 
     /**
@@ -214,10 +216,13 @@ public record CumulativeUpkeepEffect(
                 List.of(), paidEffects);
     }
 
-    /** Cumulative upkeep — sacrifice a permanent matching {@code filter} per age counter. */
-    public static CumulativeUpkeepEffect sacrifice(PermanentPredicate filter) {
-        return new CumulativeUpkeepEffect(null, filter, 0, false, null, false, null, false, 0, 0,
-                List.of(), List.of());
+    /**
+     * Cumulative upkeep — sacrifice a {@code noun} ("land", "creature") matching {@code filter} per age counter (Polar
+     * Kraken, Phyrexian Soulgorger).
+     */
+    public static CumulativeUpkeepEffect sacrifice(PermanentPredicate filter, String noun) {
+        return new CumulativeUpkeepEffect(null, filter, null, 0, false, null, false, null, false, 0, 0,
+                List.of(), List.of(), false, null, java.util.Objects.requireNonNull(noun, "noun"));
     }
 
     /** Cumulative upkeep — gain control of a matching permanent per age counter. */
@@ -286,13 +291,13 @@ public record CumulativeUpkeepEffect(
     /** Cumulative upkeep — flip a coin once per age counter (Karplusan Minotaur). */
     public static CumulativeUpkeepEffect flipCoin() {
         return new CumulativeUpkeepEffect(null, null, null, 0, false, null, false, null,
-                false, 0, 0, List.of(), List.of(), true, null);
+                false, 0, 0, List.of(), List.of(), true, null, null);
     }
 
     /** Cumulative upkeep — put a counter on a creature an opponent controls per age counter. */
     public static CumulativeUpkeepEffect putCounterOnOpponentCreature(CounterType counterType) {
         return new CumulativeUpkeepEffect(null, null, null, 0, false, null, false, null,
-                false, 0, 0, List.of(), List.of(), false, counterType);
+                false, 0, 0, List.of(), List.of(), false, counterType, null);
     }
 
     public boolean isSacrificeCost() {

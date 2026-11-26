@@ -1195,13 +1195,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleForcedCostOrElse(GameData gameData, UUID permanentId,
-                                       PermanentChoiceContext.ForcedCostOrElse context) {
-        destructionSupport.completeForcedCostOrElse(gameData, permanentId, context);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleMaySacrificeForCounterOnSource(GameData gameData, UUID permanentId,
                                                      PermanentChoiceContext.MaySacrificeForCounterOnSource context) {
         if (context.counterAmount() instanceof SacrificedPermanentPower) {

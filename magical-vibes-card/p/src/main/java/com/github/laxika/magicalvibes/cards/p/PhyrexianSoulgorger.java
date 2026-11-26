@@ -12,6 +12,6 @@ public class PhyrexianSoulgorger extends Card {
 
     public PhyrexianSoulgorger() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                CumulativeUpkeepEffect.sacrifice(new PermanentIsCreaturePredicate()));
+                CumulativeUpkeepEffect.sacrifice(new PermanentIsCreaturePredicate(), "creature"));
     }
 }

@@ -98,9 +98,6 @@ public class MultiPermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService resolutionCostPaymentService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
-    private com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
-    @org.springframework.beans.factory.annotation.Autowired
-    @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
             triggeredAbilityStackService;
 
@@ -784,8 +781,6 @@ public class MultiPermanentChoiceHandlerService {
             // pay made. A sacrifice is completed after its death replacements are asked (below).
             resolutionCostPaymentService.completeMultiPermanentChoice(gameData, playerId, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.ForcedCostWaterbendPayment ctx) {
-            handleForcedCostWaterbendPayment(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapPermanentsForAmount ctx) {
             handleUntapPermanentsForAmount(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand ctx) {
@@ -1385,21 +1380,6 @@ public class MultiPermanentChoiceHandlerService {
         log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped);
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleForcedCostWaterbendPayment(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                                  MultiPermanentChoiceContext.ForcedCostWaterbendPayment ctx) {
-        if (permanentIds.size() < ctx.minimumTaps()) {
-            throw new IllegalStateException("Must tap at least " + ctx.minimumTaps()
-                    + " permanents (the rest of the cost is paid with mana)");
-        }
-        waterbendPaymentService.pay(gameData, playerId, ctx.amount(), ctx.ability().sourceCard(), permanentIds);
-        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
-                + " pays {" + ctx.amount() + "} using waterbend."));
-        log.info("Game {} - {} pays waterbend {}", gameData.id, playerId, ctx.amount());
-        forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ctx.ability(), ctx.effect(), 0);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleUntapChosenPermanents(GameData gameData, UUID playerId, List<UUID> permanentIds,

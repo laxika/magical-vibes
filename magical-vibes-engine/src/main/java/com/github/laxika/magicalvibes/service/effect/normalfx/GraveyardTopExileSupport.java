@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
  * append-ordered, so the top is its last element; a {@code requiredType} filter walks upward from
  * there and returns the first matching card, skipping nonmatching cards above it.
  *
- * <p>Used by the {@code ExileTopCardOfGraveyardCost} side of {@code ForcedCostOrElseEffect}
+ * <p>Used by the {@code ExileTopCardOfGraveyardCost} side of {@code UnlessPaysEffect}
  * (Barrow Ghoul).</p>
  */
 @Slf4j

@@ -61,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
@@ -805,9 +804,9 @@ class StepTriggerServiceTest {
             Permanent host = new Permanent(createCardWithName("Host Creature"));
             gd.playerBattlefields.get(player1Id).add(host);
             when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(host), any(), any())).thenReturn(List.of(
-                    new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
-                            new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
-                            List.of(new TargetPlayerGainsControlOfSourceCreatureEffect()), true))
+                    new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay(
+                            new SacrificePermanentCost(new PermanentIsLandPredicate(), "land"),
+                            new TargetPlayerGainsControlOfSourceCreatureEffect()))
                             .withTargetFilter(new PlayerPredicateTargetFilter(
                                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                     "Target must be an opponent"))));

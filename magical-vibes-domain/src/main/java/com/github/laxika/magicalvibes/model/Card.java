@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
@@ -1043,12 +1042,6 @@ public class Card {
             case UnlessPaysEffect e -> {
                 bindEffectToTargetGroup(e.ifNotPaid(), targetIndex);
                 if (e.ifPaid() != null) bindEffectToTargetGroup(e.ifPaid(), targetIndex);
-            }
-            case ForcedCostOrElseEffect e -> {
-                e.paidEffects().forEach(innerEffect -> bindEffectToTargetGroup(innerEffect, targetIndex));
-                if (e.elseEffects() != null) {
-                    e.elseEffects().forEach(innerEffect -> bindEffectToTargetGroup(innerEffect, targetIndex));
-                }
             }
             case RollD20Effect e -> {
                 if (e.zeroOrLess() != null) bindEffectToTargetGroup(e.zeroOrLess(), targetIndex);

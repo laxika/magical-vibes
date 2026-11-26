@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Decomposition.class, FeralShadow.class, IronTuskElephant.class})
 class DecompositionTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     private void enchant(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Decomposition());
@@ -184,7 +191,8 @@ class DecompositionTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         assertThat(shadow.getCounterCount(CounterType.AGE)).isEqualTo(4);
-        harness.handleMayAbilityChosen(player2, true);
+        // A payer who can't pay the life isn't asked (CR 119.4, 118.3).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Feral Shadow");

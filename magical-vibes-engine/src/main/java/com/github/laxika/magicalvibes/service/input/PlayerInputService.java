@@ -1880,22 +1880,6 @@ public class PlayerInputService {
                 gameData.id, playerId, tokenIds.getFirst());
     }
 
-    public void beginRemoveCountersFromForcedCostOrElseChoice(GameData gameData,
-            PendingMayAbility ability,
-            com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
-            UUID payerId, int remaining,
-            Map<String, ChoiceContext.CounterSelection> permanentOptions) {
-        ChoiceContext.RemoveCountersFromForcedCostOrElse context =
-                new ChoiceContext.RemoveCountersFromForcedCostOrElse(
-                        ability, effect, payerId, remaining, permanentOptions);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                payerId, null, null, context, context.options(),
-                ability.sourceCard().getName() + " - Choose a permanent to remove a counter from ("
-                        + remaining + " remaining)."));
-        log.info("Game {} - Awaiting {} to choose a permanent from which to remove a counter",
-                gameData.id, payerId);
-    }
-
     public void beginRemoveOneCounterChoice(GameData gameData, UUID playerId, UUID targetId,
                                              String sourceCardName, List<CounterType> counterTypes) {
         beginRemoveOneCounterChoice(gameData, playerId, targetId, sourceCardName, counterTypes, true);

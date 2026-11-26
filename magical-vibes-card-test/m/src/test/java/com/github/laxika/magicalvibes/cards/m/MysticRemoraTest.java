@@ -12,19 +12,21 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MysticRemora.class, IcyManipulator.class, BalduvianBears.class, Island.class})
+@CardUsed({MysticRemora.class, IcyManipulator.class, BalduvianBears.class, Island.class, ManaFlare.class})
 class MysticRemoraTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying cumulative upkeep keeps Mystic Remora")
     void paysCumulativeUpkeep() {
         Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+        giveManaSource(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -42,6 +44,7 @@ class MysticRemoraTest extends BaseCardTest {
     @DisplayName("Second cumulative upkeep requires two mana")
     void secondUpkeepRequiresTwoMana() {
         Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+        giveManaSource(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -62,6 +65,7 @@ class MysticRemoraTest extends BaseCardTest {
     @DisplayName("Declining cumulative upkeep sacrifices Mystic Remora")
     void declineSacrifices() {
         Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+        giveManaSource(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -263,6 +267,7 @@ class MysticRemoraTest extends BaseCardTest {
     @DisplayName("Cumulative upkeep counts existing age counters and spends the full payment")
     void upkeepCountsExistingAgeCounters() {
         Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+        giveManaSource(player1);
         remora.setCounterCount(CounterType.AGE, 2);
 
         advanceToUpkeep(player1);
@@ -292,6 +297,64 @@ class MysticRemoraTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Nested
+    @DisplayName("Cumulative upkeep payment")
+    class CumulativeUpkeepPayment {
+
+        @Test
+        @DisplayName("An age counter removed while the ability waits is not paid for: the counters are read as it resolves")
+        void countersAreReadAsTheAbilityResolves() {
+            Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+            giveManaSource(player1);
+            remora.setCounterCount(CounterType.AGE, 1);
+
+            advanceToUpkeep(player1);
+            remora.setCounterCount(CounterType.AGE, 0);
+            harness.passBothPriorities();
+
+            assertThat(remora.getCounterCount(CounterType.AGE)).isEqualTo(1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(remora);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        }
+
+        @Test
+        @DisplayName("Mana Flare's additional mana made while asked pays for two age counters")
+        void manaFlaresExtraManaPays() {
+            harness.addToBattlefield(player1, new Island());
+            harness.addToBattlefield(player1, new ManaFlare());
+            Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+            remora.setCounterCount(CounterType.AGE, 1);
+
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            gs.tapPermanent(gd, player1, 0);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(remora.getCounterCount(CounterType.AGE)).isEqualTo(2);
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(remora);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        }
+
+        @Test
+        @DisplayName("A controller with no mana and no mana source isn't asked, and Mystic Remora is sacrificed")
+        void payerWithNoManaSourceIsNotAsked() {
+            Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(remora);
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(remora.getCard());
+        }
     }
 
     private void setupOpponentCastsNoncreatureWithMana(int remoraCount) {

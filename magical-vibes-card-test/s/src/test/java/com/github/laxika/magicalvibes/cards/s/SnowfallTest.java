@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Snowfall.class, Island.class, SnowCoveredIsland.class, Mountain.class, BalduvianBears.class,
         QuicksilverFountain.class, Piracy.class})
 class SnowfallTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Tapping an Island adds one cumulative-upkeep-only blue")

@@ -16,7 +16,7 @@ import java.util.Objects;
  * carries several allowed kinds of counters, the payer chooses the kind of each counter removed for an activated
  * ability's cost.
  *
- * <p>Used both as the payable side of a {@link ForcedCostOrElseEffect} and as an activated-ability
+ * <p>Used both as the payable side of a {@link UnlessPaysEffect} and as an activated-ability
  * cost. When used for an activated ability, the controller chooses one of their counter-bearing
  * permanents through the standard permanent-choice cost flow. {@code permanentFilter}, when
  * present, further restricts which permanents may pay the cost.

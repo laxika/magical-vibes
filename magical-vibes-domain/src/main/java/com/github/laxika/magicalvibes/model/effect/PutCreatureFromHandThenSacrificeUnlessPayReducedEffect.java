@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Reuses the hand-to-battlefield card choice ({@link PutCardToBattlefieldEffect}'s machinery). The
  * chosen creature enters normally; then a resolution-time pay-or-sacrifice prompt — a
- * {@link ForcedCostOrElseEffect} with {@link PayManaCost} (the entering creature's mana cost reduced by
+ * {@link UnlessPaysEffect} with {@link PayManaCost} (the entering creature's mana cost reduced by
  * {@code genericReduction}) and a {@link SacrificeSelfEffect} penalty — charges the reduced cost or
  * sacrifices the creature.
  *

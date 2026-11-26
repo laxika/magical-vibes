@@ -41,7 +41,10 @@ import java.util.Objects;
  * {@link RemoveCounterFromControlledPermanentCost}, {@link PutCardsFromGraveyardOnBottomOfLibraryCost},
  * {@link ReturnCardFromGraveyardToHandCost}, {@link MillControllerCost}, {@link PutTypedCounterOnSourceCost},
  * {@link PayEchoCost} (echo's cost, paid as the cost it names as it resolves, with a "rather than pay the echo cost"
- * alternative as an any-of choice), {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
+ * alternative as an any-of choice), the cumulative upkeep costs ({@link FlipCoinsCost}, {@link OpponentCreatesTokensCost},
+ * {@link PutCounterOnOpponentCreatureCost}, {@link DrawCardsCost}, {@link ExileTopCardOfLibraryCost},
+ * {@link PutCardsFromSingleGraveyardOnBottomOfLibraryCost}, {@link OpponentGainsLifeCost},
+ * {@link GainControlOfPermanentsCost}, each once for each age counter), {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
  * factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter target spell unless its controller pays
  * {3}" and ward {3}.
  *
@@ -154,6 +157,14 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             case MillControllerCost ignored -> true;
             case PutTypedCounterOnSourceCost ignored -> true;
             case PayEchoCost echo -> echoPayable(echo);
+            case FlipCoinsCost ignored -> true;
+            case OpponentCreatesTokensCost ignored -> true;
+            case PutCounterOnOpponentCreatureCost ignored -> true;
+            case DrawCardsCost ignored -> true;
+            case ExileTopCardOfLibraryCost exile -> !exile.imprintOnSource();
+            case PutCardsFromSingleGraveyardOnBottomOfLibraryCost ignored -> true;
+            case OpponentGainsLifeCost ignored -> true;
+            case GainControlOfPermanentsCost ignored -> true;
             default -> false;
         };
         if (!payable) {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Musician.class, BalduvianBears.class, DarksteelSentinel.class, Plains.class})
 class MusicianTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     private Permanent addReadyMusician(Player player) {
         return addCreatureReady(player, new Musician());

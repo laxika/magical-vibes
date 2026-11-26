@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PolarKraken.class, Island.class, BalduvianBears.class})
 class PolarKrakenTest extends BaseCardTest {
+
+    @BeforeEach
+    void giveBothPlayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     private long landsControlledBy(UUID playerId) {
         return gd.playerBattlefields.get(playerId).stream()
@@ -50,6 +57,8 @@ class PolarKrakenTest extends BaseCardTest {
         assertThat(kraken.getCounterCount(CounterType.AGE)).isEqualTo(1);
 
         harness.handleMayAbilityChosen(player1, true);
+        // The lone land is the shared sacrifice pick.
+        answerForcedPick(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(kraken);
         assertThat(landsControlledBy(player1.getId())).isEqualTo(0);
@@ -154,10 +163,11 @@ class PolarKrakenTest extends BaseCardTest {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new PolarKraken());
         harness.addToBattlefield(player1, new Island());
 
-        // First upkeep: exactly one land — auto-sacrificed on accept.
+        // First upkeep: exactly one land — the shared sacrifice pick.
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
         assertThat(kraken.getCounterCount(CounterType.AGE)).isEqualTo(1);
         assertThat(landsControlledBy(player1.getId())).isEqualTo(0);
 
@@ -171,7 +181,8 @@ class PolarKrakenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        // Exactly two lands — both auto-sacrificed.
+        // Exactly two lands — both are the shared sacrifice pick.
+        answerForcedPick(player1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(kraken);
         assertThat(landsControlledBy(player1.getId())).isEqualTo(0);

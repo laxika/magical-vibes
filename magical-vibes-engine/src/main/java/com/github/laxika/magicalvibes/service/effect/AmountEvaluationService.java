@@ -1225,6 +1225,9 @@ public class AmountEvaluationService {
         if (thisWay.stat() == AmountThisWay.Stat.FROM_HAND) {
             return results.outcome(StepKind.EXILE).fromHand();
         }
+        if (!thisWay.manaColors().isEmpty()) {
+            return results.outcome(StepKind.PAY_MANA).manaOf(thisWay.manaColors());
+        }
         if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.filter() == null && !thisWay.yours()
                 && !thisWay.includesUnremoved()) {
             return results.outcome(thisWay.kind()).amount();

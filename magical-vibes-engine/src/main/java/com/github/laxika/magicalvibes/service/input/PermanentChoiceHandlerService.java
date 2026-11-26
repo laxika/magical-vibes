@@ -423,8 +423,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.ExploitSacrifice
                 || context instanceof PermanentChoiceContext.SacrificePermanentThen
                 || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
-                || context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCost
-                        && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
                 || context instanceof PermanentChoiceContext.TormentSacrifice
                 || context instanceof PermanentChoiceContext.LandEquilibriumSacrifice
                 || context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature
@@ -511,8 +509,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
             case PermanentChoiceContext.MaySacrificeForCounterOnSource msfc ->
                     battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
-            case PermanentChoiceContext.ForcedCostOrElse forcedCostOrElse ->
-                    battlefieldHandler.handleForcedCostOrElse(gameData, permanentId, forcedCostOrElse);
             case PermanentChoiceContext.TormentSacrifice tormentSacrifice ->
                     battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
             case PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken ->
@@ -609,8 +605,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachTargetAuraToAnotherPermanentWithSameController(gameData, permanentId, attachAura);
         } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
             battlefieldHandler.handleLegendRule(gameData, playerId, permanentId, legendRule);
-        } else if (context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCostOrElse) {
-            battlefieldHandler.handleForcedCostOrElse(gameData, permanentId, forcedCostOrElse);
         } else if (context instanceof PermanentChoiceContext.DealDamageToOneOfTwoThenOtherCantBlock dealDamage) {
             battlefieldHandler.handleDealDamageToOneOfTwoThenOtherCantBlock(gameData, permanentId, dealDamage);
         } else if (context instanceof PermanentChoiceContext.PackHuntDamageAssignment packHunt) {

@@ -17,6 +17,6 @@ public class PolarKraken extends Card {
         addStaticEffect(new EntersTappedEffect());
         // Cumulative upkeep—Sacrifice a land.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                CumulativeUpkeepEffect.sacrifice(new PermanentIsLandPredicate()));
+                CumulativeUpkeepEffect.sacrifice(new PermanentIsLandPredicate(), "land"));
     }
 }

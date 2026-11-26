@@ -182,7 +182,7 @@ class GlacialChasmTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot pay cumulative upkeep when life total is too low")
+    @DisplayName("A controller whose life is too low for the cumulative upkeep isn't asked, and Glacial Chasm is sacrificed")
     void cannotPayUpkeepWhenLifeIsInsufficient() {
         Permanent chasm = harness.addToBattlefieldAndReturn(player1, new GlacialChasm());
         chasm.setCounterCount(CounterType.AGE, 1);
@@ -190,7 +190,8 @@ class GlacialChasmTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(chasm);
         harness.assertInGraveyard(player1, "Glacial Chasm");

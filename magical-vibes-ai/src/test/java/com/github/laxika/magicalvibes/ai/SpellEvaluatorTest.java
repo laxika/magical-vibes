@@ -1695,4 +1695,19 @@ class SpellEvaluatorTest {
         assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.PayEchoCost("{2}"),
                 payer)).isZero();
     }
+
+    @Test
+    @DisplayName("Cumulative upkeep ransoms that give an opponent something are not free; drawing a card costs nothing")
+    void cumulativeUpkeepRansomsArePriced() {
+        java.util.UUID payer = player2.getId();
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost(2),
+                payer)).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.FlipCoinsCost(2),
+                payer)).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd,
+                new com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost(
+                        com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 1), payer)).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.DrawCardsCost(1),
+                payer)).isZero();
+    }
 }
