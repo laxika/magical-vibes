@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +30,7 @@ public class VerdantDread extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}{G}",
-                List.of(new ConjureCardNamedOntoBattlefieldEffect("YDSK", "17")),
+                List.of(ConjureCardsEffect.named("YDSK", "17", ConjureDestination.ontoBattlefield())),
                 "{3}{G}{G}: Conjure a card named Verdant Dread onto the battlefield. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

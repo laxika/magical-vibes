@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -48,7 +49,7 @@ public class BrazenBoarding extends Card {
                 .addSpellEffect(new ConditionalEffect(
                         new EventValueAtLeast(1), SequenceEffect.of(
                                 new ConditionalEffect(new EventValueAtLeast(4),
-                                        new ConjureCardToBattlefieldEffect("XLN", "217")),
+                                        ConjureCardsEffect.named("XLN", "217", ConjureDestination.ontoBattlefield())),
                                 new ConditionalEffect(new NotCondition(new EventValueAtLeast(4)),
                                         new ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect(
                                                 SPELLBOOK, new EventValue())))));

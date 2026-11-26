@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BessSoulNourisher;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarwynsKindred.class, MarwynTheNurturer.class, LlanowarElves.class, Eviscerate.class})
+@CardUsed({BessSoulNourisher.class, MarwynsKindred.class, MarwynTheNurturer.class, LlanowarElves.class, Eviscerate.class})
 class MarwynsKindredTest extends BaseCardTest {
 
     @Test
@@ -89,5 +91,19 @@ class MarwynsKindredTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Marwyn, the Nurturer");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Marwyn and the Llanowar Elves enter together, so a \"one or more 1/1 creatures enter\" ability triggers once")
+    void marwynAndTheElvesEnterAsOneEvent() {
+        Permanent bess = harness.addToBattlefieldAndReturn(player1, new BessSoulNourisher());
+        harness.setHand(player1, List.of(new MarwynsKindred()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(bess.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

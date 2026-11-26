@@ -30,6 +30,16 @@ class GraveStudiesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The log names the player who conjures Teacher's Pest onto the battlefield")
+    void logsThePlayerWhoConjures() {
+        harness.castFromHand(player1, new GraveStudies(), "{B}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                gd.playerIdToName.get(player1.getId()) + " conjures Teacher's Pest onto the battlefield."));
+    }
+
+    @Test
     @DisplayName("Resolves with no opposing creatures and leaves a returnable conjured card")
     void emptyOpponentBattlefieldStillSacrificesConjuredCard() {
         harness.castFromHand(player1, new GraveStudies(), "{B}{G}");

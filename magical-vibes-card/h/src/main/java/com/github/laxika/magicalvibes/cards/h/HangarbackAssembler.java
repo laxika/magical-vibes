@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +30,7 @@ public class HangarbackAssembler extends Card {
     public HangarbackAssembler() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
-                        new ConjureCardToBattlefieldEffect("ORI", "229"),
+                        ConjureCardsEffect.named("ORI", "229", ConjureDestination.ontoBattlefield()),
                         new PutCountersEffect(Subjects.createdThisResolution(),
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
 

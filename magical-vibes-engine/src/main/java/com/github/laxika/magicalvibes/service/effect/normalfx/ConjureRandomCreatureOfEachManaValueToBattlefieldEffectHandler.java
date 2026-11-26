@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureOfEachManaValueToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -50,7 +51,11 @@ public class ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler
         for (int manaValue = 1; manaValue <= maxManaValue; manaValue++) {
             findRandomCreaturePrinting(manaValue).ifPresent(printings::add);
         }
-        List<CardEffect> conjures = ConjureCardToBattlefieldEffect.asOneEvent(printings);
+        if (printings.isEmpty()) {
+            return;
+        }
+        // One conjure step: the creatures enter together, as one conjure (CR 603.6a, 603.2c).
+        List<CardEffect> conjures = List.of(ConjureCardsEffect.eachOf(printings, ConjureDestination.ontoBattlefield()));
 
         int index = entry.getEffectsToResolve().indexOf(effect);
         if (index < 0) {

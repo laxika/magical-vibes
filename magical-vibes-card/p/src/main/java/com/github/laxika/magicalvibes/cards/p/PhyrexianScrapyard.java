@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -45,7 +46,7 @@ public class PhyrexianScrapyard extends Card {
                                         new PermanentIsLandPredicate(),
                                         new PermanentNamedPredicate("Phyrexian Scrapyard")
                                 ))),
-                        new ConjureCardToBattlefieldEffect("M15", "231")
+                        ConjureCardsEffect.named("M15", "231", ConjureDestination.ontoBattlefield())
                 ),
                 "{2}, {T}, Sacrifice three lands named Phyrexian Scrapyard: Conjure a card named Soul of New "
                         + "Phyrexia onto the battlefield. Activate only as a sorcery.",

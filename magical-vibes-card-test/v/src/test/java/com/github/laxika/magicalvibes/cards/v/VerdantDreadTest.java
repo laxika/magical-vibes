@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -245,5 +246,23 @@ class VerdantDreadTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard() instanceof VerdantDread)
                 .hasSize(2);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The conjured Verdant Dread is owned by the player who conjured it")
+    void conjuredVerdantDreadIsOwnedByItsConjurer() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new VerdantDread());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null);
+        resolveAllTriggers();
+
+        Permanent conjured = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof VerdantDread && permanent != original)
+                .findFirst().orElseThrow();
+        assertThat(conjured.getCard().isConjured()).isTrue();
+        assertThat(conjured.getCard().getOwnerId()).isEqualTo(player1.getId());
     }
 }

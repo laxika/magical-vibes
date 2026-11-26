@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardFromSpellbookToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardFromSpellbookToHandEffect.CardPrintingReference;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,10 +33,10 @@ public class SwineRebellion extends Card {
     public SwineRebellion() {
         addSpellEffect(new ConditionalEffect(
                 new ControlsDistinctPermanentNamesCount(3, BOAR),
-                SequenceEffect.of(
-                        new ConjureCardToBattlefieldEffect("YWOE", "18"),
-                        new ConjureCardToBattlefieldEffect("YWOE", "24"),
-                        new ConjureCardToBattlefieldEffect("YWOE", "28"))));
+                ConjureCardsEffect.eachOf(List.of(
+                        new DraftFromSpellbookEffect.SpellbookCard("YWOE", "18"),
+                        new DraftFromSpellbookEffect.SpellbookCard("YWOE", "24"),
+                        new DraftFromSpellbookEffect.SpellbookCard("YWOE", "28")), ConjureDestination.ontoBattlefield())));
 
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new ControlsDistinctPermanentNamesCount(3, BOAR)),

@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +29,7 @@ public class FurgulQuagNurturer extends Card {
                         new ControlsPermanentCountAtMost(0,
                                 new PermanentHasSubtypePredicate(CardSubtype.LEECH)),
                         PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSubtypePredicate(CardSubtype.LEECH)),
-                        new ConjureCardNamedOntoBattlefieldEffect("MKM", "104")));
+                        ConjureCardsEffect.named("MKM", "104", ConjureDestination.ontoBattlefield())));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

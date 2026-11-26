@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardSet;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -41,7 +44,11 @@ import java.util.stream.IntStream;
  * Resolves {@link ConjureCardsEffect}: builds the new cards, owned by the player whose zone gets them, puts each into
  * the destination zone, and records {@link StepKind#CONJURE} with each card in the zone it is in afterwards (a
  * replacement may have sent it elsewhere). Each conjuring player's cards are one conjure event, each round of a
- * repeated conjure its own. It never prompts, so a later step of the same resolution may read it.
+ * repeated conjure its own (CR 603.2c). It never prompts, so a later step of the same resolution may read it.
+ *
+ * <p>Onto the battlefield, every card of the step enters as one entry batch from outside the game, under its owner's
+ * control (CR 603.6a), whose choices are asked at the end of the step; the batch adds each permanent to the CONJURE
+ * step and to the entry's created permanents as it enters.
  */
 @Component
 @RequiredArgsConstructor
@@ -54,6 +61,8 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
     private final ExileService exileService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final BattlefieldEntryService battlefieldEntryService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -66,6 +75,12 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
         int count = Math.max(0, amountEvaluationService.evaluate(
                 gameData, conjure.count(), AmountContext.forStackEntry(entry, null)));
         List<UUID> owners = subjectResolutionService.players(gameData, entry, conjure, conjure.owners());
+        boolean battlefield = conjure.destination().zone() == Zone.BATTLEFIELD;
+        if (battlefield) {
+            entry.recordStep(StepKind.CONJURE, StepOutcome.NONE);
+        }
+        boolean tapped = conjure.destination().tapped()
+                || MakeCreatedPermanentsAttackingEffectHandler.entersTappedAndAttacking(entry);
 
         List<UUID> cardIds = new ArrayList<>();
         List<MovedCard> moved = new ArrayList<>();
@@ -73,6 +88,8 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
         while (!round.isEmpty()) {
             Map<UUID, Integer> conjuredBy = new LinkedHashMap<>();
             List<UUID> again = new ArrayList<>();
+            List<BattlefieldEntryCard> entering = new ArrayList<>();
+            List<Runnable> logs = new ArrayList<>();
             for (UUID ownerId : round) {
                 UUID conjurerId = conjure.ownersConjure() ? ownerId : entry.getControllerId();
                 int handBefore = handSize(gameData, ownerId);
@@ -86,15 +103,26 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
                         made.add(card);
                     }
                 }
-                put(gameData, entry, ownerId, made, conjure.destination());
-                for (Card card : made) {
-                    Zone zone = zoneOf(gameData, card);
-                    if (zone != null) {
-                        cardIds.add(card.getId());
-                        moved.add(new MovedCard(card.getId(), card.getId(), zone, ownerId));
+                if (battlefield) {
+                    for (Card card : made) {
+                        UUID controllerId = battlefieldEntryService.resolveEnteringController(
+                                gameData, ownerId, new Permanent(card, Zone.OUTSIDE_GAME));
+                        entering.add(new BattlefieldEntryCard(controllerId, ownerId, card, Zone.OUTSIDE_GAME, null)
+                                .withTapped(tapped).recordingConjure());
                     }
+                    groups.forEach(group -> logs.add(
+                            () -> log(gameData, conjurerId, ownerId, group, conjure.destination())));
+                } else {
+                    put(gameData, entry, ownerId, made, conjure.destination());
+                    for (Card card : made) {
+                        Zone zone = zoneOf(gameData, card);
+                        if (zone != null) {
+                            cardIds.add(card.getId());
+                            moved.add(new MovedCard(card.getId(), card.getId(), zone, ownerId));
+                        }
+                    }
+                    groups.forEach(group -> log(gameData, conjurerId, ownerId, group, conjure.destination()));
                 }
-                groups.forEach(group -> log(gameData, conjurerId, ownerId, group, conjure.destination()));
                 conjuredBy.merge(conjurerId, made.size(), Integer::sum);
                 if (conjure.repeatWhileHandSmallerThan() != null && handSize(gameData, ownerId) > handBefore
                         && handSize(gameData, ownerId) < amountEvaluationService.evaluate(gameData,
@@ -103,8 +131,15 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
                     again.add(ownerId);
                 }
             }
+            logs.forEach(Runnable::run);
+            if (!entering.isEmpty()) {
+                battlefieldEntryBatchSupport.begin(gameData, entering);
+            }
             conjuredBy.forEach((playerId, made) -> ActionEvents.conjured(gameData, playerId, made));
             round = again;
+        }
+        if (battlefield) {
+            return;
         }
         List<UUID> players = moved.stream().map(MovedCard::ownerId).distinct().toList();
         entry.recordStep(StepKind.CONJURE, cardIds.isEmpty() ? StepOutcome.NONE
@@ -151,6 +186,26 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
                 }
                 if (!picks.isEmpty()) {
                     groups.add(new Group(null, picks, true, false));
+                }
+            }
+            case ConjureCardsEffect.EachOf each -> {
+                // The text names each printing, so each one's cards may be named, together on one line.
+                for (ConjureCardsEffect.EachOf.Printing part : each.printings()) {
+                    if (!isImplemented(part.printing())) {
+                        continue;
+                    }
+                    int cards = Math.max(0, amountEvaluationService.evaluate(gameData, part.count(),
+                            AmountContext.forStackEntry(entry, null))) * count;
+                    List<Card> made = new ArrayList<>(cards);
+                    for (int i = 0; i < cards; i++) {
+                        Card card = cardCatalog.findByCollectorNumber(CardSet.findByCode(part.printing().setCode()),
+                                part.printing().collectorNumber()).createCard();
+                        card.setConjured(true);
+                        made.add(card);
+                    }
+                    if (!made.isEmpty()) {
+                        groups.add(new Group(null, made, true, false));
+                    }
                 }
             }
             case ConjureCardsEffect.DuplicatesOf of -> {
@@ -265,6 +320,7 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
             case HAND -> " into " + whose + " hand.";
             case GRAVEYARD -> " into " + whose + " graveyard.";
             case LIBRARY -> " into " + whose + " library.";
+            case BATTLEFIELD -> " onto the battlefield.";
             default -> " into exile.";
         };
         boolean publicZone = destination.zone() != Zone.LIBRARY && destination.zone() != Zone.HAND;

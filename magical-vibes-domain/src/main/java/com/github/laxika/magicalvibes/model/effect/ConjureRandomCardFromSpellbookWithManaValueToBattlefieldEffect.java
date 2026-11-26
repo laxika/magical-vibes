@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * "Conjure a random card from [this]'s spellbook onto the battlefield", "... with mana value X": one random implemented
  * printing of {@code spellbook}, of mana value {@code manaValue} as it resolves when one is given, conjured onto the
- * battlefield by a {@link ConjureCardToBattlefieldEffect} step inserted after this one, so a later step reads it as
+ * battlefield by a {@link ConjureCardsEffect} step inserted after this one, so a later step reads it as
  * {@link Subjects#createdThisResolution()}.
  *
  * @param spellbook the printings picked from

@@ -338,8 +338,8 @@ public class BattlefieldEntryBatchSupport {
                 }
                 if (gameQueryService.findPermanentController(gameData, permanent.getId()) != null) {
                     entered.add(permanent);
-                    if (candidate.recordsReturn()) {
-                        recordReturn(gameData, candidate, permanent);
+                    if (candidate.recordsStep() != null) {
+                        recordEntry(gameData, candidate, permanent);
                     }
                     keepUnderNonOwnersControl(gameData, candidate, permanent);
                     gameData.stack.addAll(candidate.afterEntryTriggers());
@@ -404,16 +404,23 @@ public class BattlefieldEntryBatchSupport {
         }
     }
 
-    /** Adds the permanent to the step that put it there, which ends as its batch enters. */
-    private void recordReturn(GameData gameData, BattlefieldEntryCard candidate, Permanent permanent) {
+    /**
+     * Adds the permanent to the step that put it there, which ends as its batch enters: a put step's permanent is also
+     * "returned this resolution", a conjured one "created this resolution".
+     */
+    private void recordEntry(GameData gameData, BattlefieldEntryCard candidate, Permanent permanent) {
         StackEntry step = gameData.resolvingEntry != null
                 ? gameData.resolvingEntry : gameData.pendingEffectResolutionEntry;
         if (step == null) {
             return;
         }
-        step.addToStep(StepKind.RETURN, StepOutcome.ofObjects(List.of(permanent.getId()),
+        step.addToStep(candidate.recordsStep(), StepOutcome.ofObjects(List.of(permanent.getId()),
                 candidate.zoneOwnerId() == null ? List.of() : List.of(candidate.zoneOwnerId())));
-        step.rememberReturnedPermanent(permanent.getId());
+        if (candidate.recordsStep() == StepKind.CONJURE) {
+            step.getCreatedPermanentIds().add(permanent.getId());
+        } else {
+            step.rememberReturnedPermanent(permanent.getId());
+        }
     }
 
     /** A permanent put onto the battlefield under another player's control than its owner's stays that player's. */
@@ -429,6 +436,8 @@ public class BattlefieldEntryBatchSupport {
 
     private boolean removeFromOrigin(GameData gameData, BattlefieldEntryCard candidate) {
         if (candidate.card().isToken() && candidate.origin() == Zone.STACK) return true;
+        // A card conjured onto the battlefield comes from outside the game and is in no zone until it enters.
+        if (candidate.origin() == Zone.OUTSIDE_GAME) return candidate.card().isConjured();
         List<Card> zone = switch (candidate.origin()) {
             case GRAVEYARD -> gameData.playerGraveyards.get(candidate.zoneOwnerId());
             case LIBRARY -> gameData.playerDecks.get(candidate.zoneOwnerId());

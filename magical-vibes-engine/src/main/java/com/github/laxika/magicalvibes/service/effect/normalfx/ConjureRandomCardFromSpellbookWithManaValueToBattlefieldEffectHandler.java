@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -65,6 +66,7 @@ public class ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffectHandl
             throw new IllegalStateException("Current effect is not present in its stack entry");
         }
         entry.insertEffectsToResolve(index + 1, List.of(
-                new ConjureCardToBattlefieldEffect(selected.setCode(), selected.collectorNumber())));
+                ConjureCardsEffect.named(selected.setCode(), selected.collectorNumber(),
+                        ConjureDestination.ontoBattlefield())));
     }
 }

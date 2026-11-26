@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -36,6 +37,6 @@ public class GravenArchfiend extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardNotPredicate(new CardSubtypePredicate(CardSubtype.DEMON))
                         )), "a non-Demon creature")),
-                new ConjureCardToBattlefieldEffect("ORI", "92"));
+                ConjureCardsEffect.named("ORI", "92", ConjureDestination.ontoBattlefield()));
     }
 }

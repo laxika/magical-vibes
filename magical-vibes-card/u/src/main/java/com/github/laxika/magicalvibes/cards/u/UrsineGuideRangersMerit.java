@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.r.RangersMerit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.filter.CardInStartingDeckPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +19,7 @@ public class UrsineGuideRangersMerit extends Card {
 
         addStaticEffect(new BecomePreparedEffect());
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardInStartingDeckPredicate())),
-                new ConjureCardToBattlefieldEffect("FDN", "552"),
+                ConjureCardsEffect.named("FDN", "552", ConjureDestination.ontoBattlefield()),
                 new BecomePreparedEffect());
     }
 

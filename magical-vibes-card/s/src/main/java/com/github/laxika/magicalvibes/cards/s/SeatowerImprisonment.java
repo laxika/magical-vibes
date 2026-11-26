@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,6 +34,6 @@ public class SeatowerImprisonment extends Card {
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
                 .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ConjureCardToBattlefieldEffect("HBG", "28"));
+                        ConjureCardsEffect.named("HBG", "28", ConjureDestination.ontoBattlefield()));
     }
 }

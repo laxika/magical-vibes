@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardsToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifyCardsOfSubtypeEffect;
 
@@ -13,7 +14,7 @@ public class ColossalChorus extends Card {
 
     public ColossalChorus() {
         addSpellEffect(new InitializeSourceIntensityEffect(2));
-        addSpellEffect(new ConjureCardsToBattlefieldEffect("XLN", "180", new SourceIntensity()));
+        addSpellEffect(ConjureCardsEffect.named("XLN", "180", ConjureDestination.ontoBattlefield()).times(new SourceIntensity()));
         addSpellEffect(new IntensifyCardsOfSubtypeEffect(CardSubtype.CHORUS));
     }
 }

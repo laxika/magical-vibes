@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardsToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class CallTheCrash extends Card {
 
     public CallTheCrash() {
-        addSpellEffect(new ConjureCardsToBattlefieldEffect("KTK", "200", new Fixed(2)));
+        addSpellEffect(ConjureCardsEffect.named("KTK", "200", ConjureDestination.ontoBattlefield()).times(2));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{W}{B}{G}",

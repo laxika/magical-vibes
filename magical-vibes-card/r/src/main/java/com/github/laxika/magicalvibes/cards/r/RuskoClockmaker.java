@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -22,7 +23,7 @@ public class RuskoClockmaker extends Card {
     public RuskoClockmaker() {
         // When Rusko enters the battlefield, conjure a card named Midnight Clock onto the battlefield.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConjureCardToBattlefieldEffect("ELD", "54"));
+                ConjureCardsEffect.named("ELD", "54", ConjureDestination.ontoBattlefield()));
 
         // Whenever you cast a noncreature spell, put an hour counter on each Midnight Clock you control.
         // Each opponent loses 1 life and you gain 1 life.

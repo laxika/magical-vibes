@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.ScheduleCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -28,7 +29,7 @@ public class KariZevCrewOfTwo extends Card {
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                                 new PermanentHasSubtypePredicate(CardSubtype.MONKEY))))),
                 SequenceEffect.of(
-                        new ConjureCardToBattlefieldEffect("MH2", "138"),
+                        ConjureCardsEffect.named("MH2", "138", ConjureDestination.ontoBattlefield()),
                         new MakeCreatedPermanentsAttackingEffect(true),
                         new ScheduleCreatedPermanentsEffect(DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)));
     }

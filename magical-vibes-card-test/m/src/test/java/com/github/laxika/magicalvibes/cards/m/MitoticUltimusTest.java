@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.ThirdLittlePig;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MitoticUltimus.class, MitoticSlime.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({ThirdLittlePig.class, MitoticUltimus.class, MitoticSlime.class, GrizzlyBears.class, WrathOfGod.class})
 class MitoticUltimusTest extends BaseCardTest {
 
     @Test
@@ -102,5 +104,19 @@ class MitoticUltimusTest extends BaseCardTest {
                     assertThat(slime.getCard().isToken()).isFalse();
                     assertThat(slime.getCard().getOwnerId()).isEqualTo(player2.getId());
                 });
+    }
+
+    @Test
+    @DisplayName("The two Mitotic Slimes are one conjure, so a \"whenever you conjure\" ability triggers once")
+    void twoSlimesAreOneConjureEvent() {
+        Permanent pig = harness.addToBattlefieldAndReturn(player1, new ThirdLittlePig());
+        Permanent ultimus = harness.addToBattlefieldAndReturn(player1, new MitoticUltimus());
+        ultimus.setMarkedDamage(8);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Mitotic Slime")).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, pig)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pig)).isEqualTo(3);
     }
 }

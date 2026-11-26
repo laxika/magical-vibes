@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +26,7 @@ public class Overcooked extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), 2);
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new ConditionalEffect(celebration,
-                        new ConjureCardNamedOntoBattlefieldEffect("WOE", "129")),
+                        ConjureCardsEffect.named("WOE", "129", ConjureDestination.ontoBattlefield())),
                 new ConditionalEffect(new NotCondition(celebration), CreateTokenEffect.ofFoodToken(1))));
     }
 }

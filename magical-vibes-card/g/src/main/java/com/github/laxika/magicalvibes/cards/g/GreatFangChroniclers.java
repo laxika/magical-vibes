@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseThisActivatedAbilityEffect;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class GreatFangChroniclers extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}",
-                List.of(new ConjureCardToBattlefieldEffect("FUT", "146"),
+                List.of(ConjureCardsEffect.named("FUT", "146", ConjureDestination.ontoBattlefield()),
                         new LoseThisActivatedAbilityEffect()),
                 "{3}{G}: Conjure a card named Muraganda Petroglyphs onto the battlefield, then this creature loses this ability. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED

@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class TrackhandTrainer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new ConjureCardToBattlefieldEffect("ROE", "91")),
+                List.of(ConjureCardsEffect.named("ROE", "91", ConjureDestination.ontoBattlefield())),
                 "Exhaust — {U}: Conjure a card named Training Grounds onto the battlefield."
                         + " (Activate each exhaust ability only once.)"
         ).withMaxActivationsPerGame(1).withExhaust());

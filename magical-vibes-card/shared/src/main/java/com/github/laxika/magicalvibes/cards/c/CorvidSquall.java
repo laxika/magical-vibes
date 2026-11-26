@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -9,7 +10,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CorvidSquall extends Card {
 
     public CorvidSquall() {
-        addSpellEffect(new ConjureCardNamedOntoBattlefieldEffect("9ED", "100"));
+        addSpellEffect(ConjureCardsEffect.named("9ED", "100", ConjureDestination.ontoBattlefield()));
         addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm());
     }
 }
