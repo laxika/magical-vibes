@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -34,14 +33,10 @@ public class ChandraAcolyteOfFlame extends Card {
     public ChandraAcolyteOfFlame() {
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.LOYALTY,
-                        1,
-                        new PermanentAllOfPredicate(List.of(
+                List.of(PutCountersEffect.onEach(CounterType.LOYALTY, 1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsPlaneswalkerPredicate(),
                                 new PermanentColorInPredicate(Set.of(CardColor.RED)),
-                                new PermanentControlledBySourceControllerPredicate())),
-                        EachPermanentScope.ALL_PLAYERS)),
+                                new PermanentControlledBySourceControllerPredicate())))),
                 "0: Put a loyalty counter on each red planeswalker you control."));
 
         addActivatedAbility(new ActivatedAbility(

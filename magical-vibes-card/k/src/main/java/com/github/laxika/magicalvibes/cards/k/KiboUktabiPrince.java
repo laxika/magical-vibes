@@ -8,10 +8,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -51,15 +50,11 @@ public class KiboUktabiPrince extends Card {
         ));
 
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.OPPONENT_CONTROLS),
-                new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        1,
-                        new PermanentAllOfPredicate(List.of(
+                PutCountersEffect.onEach(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.APE, CardSubtype.MONKEY))
-                        )),
-                        EachPermanentScope.ALL_PLAYERS));
+                        ))));
 
         addTrigger(Triggers.attacks(),
                 new SacrificePermanentsEffect(

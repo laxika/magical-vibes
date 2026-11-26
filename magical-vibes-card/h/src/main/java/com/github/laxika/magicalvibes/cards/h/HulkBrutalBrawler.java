@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -22,7 +22,6 @@ public class HulkBrutalBrawler extends Card {
 
     public HulkBrutalBrawler() {
         addStaticEffect(new MustAttackEffect());
-        addTrigger(Triggers.attacks(), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
+        addTrigger(Triggers.attacks(), PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
     }
 }

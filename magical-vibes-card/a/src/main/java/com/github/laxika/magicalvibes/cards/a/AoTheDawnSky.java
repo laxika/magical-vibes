@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -44,8 +44,7 @@ public class AoTheDawnSky extends Card {
                                 7, NONLAND_PERMANENT_WITH_MANA_VALUE_AT_MOST_FOUR, 7, 4)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on each permanent you control that's a creature or Vehicle.",
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 2, CREATURE_OR_VEHICLE))
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 2, CREATURE_OR_VEHICLE))
         )));
     }
 }

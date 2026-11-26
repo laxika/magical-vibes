@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -48,8 +48,7 @@ public class AgeOfUltron extends Card {
         PermanentAllOfPredicate artifactCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate()));
         addTrigger(Triggers.chapter(3),
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreature),
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreature),
                 new GrantKeywordEffect(
                         Keyword.DEATHTOUCH, Subjects.creaturesYouControl(), artifactCreature));
     }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,16 +19,12 @@ import java.util.List;
 public class SouthernAirTemple extends Card {
 
     public SouthernAirTemple() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER),
-                new PermanentIsCreaturePredicate()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER), new PermanentIsCreaturePredicate()));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.ENCHANTMENT,
                                 new PermanentHasSubtypePredicate(CardSubtype.SHRINE))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,13 +29,10 @@ public class HavengulRunebinder extends Card {
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.CREATURE),
                         CreateTokenEffect.blackZombie(1),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                new PermanentAllOfPredicate(List.of(
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                                         new PermanentIsCreaturePredicate()
-                                ))
-                        )
+                                )))
                 ),
                 "{2}{U}, {T}, Exile a creature card from your graveyard: Create a 2/2 black Zombie creature token, then put a +1/+1 counter on each Zombie creature you control."
         ));

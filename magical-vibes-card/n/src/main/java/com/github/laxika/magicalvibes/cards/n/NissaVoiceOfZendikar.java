@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -35,8 +35,7 @@ public class NissaVoiceOfZendikar extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())),
+                List.of(PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())),
                 "−2: Put a +1/+1 counter on each creature you control."
         ));
 

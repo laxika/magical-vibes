@@ -125,8 +125,7 @@ package com.github.laxika.magicalvibes.model;
  * gain control ({@code GainControlOfTargetEffect}, never prompting), sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
  * {@code DestructionSupport.sacrificeTogether}), the chosen return to hand
  * ({@code ReturnPermanentControlledByPlayerToHandEffect}: its {@code BounceCreature} choice adds the returned
- * permanent; {@code ReturnChosenPermanentsToHandEffect}: its answer adds all of them), put counters (a replacement order answered later adds the rest; on each matching permanent,
- * {@code PutCounterOnEachMatchingPermanentEffect}, never prompting; proliferate, {@code ProliferateEffect}: each answered
+ * permanent; {@code ReturnChosenPermanentsToHandEffect}: its answer adds all of them), put counters (a replacement order answered later adds the rest; proliferate, {@code ProliferateEffect}: each answered
  * proliferate adds the permanents and players it gave counters to) and counter a spell; the chosen-permanent exile ({@code ExileChosenPermanentsEffect}: its
  * choices add to the result as they are answered), the chosen hand-card exile ({@code ExileCardFromHandEffect}), the
  * same-name exile ({@code ExileCardsWithSameNameEffect}), the card and random-player choices

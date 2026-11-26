@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,13 +27,11 @@ public class SpiderManMilesMorales extends Card {
 
     public SpiderManMilesMorales() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
 
         addTrigger(Triggers.attacks(),
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
     }
 }

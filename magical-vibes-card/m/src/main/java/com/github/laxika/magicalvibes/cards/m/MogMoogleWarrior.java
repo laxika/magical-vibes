@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardOneThenApplyEffectsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,8 +25,6 @@ public class MogMoogleWarrior extends Card {
                 new EachPlayerMayDiscardOneThenApplyEffectsEffect(
                         new CreateTokenEffect("Moogle", 1, 2, CardColor.WHITE,
                                 List.of(CardSubtype.MOOGLE), Set.of(Keyword.LIFELINK), Set.of()),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                new PermanentHasSubtypePredicate(CardSubtype.MOOGLE))));
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSubtypePredicate(CardSubtype.MOOGLE))));
     }
 }

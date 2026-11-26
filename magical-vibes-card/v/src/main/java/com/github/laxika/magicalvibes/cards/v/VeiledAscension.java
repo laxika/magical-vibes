@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CloakTopCardOfControllerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
@@ -26,8 +26,7 @@ public class VeiledAscension extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsFaceDownPredicate()));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.FLYING, 1, faceDownCreature));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onEachYouControl(CounterType.FLYING, 1, faceDownCreature));
         addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(
                 faceDownCreature, CounterType.FLYING, 1));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentOfChosenSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class PutCounterOnEachControlledPermanentOfChosenSubtypeEffectHandler
         implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
-    private final PutCounterOnEachControlledPermanentEffectHandler counterHandler;
+    private final PutCountersEffectHandler counterHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +41,7 @@ public class PutCounterOnEachControlledPermanentOfChosenSubtypeEffectHandler
         gameData.chosenSpellSubtype = null;
         gameData.rerunCurrentEffectAfterInteraction = false;
 
-        counterHandler.resolve(gameData, entry, new PutCounterOnEachControlledPermanentEffect(
+        counterHandler.resolve(gameData, entry, PutCountersEffect.onEachYouControl(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 1,
                 new PermanentAllOfPredicate(List.of(

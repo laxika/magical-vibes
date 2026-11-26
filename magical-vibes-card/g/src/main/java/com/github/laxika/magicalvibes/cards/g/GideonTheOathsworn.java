@@ -10,10 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -41,9 +40,7 @@ public class GideonTheOathsworn extends Card {
 
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumMatchingAttackers(2, nonGideonCreature)),
-                new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, nonGideonAttacker,
-                        EachPermanentScope.ALL_PLAYERS));
+                PutCountersEffect.onEach(CounterType.PLUS_ONE_PLUS_ONE, 1, nonGideonAttacker));
 
         addActivatedAbility(new ActivatedAbility(
                 +2,

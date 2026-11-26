@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,8 +30,6 @@ public class Infestation extends Card {
         // Then put a -1/-1 counter on each creature.
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ConjureCardToBattlefieldEffect("SHM", "58"),
-                new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.MINUS_ONE_MINUS_ONE, 1,
-                        new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS)));
+                PutCountersEffect.onEach(CounterType.MINUS_ONE_MINUS_ONE, 1, new PermanentIsCreaturePredicate())));
     }
 }

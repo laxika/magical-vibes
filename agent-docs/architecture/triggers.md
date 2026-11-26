@@ -716,7 +716,7 @@ Matchers record the event whatever the effects are; effects read it as they reso
   `PermanentIsTriggeringPermanentPredicate`. Also the tapped permanent, the permanent an attachment's becomes-the-target
   ability watched (Fractured Loyalty) and the "attacks you" attacker.
 - **Triggering permanents** (`setTriggeringPermanentIds`, "them"): `ONE_OR_MORE` combat damage dealers, a filtered
-  `youAttack()`'s attackers; read by `EachPermanentScope.TRIGGERING_PERMANENTS`.
+  `youAttack()`'s attackers; read by `Subjects.triggeringAll()`.
 - **Triggering card** (`setTriggeringCard(cardId, graveyardEntryVersion)`): "that card" of a graveyard arrival, checked
   with `isTriggeringCardIncarnation` (CR 400.7), carried by `DeathTriggerTarget.withTriggeringCard`,
   `GraveyardTargetOperationState.triggeringCardId`, `PendingMayAbility.withTriggeringCard`. Every graveyard matcher

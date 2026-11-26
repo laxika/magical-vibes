@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -40,8 +40,7 @@ public class UrtetRemnantOfMemnarch extends Card {
         // {W}{U}{B}{R}{G}, {T}: Put three +1/+1 counters on each Myr you control.
         addActivatedAbility(new ActivatedAbility(
                 true, "{W}{U}{B}{R}{G}",
-                List.of(new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 3, MYR_PERMANENT)),
+                List.of(PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 3, MYR_PERMANENT)),
                 "{W}{U}{B}{R}{G}, {T}: Put three +1/+1 counters on each Myr you control. Activate only during your turn.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_TURN));
     }

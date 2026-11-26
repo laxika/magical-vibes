@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -26,13 +25,9 @@ public class PrimevalProtector extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS)));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                1,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onEach(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
     }
 }

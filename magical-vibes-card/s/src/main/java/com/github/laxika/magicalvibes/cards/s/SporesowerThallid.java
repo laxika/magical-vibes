@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,11 +22,7 @@ import java.util.Set;
 public class SporesowerThallid extends Card {
 
     public SporesowerThallid() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.FUNGUS,
-                1,
-                new PermanentHasSubtypePredicate(CardSubtype.FUNGUS)
-        ));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onEachYouControl(CounterType.FUNGUS, 1, new PermanentHasSubtypePredicate(CardSubtype.FUNGUS)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

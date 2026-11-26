@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,8 +27,7 @@ public class ThelonOfHavenwood extends Card {
                 "{B}{G}",
                 List.of(
                         new ExileCardFromGraveyardCost(CardSubtype.FUNGUS, true),
-                        new PutCounterOnEachMatchingPermanentEffect(
-                                CounterType.FUNGUS, 1, fungus, EachPermanentScope.ALL_PLAYERS)
+                        PutCountersEffect.onEach(CounterType.FUNGUS, 1, fungus)
                 ),
                 "{B}{G}, Exile a Fungus card from a graveyard: Put a spore counter on each Fungus on the battlefield."
         ));

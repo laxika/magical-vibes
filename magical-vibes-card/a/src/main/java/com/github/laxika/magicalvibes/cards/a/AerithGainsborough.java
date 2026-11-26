@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -25,14 +23,10 @@ public class AerithGainsborough extends Card {
 
     public AerithGainsborough() {
         addTrigger(Triggers.youGainLife(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), PutCountersEffect.onEach(CounterType.PLUS_ONE_PLUS_ONE, new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         new PermanentControlledBySourceControllerPredicate()
-                )),
-                EachPermanentScope.ALL_PLAYERS));
+                ))));
     }
 }

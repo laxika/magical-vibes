@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -36,8 +36,7 @@ public class ElspethStormSlayer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 0,
                 List.of(
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                         new GrantKeywordEffect(
                                 Keyword.FLYING, Subjects.creaturesYouControl(), Duration.UNTIL_YOUR_NEXT_TURN)
                 ),

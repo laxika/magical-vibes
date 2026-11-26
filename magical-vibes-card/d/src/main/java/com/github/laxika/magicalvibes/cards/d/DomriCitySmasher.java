@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -36,8 +36,7 @@ public class DomriCitySmasher extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 3, new PermanentIsCreaturePredicate()),
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 3, new PermanentIsCreaturePredicate()),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl())
                 ),
                 "−8: Put three +1/+1 counters on each creature you control. Those creatures gain trample until end of turn."

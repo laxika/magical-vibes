@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -21,9 +21,7 @@ public class VodalianWaveKnight extends Card {
     public VodalianWaveKnight() {
         // Whenever you draw a card, put a +1/+1 counter on each other Merfolk and/or Knight
         // you control.
-        addTrigger(Triggers.youDrawCard(), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, 1,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.youDrawCard(), PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK, CardSubtype.KNIGHT)),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
     }

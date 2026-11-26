@@ -88,7 +88,6 @@ import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
@@ -467,8 +466,10 @@ public class SpellEvaluator {
                     .sum();
         }
         // +1/+1 counters on all own creatures
-        if (effect instanceof PutCounterOnEachControlledPermanentEffect counters
-                && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+        if (effect instanceof PutCountersEffect counters
+                && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+                && counters.subject() instanceof PermanentSubject.ControlledBy set
+                && set.players() instanceof PlayerSubject.You) {
             long creatureCount = aiBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .count();

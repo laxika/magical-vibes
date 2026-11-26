@@ -5,14 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfSourceCardColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectsToCounterBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,9 +23,7 @@ import java.util.Set;
 public class WrathOfSod extends Card {
 
     public WrathOfSod() {
-        addSpellEffect(new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.MANABOND, 1, new PermanentIsCreaturePredicate(),
-                EachPermanentScope.ALL_PLAYERS));
+        addSpellEffect(PutCountersEffect.onEach(CounterType.MANABOND, 1, new PermanentIsCreaturePredicate()));
         addSpellEffect(new GrantEffectsToCounterBearersEffect(CounterType.MANABOND, List.of(
                 new SetCardTypesEffect(Set.of(CardType.LAND), Subjects.otherLands()),
                 new LoseAllCreatureTypesEffect(Subjects.otherLands()),

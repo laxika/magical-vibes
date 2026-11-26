@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -36,6 +36,6 @@ public class SummonKnightsOfRound extends Card {
         addTrigger(Triggers.chapter(4), KNIGHTS);
         addTrigger(Triggers.chapter(5),
                 BoostEffect.creaturesYouControl(2, 2, OTHER_CREATURES),
-                new PutCounterOnEachControlledPermanentEffect(CounterType.INDESTRUCTIBLE, 1, OTHER_CREATURES));
+                PutCountersEffect.onEachYouControl(CounterType.INDESTRUCTIBLE, 1, OTHER_CREATURES));
     }
 }

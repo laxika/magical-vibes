@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -35,8 +35,7 @@ public class FelidarRetreat extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on each creature you control. Those creatures gain vigilance until end of turn.",
                         List.of(
-                                new PutCounterOnEachControlledPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
+                                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                                 new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())
                         ))
         ))));

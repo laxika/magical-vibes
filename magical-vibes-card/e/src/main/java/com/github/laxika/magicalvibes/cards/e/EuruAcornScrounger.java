@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
@@ -37,9 +37,7 @@ public class EuruAcornScrounger extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new SacrificePermanentsEffect(1, new PermanentIsTokenPredicate(), Subjects.you()),
-                                new ConditionalEffect(HappenedThisWay.sacrificed(), new PutCounterOnEachControlledPermanentEffect(
-                                        CounterType.ACORN, 1,
-                                        new PermanentNamedPredicate("Chitterspitter")))),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), PutCountersEffect.onEachYouControl(CounterType.ACORN, 1, new PermanentNamedPredicate("Chitterspitter")))),
                         "Sacrifice a token?"));
     }
 }

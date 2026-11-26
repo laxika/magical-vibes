@@ -37,7 +37,9 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>{@code source()} → the ability's own source permanent, or its face-up planar object for a planar ability;
  *       the entry's source snapshot is refreshed after the placement;</li>
- *   <li>another non-target subject → the permanents {@code SubjectResolutionService} names (non-targeting);</li>
+ *   <li>another non-target subject → the permanents {@code SubjectResolutionService} names (non-targeting); a set
+ *       ("each creature you control") gets one amount, worked out against the source (CR 608.2h), unless the effect
+ *       works it out for each permanent;</li>
  *   <li>a non-null {@code predicate} → resolution-time choice among the controller's matching
  *       permanents (non-targeting);</li>
  *   <li>otherwise a targeting effect, resolving {@code StackEntry.targetsForEffect} — the
@@ -46,8 +48,10 @@ import org.springframework.stereotype.Component;
  *       the lone {@code targetId}.</li>
  * </ul>
  * The counter count is a {@code DynamicAmount} ({@code Fixed}, {@code XValue()}, …). Placement is
- * routed through {@link PermanentCounterSupport#placeCounterOnPermanent} so counter-type-specific
- * behaviour (+1/+1 triggers, -1/-1 prevention, lore/saga chapters) is preserved. When
+ * routed through {@link PermanentCounterSupport#placeCounterInBatch} so counter-type-specific
+ * behaviour (+1/+1 triggers, -1/-1 prevention, lore/saga chapters) is preserved; every placement of one resolution is
+ * one batch, whose "one or more" events (Heroes, loyalty on planeswalkers) are raised once after the last placement,
+ * also when a replacement order made it wait (CR 603.2c). When
  * {@code regenerateIfSurvives} is set, the target is regenerated after placement if it survives.
  */
 @Slf4j
@@ -75,9 +79,13 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
         var e = (PutCountersEffect) effect;
         Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData,
                 candidates(gameData, entry, e), e.counterType());
-        putCounters(gameData, entry, e);
+        List<ChoiceContext.CounterPlacement> batch = new ArrayList<>();
+        boolean waiting = putCounters(gameData, entry, e, batch);
         entry.recordStep(StepKind.PUT_COUNTERS,
                 permanentCounterSupport.counterChange(gameData, before, e.counterType(), true));
+        if (!waiting) {
+            permanentCounterSupport.firePlacementBatchEvents(gameData, e.counterType(), batch);
+        }
     }
 
     /**
@@ -100,30 +108,26 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
         return entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
     }
 
-    private void putCounters(GameData gameData, StackEntry entry, PutCountersEffect e) {
+    /**
+     * Puts the counters, each placement joining {@code batch}; {@code true} when a placement waits for its controller
+     * to order counter replacements (the rest of the batch then goes on after the answer).
+     */
+    private boolean putCounters(GameData gameData, StackEntry entry, PutCountersEffect e,
+                                List<ChoiceContext.CounterPlacement> batch) {
         CardEffect effect = e;
         if (e.subject() instanceof PermanentSubject.Source) {
-            resolveSource(gameData, entry, e);
-            return;
+            return resolveSource(gameData, entry, e, batch);
         }
         if (!(e.subject() instanceof PermanentSubject.Target)) {
-            resolveNamedPermanents(gameData, entry, e);
-            return;
+            return resolveNamedPermanents(gameData, entry, e, batch);
         }
-        Permanent source = entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                : null;
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
-        }
-        int count = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+        int count = amountAgainstSource(gameData, entry, e);
 
         // Predicate-based resolution: choose from controller's battlefield (non-targeting).
         if (e.predicate() != null) {
             permanentCounterSupport.resolveCounterOnOwnPermanent(gameData, entry,
                     e.counterType(), count, e.predicate());
-            return;
+            return false;
         }
 
         // Targeting mode: apply to each valid target of this effect's target group — the group's
@@ -133,28 +137,51 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
         // does nothing.
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.targetsForBoundEffectGroup(effect) != null) {
-            return;
+            return false;
         }
         if (!targetIds.isEmpty()) {
-            resolveTargets(gameData, entry, targetIds, e, count);
-            return;
+            return resolveTargets(gameData, entry, targetIds, e, count, batch);
         }
 
         // Single-target fallback.
         if (entry.getTargetId() == null) {
             log.info("Game {} - Target no longer on battlefield, effect fizzles", gameData.id);
-            return;
+            return false;
         }
-        resolveTargets(gameData, entry, List.of(entry.getTargetId()), e, count);
+        return resolveTargets(gameData, entry, List.of(entry.getTargetId()), e, count, batch);
+    }
+
+    /** The effect's amount worked out against its source as it is, else as it last existed (CR 608.2h). */
+    private int amountAgainstSource(GameData gameData, StackEntry entry, PutCountersEffect e) {
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        return amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, source));
+    }
+
+    /** Whether the effect's one amount, worked out against its source, goes on each permanent of its set. */
+    private static boolean oneAmountForSet(PutCountersEffect e) {
+        return e.subject().isSet() && !e.amountForEachRecipient();
     }
 
     /**
      * A subject that names its permanents without targeting them ("put a +1/+1 counter on it", "on enchanted
      * creature"): each named permanent still on the battlefield gets the counters, the count evaluated against that
-     * permanent ("equal to its power"), wherever it is now, even if control changed before resolution.
+     * permanent ("equal to its power"), wherever it is now, even if control changed before resolution. A set ("each
+     * creature you control") is found once and gets one amount, worked out against the source (CR 608.2h), unless the
+     * effect works it out for each permanent.
      */
-    private void resolveNamedPermanents(GameData gameData, StackEntry entry, PutCountersEffect e) {
-        placeOnNamed(gameData, entry, e, subjectResolutionService.permanents(gameData, entry, e, e.subject()));
+    private boolean resolveNamedPermanents(GameData gameData, StackEntry entry, PutCountersEffect e,
+                                           List<ChoiceContext.CounterPlacement> batch) {
+        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, e, e.subject());
+        if (oneAmountForSet(e)) {
+            return resolveTargets(gameData, entry, named.stream().map(Permanent::getId).toList(), e,
+                    amountAgainstSource(gameData, entry, e), batch);
+        }
+        return placeOnNamed(gameData, entry, e, named, batch);
     }
 
     /**
@@ -162,14 +189,18 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
      * the placement the entry's source snapshot shows the new counters, unless the permanent has transformed since
      * the ability was put on the stack (later steps can then still tell it transformed).
      */
-    private void resolveSource(GameData gameData, StackEntry entry, PutCountersEffect e) {
+    private boolean resolveSource(GameData gameData, StackEntry entry, PutCountersEffect e,
+                                  List<ChoiceContext.CounterPlacement> batch) {
         if (entry.getSourcePlanarObject() != null && entry.getSourcePermanentId() == null) {
             resolvePlanarSource(gameData, entry, e);
-            return;
+            return false;
         }
         List<Permanent> self = subjectResolutionService.permanents(gameData, entry, e, e.subject());
-        if (placeOnNamed(gameData, entry, e, self) || self.isEmpty()) {
-            return;
+        if (placeOnNamed(gameData, entry, e, self, batch)) {
+            return true;
+        }
+        if (self.isEmpty()) {
+            return false;
         }
         Permanent source = self.getFirst();
         Permanent previousSnapshot = entry.getSourcePermanentSnapshot();
@@ -177,6 +208,7 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
                 || previousSnapshot.getTransformationSequence() == source.getTransformationSequence()) {
             entry.setSourcePermanentSnapshot(new Permanent(source));
         }
+        return false;
     }
 
     private void resolvePlanarSource(GameData gameData, StackEntry entry, PutCountersEffect e) {
@@ -201,32 +233,35 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
      * {@code true} when a placement waits for its controller to order counter replacements.
      */
     private boolean placeOnNamed(GameData gameData, StackEntry entry, PutCountersEffect e,
-                                 List<Permanent> named) {
+                                 List<Permanent> named, List<ChoiceContext.CounterPlacement> batch) {
         for (int i = 0; i < named.size(); i++) {
             Permanent permanent = named.get(i);
             int count = amountEvaluationService.evaluate(gameData, e.amount(),
                     AmountContext.forStackEntry(entry, permanent));
             List<UUID> later = named.subList(i + 1, named.size()).stream().map(Permanent::getId).toList();
-            if (placeOnTarget(gameData, entry, permanent.getId(), e, count, later, false)) {
+            if (placeOnTarget(gameData, entry, permanent.getId(), e, count, later, false, batch)) {
                 return true;
             }
         }
         return false;
     }
 
-    private void resolveTargets(GameData gameData, StackEntry entry, List<UUID> targets,
-                                PutCountersEffect effect, int count) {
+    /** Places {@code count} on each of {@code targets}; {@code true} when a placement waits for a replacement order. */
+    private boolean resolveTargets(GameData gameData, StackEntry entry, List<UUID> targets,
+                                   PutCountersEffect effect, int count, List<ChoiceContext.CounterPlacement> batch) {
         for (int i = 0; i < targets.size(); i++) {
             if (placeOnTarget(gameData, entry, targets.get(i), effect, count,
-                    targets.subList(i + 1, targets.size()), false)) {
-                return;
+                    targets.subList(i + 1, targets.size()), false, batch)) {
+                return true;
             }
         }
+        return false;
     }
 
     private boolean placeOnTarget(GameData gameData, StackEntry entry, UUID targetId,
                                    PutCountersEffect e, int count,
-                                   List<UUID> subsequentTargets, boolean replacementsApplied) {
+                                   List<UUID> subsequentTargets, boolean replacementsApplied,
+                                   List<ChoiceContext.CounterPlacement> batch) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return false; // Partially resolves — skip removed targets.
@@ -252,19 +287,20 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
                     placerId, false);
             if (gameQueryService.counterReplacementOrderMatters(gameData, e.counterType(), count, modifiers)) {
                 beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(
-                        entry, targetId, count, modifiers, e, subsequentTargets, count));
+                        entry, targetId, count, modifiers, e, subsequentTargets, count, batch));
                 return true;
             }
         }
         // A prevented placement does not stop later instructions (CR 608.2c), so a "then"
         // regeneration clause is still checked against the target's toughness.
         if (!counterBlocked) {
-            if (replacementsApplied) {
-                permanentCounterSupport.placeCounterOnPermanentAfterReplacements(
-                        gameData, entry, target, e.counterType(), count, placerId);
-            } else {
-                permanentCounterSupport.placeCounterOnPermanentForPlayer(
-                        gameData, entry, target, e.counterType(), count, placerId);
+            UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            boolean planeswalker = gameQueryService.isPlaneswalker(gameData, target);
+            int placed = permanentCounterSupport.placeCounterInBatch(gameData, entry, target, e.counterType(), count,
+                    placerId, replacementsApplied);
+            if (placed > 0) {
+                batch.add(new ChoiceContext.CounterPlacement(target.getId(), placerId, controllerId, planeswalker,
+                        placed));
             }
         }
 
@@ -315,7 +351,7 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
         if (count > 0 && gameQueryService.counterReplacementOrderMatters(gameData, type, count, remaining)) {
             beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(order.entry(),
                     order.targetId(), count, remaining, order.effect(), order.subsequentTargets(),
-                    order.originalCount()));
+                    order.originalCount(), order.placed()));
             return;
         }
         for (var replacement : remaining) {
@@ -324,18 +360,25 @@ public class PutCountersEffectHandler implements NormalEffectHandlerBean {
         List<UUID> rest = new ArrayList<>(List.of(order.targetId()));
         rest.addAll(order.subsequentTargets());
         Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData, rest, type);
-        placeOnTarget(gameData, order.entry(), order.targetId(), order.effect(), count, List.of(), true);
-        if (order.effect().subject() instanceof PermanentSubject.Target) {
-            resolveTargets(gameData, order.entry(), order.subsequentTargets(), order.effect(), order.originalCount());
+        List<ChoiceContext.CounterPlacement> batch = new ArrayList<>(order.placed());
+        placeOnTarget(gameData, order.entry(), order.targetId(), order.effect(), count, List.of(), true, batch);
+        boolean waiting;
+        if (order.effect().subject() instanceof PermanentSubject.Target || oneAmountForSet(order.effect())) {
+            // A target's or a set's count was worked out once, before the placement waited.
+            waiting = resolveTargets(gameData, order.entry(), order.subsequentTargets(), order.effect(),
+                    order.originalCount(), batch);
         } else {
             // A named permanent's count is its own ("equal to its power"), as if the placement had not waited.
-            placeOnNamed(gameData, order.entry(), order.effect(), order.subsequentTargets().stream()
+            waiting = placeOnNamed(gameData, order.entry(), order.effect(), order.subsequentTargets().stream()
                     .map(id -> gameQueryService.findPermanentById(gameData, id))
                     .filter(java.util.Objects::nonNull)
-                    .toList());
+                    .toList(), batch);
         }
         // The placement waited for this order, so its step recorded only what came before; the rest is added now.
         order.entry().addToStep(StepKind.PUT_COUNTERS, permanentCounterSupport.counterChange(gameData, before, type,
                 true));
+        if (!waiting) {
+            permanentCounterSupport.firePlacementBatchEvents(gameData, type, batch);
+        }
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,9 +32,7 @@ public class GaladrielLightOfValinor extends Card {
                                 new AwardManaEffect(ManaColor.GREEN, 3)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on each creature you control.",
-                                new PutCounterOnEachControlledPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                        new PermanentIsCreaturePredicate())),
+                                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Scry 2, then draw a card.",
                                 SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)))

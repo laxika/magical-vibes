@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOrGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -35,9 +35,7 @@ public class KastralTheWindcrested extends Card {
                                 "Put a Bird creature card from your hand or graveyard onto the battlefield with a finality counter on it?")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on each Bird you control",
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                new PermanentHasSubtypePredicate(CardSubtype.BIRD))),
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSubtypePredicate(CardSubtype.BIRD))),
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect(1))));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()

@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -39,12 +38,9 @@ public class SplinterLeoFatherSon extends Card {
         CreateTokenForTargetPlayerEffect tokenEffect = new CreateTokenForTargetPlayerEffect(
                 new CreateTokenEffect(1, "Mutant", 2, 2, CardColor.RED,
                         List.of(CardSubtype.MUTANT), Set.of(), Set.of()));
-        PutCounterOnEachMatchingPermanentEffect counterEffect = new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, 1,
-                new PermanentAllOfPredicate(List.of(
+        PutCountersEffect counterEffect = PutCountersEffect.onEachTargetPlayerControls(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
-                EachPermanentScope.TARGET_PLAYER);
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))));
 
         registerEffectTargetIndex(tokenEffect, tokenTarget.getIndex());
         registerEffectTargetIndex(counterEffect, counterTarget.getIndex());

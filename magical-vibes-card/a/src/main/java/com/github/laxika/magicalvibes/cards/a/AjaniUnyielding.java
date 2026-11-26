@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -56,11 +56,8 @@ public class AjaniUnyielding extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 5, new PermanentIsCreaturePredicate()),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.LOYALTY, 5,
-                                new PermanentAllOfPredicate(List.of(
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 5, new PermanentIsCreaturePredicate()),
+                        PutCountersEffect.onEachYouControl(CounterType.LOYALTY, 5, new PermanentAllOfPredicate(List.of(
                                         new PermanentIsPlaneswalkerPredicate(),
                                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                                 )))

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,8 +30,7 @@ public class NightOfTheFlyingMerfolk extends Card {
                 2, "Merfolk", 1, 1, CardColor.BLUE,
                 List.of(CardSubtype.MERFOLK), Set.of(), Set.of()));
 
-        addTrigger(Triggers.chapter(2), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.FLYING, 1, new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.chapter(2), PutCountersEffect.onEachYouControl(CounterType.FLYING, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsTappedPredicate()))));
 
         addTrigger(Triggers.chapter(3), new DrawCardEffect(new PermanentCount(

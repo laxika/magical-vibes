@@ -270,6 +270,62 @@ public class PermanentCounterSupport {
     private int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
                                         CounterType counterType, int count, boolean modularAbility,
                                         UUID placingPlayerIdOverride, boolean replacementsApplied) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, modularAbility,
+                placingPlayerIdOverride, replacementsApplied, false);
+    }
+
+    /**
+     * One placement of a batch: counters {@code placingPlayerId} puts on several permanents at once, one event
+     * (CR 603.2c). It does everything {@link #placeCounterOnPermanentForPlayer} does but raise the "one or more"
+     * events about the whole batch ("+1/+1 counters on one or more other Heroes", "loyalty counters on planeswalkers
+     * you control"), which the caller raises once for the batch ({@link #firePlacementBatchEvents}). Returns how many
+     * counters were put.
+     */
+    public int placeCounterInBatch(GameData gameData, StackEntry entry, Permanent target, CounterType counterType,
+                                   int count, UUID placingPlayerId, boolean replacementsApplied) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, false, placingPlayerId,
+                replacementsApplied, true);
+    }
+
+    /**
+     * Raises the "one or more" events of a batch of placements of {@code counterType} once (CR 603.2c): one placement of
+     * +1/+1 counters on the Heroes among them for each player who put counters, and one placement of loyalty counters
+     * on planeswalkers for each player who controlled one that got them, with the sum. A permanent that has left since
+     * is not named.
+     */
+    public void firePlacementBatchEvents(GameData gameData, CounterType counterType,
+                                         List<ChoiceContext.CounterPlacement> placements) {
+        if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+            Map<UUID, List<Permanent>> byPlacer = new LinkedHashMap<>();
+            Map<UUID, Integer> countByPlacer = new LinkedHashMap<>();
+            for (ChoiceContext.CounterPlacement placement : placements) {
+                if (placement.placerId() == null) {
+                    continue;
+                }
+                Permanent permanent = gameQueryService.findPermanentById(gameData, placement.permanentId());
+                if (permanent != null) {
+                    byPlacer.computeIfAbsent(placement.placerId(), id -> new ArrayList<>()).add(permanent);
+                    countByPlacer.merge(placement.placerId(), placement.count(), SaturatingMath::add);
+                }
+            }
+            byPlacer.forEach((placerId, permanents) -> firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+                    gameData, permanents, countByPlacer.get(placerId), placerId));
+        } else if (counterType == CounterType.LOYALTY) {
+            Map<UUID, Integer> byController = new LinkedHashMap<>();
+            for (ChoiceContext.CounterPlacement placement : placements) {
+                if (placement.planeswalker() && placement.controllerId() != null) {
+                    byController.merge(placement.controllerId(), placement.count(), SaturatingMath::add);
+                }
+            }
+            byController.forEach((controllerId, count) ->
+                    fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(gameData, controllerId, count));
+        }
+    }
+
+    private int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
+                                        CounterType counterType, int count, boolean modularAbility,
+                                        UUID placingPlayerIdOverride, boolean replacementsApplied,
+                                        boolean batched) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
         int previousLoreCount = counterType == CounterType.LORE
@@ -497,8 +553,10 @@ public class PermanentCounterSupport {
             recordPlusOnePlusOneCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
             recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                     gameData, target, count, counterPlacingPlayerId);
-            firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
-                    gameData, target, count, counterPlacingPlayerId);
+            if (!batched) {
+                firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+                        gameData, target, count, counterPlacingPlayerId);
+            }
             firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers(
                     gameData, target, count, counterPlacingPlayerId);
         }
@@ -511,7 +569,7 @@ public class PermanentCounterSupport {
                 sourceCard.getName(), count, counterName, card.getName());
 
         // Lore counters on Sagas trigger each chapter crossed by the placement.
-        if (counterType == CounterType.LOYALTY) {
+        if (counterType == CounterType.LOYALTY && !batched) {
             fireLoyaltyCountersPutOnPlaneswalkerTriggers(gameData, target, count);
         }
 

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,14 +34,10 @@ public class DuskfangMentor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}",
-                List.of(new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        1,
-                        new PermanentAllOfPredicate(List.of(
+                List.of(PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasKeywordPredicate(Keyword.LIFELINK)
-                        ))
-                )),
+                        )))),
                 "{1}{B}, {T}: Put a +1/+1 counter on each creature you control with lifelink."
         ));
     }

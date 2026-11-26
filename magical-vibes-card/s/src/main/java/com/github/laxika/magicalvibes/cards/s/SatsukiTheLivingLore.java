@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -33,8 +33,7 @@ public class SatsukiTheLivingLore extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.LORE, 1, new PermanentHasSubtypePredicate(CardSubtype.SAGA))),
+                List.of(PutCountersEffect.onEachYouControl(CounterType.LORE, 1, new PermanentHasSubtypePredicate(CardSubtype.SAGA))),
                 "Put a lore counter on each Saga you control. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
 

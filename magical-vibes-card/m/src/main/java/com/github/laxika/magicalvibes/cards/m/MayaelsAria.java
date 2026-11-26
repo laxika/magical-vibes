@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,8 +31,7 @@ public class MayaelsAria extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new ConditionalEffect(
                         new ControlsPermanentCount(1, creatureWithPowerAtLeast(5)),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())),
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())),
                 new ConditionalEffect(
                         new ControlsPermanentCount(1, creatureWithPowerAtLeast(10)),
                         new GainLifeEffect(10)),

@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -19,9 +18,7 @@ public class BlackSunsZenith extends Card {
 
     public BlackSunsZenith() {
         // Put X -1/-1 counters on each creature.
-        addSpellEffect(new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.MINUS_ONE_MINUS_ONE, new XValue(),
-                new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS));
+        addSpellEffect(PutCountersEffect.onEach(CounterType.MINUS_ONE_MINUS_ONE, new XValue(), new PermanentIsCreaturePredicate()));
         addSpellEffect(new ShuffleIntoLibraryEffect());
     }
 }

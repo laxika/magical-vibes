@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.a.AgentPhilCoulson;
 import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JusticeVanceAstrovik;
+import com.github.laxika.magicalvibes.cards.p.PracticedOffense;
+import com.github.laxika.magicalvibes.cards.t.TemptWithGlory;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InvisibleWomanSueStorm.class, AgentMariaHill.class, AgentPhilCoulson.class,
-        JusticeVanceAstrovik.class, BurstOfStrength.class, GrizzlyBears.class})
+        JusticeVanceAstrovik.class, BurstOfStrength.class, GrizzlyBears.class, TemptWithGlory.class,
+        PracticedOffense.class})
 class InvisibleWomanSueStormTest extends BaseCardTest {
 
     @Test
@@ -146,6 +149,52 @@ class InvisibleWomanSueStormTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Wall")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tempt with Glory's counters on several other Heroes at once create only one Wall")
+    void temptWithGloryOnSeveralHeroesTriggersOnce() {
+        addCreatureReady(player1, new InvisibleWomanSueStorm());
+        Permanent maria = addCreatureReady(player1, new AgentMariaHill());
+        Permanent justice = addCreatureReady(player1, new JusticeVanceAstrovik());
+
+        harness.castFromHand(player1, new TemptWithGlory(), "{5}{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(maria.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(justice.getPlusOnePlusOneCounters()).isEqualTo(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Wall")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Practiced Offense's counters on each of your other Heroes create only one Wall")
+    void practicedOffenseOnSeveralHeroesTriggersOnce() {
+        addCreatureReady(player1, new InvisibleWomanSueStorm());
+        Permanent maria = addCreatureReady(player1, new AgentMariaHill());
+        Permanent justice = addCreatureReady(player1, new JusticeVanceAstrovik());
+        harness.setHand(player1, List.of(new PracticedOffense()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), maria.getId()));
+        harness.handleListChoice(player1, "LIFELINK");
+
+        assertThat(maria.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(justice.getPlusOnePlusOneCounters()).isEqualTo(1);
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

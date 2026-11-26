@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,11 +23,8 @@ public class MidnightBanshee extends Card {
     public MidnightBanshee() {
         // Wither is auto-loaded from Scryfall keywords.
         // "At the beginning of your upkeep, put a -1/-1 counter on each nonblack creature."
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.MINUS_ONE_MINUS_ONE, 1,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onEach(CounterType.MINUS_ONE_MINUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))))));
     }
 }

@@ -4,9 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,13 +28,9 @@ public class BombSquad extends Card {
                 "{T}: Put a fuse counter on target creature.",
                 TargetFilters.creature()));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.FUSE,
-                1,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onEach(CounterType.FUSE, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentHasCountersPredicate(CounterType.FUSE))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentHasCountersPredicate(CounterType.FUSE)))));
 
         addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) -> true)
                         .referencing(new PermanentAllOfPredicate(List.of(

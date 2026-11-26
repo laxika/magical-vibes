@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BlackSunsZenith;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GavonyTownship;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DannyPink.class, Forest.class, GavonyTownship.class, GrizzlyBears.class, SisterhoodOfKarn.class,
-        MirrorBox.class})
+        MirrorBox.class, BlackSunsZenith.class})
 class DannyPinkTest extends BaseCardTest {
 
     @BeforeEach
@@ -158,5 +159,22 @@ class DannyPinkTest extends BaseCardTest {
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters an effect puts on each creature draw a card for each of your creatures")
+    void countersOnEachCreatureDrawForEachOfYourCreatures() {
+        addCreatureReady(player1, new DannyPink());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new BlackSunsZenith()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 }

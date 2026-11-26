@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -36,10 +35,7 @@ public class Corrosion extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.RUST, 1,
-                        new PermanentIsArtifactPredicate(),
-                        EachPermanentScope.TARGET_PLAYER),
+                PutCountersEffect.onEachTargetPlayerControls(CounterType.RUST, 1, new PermanentIsArtifactPredicate()),
                 new DestroyAllPermanentsEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

@@ -96,8 +96,7 @@ public record DestroyAllPermanentsEffect(
     /**
      * The {@link EachPermanentScope#TARGET_PLAYER} scope needs the player whose battlefield is
      * swept — "destroy all creatures target opponent controls", "destroy all lands target player
-     * controls". Same shape as the sibling scoped effect
-     * ({@link PutCounterOnEachMatchingPermanentEffect}); the every-battlefield scope targets nothing.
+     * controls"; the every-battlefield scope targets nothing.
      */
     @Override
     public TargetSpec targetSpec() {

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,9 +27,8 @@ public class SlurrkAllIngesting extends Card {
                     new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)
             ));
 
-    private static final PutCounterOnEachControlledPermanentEffect GROW_COUNTERED_CREATURES =
-            new PutCounterOnEachControlledPermanentEffect(
-                    CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), CONTROLLED_CREATURES_WITH_COUNTERS);
+    private static final PutCountersEffect GROW_COUNTERED_CREATURES =
+            PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), CONTROLLED_CREATURES_WITH_COUNTERS);
 
 
     public SlurrkAllIngesting() {

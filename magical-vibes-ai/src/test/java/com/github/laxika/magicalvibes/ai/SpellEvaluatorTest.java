@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -464,11 +463,11 @@ class SpellEvaluatorTest {
     }
 
     @Test
-    @DisplayName("PutCounterOnEachControlledPermanentEffect scales with creature count")
+    @DisplayName("+1/+1 counters on each creature you control scale with creature count")
     void counterOnEachCreatureScalesWithCount() {
         // No creatures: value should be 0
         double noCreatures = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())), player1.getId());
+                gd, List.of(PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())), player1.getId());
         assertThat(noCreatures).isEqualTo(0.0);
 
         // Add 3 creatures
@@ -479,7 +478,7 @@ class SpellEvaluatorTest {
         }
 
         double withCreatures = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())), player1.getId());
+                gd, List.of(PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())), player1.getId());
         assertThat(withCreatures).isEqualTo(10.5); // 3 * 1 * 3.5
     }
 

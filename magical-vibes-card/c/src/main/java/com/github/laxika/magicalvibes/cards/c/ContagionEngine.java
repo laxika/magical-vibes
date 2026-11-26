@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,9 +26,7 @@ public class ContagionEngine extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.MINUS_ONE_MINUS_ONE, 1,
-                        new PermanentIsCreaturePredicate(), EachPermanentScope.TARGET_PLAYER));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onEachTargetPlayerControls(CounterType.MINUS_ONE_MINUS_ONE, 1, new PermanentIsCreaturePredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -31,9 +31,7 @@ public class SongOfERendil extends Card {
                         1, "Bird", 2, 2, CardColor.BLUE,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()))));
 
-        addTrigger(Triggers.chapter(3), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.FLYING, 1,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.chapter(3), PutCountersEffect.onEachYouControl(CounterType.FLYING, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))
                 ))));

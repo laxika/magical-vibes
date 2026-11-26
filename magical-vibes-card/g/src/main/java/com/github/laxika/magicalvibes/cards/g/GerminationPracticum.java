@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SOS", collectorNumber = "149")
@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class GerminationPracticum extends Card {
 
     public GerminationPracticum() {
-        addSpellEffect(new PutCounterOnEachControlledPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate()));
+        addSpellEffect(PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate()));
     }
 }

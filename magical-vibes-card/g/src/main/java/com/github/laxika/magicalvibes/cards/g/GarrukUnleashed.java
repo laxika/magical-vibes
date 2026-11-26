@@ -15,10 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -57,10 +56,7 @@ public class GarrukUnleashed extends Card {
                                 CardColor.GREEN, List.of(CardSubtype.BEAST), Set.of(), Set.of()),
                         new ConditionalEffect(
                                 new OpponentControlsMoreCreatures(1),
-                                new PutCounterOnEachMatchingPermanentEffect(
-                                        CounterType.LOYALTY, 1,
-                                        new PermanentIsSourceCardPredicate(),
-                                        EachPermanentScope.ALL_PLAYERS))
+                                PutCountersEffect.onEach(CounterType.LOYALTY, 1, new PermanentIsSourceCardPredicate()))
                 ),
                 "−2: Create a 3/3 green Beast creature token. Then if an opponent controls more creatures than you, put a loyalty counter on Garruk."
         ));

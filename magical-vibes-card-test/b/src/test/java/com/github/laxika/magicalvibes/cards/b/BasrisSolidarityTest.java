@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BasrisSolidarity.class, AlpineWatchdog.class, GloriousAnthem.class})
+@CardUsed({BasrisSolidarity.class, AlpineWatchdog.class, GloriousAnthem.class, DoublingSeason.class,
+        HardenedScales.class})
 class BasrisSolidarityTest extends BaseCardTest {
 
     @Test
@@ -68,5 +72,35 @@ class BasrisSolidarityTest extends BaseCardTest {
         assertThat(existing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(beforeResolution.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(afterResolution.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller orders Hardened Scales and Doubling Season for each creature it puts a counter on")
+    void controllerOrdersCounterReplacementsForEachCreature() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addToBattlefield(player1, new HardenedScales());
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new AlpineWatchdog());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new AlpineWatchdog());
+        harness.setHand(player1, List.of(new BasrisSolidarity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        chooseHardenedScalesFirst();
+        chooseHardenedScalesFirst();
+
+        assertThat(firstBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(secondBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void chooseHardenedScalesFirst() {
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        assertThat(order.playerId()).isEqualTo(player1.getId());
+        String hardenedScales = order.options().stream()
+                .filter(option -> option.contains("Hardened Scales"))
+                .findFirst().orElseThrow();
+        harness.handleListChoice(player1, hardenedScales);
     }
 }

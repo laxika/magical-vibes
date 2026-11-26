@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VoteEffect;
@@ -42,7 +42,6 @@ public class ElrondOfTheWhiteCouncil extends Card {
                 GainControlOfTargetEffect.of(Subjects.thisWay(StepKind.CHOOSE), Duration.PERMANENT),
                 new GrantEffectToTargetEffect(new StaticAbility(List.of(new CantAttackCardOwnerEffect(false))),
                         Duration.PERMANENT, false, Subjects.thisWay(StepKind.CHOOSE)),
-                new ConditionalEffect(VoteResult.anyVotes(AID), new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, new VotesFor(AID), new PermanentIsCreaturePredicate()))));
+                new ConditionalEffect(VoteResult.anyVotes(AID), PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, new VotesFor(AID), new PermanentIsCreaturePredicate()))));
     }
 }

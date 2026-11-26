@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -21,12 +19,8 @@ public class OranRiefOoze extends Card {
     public OranRiefOoze() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addTrigger(Triggers.attacks(), new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                1,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.attacks(), PutCountersEffect.onEach(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
-                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE))),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)))));
     }
 }

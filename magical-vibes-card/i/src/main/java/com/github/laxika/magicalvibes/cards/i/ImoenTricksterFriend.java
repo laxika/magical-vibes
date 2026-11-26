@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -85,8 +85,7 @@ public class ImoenTricksterFriend extends Card {
 
     public static CardEffect specializedCombatDamageTrigger(CardColor color) {
         CardEffect effect = switch (color) {
-            case WHITE -> new PutCounterOnEachControlledPermanentEffect(
-                    CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
+            case WHITE -> PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
             case BLUE -> {
                 PermanentPredicate opponentCreature = TargetFilters.creatureAnOpponentControls().predicate();
                 yield new QueueReflexiveAbilityEffect(SequenceEffect.of(

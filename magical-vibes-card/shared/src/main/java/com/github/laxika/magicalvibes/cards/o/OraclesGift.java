@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,11 +23,8 @@ public class OraclesGift extends Card {
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                 List.of(CardSubtype.FRACTAL), Set.of(), Set.of(), false, false,
                 List.of(), List.of(), false, false, false, 0, Set.of()));
-        addSpellEffect(new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, new XValue(),
-                new PermanentAllOfPredicate(List.of(
+        addSpellEffect(PutCountersEffect.onEach(CounterType.PLUS_ONE_PLUS_ONE, new XValue(), new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.FRACTAL),
-                        new PermanentControlledBySourceControllerPredicate())),
-                EachPermanentScope.ALL_PLAYERS));
+                        new PermanentControlledBySourceControllerPredicate()))));
     }
 }

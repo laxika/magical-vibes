@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,8 +24,7 @@ public class VojaJawsOfTheConclave extends Card {
         PermanentCount wolvesYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.WOLF), CountScope.CONTROLLER);
         addTrigger(Triggers.attacks(),
-                new PutCounterOnEachControlledPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, elvesYouControl, new PermanentIsCreaturePredicate()),
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, elvesYouControl, new PermanentIsCreaturePredicate()),
                 new DrawCardEffect(wolvesYouControl));
 
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(3));

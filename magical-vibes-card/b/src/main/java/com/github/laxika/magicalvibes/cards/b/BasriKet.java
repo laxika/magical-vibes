@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -61,9 +60,7 @@ public class BasriKet extends Card {
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
                                 CreateTokenEffect.whiteSoldier(1),
-                                new PutCounterOnEachControlledPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                        new PermanentIsCreaturePredicate())),
+                                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())),
                         EMBLEM_TEXT)),
                 "−6: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));

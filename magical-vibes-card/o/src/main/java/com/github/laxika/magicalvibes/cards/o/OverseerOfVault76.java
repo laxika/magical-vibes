@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
@@ -38,9 +37,7 @@ public class OverseerOfVault76 extends Card {
                 UnlessPaysEffect.youMayPay(new RemoveCounterFromControlledPermanentCost(
                                 List.of(CounterType.QUEST), 3, new PermanentTruePredicate(), false),
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
-                                new PutCounterOnEachControlledPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                        new PermanentIsCreaturePredicate()),
+                                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                                 new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())))));
     }
 }

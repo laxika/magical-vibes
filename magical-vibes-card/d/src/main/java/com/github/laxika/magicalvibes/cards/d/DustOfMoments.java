@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,10 +29,7 @@ public class DustOfMoments extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two time counters on each permanent with a time counter on it and each suspended card",
                         List.of(
-                                new PutCounterOnEachMatchingPermanentEffect(
-                                        CounterType.TIME, 2,
-                                        new PermanentHasCountersPredicate(CounterType.TIME),
-                                        EachPermanentScope.ALL_PLAYERS),
+                                PutCountersEffect.onEach(CounterType.TIME, 2, new PermanentHasCountersPredicate(CounterType.TIME)),
                                 new PutCounterOnExiledCardsEffect(
                                         Subjects.exiledCards(new CardIsSuspendedPredicate()), CounterType.TIME, 2)))
         )));

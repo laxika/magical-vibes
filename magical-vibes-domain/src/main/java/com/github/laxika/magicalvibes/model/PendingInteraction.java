@@ -2671,7 +2671,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return new ColorChoice(playerId, permanentId, etbTargetId,
                         new ChoiceContext.CounterReplacementOrder(new StackEntry(order.entry()),
                                 order.targetId(), order.count(), order.remaining(), order.effect(),
-                                order.subsequentTargets(), order.originalCount()), options, prompt, disabledOptions);
+                                order.subsequentTargets(), order.originalCount(), order.placed()), options, prompt,
+                        disabledOptions);
             }
             if (context instanceof ChoiceContext.FreeCastAdditionalCostChoice costChoice) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,

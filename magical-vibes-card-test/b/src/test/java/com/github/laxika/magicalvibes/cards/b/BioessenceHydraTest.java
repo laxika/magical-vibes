@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniTheGreathearted;
+import com.github.laxika.magicalvibes.cards.c.ChandraAcolyteOfFlame;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.k.KayasGhostform;
 import com.github.laxika.magicalvibes.cards.k.KioraBehemothBeckoner;
 import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
@@ -18,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BioessenceHydra.class, AjaniTheGreathearted.class, KioraBehemothBeckoner.class,
+@CardUsed({BioessenceHydra.class, ChandraAcolyteOfFlame.class, ChandraNalaar.class, AjaniTheGreathearted.class, KioraBehemothBeckoner.class,
         NarsetParterOfVeils.class, KayasGhostform.class})
 class BioessenceHydraTest extends BaseCardTest {
 
@@ -136,6 +138,23 @@ class BioessenceHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Loyalty counters an effect puts on several planeswalkers at once trigger it once, for their sum")
+    void loyaltyOnSeveralPlaneswalkersAtOnceTriggersOnceForTheSum() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new BioessenceHydra());
+        addReadyPlaneswalker(player1, new ChandraAcolyteOfFlame(), 4);
+        addReadyPlaneswalker(player1, new ChandraNalaar(), 4);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private Permanent addReadyPlaneswalker(Player player, com.github.laxika.magicalvibes.model.Card card,

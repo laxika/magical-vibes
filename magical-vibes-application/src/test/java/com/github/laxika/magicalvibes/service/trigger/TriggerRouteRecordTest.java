@@ -58,7 +58,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -1444,14 +1443,14 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, cards) -> {
                             test.harness.addToBattlefieldAndReturn(test.player1,
                                     card("Walker", CardType.PLANESWALKER)).setCounterCount(CounterType.LOYALTY, 3);
-                            test.helperAbilityResolves(cards, new PutCounterOnEachControlledPermanentEffect(
+                            test.helperAbilityResolves(cards, PutCountersEffect.onEachYouControl(
                                     CounterType.LOYALTY, 1, Triggers.PLANESWALKER));
                         }),
                 watch("you put -1/-1 counters on this", "youPutMinusOneCountersOnThis",
                         Triggers::youPutMinusOneCountersOnThis, CardType.CREATURE,
                         (test, cards) -> {
                             test.fixtureCreatures(cards);
-                            test.helperEntersAndItsAbilityResolves(new PutCounterOnEachControlledPermanentEffect(
+                            test.helperEntersAndItsAbilityResolves(PutCountersEffect.onEachYouControl(
                                     CounterType.MINUS_ONE_MINUS_ONE, 1, Triggers.CREATURE));
                         }),
                 watch("a -1/-1 counter is put on a creature", "minusOneCounterPutOnCreature", Triggers::minusOneCounterPutOnCreature, CardType.ENCHANTMENT,
@@ -2540,7 +2539,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     /** The helper's ability puts a -1/-1 counter on a Goblin of player1. */
     private void minusOneCounterIsPutOnACreature(List<Card> cards) {
         addCreatureReady(player1, card("Victim", CardType.CREATURE, CardSubtype.GOBLIN));
-        helperAbilityResolves(cards, new PutCounterOnEachControlledPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1,
+        helperAbilityResolves(cards, PutCountersEffect.onEachYouControl(CounterType.MINUS_ONE_MINUS_ONE, 1,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
     }
 
@@ -3057,7 +3056,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
 
     private void countersArePutOnFixtures(List<Card> cards) {
         fixtureCreatures(cards);
-        helperEntersAndItsAbilityResolves(new PutCounterOnEachControlledPermanentEffect(
+        helperEntersAndItsAbilityResolves(PutCountersEffect.onEachYouControl(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, Triggers.CREATURE));
     }
 

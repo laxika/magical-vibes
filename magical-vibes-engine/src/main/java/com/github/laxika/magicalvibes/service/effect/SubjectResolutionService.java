@@ -2472,7 +2472,8 @@ public class SubjectResolutionService {
      * last-known snapshot), controller and X, and what its trigger was about: the defending player (as the entry
      * recorded it when the ability went on the stack, else the player or the protector of the attacked permanent), the
      * triggering player and the triggering permanent ("tap all lands that player controls", "untap all creatures
-     * defending player controls").
+     * defending player controls"), and the permanent its source was attached to as the ability triggered (an
+     * Equipment's "creatures that share a creature type with equipped creature" after that creature left).
      */
     private FilterContext filterContext(Context ctx) {
         FilterContext filterContext = FilterContext.of(ctx.gameData())
@@ -2490,7 +2491,8 @@ public class SubjectResolutionService {
                             : gameQueryService.defendingPlayerOfAttackTarget(ctx.gameData(), entry.getAttackedTargetId()))
                     .withTriggeringPlayerId(entry.getTriggeringPlayerId())
                     .withTriggeringPermanentId(entry.getTriggeringPermanentId())
-                    .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot());
+                    .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot())
+                    .withAttachedPermanentSnapshot(entry.getAttachedPermanentSnapshot());
         }
         return filterContext;
     }

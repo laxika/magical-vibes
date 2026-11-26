@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -27,10 +27,7 @@ public class AntiquitiesOnTheLoose extends Card {
                 List.of(CardSubtype.SPIRIT)
         ));
         addSpellEffect(new ConditionalEffect(new CastNotFromHand(), 
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1,
-                        new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)
-                )
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSubtypePredicate(CardSubtype.SPIRIT))
         ));
         addCastingOption(new FlashbackCast("{4}{W}{W}"));
     }

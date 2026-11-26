@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -44,11 +44,7 @@ public class KumenaTyrantOfOrazca extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(5, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE,
-                                1,
-                                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)
-                        )
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))
                 ),
                 "Tap five untapped Merfolk you control: Put a +1/+1 counter on each Merfolk you control."
         ));

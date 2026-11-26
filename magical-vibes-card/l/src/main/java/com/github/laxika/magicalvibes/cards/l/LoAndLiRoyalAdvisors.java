@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,10 +21,8 @@ import java.util.List;
 public class LoAndLiRoyalAdvisors extends Card {
 
     public LoAndLiRoyalAdvisors() {
-        PutCounterOnEachControlledPermanentEffect counterEffect =
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1,
-                        new PermanentHasSubtypePredicate(CardSubtype.ADVISOR));
+        PutCountersEffect counterEffect =
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSubtypePredicate(CardSubtype.ADVISOR));
         addTrigger(Triggers.opponentDiscardsCard(), counterEffect);
         addTrigger(new TriggerCondition(Triggers.mills(null, ObjectRelation.OPPONENT_OWNS)),
                 TriggerOptions.ONE_OR_MORE, counterEffect);

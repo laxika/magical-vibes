@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,8 +30,7 @@ public class TolarianContempt extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.REJECTION, 1, opponentCreature, EachPermanentScope.ALL_PLAYERS));
+                PutCountersEffect.onEach(CounterType.REJECTION, 1, opponentCreature));
 
         PermanentPredicate opponentCreatureWithRejectionCounter = new PermanentAllOfPredicate(List.of(
                 opponentCreature,

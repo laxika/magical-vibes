@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,11 +33,8 @@ public class AjaniTheGreathearted extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.LOYALTY, 1,
-                                new PermanentAllOfPredicate(List.of(
+                        PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
+                        PutCountersEffect.onEachYouControl(CounterType.LOYALTY, 1, new PermanentAllOfPredicate(List.of(
                                         new PermanentIsPlaneswalkerPredicate(),
                                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                                 )))

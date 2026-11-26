@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,15 +22,10 @@ public class CanopyGargantuan extends Card {
 
     public CanopyGargantuan() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), UnlessPaysEffect.counterUnlessPays(2));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                new SourceToughness(),
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onEach(CounterType.PLUS_ONE_PLUS_ONE, new SourceToughness(), new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                )),
-                EachPermanentScope.ALL_PLAYERS,
-                true));
+                ))).evaluatedForEach());
     }
 }

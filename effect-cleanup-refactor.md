@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files; run PO: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` per effect with the escape snapshot, `GrantSupertypeToEnchantedPermanentEffect` into `GrantSupertypeEffect(T, attached())`, the scavenge grant into `PerCard.SCAVENGE_FOR_MANA_COST`, `PerpetuallyBoostSourceEffect` into `PerpetuallyBoostCardEffect` (perpetual P/T on a graveyard card in layer 7c), 32 card files; run U: `MakeCreatureUnblockableEffect`'s five who flags into one `PermanentSubject` (`self`, `of`, `targetPermanent`, `.byCreaturesYourOpponentsControl()`), every duration a floating rule, 67 card files; run C1: the three remove-all records into `RemoveCountersEffect.allFromSelf` / `allFrom` / `allFromTarget`, an explicit "all" component replacing `MAX_VALUE`, "that many" read as `AmountThisWay(REMOVE_COUNTERS)`, 42 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (C2-pre and C2, D-Destroy and K / K2, then R2, J, T, U8) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files; run PO: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` per effect with the escape snapshot, `GrantSupertypeToEnchantedPermanentEffect` into `GrantSupertypeEffect(T, attached())`, the scavenge grant into `PerCard.SCAVENGE_FOR_MANA_COST`, `PerpetuallyBoostSourceEffect` into `PerpetuallyBoostCardEffect` (perpetual P/T on a graveyard card in layer 7c), 32 card files; run U: `MakeCreatureUnblockableEffect`'s five who flags into one `PermanentSubject` (`self`, `of`, `targetPermanent`, `.byCreaturesYourOpponentsControl()`), every duration a floating rule, 67 card files; run C1: the three remove-all records into `RemoveCountersEffect.allFromSelf` / `allFrom` / `allFromTarget`, an explicit "all" component replacing `MAX_VALUE`, "that many" read as `AmountThisWay(REMOVE_COUNTERS)`, 42 card files; runs C2-pre and C2: the batched set path in `PutCountersEffect` (a set's amount once, CR 608.2h; one Hero / loyalty event per resolution, CR 603.2c) and the three mass records as `onEachYouControl` / `onEach` / `onEachTargetPlayerControls`, 264 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (D-Destroy and K / K2, then R2, J, T, U8) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,873 / 2,258 (after step 10 run C1) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 2,870 / 2,255 (after step 10 run C2) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -443,7 +443,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
 - `PutCountersEffect` (run Counters): `onSelf(kind[, int | DynamicAmount])`, `onSelfCountingTargetPlayer(kind, amount)`,
   `onSelfWithTargetPermanent(kind)`, `placedByEachController()`, over any subject (`createdThisResolution()`, `returnedThisResolution()`,
   `thisWay(kind)`). One placement: counter events, the CR 616.1 order, PUT_COUNTERS, the source snapshot refreshed; the mana-ability
-  path places it inline. A source-relative amount after a token or return step is noted first (`NoteAmountEffect`).
+  path places it inline. A source-relative amount after a token or return step is noted first (`NoteAmountEffect`). Run C2: the
+  mass forms `onEachYouControl` / `onEach` / `onEachTargetPlayerControls` (any set subject); a set's amount once against the source
+  unless `.evaluatedForEach()` (CR 608.2h); one resolution's placements one batch: one Hero / loyalty event (CR 603.2c), across an order prompt.
 - `RemoveCountersEffect` (run Remove counters): `fromSelf(kind, int | DynamicAmount)`, `fromSelfCountingTargetPlayer(kind, amount)`,
   `fromTarget()` (any one kind), `fromTarget(kind, int | DynamicAmount[, targetPredicate])`, `fromTarget(kind, targetPredicate)`,
   `new RemoveCountersEffect(subject, kind[, int])`. One removal path (`PermanentCounterSupport.removeCounterFromPermanent`): vanishing's
@@ -969,9 +971,8 @@ there and updates them when it lands.
   composites (they hold a `BoostEffect`), `BoostControllerDamageThisTurnEffect` (not a boost).
 - **Counters**: run C1 folded the remove-all records of one kind (`allFromSelf` / `allFrom` / `allFromTarget`). Stay out:
   `RemoveAllCountersFromTargetPermanentEffect` (every kind at once and player counters: its own verb), `RemoveAllCountersAsCostEffect`
-  (a cost), Bomb Squad's fused record, the as-enters removals (Thief of Blood, Sin). Left: the mass placements (`PutCounterOnEachControlledPermanentEffect`,
-  `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a batched
-  path in `PutCountersEffect` first (owner's decision 2026-11-25).
+  (a cost), Bomb Squad's fused record, the as-enters removals (Thief of Blood, Sin). Run C2 folded the mass placements onto
+  `PutCountersEffect`'s batched set path; `PutCounterOnEachControlledPermanentOfChosenSubtypeEffect` stays (a choice at resolution, one card).
 - **Damage**: run Damage P folded the player record (`to(PlayerSubject)`); defect run D26 moved the player kinds' and the set handlers'
   pre-pool checks into the pools and begins their DEAL_DAMAGE steps; run M1 folded the four set records (`toEach`, `toEachTarget`); run
   M2 folded `MassDamageEffect` (Falling Star's tap a step; left out: `DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCountEffect`,
@@ -1205,6 +1206,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run PO (2026-11-26): the player-grant list onto `GrantStaticEffectToPlayerEffect.untilEndOfTurn` with the escape snapshot, the supertype, scavenge and perpetual-boost pairs absorbed (32 card files by hand and script); perpetual P/T on a graveyard card in layer 7c (CR 613.4c), Courageous Resolve's opponents can lose
 - Step 10, run U (2026-11-26): `MakeCreatureUnblockableEffect`'s five who flags become one `PermanentSubject` (67 card files by script); every duration a floating rule, so Ma Chao, Yuan Shao's Infantry and Sly Instigator stay unblockable after losing all abilities
 - Step 10, run C1 (2026-11-26): the three remove-all records absorbed into `RemoveCountersEffect.allFromSelf` / `allFrom` / `allFromTarget` with an explicit "all" component (42 card files by script); "that many" read as `AmountThisWay(REMOVE_COUNTERS)`, Sarulf's exile takes an amount; no rules change
+- Step 10, runs C2-pre and C2 (2026-11-26): the batched set path in `PutCountersEffect`, then the three mass-placement records absorbed into `onEachYouControl` / `onEach` / `onEachTargetPlayerControls` (264 card files by script); one Hero / loyalty trigger per resolution (CR 603.2c), the mass forms order counter replacements (CR 616.1) and raise "counters put on this"
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2947,6 +2949,45 @@ added to `NornsDominionTest` (5) and `OblivionStoneTest` (8). **Tests run** (one
 **Seen, not changed** (defect queue): Sarulf's exile moves each permanent on its own, not as one leave batch. No doc names a deleted class.
 
 **For the next run.** C2-pre (the batched set path in `PutCountersEffectHandler`, `survey-counters.md` section 2), then C2.
+
+### Step 10, runs C2-pre and C2 (mass counters) (2026-11-26)
+
+Runs C2-pre and C2 of the plan `s10-rest`. C2-pre: `PutCountersEffect` gains `amountForEachRecipient` (`.evaluatedForEach()`); a set
+(`isSet()`) is found once and gets one amount, against the source as it is or last existed (CR 608.2h); one resolution's placements are
+one batch whose "one or more" events (Heroes per placer, loyalty per controller with the sum) are raised once after the last placement
+(`PermanentCounterSupport.placeCounterInBatch` / `firePlacementBatchEvents`), also across an order prompt (`CounterReplacementOrder.placed`),
+the resume keeping a set's count; `controlledBy(targetPlayer(), …)` declares the benign player target; the set filter context carries the
+attached snapshot (Holy Frazzle Cannon). C2: the three mass records and handlers absorbed into `onEachYouControl` / `onEach` /
+`onEachTargetPlayerControls(kind, n, filter)`; `EachPermanentScope.TRIGGERING_PERMANENTS` deleted. Ledger: 3 absorbed, 1 survivor, 1 unique
+(the chosen-subtype record, now calling the survivor's handler). Ratchet 2,873 / 2,258 → 2,870 / 2,255. No `CONVERSION_VERSION` bump.
+
+**Premises.** Held: both mass handlers fixed the amount once (only Canopy Gargantuan per permanent); the cards already on a set subject
+use fixed amounts; the triggering-permanents calls are unfiltered (`triggeringAll()`); counter events are matched as the resolution's
+batch closes, so placement-time firing changes nothing. Not held: Moment of Glory's "each other creature" can't be `except(…, allTargets())`
+(an exception declares no target): it is the filter `Not(PermanentIsTargetCardPredicate)`, bound to the target by the set resolver.
+
+**Cards.** 264 files, 275 calls, by a scratch script (balanced parentheses, shape table, loud failure, leftover-name check, imports;
+deleted), Moment of Glory by hand: `onEachYouControl` 216, `onEach` 47 (+1 `.evaluatedForEach()`), `onEachTargetPlayerControls` 8,
+`triggeringAll()` 3, typed locals 8. Oracle text checked with `get_card` for 38 (every non-plain shape and a sample); all match.
+
+**Behaviour changes** (rules-correct, each failing first on HEAD): one Hero trigger per resolution for Tempt with Glory / Shadrix and the
++1/+1 target-player record (CR 603.2c; `InvisibleWomanSueStormTest.temptWithGloryOnSeveralHeroesTriggersOnce`,
+`practicedOffenseOnSeveralHeroesTriggersOnce`); the every-battlefield record now raises the loyalty event (Chandra, Acolyte of Flame and
+Bioessence Hydra, once for the sum: `BioessenceHydraTest.loyaltyOnSeveralPlaneswalkersAtOnceTriggersOnceForTheSum`) and "counters are put on
+this" (`DannyPinkTest.countersOnEachCreatureDrawForEachOfYourCreatures`); the mass forms ask each controller to order counter
+replacements (CR 616.1; `BasrisSolidarityTest.controllerOrdersCounterReplacementsForEachCreature`). Untested, from the survivor's path:
+keyword-counter timestamps, the non-±1 controlled-creature events, a PUT_COUNTERS step everywhere, the per-permanent log line (the
+survivor's wins). AI: the +1/+1 own-set score kept; a target-player set gets the counter kind's polarity.
+
+**Pins** (old code: 14 classes, 105 tests, only the five new ones failing). **Tests changed:** `CounterReplacementOrderTest.laterNamedPermanentsKeepTheirOwnAmount`
+builds its set `.evaluatedForEach()` (assertions unchanged); `SpellEvaluatorTest`, `TriggerRouteRecordTest` build the survivor. **Tests run**
+(one run, XML of this run): 4,734 classes plus the AI module, 5,203 files, 46,831 tests, 341 failures, all Moment of Glory's `except`
+refusal (its 7 tests and the AI module's Spring context); fixed, rerun (AI module, Moment of Glory, both application classes): 123 files,
+1,727 tests, 0 failures.
+
+**Seen, not changed:** none new. AGENTS.md names no deleted class.
+
+**For the next run.** D-Destroy (the defect run before K, plan section 2), then K / K2.
 
 ## Prompt
 

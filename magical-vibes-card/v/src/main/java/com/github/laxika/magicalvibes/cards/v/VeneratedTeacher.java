@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -16,13 +16,9 @@ import java.util.List;
 public class VeneratedTeacher extends Card {
 
     public VeneratedTeacher() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.LEVEL,
-                2,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PutCountersEffect.onEachYouControl(CounterType.LEVEL, 2, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         PermanentHasNonManaActivatedAbilityPredicate.levelUp()
-                ))
-        ));
+                ))));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,10 +29,7 @@ public class CosmograndZenith extends Card {
                                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER),
                                         Set.of(), Set.of())),
                         new ChooseOneEffect.ChooseOneOption(COUNTER_MODE,
-                                new PutCounterOnEachControlledPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE,
-                                        1,
-                                        new PermanentIsCreaturePredicate()))
+                                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()))
                 )));
     }
 }

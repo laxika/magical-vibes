@@ -7,10 +7,14 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "21")
 public class MomentOfGlory extends Card {
@@ -20,8 +24,9 @@ public class MomentOfGlory extends Card {
                 .addSpellEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addSpellEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate(), true)));
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1,
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsTargetCardPredicate()))))));
         addCastingOption(new FlashbackCast("{4}{W}"));
     }
 }

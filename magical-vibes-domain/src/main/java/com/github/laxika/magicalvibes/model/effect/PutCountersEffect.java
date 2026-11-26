@@ -38,7 +38,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>A non-target subject declares no target, so shroud and hexproof don't stop it and a permanent that is gone at
  * resolution simply gets nothing. It takes no {@code predicate}, {@code targetPredicate},
- * {@code regenerateIfSurvives} or {@code optionalTarget}.</p>
+ * {@code regenerateIfSurvives} or {@code optionalTarget}. A set ({@link PermanentSubject#isSet()}: "each creature you
+ * control", {@link #onEachYouControl}, {@link #onEach}, {@link #onEachTargetPlayerControls}) is found once and its
+ * amount worked out once, against the source as it is or last existed (CR 608.2h), unless
+ * {@code amountForEachRecipient} ({@link #evaluatedForEach()}); "creatures target player controls" declares that
+ * player as the effect's target.</p>
+ *
+ * <p>Every permanent the effect puts counters on is one placement event (CR 603.2c): "whenever you put one or more
+ * +1/+1 counters on one or more other Heroes" and "whenever one or more loyalty counters are put on planeswalkers you
+ * control" trigger once for the effect, each counter replacement still ordered per permanent by its controller
+ * (CR 616.1).</p>
  *
  * <p>The effect's controller puts the counters, unless {@code eachControllerPlaces}: then each
  * permanent's controller puts them on it ({@link #placedByEachController()}: "target player puts a +1/+1 counter on
@@ -61,12 +70,17 @@ public record PutCountersEffect(CounterType counterType, DynamicAmount amount,
                                                 PermanentSubject subject,
                                                 boolean eachControllerPlaces,
                                                 boolean targetsPlayer,
-                                                boolean declaresPermanentTarget)
+                                                boolean declaresPermanentTarget,
+                                                boolean amountForEachRecipient)
         implements CardEffect {
 
     public PutCountersEffect {
         if (subject == null) {
             subject = Subjects.target();
+        }
+        if (amountForEachRecipient && !subject.isSet()) {
+            throw new IllegalArgumentException("Only a set's amount is worked out for each of its permanents: "
+                    + subject);
         }
         if ((targetsPlayer || declaresPermanentTarget) && !(subject instanceof PermanentSubject.Source)) {
             throw new IllegalArgumentException("Only counters on the source declare a target they don't go on: "
@@ -77,6 +91,21 @@ public record PutCountersEffect(CounterType counterType, DynamicAmount amount,
             throw new IllegalArgumentException("A resolution-time choice, a target restriction, regeneration and an "
                     + "optional target need the target subject: " + subject);
         }
+    }
+
+    /** A counter effect whose amount is worked out once for a set (CR 608.2h). */
+    public PutCountersEffect(CounterType counterType, DynamicAmount amount,
+                             PermanentPredicate predicate,
+                             PermanentPredicate targetPredicate,
+                             boolean regenerateIfSurvives,
+                             PermanentPredicate resolutionCondition,
+                             boolean optionalTarget,
+                             PermanentSubject subject,
+                             boolean eachControllerPlaces,
+                             boolean targetsPlayer,
+                             boolean declaresPermanentTarget) {
+        this(counterType, amount, predicate, targetPredicate, regenerateIfSurvives, resolutionCondition,
+                optionalTarget, subject, eachControllerPlaces, targetsPlayer, declaresPermanentTarget, false);
     }
 
     /** A counter effect that declares no target besides its subject's. */
@@ -248,11 +277,45 @@ public record PutCountersEffect(CounterType counterType, DynamicAmount amount,
         return new PutCountersEffect(counterType, new Fixed(count), null, null, false, resolutionCondition, false);
     }
 
+    /** "Put a [kind] counter on each [permanent] you control": {@code filter} the permanents. */
+    public static PutCountersEffect onEachYouControl(CounterType counterType, int count, PermanentPredicate filter) {
+        return onEachYouControl(counterType, new Fixed(count), filter);
+    }
+
+    /** "Put N [kind] counters on each [permanent] you control", {@code amount} worked out once (CR 608.2h). */
+    public static PutCountersEffect onEachYouControl(CounterType counterType, DynamicAmount amount,
+                                                     PermanentPredicate filter) {
+        return new PutCountersEffect(Subjects.controlledBy(Subjects.you(), filter), counterType, amount);
+    }
+
+    /**
+     * "Put a [kind] counter on each [permanent]" on every battlefield ("each creature", "each attacking creature",
+     * "each other creature"): {@code filter} the permanents.
+     */
+    public static PutCountersEffect onEach(CounterType counterType, int count, PermanentPredicate filter) {
+        return onEach(counterType, new Fixed(count), filter);
+    }
+
+    /** {@link #onEach(CounterType, int, PermanentPredicate)}, {@code amount} worked out once (CR 608.2h). */
+    public static PutCountersEffect onEach(CounterType counterType, DynamicAmount amount, PermanentPredicate filter) {
+        return new PutCountersEffect(Subjects.controlledBy(Subjects.eachPlayer(), filter), counterType, amount);
+    }
+
+    /**
+     * "Put a [kind] counter on each [permanent] target player controls": the effect declares the player target (a
+     * benign one), bound to the effect's target group when the card binds it.
+     */
+    public static PutCountersEffect onEachTargetPlayerControls(CounterType counterType, int count,
+                                                               PermanentPredicate filter) {
+        return new PutCountersEffect(Subjects.controlledBy(Subjects.targetPlayer(), filter), counterType,
+                new Fixed(count));
+    }
+
     /** This effect on the permanent {@code subject} names, everything else kept. */
     public PutCountersEffect withSubject(PermanentSubject subject) {
         return new PutCountersEffect(counterType, amount, predicate, targetPredicate,
                 regenerateIfSurvives, resolutionCondition, optionalTarget, subject, eachControllerPlaces,
-                targetsPlayer, declaresPermanentTarget);
+                targetsPlayer, declaresPermanentTarget, amountForEachRecipient);
     }
 
     /**
@@ -265,7 +328,17 @@ public record PutCountersEffect(CounterType counterType, DynamicAmount amount,
         }
         return new PutCountersEffect(counterType, amount, predicate, targetPredicate,
                 regenerateIfSurvives, resolutionCondition, optionalTarget, subject, true, targetsPlayer,
-                declaresPermanentTarget);
+                declaresPermanentTarget, amountForEachRecipient);
+    }
+
+    /**
+     * "Put a number of counters on each [permanent] equal to that permanent's [quality]": the amount worked out for
+     * each permanent of the set, that permanent its source, instead of once for the whole set.
+     */
+    public PutCountersEffect evaluatedForEach() {
+        return new PutCountersEffect(counterType, amount, predicate, targetPredicate,
+                regenerateIfSurvives, resolutionCondition, optionalTarget, subject, eachControllerPlaces, targetsPlayer,
+                declaresPermanentTarget, true);
     }
 
     @Override
@@ -276,6 +349,9 @@ public record PutCountersEffect(CounterType counterType, DynamicAmount amount,
             }
             return declaresPermanentTarget ? TargetSpec.benign(TargetPredicates.permanent())
                     : new TargetSpec(null, false, null, true, 1);
+        }
+        if (subject.declaresPlayerTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
         }
         return predicate == null && subject.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate) : TargetSpec.NONE;

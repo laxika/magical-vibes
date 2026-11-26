@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,8 +38,7 @@ public class ToxrillTheCorrosive extends Card {
         ));
 
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.SLIME, 1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS));
+                PutCountersEffect.onEach(CounterType.SLIME, 1, opponentsCreatures));
         addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.otherCreatures(),
                         opponentsCreatures, CounterType.SLIME, true));
         addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.SLIME),

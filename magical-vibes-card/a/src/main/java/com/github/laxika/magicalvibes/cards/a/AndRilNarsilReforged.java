@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,12 +21,10 @@ public class AndRilNarsilReforged extends Card {
     public AndRilNarsilReforged() {
         addStaticEffect(new AscendEffect());
 
-        PutCounterOnEachControlledPermanentEffect oneCounter =
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
-        PutCounterOnEachControlledPermanentEffect twoCounters =
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate());
+        PutCountersEffect oneCounter =
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
+        PutCountersEffect twoCounters =
+                PutCountersEffect.onEachYouControl(CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate());
         addTrigger(Triggers.attacks(), new ConditionalEffect(new ControllerHasCityBlessing(),
                 twoCounters),
                 new ConditionalEffect(

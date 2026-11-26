@@ -43,7 +43,7 @@ class CounterReplacementOrderTest extends BaseCardTest {
         spell.setName("Growth Surge");
         spell.setType(CardType.SORCERY);
         List<CardEffect> effects = new ArrayList<>(List.of(new PutCountersEffect(
-                Subjects.creaturesYouControl(), CounterType.PLUS_ONE_PLUS_ONE, new SourcePower())));
+                Subjects.creaturesYouControl(), CounterType.PLUS_ONE_PLUS_ONE, new SourcePower()).evaluatedForEach()));
         gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Growth Surge", effects));
 
         harness.passBothPriorities();
@@ -52,6 +52,29 @@ class CounterReplacementOrderTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("After an ordered placement, the later permanents of a set get the set's amount")
+    void laterPermanentsOfASetGetTheSetsAmount() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addToBattlefield(player1, new HardenedScales());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Card spell = new Card();
+        spell.setName("Growth Surge");
+        spell.setType(CardType.SORCERY);
+        List<CardEffect> effects = new ArrayList<>(List.of(new PutCountersEffect(
+                Subjects.creaturesYouControl(), CounterType.PLUS_ONE_PLUS_ONE, 2)));
+        gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Growth Surge", effects));
+
+        harness.passBothPriorities();
+        chooseHardenedScalesFirst();
+        chooseHardenedScalesFirst();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void chooseHardenedScalesFirst() {

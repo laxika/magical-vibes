@@ -159,16 +159,27 @@ public sealed interface ChoiceContext {
     /** A separately applicable counter replacement, identified by its source. */
     record CounterReplacement(String label, CardEffect effect) {}
 
-    /** Retains counter placement while the affected permanent's controller orders replacements. */
+    /**
+     * Retains counter placement while the affected permanent's controller orders replacements. {@code placed} are the
+     * placements the effect already made, one batch with those still to come (CR 603.2c).
+     */
     record CounterReplacementOrder(StackEntry entry, UUID targetId, int count,
                                    List<CounterReplacement> remaining,
                                    com.github.laxika.magicalvibes.model.effect.PutCountersEffect effect,
-                                   List<UUID> subsequentTargets, int originalCount) implements ChoiceContext {
+                                   List<UUID> subsequentTargets, int originalCount,
+                                   List<CounterPlacement> placed) implements ChoiceContext {
         public CounterReplacementOrder {
             remaining = List.copyOf(remaining);
             subsequentTargets = List.copyOf(subsequentTargets);
+            placed = placed == null ? List.of() : List.copyOf(placed);
         }
     }
+
+    /**
+     * One placement of a batch of counters: {@code count} counters {@code placerId} put on {@code permanentId}, which
+     * {@code controllerId} controlled and which was a planeswalker ({@code planeswalker}) as they were put.
+     */
+    record CounterPlacement(UUID permanentId, UUID placerId, UUID controllerId, boolean planeswalker, int count) {}
 
     /**
      * A counter placement on an entering permanent that was applied with the default replacement
