@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaPutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
@@ -21,7 +24,8 @@ public class RemnantOfTheRisingStar extends Card {
 
     public RemnantOfTheRisingStar() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, true));
+                UnlessPaysEffect.youMayPayX("{X}", new QueueReflexiveAbilityEffect(
+                        new PutCountersEffect(Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE, new XValue()))));
 
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(5, new PermanentAllOfPredicate(List.of(

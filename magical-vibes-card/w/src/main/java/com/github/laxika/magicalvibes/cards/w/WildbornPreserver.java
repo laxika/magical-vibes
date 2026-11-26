@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PayXManaPutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -23,6 +26,7 @@ public class WildbornPreserver extends Card {
                                 Triggers.CREATURE,
                                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, false, true));
+                UnlessPaysEffect.youMayPayX("{X}", new QueueReflexiveAbilityEffect(
+                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, new XValue()))));
     }
 }

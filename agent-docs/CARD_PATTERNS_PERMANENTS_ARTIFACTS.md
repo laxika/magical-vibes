@@ -40,7 +40,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Resolution-time hand exile + 3/3 Golem artifact creature copy | `n/NexusOfBecoming.java` | `Triggers.beginningOfCombat(ActivePlayer.YOU)` `SequenceEffect.of(DrawCardEffect(), MayEffect(ExileCardFromHandEffect([player, ]filter) + CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE[, filter]), options)))` |
-| Life-gain trigger with capped pay-X draw-X | `w/WellOfLostDreams.java` | Triggers.youGainLife() PayXManaDrawXCardsEffect — snapshot the life gained for each trigger, then choose and pay generic X at resolution to draw X cards |
+| Life-gain trigger with capped pay-X draw-X | `w/WellOfLostDreams.java` | Triggers.youGainLife() `UnlessPaysEffect.youMayPayX("{X}", new EventValue(), new DrawCardEffect(new XValue()))` — the life gained is the trigger's event value, the cap of X |
 | ETB/LTB controller chooses one land of each basic land type and destroys them | `s/SunderingTitan.java` | Register the same non-targeting resolution effect in `Triggers.enters(ObjectRelation.THIS)` and `Triggers.leavesBattlefield(THIS)`; the controller chooses across all battlefields and the selected lands are destroyed simultaneously |
 | Graveyard-punisher + permanent handoff | `j/JinxedRing.java` | `Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN)` with `DealDamageEffect.to(CONTROLLER, 1)` + activated `SacrificeCreatureCost` and `TargetPlayerGainsControlOfSourceCreatureEffect` targeting an opponent |
 | Artifact/enchantment graveyard life trigger | `s/Scrapheap.java` | `Triggers.dies(PermanentAnyOfPredicate(List.of(PermanentIsArtifactPredicate(), PermanentIsEnchantmentPredicate())), ObjectRelation.YOU_OWN)` + `GainLifeEffect(1)` |

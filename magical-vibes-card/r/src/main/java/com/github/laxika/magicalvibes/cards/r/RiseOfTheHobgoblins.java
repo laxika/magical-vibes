@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaCreateXTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +24,10 @@ public class RiseOfTheHobgoblins extends Card {
     public RiseOfTheHobgoblins() {
         // When this enchantment enters, you may pay {X}. If you do, create X 1/1 red and white
         // Goblin Soldier creature tokens.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PayXManaCreateXTokensEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.youMayPayX("{X}",
                 new CreateTokenEffect("Goblin Soldier", 1, 1, CardColor.RED,
                         Set.of(CardColor.RED, CardColor.WHITE),
-                        List.of(CardSubtype.GOBLIN, CardSubtype.SOLDIER))));
+                        List.of(CardSubtype.GOBLIN, CardSubtype.SOLDIER)).withAmount(new XValue())));
 
         // {R/W}: Red creatures and white creatures you control gain first strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R/W}",

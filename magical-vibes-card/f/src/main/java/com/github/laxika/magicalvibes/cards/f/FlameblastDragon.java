@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALA", collectorNumber = "100")
@@ -15,6 +17,6 @@ public class FlameblastDragon extends Card {
 
     public FlameblastDragon() {
         // Whenever this creature attacks, you may pay {X}{R}. If you do, it deals X damage to any target.
-        addTrigger(Triggers.attacks(), new PayXManaDealXDamageToAnyTargetEffect("{X}{R}"));
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPayX("{X}{R}", DealDamageEffect.toAnyTarget(new XValue())));
     }
 }

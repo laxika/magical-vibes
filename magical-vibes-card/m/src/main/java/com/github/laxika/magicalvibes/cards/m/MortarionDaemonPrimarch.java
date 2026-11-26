@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaCreateXTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,6 +26,7 @@ public class MortarionDaemonPrimarch extends Card {
                 Set.of(Keyword.MENACE), Set.of());
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new PayXManaCreateXTokensEffect(new LifeLostThisTurn(CountScope.CONTROLLER), astartesWarrior));
+                UnlessPaysEffect.youMayPayX("{X}", new LifeLostThisTurn(CountScope.CONTROLLER),
+                        astartesWarrior.withAmount(new XValue())));
     }
 }

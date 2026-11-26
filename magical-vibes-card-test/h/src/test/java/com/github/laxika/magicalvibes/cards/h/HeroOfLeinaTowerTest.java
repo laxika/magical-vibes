@@ -153,4 +153,21 @@ class HeroOfLeinaTowerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isEqualTo(2);
         assertThat(choice.maxValue()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Powerstone mana pays the {X}: the payment isn't casting a spell")
+    void powerstoneManaPaysTheX() {
+        harness.addToBattlefield(player1, new HeroOfLeinaTower());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(2);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Hero of Leina Tower"));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(findPermanent(player1, "Hero of Leina Tower")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
 }

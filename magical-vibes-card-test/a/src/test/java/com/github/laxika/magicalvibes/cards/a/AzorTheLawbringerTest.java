@@ -119,8 +119,8 @@ class AzorTheLawbringerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The controller can pay for X=0 with exactly white and two blue mana")
-    void offersPaymentWhenOnlyTheFixedCostIsAvailable() {
+    @DisplayName("With exactly white and two blue mana and no mana source X=1 can't be paid, so nothing is asked")
+    void notAskedWhenOnlyTheFixedCostIsAvailable() {
         addCreatureReady(player1, new AzorTheLawbringer());
         addCreatureReady(player2, new SunCollaredRaptor());
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -129,10 +129,7 @@ class AzorTheLawbringerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        PendingInteraction.XValueChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.maxValue()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
     }
 
     @Test
@@ -164,4 +161,21 @@ class AzorTheLawbringerTest extends BaseCardTest {
         resolveAllTriggers();
     }
 
+    @Test
+    @DisplayName("Powerstone mana pays the X of {X}{W}{U}{U}: the payment isn't casting a spell")
+    void powerstoneManaPaysTheX() {
+        addCreatureReady(player1, new AzorTheLawbringer());
+        addCreatureReady(player2, new SunCollaredRaptor());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
 }

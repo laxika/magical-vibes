@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -132,8 +133,11 @@ import org.springframework.stereotype.Component;
  *   ({@link ActionEvents#taxPaid}, the event the cast and activation taxes raise). Its {@code manaCost} must be the
  *   cost as it is paid now (no reduction, increase or source cost left to read); {@code announcedX} lets mana spendable
  *   only on {X} pay it, and {@code lifeAmount} is paid with it.</li>
+ *   <li>{@link PayXManaCost}: the X chosen by its caller first (CR 107.3f), then {@link #paidWith} that X paid as
+ *   {@link PayManaCost}; {@link #couldPossiblyPay} asks whether X = 1 might be paid within its limit, and
+ *   {@link #mostXPayable} bounds the question.</li>
  *   <li>{@link PayLifeCost} with a fixed amount: losing that life ({@link LifeSupport#applyLifePayment}, CR 119.4), only
- *   while the payer can lose life (CR 119.8, {@link #canPayLife}).</li>
+ *   while the payer can lose life (CR 119.8, {@link #canPayLife}), recorded as the entry's {@code PAY_LIFE} step.</li>
  *   <li>{@link DiscardCardTypeCost} and {@link DiscardRandomCardCost}: the shared discard prompt or random discard, so
  *   madness and "whenever a player discards" see it; caused by the source's controller's ability when the payer is
  *   another player (CR 701.9).</li>
@@ -351,6 +355,8 @@ public class ResolutionCostPaymentService {
     public boolean canPay(GameData gameData, UUID payerId, CostEffect cost, Card sourceCard, StackEntry entry) {
         return switch (cost) {
             case PayManaCost mana -> lifeForMana(gameData, payerId, mana, true) >= 0;
+            case PayXManaCost xCost -> maximumX(xCost) >= 1
+                    && lifeForMana(gameData, payerId, paidWith(xCost, 1), true) >= 0;
             case PayLifeCost life -> canPayLife(gameData, payerId, fixedLife(life));
             case DiscardCardTypeCost discard ->
                     discardableIndices(gameData, payerId, discard, sourceCard).size() >= discard.count();
@@ -460,6 +466,8 @@ public class ResolutionCostPaymentService {
         return switch (cost) {
             case PayLifeCost life -> canPayLife(gameData, payerId, fixedLife(life));
             case PayManaCost mana -> couldPossiblyPayMana(gameData, payerId, mana);
+            case PayXManaCost xCost -> maximumX(xCost) >= 1 && couldPossiblyPayMana(gameData, payerId,
+                    paidWith(xCost, 1));
             case WaterbendCost waterbend -> canPay(gameData, payerId, waterbend, sourceCard)
                     || hasManaSource(gameData, payerId);
             case AnyOfCost anyOf -> anyOf.alternatives().stream()
@@ -556,6 +564,8 @@ public class ResolutionCostPaymentService {
         UUID payerId = payer.getId();
         return switch (cost) {
             case PayManaCost mana -> payMana(gameData, payer, mana, payment);
+            case PayXManaCost ignored -> throw new IllegalArgumentException(
+                    "The X is chosen first, then the cost with it is paid (paidWith): " + cost);
             case PayLifeCost life -> payLife(gameData, payer, fixedLife(life), payment);
             case DiscardCardTypeCost discard -> {
                 List<Integer> indices = discardableIndices(gameData, payerId, discard, payment.sourceCard());
@@ -1726,6 +1736,60 @@ public class ResolutionCostPaymentService {
         return true;
     }
 
+    /**
+     * {@code cost} with {@code x} chosen for its X (CR 107.3f), as the mana cost then paid: mana spendable only on costs
+     * with {X} may pay it, {B} with 2 life under K'rrik, and paying it records the {@code PAY_MANA} step and the tax as
+     * any resolution-time mana payment ({@link #pay}).
+     */
+    public static PayManaCost paidWith(PayXManaCost cost, int x) {
+        return new PayManaCost(cost.withX(x), null, null, false, 0, false, true);
+    }
+
+    /**
+     * The most X {@code cost} allows, its limit read already ({@link Fixed}), or {@link Integer#MAX_VALUE} without
+     * one.
+     *
+     * @throws IllegalArgumentException for a limit not read yet
+     */
+    public static int maximumX(PayXManaCost cost) {
+        if (cost.maximumX() == null) {
+            return Integer.MAX_VALUE;
+        }
+        if (cost.maximumX() instanceof Fixed fixed) {
+            return Math.max(0, fixed.value());
+        }
+        throw new IllegalArgumentException("Read the limit of X before paying it: " + cost);
+    }
+
+    /**
+     * The most X {@code payerId} could pay {@code cost} with, from their pool and the mana their untapped sources could
+     * still add (they may activate mana abilities while asked, CR 605.3a), as a resolution-time cost: Powerstone mana
+     * and mana spendable only on costs with {X} count. An estimate for the question's upper bound; the payment checks the
+     * pool.
+     */
+    public int mostXPayable(GameData gameData, UUID payerId, PayXManaCost cost) {
+        ManaCost mana = new ManaCost(cost.manaCost());
+        ManaPool pool = gameData.playerManaPools.get(payerId);
+        int most = pool == null ? 0 : mana.calculateMaxXForResolutionCost(pool);
+        if (potentialManaService != null) {
+            ManaPool potential = potentialManaService.buildVirtualManaPoolForSpecialAction(gameData, payerId);
+            potential.addXCostOnlyColorless((pool == null ? 0 : pool.getXCostOnlyColorless())
+                    + potentialManaService.potentialXCostOnlyMana(gameData, payerId));
+            most = Math.max(most, mana.calculateMaxXForResolutionCost(potential));
+        }
+        return Math.min(most, maximumX(cost));
+    }
+
+    /**
+     * Asks {@code payerId} for the X of {@code cost} (CR 107.3f): one number from 0 (not paying) to
+     * {@link #mostXPayable}, at least 1 as they are asked only when they could possibly pay X = 1; a mana payment, so
+     * they may activate mana abilities while asked (CR 605.3a). The answer resumes the waiting resolution.
+     */
+    public void askX(GameData gameData, UUID payerId, PayXManaCost cost, String prompt, String sourceName) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(payerId, 0,
+                Math.max(1, mostXPayable(gameData, payerId, cost)), prompt, sourceName, true, cost.manaCost()));
+    }
+
     /** {@code mana}'s cost as a {@link ManaCost}, or {@code null} for a life-only payment. */
     public static ManaCost manaCostOf(PayManaCost mana) {
         if (mana.genericReduction() != null || mana.genericIncrease() != null || mana.useSourceManaCost()
@@ -1834,8 +1898,13 @@ public class ResolutionCostPaymentService {
         if (!canPayLife(gameData, payerId, life)) {
             return Outcome.NOT_PAID;
         }
-        return payAskingDeathReplacementsFirst(gameData, payer, life, payment,
-                () -> lifeSupport.applyLifePayment(gameData, payerId, life, payment.sourceCard().getName()));
+        return payAskingDeathReplacementsFirst(gameData, payer, life, payment, () -> {
+            lifeSupport.applyLifePayment(gameData, payerId, life, payment.sourceCard().getName());
+            // "That many" after "you may pay life equal to …" reads the life paid (Madame Null, Power Broker).
+            if (payment.entry() != null) {
+                payment.entry().recordStep(StepKind.PAY_LIFE, StepOutcome.ofAmounts(Map.of(payerId, life)));
+            }
+        });
     }
 
     /**

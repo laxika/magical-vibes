@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PayEnergyToGainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,8 +30,8 @@ public class ConfiscationCoup extends Card {
                 "Target must be an artifact or creature"
         ))
                 .addSpellEffect(new EnergyCountersEffect(4))
-                .addSpellEffect(new MayEffect(
-                        new PayEnergyToGainControlOfTargetEffect(new TargetManaValue()),
-                        "Pay energy equal to that permanent's mana value to gain control of it?"));
+                .addSpellEffect(UnlessPaysEffect.youMayPay(new PayEnergyCost(new TargetManaValue()),
+                        new GainControlOfTargetEffect(Duration.PERMANENT))
+                        .withPrompt("Pay energy equal to that permanent's mana value to gain control of it?"));
     }
 }

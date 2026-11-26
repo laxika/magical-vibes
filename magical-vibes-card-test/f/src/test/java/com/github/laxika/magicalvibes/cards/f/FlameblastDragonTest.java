@@ -154,8 +154,8 @@ class FlameblastDragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A single red mana still allows the optional payment with X=0")
-    void canChooseToPayWhenOnlyZeroIsAffordable() {
+    @DisplayName("A single red mana and no mana source can't pay X=1, so nothing is asked (X=0 is not paying)")
+    void notAskedWhenOnlyZeroIsAffordable() {
         Permanent dragon = addCreatureReady(player1, new FlameblastDragon());
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -163,10 +163,9 @@ class FlameblastDragonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, dragon.getId());
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
-        PendingInteraction.XValueChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.maxValue()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+        assertThat(dragon.getMarkedDamage()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
     @Test
@@ -216,5 +215,22 @@ class FlameblastDragonTest extends BaseCardTest {
                 () -> harness.handleXValueChosen(player1, 2));
 
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Powerstone mana pays the X of {X}{R}: the payment isn't casting a spell")
+    void powerstoneManaPaysTheX() {
+        addCreatureReady(player1, new FlameblastDragon());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(2);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
     }
 }

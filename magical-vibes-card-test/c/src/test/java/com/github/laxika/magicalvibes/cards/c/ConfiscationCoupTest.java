@@ -80,12 +80,13 @@ class ConfiscationCoupTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Insufficient energy leaves both the target and all energy unchanged")
+    @DisplayName("Insufficient energy isn't asked for and leaves both the target and all energy unchanged")
     void insufficientEnergyDoesNotPayOrGainControl() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BastionMastodon());
 
         cast(target);
-        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

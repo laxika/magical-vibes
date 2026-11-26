@@ -64,7 +64,8 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #PAY_MANA}: the total mana paid ({@code EachPlayerPaysAnyManaEffect}), nothing, the players who paid
  *       some, and how much each paid ({@link StepOutcome#amountByPlayer()});</li>
  *   <li>{@link #PAY_ENERGY}, {@link #PAY_LIFE}: the same for a payment of energy or life
- *       ({@code EachPlayerPaysAnyManaEffect} with that resource);</li>
+ *       ({@code EachPlayerPaysAnyManaEffect} with that resource; a life ransom of {@code UnlessPaysEffect} records
+ *       PAY_LIFE too);</li>
  *   <li>{@link #PUT_INTO_LIBRARY}: the number of cards put into libraries on top or on the bottom
  *       ({@code PutCardsIntoLibraryEffect}), those cards, their owners: a hidden zone, so no card subject names them
  *       there.</li>
@@ -130,7 +131,7 @@ package com.github.laxika.magicalvibes.model;
  * choices add to the result as they are answered), the chosen hand-card exile ({@code ExileCardFromHandEffect}), the
  * same-name exile ({@code ExileCardsWithSameNameEffect}), the card and random-player choices
  * ({@code ChooseCardEffect}, {@code ChoosePlayerAtRandomEffect}), the revealed-hand choice's exile and keep
- * ({@code ChooseCardsFromTargetHandEffect}), the pay-X token step ({@code PayXManaCreateXTokensEffect}), the reveal of
+ * ({@code ChooseCardsFromTargetHandEffect}), the reveal of
  * the top cards of libraries and from hands ({@code RevealTopCardOfLibraryEffect},
  * {@code RevealCardsFromTopUntilEffect}, {@code RevealCardsFromHandEffect}, never prompting), the discard of named
  * cards ({@code DiscardCardsEffect}: a replacement's question ends it) and the any-amount payment

@@ -782,7 +782,6 @@ public class TargetPolarityClassifier {
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("TargetCreaturesDealToughnessDamageToEachOtherEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("UnattachEquipmentFromTargetPermanentsEffect", TargetPolarity.HARMFUL),
-            entry("PayEnergyToGainControlOfTargetEffect", TargetPolarity.HARMFUL),
             entry("PutCounterOnEitherTargetPermanentEffect", TargetPolarity.HARMFUL),
 
             // Arcbond's watched creature is a strategic choice: either player's creature may be

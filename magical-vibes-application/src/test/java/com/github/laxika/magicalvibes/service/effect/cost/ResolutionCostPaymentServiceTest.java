@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXManaCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -767,5 +768,73 @@ class ResolutionCostPaymentServiceTest {
                 .isEqualTo(ResolutionCostPaymentService.Outcome.ASKING);
         verify(playerInputService).beginDiscardChoice(eq(gd), eq(payerId), eq(List.of(0, 1, 2)),
                 eq("Choose 3 cards to discard."), eq(3));
+    }
+
+    @Nested
+    @DisplayName("An X chosen while paying (CR 107.3f)")
+    class XChosenWhilePaying {
+
+        @Test
+        @DisplayName("Is asked only while X = 1 might be paid within its limit")
+        void askedWhileXOfOneMightBePaid() {
+            gd.playerManaPools.get(payerId).add(ManaColor.RED, 1);
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayXManaCost("{X}{R}"), null)).isFalse();
+
+            gd.playerManaPools.get(payerId).add(ManaColor.COLORLESS, 1);
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayXManaCost("{X}{R}"), null)).isTrue();
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayXManaCost("{X}{R}", new Fixed(0)), null))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("The most X counts Powerstone mana (not a spell) and stops at the limit")
+        void mostXCountsPowerstoneManaUpToTheLimit() {
+            gd.playerManaPools.get(payerId).add(ManaColor.RED, 1);
+            gd.playerManaPools.get(payerId).addPowerstoneOnlyColorless(3);
+
+            assertThat(service.mostXPayable(gd, payerId, new PayXManaCost("{X}{R}"))).isEqualTo(3);
+            assertThat(service.mostXPayable(gd, payerId, new PayXManaCost("{X}{R}", new Fixed(2)))).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("The cost with its X chosen is paid as resolution-time mana, recorded as PAY_MANA")
+        void paidWithItsXAsResolutionMana() {
+            gd.playerManaPools.get(payerId).add(ManaColor.RED, 1);
+            gd.playerManaPools.get(payerId).addPowerstoneOnlyColorless(2);
+            StackEntry entry = new StackEntry(new GrizzlyBears(), payerId);
+
+            assertThat(service.pay(gd, new Player(payerId, "Payer"),
+                    ResolutionCostPaymentService.paidWith(new PayXManaCost("{X}{R}"), 2),
+                    new ResolutionCostPaymentService.Payment(new GrizzlyBears(), payerId, null, entry)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+
+            assertThat(gd.playerManaPools.get(payerId).getTotalAllMana()).isZero();
+            assertThat(entry.getResolutionResults().outcome(com.github.laxika.magicalvibes.model.StepKind.PAY_MANA)
+                    .amount()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Is paid only once its X is chosen")
+        void notPaidBeforeItsXIsChosen() {
+            assertThatThrownBy(() -> service.pay(gd, new Player(payerId, "Payer"), new PayXManaCost("{X}"),
+                    new ResolutionCostPaymentService.Payment(new GrizzlyBears(), payerId, null)))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Test
+    @DisplayName("A life payment is recorded as the entry's PAY_LIFE step (\"that many\")")
+    void lifePaymentRecordsPayLife() {
+        when(gameQueryService.canPlayerLoseLife(gd, payerId)).thenReturn(true);
+        StackEntry entry = new StackEntry(new GrizzlyBears(), payerId);
+
+        assertThat(service.pay(gd, new Player(payerId, "Payer"), new PayLifeCost(3),
+                new ResolutionCostPaymentService.Payment(new GrizzlyBears(), payerId, null, entry)))
+                .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+
+        verify(lifeSupport).applyLifePayment(eq(gd), eq(payerId), eq(3), any());
+        assertThat(entry.getResolutionResults().outcome(com.github.laxika.magicalvibes.model.StepKind.PAY_LIFE)
+                .amount()).isEqualTo(3);
     }
 }

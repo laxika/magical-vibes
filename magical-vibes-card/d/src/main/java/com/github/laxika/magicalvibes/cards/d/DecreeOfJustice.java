@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaCreateXTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class DecreeOfJustice extends Card {
         addSpellEffect(new CreateTokenEffect(new XValue(), "Angel", 4, 4,
                 CardColor.WHITE, List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()));
 
-        addTrigger(Triggers.youCycleThisCard(), new PayXManaCreateXTokensEffect(CreateTokenEffect.whiteSoldier(1)));
+        addTrigger(Triggers.youCycleThisCard(), UnlessPaysEffect.youMayPayX("{X}", CreateTokenEffect.whiteSoldier(new XValue())));
         addCycling("{2}{W}");
     }
 }

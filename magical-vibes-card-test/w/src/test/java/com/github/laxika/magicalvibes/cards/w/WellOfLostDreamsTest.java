@@ -131,7 +131,7 @@ class WellOfLostDreamsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot pay a triggered ability with mana restricted to artifact spells and activations")
+    @DisplayName("Mana restricted to artifact spells and activations can't pay: X=1 is refused and asked again")
     void cannotPayWithArtifactRestrictedMana() {
         harness.addToBattlefield(player1, new WellOfLostDreams());
         addCreatureReady(player1, new VedalkenEngineer());
@@ -143,6 +143,11 @@ class WellOfLostDreamsTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2));
         harness.passBothPriorities();
+
+        // A mana source is on the battlefield, so the payer is asked (the owner's strict rule).
+        harness.handleXValueChosen(player1, 1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);

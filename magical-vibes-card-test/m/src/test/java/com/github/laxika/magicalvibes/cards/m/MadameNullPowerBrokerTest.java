@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MadameNullPowerBroker.class, GrizzlyBears.class})
+@CardUsed({MadameNullPowerBroker.class, GrizzlyBears.class, Ornithopter.class})
 class MadameNullPowerBrokerTest extends BaseCardTest {
 
     @Test
@@ -150,5 +151,23 @@ class MadameNullPowerBrokerTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         assertThat(findPermanent(player1, "Grizzly Bears")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature with 0 power entering asks for 0 life; paying it changes nothing")
+    void zeroPowerAsksForZeroLife() {
+        harness.addToBattlefield(player1, new MadameNullPowerBroker());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new Ornithopter(), "{0}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanent(player1, "Ornithopter").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

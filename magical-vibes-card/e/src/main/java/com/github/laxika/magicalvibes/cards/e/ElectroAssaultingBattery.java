@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,6 +33,7 @@ public class ElectroAssaultingBattery extends Card {
                 new AwardManaEffect(ManaColor.RED));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                PayXManaDealXDamageToAnyTargetEffect.reflexive("{X}", TargetPredicates.player()));
+                UnlessPaysEffect.youMayPayX("{X}",
+                        new QueueReflexiveAbilityEffect(DealDamageEffect.to(Subjects.targetPlayer(), new XValue()))));
     }
 }

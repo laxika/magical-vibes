@@ -29,7 +29,7 @@ import java.util.Objects;
  * (CR 608.2h).
  *
  * <p>Ransoms: {@link PayManaCost} (a fixed or exact cost, {@code withGenericIncrease} for "{1} for each …", {@link
- * PayManaCost#x()} for the announced X, {@link PayManaCost#ofTriggeringSpell()} for "that spell's mana cost",
+ * PayManaCost#x()} for the announced X, {@link PayXManaCost} for an X chosen while paying, {@link PayManaCost#ofTriggeringSpell()} for "that spell's mana cost",
  * {@code lifeAmount} for "{2} and 2 life"), {@link PayLifeCost}, a discard
  * ({@link DiscardCardTypeCost} of one or more cards, {@link DiscardRandomCardCost}, {@link DiscardHandCost}), a sacrifice
  * ({@link SacrificePermanentCost}, {@link SacrificeMultiplePermanentsCost}), a blight
@@ -99,10 +99,15 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         if (ifNotPaid == null && ifPaid == null) {
             throw new IllegalArgumentException("An \"unless\" or \"if you do\" needs an effect on one branch");
         }
+        if (ransom instanceof PayXManaCost && (!(payer instanceof PlayerSubject.You) || paidTogether
+                || forEach != null || forEachCard != null || perPayer)) {
+            throw new IllegalArgumentException("An X chosen while paying becomes the ability's X, so only its "
+                    + "controller pays it, once: " + payer);
+        }
         if (ransom instanceof AnyOfCost anyOf) {
-            anyOf.alternatives().forEach(UnlessPaysEffect::requirePayableAtResolution);
+            anyOf.alternatives().forEach(UnlessPaysEffect::requireOnePartOfSeveral);
         } else if (ransom instanceof AllOfCost allOf) {
-            allOf.parts().forEach(UnlessPaysEffect::requirePayableAtResolution);
+            allOf.parts().forEach(UnlessPaysEffect::requireOnePartOfSeveral);
         } else {
             requirePayableAtResolution(ransom);
         }
@@ -150,9 +155,18 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
                 || ransom instanceof SourceControllerDrawsCost || ransom instanceof DiscardCardTypeCost;
     }
 
+    /** An alternative or a part of a ransom: an X chosen while paying is a ransom on its own. */
+    private static void requireOnePartOfSeveral(CostEffect ransom) {
+        if (ransom instanceof PayXManaCost) {
+            throw new IllegalArgumentException("An X chosen while paying is a ransom on its own: " + ransom);
+        }
+        requirePayableAtResolution(ransom);
+    }
+
     private static void requirePayableAtResolution(CostEffect ransom) {
         boolean payable = switch (ransom) {
             case PayManaCost ignored -> true;
+            case PayXManaCost ignored -> true;
             case PayLifeCost ignored -> true;
             case DiscardCardTypeCost discard -> !discard.manaValueEqualsX()
                     && !discard.sameName() && !discard.trackManaValue() && !discard.imprintOnSource();
@@ -335,6 +349,20 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
     /** "You may pay {@code manaCost}. If you do, {@code ifYouDo}." */
     public static UnlessPaysEffect youMayPay(String manaCost, CardEffect ifYouDo) {
         return mayPay(Subjects.you(), manaCost, ifYouDo);
+    }
+
+    /**
+     * "You may pay {@code manaCost}. If you do, {@code ifYouDo}" for a cost with an {X} chosen as it is paid ("you may
+     * pay {X}{R}. If you do, it deals X damage to any target"): the payer chooses X, 0 being not paying (CR 107.3f);
+     * the X paid is the ability's X, read by {@code ifYouDo} and a reflexive "when you do" as {@code XValue}.
+     */
+    public static UnlessPaysEffect youMayPayX(String manaCost, CardEffect ifYouDo) {
+        return youMayPay(new PayXManaCost(manaCost), ifYouDo);
+    }
+
+    /** {@link #youMayPayX(String, CardEffect)} with "X can't be greater than {@code maximumX}", read as it resolves. */
+    public static UnlessPaysEffect youMayPayX(String manaCost, DynamicAmount maximumX, CardEffect ifYouDo) {
+        return youMayPay(new PayXManaCost(manaCost, Objects.requireNonNull(maximumX, "maximumX")), ifYouDo);
     }
 
     /** "You may pay {@code manaCost} and {@code life} life. If you do, {@code ifYouDo}" (both or neither). */

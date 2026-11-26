@@ -1670,7 +1670,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 | `AddManaWhenLandOfSubtypeTappedForManaEffect(+ ManaRestriction)` | **Done differently**: the subtype is the trigger's filter, the fixed-color form is `AddManaWhenTappedForManaEffect`, the restricted one `AddRestrictedManaWhenLandTappedForManaEffect` | — |
 | `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly)` + the trigger's `withFilter` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` (and `TappedSnowLandDoesntUntapEffect`): **Gone** | 1 + 1 |
 | `PlayWithHandRevealedEffect(boolean controllerOnly)` | **Done differently** (effect-cleanup step 9 fold run 35): `PlayWithHandsRevealedEffect(PlayerSubject)` absorbed `PlayWithOwnHandRevealedEffect`; `PubliclyRevealedHandEffect` deleted | 1 + 1 |
-| `PayXManaThenEffect(String manaCost, CardEffect payload)` | `PayXManaGainXLifeEffect`: **Done differently** (effect-cleanup step 9 fold run 46: `EachPlayerPaysAnyManaEffect.byYou(X_MANA)` + `GainLifeEffect(AmountThisWay.manaPaid())`); `PayXManaCreateXTokensEffect` kept | 1 + 1 |
+| `PayXManaThenEffect(String manaCost, CardEffect payload)` | `PayXManaGainXLifeEffect`: **Done differently** (effect-cleanup step 9 fold run 46: `EachPlayerPaysAnyManaEffect.byYou(X_MANA)` + `GainLifeEffect(AmountThisWay.manaPaid())`); `PayXManaCreateXTokensEffect`: **Done differently** (effect-cleanup step 10 run U8: `UnlessPaysEffect.youMayPayX` + `token.withAmount(new XValue())`) | 1 + 1 |
 | `TargetPlayerChoosesCreatureEffect(boolean exile)` | `TargetPlayerChoosesCreatureDestroyEffect`: **Done differently** (effect-cleanup step 9 run 35: `ChoosePermanentsEffect.chosenBy` + `DestroyTargetPermanentEffect(thisWay(CHOOSE))`); `TargetPlayerChoosesCreatureExileEffect` kept | 2 + 1 |
 | `TargetPlayerCantThisTurnEffect(TurnRestriction)` | **Done differently** (effect-cleanup step 9 run 39): `PlayerRestrictionEffect(PlayerSubject, PlayerRestriction, Duration)` absorbed `TargetPlayerCantPlayLandsThisTurnEffect`, `TargetPlayerCantCastSpellTypesThisTurnEffect` and eight other player restrictions | 2 + 1 |
 | `SacrificeCreatureForTokenEffect(CreateTokenEffect, PermanentPredicate, SacrificedStat, TokenScaling)` | **Moot**: `SacrificeCreatureCreateSizedTokenEqualToPowerEffect` had no card left and was deleted (`effect-cleanup-refactor.md` step 2); `SacrificeCreatureToCreateTokensEqualToToughnessEffect` was split onto `SacrificePermanentsEffect` + `CreateTokenEffect.withAmount(AmountThisWay.sacrificedToughness())` (fold run 9) | 0 + 1 |
@@ -1692,7 +1692,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 - `PayXMana*`: the two handlers are byte-identical (100 vs 101 lines) except the injected support
   bean, one payload line, and the prompt string — the whole `chosenXValue` re-entry protocol,
   X=0 decline branch, `payableFromPool` re-check and `beginXPrompt`/`payableFromPool` helpers are
-  duplicated verbatim. Leave `PayXManaDealXDamageToAnyTargetEffect` (colored cost + targeting) out.
+  duplicated verbatim. Leave `PayXManaDealXDamageToAnyTargetEffect` (colored cost + targeting) out. (Effect cleanup step 10 run U8: every `PayXMana…` record but Roalesk's is now `UnlessPaysEffect.youMayPayX` with a `PayXManaCost` ransom.)
 - `TargetPlayerChoosesCreature*`: the choice context is **already parameterized** — destroy passes
   `PermanentChoiceContext.DestroyChosenCreature(targetPlayerId, cardName)`, exile passes the same
   record with `true`. No context work needed.

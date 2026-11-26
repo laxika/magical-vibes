@@ -94,8 +94,8 @@ class ElendaAndAzorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Paying the colored attack cost with X zero must remain available")
-    void attackOffersPaymentWhenOnlyZeroIsAffordable() {
+    @DisplayName("With only the colored part and no mana source X=1 can't be paid, so nothing is asked")
+    void attackNotAskedWhenOnlyZeroIsAffordable() {
         addCreatureReady(player1, new ElendaAndAzor());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -104,7 +104,7 @@ class ElendaAndAzorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
     }
 
     @Test

@@ -30,7 +30,7 @@ import java.util.UUID;
  * Handles X value choice interactions: prompts the deciding player, validates the chosen
  * value, stores it on GameData, and resumes effect resolution. The actual game logic (what
  * to do with the chosen X) lives in the effect handler that initiated the interaction
- * (e.g. PayXManaGainXLifeEffectHandler), which re-runs and reads {@code chosenXValue}. An
+ * (e.g. UnlessPaysEffectHandler for an X chosen while paying), which re-runs and reads {@code chosenXValue}. An
  * activated ability's variable source-counter cost instead resumes through
  * {@link AbilityActivationService}.
  */

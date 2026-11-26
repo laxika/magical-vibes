@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DST", collectorNumber = "159")
@@ -18,6 +21,6 @@ public class WellOfLostDreams extends Card {
     public WellOfLostDreams() {
         // Whenever you gain life, you may pay {X}, where X is less than or equal to the amount of
         // life you gained. If you do, draw X cards.
-        addTrigger(Triggers.youGainLife(), new PayXManaDrawXCardsEffect());
+        addTrigger(Triggers.youGainLife(), UnlessPaysEffect.youMayPayX("{X}", new EventValue(), new DrawCardEffect(new XValue())));
     }
 }

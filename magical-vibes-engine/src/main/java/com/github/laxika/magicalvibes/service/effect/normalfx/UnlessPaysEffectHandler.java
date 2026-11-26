@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXManaCost;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.LandDropCost;
@@ -117,7 +118,8 @@ import org.springframework.stereotype.Component;
  * where they are.
  *
  * <p>What can pay: the payer's mana pool and the mana they could still make (they may activate mana abilities while
- * asked, CR 605.3a); mana that can be spent only on {X} for an announced-X ransom; 2 life for each {B} under K'rrik,
+ * asked, CR 605.3a); mana that can be spent only on {X} for an announced-X ransom; an X chosen while paying
+ * ({@link PayXManaCost}), asked as one number (0 is not paying) and made the ability's X (CR 107.3f); 2 life for each {B} under K'rrik,
  * Son of Yawgmoth; life only while the payer can lose life (CR 119.4, 119.8); the other costs as
  * {@link ResolutionCostPaymentService} judges and pays them, through the shared actions. An amount read from the source
  * reads the source on the battlefield, else as it last existed (CR 608.2h). An echo cost ({@link PayEchoCost}) is
@@ -271,6 +273,14 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         List<Ransom> alternatives = alternatives(gameData, entry, unless, payerId);
         int asked = Math.min(state.alternative(), alternatives.size() - 1);
         Ransom ransom = alternatives.get(asked);
+        if (ransom.cost() instanceof PayXManaCost xCost) {
+            // The X is chosen while paying (CR 107.3f): one number, 0 not paying; mana abilities may be activated
+            // meanwhile (CR 605.3a). The answer resumes this resolution, which reads it in nextStep.
+            String source = FaceDownVisibility.sourceName(gameData, entry);
+            costPayment.askX(gameData, payerId, xCost, unless.prompt() != null ? unless.prompt()
+                    : "You may pay " + xCost.manaCost() + " for " + source + ". Choose X (0 = don't pay).", source);
+            return;
+        }
         StackEntry spell = spellAskedAbout(gameData, entry, unless);
         UUID object = state.currentObject();
         String prompt = unless.prompt() != null && alternatives.size() == 1 ? unless.prompt()
@@ -303,6 +313,13 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                     entry.getCard(), entry.getControllerId(), null, entry))
                     == ResolutionCostPaymentService.Outcome.ASKING) {
                 return Step.PAYING;
+            }
+            state = entry.unlessAnswer(index);
+        }
+        if (state != null && state.currentPayer() != null && gameData.chosenXValue != null
+                && unless.ransom() instanceof PayXManaCost) {
+            if (answerX(gameData, entry, unless, state)) {
+                return Step.ASK;
             }
             state = entry.unlessAnswer(index);
         }
@@ -367,6 +384,47 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         }
         entry.setUnlessAnswer(state);
         return Step.ASK;
+    }
+
+    /**
+     * The payer's answer to an X chosen while paying ({@link PayXManaCost}, asked by {@link #resolve}): 0 is not paying;
+     * an X above its limit or one their pool can't pay now is asked again, the payer having been able to tap for it
+     * while asked (CR 605.3a, 118.3); otherwise the cost with that X is paid through the resolution-time payment (the
+     * {@code PAY_MANA} step, K'rrik's life, Powerstone mana: not a spell) and that X becomes the ability's X (CR 107.3f),
+     * read by the branch and by a reflexive "when you do" it makes (CR 603.12).
+     *
+     * @return {@code true} when the payer is asked again
+     */
+    private boolean answerX(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UnlessAnswer state) {
+        int x = gameData.chosenXValue;
+        gameData.chosenXValue = null;
+        UUID payerId = state.currentPayer();
+        String payerName = gameData.playerIdToName.get(payerId);
+        Ransom ransom = alternatives(gameData, entry, unless, payerId).getFirst();
+        PayXManaCost xCost = (PayXManaCost) ransom.cost();
+        if (x <= 0) {
+            gameLogService.append(gameData, GameLog.text(payerName + " declines to " + ransom.declined() + "."));
+            entry.setUnlessAnswer(state.answered(false));
+            return false;
+        }
+        PayManaCost paid = ResolutionCostPaymentService.paidWith(xCost, x);
+        if (x > ResolutionCostPaymentService.maximumX(xCost)
+                || !costPayment.canPayNow(gameData, payerId, paid, entry.getCard(), entry)) {
+            gameLogService.append(gameData, GameLog.text(payerName + " can't pay " + xCost.withX(x)
+                    + " (tap mana sources, then choose X again)."));
+            return true;
+        }
+        costPayment.pay(gameData, new Player(payerId, payerName), paid,
+                new ResolutionCostPaymentService.Payment(entry.getCard(), entry.getControllerId(), null, entry));
+        // The text defines no other X for the ability, so this one replaces what the entry kept there (an attack
+        // trigger keeps the number of attackers).
+        entry.setXValue(x);
+        // Paying is taking the action of "do this only once each turn" (CR 603.2h).
+        TriggeredAbilityStackService.markActionTaken(gameData, entry);
+        gameLogService.append(gameData, GameLog.text(payerName + " pays " + xCost.withX(x) + "."));
+        log.info("Game {} - {} pays {} ({})", gameData.id, payerName, xCost.withX(x), entry.getCard().getName());
+        entry.setUnlessAnswer(state.answered(true));
+        return false;
     }
 
     /**
@@ -652,6 +710,10 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             }
             case PayManaCost mana -> Ransom.ofManaAndLife(manaCost(gameData, entry, mana), mana.announcedX(),
                     mana.lifeAmount(), mana.forCumulativeUpkeep());
+            case PayXManaCost xCost -> new Ransom(xCost.maximumX() == null ? xCost
+                    : new PayXManaCost(xCost.manaCost(), new Fixed(Math.max(0, amountEvaluationService.evaluate(
+                            gameData, xCost.maximumX(), amountContext(gameData, entry))))),
+                    "Pay " + xCost.manaCost(), "pays " + xCost.manaCost(), "pay " + xCost.manaCost());
             case PayLifeCost life -> Ransom.ofManaAndLife(null, false, Math.max(0,
                     amountEvaluationService.evaluate(gameData, life.amount(),
                             amountContext(gameData, entry).withControllerId(payerId))));

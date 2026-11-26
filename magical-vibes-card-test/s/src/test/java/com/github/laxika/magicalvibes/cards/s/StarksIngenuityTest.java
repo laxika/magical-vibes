@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -127,5 +128,24 @@ class StarksIngenuityTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    @DisplayName("Powerstone mana pays the {X}: the payment isn't casting a spell")
+    void powerstoneManaPaysTheX() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new StarksIngenuity()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(2);
+        prepareMainPhase();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+        harness.handleXValueChosen(player1, 2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
     }
 }

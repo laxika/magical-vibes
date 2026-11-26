@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.UnlessAnswer;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AllOfCost;
@@ -749,5 +751,59 @@ class UnlessPaysEffectHandlerTest {
         assertThat(chosen.objectIds()).containsExactly(counterspell.getId());
         assertThat(chosen.movedCards()).singleElement().satisfies(moved ->
                 assertThat(moved.zone()).isEqualTo(com.github.laxika.magicalvibes.model.Zone.HAND));
+    }
+
+    private StackEntry payXEntry(UnlessPaysEffect effect) {
+        Card dragon = new Card();
+        dragon.setName("Flameblast Dragon");
+        StackEntry entry = TestStackDoor.triggered(dragon, player1Id, dragon.getName(), List.of(effect));
+        lenient().when(subjectResolutionService.players(gd, entry, effect, effect.payer()))
+                .thenReturn(List.of(player1Id));
+        entry.setUnlessAnswer(UnlessAnswer.asking(0, List.of(player1Id)));
+        return entry;
+    }
+
+    @Test
+    @DisplayName("An X chosen while paying is paid and becomes the ability's X (CR 107.3f)")
+    void chosenXIsPaidAndBecomesTheX() {
+        gd.playerManaPools.get(player1Id).add(ManaColor.RED, 3);
+        UnlessPaysEffect effect = UnlessPaysEffect.youMayPayX("{X}{R}", new DrawCardEffect(new XValue()));
+        StackEntry entry = payXEntry(effect);
+        gd.chosenXValue = 2;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.PAID);
+
+        assertThat(entry.getXValue()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        assertThat(gd.chosenXValue).isNull();
+    }
+
+    @Test
+    @DisplayName("X = 0 is not paying: nothing is paid and the ability's X is left alone")
+    void zeroIsNotPaying() {
+        gd.playerManaPools.get(player1Id).add(ManaColor.RED, 3);
+        UnlessPaysEffect effect = UnlessPaysEffect.youMayPayX("{X}{R}", new DrawCardEffect(new XValue()));
+        StackEntry entry = payXEntry(effect);
+        gd.chosenXValue = 0;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOT_PAID);
+
+        assertThat(entry.getXValue()).isZero();
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An X the pool can't pay now is asked again, nothing paid (CR 118.3)")
+    void unpayableXIsAskedAgain() {
+        gd.playerManaPools.get(player1Id).add(ManaColor.RED, 2);
+        UnlessPaysEffect effect = UnlessPaysEffect.youMayPayX("{X}{R}", new DrawCardEffect(new XValue()));
+        StackEntry entry = payXEntry(effect);
+        gd.chosenXValue = 2;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+
+        assertThat(entry.getXValue()).isZero();
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(2);
+        assertThat(entry.unlessAnswer(0).currentPayer()).isEqualTo(player1Id);
     }
 }

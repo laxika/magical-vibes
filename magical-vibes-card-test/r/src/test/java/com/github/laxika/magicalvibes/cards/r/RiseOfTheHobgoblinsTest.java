@@ -196,4 +196,20 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
                 assertThat(gqs.hasKeyword(gd, token, Keyword.FIRST_STRIKE)).isTrue());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("Powerstone mana pays the {X}: the payment isn't casting a spell")
+    void powerstoneManaPaysTheX() {
+        setupPlayer1Active();
+        harness.setHand(player1, java.util.List.of(new RiseOfTheHobgoblins()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(2);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(goblinTokenCount()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
 }
