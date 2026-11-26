@@ -2888,7 +2888,7 @@ public class DamagePreventionService {
                     combat, entry.getEntryType(), gameData.unpreventableDamageInProgress)),
                     "Prevent up to " + clericPreventionAmount(gameData, controller) + " damage to "
                             + gameData.playerIdToName.get(playerId) + "?", playerId, null,
-                    entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                    entry.getSourcePermanentId(), 0, 0, null, null, null,
                     damageSource == null ? null : new Permanent(damageSource), sourceControllerId, null, damage));
             return true;
         }

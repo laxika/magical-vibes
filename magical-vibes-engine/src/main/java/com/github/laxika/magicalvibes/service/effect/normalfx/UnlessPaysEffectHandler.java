@@ -291,7 +291,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard(), payerId, List.of(unless), prompt,
                 object != null ? object : spell == null ? entry.getTargetId() : spell.getTargetableId(),
                 ransom.manaCost(),
-                entry.getSourcePermanentId(), null, 0, ransom.life(), null, null, null,
+                entry.getSourcePermanentId(), 0, ransom.life(), null, null, null,
                 entry.getSourcePermanentSnapshot(), entry.getControllerId()));
     }
 

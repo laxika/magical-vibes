@@ -88,7 +88,6 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
                         null,
                         null,
                         entry.getSourcePermanentId(),
-                        null,
                         0,
                         0,
                         null,

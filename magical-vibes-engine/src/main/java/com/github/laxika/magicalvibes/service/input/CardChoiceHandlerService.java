@@ -1945,7 +1945,7 @@ public class CardChoiceHandlerService {
                             replacementSource, targetPlayerId,
                             List.of(new DiscardToTopOfLibraryInsteadEffect()),
                             "Put " + discarded.getName() + " on top of your library instead of into your graveyard?",
-                            discarded.getId(), (String) null, (UUID) null, null, 0, 0, null, null, null, null,
+                            discarded.getId(), (String) null, (UUID) null, 0, 0, null, null, null, null,
                             null, null, 1));
                 } else {
                     graveyardService.discardCard(gameData, targetPlayerId, discarded);

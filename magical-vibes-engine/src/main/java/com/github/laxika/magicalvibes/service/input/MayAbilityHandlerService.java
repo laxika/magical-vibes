@@ -225,7 +225,7 @@ public class MayAbilityHandlerService {
      * its steps records (CR 603.12).
      */
     private void resolveAcceptedInAskingResolution(GameData gameData, Player player, PendingMayAbility ability) {
-        if (ability.manaCost() != null || ability.tapPermanentsCost() != null) {
+        if (ability.manaCost() != null) {
             throw new IllegalStateException("A question with a cost needs a may handler that pays it: "
                     + ability.description());
         }

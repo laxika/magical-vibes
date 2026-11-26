@@ -435,7 +435,6 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 targetId,
                 null,
                 entry.getSourcePermanentId(),
-                null,
                 0,
                 0,
                 attackedTargetForPendingMay(gameData, entry),

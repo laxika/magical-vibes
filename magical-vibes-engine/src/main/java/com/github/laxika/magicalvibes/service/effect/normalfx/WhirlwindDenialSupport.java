@@ -118,7 +118,7 @@ public class WhirlwindDenialSupport {
                             + target.getCard().getName() + " from being countered?",
                     targetId,
                     manaCost(state.amount),
-                    null, null, 0, 0, null, null, null, null,
+                    null, 0, 0, null, null, null, null,
                     state.sourceControllerId,
                     0));
             return;

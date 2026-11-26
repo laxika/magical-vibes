@@ -2359,7 +2359,7 @@ public class CombatDamageService {
                         controllers.subList(1, controllers.size()), true, -1, false,
                         false, StackEntryType.ACTIVATED_ABILITY)),
                 "Have " + damage + " combat damage dealt to you instead?", target.getId(), null,
-                source.getId(), null, 0, 0, null, null, null, new Permanent(source), sourceController, null, damage));
+                source.getId(), 0, 0, null, null, null, new Permanent(source), sourceController, null, damage));
     }
 
     /**

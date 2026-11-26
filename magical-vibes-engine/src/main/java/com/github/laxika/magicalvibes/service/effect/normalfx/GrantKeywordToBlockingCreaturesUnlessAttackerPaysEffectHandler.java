@@ -77,7 +77,6 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffectHandler impl
                         attacker.getId(),
                         effect.manaCost(),
                         entry.getSourcePermanentId(),
-                        null,
                         0,
                         0,
                         null,

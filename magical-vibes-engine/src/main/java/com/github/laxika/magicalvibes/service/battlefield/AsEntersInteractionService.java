@@ -239,7 +239,6 @@ public class AsEntersInteractionService {
                         null,
                         null,
                         justEntered.getId(),
-                        null,
                         0,
                         0,
                         null,

@@ -55,7 +55,6 @@ public class QueueMayPutSelectedCardOntoBattlefieldEffectHandler implements Norm
                 selectedCard.getId(),
                 null,
                 entry.getSourcePermanentId(),
-                null,
                 0,
                 0,
                 null,

@@ -68,7 +68,7 @@ public class SoulEchoUpkeepEffectHandler implements NormalEffectHandlerBean {
                 + " until their next upkeep, they remove an echo counter from "
                 + FaceDownVisibility.publicName(gameData, self) + " instead?";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                self.getCard(), opponentId, List.of(effect), prompt, null, null, self.getId(), null));
+                self.getCard(), opponentId, List.of(effect), prompt, null, null, self.getId()));
         log.info("Game {} - {} offers the echo-counter choice to {}", gameData.id,
                 self.getCard().getName(), gameData.playerIdToName.get(opponentId));
     }

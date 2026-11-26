@@ -6,7 +6,7 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 
 1. **Reprint check** — run `grep -r --include=*.java "class CardName " magical-vibes-card/` (replace `CardName` with the PascalCase class name). If the class already exists, just add a `@CardRegistration` annotation for the new set/collector-number and stop — no new code or tests needed.
 2. Find a similar card in `CARD_PATTERN_INDEX.md` for reference.
-3. Reuse existing effects from `EFFECTS_INDEX.md`.
+3. Pick the verb, then the subject: each instruction is a verb's record ("Verbs and their subjects" in `EFFECTS_INDEX.md`) with a subject from `Subjects` (`SUBJECTS_REFERENCE.md`); compose fused text from steps (below).
 4. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and the trigger quick reference.
 5. Add card class + `@CardRegistration` in `magical-vibes-card/{letter}/` — or in `magical-vibes-card/shared/` if a card of another letter constructs it (back face, meld partner, conjure target), since letter modules can't depend on each other.
 6. Use `target(filter).addSpellEffect(effect)` for a targeting spell and `target(filter).addTrigger(Triggers.x(), effect)` for a targeted triggered ability.
@@ -228,6 +228,90 @@ public class ExampleCard extends Card {
   - `addStaticEffect(new EnterBattlefieldOnDiscardEffect())` (a replacement effect of a static ability that functions in the hand, CR 113.6m; not a trigger) — checked in `CardChoiceHandlerService` during both self-discard-choice and revealed-hand-choice flows. Only applies when `gameData.discardCausedByOpponent` is true. ETB triggers still fire normally.
   - For the variant that enters with counters, use `new EnterBattlefieldOnDiscardEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)`; the counters are applied during battlefield entry only for the discard replacement.
   - Example: `magical-vibes-card/o/src/main/java/com/github/laxika/magicalvibes/cards/o/ObstinateBaloth.java`
+
+## Composing fused text from steps
+
+Each instruction of the Oracle text is one verb with its subject ("Verbs and their subjects" in `EFFECTS_INDEX.md`). Text
+that fuses instructions is several steps: a later step reads what an earlier one did from the resolution's step results
+(`architecture/resolution.md`, "Resolution scratchpad"), never from state of its own.
+
+Readers, and nothing else: the `Condition` `HappenedThisWay(kind)` ("if you do", "if a [kind] was … this way": `toA`, `toACard`,
+`atLeast`, `drew()`, `sacrificed()`, `exiled()`, `discarded()`, `transformed()`, `removedCounters()`, ...); the `DynamicAmount`
+`AmountThisWay(kind)` ("that many", "its power": `died()`, `matching(...)`, `controlledByYou()`, `destroyedManaValue()`,
+`exiledCards()`, `noted()`, `keepingNegative()`, ...); the subjects `thisWay(kind[, filter])`, `playersThisWay(kind)` and
+`cardsThisWay(kind[, filter])`. Reading follows CR 608.2c (instructions in written order) and CR 608.2h. A reflexive or delayed
+ability made by a resolution carries that resolution's results (`StackEntry.readStepResults`).
+
+Fused text becomes `SequenceEffect.of(first, second)` (or flat `addSpellEffect` calls on a plain spell), the second step reading the
+first's result:
+
+- "If you do" is gated on the first step having happened, read from its result: a `ConditionalEffect(HappenedThisWay(...), ...)`
+  step (`SequenceEffect` has no gate of its own). "When you do" is reflexive (CR 603.12): check the Oracle text.
+- "X and Y" in one sentence is often one event (one damage event, deaths together): `SequenceEffect.simultaneous` or the survivor's
+  batch form, not two sequential steps.
+- One target shared by the steps stays one entry target; with two targets, each step names its target group. The cast-time target
+  prompt must not change.
+- A trigger slot holds one effect, so a split on a trigger slot stays one `SequenceEffect`.
+- The first step's handler must be one a later step may follow (`architecture/resolution.md`, "Only a step that finishes before the
+  next one starts may be read"); if it isn't, the text needs its own record until that handler moves onto the step model.
+
+Oracle wording and the steps it becomes:
+
+- "If you do" → `ConditionalEffect(HappenedThisWay.x(), …)` after the step; "Otherwise" → the negated filter, not a `NotCondition`
+  (which would also fire when nothing happened); "if you don't [draw] this way" → `NotCondition(HappenedThisWay.drew())`.
+- "That many" / "its power" → `AmountThisWay(kind)`; "its controller" of what a step moved → `playersThisWay(kind)`; "it" / "that
+  creature" after a step → `thisWay(kind[, filter])` or `cardsThisWay(kind[, filter])`.
+- "[Sacrifice / exile] this unless you [discard / sacrifice] …" → `UnlessPaysEffect` with the ransom as a cost (CR 118.12a); "you may
+  sacrifice N … If you do / Otherwise" → `MayEffect(SequenceEffect.of(SacrificePermanentsEffect(N, …),
+  ConditionalEffect(HappenedThisWay.atLeast(SACRIFICE, N), X)), prompt, Y)`; "if you can't sacrifice" →
+  `ConditionalEffect(NotCondition(sacrificed()), …)` after the step.
+- "Sacrifice any number … draw that many" → `SacrificePermanentsEffect.anyNumber(filter, you())` + `AmountThisWay(SACRIFICE)`.
+- "Exile target card from a graveyard. If it was a [type] card" → the exile + `HappenedThisWay.toACard(EXILE, filter)`.
+- "[Another player] may play those cards" → `.playableBy(subject)`; "during your next turn" → `.until(DURING_YOUR_NEXT_TURN)` on the
+  library-exile permission step.
+- "Destroy target X and all other … that share a [quality] with it" → `allOf(target(), otherPermanentsSharing(target(), quality,
+  filter))`.
+- "For each permanent destroyed this way, its controller …" → `AmountThisWay(DESTROY)` with `died` / `matching` / `controlledByYou`, or
+  the verb over `eachPlayer()` evaluated per player.
+- "Note its power … that much" → `NoteAmountEffect` + `AmountThisWay.noted()`; a delayed ability keeps it
+  (`TemporaryGlobalTriggeredAbility.keepingNotedAmount`).
+- "Choose N target permanents, [verb] one of them at random" → `ChoosePermanentsEffect.atRandom(1, Subjects.allTargets(), label)` + the
+  verb over `thisWay(CHOOSE)`; "the other" → the verb over `except(allTargets(), thisWay(CHOOSE))`.
+- "Choose a creature type, [verb] for each permanent of it you control" → `ChooseCreatureTypeAtResolutionEffect` + the verb over
+  `PermanentCount(PermanentHasTypeChosenThisResolutionPredicate, CONTROLLER)`; a chosen card type is `ChooseCardTypeAtResolutionEffect` +
+  `CardHasCardTypeChosenThisResolutionPredicate`; "choose a number" is `ChooseNumberAtResolutionEffect` (sets X).
+- "Put counters on a [permanent] you control. It becomes …" → `ChoosePermanentsEffect.exactly(1, controlledBy(you(), filter), label)` +
+  the verbs over `thisWay(CHOOSE)`. Amass = that choice over Armies + `PutCountersEffect(thisWay(CHOOSE), …)` +
+  `GrantSubtypeEffect(subtype, thisWay(CHOOSE))`.
+- "Tap any number of untapped [f] you control" → `ChoosePermanentsEffect.anyNumber(controlledBy(you(), allOf(f,
+  PermanentCanBecomeTappedPredicate)))` + `TapPermanentsEffect(thisWay(CHOOSE))` + the verb over `AmountThisWay(TAP)` / `thisWay(TAP)`.
+- "Remove all [kind] counters from this. If no counters were removed" → `RemoveCountersEffect.allFromSelf(kind)` +
+  `ConditionalEffect(NotCondition(HappenedThisWay.removedCounters()), …)`.
+- "Reveal it; if X put it onto the battlefield, otherwise into your hand" → `SearchLibraryEffect(filter, REVEAL_ONLY, null, false)` +
+  `PutCardsOntoBattlefieldEffect(cardsThisWay(SEARCH, X))` + `PutCardsIntoHandEffect(cardsThisWay(SEARCH, not X))` +
+  `ShuffleLibraryEffect(false)`.
+- "Seek N; put one onto the battlefield, the rest on the bottom" → `SeekLibraryEffect` + `ChooseCardEffect.oneOf(cardsThisWay(SEEK))` +
+  mover + `PutCardsIntoLibraryEffect.onBottomInRandomOrder(except(cardsThisWay(SEEK), cardsThisWay(CHOOSE)))`; a choice among sought
+  cards is hidden.
+- "An opponent chooses one of the revealed cards" → `ChoosePlayerEffect.opponent()` + `ChooseCardEffect.oneOf(revealedThisWay(filter))
+  .by(playersThisWay(CHOOSE))`; "the rest" is `revealedThisWay()` once the chosen card has moved.
+- "Look at target player's hand. You may choose a card from it. If you do" → `ChooseCardsFromTargetHandEffect(... KEEP_IN_HAND, upTo,
+  look)` + `ConditionalEffect(HappenedThisWay(CHOOSE), …)` over `cardsThisWay(CHOOSE)`.
+- "Choose two target creatures controlled by the same player; that player sacrifices one" → `ChoosePermanentsEffect.exactly(1,
+  allTargets(), label).chosenBy(controllerOf(allTargets()))` + `SacrificeSelfEffect(thisWay(CHOOSE), controllerOf(thisWay(CHOOSE)))`.
+- "You may destroy target X. If you do" → `MayEffect(SequenceEffect.of(destroy, ConditionalEffect(TargetPermanentMatches(not
+  indestructible), …)))`; "you may pay {c}. If you do, destroy … and …" has no gate (CR 118.12).
+- "You may pay {X}. When you do, [ability reading X]" → `MayEffect(SequenceEffect.of(EachPlayerPaysAnyManaEffect.byYou(X_MANA),
+  QueueReflexiveAbilityEffect.withEventValue(effect, manaPaid())))`.
+- "If you haven't cast a spell this turn, you may cast … If you do, you can't cast additional spells" →
+  `ConditionalEffect(NotCondition(ControllerCastSpellThisTurn(null)), CastCardFromGraveyardEffect.of(…).ifCast(
+  PlayerRestrictionEffect.thisTurn(you(), castingSpells())))`.
+- "Return that card to its owner's hand at the beginning of the next end step" → `aboutCardAtNext(endStep(ANY), triggeringCards() |
+  sourceCard(), PutCardsIntoHandEffect(same subject))`.
+- A static "can't be blocked if [condition]" → `ConditionalEffect(condition, GrantEffectEffect(CantBeBlockedEffect, source()))`; a
+  turn-limited static cost change → `ConditionalEffect(ControllerTurn(), …)`.
+- Several targets in one triggered ability → plain `target(...)` groups plus `addTrigger(trigger, e1, e2)` with
+  `registerEffectTargetIndex(e, group)` for each effect.
 
 ## Targeting checklist
 

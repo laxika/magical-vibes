@@ -60,7 +60,6 @@ public class TargetPermanentControllerMaySacrificeOrDamageEffectHandler
                 target.getId(),
                 null,
                 entry.getSourcePermanentId(),
-                null,
                 0,
                 0,
                 null,

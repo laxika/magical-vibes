@@ -2,6 +2,8 @@
 
 Ready-to-use templates for the most common archetypes. Replace `PLACEHOLDER` values. Each template includes the card class and the full test file.
 
+Every template is a verb with a subject: change who it acts on by changing the subject (`Subjects.target()`, `source()`, `eachOpponent()`, `controlledBy(you(), filter)`, ...; `SUBJECTS_REFERENCE.md`), never by looking for another record, and write text that fuses two instructions as steps ("Composing fused text from steps" in `CARD_IMPLEMENTATION_PLAYBOOK.md`).
+
 ## Quick template selector
 
 | Oracle text pattern | Template |

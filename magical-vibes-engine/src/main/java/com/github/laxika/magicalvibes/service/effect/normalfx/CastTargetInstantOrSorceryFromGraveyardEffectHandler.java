@@ -107,7 +107,7 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                     : entry.getCard().getName() + " — Cast " + targetCard.getName() + "?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     targetCard, controllerId, List.of(e), prompt, null, null,
-                    entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                    entry.getSourcePermanentId(), 0, 0, null, null, null,
                     entry.getSourcePermanentSnapshot(), null, null, 0, null,
                     entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue(), null, -1L));
         }

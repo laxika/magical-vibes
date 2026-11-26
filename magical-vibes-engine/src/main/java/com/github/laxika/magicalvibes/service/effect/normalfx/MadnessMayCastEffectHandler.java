@@ -63,7 +63,6 @@ public class MadnessMayCastEffectHandler implements NormalEffectHandlerBean {
                 null,
                 cost,
                 null,
-                null,
                 0,
                 madnessLifeCost,
                 null, null, null, null, null, null, 0, null, null, null, null

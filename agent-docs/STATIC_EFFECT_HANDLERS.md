@@ -40,9 +40,7 @@ characteristic-defining (`*/*`) counterpart, handled by the single generic
 `AmountEvaluationService` on the same `forStaticEffect` context and writes a **base-P/T
 override** (CR 613 sublayer 7a): any layer-7b setter (Lignify, Diminish, ...) overrides it in
 layer order regardless of timestamps, and a creature that lost all abilities loses its CDA
-(Maro under a lose-all is 0/0). It replaced the entire per-derivation
-`PowerToughnessEqualTo*SelfEffectHandler` family and the ooze-token
-`BoostSelfBySlimeCountersOnLinkedPermanentSelfEffectHandler` — do NOT add new ones.
+(Maro under a lose-all is 0/0). It is the one P/T-defining self handler: do NOT add per-derivation ones.
 
 The attached-scope counterpart is `AttachedBoostEffect(DynamicAmount, DynamicAmount, PermanentSubject)`,
 handled by the single generic `AttachedBoostEffectHandler` (NOT selfOnly). It gates on

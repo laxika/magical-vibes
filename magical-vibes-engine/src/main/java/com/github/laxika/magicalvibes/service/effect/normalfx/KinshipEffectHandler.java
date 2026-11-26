@@ -44,7 +44,7 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), controllerId, List.of(lookStep),
                     entry.getCard().getName() + " — Look at the top card of your library?",
-                    null, null, entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                    null, null, entry.getSourcePermanentId(), 0, 0, null, null, null,
                     source == null ? null : new Permanent(source), controllerId, null, 0, null, null, null,
                     null));
             return;

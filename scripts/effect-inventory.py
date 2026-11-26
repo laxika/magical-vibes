@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Inventory of the effect types in model/effect/, for effect-cleanup-refactor.md.
+"""Inventory of the effect types in model/effect/: tells a card author whether an effect already exists and who uses it.
+
+Built for the effect cleanup (closed 2026-11-26; its plan is in git history, `git show 3b0d60d42d4:effect-cleanup-refactor.md`).
+scripts/effect-audit-ledger.csv is that cleanup's per-class verdict ledger; the open blocked rows are in refactors-to-do.md.
 
 For every type in magical-vibes-domain's model/effect/ it finds: its kind (record, class, enum, interface), its
 record components, the card classes that name it, the main-code files outside its own file and its own handlers
@@ -9,7 +12,7 @@ returns the type) with their line counts, and the test files that name it. "Name
 simple class name anywhere in the file, comments included, so a count errs towards "used".
 
 Modes (one at a time):
-  (none)                          the summary table of the plan's Measurements, recomputed
+  (none)                          the summary table (the cleanup plan's Measurements), recomputed
   --family PREFIX                 every effect whose name starts with PREFIX at a word boundary, most used first
   --siblings                      groups of effects whose names differ only in a subject word
   --dead                          records no card names and no main code outside their own handlers names

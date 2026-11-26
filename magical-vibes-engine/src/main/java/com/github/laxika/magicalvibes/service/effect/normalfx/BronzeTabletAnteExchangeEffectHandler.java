@@ -94,7 +94,7 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
                 + "exchanged. (" + tabletCard.getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 tabletCard, opponentId, List.of(e), prompt, target.getOriginalCard().getId(),
-                null, entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                null, entry.getSourcePermanentId(), 0, 0, null, null, null,
                 entry.getSourcePermanentSnapshot(), entry.getControllerId()));
     }
     /** Applies the ownership changes to the exiled objects while retaining their identities. */

@@ -15,6 +15,7 @@ Javadoc of the owner class.
 |---|---|
 | Casting paths, costs, stack object identity, face-down cards in views, logs and prompts, spell copies, what a stack entry retains | [architecture/casting-stack.md](architecture/casting-stack.md) |
 | A new effect or handler, prompts, parked resolutions, the resolution scratchpad | [architecture/resolution.md](architecture/resolution.md) |
+| An effect's verb and subject, the rules every handler keeps (face-down reads, batches, APNAP choices), the shared records, costs and steps to reuse | [architecture/effect-building-blocks.md](architecture/effect-building-blocks.md) |
 | Replacement and prevention, damage, death replacements, losing the game, token creation | [architecture/replacement-damage.md](architecture/replacement-damage.md) |
 | How permanents enter the battlefield | [architecture/entry.md](architecture/entry.md) |
 | Triggered abilities, rules events, what a stack entry records about its trigger | [architecture/triggers.md](architecture/triggers.md): 86 KB, grep its ` |

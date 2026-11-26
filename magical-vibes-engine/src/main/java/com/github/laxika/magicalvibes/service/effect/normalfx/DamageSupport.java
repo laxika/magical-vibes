@@ -1214,7 +1214,7 @@ public class DamageSupport {
                 List.of(new RedirectAllCreatureDamageToControllerEffect(
                         controllers.subList(1, controllers.size()), false, -1, false, false, entry.getEntryType())),
                 "Have " + amount + " damage dealt to you instead?", targetId, null,
-                entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                entry.getSourcePermanentId(), 0, 0, null, null, null,
                 snapshot == null ? null : new Permanent(snapshot), sourceControllerId, null, amount));
     }
 

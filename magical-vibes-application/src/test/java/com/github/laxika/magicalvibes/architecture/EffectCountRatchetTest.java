@@ -15,10 +15,11 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Shrinking ratchet for effect-cleanup-refactor.md: the number of effect records in {@code model/effect/} and of effect
- * handler classes in {@code service/effect/{normalfx,mayfx,staticfx}} may only go down. A new card is built from the
- * existing verbs, subjects and wrappers; when a refactor step deletes classes it lowers the baselines here to the new
- * counts. {@code scripts/effect-inventory.py} prints the same two numbers on its last summary line.
+ * Shrinking ratchet left by the effect cleanup (closed 2026-11-26; its plan is in git history, {@code git show
+ * 3b0d60d42d4:effect-cleanup-refactor.md}): the number of effect records in {@code model/effect/} and of effect handler
+ * classes in {@code service/effect/{normalfx,mayfx,staticfx}} may only go down. A new card is built from the existing
+ * verbs, subjects and wrappers ({@code agent-docs/EFFECTS_INDEX.md}, "Verbs and their subjects"); a change that deletes
+ * classes lowers the baselines here to the new counts. {@code scripts/effect-inventory.py} prints the same two numbers on its last summary line.
  *
  * <p>A record is a file whose top-level declaration is {@code public record <FileName>}; a handler class is a file whose
  * name ends in {@code Handler.java}.
@@ -49,8 +50,8 @@ class EffectCountRatchetTest {
 
         assertThat(records)
                 .withFailMessage("model/effect/ has %d records, above the baseline of %d. Build the card from existing "
-                                + "effects (see effect-cleanup-refactor.md and scripts/effect-inventory.py --family); "
-                                + "if a refactor step deleted records, lower RECORD_BASELINE to the new count instead.",
+                                + "effects (see agent-docs/EFFECTS_INDEX.md and scripts/effect-inventory.py --family); "
+                                + "if a change deleted records, lower RECORD_BASELINE to the new count instead.",
                         records, RECORD_BASELINE)
                 .isLessThanOrEqualTo(RECORD_BASELINE);
     }
@@ -70,7 +71,7 @@ class EffectCountRatchetTest {
 
         assertThat(handlers)
                 .withFailMessage("service/effect/{normalfx,mayfx,staticfx} has %d handler classes, above the baseline "
-                                + "of %d. Build the card from existing effects; if a refactor step deleted handlers, "
+                                + "of %d. Build the card from existing effects; if a change deleted handlers, "
                                 + "lower HANDLER_BASELINE to the new count instead.",
                         handlers, HANDLER_BASELINE)
                 .isLessThanOrEqualTo(HANDLER_BASELINE);

@@ -4281,7 +4281,7 @@ public class ChoiceHandlerService {
                             replacementSource, targetPlayerId,
                             List.of(new DiscardToTopOfLibraryInsteadEffect()),
                             "Put " + card.getName() + " on top of your library instead of into your graveyard?",
-                            card.getId(), null, null, null, 0, 0, null, null, null, null, null, null, 1));
+                            card.getId(), null, null, 0, 0, null, null, null, null, null, null, 1));
                 }
             }
         }

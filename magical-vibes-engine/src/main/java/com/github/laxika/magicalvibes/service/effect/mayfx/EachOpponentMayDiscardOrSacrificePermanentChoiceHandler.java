@@ -78,7 +78,6 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
                         ability.targetCardId(),
                         ability.manaCost(),
                         ability.sourcePermanentId(),
-                        ability.tapPermanentsCost(),
                         ability.lifeCost(),
                         ability.additionalLifeCost(),
                         ability.attackedTargetId(),

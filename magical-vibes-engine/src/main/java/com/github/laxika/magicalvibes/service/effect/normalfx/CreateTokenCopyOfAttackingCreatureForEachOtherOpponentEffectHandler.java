@@ -78,7 +78,6 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                         attackerId,
                         null,
                         attackerId,
-                        null,
                         0,
                         0,
                         attackedPlayerId,
