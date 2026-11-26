@@ -38,7 +38,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 
 | Track | Runs | Status |
 |---|---|---|
-| 0 Owner and bookkeeping | 0 | open |
+| 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
 | DM Damage | DM-1, DM-2, DM-3 | open |
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | open |
 | CP Casting permissions and cost readers | CP-1 | open |
@@ -97,6 +97,20 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
   are yours to write.
 - No banner comments. No `CONVERSION_VERSION` change unless you touch a mapping file AGENTS.md lists; if you do, say so. No
   commits.
+
+## Sequential mode (owner's instruction, 2026-11-27)
+
+The runs are being done one at a time, in wave-table order, each by one fresh agent working **directly on main** (no worktree,
+no sync patch, no merge). So the shared-docs rule changes: the agent of a run does its own bookkeeping.
+
+- It fills in its run's "Outcome" line and its track's Status row in this file.
+- It deletes from `refactors-to-do.md` entry 18 every line it fixed or dropped. For a line it fixed only partly, it edits the line
+  down to what is left. It updates the group's count in the heading.
+- It appends each new owner question to entry 17's "Open questions", dated, with the run ID.
+- It adds the ledger rows and moves the `EffectCountRatchetTest` baselines if it deleted or added effect classes.
+
+The orchestrator reviews the diff, runs the architecture tests and a compile of every module, then commits and pushes the run. A
+line that needs the owner's answer is left and collected for the end.
 
 ## How the orchestrator runs a wave
 
@@ -179,7 +193,8 @@ entry 17. Until the owner answers, each one stays in entry 18 and no run touches
 "that permanent" stays in entry 18 for MC-2) and O84 (the Demonic Hordes / Infernal Denizen folds; MP-2 takes Infernal Denizen's
 opponent choice).
 
-Outcome:
+Outcome: 2026-11-27, O18, O19, O30, O79's fold part and O84 moved to entry 16's step-10 parts (O79's Behemoth line stays in
+entry 18). The owner's questions are asked once every run is done (owner's instruction).
 
 ### DM. Damage
 
