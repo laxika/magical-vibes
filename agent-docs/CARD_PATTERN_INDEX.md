@@ -455,7 +455,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | cast trigger, takeover counter, enter as a copy of a marked exiled creature card | `t/TheMasterFormedAnew.java` and EFFECTS_QUICK_REFERENCE.md |
 | two target creatures get counters/keywords and only those creatures may attack in an added combat | `l/LastNightTogether.java` + target-bound untap/counter/keyword effects + `AdditionalCombatPhasesAfterMainEffect(1, true)` |
 | combat damage modal, goad damaged player's creature, exile top card and cast with any-color mana | CARD_PATTERNS_CREATURES_TRIGGERED.md |
-| combat damage by a creature or its equipped creature, goad every creature controlled by the damaged player | `k/KomainuBattleArmor.java` + `GoadCreaturesTargetPlayerControlsUntilNextTurnEffect(Subjects.triggeringPlayer())` |
+| combat damage by a creature or its equipped creature, goad every creature controlled by the damaged player | `k/KomainuBattleArmor.java` + `GoadTargetCreatureUntilNextTurnEffect.creaturesControlledBy(Subjects.triggeringPlayer())` |
 | ETB goads up to one creature per opponent and adds their total power as +1/+1 counters | `h/HavocEater.java` + `targetUpTo(PlayersInGame - 1, creatureAnOpponentControls)` + `AT_MOST_ONE_PER_CONTROLLER` + `TotalPowerOfTargetGroup` |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | ally permanent death trigger counts the dying permanent's total counters and optionally places that many +1/+1 counters on a creature | `y/YunaGrandSummoner.java` + `PutCountersEffect(PLUS_ONE_PLUS_ONE, CountersOnTriggeringPermanent(), null, creature, false, null, false)` |

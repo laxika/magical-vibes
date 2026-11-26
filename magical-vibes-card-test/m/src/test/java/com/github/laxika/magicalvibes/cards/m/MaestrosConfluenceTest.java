@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MaestrosConfluenceTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Resolves all three different modes")
     void resolvesAllThreeModes() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card spell = new Shock();
@@ -35,6 +37,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The -3/-3 mode chosen three times hits three creatures")
     void repeatedMinusThreeModeIsAppliedThreeTimes() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -47,6 +50,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The goad mode makes the target player's creatures attack")
     void goadModeForcesTargetPlayersCreaturesToAttack() {
         addCreatureReady(player2, new GrizzlyBears());
         Card spell = new Shock();
@@ -61,6 +65,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard mode can't target a creature card")
     void graveyardModeRejectsCreatureCards() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
@@ -74,6 +79,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard mode chosen twice returns two different cards")
     void repeatedGraveyardModeReturnsDifferentInstantsAndSorceries() {
         Card first = new Shock();
         Card second = new Ponder();
@@ -89,6 +95,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard mode chosen twice may target the same card")
     void repeatedGraveyardModeCanTargetTheSameCard() {
         Card spell = new Shock();
         harness.setGraveyard(player1, List.of(spell));
@@ -100,6 +107,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard mode can't target a multicolored sorcery")
     void graveyardModeRejectsMulticoloredSorcery() {
         Card spell = new MaestrosConfluence();
         harness.setGraveyard(player1, List.of(spell));
@@ -110,6 +118,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard mode can't target an opponent's card")
     void graveyardModeRejectsOpponentsCard() {
         Card spell = new Shock();
         harness.setGraveyard(player2, List.of(spell));
@@ -120,6 +129,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The goad affects only the target player's creatures present at resolution")
     void goadAffectsOnlyTargetPlayersCreaturesPresentAtResolution() {
         Permanent affected = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -133,6 +143,17 @@ class MaestrosConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The goad mode chosen three times for one player adds one attack requirement (CR 701.15d)")
+    void goadModeChosenThriceAddsOneRequirement() {
+        Permanent affected = addCreatureReady(player2, new GrizzlyBears());
+        cast(new int[]{2, 2, 2}, List.of(player2.getId(), player2.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(als.getMustAttackRequirementCount(gd, affected)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The -3/-3 mode chosen twice on one creature stacks")
     void repeatedMinusThreeModeStacksOnTheSameCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArtisanOfKozilek());
 

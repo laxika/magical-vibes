@@ -130,6 +130,16 @@ class DisruptDecorumTest extends BaseCardTest {
                 .hasMessageContaining("must attack");
     }
 
+    @Test
+    @DisplayName("Cast twice by one player, it adds one attack requirement (CR 701.15d)")
+    void castTwiceAddsOneRequirement() {
+        var creature = addCreatureReady(player2, new GrizzlyBears());
+        castAndResolve();
+        castAndResolve();
+
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
+    }
+
     private void castAndResolve() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

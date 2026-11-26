@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSnapshotEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class DayOfTheMoon extends Card {
         for (int chapter : new int[]{1, 2, 3}) {
             addTrigger(Triggers.chapter(chapter),
                     new ChooseCardNameAtResolutionEffect(CardType.CREATURE),
-                    new GoadCreaturesUntilNextTurnSnapshotEffect(
+                    GoadTargetCreatureUntilNextTurnEffect.eachCreature(
                             new PermanentHasSourceChosenNamePredicate(true)));
         }
     }

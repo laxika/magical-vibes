@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSnapshotEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -23,7 +23,7 @@ public class TakeTheBait extends Card {
         addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate())))));
-        addSpellEffect(new GoadCreaturesUntilNextTurnSnapshotEffect(new PermanentIsAttackingPredicate()));
+        addSpellEffect(GoadTargetCreatureUntilNextTurnEffect.eachCreature(new PermanentIsAttackingPredicate()));
         addSpellEffect(new AdditionalCombatPhaseEffect(1));
     }
 }

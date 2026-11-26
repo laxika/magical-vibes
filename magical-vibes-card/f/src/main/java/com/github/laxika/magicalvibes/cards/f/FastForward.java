@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSnapshotEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -13,7 +13,7 @@ public class FastForward extends Card {
 
     public FastForward() {
         addStaticEffect(new ReduceOwnCastCostEffect(new OpponentsAttackedThisTurn()));
-        addSpellEffect(new GoadCreaturesUntilNextTurnSnapshotEffect(
+        addSpellEffect(GoadTargetCreatureUntilNextTurnEffect.eachCreature(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }
 }

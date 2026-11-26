@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSnapshotEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class DisruptDecorum extends Card {
 
     public DisruptDecorum() {
-        addSpellEffect(new GoadCreaturesUntilNextTurnSnapshotEffect(new PermanentNotPredicate(
+        addSpellEffect(GoadTargetCreatureUntilNextTurnEffect.eachCreature(new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate())));
     }
 }

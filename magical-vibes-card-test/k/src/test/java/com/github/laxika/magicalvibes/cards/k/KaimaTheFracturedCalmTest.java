@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.d.DisruptDecorum;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hobble;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KaimaTheFracturedCalm.class, GrizzlyBears.class, Hobble.class})
+@CardUsed({KaimaTheFracturedCalm.class, GrizzlyBears.class, Hobble.class, DisruptDecorum.class})
 class KaimaTheFracturedCalmTest extends BaseCardTest {
 
     @Test
@@ -160,6 +162,26 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
         resolveControllerEndStep();
 
         assertThat(kaima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature you goaded with another spell is not goaded this way and adds no counter (CR 701.15d)")
+    void creatureGoadedByYourOtherSpellIsNotCountedAsGoadedThisWay() {
+        Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addAura(player1, creature);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, java.util.List.of(new DisruptDecorum()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        resolveControllerEndStep();
+
+        assertThat(kaima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
     }
 
     private Permanent addAura(com.github.laxika.magicalvibes.model.Player controller, Permanent host) {

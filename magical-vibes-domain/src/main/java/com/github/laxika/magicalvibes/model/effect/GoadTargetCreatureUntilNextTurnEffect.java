@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -11,12 +13,15 @@ import java.util.Objects;
  * effect's target when {@code goaded} is null; otherwise the permanents a subject that doesn't target names as the
  * ability resolves: "goad it" ({@link #ofTriggeringPermanent()}), "goad each creature that had a counter put on it this
  * way", "the tokens are goaded for the rest of the game" ({@code createdThisResolution()} with
- * {@link Duration#PERMANENT}), "goad each creature your opponents control that's enchanted by an Aura you control" (a
- * set, locked as it resolves, CR 611.2c). One that has left the battlefield or isn't a creature is not goaded.
+ * {@link Duration#PERMANENT}), "goad each creature your opponents control that's enchanted by an Aura you control",
+ * "goad all creatures you don't control" ({@link #eachCreature}), "goad each creature target player controls"
+ * ({@link #creaturesControlledBy}; a set of a target player's permanents declares that player as the harmful target).
+ * A set is found once, as the effect resolves (CR 608.2h); creatures that arrive later aren't goaded. One that has left
+ * the battlefield or isn't a creature is not goaded.
  *
  * <p>A {@link StepKind#GOAD} step: it records the creatures it goaded and their controllers ("for each creature goaded
- * this way"). A creature the same player goads again is recorded too, though no requirement is added (CR 701.15d: the
- * attack rules count one per goading player).
+ * this way"). A creature the same player already goaded for as long is neither goaded again nor recorded: goading it
+ * again has no effect (CR 701.15d).
  *
  * <p>The record itself is stored in each resulting floating effect, so readers of the goaded designation see it through
  * {@link GoadStatusEffect} and {@link CombatAttackRequirementEffect}. "For as long as this remains on the battlefield"
@@ -58,6 +63,31 @@ public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRes
         return new GoadTargetCreatureUntilNextTurnEffect(null, Objects.requireNonNull(goaded, "goaded"), duration);
     }
 
+    /**
+     * "Goad all creatures [matching {@code filter}]" until your next turn: every player's creatures that match as it
+     * resolves ("you don't control", "attacking", "suspected", "with the chosen name").
+     */
+    public static GoadTargetCreatureUntilNextTurnEffect eachCreature(PermanentPredicate filter) {
+        return of(Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(), Objects.requireNonNull(filter, "filter")))),
+                Duration.UNTIL_YOUR_NEXT_TURN);
+    }
+
+    /**
+     * "Goad each creature [player] controls" until your next turn: target player ({@code Subjects.targetPlayer()},
+     * then the effect's harmful player target) or the event's player ({@code Subjects.triggeringPlayer()}, not
+     * targeted).
+     */
+    public static GoadTargetCreatureUntilNextTurnEffect creaturesControlledBy(PlayerSubject player) {
+        return of(Subjects.controlledBy(Objects.requireNonNull(player, "player"), new PermanentIsCreaturePredicate()),
+                Duration.UNTIL_YOUR_NEXT_TURN);
+    }
+
+    /** "Goad each creature target player controls" until your next turn; the player is the harmful target. */
+    public static GoadTargetCreatureUntilNextTurnEffect creaturesTargetPlayerControls() {
+        return creaturesControlledBy(Subjects.targetPlayer());
+    }
+
     /** "As long as this remains on the battlefield, that creature is also goaded": the target. */
     public static GoadTargetCreatureUntilNextTurnEffect targetWhileSourceRemains() {
         return new GoadTargetCreatureUntilNextTurnEffect(null, null, Duration.WHILE_SOURCE_REMAINS);
@@ -75,9 +105,10 @@ public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRes
 
     @Override
     public TargetSpec targetSpec() {
-        return goaded == null
-                ? TargetSpec.harmful(TargetPredicates.creature(), targetRestriction)
-                : TargetSpec.NONE;
+        if (goaded == null) {
+            return TargetSpec.harmful(TargetPredicates.creature(), targetRestriction);
+        }
+        return goaded.declaresPlayerTarget() ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     @Override

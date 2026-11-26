@@ -88,7 +88,7 @@ package com.github.laxika.magicalvibes.model;
  *       one that can't become tapped, is not counted), those permanents, their controllers: "for each creature tapped
  *       this way", "each of those Vampires".</li>
  *   <li>{@link #GOAD}: the number of creatures the step goaded ({@code GoadTargetCreatureUntilNextTurnEffect}; one the
- *       same player goaded again counts, CR 701.15d), those creatures, their controllers: "for each creature goaded this
+ *       same player already goaded doesn't count, CR 701.15d), those creatures, their controllers: "for each creature goaded this
  *       way".</li>
  *   <li>{@link #SEARCH}: the number of cards a library search found ({@code SearchLibraryEffect},
  *       {@code SearchTargetLibraryEffect}, {@code IntuitionEffect}, {@code EachPlayerSearchesLibraryEffect}, the
