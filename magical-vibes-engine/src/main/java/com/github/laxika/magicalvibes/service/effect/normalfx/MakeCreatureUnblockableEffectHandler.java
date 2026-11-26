@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,14 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves {@link MakeCreatureUnblockableEffect}: each permanent its subject names that is still on the battlefield
+ * can't be blocked for the effect's duration, a floating rule on that permanent (CR 611.2a, 613.11), not an ability it
+ * gains, so a later "loses all abilities" leaves it. An illegal target is not affected (CR 608.2b); a source or host
+ * that left is not affected either. "By creatures your opponents control" floats that restriction instead, unless the
+ * ability's controller controls the permanent: then only those opponents' creatures could block it, so it simply can't
+ * be blocked.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -32,6 +41,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,74 +51,24 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var unblockable = (MakeCreatureUnblockableEffect) effect;
-
-        if (unblockable.triggeringPermanent()) {
-            Permanent triggering = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-            if (unblockable.notBlockableByOpponentsOfController()) {
-                makeUnblockableByOpponentsOf(gameData, triggering, entry);
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, unblockable.subject())) {
+            if (unblockable.opponentsCreaturesOnly()) {
+                makeUnblockableByOpponentsOf(gameData, permanent, entry, unblockable.duration());
             } else {
-                makeUnblockable(gameData, triggering, entry, unblockable);
+                makeUnblockable(gameData, entry, permanent, unblockable.duration());
             }
-            return;
         }
-
-        // Multi-target: make each target in the group unblockable (e.g. Open into Wonder's
-        // "X target creatures can't be blocked this turn").
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetIds()) {
-                makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId), entry, unblockable);
-            }
-            return;
-        }
-
-        // Self-targeting triggers (e.g. Repartee) use sourcePermanentId; targetId may carry
-        // separate context about the spell or player that caused the trigger.
-        UUID targetId;
-        if (unblockable.attachedPermanent()) {
-            targetId = entry.getTargetId();
-        } else if (unblockable.selfTargeting() && entry.getSourcePermanentId() != null) {
-            targetId = entry.getSourcePermanentId();
-        } else {
-            targetId = entry.getTargetId();
-        }
-        makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId), entry, unblockable);
-    }
-
-    private void makeUnblockable(GameData gameData, Permanent target, StackEntry entry,
-                                 MakeCreatureUnblockableEffect effect) {
-        if (target == null) return;
-        if (Duration.UNTIL_END_OF_TURN.equals(effect.duration())) {
-            makeUnblockable(gameData, entry, target);
-            return;
-        }
-        grantCantBeBlocked(gameData, target, entry, effect.duration());
-    }
-
-    /**
-     * {@code target} gains "this creature can't be blocked" for {@code duration} (Ogre Marauder): an ability (layer 6, CR 613.1f), which a
-     * "loses all abilities" with a later timestamp removes (CR 613.7), unlike "it can't be blocked this turn".
-     */
-    public void grantCantBeBlocked(GameData gameData, Permanent target, StackEntry entry, Duration duration) {
-        if (target == null) return;
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
-                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.target()),
-                target.getId(), null, null, duration, 0));
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                Duration.UNTIL_END_OF_COMBAT.equals(duration)
-                        ? " can't be blocked this combat." : " can't be blocked."));
     }
 
     /**
      * The target can't be blocked by creatures controlled by the opponents of the resolving ability's
-     * controller this turn. A creature that controller controls is blocked only by those opponents'
+     * controller for {@code duration}. A creature that controller controls is blocked only by those opponents'
      * creatures, so it simply can't be blocked.
      */
-    private void makeUnblockableByOpponentsOf(GameData gameData, Permanent target, StackEntry entry) {
-        if (target == null) return;
+    private void makeUnblockableByOpponentsOf(GameData gameData, Permanent target, StackEntry entry, Duration duration) {
         UUID abilityControllerId = entry.getControllerId();
         if (abilityControllerId.equals(gameQueryService.findPermanentController(gameData, target.getId()))) {
-            makeUnblockable(gameData, entry, target);
+            makeUnblockable(gameData, entry, target, duration);
             return;
         }
         List<PermanentPredicate> opponentControlled = gameData.orderedPlayerIds.stream()
@@ -120,28 +80,40 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
                 UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), null, abilityControllerId,
                 new GrantEffectEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentAnyOfPredicate(opponentControlled)), Subjects.target()),
-                target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+                target.getId(), null, null, duration, 0));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " can't be blocked by creatures its opponents control this turn."));
+                " can't be blocked by creatures its opponents control" + durationText(duration) + "."));
     }
 
-    private void makeUnblockable(GameData gameData, StackEntry entry, Permanent target) {
-        makeUnblockableThisTurn(gameData, target, entry.getCard() == null ? null : FaceDownVisibility.sourceName(gameData, entry),
-                entry.getSourcePermanentId(), entry.getControllerId());
+    private void makeUnblockable(GameData gameData, StackEntry entry, Permanent target, Duration duration) {
+        makeUnblockable(gameData, target, entry.getCard() == null ? null : FaceDownVisibility.sourceName(gameData, entry),
+                entry.getSourcePermanentId(), entry.getControllerId(), duration);
     }
 
     /** "{@code target} can't be blocked this turn" (CR 611.2a), made by {@code sourceCardName}'s ability. */
     public void makeUnblockableThisTurn(GameData gameData, Permanent target, String sourceCardName,
                                         UUID sourcePermanentId, UUID controllerId) {
+        makeUnblockable(gameData, target, sourceCardName, sourcePermanentId, controllerId, Duration.UNTIL_END_OF_TURN);
+    }
+
+    private void makeUnblockable(GameData gameData, Permanent target, String sourceCardName, UUID sourcePermanentId,
+                                 UUID controllerId, Duration duration) {
         if (target == null) {
             return;
         }
 
         gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(sourceCardName, sourcePermanentId, controllerId,
-                new CantBeBlockedEffect(), target.getId(), Duration.UNTIL_END_OF_TURN));
+                new CantBeBlockedEffect(), target.getId(), duration));
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't be blocked this turn."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't be blocked" + durationText(duration) + "."));
 
-        log.info("Game {} - {} can't be blocked this turn", gameData.id, target.getCard().getName());
+        log.info("Game {} - {} can't be blocked{}", gameData.id, target.getCard().getName(), durationText(duration));
+    }
+
+    private static String durationText(Duration duration) {
+        if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
+            return " this turn";
+        }
+        return Duration.UNTIL_END_OF_COMBAT.equals(duration) ? " this combat" : "";
     }
 }

@@ -14,7 +14,7 @@ public class FrostpeakYeti extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{S}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{1}{S}: This creature can't be blocked this turn."
         ));
     }

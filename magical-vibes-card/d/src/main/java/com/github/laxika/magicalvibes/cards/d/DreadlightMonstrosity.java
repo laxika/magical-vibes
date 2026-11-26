@@ -19,7 +19,7 @@ public class DreadlightMonstrosity extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{U}{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{3}{U}{U}: This creature can't be blocked this turn. Activate only if you own a card in exile."
         ).withActivationCondition(
                 new ControllerOwnsCardInExile(),

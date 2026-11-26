@@ -24,6 +24,6 @@ public class RiverfallMimic extends Card {
                                 new CardColorPredicate(CardColor.RED)
                         ))),
                 new SetBasePowerToughnessEffect(3, 3, Subjects.source()),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
     }
 }

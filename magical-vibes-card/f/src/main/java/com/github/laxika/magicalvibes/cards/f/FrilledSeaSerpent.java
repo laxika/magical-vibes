@@ -17,7 +17,7 @@ public class FrilledSeaSerpent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{U}{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{5}{U}{U}: Frilled Sea Serpent can't be blocked this turn."
         ));
     }

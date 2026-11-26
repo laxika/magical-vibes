@@ -33,7 +33,7 @@ public class JinSakaiGhostOfTsushima extends Card {
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Ghost — It can't be blocked this turn",
                                         new ConditionalEffect(new AttacksPlayerAlone(),
-                                                MakeCreatureUnblockableEffect.forTriggeringPermanent()))
+                                                MakeCreatureUnblockableEffect.of(Subjects.triggering())))
                         ))));
     }
 }

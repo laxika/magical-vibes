@@ -28,6 +28,6 @@ public class MatterbendingMage extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target());
 
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryHasXInManaCostPredicate()),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
     }
 }

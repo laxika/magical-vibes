@@ -21,7 +21,7 @@ public class AntManReformedRogue extends Card {
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()));
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
                 BoostEffect.self(-1, 0),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect());
     }
 }

@@ -14,7 +14,7 @@ public class TrespassingSouleater extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U/P}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{U/P}: Trespassing Souleater can't be blocked this turn."
         ));
     }

@@ -13,7 +13,7 @@ public class ShroudedSerpent extends Card {
     public ShroudedSerpent() {
         // Whenever this creature attacks, defending player may pay {4}. If that player doesn't,
         // this creature can't be blocked this turn.
-        addTrigger(Triggers.attacks(), UnlessPaysEffect.unlessPays(Subjects.defendingPlayer(), "{4}", new MakeCreatureUnblockableEffect(true))
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.unlessPays(Subjects.defendingPlayer(), "{4}", MakeCreatureUnblockableEffect.self())
                 .withPrompt("Pay {4} to allow this creature to be blocked this turn?"));
     }
 }

@@ -17,6 +17,6 @@ public class MaChaoWesternWarrior extends Card {
         // Whenever Ma Chao attacks alone, it can't be blocked this combat.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new MakeCreatureUnblockableEffect(true, false, Duration.UNTIL_END_OF_COMBAT));
+                MakeCreatureUnblockableEffect.self(Duration.UNTIL_END_OF_COMBAT));
     }
 }

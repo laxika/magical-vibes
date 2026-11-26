@@ -26,7 +26,7 @@ public class SnoopingPage extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY))))
                         .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
 
         // Whenever this creature deals combat damage to a player, you draw a card and lose 1 life.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),

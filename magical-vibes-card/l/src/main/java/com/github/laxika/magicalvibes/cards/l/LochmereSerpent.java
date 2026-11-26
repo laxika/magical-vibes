@@ -30,7 +30,7 @@ public class LochmereSerpent extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Sacrifice an Island"),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "{U}, Sacrifice an Island: This creature can't be blocked this turn."
         ));

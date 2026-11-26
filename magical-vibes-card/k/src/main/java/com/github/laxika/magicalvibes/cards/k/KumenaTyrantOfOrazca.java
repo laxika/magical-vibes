@@ -24,7 +24,7 @@ public class KumenaTyrantOfOrazca extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), true),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "Tap another untapped Merfolk you control: Kumena can't be blocked this turn."
         ));

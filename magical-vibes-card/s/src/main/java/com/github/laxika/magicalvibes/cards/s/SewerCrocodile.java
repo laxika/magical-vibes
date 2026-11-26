@@ -20,7 +20,7 @@ public class SewerCrocodile extends Card {
                 List.of(
                         new ReduceActivationCostEffect(new FixedIfCondition(
                                 new DistinctManaValuesAmongCardsInGraveyardAtLeast(5), 3, 0)),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "{3}{U}: This creature can't be blocked this turn. This ability costs {3} less to activate "
                         + "if there are five or more mana values among cards in your graveyard."

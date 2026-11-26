@@ -14,7 +14,7 @@ public class AgentOfHorizons extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{2}{U}: This creature can't be blocked this turn."
         ));
     }

@@ -17,6 +17,6 @@ public class SearchElemental extends Card {
         addTrigger(Triggers.youSearchYourLibrary(), new ScryEffect(1));
         addTrigger(Triggers.youScry(), SequenceEffect.of(
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                new MakeCreatureUnblockableEffect(true)));
+                MakeCreatureUnblockableEffect.self()));
     }
 }

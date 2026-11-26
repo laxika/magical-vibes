@@ -22,7 +22,7 @@ public class SureFootedInfiltrator extends Card {
                 List.of(
                         new TapMultiplePermanentsCost(1,
                                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE), true),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "Tap another untapped Rogue you control: This creature can't be blocked this turn."
         ));

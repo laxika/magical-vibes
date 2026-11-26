@@ -32,7 +32,7 @@ public class GhostlyPilferer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new DiscardCardTypeCost(null, null), new MakeCreatureUnblockableEffect(true)),
+                List.of(new DiscardCardTypeCost(null, null), MakeCreatureUnblockableEffect.self()),
                 "Discard a card: This creature can't be blocked this turn."));
     }
 }

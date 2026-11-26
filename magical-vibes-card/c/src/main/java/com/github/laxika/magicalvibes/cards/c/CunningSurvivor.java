@@ -18,6 +18,6 @@ public class CunningSurvivor extends Card {
         // on this creature.
         addTrigger(Triggers.youDiscardCard(), SequenceEffect.of(
                 BoostEffect.self(1, 0),
-                new MakeCreatureUnblockableEffect(true)));
+                MakeCreatureUnblockableEffect.self()));
     }
 }

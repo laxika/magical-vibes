@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files; run PO: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` per effect with the escape snapshot, `GrantSupertypeToEnchantedPermanentEffect` into `GrantSupertypeEffect(T, attached())`, the scavenge grant into `PerCard.SCAVENGE_FOR_MANA_COST`, `PerpetuallyBoostSourceEffect` into `PerpetuallyBoostCardEffect` (perpetual P/T on a graveyard card in layer 7c), 32 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (U, C1, C2, K / K2, then R2, J, T, U8) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files; run G: the two goad-set records into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` with a player-target spec, 10 card files; run D: `EachPlayerDrawsCardEffect` into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (every amount fixed first, CR 608.2h), 8 opponent-draw files onto `eachOpponent()` / a chosen opponent, the AI's `AiUtils.drawRecipients`, 69 card files; run PO: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` per effect with the escape snapshot, `GrantSupertypeToEnchantedPermanentEffect` into `GrantSupertypeEffect(T, attached())`, the scavenge grant into `PerCard.SCAVENGE_FOR_MANA_COST`, `PerpetuallyBoostSourceEffect` into `PerpetuallyBoostCardEffect` (perpetual P/T on a graveyard card in layer 7c), 32 card files; run U: `MakeCreatureUnblockableEffect`'s five who flags into one `PermanentSubject` (`self`, `of`, `targetPermanent`, `.byCreaturesYourOpponentsControl()`), every duration a floating rule, 67 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (C1, C2, K / K2, then R2, J, T, U8) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -739,6 +739,8 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `MakeTargetAttackingCreatureBlockedEffect` (CR 509.1h), `CanBlockCreaturesWithShadowEffect`, `CantBeBlockedIfDefenderControlsMatchingPermanentEffect.whileDefendingPlayer`
   (CR 508.5, 509.1b), `AttachedPermanentRestrictionEffect`, `ExploreEffect` (CR 701.44d). Run S: `CantAttackOrBlockUnlessEffect.attack` / `block` /
   `attackOrBlock(condition, text)` (CR 508.1c, 509.1b), `CreaturesCantAttackUnlessPredicateEffect.youControl(exemption)`, `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()` (CR 602.5).
+  Run U: `MakeCreatureUnblockableEffect` over one permanent subject (`()` target, `self([Duration])`, `of(subject[, Duration])`,
+  `targetPermanent(filter)`, `.byCreaturesYourOpponentsControl()`; a set refused, CR 611.2c), a floating rule for every duration (CR 613.11).
   Run G: `GoadTargetCreatureUntilNextTurnEffect.eachCreature(filter)` / `creaturesControlledBy(player)` / `creaturesTargetPlayerControls()` (a
   `controlledBy(targetPlayer(), …)` subject declares the harmful player target; the set found once, CR 608.2h; CR 701.15d).
 - Types, colours, names: `SetCardTypesEffect`, `LoseAllLandTypesEffect`, `GrantSubtypeEffect.chosenSubtype` (CR 305.7),
@@ -953,8 +955,9 @@ there and updates them when it lands.
   `TargetPermanentControllerMaySacrificeOrDamageEffect` (Star Athlete, Enchanter's Bane), the cost pairs `Sacrifice*Cost`, `Exile*Cost`,
   `Return*ToHandCost`, `PutCounterOn*Cost`.
 - **Static restrictions**: run S merged the condition trio (`CantAttackOrBlockUnlessEffect` factories), the can't-activate pair and the two
-  `…CantAttackUnlessPredicateEffect` records. Left: `CreaturesCantAttackControllerUnlessPredicateEffect` (whom a creature may attack, also
-  floated: stays out), the unblockable subject (run U), `MustBlockTargetCreatureEffect` (stays out). Goad: run G folded the two set records;
+  `…CantAttackUnlessPredicateEffect` records; run U the unblockable subject (`MakeCreatureUnblockableEffect` over a `PermanentSubject`).
+  Left: `CreaturesCantAttackControllerUnlessPredicateEffect` (whom a creature may attack, also floated: stays out),
+  `MakeAllCreaturesUnblockableEffect` (a rule not locked, CR 611.2c: stays out), `MustBlockTargetCreatureEffect` (stays out). Goad: run G folded the two set records;
   `GoadCreaturesUntilNextTurnEffect` (a rule that covers later creatures, Kardur's and Maximum Carnage's rulings) and the static
   `GoadEquippedCreatureEffect` stay out.
 - **Boost**: B1 and B2 done (`BoostEffect`; the mass records are `controlledBy` subjects). Stay out (more than the subject): the
@@ -1197,6 +1200,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run G (2026-11-26): the two goad-set records absorbed into `GoadTargetCreatureUntilNextTurnEffect.eachCreature` / `creaturesControlledBy` / `creaturesTargetPlayerControls` (10 card files by hand); their goads are a GOAD step under the CR 701.15d check
 - Step 10, run D (2026-11-26): `EachPlayerDrawsCardEffect` absorbed into `DrawCardEffect(n, eachPlayer())` / `DrawCardEffect.eachEvaluatedFor` (61 card files by script), 8 opponent-draw files onto `DrawCardEffect`; every amount fixed before the first draw (CR 608.2h), Baleful Mastery's chosen opponent, the AI's own-draw rule
 - Step 10, run PO (2026-11-26): the player-grant list onto `GrantStaticEffectToPlayerEffect.untilEndOfTurn` with the escape snapshot, the supertype, scavenge and perpetual-boost pairs absorbed (32 card files by hand and script); perpetual P/T on a graveyard card in layer 7c (CR 613.4c), Courageous Resolve's opponents can lose
+- Step 10, run U (2026-11-26): `MakeCreatureUnblockableEffect`'s five who flags become one `PermanentSubject` (67 card files by script); every duration a floating rule, so Ma Chao, Yuan Shao's Infantry and Sly Instigator stay unblockable after losing all abilities
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2857,6 +2861,47 @@ that isn't there. AGENTS.md names no deleted class.
 
 **For the next run.** U (the unblockable subject, `s10-rest` plan section 2). A follow-on for the subtype grant and choose-one needs a per-mode AI
 polarity rule first.
+
+### Step 10, run U (unblockable as a subject) (2026-11-26)
+
+Run U of the plan `s10-rest` (orchestrator's decision Q6: `MakeAllCreaturesUnblockableEffect` stays out). No record merged: the survivor
+`MakeCreatureUnblockableEffect` keeps its name; its five who flags (`selfTargeting`, `attachedPermanent`, `triggeringPermanent`,
+`targetAnyPermanent`, the opponents rider) became `(PermanentSubject subject, Duration duration, PermanentPredicate filter, boolean
+targetsPermanent, boolean opponentsCreaturesOnly)`, the handler one loop over `SubjectResolutionService.permanents`. Kept: `()` and
+`(filter)` (the target, 107 calls unchanged). New: `self([Duration])`, `of(subject[, Duration])`, `targetPermanent(filter)` (was
+`forTargetPermanent`), rider `byCreaturesYourOpponentsControl()`; the boolean constructors and the three `for…Permanent` factories are gone. A
+set subject (and a player-target set) is refused (CR 611.2c); a filter only with a target. Ledger: 1 survivor, `MakeAllCreaturesUnblockableEffect`
+unique. Ratchet unchanged at 2,876 / 2,261 (nothing deleted). No `CONVERSION_VERSION` bump.
+
+**Premises.** Held: about 10 call shapes (9 found), scriptable; the target spec is kept exactly (benign creature or permanent target with the
+filter; the self-targeting spec for source, attached and triggering, as before); `resolvesAgainstAttachedPermanent` for `attached()`; no card
+binds the effect to one of several target groups, so `Subjects.target()` (the effect's targets, else the flat list) reads what the old flat
+`getTargetIds()` loop read; illegal targets are masked centrally (CR 608.2b). Dropped with no user: the old "self falls back to the entry's
+target" and "any flat target list wins over the flag" branches (no card's entry has both; Martha Jones' and Snooping Page's tests pin it).
+Not in the plan: the non-end-of-turn durations granted an ability (layer 6), see below.
+
+**Cards.** 67 calls in 67 files by a scratch script (balanced parentheses, a shape table, loud failure on any other shape, the `Subjects`
+import, a leftover-name check; written, run, deleted): `self()` 58, `self(UNTIL_END_OF_COMBAT)` 2, `of(target(), UNTIL_YOUR_NEXT_TURN)` 1,
+`targetPermanent` 3, `of(attached())` 1, `of(triggering())` 1, `of(triggering()).byCreaturesYourOpponentsControl()` 1. Oracle text checked
+with `get_card` for all 67 (Search Elemental via MB2 535, Biolume Serpent via its text); all match the subject chosen.
+
+**Behaviour change.** "Can't be blocked this combat" (Ma Chao, Yuan Shao's Infantry) and "until your next turn, ... can't be blocked" (Sly
+Instigator) were a granted "can't be blocked" ability, which a later "loses all abilities" removed. Their Oracle text gives no ability: the
+effect is a rule about the creature (CR 611.2a, 613.11), as "this turn" already was, so every duration now floats `CantBeBlockedEffect` on the
+permanent. Failing first: `SlyInstigatorTest.unblockabilityOutlastsLosingAllAbilities`, `YuanShaosInfantryTest.unblockabilityOutlastsLosingAllAbilities`
+(Turn to Frog; both false on the old code). The log reads "can't be blocked this combat" / "can't be blocked" as before.
+
+**Pins** (old code and after; 17 classes, 173 tests): Sly Instigator, Yuan Shao's Infantry, Ma Chao, Martha Jones, Wings of Hubris, Jin Sakai,
+Rikku, Secret Tunnel, Open into Wonder, Runed Arch, Turtle Lair, Corsairs, Daughter of the Deep, Snooping Page, Kappa Cannoneer, Matterbending
+Mage, Chromium. New: `MakeCreatureUnblockableEffectTest` (the guards). **Tests changed:** none (two methods added). **Tests run** (one run, XML
+of this run): 391 classes plus the AI module, 543 result files, 5,209 tests, 0 failures (the record's cards and Tidal Terror, the 332 classes
+naming one, the `Unblockable|CantBeBlocked|Block|Evasion|Attack|Combat` classes, both ratchets, `CardEffectTargetingConsistencyTest`).
+
+**Seen, not changed** (defect queue): Rikku's "can't be blocked by creatures your opponents control" is still a granted ability (lost to "loses
+all abilities"); the block reader reads that restriction only as an ability. AGENTS.md names no changed class; `EFFECT_MERGE_PLAN.md` keeps one
+historical mention.
+
+**For the next run.** C1 (remove all counters, `s10-rest` plan section 2): an explicit "all" amount the three may-readers accept first.
 
 ## Prompt
 

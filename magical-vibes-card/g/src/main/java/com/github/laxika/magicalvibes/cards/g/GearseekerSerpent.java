@@ -23,7 +23,7 @@ public class GearseekerSerpent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{5}{U}: This creature can't be blocked this turn."
         ));
     }

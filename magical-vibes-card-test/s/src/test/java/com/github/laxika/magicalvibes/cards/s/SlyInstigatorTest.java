@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SlyInstigator.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SlyInstigator.class, GrizzlyBears.class, Forest.class, TurnToFrog.class})
 class SlyInstigatorTest extends BaseCardTest {
 
     @Test
@@ -70,6 +71,22 @@ class SlyInstigatorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentLand.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The creature stays unblockable after it loses all abilities: the effect is no ability")
+    void unblockabilityOutlastsLosingAllAbilities() {
+        addCreatureReady(player1, new SlyInstigator());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addBlueMana();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     private void addBlueMana() {

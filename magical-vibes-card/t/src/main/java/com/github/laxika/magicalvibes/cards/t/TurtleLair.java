@@ -38,7 +38,7 @@ public class TurtleLair extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(MakeCreatureUnblockableEffect.forTargetPermanent(NINJA_OR_TURTLE_PERMANENT)),
+                List.of(MakeCreatureUnblockableEffect.targetPermanent(NINJA_OR_TURTLE_PERMANENT)),
                 "{3}, {T}: Target Ninja or Turtle can't be blocked this turn.",
                 new PermanentPredicateTargetFilter(NINJA_OR_TURTLE_PERMANENT, "Target must be a Ninja or Turtle")
         ));

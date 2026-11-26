@@ -22,7 +22,7 @@ public class GatewaySneak extends Card {
                                 Triggers.LAND,
                                 new PermanentHasSubtypePredicate(CardSubtype.GATE))),
                         ObjectRelation.YOU_CONTROL),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
 
         // Whenever this creature deals combat damage to a player, draw a card.
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect());

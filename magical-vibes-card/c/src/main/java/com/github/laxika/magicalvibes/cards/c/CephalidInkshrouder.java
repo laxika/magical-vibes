@@ -21,7 +21,7 @@ public class CephalidInkshrouder extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new GrantKeywordEffect(Keyword.SHROUD, Subjects.source()),
-                        new MakeCreatureUnblockableEffect(true)),
+                        MakeCreatureUnblockableEffect.self()),
                 "Discard a card: This creature gains shroud until end of turn and can't be blocked this turn."
         ));
     }

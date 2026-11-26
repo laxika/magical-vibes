@@ -32,6 +32,6 @@ public class KappaCannoneer extends Card {
                         new TriggerCondition(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                        new MakeCreatureUnblockableEffect(true, false))))));
+                        MakeCreatureUnblockableEffect.self())))));
     }
 }

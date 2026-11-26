@@ -21,6 +21,6 @@ public class Sahagin extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(4)),
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
     }
 }

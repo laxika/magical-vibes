@@ -15,6 +15,6 @@ public class MerfolkCaveDiver extends Card {
         // and can't be blocked this turn.
         addTrigger(Triggers.creatureYouControlExplores(), SequenceEffect.of(
                 BoostEffect.self(1, 0),
-                new MakeCreatureUnblockableEffect(true)));
+                MakeCreatureUnblockableEffect.self()));
     }
 }

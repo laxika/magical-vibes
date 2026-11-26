@@ -25,7 +25,7 @@ public class PrismariApprentice extends Card {
         // Magecraft: Prismari Apprentice can't be blocked this turn. If that spell's mana value is
         // 5 or greater, put a +1/+1 counter on it.
         List<CardEffect> magecraft = List.of(
-                new MakeCreatureUnblockableEffect(true),
+                MakeCreatureUnblockableEffect.self(),
                 new ConditionalEffect(new EventValueAtLeast(5), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), magecraft.toArray(CardEffect[]::new));

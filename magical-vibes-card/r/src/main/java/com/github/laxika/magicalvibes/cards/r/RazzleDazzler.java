@@ -13,6 +13,6 @@ public class RazzleDazzler extends Card {
     public RazzleDazzler() {
         addTrigger(Triggers.youCastSpell().nthThisTurn(2),
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
     }
 }

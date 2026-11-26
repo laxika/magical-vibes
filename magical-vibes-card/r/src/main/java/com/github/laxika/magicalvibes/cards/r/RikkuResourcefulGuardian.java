@@ -20,7 +20,7 @@ public class RikkuResourcefulGuardian extends Card {
 
     public RikkuResourcefulGuardian() {
         addTrigger(Triggers.youPutCountersOnCreature(),
-                MakeCreatureUnblockableEffect.forTriggeringPermanentNotBlockableByOpponents());
+                MakeCreatureUnblockableEffect.of(Subjects.triggering()).byCreaturesYourOpponentsControl());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

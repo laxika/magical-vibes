@@ -23,7 +23,7 @@ public class DaringSaboteur extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{2}{U}: Daring Saboteur can't be blocked this turn."
         ));
 

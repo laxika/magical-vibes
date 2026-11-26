@@ -31,7 +31,7 @@ public class DimirKeyrune extends Card {
                         AnimatePermanentsEffect.withAnimatedColors(
                                 2, 2, List.of(CardSubtype.HORROR), Set.of(),
                                 Set.of(CardColor.BLUE, CardColor.BLACK)),
-                        new MakeCreatureUnblockableEffect(true)),
+                        MakeCreatureUnblockableEffect.self()),
                 "{U}{B}: This artifact becomes a 2/2 blue and black Horror artifact creature until end of turn and can't be blocked this turn."
         ));
     }

@@ -15,7 +15,7 @@ public class ClockworkDroid extends Card {
     public ClockworkDroid() {
         addStaticEffect(new ExertAsItAttacksEffect());
         addTrigger(Triggers.exertedAsItAttacks(), SequenceEffect.of(
-                                new MakeCreatureUnblockableEffect(true),
+                                MakeCreatureUnblockableEffect.self(),
                                 new ScryEffect(1)));
     }
 }

@@ -36,7 +36,7 @@ public class MarthaJones extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                                 ObjectRelation.YOU_CONTROL),
                         SequenceEffect.of(
-                                        new MakeCreatureUnblockableEffect(true),
+                                        MakeCreatureUnblockableEffect.self(),
                                         new MakeCreatureUnblockableEffect()
                                 ));
     }

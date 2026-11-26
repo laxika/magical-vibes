@@ -14,6 +14,6 @@ public class OtterPenguin extends Card {
         addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 SequenceEffect.of(
                         BoostEffect.self(1, 2),
-                        new MakeCreatureUnblockableEffect(true)));
+                        MakeCreatureUnblockableEffect.self()));
     }
 }

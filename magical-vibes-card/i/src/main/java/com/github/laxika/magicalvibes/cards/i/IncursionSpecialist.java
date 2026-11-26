@@ -14,6 +14,6 @@ public class IncursionSpecialist extends Card {
         // turn and can't be blocked this turn.
         addTrigger(Triggers.youCastSpell().nthThisTurn(2),
                 BoostEffect.self(2, 0),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
     }
 }

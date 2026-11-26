@@ -14,7 +14,7 @@ public class AshioksSkulker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{3}{U}: This creature can't be blocked this turn."
         ));
     }

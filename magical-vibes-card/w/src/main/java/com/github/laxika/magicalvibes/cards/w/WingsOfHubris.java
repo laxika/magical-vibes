@@ -24,7 +24,7 @@ public class WingsOfHubris extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        MakeCreatureUnblockableEffect.forAttachedPermanent(),
+                        MakeCreatureUnblockableEffect.of(Subjects.attached()),
                         SacrificeSelfAtEndStepEffect.forAttachedPermanent()),
                 "Sacrifice Wings of Hubris: Equipped creature can't be blocked this turn. Sacrifice it at the beginning of the next end step."
         ));

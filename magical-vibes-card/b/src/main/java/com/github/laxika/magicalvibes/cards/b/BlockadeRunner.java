@@ -14,7 +14,7 @@ public class BlockadeRunner extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{U}: This creature can't be blocked this turn."
         ));
     }

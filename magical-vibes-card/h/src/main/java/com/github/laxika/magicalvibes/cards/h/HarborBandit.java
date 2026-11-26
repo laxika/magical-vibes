@@ -26,7 +26,7 @@ public class HarborBandit extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{1}{U}: Harbor Bandit can't be blocked this turn."
         ));
     }

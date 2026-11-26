@@ -24,7 +24,7 @@ public class DevourerOfMemory extends Card {
                 ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE, SequenceEffect.of(
                 BoostEffect.self(1, 1),
-                new MakeCreatureUnblockableEffect(true)));
+                MakeCreatureUnblockableEffect.self()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}{B}",

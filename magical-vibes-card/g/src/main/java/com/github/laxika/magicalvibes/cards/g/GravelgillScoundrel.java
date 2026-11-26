@@ -14,7 +14,7 @@ public class GravelgillScoundrel extends Card {
     public GravelgillScoundrel() {
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
                 new TapMultiplePermanentsCost(1, new PermanentIsCreaturePredicate(), true),
-                new MakeCreatureUnblockableEffect(true))
+                MakeCreatureUnblockableEffect.self())
                 .withPrompt("Tap another untapped creature you control?"));
     }
 }

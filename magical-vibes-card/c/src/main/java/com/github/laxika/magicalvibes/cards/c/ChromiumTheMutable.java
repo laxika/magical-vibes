@@ -32,7 +32,7 @@ public class ChromiumTheMutable extends Card {
                         new SetBasePowerToughnessEffect(1, 1, Subjects.source()),
                         new LosesAllAbilitiesEffect(Subjects.source(), Duration.UNTIL_END_OF_TURN),
                         new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source()),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "Discard a card: Until end of turn, Chromium becomes a Human with base power and toughness 1/1, loses all abilities, and gains hexproof. It can't be blocked this turn."
         ));

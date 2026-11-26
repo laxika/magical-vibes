@@ -16,6 +16,6 @@ public class YuanShaosInfantry extends Card {
         // Whenever this creature attacks alone, this creature can't be blocked this combat.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new MakeCreatureUnblockableEffect(true, false, Duration.UNTIL_END_OF_COMBAT));
+                MakeCreatureUnblockableEffect.self(Duration.UNTIL_END_OF_COMBAT));
     }
 }

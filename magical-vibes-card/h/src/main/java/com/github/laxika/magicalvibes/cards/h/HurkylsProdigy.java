@@ -18,7 +18,7 @@ public class HurkylsProdigy extends Card {
         CreateTokenEffect powerstone = CreateTokenEffect.ofPowerstoneToken(new Fixed(1));
         addTrigger(Triggers.enters(ObjectRelation.THIS), powerstone);
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{2}", SequenceEffect.of(
-                        new MakeCreatureUnblockableEffect(true),
+                        MakeCreatureUnblockableEffect.self(),
                         new PerpetuallyBoostCardEffect(this, 2, 0)
                 )).withPrompt("Pay {2} to make Hurkyl's Prodigy unblockable this turn and perpetually give it +2/+0?"));
     }

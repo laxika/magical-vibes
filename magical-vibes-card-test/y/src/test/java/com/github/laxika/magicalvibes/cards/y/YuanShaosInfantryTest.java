@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
 import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({YuanShaosInfantry.class, ShuCavalry.class, ShuFootSoldiers.class, RelentlessAssault.class})
+@CardUsed({YuanShaosInfantry.class, ShuCavalry.class, ShuFootSoldiers.class, RelentlessAssault.class, TurnToFrog.class})
 class YuanShaosInfantryTest extends BaseCardTest {
 
     @Test
@@ -29,6 +31,23 @@ class YuanShaosInfantryTest extends BaseCardTest {
             declareAttackers(player1, List.of(0));
             resolveAllTriggers();
         });
+
+        assertThat(gqs.hasCantBeBlocked(gd, infantry)).isTrue();
+    }
+
+    @Test
+    @DisplayName("It stays unblockable this combat after it loses all abilities: the effect is no ability")
+    void unblockabilityOutlastsLosingAllAbilities() {
+        Permanent infantry = addCreatureReady(player1, new YuanShaosInfantry());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, infantry.getId());
+        harness.withAutoStop(gd.currentStep, () -> harness.passBothPriorities());
 
         assertThat(gqs.hasCantBeBlocked(gd, infantry)).isTrue();
     }

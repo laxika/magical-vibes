@@ -42,7 +42,7 @@ public class CreepingTarPit extends Card {
                         AnimatePermanentsEffect.withAnimatedColors(
                                 3, 2, List.of(CardSubtype.ELEMENTAL), Set.of(),
                                 Set.of(CardColor.BLUE, CardColor.BLACK)),
-                        new MakeCreatureUnblockableEffect(true)),
+                        MakeCreatureUnblockableEffect.self()),
                 "{1}{U}{B}: Until end of turn, this land becomes a 3/2 blue and black Elemental creature. It's still a land. It can't be blocked this turn."
         ));
     }

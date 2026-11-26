@@ -27,7 +27,7 @@ public class CorsairsOfUmbar extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(MakeCreatureUnblockableEffect.forTargetPermanent(
+                List.of(MakeCreatureUnblockableEffect.targetPermanent(
                         new PermanentHasAnySubtypePredicate(Set.of(
                                 CardSubtype.GOBLIN, CardSubtype.ORC, CardSubtype.PIRATE)))),
                 "{2}{U}: Target Goblin, Orc, or Pirate can't be blocked this turn.",

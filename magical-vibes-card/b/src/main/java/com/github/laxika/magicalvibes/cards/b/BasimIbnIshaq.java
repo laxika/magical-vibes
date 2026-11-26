@@ -21,7 +21,7 @@ public class BasimIbnIshaq extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 new DrawCardEffect(),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
 
         // Whenever Basim Ibn Ishaq deals combat damage to a player, put a +1/+1 counter on it.
         addTrigger(Triggers.dealsCombatDamageToPlayer(), PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));

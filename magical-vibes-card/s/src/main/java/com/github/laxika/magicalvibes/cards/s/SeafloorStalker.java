@@ -20,7 +20,7 @@ public class SeafloorStalker extends Card {
                 List.of(
                         new ReduceActivationCostEffect(new PartySize()),
                         BoostEffect.self(1, 0),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "{4}{U}: This creature gets +1/+0 until end of turn and can't be blocked this turn. "
                         + "This ability costs {1} less to activate for each creature in your party."

@@ -16,6 +16,6 @@ public class ElusiveSpellfist extends Card {
     public ElusiveSpellfist() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 BoostEffect.self(1, 0),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
     }
 }

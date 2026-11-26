@@ -19,7 +19,7 @@ public class TigerSharkAbyssalHunter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{U/B}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{4}{U/B}: Tiger Shark can't be blocked this turn."
         ));
     }

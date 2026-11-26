@@ -23,7 +23,7 @@ public class Spincrusher extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "Remove a +1/+1 counter from this creature: This creature can't be blocked this turn."
         ));

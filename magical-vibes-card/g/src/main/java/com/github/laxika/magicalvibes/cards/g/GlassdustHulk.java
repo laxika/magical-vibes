@@ -19,7 +19,7 @@ public class GlassdustHulk extends Card {
         // and can't be blocked this turn. Both effects are self-scoped (sourcePermanentId).
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
                 BoostEffect.self(1, 1),
-                new MakeCreatureUnblockableEffect(true)));
+                MakeCreatureUnblockableEffect.self()));
 
         // Cycling {W/U} ({W/U}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{W/U}");

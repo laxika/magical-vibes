@@ -20,7 +20,7 @@ public class SaprazzanBreaker extends Card {
                 List.of(new MillControllerThenIfMilledEffect(
                         1,
                         new CardTypePredicate(CardType.LAND),
-                        new MakeCreatureUnblockableEffect(true))),
+                        MakeCreatureUnblockableEffect.self())),
                 "{U}: Mill a card. If a land card was milled this way, this creature can't be blocked this turn."
         ));
     }

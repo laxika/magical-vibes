@@ -40,6 +40,6 @@ public class RapidAugmenter extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                        new MakeCreatureUnblockableEffect(true)));
+                        MakeCreatureUnblockableEffect.self()));
     }
 }

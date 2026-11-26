@@ -26,7 +26,7 @@ public class BloodmistInfiltrator extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )), Subjects.you()),
-                        new ConditionalEffect(HappenedThisWay.sacrificed(), new MakeCreatureUnblockableEffect(true))),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), MakeCreatureUnblockableEffect.self())),
                 "Sacrifice another creature?"
         ));
     }

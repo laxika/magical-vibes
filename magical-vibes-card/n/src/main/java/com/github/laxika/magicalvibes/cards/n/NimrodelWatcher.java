@@ -17,6 +17,6 @@ public class NimrodelWatcher extends Card {
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 SequenceEffect.of(
                         BoostEffect.self(1, 0),
-                        new MakeCreatureUnblockableEffect(true)));
+                        MakeCreatureUnblockableEffect.self()));
     }
 }

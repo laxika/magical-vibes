@@ -16,7 +16,7 @@ public class VectisAgents extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}{B}",
-                List.of(BoostEffect.self(-2, 0), new MakeCreatureUnblockableEffect(true)),
+                List.of(BoostEffect.self(-2, 0), MakeCreatureUnblockableEffect.self()),
                 "{U}{B}: Vectis Agents gets -2/-0 until end of turn and can't be blocked this turn."
         ));
     }

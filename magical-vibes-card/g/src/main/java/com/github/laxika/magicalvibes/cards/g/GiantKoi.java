@@ -19,7 +19,7 @@ public class GiantKoi extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new WaterbendCost(3), new MakeCreatureUnblockableEffect(true)),
+                List.of(new WaterbendCost(3), MakeCreatureUnblockableEffect.self()),
                 "Waterbend {3}: This creature can't be blocked this turn."
         ));
 

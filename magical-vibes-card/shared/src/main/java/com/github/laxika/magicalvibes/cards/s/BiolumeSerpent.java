@@ -21,7 +21,7 @@ public class BiolumeSerpent extends Card {
                 null,
                 List.of(
                         new SacrificeMultiplePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                        new MakeCreatureUnblockableEffect(true)
+                        MakeCreatureUnblockableEffect.self()
                 ),
                 "Sacrifice two Islands: This creature can't be blocked this turn."
         ));

@@ -23,7 +23,7 @@ public class Aetherling extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new MakeCreatureUnblockableEffect(true)),
+                List.of(MakeCreatureUnblockableEffect.self()),
                 "{U}: Aetherling can't be blocked this turn."
         ));
         addActivatedAbility(new ActivatedAbility(

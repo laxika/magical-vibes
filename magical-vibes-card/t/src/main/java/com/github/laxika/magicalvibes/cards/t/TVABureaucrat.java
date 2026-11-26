@@ -15,6 +15,6 @@ public class TVABureaucrat extends Card {
     public TVABureaucrat() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 BoostEffect.self(1, 0),
-                new MakeCreatureUnblockableEffect(true));
+                MakeCreatureUnblockableEffect.self());
     }
 }

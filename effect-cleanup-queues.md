@@ -1016,6 +1016,11 @@ entwine with two modes (P09).
 - `TheGrimCaptainsLockerTest.doesNotGrantEscapeToNonCreatureCards` asserts a Grizzly Bears in a graveyard that holds only a Shock
   and never tries to cast the Shock with escape, so it doesn't test what its name says. Test only. Step 10 run PO (seen, not
   changed). Sure of the assertion; not checked why it passes.
+- Rikku, Resourceful Guardian: "until end of turn, that creature can't be blocked by creatures your opponents control" floats
+  a granted `CantBeBlockedByCreaturesMatchingPredicateEffect` ability (`MakeCreatureUnblockableEffect.byCreaturesYourOpponentsControl()`),
+  so a later "loses all abilities" ends it, though the effect gives no ability (CR 611.2a, 613.11). Needs a block-legality read of
+  a floating blocker restriction on the attacker (`BlockLegalityService.buildAttackerFacts`, `CombatHelper`); run U moved only the
+  plain "can't be blocked" durations onto the floating rule. Step 10 run U (seen, not changed). Sure of the code and the rule.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 
