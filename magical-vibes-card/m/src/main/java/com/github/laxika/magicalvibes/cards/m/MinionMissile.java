@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -13,7 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class MinionMissile extends Card {
 
     public MinionMissile() {
-        addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentIsCreaturePredicate(), "a creature"));
+        addCastingCost(AnyOfCost.of(new DiscardCardTypeCost(null, null),
+                new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "a creature", false)));
         target(TargetFilters.creature())
                 .addSpellEffect(new DestroyTargetPermanentEffect())
                         .addSpellEffect(new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())));

@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FutureSight;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BitterTriumph.class, Forest.class, QuintoriusKand.class, ArmoredKincaller.class, Plains.class})
+@CardUsed({BitterTriumph.class, FutureSight.class, Forest.class, QuintoriusKand.class, ArmoredKincaller.class, Plains.class})
 class BitterTriumphTest extends BaseCardTest {
 
     @Test
@@ -31,6 +33,26 @@ class BitterTriumphTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Armored Kincaller");
+    }
+
+    @Test
+    @DisplayName("Cast from the top of the library with an empty hand, pays 3 life")
+    void castFromLibraryTopWithAnEmptyHandPaysLife() {
+        harness.addToBattlefield(player1, new FutureSight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
+        harness.setLibrary(player1, List.of(new BitterTriumph()));
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromLibraryTop(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
         harness.assertInGraveyard(player2, "Armored Kincaller");
     }
 

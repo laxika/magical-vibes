@@ -935,6 +935,20 @@ entwine with two modes (P09).
 - Decoy Gambit (`ReturnTargetCreaturesUnlessControllersDrawEffect`) still offers "have you draw a card" when its caster can't draw; whether an opponent may choose it then (CR 608.2d: an impossible option can't be chosen; CR 121.3 bars a player who can't draw from choosing to draw, but here another player makes the choice) is not settled by the rules or its rulings. Owner's question; step 10 run U6b. Sure the question is open.
 - Varchild's War-Riders and Wall of Shards pay their cumulative upkeep to `getOpponentId` (the first opponent); their rulings let each age counter's token or life go to any opponent, chosen separately. Multiplayer only; as before the run. Step 10 run U4d. Sure of the rulings and the code.
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Step 10 run U4d. Sure of the code.
+- Missing feature (owner): no client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`). A human
+  gets the default alternative (mana, else life) and the hand-cast client sends no discard choice for **any** additional discard
+  cost, so Bone Shards, Demand Answers, Minion Missile and Souls of the Lost can't be cast from the UI at all (CR 601.2b: the caster
+  announces the alternative). Needs a generic `CardView` list of alternatives and a picker routing to the discard, permanent and
+  graveyard pickers; `PlayCardRequest` already carries every field. Orchestrator's decision Q3 for step 10 run U7; sure.
+- The free-cast additional-cost chooser ("Choose how to pay the additional cost.") is asked after the targets, not as the spell is
+  announced (CR 601.2b, before 601.2c). It changes play for none of these cards. Orchestrator's decision Q6 for step 10 run U7; sure.
+- A spell played from a graveyard without paying its mana cost (`MayCastHandlerService.handlePlayFromGraveyardChoice`: Horde of
+  Notions and the other users) pays no additional cast cost: it refuses a discard-or-sacrifice one (Bone Shards' shape) and casts
+  Bitter Triumph, Final Payment and Dusk Mangler with theirs skipped (CR 601.2f, 601.2h). Kept as it was in step 10 run U7a
+  (seen, not changed). Sure of the code.
+- A library-top cast of Bitter Triumph with cards in hand is refused: the library-top request carries no discard choice, so only the
+  empty-hand life payment is accepted (CR 601.2b). Step 10 run U7a (seen, not changed; U7b takes the library-top request fields).
+  Sure of the code.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

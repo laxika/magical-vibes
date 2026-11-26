@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -3169,12 +3169,13 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Returns whether an either-or discard/sacrifice cost can be paid by discarding. The spell
-     * request must carry exactly one branch, so sacrifice selection defers to the discard choice
+     * Returns whether an "[A] or [B]" cost with a discard alternative can be paid by discarding. The spell
+     * request must carry exactly one alternative, so sacrifice selection defers to the discard choice
      * whenever the shared cost query finds an eligible card.
      */
     protected boolean hasAvailableDiscardAlternative(GameData gameData, Card card, CardEffect effect) {
-        if (!(effect instanceof DiscardCardOrSacrificePermanentCost)) {
+        if (!(effect instanceof AnyOfCost anyOf)
+                || anyOf.alternatives().stream().noneMatch(DiscardCardTypeCost.class::isInstance)) {
             return false;
         }
         List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(

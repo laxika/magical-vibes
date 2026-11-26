@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
@@ -382,11 +383,15 @@ public class SpellEvaluator {
 
     /**
      * The life a cost makes its payer pay: a {@link PayLifeCost}'s amount evaluated against the payer and the source,
-     * else the cost's fixed {@link CostEffect#lifePaid} facet.
+     * the life alternative of an "[A] or [B]" cost, else the cost's fixed {@link CostEffect#lifePaid} facet.
      */
     public int lifePaidForCost(GameData gameData, CostEffect cost, UUID payerId, Permanent source) {
         if (cost instanceof PayLifeCost payLifeCost) {
             return amountEvaluationService.evaluateCost(gameData, payLifeCost.amount(), payerId, source, 0);
+        }
+        if (cost instanceof AnyOfCost anyOf) {
+            return anyOf.alternatives().stream().filter(PayLifeCost.class::isInstance)
+                    .mapToInt(alternative -> lifePaidForCost(gameData, alternative, payerId, source)).max().orElse(0);
         }
         return cost.lifePaid(gameData.getLife(payerId));
     }

@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffec
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
@@ -56,8 +55,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -1983,9 +1983,10 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("DiscardCardOrPayLifeCost — true with enough life or another hand card")
+        @DisplayName("Discard a card or pay 3 life — true with enough life or another hand card")
         void discardCardOrPayLifeCost() {
-            Card spell = spellWith(new DiscardCardOrPayLifeCost(3));
+            Card spell = spellWith(com.github.laxika.magicalvibes.model.effect.AnyOfCost.of(
+                    new DiscardCardTypeCost(null, null), new PayLifeCost(3)));
             gd.playerHands.get(player1Id).add(spell);
 
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
@@ -1998,9 +1999,10 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("SacrificeCreatureOrDiscardCardOrPayLifeCost — true for any of its three options")
+        @DisplayName("Sacrifice a creature, discard a card, or pay 4 life — true for any of its three options")
         void sacrificeCreatureOrDiscardCardOrPayLifeCost() {
-            Card spell = spellWith(new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
+            Card spell = spellWith(com.github.laxika.magicalvibes.model.effect.AnyOfCost.of(new SacrificeCreatureCost(),
+                    new DiscardCardTypeCost(null, null), new PayLifeCost(4)));
             gd.playerHands.get(player1Id).add(spell);
             gd.playerLifeTotals.put(player1Id, 3);
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();

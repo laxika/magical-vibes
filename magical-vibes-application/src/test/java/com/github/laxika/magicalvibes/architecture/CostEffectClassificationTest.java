@@ -41,7 +41,6 @@ class CostEffectClassificationTest {
      */
     private static final Set<String> RESOLUTION_ONLY_COST_TYPES = Set.of(
             "AllOfCost",
-            "AnyOfCost",
             "DamageFromSourceCost",
             "ExileCardsCost",
             "ExileGraveyardCost",
@@ -146,7 +145,6 @@ class CostEffectClassificationTest {
             "DiscardCardTypeCost",
             "DiscardRandomCardCost",
             "DiscardCardOrPayManaCost",
-            "DiscardCardOrPayLifeCost",
             "DiscardHandCost",
             "DiscardXCardsCost",
             "TieredManaCost",

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -1418,7 +1419,9 @@ public class MayCastHandlerService {
         // cost even when the mana cost is not paid (CR 601.2f), and it must be paid (CR 601.2h). This path can't take that
         // payment, so the card stays where it is rather than being cast with the cost skipped.
         if (cardToPlay.getCastingCosts().stream()
-                .anyMatch(effect -> effect instanceof DiscardCardOrSacrificePermanentCost
+                .anyMatch(effect -> effect instanceof AnyOfCost anyOf && anyOf.alternatives().stream()
+                        .allMatch(alternative -> alternative instanceof DiscardCardTypeCost
+                                || alternative instanceof SacrificePermanentCost)
                         || effect instanceof DiscardCardTypeCost)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                     " can't be cast without paying its additional cost."));

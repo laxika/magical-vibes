@@ -123,7 +123,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -694,7 +693,10 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         card.setManaCost("{1}{R}");
         card.setPower(2);
         card.setToughness(2);
-        card.addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact"));
+        card.addCastingCost(com.github.laxika.magicalvibes.model.effect.AnyOfCost.of(
+                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null),
+                new com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost(
+                        new PermanentIsArtifactPredicate(), "an artifact", false)));
         return card;
     }
 

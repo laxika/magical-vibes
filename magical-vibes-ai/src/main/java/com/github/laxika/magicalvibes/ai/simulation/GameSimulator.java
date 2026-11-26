@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -1418,7 +1418,8 @@ public class GameSimulator {
                 continue;
             }
             if (effect instanceof CostEffect cost) {
-                if (effect instanceof DiscardCardOrSacrificePermanentCost
+                if (effect instanceof AnyOfCost anyOf
+                        && anyOf.alternatives().stream().anyMatch(DiscardCardTypeCost.class::isInstance)
                         && !castingCostService.validDiscardCostIndices(gd, playerId, card).isEmpty()) {
                     continue;
                 }

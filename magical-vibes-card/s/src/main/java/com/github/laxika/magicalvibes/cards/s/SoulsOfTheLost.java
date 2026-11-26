@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -16,7 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class SoulsOfTheLost extends Card {
 
     public SoulsOfTheLost() {
-        addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentTruePredicate(), "a permanent"));
+        addCastingCost(AnyOfCost.of(new DiscardCardTypeCost(null, null),
+                new SacrificePermanentCost(new PermanentTruePredicate(), "a permanent", false)));
         CardsInGraveyard permanentCards =
                 new CardsInGraveyard(new CardIsPermanentPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(

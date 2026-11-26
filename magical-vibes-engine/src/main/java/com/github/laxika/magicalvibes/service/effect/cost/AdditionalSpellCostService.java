@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -24,8 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellAdditionalCountersCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
@@ -42,9 +42,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.LandDropCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
@@ -56,7 +56,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
@@ -89,8 +88,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -122,7 +123,7 @@ public class AdditionalSpellCostService {
     public static final Set<Class<? extends CardEffect>> HANDLED_SPELL_COST_TYPES = Set.of(
             SacrificeAllMatchingPermanentsCost.class,
             SacrificeCreatureCost.class,
-            SacrificeCreatureOrDiscardCardOrPayLifeCost.class,
+            AnyOfCost.class,
             CasualtyCost.class,
             ForageOrPayManaCost.class,
             SacrificePermanentOrPayManaCost.class,
@@ -144,7 +145,6 @@ public class AdditionalSpellCostService {
             PutCountersOnControlledCreatureOrPayManaCost.class,
             PayLifeCost.class,
             PayLifeOrPayManaCost.class,
-            PayLifeOrSacrificePermanentCost.class,
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
             ExileAnyNumberOfCardsFromHandCost.class,
@@ -156,8 +156,6 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost.class,
             DiscardRandomCardCost.class,
             DiscardCardOrPayManaCost.class,
-            DiscardCardOrPayLifeCost.class,
-            DiscardCardOrSacrificePermanentCost.class,
             DiscardHandCost.class,
             DiscardXCardsCost.class,
             RepeatableAdditionalManaCost.class,
@@ -245,16 +243,19 @@ public class AdditionalSpellCostService {
      * The additional cast costs found on one spell, in canonical payment order. Extracted once
      * per cast so extraction, validation and payment can never disagree about what the spell
      * costs. {@code SpellCastingService.payAdditionalCosts} must consume every field.
+     * <p>
+     * {@code anyOfCost} is an "[A] or [B]" additional cost whose alternative is not chosen yet;
+     * {@link AdditionalSpellCostService#withChosenAlternative} swaps the chosen alternative into its own slot before the
+     * costs are validated or paid. {@code extractedCosts} are the cost effects this extraction removed, in the spell's
+     * order, so the extraction can be made again with the chosen alternative.
      */
     public record ExtractedCosts(
             SacrificeAllMatchingPermanentsCost sacrificeAllCost,
             SacrificeCreatureCost sacrificeCreatureCost,
-            SacrificeCreatureOrDiscardCardOrPayLifeCost sacrificeCreatureOrDiscardCardOrPayLifeCost,
             CasualtyCost casualtyCost,
             SacrificePermanentOrPayManaCost sacrificePermanentOrPayManaCost,
             TapPermanentOrPayManaCost tapPermanentOrPayManaCost,
             SacrificePermanentCost sacrificePermanentCost,
-            DiscardCardOrSacrificePermanentCost discardCardOrSacrificePermanentCost,
             ExileCreatureCost exileCreatureCost,
             SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
             SacrificeFractionRoundedUpCost sacrificeFractionRoundedUpCost,
@@ -282,7 +283,6 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost discardCost,
             DiscardRandomCardCost discardRandomCost,
             DiscardCardOrPayManaCost discardCardOrPayManaCost,
-            DiscardCardOrPayLifeCost discardCardOrPayLifeCost,
             boolean discardHand,
             DiscardXCardsCost discardXCardsCost,
             RepeatableAdditionalManaCost repeatableManaCost,
@@ -295,12 +295,17 @@ public class AdditionalSpellCostService {
             ChooseCreatureOrRevealCreatureCardCost chooseCreatureOrRevealCreatureCardCost,
             ChooseCreatureTypeCost chooseCreatureTypeCost,
             TieredManaCost tieredManaCost,
-            PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost,
             SpreeAdditionalManaCost spreeAdditionalManaCost,
             WaterbendCost waterbendCost,
             ForageOrPayManaCost forageOrPayManaCost,
-            boolean landDropCost
+            boolean landDropCost,
+            AnyOfCost anyOfCost,
+            List<CardEffect> extractedCosts
     ) {
+        public ExtractedCosts {
+            extractedCosts = List.copyOf(extractedCosts);
+        }
+
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
             return hasNonEscalateCost() || hasEscalate();
@@ -309,7 +314,7 @@ public class AdditionalSpellCostService {
         /** True when the spell has an additional cost that is not charged per extra mode. */
         public boolean hasNonEscalateCost() {
             return sacrificeAllCost != null || sacrificeCreatureCost != null
-                    || sacrificeCreatureOrDiscardCardOrPayLifeCost != null || casualtyCost != null
+                    || casualtyCost != null
                     || sacrificePermanentCost != null || exileCreatureCost != null
                     || sacrificeMultiplePermanentsCost != null
                     || sacrificeFractionRoundedUpCost != null
@@ -322,8 +327,6 @@ public class AdditionalSpellCostService {
                     || returnPermanentToHand != null
                     || returnCreatureToHand || putCounterCost != null || putCountersOrPayManaCost != null
                     || payLifeCost != null || payLifeOrPayManaCost != null
-                    || payLifeOrSacrificePermanentCost != null
-                    || discardCardOrSacrificePermanentCost != null
                     || exileAnyNumberOfCardsFromHandCost != null
                     || exileAnyNumberOfCardsFromGraveyardCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null
@@ -331,7 +334,6 @@ public class AdditionalSpellCostService {
                     || collectEvidenceCost != null || exileNCardsCost != null
                     || exileNCardsOrPayManaCost != null
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
-                    || discardCardOrPayLifeCost != null
                     || discardHand || discardXCardsCost != null
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
@@ -340,7 +342,7 @@ public class AdditionalSpellCostService {
                     || chooseCreatureOrRevealCreatureCardCost != null
                     || tieredManaCost != null
                     || spreeAdditionalManaCost != null || waterbendCost != null
-                    || forageOrPayManaCost != null || landDropCost;
+                    || forageOrPayManaCost != null || landDropCost || anyOfCost != null;
         }
 
         public boolean sacrificeCreature() {
@@ -481,17 +483,14 @@ public class AdditionalSpellCostService {
      * stripped list is what goes onto the stack; costs are paid at cast time, not resolved.
      */
     public ExtractedCosts extractAndRemove(List<CardEffect> effects) {
+        List<CardEffect> before = new ArrayList<>(effects);
         boolean landDropCost = effects.removeIf(LandDropCost.class::isInstance);
         SacrificeAllMatchingPermanentsCost sacAllCost = removeFirst(effects, SacrificeAllMatchingPermanentsCost.class);
         SacrificeCreatureCost sacCreature = removeFirst(effects, SacrificeCreatureCost.class);
-        SacrificeCreatureOrDiscardCardOrPayLifeCost sacCreatureOrDiscardOrPayLife =
-                removeFirst(effects, SacrificeCreatureOrDiscardCardOrPayLifeCost.class);
         CasualtyCost casualtyCost = removeFirst(effects, CasualtyCost.class);
         SacrificePermanentOrPayManaCost sacOrPay = removeFirst(effects, SacrificePermanentOrPayManaCost.class);
         TapPermanentOrPayManaCost tapOrPay = removeFirst(effects, TapPermanentOrPayManaCost.class);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
-        DiscardCardOrSacrificePermanentCost discardOrSacrifice =
-                removeFirst(effects, DiscardCardOrSacrificePermanentCost.class);
         ExileCreatureCost exileCreatureCost = removeFirst(effects, ExileCreatureCost.class);
         SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
         SacrificeFractionRoundedUpCost fractionRoundedUpCost =
@@ -525,8 +524,6 @@ public class AdditionalSpellCostService {
                 removeFirst(effects, ExileAnyNumberOfCardsFromHandCost.class);
         ExileAnyNumberOfCardsFromGraveyardCost exileAnyNumberOfCardsFromGraveyardCost =
                 removeFirst(effects, ExileAnyNumberOfCardsFromGraveyardCost.class);
-        PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost =
-                removeFirst(effects, PayLifeOrSacrificePermanentCost.class);
         ExileCardFromGraveyardCost exileGraveyardCost = removeFirst(effects, ExileCardFromGraveyardCost.class);
         ExileXCardsFromGraveyardCost exileXCardsCost = removeFirst(effects, ExileXCardsFromGraveyardCost.class);
         PutOpponentOwnedExiledCardIntoGraveyardCost putOpponentOwnedExiledCardIntoGraveyardCost =
@@ -538,7 +535,6 @@ public class AdditionalSpellCostService {
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
         DiscardRandomCardCost discardRandomCost = removeFirst(effects, DiscardRandomCardCost.class);
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
-        DiscardCardOrPayLifeCost discardOrPayLife = removeFirst(effects, DiscardCardOrPayLifeCost.class);
         boolean discardHand = effects.removeIf(DiscardHandCost.class::isInstance);
         DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
         List<RepeatableAdditionalManaCost> repeatableManaCosts = effects.stream()
@@ -565,9 +561,13 @@ public class AdditionalSpellCostService {
         SpreeAdditionalManaCost spreeAdditionalManaCost = removeFirst(effects, SpreeAdditionalManaCost.class);
         WaterbendCost waterbendCost = removeFirst(effects, WaterbendCost.class);
         ForageOrPayManaCost forageOrPayManaCost = removeFirst(effects, ForageOrPayManaCost.class);
+        AnyOfCost anyOfCost = removeFirst(effects, AnyOfCost.class);
+        Set<CardEffect> remaining = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
+        remaining.addAll(effects);
+        List<CardEffect> extracted = before.stream().filter(effect -> !remaining.contains(effect)).toList();
         return new ExtractedCosts(sacAllCost, sacCreature,
-                sacCreatureOrDiscardOrPayLife, casualtyCost, sacOrPay, tapOrPay,
-                permCost, discardOrSacrifice, exileCreatureCost, multiPermCost,
+                casualtyCost, sacOrPay, tapOrPay,
+                permCost, exileCreatureCost, multiPermCost,
                 fractionRoundedUpCost, escalateCost,
                 sacAnyNumberCost, tapAnyNumberCost, tapCreaturesForManaCost, tapMultipleCost, teamworkCost, returnAnyNumberCost,
                 returnPermanentToHand, returnCreature,
@@ -576,12 +576,12 @@ public class AdditionalSpellCostService {
                 exileAnyNumberOfCardsFromGraveyardCost,
                 exileGraveyardCost, exileXCardsCost, putOpponentOwnedExiledCardIntoGraveyardCost,
                 collectEvidenceCost, exileNCardsCost, exileNCardsOrPayManaCost, discardCost, discardRandomCost,
-                discardOrPay, discardOrPayLife,
+                discardOrPay,
                 discardHand, discardXCards, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
                 delveCost, revealCardCost, chooseCreatureOrRevealCreatureCardCost, chooseCreatureTypeCost, tieredManaCost,
-                payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
-                forageOrPayManaCost, landDropCost);
+                spreeAdditionalManaCost, waterbendCost,
+                forageOrPayManaCost, landDropCost, anyOfCost, extracted);
     }
 
     /** Adds additional costs granted by permanents before extracting the spell's cast costs. */
@@ -690,6 +690,73 @@ public class AdditionalSpellCostService {
         return extractAndRemove(gameData, playerId, card, new ArrayList<>(card.getCastingCostsAndSpellEffects()));
     }
 
+    /**
+     * The costs with the chosen alternative of their "[A] or [B]" cost in that alternative's own slot, so it is
+     * validated and paid like the same cost standing alone (CR 601.2b, 601.2h); the costs unchanged when they have no
+     * such cost. Every reader of a cast's costs and its selection calls this, so they agree on the alternative.
+     */
+    public ExtractedCosts withChosenAlternative(ExtractedCosts costs, CostSelection selection, Card card) {
+        if (costs.anyOfCost() == null) {
+            return costs;
+        }
+        CostEffect chosen = chosenAlternative(costs.anyOfCost(), selection, card);
+        List<CardEffect> chosenCosts = new ArrayList<>(costs.extractedCosts().size());
+        for (CardEffect cost : costs.extractedCosts()) {
+            chosenCosts.add(cost == costs.anyOfCost() ? chosen : cost);
+        }
+        return extractAndRemove(chosenCosts);
+    }
+
+    /**
+     * The alternative of an "[A] or [B]" additional cost the caster announced (CR 601.2b), read from the cast request:
+     * the alternative whose selection field is filled in (a sacrificed or countered permanent, a discarded card,
+     * exiled graveyard cards, tapped permanents, {@code payLifeForAdditionalCost}). With none filled in, the mana
+     * alternative is paid, else the life alternative. A request naming two alternatives, or none when the cost has
+     * neither a mana nor a life alternative, is refused.
+     */
+    public CostEffect chosenAlternative(AnyOfCost cost, CostSelection selection, Card card) {
+        List<CostEffect> selected = cost.alternatives().stream()
+                .filter(alternative -> selectsAlternative(alternative, selection)).toList();
+        String mustPay = "Must " + String.join(" or ",
+                cost.alternatives().stream().map(AdditionalSpellCostService::alternativeWords).toList())
+                + " to cast " + card.getName();
+        if (selected.size() > 1) {
+            throw new IllegalStateException(mustPay + ": choose only one additional cost payment");
+        }
+        if (selected.size() == 1) {
+            return selected.getFirst();
+        }
+        return cost.alternatives().stream().filter(PayManaCost.class::isInstance).findFirst()
+                .or(() -> cost.alternatives().stream().filter(PayLifeCost.class::isInstance).findFirst())
+                .orElseThrow(() -> new IllegalStateException(mustPay));
+    }
+
+    private static boolean selectsAlternative(CostEffect alternative, CostSelection selection) {
+        return switch (alternative) {
+            case SacrificePermanentCost ignored -> selection.sacrificePermanentId() != null;
+            case SacrificeCreatureCost ignored -> selection.sacrificePermanentId() != null;
+            case PutCounterOnControlledCreatureCost ignored -> selection.sacrificePermanentId() != null;
+            case DiscardCardTypeCost ignored -> selection.discardHandCardIndex() != null;
+            case ExileNCardsFromGraveyardCost ignored -> selection.exileGraveyardCardIndices() != null
+                    && !selection.exileGraveyardCardIndices().isEmpty();
+            case TapMultiplePermanentsCost ignored -> selection.sacrificePermanentIds() != null
+                    && !selection.sacrificePermanentIds().isEmpty();
+            case PayLifeCost ignored -> Boolean.TRUE.equals(selection.payLifeForAdditionalCost());
+            default -> false;
+        };
+    }
+
+    /** The words "Must [alternative] or [alternative]" names an alternative of an "[A] or [B]" cost with. */
+    public static String alternativeWords(CostEffect alternative) {
+        return switch (alternative) {
+            case SacrificePermanentCost cost -> "sacrifice " + cost.description();
+            case SacrificeCreatureCost ignored -> "sacrifice a creature";
+            case DiscardCardTypeCost ignored -> "discard a card";
+            case PayLifeCost cost -> "pay " + cost.fixedAmount() + " life";
+            default -> alternative.getClass().getSimpleName();
+        };
+    }
+
     private <T extends CardEffect> T removeFirst(List<CardEffect> effects, Class<T> type) {
         T cost = effects.stream().filter(type::isInstance).map(type::cast).findFirst().orElse(null);
         if (cost != null) {
@@ -735,301 +802,295 @@ public class AdditionalSpellCostService {
         // Battlefield static effects may prohibit life payments or particular permanent sacrifices.
         boolean lifePaymentAllowed = gameQueryService.canPayLifeForCosts(gameData, playerId);
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
-            switch (effect) {
-                case LandDropCost ignored -> {
-                    if (!canPayLandDropCost(gameData, playerId)) return false;
-                }
-                case SacrificeCreatureCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p)
-                            && gameQueryService.canChooseToSacrificeForCosts(gameData, p))) return false;
-                }
-                case SacrificeCreatureOrDiscardCardOrPayLifeCost cost -> {
-                    boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
-                            && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
-                    boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
-                            new DiscardCardTypeCost(null, null)).isEmpty();
-                    boolean canPayLife = lifePaymentAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
-                    if (!hasCreature && !hasDiscard && !canPayLife) return false;
-                }
-                // Casualty is optional, so it never makes a spell uncastable by itself.
-                case CasualtyCost ignored -> { }
-                case SacrificePermanentOrPayManaCost cost -> {
-                    boolean hasPermanent = battlefield.stream().anyMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
-                    if (!hasPermanent && !canAffordSacrificeOrPayManaOption(gameData, playerId, card, cost)) {
-                        return false;
-                    }
-                }
-                case TapPermanentOrPayManaCost cost -> {
-                    boolean hasPermanent = battlefield.stream().anyMatch(p ->
-                            !p.isTapped()
-                                    && predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
-                    if (!hasPermanent && !canAffordTapPermanentOrPayManaOption(gameData, playerId, card, cost)) {
-                        return false;
-                    }
-                }
-                case ForageOrPayManaCost cost -> {
-                    if (!canPayForageOrPayManaCost(gameData, playerId, card, cost)) {
-                        return false;
-                    }
-                }
-                case ExileCreatureCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
-                }
-                case DiscardCardOrPayManaCost cost -> {
-                    boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
-                            new DiscardCardTypeCost(null, null)).isEmpty();
-                    boolean canPayMana = withoutManaCost
-                            ? new ManaCost(cost.manaCost()).canPay(gameData.playerManaPools.get(playerId))
-                            : canAffordDiscardOrPayManaOption(gameData, playerId, card, cost);
-                    if (!hasDiscard && !canPayMana) {
-                        return false;
-                    }
-                }
-                case DiscardCardOrPayLifeCost cost -> {
-                    boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
-                            new DiscardCardTypeCost(null, null)).isEmpty();
-                    boolean canPayLife = lifePaymentAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
-                    if (!hasDiscard && !canPayLife) {
-                        return false;
-                    }
-                }
-                case DiscardCardOrSacrificePermanentCost cost -> {
-                    boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
-                            new DiscardCardTypeCost(null, null)).isEmpty();
-                    boolean hasPermanent = battlefield.stream().anyMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
-                    if (!hasDiscard && !hasPermanent) {
-                        return false;
-                    }
-                }
-                case ReturnCreatureToHandCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
-                }
-                case ReturnPermanentToHandCost cost -> {
-                    if (battlefield.stream().noneMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) {
-                        return false;
-                    }
-                }
-                case PutCounterOnControlledCreatureCost cost -> {
-                    if (!cost.optional()
-                            && battlefield.stream().noneMatch(p -> isChoosableCreature(gameData, p))) {
-                        return false;
-                    }
-                }
-                case PutCountersOnControlledCreatureOrPayManaCost cost -> {
-                    boolean hasCreature = battlefield.stream().anyMatch(p -> isChoosableCreature(gameData, p));
-                    if (!hasCreature && !canAffordPutCountersOrPayManaOption(gameData, playerId, card, cost)) {
-                        return false;
-                    }
-                }
-                case SacrificePermanentCost cost -> {
-                    if (cost.optional()) {
-                        continue;
-                    }
-                    if (battlefield.stream().noneMatch(p ->
-                            gameQueryService.canChooseToSacrificeForCosts(gameData, p)
-                                    && predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) return false;
-                }
-                case SacrificeMultiplePermanentsCost cost -> {
-                    long matching = battlefield.stream()
-                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                            .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
-                            .count();
-                    if (matching < cost.count()) return false;
-                }
-                case SacrificeFractionRoundedUpCost cost -> {
-                    long matching = battlefield.stream()
-                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                            .count();
-                    int required = (int) ((matching + cost.divisor() - 1) / cost.divisor());
-                    long sacrificable = battlefield.stream()
-                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                            .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
-                            .count();
-                    if (sacrificable < required) return false;
-                }
-                case TapMultiplePermanentsCost cost -> {
-                    int required = fixedTapCount(cost);
-                    long matching = battlefield.stream()
-                            .filter(p -> !p.isTapped())
-                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                            .count();
-                    if (matching < required) return false;
-                }
-                // Teamwork is optional, so declining it is always legal.
-                case TeamworkCost ignored -> { }
-                case WaterbendCost cost -> {
-                    if (cost.optional()) {
-                        continue;
-                    }
-                    int amount = cost.effectiveAmount(0);
-                    long matching = battlefield.stream()
-                            .filter(p -> !p.isTapped())
-                            .filter(p -> gameQueryService.isArtifact(gameData, p)
-                                    || gameQueryService.isCreature(gameData, p))
-                            .count();
-                    int availableMana = gameData.playerManaPools.getOrDefault(playerId, new ManaPool()).getTotalAllMana();
-                    if (availableMana + Math.min(amount, (int) matching) < amount) return false;
-                }
-                case ExileNCardsFromGraveyardCost cost -> {
-                    if (!includeFlashbackOnlyCosts && cost.onlyFromGraveyard()) {
-                        continue;
-                    }
-                    long matchingCount = graveyard.stream()
-                            .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
-                                    && (cost.predicate() == null
-                                    || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null)))
-                            .count();
-                    if (matchingCount < cost.count()) return false;
-                }
-                case ExileNCardsFromGraveyardOrPayManaCost cost -> {
-                    long matchingCount = graveyard.stream()
-                            .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
-                                    && (cost.predicate() == null
-                                    || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null)))
-                            .count();
-                    if (matchingCount < cost.count()
-                            && !canAffordExileNCardsOrPayManaOption(gameData, playerId, card, cost)) {
-                        return false;
-                    }
-                }
-                case ExileCardFromGraveyardCost cost -> {
-                    if (graveyard.stream().noneMatch(c ->
-                            (cost.requiredType() == null || c.hasType(cost.requiredType())
-                                    || (cost.alternateType() != null && c.hasType(cost.alternateType())))
-                                    && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
-                }
-                case PutOpponentOwnedExiledCardIntoGraveyardCost ignored -> {
-                    if (gameData.exiledCards.stream().noneMatch(exiled ->
-                            gameData.playerIds.contains(exiled.ownerId())
-                                    && !playerId.equals(exiled.ownerId()))) return false;
-                }
-                case ExileXCardsFromGraveyardCost cost -> {
-                    if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
-                }
-                case ExileAnyNumberOfCardsFromHandCost ignored -> { }
-                case ExileAnyNumberOfCardsFromGraveyardCost ignored -> { }
-                case CollectEvidenceCost cost -> {
-                    if (!cost.optional() && graveyard.stream()
-                            .filter(cardInGraveyard -> matchesCollectEvidenceCard(cardInGraveyard, cost))
-                            .mapToInt(cardInGraveyard -> collectEvidenceValue(cardInGraveyard, cost)).sum()
-                            < cost.minimumManaValue()) return false;
-                }
-                case DiscardCardTypeCost cost -> {
-                    if (discardCostIndices(gameData, playerId, card, cost).size() < cost.count()) return false;
-                }
-                case RevealCardFromHandCost cost -> {
-                    if (!cost.optional() && revealCardIndices(gameData, playerId, card, cost).isEmpty()) return false;
-                }
-                case ChooseCreatureOrRevealCreatureCardCost ignored -> {
-                    boolean hasCreature = battlefield.stream().anyMatch(
-                            permanent -> gameQueryService.isCreature(gameData, permanent));
-                    boolean hasCreatureCard = hand.stream()
-                            .filter(candidate -> !candidate.getId().equals(card.getId()))
-                            .anyMatch(candidate -> candidate.hasType(CardType.CREATURE));
-                    if (!hasCreature && !hasCreatureCard) return false;
-                }
-                case DiscardRandomCardCost ignored -> {
-                    if (hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) return false;
-                }
-                // Choosing X consumes no resource and is always satisfiable within its declared range.
-                case ChooseXValueCost ignored -> { }
-                case ChooseCreatureTypeCost ignored -> { }
-                // A life payment is only legal while the life total covers it (CR 119.4); "pay X life" is always
-                // payable, as X may be announced as 0.
-                case PayLifeCost cost -> {
-                    int amount = spellLifePayment(gameData, playerId, cost, 0);
-                    if (amount > 0 && !lifePaymentAllowed) return false;
-                    if (gameData.getLife(playerId) < amount) return false;
-                }
-                case PayLifeOrSacrificePermanentCost cost -> {
-                    int life = gameData.getLife(playerId);
-                    boolean canPayLife = lifePaymentAllowed && life >= cost.lifeAmount();
-                    boolean canSacrifice = battlefield.stream()
-                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, p, cost.filter()))
-                            .anyMatch(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p));
-                    if (!canPayLife && !canSacrifice) return false;
-                }
-                case PayLifeOrPayManaCost cost -> {
-                    int life = gameData.getLife(playerId);
-                    boolean canPayLife = lifePaymentAllowed && life >= cost.lifeAmount();
-                    boolean canPayMana = canAffordManaOption(gameData, playerId, card, cost.manaCost());
-                    if (!canPayLife && !canPayMana) return false;
-                }
-                 // Escalate is payable with a single mode (zero extra payments), so it never blocks
-                 // playability by itself — concrete mode+payment selections are validated at cast.
-                 case EscalateCost ignored -> { }
-                 // Entwine is paid as a fixed mana suffix only when all modes are selected.
-                 case TieredManaCost ignored -> { }
-                case SacrificeAllMatchingPermanentsCost cost -> {
-                    if (battlefield.stream().anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, p, cost.filter())
-                            && !gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
-                }
-                // Discarding your entire hand is legal with an empty hand.
-                case DiscardHandCost ignored -> { }
-                // "Discard X cards" is payable with X = 0, so it never blocks a cast on its own;
-                // the announced X is checked against the hand by validateDiscardXCardsCost.
-                case DiscardXCardsCost ignored -> { }
-                // Tapping / returning "any number of" permanents is payable with zero, so it never
-                // blocks a cast.
-                case SacrificeAnyNumberOfPermanentsCost ignored -> { }
-                case TapAnyNumberOfPermanentsCost ignored -> { }
-                case TapCreaturesForManaCost ignored -> { }
-                case ReturnAnyNumberOfPermanentsToHandCost ignored -> { }
-                case BeholdAndExileCost cost -> {
-                    boolean hasPermanent = battlefield.stream().anyMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, p, new PermanentHasSubtypePredicate(cost.subtype())));
-                    boolean hasHandCard = hand.stream().anyMatch(c ->
-                            !c.getId().equals(card.getId())
-                                    && predicateEvaluationService.matchesCardPredicate(
-                                    c, new CardSubtypePredicate(cost.subtype()), c.getId()));
-                    if (!hasPermanent && !hasHandCard) return false;
-                }
-                // Fixed BeholdCost is a flashback-only additional cost. Optional chosen-type
-                // BeholdCost is payable by declining the optional cost.
-                case BeholdCost cost -> {
-                    if (cost.alternativeManaCost() != null) {
-                        boolean canBehold = battlefield.stream().anyMatch(permanent ->
-                                predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
-                                        new PermanentHasSubtypePredicate(cost.subtype())))
-                                || hand.stream().anyMatch(candidate -> !candidate.getId().equals(card.getId())
-                                && predicateEvaluationService.matchesCardPredicate(candidate,
-                                        new CardSubtypePredicate(cost.subtype()), candidate.getId()));
-                        if (!canBehold && !canAffordManaOption(gameData, playerId, card,
-                                cost.alternativeManaCost())) return false;
-                    }
-                    if (includeFlashbackOnlyCosts && !cost.optional() && !cost.chosenCreatureType()) {
-                        long matchingPermanents = battlefield.stream()
-                                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
-                                        gameData, p, new PermanentHasSubtypePredicate(cost.subtype())))
-                                .count();
-                        long matchingHandCards = hand.stream()
-                                .filter(c -> !c.getId().equals(card.getId()))
-                                .filter(c -> predicateEvaluationService.matchesCardPredicate(
-                                        c, new CardSubtypePredicate(cost.subtype()), c.getId()))
-                                .count();
-                        if (matchingPermanents + matchingHandCards < cost.count()) return false;
-                    }
-                }
-                case ChooseCreatureOrWarpedCardCost ignored -> {
-                    boolean hasCreature = battlefield.stream()
-                            .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent));
-                    boolean hasWarpedCreatureCard = gameData.exiledCards.stream()
-                            .filter(entry -> playerId.equals(entry.ownerId()) && !entry.faceDown())
-                            .map(ExiledCardEntry::card)
-                            .anyMatch(exiledCard -> exiledCard.hasType(CardType.CREATURE)
-                                    && isWarpedExileEntry(gameData, exiledCard.getId()));
-                    if (!hasCreature && !hasWarpedCreatureCard) return false;
-                }
-                default -> { }
+            if (!costSatisfiable(gameData, playerId, card, effect, includeFlashbackOnlyCosts, withoutManaCost,
+                    battlefield, graveyard, hand, lifePaymentAllowed)) {
+                return false;
             }
+        }
+        return true;
+    }
+
+    /**
+     * True when the caster could pay one additional cast cost of {@code card} right now. An "[A] or [B]" cost can be
+     * paid while any alternative can (CR 118.3).
+     */
+    public boolean alternativeSatisfiable(GameData gameData, UUID playerId, Card card, CostEffect alternative,
+                                          boolean withoutManaCost) {
+        return costSatisfiable(gameData, playerId, card, alternative, false, withoutManaCost,
+                gameData.playerBattlefields.getOrDefault(playerId, List.of()),
+                gameData.playerGraveyards.getOrDefault(playerId, List.of()),
+                gameData.playerHands.getOrDefault(playerId, List.of()),
+                gameQueryService.canPayLifeForCosts(gameData, playerId));
+    }
+
+    private boolean costSatisfiable(GameData gameData, UUID playerId, Card card, CardEffect effect,
+                                    boolean includeFlashbackOnlyCosts, boolean withoutManaCost,
+                                    List<Permanent> battlefield, List<Card> graveyard, List<Card> hand,
+                                    boolean lifePaymentAllowed) {
+        switch (effect) {
+            case AnyOfCost cost -> {
+                return cost.alternatives().stream().anyMatch(alternative -> costSatisfiable(gameData, playerId,
+                        card, alternative, includeFlashbackOnlyCosts, withoutManaCost, battlefield, graveyard,
+                        hand, lifePaymentAllowed));
+            }
+            case LandDropCost ignored -> {
+                if (!canPayLandDropCost(gameData, playerId)) return false;
+            }
+            case SacrificeCreatureCost ignored -> {
+                if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p)
+                        && gameQueryService.canChooseToSacrificeForCosts(gameData, p))) return false;
+            }
+            // Casualty is optional, so it never makes a spell uncastable by itself.
+            case CasualtyCost ignored -> { }
+            case SacrificePermanentOrPayManaCost cost -> {
+                boolean hasPermanent = battlefield.stream().anyMatch(p ->
+                        predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
+                                && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
+                if (!hasPermanent && !canAffordSacrificeOrPayManaOption(gameData, playerId, card, cost)) {
+                    return false;
+                }
+            }
+            case TapPermanentOrPayManaCost cost -> {
+                boolean hasPermanent = battlefield.stream().anyMatch(p ->
+                        !p.isTapped()
+                                && predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+                if (!hasPermanent && !canAffordTapPermanentOrPayManaOption(gameData, playerId, card, cost)) {
+                    return false;
+                }
+            }
+            case ForageOrPayManaCost cost -> {
+                if (!canPayForageOrPayManaCost(gameData, playerId, card, cost)) {
+                    return false;
+                }
+            }
+            case ExileCreatureCost ignored -> {
+                if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
+            }
+            case DiscardCardOrPayManaCost cost -> {
+                boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
+                        new DiscardCardTypeCost(null, null)).isEmpty();
+                boolean canPayMana = withoutManaCost
+                        ? new ManaCost(cost.manaCost()).canPay(gameData.playerManaPools.get(playerId))
+                        : canAffordDiscardOrPayManaOption(gameData, playerId, card, cost);
+                if (!hasDiscard && !canPayMana) {
+                    return false;
+                }
+            }
+            case ReturnCreatureToHandCost ignored -> {
+                if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
+            }
+            case ReturnPermanentToHandCost cost -> {
+                if (battlefield.stream().noneMatch(p ->
+                        predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) {
+                    return false;
+                }
+            }
+            case PutCounterOnControlledCreatureCost cost -> {
+                if (!cost.optional()
+                        && battlefield.stream().noneMatch(p -> isChoosableCreature(gameData, p))) {
+                    return false;
+                }
+            }
+            case PutCountersOnControlledCreatureOrPayManaCost cost -> {
+                boolean hasCreature = battlefield.stream().anyMatch(p -> isChoosableCreature(gameData, p));
+                if (!hasCreature && !canAffordPutCountersOrPayManaOption(gameData, playerId, card, cost)) {
+                    return false;
+                }
+            }
+            case SacrificePermanentCost cost -> {
+                if (cost.optional()) {
+                    return true;
+                }
+                if (battlefield.stream().noneMatch(p ->
+                        gameQueryService.canChooseToSacrificeForCosts(gameData, p)
+                                && predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) return false;
+            }
+            case SacrificeMultiplePermanentsCost cost -> {
+                long matching = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
+                        .count();
+                if (matching < cost.count()) return false;
+            }
+            case SacrificeFractionRoundedUpCost cost -> {
+                long matching = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .count();
+                int required = (int) ((matching + cost.divisor() - 1) / cost.divisor());
+                long sacrificable = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
+                        .count();
+                if (sacrificable < required) return false;
+            }
+            case TapMultiplePermanentsCost cost -> {
+                int required = fixedTapCount(cost);
+                long matching = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .count();
+                if (matching < required) return false;
+            }
+            // Teamwork is optional, so declining it is always legal.
+            case TeamworkCost ignored -> { }
+            case WaterbendCost cost -> {
+                if (cost.optional()) {
+                    return true;
+                }
+                int amount = cost.effectiveAmount(0);
+                long matching = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isArtifact(gameData, p)
+                                || gameQueryService.isCreature(gameData, p))
+                        .count();
+                int availableMana = gameData.playerManaPools.getOrDefault(playerId, new ManaPool()).getTotalAllMana();
+                if (availableMana + Math.min(amount, (int) matching) < amount) return false;
+            }
+            case ExileNCardsFromGraveyardCost cost -> {
+                if (!includeFlashbackOnlyCosts && cost.onlyFromGraveyard()) {
+                    return true;
+                }
+                long matchingCount = graveyard.stream()
+                        .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
+                                && (cost.predicate() == null
+                                || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null)))
+                        .count();
+                if (matchingCount < cost.count()) return false;
+            }
+            case ExileNCardsFromGraveyardOrPayManaCost cost -> {
+                long matchingCount = graveyard.stream()
+                        .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
+                                && (cost.predicate() == null
+                                || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null)))
+                        .count();
+                if (matchingCount < cost.count()
+                        && !canAffordExileNCardsOrPayManaOption(gameData, playerId, card, cost)) {
+                    return false;
+                }
+            }
+            case ExileCardFromGraveyardCost cost -> {
+                if (graveyard.stream().noneMatch(c ->
+                        (cost.requiredType() == null || c.hasType(cost.requiredType())
+                                || (cost.alternateType() != null && c.hasType(cost.alternateType())))
+                                && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
+            }
+            case PutOpponentOwnedExiledCardIntoGraveyardCost ignored -> {
+                if (gameData.exiledCards.stream().noneMatch(exiled ->
+                        gameData.playerIds.contains(exiled.ownerId())
+                                && !playerId.equals(exiled.ownerId()))) return false;
+            }
+            case ExileXCardsFromGraveyardCost cost -> {
+                if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
+            }
+            case ExileAnyNumberOfCardsFromHandCost ignored -> { }
+            case ExileAnyNumberOfCardsFromGraveyardCost ignored -> { }
+            case CollectEvidenceCost cost -> {
+                if (!cost.optional() && graveyard.stream()
+                        .filter(cardInGraveyard -> matchesCollectEvidenceCard(cardInGraveyard, cost))
+                        .mapToInt(cardInGraveyard -> collectEvidenceValue(cardInGraveyard, cost)).sum()
+                        < cost.minimumManaValue()) return false;
+            }
+            case DiscardCardTypeCost cost -> {
+                if (discardCostIndices(gameData, playerId, card, cost).size() < cost.count()) return false;
+            }
+            case RevealCardFromHandCost cost -> {
+                if (!cost.optional() && revealCardIndices(gameData, playerId, card, cost).isEmpty()) return false;
+            }
+            case ChooseCreatureOrRevealCreatureCardCost ignored -> {
+                boolean hasCreature = battlefield.stream().anyMatch(
+                        permanent -> gameQueryService.isCreature(gameData, permanent));
+                boolean hasCreatureCard = hand.stream()
+                        .filter(candidate -> !candidate.getId().equals(card.getId()))
+                        .anyMatch(candidate -> candidate.hasType(CardType.CREATURE));
+                if (!hasCreature && !hasCreatureCard) return false;
+            }
+            case DiscardRandomCardCost ignored -> {
+                if (hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) return false;
+            }
+            // Choosing X consumes no resource and is always satisfiable within its declared range.
+            case ChooseXValueCost ignored -> { }
+            case ChooseCreatureTypeCost ignored -> { }
+            // A life payment is only legal while the life total covers it (CR 119.4); "pay X life" is always
+            // payable, as X may be announced as 0.
+            case PayLifeCost cost -> {
+                int amount = spellLifePayment(gameData, playerId, cost, 0);
+                if (amount > 0 && !lifePaymentAllowed) return false;
+                if (gameData.getLife(playerId) < amount) return false;
+            }
+            case PayLifeOrPayManaCost cost -> {
+                int life = gameData.getLife(playerId);
+                boolean canPayLife = lifePaymentAllowed && life >= cost.lifeAmount();
+                boolean canPayMana = canAffordManaOption(gameData, playerId, card, cost.manaCost());
+                if (!canPayLife && !canPayMana) return false;
+            }
+             // Escalate is payable with a single mode (zero extra payments), so it never blocks
+             // playability by itself — concrete mode+payment selections are validated at cast.
+             case EscalateCost ignored -> { }
+             // Entwine is paid as a fixed mana suffix only when all modes are selected.
+             case TieredManaCost ignored -> { }
+            case SacrificeAllMatchingPermanentsCost cost -> {
+                if (battlefield.stream().anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, p, cost.filter())
+                        && !gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
+            }
+            // Discarding your entire hand is legal with an empty hand.
+            case DiscardHandCost ignored -> { }
+            // "Discard X cards" is payable with X = 0, so it never blocks a cast on its own;
+            // the announced X is checked against the hand by validateDiscardXCardsCost.
+            case DiscardXCardsCost ignored -> { }
+            // Tapping / returning "any number of" permanents is payable with zero, so it never
+            // blocks a cast.
+            case SacrificeAnyNumberOfPermanentsCost ignored -> { }
+            case TapAnyNumberOfPermanentsCost ignored -> { }
+            case TapCreaturesForManaCost ignored -> { }
+            case ReturnAnyNumberOfPermanentsToHandCost ignored -> { }
+            case BeholdAndExileCost cost -> {
+                boolean hasPermanent = battlefield.stream().anyMatch(p ->
+                        predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, p, new PermanentHasSubtypePredicate(cost.subtype())));
+                boolean hasHandCard = hand.stream().anyMatch(c ->
+                        !c.getId().equals(card.getId())
+                                && predicateEvaluationService.matchesCardPredicate(
+                                c, new CardSubtypePredicate(cost.subtype()), c.getId()));
+                if (!hasPermanent && !hasHandCard) return false;
+            }
+            // Fixed BeholdCost is a flashback-only additional cost. Optional chosen-type
+            // BeholdCost is payable by declining the optional cost.
+            case BeholdCost cost -> {
+                if (cost.alternativeManaCost() != null) {
+                    boolean canBehold = battlefield.stream().anyMatch(permanent ->
+                            predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
+                                    new PermanentHasSubtypePredicate(cost.subtype())))
+                            || hand.stream().anyMatch(candidate -> !candidate.getId().equals(card.getId())
+                            && predicateEvaluationService.matchesCardPredicate(candidate,
+                                    new CardSubtypePredicate(cost.subtype()), candidate.getId()));
+                    if (!canBehold && !canAffordManaOption(gameData, playerId, card,
+                            cost.alternativeManaCost())) return false;
+                }
+                if (includeFlashbackOnlyCosts && !cost.optional() && !cost.chosenCreatureType()) {
+                    long matchingPermanents = battlefield.stream()
+                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, p, new PermanentHasSubtypePredicate(cost.subtype())))
+                            .count();
+                    long matchingHandCards = hand.stream()
+                            .filter(c -> !c.getId().equals(card.getId()))
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                                    c, new CardSubtypePredicate(cost.subtype()), c.getId()))
+                            .count();
+                    if (matchingPermanents + matchingHandCards < cost.count()) return false;
+                }
+            }
+            case ChooseCreatureOrWarpedCardCost ignored -> {
+                boolean hasCreature = battlefield.stream()
+                        .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent));
+                boolean hasWarpedCreatureCard = gameData.exiledCards.stream()
+                        .filter(entry -> playerId.equals(entry.ownerId()) && !entry.faceDown())
+                        .map(ExiledCardEntry::card)
+                        .anyMatch(exiledCard -> exiledCard.hasType(CardType.CREATURE)
+                                && isWarpedExileEntry(gameData, exiledCard.getId()));
+                if (!hasCreature && !hasWarpedCreatureCard) return false;
+            }
+            default -> { }
         }
         return true;
     }
@@ -1038,7 +1099,8 @@ public class AdditionalSpellCostService {
      * Hand indices (as the caller/UI sees them, with the spell still in hand) whose card can pay
      * the spell's "discard a card" additional cast cost (plain discard, or the discard option of
      * discard-or-pay-mana). Returns {@code null} when the card has no such cost, an empty list when
-     * the cost exists but is unpayable via discard. Any card other than the spell itself that
+     * the cost exists but is unpayable via discard (the discard alternative of an "[A] or [B]" cost included). Any card
+     * other than the spell itself that
      * matches the cost's predicate qualifies (CR 601.2b — the spell is on the stack when costs are
      * paid, so it can never be its own discard).
      */
@@ -1050,14 +1112,11 @@ public class AdditionalSpellCostService {
         if (costs.discardCardOrPayManaCost() != null) {
             return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
         }
-        if (costs.discardCardOrPayLifeCost() != null) {
-            return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
-        }
-        if (costs.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null) {
-            return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
-        }
-        if (costs.discardCardOrSacrificePermanentCost() != null) {
-            return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
+        DiscardCardTypeCost discardAlternative = costs.anyOfCost() == null ? null
+                : costs.anyOfCost().alternatives().stream().filter(DiscardCardTypeCost.class::isInstance)
+                        .map(DiscardCardTypeCost.class::cast).findFirst().orElse(null);
+        if (discardAlternative != null) {
+            return discardCostIndices(gameData, playerId, card, discardAlternative);
         }
         if (costs.revealCardCost() != null) {
             return revealCardIndices(gameData, playerId, card, costs.revealCardCost());
@@ -1148,8 +1207,9 @@ public class AdditionalSpellCostService {
      * evidence threshold locked in when the spell's targets were chosen.
      */
     public void validateAll(GameData gameData, Player player, Card card,
-                            ExtractedCosts costs, CostSelection selection, Integer announcedXValue,
+                            ExtractedCosts extractedCosts, CostSelection selection, Integer announcedXValue,
                             boolean waterbendPaid, Integer resolvedCollectEvidenceMinimumManaValue) {
+        ExtractedCosts costs = withChosenAlternative(extractedCosts, selection, card);
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
         if (costs.landDropCost()) {
             validateLandDropCost(gameData, player, card);
@@ -1165,24 +1225,6 @@ public class AdditionalSpellCostService {
             validateSpellLifeCost(gameData, player, card, costs.payLifeCost(),
                     announcedXValue == null ? 0 : announcedXValue);
         }
-        if (costs.payLifeOrSacrificePermanentCost() != null) {
-            PayLifeOrSacrificePermanentCost cost = costs.payLifeOrSacrificePermanentCost();
-            if (selection.sacrificePermanentId() != null) {
-                Permanent permanent = validateSingleSacrificeCost(gameData, player, card,
-                        selection.sacrificePermanentId(), "a creature or enchantment",
-                        p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
-                if (gameQueryService.isCreature(gameData, permanent)) {
-                    validateCanSacrificeCreatureForCost(gameData, card);
-                }
-            } else {
-                validateCanPayLifeForCost(gameData, player.getId(), card);
-                int life = gameData.getLife(player.getId());
-                if (life < cost.lifeAmount()) {
-                    throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
-                            + " life for " + card.getName());
-                }
-            }
-        }
         if (costs.payLifeOrPayManaCost() != null) {
             PayLifeOrPayManaCost cost = costs.payLifeOrPayManaCost();
             if (Boolean.TRUE.equals(selection.payLifeForAdditionalCost())) {
@@ -1192,33 +1234,10 @@ public class AdditionalSpellCostService {
                     Boolean.TRUE.equals(selection.payLifeForAdditionalCost()),
                     gameData.playerManaPools.get(player.getId()));
         }
-        if (costs.discardCardOrSacrificePermanentCost() != null) {
-            DiscardCardOrSacrificePermanentCost cost = costs.discardCardOrSacrificePermanentCost();
-            if ((selection.discardHandCardIndex() != null)
-                    == (selection.sacrificePermanentId() != null)) {
-                throw new IllegalStateException("Must discard a card or sacrifice "
-                        + cost.description() + " to cast " + card.getName());
-            }
-            if (selection.discardHandCardIndex() != null) {
-                validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
-                        selection.discardHandCardIndex(), selection.spellCardIndex());
-            } else {
-                Permanent selected = validateSingleSacrificeCost(gameData, player, card,
-                        selection.sacrificePermanentId(), cost.description(),
-                        p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
-                if (gameQueryService.isCreature(gameData, selected)) {
-                    validateCanSacrificeCreatureForCost(gameData, card);
-                }
-            }
-        }
         if (costs.sacrificeCreature()) {
             validateCanSacrificeCreatureForCost(gameData, card);
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     "a creature", p -> gameQueryService.isCreature(gameData, p));
-        }
-        if (costs.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null) {
-            validateSacrificeCreatureOrDiscardCardOrPayLifeCost(gameData, player, card,
-                    costs.sacrificeCreatureOrDiscardCardOrPayLifeCost(), selection);
         }
         validateCasualtyCost(gameData, player, card, costs.casualtyCost(), selection.sacrificePermanentId(),
                 announcedXValue);
@@ -1257,20 +1276,6 @@ public class AdditionalSpellCostService {
                 throw new IllegalStateException("Must discard a card or pay "
                         + costs.discardCardOrPayManaCost().manaCost()
                         + " to cast " + card.getName());
-            }
-        }
-        if (costs.discardCardOrPayLifeCost() != null) {
-            if (selection.discardHandCardIndex() != null) {
-                validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
-                        selection.discardHandCardIndex(), selection.spellCardIndex());
-            } else {
-                validateCanPayLifeForCost(gameData, player.getId(), card);
-                int life = gameData.getLife(player.getId());
-                if (life < costs.discardCardOrPayLifeCost().lifeAmount()) {
-                    throw new IllegalStateException("Not enough life to pay "
-                            + costs.discardCardOrPayLifeCost().lifeAmount()
-                            + " for " + card.getName());
-                }
             }
         }
         if (costs.revealCardCost() != null) {
@@ -1690,34 +1695,6 @@ public class AdditionalSpellCostService {
     private void validateCanSacrificeCreatureForCost(GameData gameData, Card card) {
         if (!gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             throw new IllegalStateException("Players can't sacrifice creatures to cast " + card.getName());
-        }
-    }
-
-    /** Validates the selected branch of a sacrifice, discard, or life-payment cost. */
-    public void validateSacrificeCreatureOrDiscardCardOrPayLifeCost(
-            GameData gameData, Player player, Card card,
-            SacrificeCreatureOrDiscardCardOrPayLifeCost cost,
-            AdditionalSpellCostService.CostSelection selection) {
-        if (selection.sacrificePermanentId() != null && selection.discardHandCardIndex() != null) {
-            throw new IllegalStateException("Must choose only one additional cost payment for "
-                    + card.getName());
-        }
-        if (selection.sacrificePermanentId() != null) {
-            validateCanSacrificeCreatureForCost(gameData, card);
-            validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
-                    "a creature", p -> gameQueryService.isCreature(gameData, p));
-            return;
-        }
-        if (selection.discardHandCardIndex() != null) {
-            validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
-                    selection.discardHandCardIndex(), selection.spellCardIndex());
-            return;
-        }
-        validateCanPayLifeForCost(gameData, player.getId(), card);
-        int life = gameData.getLife(player.getId());
-        if (life < cost.lifeAmount()) {
-            throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
-                    + " for " + card.getName());
         }
     }
 

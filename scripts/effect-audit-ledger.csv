@@ -6925,3 +6925,8 @@ PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect,blocked-other,10,"step
 GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect,blocked-other,10,"step 10 run U6b: left: no subject or predicate for 'creatures you control blocking that creature' over a set; one card (Tidal Flats)"
 ReturnTargetCreaturesUnlessControllersDrawEffect,blocked-other,10,"step 10 run U6b: left: objects are targets, one draw per payer who chose it, all draws before the returns (its ruling; SourceControllerDrawsCost paid together draws once, Development's), and whether an opponent may choose 'you draw' when the caster can't draw isn't settled (CR 608.2d; CR 121.3 speaks of the drawer's own choice; its rulings): reported"
 EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect,blocked-other,10,"step 10 run U6b: left: the object is chosen per player (ties) and the ransom is that creature's mana cost: a ransom read from the object, one card (Tariff)"
+DiscardCardOrSacrificePermanentCost,absorbed,10,"step 10 run U7a: into AnyOfCost"
+DiscardCardOrPayLifeCost,absorbed,10,"step 10 run U7a: into AnyOfCost"
+PayLifeOrSacrificePermanentCost,absorbed,10,"step 10 run U7a: into AnyOfCost"
+SacrificeCreatureOrDiscardCardOrPayLifeCost,absorbed,10,"step 10 run U7a: into AnyOfCost"
+AnyOfCost,survivor,10,"step 10 run U7a: also an additional cast cost (CR 601.2b), chosen by AdditionalSpellCostService.chosenAlternative"

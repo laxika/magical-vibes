@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.b.BitterTriumph;
 import com.github.laxika.magicalvibes.cards.b.BoneShards;
 import com.github.laxika.magicalvibes.cards.b.BorrowedGrace;
 import com.github.laxika.magicalvibes.cards.c.CollectiveBrutality;
 import com.github.laxika.magicalvibes.cards.c.CollectiveEffort;
+import com.github.laxika.magicalvibes.cards.f.FinalPayment;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -32,13 +34,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
         CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class,
-        InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class})
+        InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class,
+        FinalPayment.class, BitterTriumph.class})
 class HazoretsUndyingFuryTest extends BaseCardTest {
 
     @Nested
     @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
             CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Shock.class,
-            InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class})
+            InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class,
+        FinalPayment.class, BitterTriumph.class})
     @DisplayName("Shuffle, exile the top four, may cast spells with mana value 5 or less")
     class ExileAndCast {
 
@@ -309,6 +313,66 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
 
             assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
             assertThat(gd.stack).anyMatch(e -> e.getCard() == missile);
+        }
+
+        @Test
+        @DisplayName("A free Final Payment asks whether to pay 5 life or sacrifice, then pays the sacrifice chosen")
+        void freeFinalPaymentOffersBothAlternatives() {
+            FinalPayment payment = new FinalPayment();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            cast(List.of(payment));
+
+            harness.handleMultipleCardsChosen(player1, List.of(payment.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            PendingInteraction.ColorChoice choice =
+                    (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+            assertThat(choice.options()).containsExactly("Pay 5 life", "Sacrifice a creature or enchantment");
+            harness.handleListChoice(player1, "Sacrifice a creature or enchantment");
+            harness.handlePermanentChosen(player1, fodder.getId());
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
+            harness.assertLife(player1, 20);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == payment);
+            harness.passBothPriorities();
+            assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        }
+
+        @Test
+        @DisplayName("A free Final Payment with nothing to sacrifice pays 5 life unasked")
+        void freeFinalPaymentPaysLifeWithNothingToSacrifice() {
+            FinalPayment payment = new FinalPayment();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            cast(List.of(payment));
+
+            harness.handleMultipleCardsChosen(player1, List.of(payment.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            harness.assertLife(player1, 15);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == payment);
+        }
+
+        @Test
+        @DisplayName("A free Bitter Triumph asks whether to discard or pay 3 life, then pays the life chosen")
+        void freeBitterTriumphPaysTheChosenLife() {
+            BitterTriumph triumph = new BitterTriumph();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            cast(List.of(triumph));
+            Forest kept = new Forest();
+            harness.setHand(player1, List.of(kept));
+
+            harness.handleMultipleCardsChosen(player1, List.of(triumph.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            PendingInteraction.ColorChoice choice =
+                    (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+            assertThat(choice.options()).containsExactly("Discard a card", "Pay 3 life");
+            harness.handleListChoice(player1, "Pay 3 life");
+
+            harness.assertLife(player1, 17);
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == triumph);
         }
 
         @Test

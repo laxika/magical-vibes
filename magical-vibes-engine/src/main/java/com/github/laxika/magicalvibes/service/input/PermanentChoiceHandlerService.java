@@ -444,7 +444,6 @@ public class PermanentChoiceHandlerService {
         return !costs.isEmpty() && costs.stream().allMatch(cost ->
                 cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost
                         || cost instanceof SacrificePermanentCost
-                        || cost instanceof com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost
                         || cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost);
     }
 

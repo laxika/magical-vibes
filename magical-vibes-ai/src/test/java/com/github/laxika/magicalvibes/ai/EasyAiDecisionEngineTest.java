@@ -117,7 +117,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -1062,6 +1061,45 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId())).contains(artifact);
         }
 
+        @Test
+        @DisplayName("Easy AI pays only one alternative of a sacrifice-discard-or-life additional cost")
+        void castsDuskManglerPayingOneAlternative() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 2);
+            testHarness.addMana(aiTestPlayer, ManaColor.COLORLESS, 5);
+            Permanent creature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            com.github.laxika.magicalvibes.cards.d.DuskMangler mangler =
+                    new com.github.laxika.magicalvibes.cards.d.DuskMangler();
+            GrizzlyBears discardedCard = new GrizzlyBears();
+            testHarness.setHand(aiTestPlayer, List.of(mangler, discardedCard));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).anyMatch(entry -> entry.getCard() == mangler);
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId())).containsExactly(discardedCard);
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId())).contains(creature);
+            assertThat(testGd.getLife(aiTestPlayer.getId())).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("Easy AI sacrifices for Final Payment rather than paying 5 life")
+        void castsFinalPaymentBySacrificing() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.WHITE, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 1);
+            Permanent fodder = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            com.github.laxika.magicalvibes.cards.f.FinalPayment payment =
+                    new com.github.laxika.magicalvibes.cards.f.FinalPayment();
+            testHarness.setHand(aiTestPlayer, List.of(payment));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).anyMatch(entry -> entry.getCard() == payment);
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId())).doesNotContain(fodder);
+            assertThat(testGd.getLife(aiTestPlayer.getId())).isEqualTo(20);
+        }
+
         private Card eitherOrCostCreature() {
             Card card = new Card();
             card.setName("Either-Or Cost Creature");
@@ -1069,7 +1107,10 @@ class EasyAiDecisionEngineTest {
             card.setManaCost("{1}{R}");
             card.setPower(2);
             card.setToughness(2);
-            card.addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact"));
+            card.addCastingCost(com.github.laxika.magicalvibes.model.effect.AnyOfCost.of(
+                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null),
+                new com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost(
+                        new PermanentIsArtifactPredicate(), "an artifact", false)));
             return card;
         }
 
