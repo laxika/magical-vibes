@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HarborSerpent extends Card {
 
     public HarborSerpent() {
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new AnyPlayerControlsPermanentCount(5, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "five or more Islands on the battlefield"
         ));

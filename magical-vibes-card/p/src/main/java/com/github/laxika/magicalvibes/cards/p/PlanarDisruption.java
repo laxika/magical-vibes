@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +25,6 @@ public class PlanarDisruption extends Card {
                 "Target must be an artifact, creature, or planeswalker"
         ))
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
     }
 }

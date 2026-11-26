@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (S, G, D, P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files; run X: the excess redirect as `DealDamageEffect`'s `excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()`, 5 card files, the two records gone; run S: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest record into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, the controller-scoped attack lock into `CreaturesCantAttackUnlessPredicateEffect.youControl`, 145 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (G, D, P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -731,7 +731,8 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `controlledBy`), `CantAttackThisTurnEffect`, `CantBlockThisTurnEffect(subject, Duration)`, `CantAttackOrBlockAloneEffect`,
   `CantAttackCardOwnerEffect`, `CreaturesCantAttackControllerUntilNextTurnEffect`, `OnlyMatchingCreaturesCanAttackThisCombatEffect`,
   `MakeTargetAttackingCreatureBlockedEffect` (CR 509.1h), `CanBlockCreaturesWithShadowEffect`, `CantBeBlockedIfDefenderControlsMatchingPermanentEffect.whileDefendingPlayer`
-  (CR 508.5, 509.1b), `AttachedPermanentRestrictionEffect`, `ExploreEffect` (CR 701.44d).
+  (CR 508.5, 509.1b), `AttachedPermanentRestrictionEffect`, `ExploreEffect` (CR 701.44d). Run S: `CantAttackOrBlockUnlessEffect.attack` / `block` /
+  `attackOrBlock(condition, text)` (CR 508.1c, 509.1b), `CreaturesCantAttackUnlessPredicateEffect.youControl(exemption)`, `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()` (CR 602.5).
 - Types, colours, names: `SetCardTypesEffect`, `LoseAllLandTypesEffect`, `GrantSubtypeEffect.chosenSubtype` (CR 305.7),
   `GrantBasicLandTypeToTargetEffect.of` (CR 611.2c), `LosesAllAbilitiesEffect.exceptManaAbilities`, `AnimateNoncreatureArtifactsEffect`
   (CR 613.6), `SetBasePowerToughnessEffect` / `SetBasePowerToughnessToAmountEffect` (keep negative toughness: `SourceToughness(true)`,
@@ -943,8 +944,9 @@ there and updates them when it lands.
   May's 11 (owner's decisions; six went in U3b1, `MayPayLandDropEffect` and Overencumbered's in U3b2),
   `TargetPermanentControllerMaySacrificeOrDamageEffect` (Star Athlete, Enchanter's Bane), the cost pairs `Sacrifice*Cost`, `Exile*Cost`,
   `Return*ToHandCost`, `PutCounterOn*Cost`.
-- **Static restrictions**: `CantAttackUnlessEffect` (66), `CantBlockUnlessEffect` (28), `CantAttackOrBlockUnlessEffect` (25) and the three
-  `…CantAttack…UnlessPredicateEffect` records; can't-activate, unblockable, goad and must-block pairs.
+- **Static restrictions**: run S merged the condition trio (`CantAttackOrBlockUnlessEffect` factories), the can't-activate pair and the two
+  `…CantAttackUnlessPredicateEffect` records. Left: `CreaturesCantAttackControllerUnlessPredicateEffect` (whom a creature may attack, also
+  floated: stays out), the unblockable subject (run U), goad (run G), `MustBlockTargetCreatureEffect` (stays out).
 - **Boost**: B1 and B2 done (`BoostEffect`; the mass records are `controlledBy` subjects). Stay out (more than the subject): the
   `StaticBoostEffect` family (per-creature amounts, a layered set, CR 611.3a), the while-tapped record, the chosen-type / Hand of Vecna
   records (a choice at resolution), the per-creature and other-target amounts (`BoostOpponentCreaturesByPoisonCountersEffect`,
@@ -1178,6 +1180,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run Damage R (2026-11-26): ten other-dealer records absorbed into `DealDamageEffect.dealtBy(dealers)` (`bite`, `targetCreatureToItself`, `toEachOther`; 138 card files by script); the bite's pre-pool checks are pool options (CR 616.1); Vengeful Ancestor's attacker deals as the triggering permanent
 - Step 10, run A (2026-11-26): the four graveyard card movers absorbed into `PutCardsIntoHandEffect` and `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()` (122 card files by script); the survivors' log lines
 - Step 10, run X (2026-11-26): the excess redirect absorbed into `DealDamageEffect.excessToControllerInstead()` / `bite().excessToControllerInsteadIfDealerHasTrample()` (5 card files by hand); a creature-planeswalker's greatest excess, the damage step begun anew
+- Step 10, run S (2026-11-26): the attack and block restrictions absorbed into `CantAttackOrBlockUnlessEffect.attack` / `block` / `attackOrBlock`, the Arrest lock into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, Evil Eye's lock into `CreaturesCantAttackUnlessPredicateEffect.youControl` (145 card files by script); no behaviour change
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2685,6 +2688,43 @@ card's class, the 7 naming a changed card, the `Damage|Excess|Lifelink|Deathtouc
 deleted class.
 
 **For the next run.** S, then G (`s10-rest` plan section 2). The Damage family's step-10 records are done; the rest are under Step-10 hand-offs.
+
+### Step 10, run S (attack and block restrictions) (2026-11-26)
+
+Run S of the plan `s10-rest` (the orchestrator's decision Q1, already entered under the owner's decisions). Absorbed: `CantAttackUnlessEffect`,
+`CantBlockUnlessEffect` into the survivor `CantAttackOrBlockUnlessEffect(condition, requirementDescription, restrictsAttacking,
+restrictsBlocking)` with `attack` / `block` / `attackOrBlock` (CR 508.1c, 509.1b); `EnchantedCreatureCantActivateAbilitiesEffect` into
+`EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()` (CR 602.5); `ControlledCreaturesCantAttackUnlessPredicateEffect` into
+`CreaturesCantAttackUnlessPredicateEffect.youControl(exemption)`. Static records, no handlers. Ledger: 4 absorbed, 3 survivor. Ratchet
+2,887 / 2,267 → 2,883 / 2,267. No `CONVERSION_VERSION` bump.
+
+**Premises.** Held: the attack and block readers read the trio the same way (face-down and lost-abilities guards, printed plus granted
+statics, one `ConditionContext.forPermanent`); nothing reads `requirementDescription`, no AI reader; the Arrest record equals the `(true)`
+lock in its three readers. Not held: (a) the plan's `creature()` factory became `includingManaAbilities()` (what it does; the 3 `(true)` cards
+moved too); (b) `youControl` needs no component: the exemption is `anyOf(X, not(PermanentControlledBySourceControllerPredicate))`, judged with
+the source context the global branch already passes (the four predicates read no context); (c) 145 card files, not 148. **Survivor.** `AttackOrBlockRestrictionEffect.cantAttackOrBlockUnless()` is renamed `cantAttackUnless()` (the attack side); the survivor also
+implements `BlockingRestrictionEffect.cantBlockUnless()` (the block side). `AttackLegalityService.isCantAttackUnlessConditionUnmet` and
+`BlockLegalityService.hasUnmetBlockRequirement` read one facet each; every other `BlockingRestrictionEffect` facet stays inert for it. The
+survivor's 25 cards moved to `attackOrBlock` (no two-argument constructor kept: one spelling). **Card rewrite.** 145 card files, 152 calls, by a scratch script (prefix shapes, an import fix-up, a leftover-name check failing loudly;
+written, run, deleted): `attack` 66, `block` 28 (Tesak's helper's return type with it), `attackOrBlock` 25, `includingManaAbilities()` 25 + 3,
+`youControl` 4. Oracle text checked with `get_card` for 143 of 145 (Avacyn's Collar MB2 273 and Lazier Goblin MB1 56 aren't in the data);
+all match the factory chosen.
+
+**Behaviour changes.** None in play; an Arrest-style refusal now reads "(enchanted permanent lock)", not "(Arrest)" (no test asserted it). **Pins** (passed on the old code and after): `DesperateCastawaysTest.canAttackWithoutArtifactWhileItHasLostItsAbilities`,
+`MaraudingBoneslasherTest.canBlockAsOnlyZombieWhileItHasLostItsAbilities`, `BlindSpotGiantTest.canAttackAsOnlyGiantWhileItHasLostItsAbilities`
+(Humility; the readers' lost-abilities guard), plus the existing Veiled Serpent (granted), Tesak (granted block side), Evil Eye, Akron Legionnaire,
+Glacial Chasm (controller scope), Arrest and Ice Cage (mana abilities) tests. No failing-first test: no behaviour change.
+
+**Tests changed.** `AbilityActivationServiceTest`: 59 strict stubs of the deleted class (all `false`) removed; the two Arrest tests stub the
+predicate overload with a matcher that accepts `includingManaAbilities()`. **Tests run** (one Gradle run, XML of this run): 476 classes, 608
+result files, 5,874 tests, 0 failures (every changed card's class and the classes naming one, 360; the `CantAttack|CantBlock|Attack|Block|
+Restriction|Combat|Activate` classes, `AbilityActivationServiceTest`, `GameQueryServiceTest`, the AI module, both ratchets).
+
+**Seen, not changed** (defect queue): the planechase branch of `isCantAttackDueToGlobalRestriction` judges a plane's exemption without its
+filter context (latent: no plane uses a source-relative one). AGENTS.md names no deleted class; `EFFECT_MERGE_PLAN.md` keeps one historical mention.
+
+**For the next run.** G (goad, `s10-rest` plan section 2): `GoadTargetCreatureUntilNextTurnEffect` with a player-target spec, the GOAD step
+and the CR 701.15d check for the snapshot and target-player records.
 
 ## Prompt
 

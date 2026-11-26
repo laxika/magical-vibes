@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PatchworkBeastie extends Card {
 
     public PatchworkBeastie() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new Delirium(),
                 "there are four or more card types among cards in your graveyard"
         ));

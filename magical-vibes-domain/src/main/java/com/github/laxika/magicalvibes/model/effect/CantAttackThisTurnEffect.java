@@ -13,7 +13,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * during its controller's next turn" (Wall of Dust: the creature it blocked, not targeted). Attack-side
  * sibling of {@link CantBlockThisTurnEffect}; combine the two for "target creature can't attack or block this turn".
  *
- * <p>Not to be confused with the static restriction effects ({@code CantAttackUnlessEffect},
+ * <p>Not to be confused with the static restriction effects ({@code CantAttackOrBlockUnlessEffect},
  * {@code EnchantedCreatureCantAttackEffect}).
  *
  * @param subject  which creature(s) can't attack

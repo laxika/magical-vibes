@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +19,7 @@ public class GelidShackles extends Card {
     public GelidShackles() {
         target(TargetFilters.creature())
                 .addStaticEffect(new CantBlockEffect())
-                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

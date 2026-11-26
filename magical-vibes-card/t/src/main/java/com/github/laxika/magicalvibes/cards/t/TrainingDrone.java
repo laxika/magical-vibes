@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 public class TrainingDrone extends Card {
 
     public TrainingDrone() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(new Equipped(), "it's equipped"));
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(new Equipped(), "it's equipped"));
     }
 }

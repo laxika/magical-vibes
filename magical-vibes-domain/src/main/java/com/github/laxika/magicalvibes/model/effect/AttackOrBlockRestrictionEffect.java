@@ -16,9 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@link PermanentPredicate} to its predicate service and the returned {@link Condition} to its
  * condition service itself.
  *
- * <p>Scope note: this covers the two printed "can't attack or block" shapes — the board-wide
- * {@code MatchingCreaturesCantAttackOrBlockEffect} (a predicate over affected creatures) and the
- * per-creature {@code CantAttackOrBlockUnlessEffect} (a condition that must be met).
+ * <p>Scope note: this covers the board-wide "can't attack or block" shape
+ * {@code MatchingCreaturesCantAttackOrBlockEffect} (a predicate over affected creatures) and the attack
+ * side of the per-creature {@code CantAttackOrBlockUnlessEffect} (a condition that must be met to attack;
+ * its block side is a {@link BlockingRestrictionEffect} facet).
  */
 public interface AttackOrBlockRestrictionEffect extends CardEffect {
 
@@ -31,10 +32,11 @@ public interface AttackOrBlockRestrictionEffect extends CardEffect {
     }
 
     /**
-     * When non-{@code null}, the creature carrying this effect can't attack or block unless this
-     * condition is met.
+     * When non-{@code null}, the creature carrying this effect can't attack unless this condition is
+     * met (CR 508.1c); {@code CantAttackOrBlockUnlessEffect} restricting attacking. Its block side is
+     * {@link BlockingRestrictionEffect#cantBlockUnless()}.
      */
-    default Condition cantAttackOrBlockUnless() {
+    default Condition cantAttackUnless() {
         return null;
     }
 

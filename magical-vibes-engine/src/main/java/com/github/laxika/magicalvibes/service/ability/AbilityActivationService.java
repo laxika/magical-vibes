@@ -66,7 +66,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileArtifactsWithTotalManaValueCost;
@@ -396,9 +395,6 @@ public class AbilityActivationService {
         }
         if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
             throw new IllegalStateException("Creature has summoning sickness");
-        }
-        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
-            throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated (Arrest)");
         }
         // Serra Bestiary / Katabatic Winds: tapping for mana is a {T} ability, so it is locked too.
         if (gameQueryService.isLockedFromActivatingTapAbilities(gameData, permanent)) {
@@ -7009,10 +7005,6 @@ public class AbilityActivationService {
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 
-        // Arrest check: block all activated abilities of enchanted creature
-        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
-            throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated (Arrest)");
-        }
         validateNotBlockedByStaticAbilityLock(gameData, permanent, isManaAbility(ability));
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities

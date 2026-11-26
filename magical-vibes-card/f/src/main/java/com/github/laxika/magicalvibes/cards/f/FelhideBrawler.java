@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "BNG", collectorNumber = "70")
 public class FelhideBrawler extends Card {
 
     public FelhideBrawler() {
-        addStaticEffect(new CantBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.block(
                 new ControlsOtherPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR)),
                 "you control another Minotaur"
         ));

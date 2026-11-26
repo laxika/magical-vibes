@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -13,7 +13,7 @@ import java.util.Set;
 public class Whimwader extends Card {
 
     public Whimwader() {
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new DefendingPlayerControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLUE))),
                 "a blue permanent"
         ));

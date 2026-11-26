@@ -17,7 +17,7 @@ public class WaywardSwordtooth extends Card {
     public WaywardSwordtooth() {
         addStaticEffect(new AscendEffect());
         addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new ControllerHasCityBlessing(),
                 "you have the city's blessing"));
     }

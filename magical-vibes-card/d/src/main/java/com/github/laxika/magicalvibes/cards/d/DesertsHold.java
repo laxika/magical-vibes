@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,6 +37,6 @@ public class DesertsHold extends Card {
 
         // Enchanted creature can't attack or block, and its activated abilities can't be activated.
         addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
-        addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
+        addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
     }
 }

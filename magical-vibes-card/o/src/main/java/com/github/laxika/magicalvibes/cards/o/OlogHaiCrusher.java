@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
 public class OlogHaiCrusher extends Card {
 
     public OlogHaiCrusher() {
-        addStaticEffect(new CantBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.block(
                 new AnyOf(List.of(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)),
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ORC))

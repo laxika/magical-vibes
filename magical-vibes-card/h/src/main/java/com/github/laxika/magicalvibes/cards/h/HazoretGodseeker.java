@@ -17,7 +17,7 @@ import java.util.List;
 public class HazoretGodseeker extends Card {
 
     public HazoretGodseeker() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new MaxSpeed(), "you have max speed"));
 
         addActivatedAbility(new ActivatedAbility(

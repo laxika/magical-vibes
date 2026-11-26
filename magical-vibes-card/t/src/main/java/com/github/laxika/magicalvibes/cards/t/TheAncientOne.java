@@ -19,7 +19,7 @@ import java.util.List;
 public class TheAncientOne extends Card {
 
     public TheAncientOne() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new GraveyardCardThreshold(8, new CardIsPermanentPredicate()),
                 "you have eight or more permanent cards in your graveyard"));
 

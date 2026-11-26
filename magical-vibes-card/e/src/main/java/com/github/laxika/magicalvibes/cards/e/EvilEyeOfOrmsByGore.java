@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class EvilEyeOfOrmsByGore extends Card {
 
     public EvilEyeOfOrmsByGore() {
-        addStaticEffect(new ControlledCreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(CreaturesCantAttackUnlessPredicateEffect.youControl(
                 new PermanentHasSubtypePredicate(CardSubtype.EYE)));
         addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.WALL),

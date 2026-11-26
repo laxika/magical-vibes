@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class BlindSpotGiant extends Card {
 
     public BlindSpotGiant() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),
                 "you control another Giant"
         ));

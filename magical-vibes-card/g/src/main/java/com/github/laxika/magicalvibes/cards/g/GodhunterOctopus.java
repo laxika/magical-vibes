@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class GodhunterOctopus extends Card {
 
     public GodhunterOctopus() {
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new AnyOf(List.of(
                         new DefendingPlayerControlsPermanent(new PermanentIsEnchantmentPredicate()),
                         new DefendingPlayerControlsPermanent(new PermanentIsEnchantedPredicate())

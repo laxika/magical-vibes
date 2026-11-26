@@ -535,8 +535,8 @@ public class BlockLegalityService {
 
     /**
      * Returns {@code true} if the creature currently fails a requirement it must meet to block at all:
-     * a "can't [attack or] block unless …" condition (block side, mirroring the attack side in
-     * {@code AttackLegalityService}), the equipped requirement, or an aura that stops it attacking or
+     * a "can't [attack or] block unless …" condition (CR 509.1b; the block side of
+     * {@code CantAttackOrBlockUnlessEffect}, mirroring the attack side in {@code AttackLegalityService}), the equipped requirement, or an aura that stops it attacking or
      * blocking. Unlike a flat prohibition this is not consulted per attacker — no choice of attacker
      * makes an unmet requirement met.
      */
@@ -551,12 +551,9 @@ public class BlockLegalityService {
             List<CardEffect> staticEffects = new ArrayList<>(creature.getCard().getStaticEffects());
             staticEffects.addAll(gameQueryService.getGrantedEffects(gameData, creature));
             for (CardEffect effect : staticEffects) {
-                Condition unless = null;
-                if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
-                    unless = restriction.cantAttackOrBlockUnless();
-                } else if (effect instanceof BlockingRestrictionEffect restriction) {
-                    unless = restriction.cantBlockUnless();
-                }
+                Condition unless = effect instanceof BlockingRestrictionEffect restriction
+                        ? restriction.cantBlockUnless()
+                        : null;
                 if (unless == null) {
                     continue;
                 }

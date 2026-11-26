@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "189")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class MoggConscripts extends Card {
 
     public MoggConscripts() {
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new ControllerCastSpellThisTurn(new CardTypePredicate(CardType.CREATURE)),
                 "you've cast a creature spell this turn"
         ));

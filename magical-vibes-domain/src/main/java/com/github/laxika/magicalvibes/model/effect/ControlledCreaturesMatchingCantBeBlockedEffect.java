@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * scope filter evaluated during the layered pass, against numbers layer 7 has not produced yet.
  *
  * <p>Scoped to the source's own controller, mirroring
- * {@link ControlledCreaturesCantAttackUnlessPredicateEffect}. Like every other blocking and
+ * {@code CreaturesCantAttackUnlessPredicateEffect.youControl}. Like every other blocking and
  * attacking restriction in the model it carries no {@code LayerClassifier} entry and no static
  * handler — the block-legality query reads it straight off the battlefield.
  *

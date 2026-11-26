@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
@@ -18,7 +18,7 @@ public class AkronLegionnaire extends Card {
     public AkronLegionnaire() {
         // Except for creatures named Akron Legionnaire and artifact creatures,
         // creatures you control can't attack.
-        addStaticEffect(new ControlledCreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(CreaturesCantAttackUnlessPredicateEffect.youControl(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentNamedPredicate("Akron Legionnaire"),
                         new PermanentIsArtifactPredicate()))));

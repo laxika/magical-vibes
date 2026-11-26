@@ -10,7 +10,7 @@ public class FloweringLumberknot extends Card {
 
     public FloweringLumberknot() {
         // The partner may lose soulbond while the pairing stays, so the partner's keyword is checked too.
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new SourcePairedWithSoulboundCreature(),
                 "it's paired with a creature with soulbond"));
     }

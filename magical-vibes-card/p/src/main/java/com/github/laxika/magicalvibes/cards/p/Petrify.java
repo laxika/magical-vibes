@@ -23,6 +23,6 @@ public class Petrify extends Card {
                 "Target must be an artifact or creature"
         ))
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-                .addStaticEffect(new EnchantedPermanentCantActivateAbilitiesEffect(true));
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
     }
 }

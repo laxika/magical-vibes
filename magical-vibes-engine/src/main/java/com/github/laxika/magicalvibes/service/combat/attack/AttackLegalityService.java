@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat.attack;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -19,11 +20,9 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessE
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
@@ -290,10 +289,10 @@ public class AttackLegalityService {
     }
 
     /**
-     * Evaluates the creature's {@link CantAttackUnlessEffect} restrictions (CR 508.1a): the
-     * creature can't attack while any attached condition is unmet. Each restriction's condition
-     * (controller controls a permanent, defending player poisoned, N Islands on the battlefield, …)
-     * is routed through {@link ConditionEvaluationService} with the attacker as source.
+     * Evaluates the creature's "can't attack unless" restrictions, the attack side of
+     * {@link CantAttackOrBlockUnlessEffect} (CR 508.1c): the creature can't attack while any such
+     * condition is unmet. Each restriction's condition (controller controls a permanent, defending
+     * player poisoned, N Islands on the battlefield, …) is routed through {@link ConditionEvaluationService} with the attacker as source.
      */
     private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
         if (creature.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, creature)) {
@@ -303,12 +302,9 @@ public class AttackLegalityService {
         List<CardEffect> restrictionSources = new ArrayList<>(creature.getCard().getStaticEffects());
         restrictionSources.addAll(gameQueryService.getGrantedEffects(gameData, creature));
         for (CardEffect effect : restrictionSources) {
-            Condition condition = null;
-            if (effect instanceof CantAttackUnlessEffect restriction) {
-                condition = restriction.condition();
-            } else if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
-                condition = restriction.cantAttackOrBlockUnless();
-            }
+            Condition condition = effect instanceof AttackOrBlockRestrictionEffect restriction
+                    ? restriction.cantAttackUnless()
+                    : null;
             if (condition != null) {
                 if (ctx == null) {
                     ctx = ConditionContext.forPermanent(creature, controllerId);
@@ -625,11 +621,6 @@ public class AttackLegalityService {
                     if (predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.attackerPredicate())
                             && countMatching(gameData, creatureController, restriction.sacrificeFilter())
                             < restriction.countPerAttacker()) {
-                        restricted[0] = true;
-                    }
-                } else if (effect instanceof ControlledCreaturesCantAttackUnlessPredicateEffect restriction) {
-                    if (playerId.equals(creatureController)
-                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
                         restricted[0] = true;
                     }
                 }

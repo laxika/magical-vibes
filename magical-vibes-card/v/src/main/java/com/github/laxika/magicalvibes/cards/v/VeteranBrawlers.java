@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -23,11 +22,11 @@ public class VeteranBrawlers extends Card {
     ));
 
     public VeteranBrawlers() {
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new NotCondition(new DefendingPlayerControlsPermanent(UNTAPPED_LAND)),
                 "defending player controls no untapped land"
         ));
-        addStaticEffect(new CantBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.block(
                 new NotCondition(new ControlsPermanentCount(1, UNTAPPED_LAND)),
                 "you control no untapped land"
         ));

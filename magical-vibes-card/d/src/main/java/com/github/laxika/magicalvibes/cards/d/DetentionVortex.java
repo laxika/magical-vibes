@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class DetentionVortex extends Card {
     public DetentionVortex() {
         target(TargetFilters.nonlandPermanent())
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

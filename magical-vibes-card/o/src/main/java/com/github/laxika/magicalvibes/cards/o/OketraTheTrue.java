@@ -21,7 +21,7 @@ public class OketraTheTrue extends Card {
 
     public OketraTheTrue() {
         // Oketra can't attack or block unless you control at least three other creatures.
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new ControlsOtherPermanentCount(3, new PermanentIsCreaturePredicate()),
                 "you control at least three other creatures"
         ));

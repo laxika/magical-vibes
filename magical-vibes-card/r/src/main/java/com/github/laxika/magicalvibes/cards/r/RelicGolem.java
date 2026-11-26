@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class RelicGolem extends Card {
 
     public RelicGolem() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new OpponentGraveyardAtLeast(8),
                 "an opponent has eight or more cards in their graveyard"
         ));

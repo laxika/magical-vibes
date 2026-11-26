@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class VeiledSerpent extends Card {
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
                 new GrantStaticEffectToSourceEffect(new GrantEffectEffect(
-                        new CantAttackUnlessEffect(
+                        CantAttackOrBlockUnlessEffect.attack(
                                 new DefendingPlayerControlsPermanent(
                                         new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                                 "an Island"),

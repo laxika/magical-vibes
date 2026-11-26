@@ -28,6 +28,6 @@ public class StuckInSummonersSanctum extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.target()))
                 .addStaticEffect(DoesntUntapEffect.enchanted())
-                .addStaticEffect(new EnchantedPermanentCantActivateAbilitiesEffect(true));
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
     }
 }

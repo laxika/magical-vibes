@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "2")
@@ -17,6 +17,6 @@ public class Arrest extends Card {
     public Arrest() {
         target(TargetFilters.creature())
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
     }
 }

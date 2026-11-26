@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "66")
@@ -11,7 +11,7 @@ public class RiverSerpent extends Card {
 
     public RiverSerpent() {
         // This creature can't attack unless there are five or more cards in your graveyard.
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new GraveyardCardThreshold(5, null),
                 "five or more cards in your graveyard"
         ));

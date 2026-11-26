@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,7 +22,7 @@ public class ArachnusWeb extends Card {
         target(TargetFilters.creature())
                 // Enchanted creature can't attack or block, and its activated abilities can't be activated.
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities())
                 // At the beginning of the end step, if enchanted creature's power is 4 or greater,
                 // destroy this Aura.
                 .addTrigger(Triggers.endStep(ActivePlayer.ANY),

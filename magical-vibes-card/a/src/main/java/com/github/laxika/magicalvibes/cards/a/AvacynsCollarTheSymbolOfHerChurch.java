@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +20,7 @@ public class AvacynsCollarTheSymbolOfHerChurch extends Card {
     public AvacynsCollarTheSymbolOfHerChurch() {
         addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
         addStaticEffect(new AttachedPermanentRestrictionEffect(new PreventTransformEffect()));
-        addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
+        addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

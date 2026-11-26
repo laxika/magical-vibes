@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.a.AxegrinderGiant;
 import com.github.laxika.magicalvibes.cards.f.FlamekinBrawler;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlindSpotGiant.class, AxegrinderGiant.class, AvianChangeling.class, FlamekinBrawler.class})
+@CardUsed({BlindSpotGiant.class, AxegrinderGiant.class, AvianChangeling.class, FlamekinBrawler.class, Humility.class})
 class BlindSpotGiantTest extends BaseCardTest {
 
     @Test
@@ -143,5 +144,17 @@ class BlindSpotGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can attack as the only Giant while Humility removes its abilities")
+    void canAttackAsOnlyGiantWhileItHasLostItsAbilities() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BlindSpotGiant());
+        harness.addToBattlefield(player2, new Humility());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
     }
 }

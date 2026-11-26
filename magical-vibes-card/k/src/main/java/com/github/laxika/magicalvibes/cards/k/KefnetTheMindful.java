@@ -22,7 +22,7 @@ public class KefnetTheMindful extends Card {
         // Flying, indestructible — auto-loaded from Scryfall.
 
         // Kefnet the Mindful can't attack or block unless you have seven or more cards in hand.
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new CardsInHandAtLeast(7),
                 "you have seven or more cards in hand"
         ));

@@ -150,7 +150,7 @@ logic belongs. No emblem effect class is referenced outside its own handler and 
 | `WinGameIfCreaturesInGraveyardEffect` | `ConditionalEffect(new GraveyardCardThreshold(20, new CardTypePredicate(CardType.CREATURE)), new WinGameEffect())` | 1 |
 | `CreateLifeTotalAvatarTokenEffect` | `CreateTokenEffect` with the existing `tokenEffects` overload, carrying `SetPowerToughnessToAmountEffect(new ControllerLifeTotal(), new ControllerLifeTotal())` | 1 |
 | `ChooseTwoColorsOnEnterEffect` | `ChooseColorOnEnterEffect(2)` | 1 |
-| `CantAttackOrBlockUnlessEquippedEffect` | `CantAttackOrBlockUnlessEffect(new Equipped(), "it's equipped")` | 1 |
+| `CantAttackOrBlockUnlessEquippedEffect` | `CantAttackOrBlockUnlessEffect.attackOrBlock(new Equipped(), "it's equipped")` | 1 |
 | `SacrificeSelfAndDrawCardsEffect`, `SacrificeSelfAndTargetPlayerDiscardsEffect`, `SacrificeSelfThenDealDamageToTargetPlayerEffect` | **new** `SacrificeSelfThenEffect(CardEffect thenEffect)` | 2 + 2 + 1 |
 
 Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
@@ -1600,7 +1600,7 @@ reference.
   second Aura would add nothing) and heuristic-only — no rules behaviour depends on it.
 
 **Rejected: the optional follow-on.** The plan priced
-`EnchantedCreatureCantActivateTapAbilitiesEffect` → `EnchantedCreatureCantActivateAbilitiesEffect`
+`EnchantedCreatureCantActivateTapAbilitiesEffect` → `EnchantedCreatureCantActivateAbilitiesEffect` (the latter since absorbed into `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()`, effect-cleanup step 10 run S)
 at "5 call sites to delete one class". The real cost is 5 production call sites **plus 53 Mockito
 stubs** in `AbilityActivationServiceTest`, every one keyed on
 `eq(EnchantedCreatureCantActivateAbilitiesEffect.class)` and every one broken by moving those call

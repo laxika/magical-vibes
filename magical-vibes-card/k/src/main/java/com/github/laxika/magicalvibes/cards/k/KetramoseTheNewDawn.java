@@ -19,7 +19,7 @@ import java.util.Set;
 public class KetramoseTheNewDawn extends Card {
 
     public KetramoseTheNewDawn() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new CardsInExileAtLeast(7),
                 "there are seven or more cards in exile"
         ));

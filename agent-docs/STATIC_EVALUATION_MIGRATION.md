@@ -336,7 +336,7 @@ reached layer 6 solely because it was written as `GrantEffectEffect(CantBeBlocke
 
 **Fix:** new `ControlledCreaturesMatchingCantBeBlockedEffect(PermanentPredicate filter)`
 (magical-vibes-domain `model/effect/`), consumed by a new branch in
-`GameQueryService.hasCantBeBlocked`, mirroring `ControlledCreaturesCantAttackUnlessPredicateEffect`
+`GameQueryService.hasCantBeBlocked`, mirroring the controller-scoped attack restriction (now `CreaturesCantAttackUnlessPredicateEffect.youControl`)
 / `AttackLegalityService`. Tetsuko now uses it. Both regression tests were confirmed to fail under
 the old `GrantEffectEffect` modeling and pass under the new one.
 

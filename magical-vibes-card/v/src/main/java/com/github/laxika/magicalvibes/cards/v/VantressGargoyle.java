@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 
 import java.util.List;
@@ -17,10 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class VantressGargoyle extends Card {
 
     public VantressGargoyle() {
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new OpponentGraveyardAtLeast(7),
                 "defending player has seven or more cards in their graveyard"));
-        addStaticEffect(new CantBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.block(
                 new CardsInHandAtLeast(4),
                 "you have four or more cards in hand"));
         addActivatedAbility(new ActivatedAbility(

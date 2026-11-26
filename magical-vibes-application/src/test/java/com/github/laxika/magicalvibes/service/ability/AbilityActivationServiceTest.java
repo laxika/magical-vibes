@@ -39,7 +39,10 @@ import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
+import org.mockito.ArgumentMatchers;
+import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
@@ -243,8 +246,6 @@ class AbilityActivationServiceTest {
             when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             ManaPool pool = gameData.playerManaPools.get(player1Id);
             int blueBefore = pool.get(ManaColor.BLUE);
@@ -269,9 +270,6 @@ class AbilityActivationServiceTest {
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
-            when(gameQueryService.hasAuraWithEffect(
-                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(landManaReplacementService.produce(eq(gameData), eq(player1Id), eq(perm),
                     eq(Set.of(ManaColor.RED)), eq(1), any()))
                     .thenReturn(new LandManaReplacementService.Resolution.Prompted());
@@ -335,8 +333,6 @@ class AbilityActivationServiceTest {
             when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             ManaPool pool = gameData.playerManaPools.get(player1Id);
             int blueBefore = pool.get(ManaColor.BLUE);
@@ -353,7 +349,9 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, elves);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm),
+                    ArgumentMatchers.<Predicate<CardEffect>>argThat(matcher -> matcher != null
+                            && matcher.test(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()))))
                     .thenReturn(true);
 
             assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 0))
@@ -378,8 +376,6 @@ class AbilityActivationServiceTest {
             when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.tapPermanent(gameData, player1, 0);
 
@@ -409,8 +405,6 @@ class AbilityActivationServiceTest {
             gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, 2, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -442,8 +436,6 @@ class AbilityActivationServiceTest {
             gameData.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isSummoningSickForTapCost(gameData, perm, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -464,8 +456,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, creature);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -482,8 +472,6 @@ class AbilityActivationServiceTest {
             // Do NOT add any mana
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -499,8 +487,6 @@ class AbilityActivationServiceTest {
             gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -531,8 +517,6 @@ class AbilityActivationServiceTest {
             when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, 2, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -565,8 +549,6 @@ class AbilityActivationServiceTest {
             when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, 0, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -596,8 +578,6 @@ class AbilityActivationServiceTest {
 
             when(amountEvaluationService.evaluate(eq(gameData), any(), any())).thenReturn(2);
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -738,8 +718,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -756,8 +734,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.UPKEEP;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -777,8 +753,6 @@ class AbilityActivationServiceTest {
                     StackEntryType.CREATURE_SPELL, new Card(), player1Id, "Test spell", List.of()));
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -795,8 +769,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -817,8 +789,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -835,8 +805,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.UPKEEP;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -854,8 +822,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.POSTCOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -877,8 +843,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.END_STEP;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -892,8 +856,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isCovenMet(gameData, player1Id)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -908,8 +870,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isCovenMet(gameData, player1Id)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -928,8 +888,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isMetalcraftMet(gameData, player1Id)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -944,8 +902,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isMetalcraftMet(gameData, player1Id)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -964,8 +920,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(2);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -980,8 +934,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(5);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -1080,8 +1032,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1099,8 +1049,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isPlaneswalkerLoyaltyAbilityLocked(gameData, perm)).thenReturn(true);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -1119,8 +1067,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.UPKEEP;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1140,8 +1086,6 @@ class AbilityActivationServiceTest {
                     StackEntryType.CREATURE_SPELL, new Card(), player1Id, "Test spell", List.of()));
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1160,8 +1104,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1179,8 +1121,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1198,8 +1138,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             doThrow(new IllegalStateException("Invalid target"))
                     .when(targetLegalityService).validateActivatedAbilityTargeting(
                             any(), any(), any(), any(), any(), any(), any(), anyInt());
@@ -1223,8 +1161,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             // No counter-placement replacement (Vorinclex): the +1 cost places exactly one counter.
             when(gameQueryService.replaceCounters(gameData, perm, CounterType.LOYALTY, 1, player1Id)).thenReturn(1);
 
@@ -1271,8 +1207,6 @@ class AbilityActivationServiceTest {
             when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             ManaPool pool = gameData.playerManaPools.get(player1Id);
             int blueBefore = pool.get(ManaColor.BLUE);
@@ -1292,8 +1226,6 @@ class AbilityActivationServiceTest {
             addPithingNeedle(player2Id, "Grizzly Bears");
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1314,7 +1246,9 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm),
+                    ArgumentMatchers.<Predicate<CardEffect>>argThat(matcher -> matcher != null
+                            && matcher.test(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()))))
                     .thenReturn(true);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -1339,8 +1273,6 @@ class AbilityActivationServiceTest {
             perm.setCounterCount(CounterType.CHARGE, 2);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1355,8 +1287,6 @@ class AbilityActivationServiceTest {
             perm.setCounterCount(CounterType.CHARGE, 5);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1371,8 +1301,6 @@ class AbilityActivationServiceTest {
             // No counters on the permanent
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1388,8 +1316,6 @@ class AbilityActivationServiceTest {
             perm.setCounterCount(CounterType.CHARGE, 1);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1410,8 +1336,6 @@ class AbilityActivationServiceTest {
             perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1437,8 +1361,6 @@ class AbilityActivationServiceTest {
             gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1461,9 +1383,6 @@ class AbilityActivationServiceTest {
             Permanent creature = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, creature)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(
-                    eq(gameData), eq(creature), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.findPermanentById(gameData, aura.getId())).thenReturn(aura);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -1537,8 +1456,6 @@ class AbilityActivationServiceTest {
 
             // Only husk on the battlefield — 1 creature = auto-pay
             when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
             when(gameQueryService.canChooseToSacrificeForCosts(gameData, husk)).thenReturn(true);
             when(gameQueryService.findPermanentById(gameData, husk.getId())).thenReturn(husk);
@@ -1565,8 +1482,6 @@ class AbilityActivationServiceTest {
 
             // 2 creatures on battlefield — prompts for choice
             when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
             when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
             when(gameQueryService.canChooseToSacrificeForCosts(gameData, husk)).thenReturn(true);
@@ -1590,8 +1505,6 @@ class AbilityActivationServiceTest {
 
             // No creatures on P1's battlefield — only a non-creature artifact
             when(gameQueryService.computeStaticBonus(gameData, artifact)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(artifact), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isCreature(gameData, artifact)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -1614,8 +1527,6 @@ class AbilityActivationServiceTest {
             addReadyPermanent(player2Id, bearsCard);
 
             when(gameQueryService.computeStaticBonus(gameData, artifact)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(artifact), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isCreature(gameData, artifact)).thenReturn(false);
 
             // getValidChoiceIds only checks player1's battlefield, so opponent's creature is invisible
@@ -1635,8 +1546,6 @@ class AbilityActivationServiceTest {
             Permanent husk = addReadyPermanent(player1Id, huskCard);
 
             when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
@@ -1665,8 +1574,6 @@ class AbilityActivationServiceTest {
                     .put(0, 1);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1685,8 +1592,6 @@ class AbilityActivationServiceTest {
                     .put(0, 1);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -1700,8 +1605,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1759,8 +1662,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
                     gameData.playerManaPools.get(player1Id))).isTrue();
@@ -1775,8 +1676,6 @@ class AbilityActivationServiceTest {
             perm.tap();
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
                     gameData.playerManaPools.get(player1Id))).isFalse();
@@ -1804,8 +1703,6 @@ class AbilityActivationServiceTest {
             // Player's actual pool is empty
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             ManaPool hypotheticalPool = new ManaPool();
@@ -1825,9 +1722,6 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(
-                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
             when(castingCostService.getActivatedAbilityActivationTax(
                     eq(gameData), eq(player1Id), eq(perm), any(), anyBoolean())).thenReturn(3);
@@ -1851,9 +1745,6 @@ class AbilityActivationServiceTest {
             UUID targetId = UUID.randomUUID();
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(
-                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
             when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
             when(castingCostService.getTargetingSubtypeTax(
                     gameData, player1Id, targetId, null, true)).thenReturn(2);
@@ -1881,9 +1772,6 @@ class AbilityActivationServiceTest {
                     createCraftMaterial(CardSubtype.DINOSAUR)));
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(
-                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
                     gameData.playerManaPools.get(player1Id))).isFalse();
@@ -1901,9 +1789,6 @@ class AbilityActivationServiceTest {
                     createCraftMaterial(CardSubtype.VAMPIRE)));
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(
-                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
                     gameData.playerManaPools.get(player1Id))).isTrue();
@@ -1950,8 +1835,6 @@ class AbilityActivationServiceTest {
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
 
             assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
                     gameData.playerManaPools.get(player1Id))).isTrue();

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SabSunenLuxaEmbodied extends Card {
 
     public SabSunenLuxaEmbodied() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new SourceCounterCountParity(ManaValueParity.EVEN),
                 "it has an even number of counters on it"
         ));

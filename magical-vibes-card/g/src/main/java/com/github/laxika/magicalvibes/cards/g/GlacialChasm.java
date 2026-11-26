@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -28,7 +28,7 @@ public class GlacialChasm extends Card {
                 new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()));
 
         // Creatures you control can't attack — no creature is ever exempt.
-        addStaticEffect(new ControlledCreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(CreaturesCantAttackUnlessPredicateEffect.youControl(
                 new PermanentNotPredicate(new PermanentTruePredicate())));
 
         // Prevent all damage that would be dealt to you.

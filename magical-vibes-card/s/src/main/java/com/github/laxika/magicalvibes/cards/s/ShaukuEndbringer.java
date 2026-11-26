@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -22,7 +22,7 @@ public class ShaukuEndbringer extends Card {
     public ShaukuEndbringer() {
         // Shauku can't attack if there's another creature on the battlefield. Expressed as the
         // inverse: it may attack only while at most one creature (itself) is on any battlefield.
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new AnyPlayerControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate()),
                 "no other creature is on the battlefield"
         ));

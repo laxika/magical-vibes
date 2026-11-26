@@ -28,7 +28,7 @@ public class RhonasTheIndomitable extends Card {
         // Deathtouch, indestructible — auto-loaded from Scryfall.
 
         // Rhonas can't attack or block unless you control another creature with power 4 or greater.
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new ControlsOtherPermanentCount(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4)

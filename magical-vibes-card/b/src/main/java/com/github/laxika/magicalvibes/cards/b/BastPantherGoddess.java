@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BastPantherGoddess extends Card {
 
     public BastPantherGoddess() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new ControlsPermanentCount(3, new PermanentIsCreaturePredicate()),
                 "you control three or more creatures"));
 

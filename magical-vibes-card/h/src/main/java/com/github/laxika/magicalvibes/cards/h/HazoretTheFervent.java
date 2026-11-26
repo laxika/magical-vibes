@@ -22,7 +22,7 @@ public class HazoretTheFervent extends Card {
 
         // Hazoret the Fervent can't attack or block unless you have one or fewer cards in hand.
         // "one or fewer cards" = not (two or more cards).
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new NotCondition(new CardsInHandAtLeast(2)),
                 "you have one or fewer cards in hand"
         ));

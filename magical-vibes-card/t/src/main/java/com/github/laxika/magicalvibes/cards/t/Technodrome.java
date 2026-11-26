@@ -18,7 +18,7 @@ import java.util.List;
 public class Technodrome extends Card {
 
     public Technodrome() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new SourcePowerAtLeast(6),
                 "its power is 6 or greater"));
 

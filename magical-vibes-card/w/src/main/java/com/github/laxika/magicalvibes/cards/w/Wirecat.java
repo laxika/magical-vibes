@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 public class Wirecat extends Card {
 
     public Wirecat() {
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new NotCondition(new AnyPlayerControlsPermanent(new PermanentIsEnchantmentPredicate())),
                 "there is no enchantment on the battlefield"
         ));

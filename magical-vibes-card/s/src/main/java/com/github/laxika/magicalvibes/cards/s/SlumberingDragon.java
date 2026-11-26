@@ -13,7 +13,7 @@ public class SlumberingDragon extends Card {
 
     public SlumberingDragon() {
         // This creature can't attack or block unless it has five or more +1/+1 counters on it.
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
                 "it has five or more +1/+1 counters on it"));
 

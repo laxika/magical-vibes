@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 
 /**
@@ -19,7 +19,7 @@ public class SpawnOfRixMaadi extends Card {
 
     public SpawnOfRixMaadi() {
         addStaticEffect(new UnleashEffect());
-        addStaticEffect(new CantBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.block(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE)),
                 "it has no +1/+1 counters on it"));
     }

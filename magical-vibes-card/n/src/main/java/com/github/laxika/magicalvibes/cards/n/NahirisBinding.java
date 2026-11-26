@@ -22,6 +22,6 @@ public class NahirisBinding extends Card {
                 )),
                 "Target must be a creature or planeswalker"))
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-                .addStaticEffect(new EnchantedPermanentCantActivateAbilitiesEffect(true));
+                .addStaticEffect(EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities());
     }
 }

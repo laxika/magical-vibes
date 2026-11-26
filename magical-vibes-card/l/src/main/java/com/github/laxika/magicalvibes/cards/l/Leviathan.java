@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -46,7 +46,7 @@ public class Leviathan extends Card {
 
         // Leviathan can't attack unless you sacrifice two Islands (paid as attackers are declared):
         // the legality gate (control enough to pay) plus the actual sacrifice cost.
-        addStaticEffect(new CantAttackUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attack(
                 new ControlsPermanentCount(2, islands), "you sacrifice two Islands"));
         addStaticEffect(new CantAttackUnlessSacrificeEffect(2, islands, "two Islands"));
     }

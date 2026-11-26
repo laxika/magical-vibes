@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.p.PiratesCutlass;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DesperateCastaways.class, PiratesCutlass.class})
+@CardUsed({DesperateCastaways.class, PiratesCutlass.class, Humility.class})
 class DesperateCastawaysTest extends BaseCardTest {
 
     @Test
@@ -91,5 +92,17 @@ class DesperateCastawaysTest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can attack without an artifact while Humility removes its abilities")
+    void canAttackWithoutArtifactWhileItHasLostItsAbilities() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new DesperateCastaways());
+        harness.addToBattlefield(player2, new Humility());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
     }
 }

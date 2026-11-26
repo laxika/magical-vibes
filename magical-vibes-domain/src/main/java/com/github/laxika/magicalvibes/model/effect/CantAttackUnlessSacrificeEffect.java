@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * "This creature can't attack unless you sacrifice two Islands."
  *
  * <p>The "can't attack unless you control enough to pay" legality gate is expressed separately with
- * a {@link CantAttackUnlessEffect} carrying a {@code ControlsPermanentCount} condition; this marker
+ * a {@code CantAttackOrBlockUnlessEffect.attack} carrying a {@code ControlsPermanentCount} condition; this marker
  * only drives the actual sacrifice payment, applied by {@code AttackSacrificeCostService} as the
  * attack is committed. Read directly (no dispatch handler), mirroring
  * {@link EnchantedCreatureCombatTaxEffect}.

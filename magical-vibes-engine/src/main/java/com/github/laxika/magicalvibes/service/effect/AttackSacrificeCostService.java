@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
  * Pays {@link CantAttackUnlessSacrificeEffect} additional attack costs (Leviathan — "can't attack
  * unless you sacrifice two Islands"). Invoked from the combat declare-attackers commit phase once the
  * declaration is final. The legality that the controller can pay is enforced upstream by the paired
- * {@code CantAttackUnlessEffect} gate, so the required matching permanents are guaranteed present.
+ * {@code CantAttackOrBlockUnlessEffect.attack} gate, so the required matching permanents are guaranteed present.
  */
 @Slf4j
 @Service

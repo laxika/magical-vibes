@@ -18,7 +18,7 @@ public class TopiaryStomper extends Card {
     public TopiaryStomper() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new ControlsPermanentCount(7, new PermanentIsLandPredicate()),
                 "you control seven or more lands"
         ));

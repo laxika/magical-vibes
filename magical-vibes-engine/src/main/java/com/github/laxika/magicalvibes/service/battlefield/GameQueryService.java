@@ -169,7 +169,6 @@ import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatD
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoCostAlternativeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
@@ -14194,10 +14193,7 @@ public class GameQueryService {
             }
         }
 
-        // Check aura-based locks (Arrest, Ice Cage)
-        if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
-            return false;
-        }
+        // Aura-based locks (Arrest, Ice Cage)
         if (hasAuraWithEffect(gameData, permanent,
                 effect -> effect instanceof EnchantedPermanentAbilityLockEffect lock && lock.blocksManaAbilities())) {
             return false;

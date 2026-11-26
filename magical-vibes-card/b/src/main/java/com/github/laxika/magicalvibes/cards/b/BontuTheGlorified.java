@@ -20,7 +20,7 @@ public class BontuTheGlorified extends Card {
 
     public BontuTheGlorified() {
         // Bontu can't attack or block unless a creature died under your control this turn.
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new CreatureDiedUnderYourControlThisTurn(),
                 "a creature died under your control this turn"
         ));

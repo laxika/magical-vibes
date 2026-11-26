@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DefiantKhenra;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaraudingBoneslasher.class, DefiantKhenra.class})
+@CardUsed({MaraudingBoneslasher.class, DefiantKhenra.class, Humility.class})
 class MaraudingBoneslasherTest extends BaseCardTest {
 
     @Test
@@ -81,6 +82,19 @@ class MaraudingBoneslasherTest extends BaseCardTest {
         addCreatureReady(player2, new DefiantKhenra());
         var blocker = addCreatureReady(player1, new MaraudingBoneslasher());
         addCreatureReady(player1, new MaraudingBoneslasher()).tap();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can block as the only Zombie while Humility removes its abilities")
+    void canBlockAsOnlyZombieWhileItHasLostItsAbilities() {
+        addCreatureReady(player2, new DefiantKhenra());
+        var blocker = addCreatureReady(player1, new MaraudingBoneslasher());
+        harness.addToBattlefield(player1, new Humility());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));

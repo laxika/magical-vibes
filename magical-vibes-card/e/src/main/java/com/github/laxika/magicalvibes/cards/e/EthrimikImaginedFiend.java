@@ -19,7 +19,7 @@ public class EthrimikImaginedFiend extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ManifestDreadEffect.forController());
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
         // Ethrimik can't attack or block as long as you control another creature.
-        addStaticEffect(new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(CantAttackOrBlockUnlessEffect.attackOrBlock(
                 new NotCondition(new ControlsAnotherPermanent(new PermanentIsCreaturePredicate())),
                 "you control no other creatures"));
     }
