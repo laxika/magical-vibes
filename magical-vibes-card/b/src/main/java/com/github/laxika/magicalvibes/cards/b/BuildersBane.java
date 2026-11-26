@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
@@ -19,7 +19,7 @@ public class BuildersBane extends Card {
                 "Targets must be artifacts"
         ), Integer.MAX_VALUE).addSpellEffect(new DestroyEachTargetPermanentEffect());
 
-        addSpellEffect(new DealDamageToPlayersEffect(AmountThisWay.died(StepKind.DESTROY).controlledByYou(),
-                Subjects.eachPlayer()));
+        addSpellEffect(DealDamageEffect.to(Subjects.eachPlayer(),
+                AmountThisWay.died(StepKind.DESTROY).controlledByYou()));
     }
 }

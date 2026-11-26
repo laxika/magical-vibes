@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -844,8 +844,8 @@ public class AiManaManager {
                 continue;
             }
             boolean painful = ability.getEffects().stream()
-                    .anyMatch(e -> e instanceof DealDamageToPlayersEffect dmg
-                            && dmg.player() instanceof PlayerSubject.You);
+                    .anyMatch(e -> e instanceof DealDamageEffect dmg
+                            && dmg.players() instanceof PlayerSubject.You);
             options.addAll(manaOptionsForEffects(permanent.getId(), i,
                     ability.getEffects(), triggerCost, versatilityCost, painful,
                     permanent, gameData, playerId));
@@ -1288,7 +1288,7 @@ public class AiManaManager {
      */
     private static int scoreManaAbility(ActivatedAbility ability, ManaCost cost, ManaPool currentPool) {
         boolean hasSideEffects = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof DealDamageToPlayersEffect dmg && dmg.player() instanceof PlayerSubject.You);
+                .anyMatch(e -> e instanceof DealDamageEffect dmg && dmg.players() instanceof PlayerSubject.You);
         Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
 
         for (CardEffect effect : ability.getEffects()) {

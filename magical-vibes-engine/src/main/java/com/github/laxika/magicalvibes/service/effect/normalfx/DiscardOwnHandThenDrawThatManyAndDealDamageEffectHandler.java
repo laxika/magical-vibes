@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyAndDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ import java.util.List;
 public class DiscardOwnHandThenDrawThatManyAndDealDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DiscardOwnHandThenDrawThatManyEffectHandler discardAndDrawHandler;
-    private final DealDamageToPlayersEffectHandler damageHandler;
+    private final DealDamageEffectHandler damageHandler;
     private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
@@ -42,7 +42,7 @@ public class DiscardOwnHandThenDrawThatManyAndDealDamageEffectHandler implements
         if (conditionEvaluationService.isMet(gameData, e.condition(),
                 ConditionContext.forStackEntry(entry), entry.getEventValue())) {
             damageHandler.resolve(gameData, entry,
-                    new DealDamageToPlayersEffect(new EventValue(), Subjects.eachOpponent()));
+                    DealDamageEffect.to(Subjects.eachOpponent(), new EventValue()));
         }
     }
 }

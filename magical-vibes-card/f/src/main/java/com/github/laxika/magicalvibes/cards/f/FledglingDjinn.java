@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FledglingDjinn extends Card {
 
     public FledglingDjinn() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DealDamageToPlayersEffect(1, Subjects.you()));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), DealDamageEffect.to(Subjects.you(), 1));
     }
 }

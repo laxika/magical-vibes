@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +33,7 @@ public class TheFantasticFour extends Card {
                                 List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of())),
                 new ChooseOneEffect.ChooseOneOption(
                         "The Fantastic Four deal 3 damage to each opponent",
-                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent())),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 3)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on target creature",
                         new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),

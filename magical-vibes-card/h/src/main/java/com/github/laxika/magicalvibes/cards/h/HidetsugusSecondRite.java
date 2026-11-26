@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FDN", collectorNumber = "202")
@@ -15,6 +15,6 @@ public class HidetsugusSecondRite extends Card {
     public HidetsugusSecondRite() {
         addSpellEffect(new ConditionalEffect(
                 new TargetPlayerLifeTotalEquals(10),
-                new DealDamageToPlayersEffect(10, Subjects.targetPlayer())));
+                DealDamageEffect.to(Subjects.targetPlayer(), 10)));
     }
 }

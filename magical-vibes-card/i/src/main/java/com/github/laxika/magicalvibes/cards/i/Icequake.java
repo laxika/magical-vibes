@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -24,6 +24,6 @@ public class Icequake extends Card {
         // damage is dealt afterwards so a destroyed snow Glacial Chasm no longer prevents it.
         target(TargetFilters.land())
                 .addSpellEffect(new DestroyTargetPermanentEffect())
-                        .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentHasSupertypePredicate(CardSupertype.SNOW)), new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.target()))));
+                        .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentHasSupertypePredicate(CardSupertype.SNOW)), DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 1)));
     }
 }

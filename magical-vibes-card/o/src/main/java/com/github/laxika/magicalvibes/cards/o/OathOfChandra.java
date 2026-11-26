@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,6 +23,6 @@ public class OathOfChandra extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new PermanentEnteredThisTurn(new CardTypePredicate(CardType.PLANESWALKER), 1)),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2));
     }
 }

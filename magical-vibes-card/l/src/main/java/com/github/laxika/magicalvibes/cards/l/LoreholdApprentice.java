@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ public class LoreholdApprentice extends Card {
         ActivatedAbility damageAbility = new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToPlayersEffect(1, Subjects.eachOpponent())),
+                List.of(DealDamageEffect.to(Subjects.eachOpponent(), 1)),
                 "{T}: This creature deals 1 damage to each opponent."
         );
         List<CardEffect> magecraft = List.of(new GrantActivatedAbilityEffect(

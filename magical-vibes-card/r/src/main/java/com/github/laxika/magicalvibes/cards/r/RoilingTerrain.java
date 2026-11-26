@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,9 +17,8 @@ public class RoilingTerrain extends Card {
 
     public RoilingTerrain() {
         target(TargetFilters.land()).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                new DealDamageToPlayersEffect(
-                        new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.TARGET_PLAYER),
-                        Subjects.targetPlayer()),
+                DealDamageEffect.to(Subjects.targetPlayer(),
+                        new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.TARGET_PLAYER)),
                 ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

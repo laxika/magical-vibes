@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.VotesFor;
 import com.github.laxika.magicalvibes.model.condition.VoteResult;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -25,7 +25,7 @@ public class FatefulTempest extends Card {
         addSpellEffect(VoteEffect.startingWithYou(PAST, PRESENT));
         addSpellEffect(new ConditionalEffect(VoteResult.anyVotes(PAST), SequenceEffect.of(
                 new MillEffect(new VotesFor(PAST), Subjects.you()),
-                new DealDamageToPlayersEffect(AmountThisWay.milledManaValue(), Subjects.eachOpponent()))));
+                DealDamageEffect.to(Subjects.eachOpponent(), AmountThisWay.milledManaValue()))));
         addSpellEffect(new ConditionalEffect(VoteResult.anyVotes(PRESENT),
                 new ExileTopCardMayPlayThisTurnEffect(new VotesFor(PRESENT), false)
                         .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)));

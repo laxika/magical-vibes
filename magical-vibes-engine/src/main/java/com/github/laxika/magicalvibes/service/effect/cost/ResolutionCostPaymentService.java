@@ -47,7 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.UnlessAnswer;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DepartPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -1076,7 +1076,7 @@ public class ResolutionCostPaymentService {
             }
             case DamageFromSourceCost damage -> {
                 entry.setAcceptedPlayerIds(payers);
-                yield List.of(new DealDamageToPlayersEffect(damage.amount(), Subjects.acceptedPlayers()));
+                yield List.of(DealDamageEffect.to(Subjects.acceptedPlayers(), damage.amount()));
             }
             case SourceControllerDrawsCost draw -> List.of(new DrawCardEffect(draw.count(), Subjects.you()));
             case DiscardCardTypeCost discard -> {

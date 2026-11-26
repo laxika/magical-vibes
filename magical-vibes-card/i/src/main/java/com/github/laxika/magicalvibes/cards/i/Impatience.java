@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastSpell;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -18,6 +18,6 @@ public class Impatience extends Card {
         // this turn, this enchantment deals 2 damage to that player.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new EndStepPlayerDidntCastSpell(null)),
-                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 2));
     }
 }

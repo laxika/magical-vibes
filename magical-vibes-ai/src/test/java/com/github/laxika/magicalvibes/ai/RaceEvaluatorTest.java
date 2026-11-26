@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -192,7 +191,7 @@ class RaceEvaluatorTest {
         @Test
         void targetedPlayerDamageCountsAsBurn() {
             Card spell = new Card();
-            spell.addSpellEffect(new DealDamageToPlayersEffect(4, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 4));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isEqualTo(4);
         }
@@ -200,7 +199,7 @@ class RaceEvaluatorTest {
         @Test
         void controllerDamageDoesNotCountAsBurn() {
             Card spell = new Card();
-            spell.addSpellEffect(new DealDamageToPlayersEffect(5, Subjects.you()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.you(), 5));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
         }

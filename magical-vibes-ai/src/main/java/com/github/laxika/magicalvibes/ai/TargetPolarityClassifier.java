@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -705,7 +705,7 @@ public class TargetPolarityClassifier {
             return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
                     ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
         }
-        if (granted instanceof DealDamageToPlayersEffect damage && damage.player() instanceof PlayerSubject.You) {
+        if (granted instanceof DealDamageEffect damage && damage.players() instanceof PlayerSubject.You) {
             return TargetPolarity.HARMFUL;
         }
         return null;

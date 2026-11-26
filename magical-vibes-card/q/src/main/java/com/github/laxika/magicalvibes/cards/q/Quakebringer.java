@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,10 +22,10 @@ public class Quakebringer extends Card {
     public Quakebringer() {
         addStaticEffect(new PlayersCantGainLifeEffect(Subjects.eachOpponent()));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2));
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withEventCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GIANT))),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2));
         addCastingOption(new ForetellCast("{2}{R}{R}"));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPerman
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +24,7 @@ public class MaskOfIntolerance extends Card {
     public MaskOfIntolerance() {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(controlsAtLeastFourBasicLandTypes()),
-                new DealDamageToPlayersEffect(3, Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 3));
     }
 
     private static Condition controlsAtLeastFourBasicLandTypes() {

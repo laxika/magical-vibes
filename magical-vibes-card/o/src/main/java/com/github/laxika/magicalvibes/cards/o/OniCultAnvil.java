@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -45,7 +45,7 @@ public class OniCultAnvil extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1),
                         new GainLifeEffect(1)
                 ),
                 "{T}, Sacrifice an artifact: This artifact deals 1 damage to each opponent. You gain 1 life."

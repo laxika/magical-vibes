@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.VoteResult;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.VoteEffect;
@@ -25,7 +25,7 @@ public class TruthOrConsequences extends Card {
         addSpellEffect(new ConditionalEffect(VoteResult.anyVotes(TRUTH), new DrawCardEffect(new VotesFor(TRUTH))));
         addSpellEffect(new ChoosePlayerAtRandomEffect(Subjects.eachOpponent()));
         addSpellEffect(new ConditionalEffect(VoteResult.anyVotes(CONSEQUENCES),
-                new DealDamageToPlayersEffect(new Scaled(new VotesFor(CONSEQUENCES), 3),
-                        Subjects.playersThisWay(StepKind.CHOOSE))));
+                DealDamageEffect.to(Subjects.playersThisWay(StepKind.CHOOSE),
+                        new Scaled(new VotesFor(CONSEQUENCES), 3))));
     }
 }

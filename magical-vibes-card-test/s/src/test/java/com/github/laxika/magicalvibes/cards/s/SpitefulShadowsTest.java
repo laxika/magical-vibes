@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.e.Enslave;
 import com.github.laxika.magicalvibes.cards.c.ChancellorOfTheDross;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,10 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SpitefulShadows.class, GrizzlyBears.class, Shock.class, SnappingSailback.class,
-        LightningBolt.class, Enslave.class, ChancellorOfTheDross.class})
+        LightningBolt.class, Enslave.class, ChancellorOfTheDross.class, WhipOfErebos.class})
 class SpitefulShadowsTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("When enchanted creature is dealt non-combat damage, it deals that much to its controller")
@@ -154,5 +153,26 @@ class SpitefulShadowsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("A creature that died deals the damage with the lifelink it had as it left")
+    void departedCreatureDealsDamageWithItsLastKnownLifelink() {
+        harness.addToBattlefield(player2, new WhipOfErebos());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpitefulShadows()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        resolveAllTriggers();
+
+        // The Bears deal 3 to their controller and gain 3 for it: lifelink as it last existed (CR 608.2h).
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLifeBefore);
     }
 }

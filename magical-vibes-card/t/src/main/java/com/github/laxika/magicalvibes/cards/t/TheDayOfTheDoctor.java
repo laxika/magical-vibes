@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayPlayWhileSourceControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -40,7 +40,7 @@ public class TheDayOfTheDoctor extends Card {
                         SequenceEffect.of(
                                 new ExileTargetPermanentEffect(
                                         Subjects.except(Subjects.allCreatures(), Subjects.thisWay(StepKind.CHOOSE))),
-                                new DealDamageToPlayersEffect(13, Subjects.you())),
+                                DealDamageEffect.to(Subjects.you(), 13)),
                         "Exile all other creatures? If you do, The Day of the Doctor deals 13 damage to you."));
     }
 }

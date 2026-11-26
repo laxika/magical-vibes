@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -20,8 +20,7 @@ public class Inquisition extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(RevealCardsFromHandEffect.hand(Subjects.targetPlayer()))
-                .addSpellEffect(new DealDamageToPlayersEffect(
-                        AmountThisWay.revealedCards(new CardColorPredicate(CardColor.WHITE)),
-                        Subjects.targetPlayer()));
+                .addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(),
+                        AmountThisWay.revealedCards(new CardColorPredicate(CardColor.WHITE))));
     }
 }

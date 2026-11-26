@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawAndThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
@@ -90,7 +90,7 @@ public class AmbergrisCitadelAgent extends Card {
                     new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()));
             case BLACK -> BoostEffect.target(new Scaled(discardedCount, -1),
                     new Scaled(discardedCount, -1), TargetFilters.creatureAnOpponentControls().predicate());
-            case RED -> new DealDamageToPlayersEffect(discardedCount, Subjects.eachOpponent());
+            case RED -> DealDamageEffect.to(Subjects.eachOpponent(), discardedCount);
             case GREEN -> new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                     discardedCount, null, anotherCreatureYouControl(), false, null);
             case BLUE -> throw new IllegalArgumentException("Blue Ambergris has no attack rider");

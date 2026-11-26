@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -38,7 +38,7 @@ public class TezzeretMasterOfTheBridge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(
-                        new DealDamageToPlayersEffect(artifactsYouControl, Subjects.eachOpponent()),
+                        DealDamageEffect.to(Subjects.eachOpponent(), artifactsYouControl),
                         new GainLifeEffect(artifactsYouControl)),
                 "+2: Tezzeret deals X damage to each opponent, where X is the number of artifacts you control. "
                         + "You gain X life."

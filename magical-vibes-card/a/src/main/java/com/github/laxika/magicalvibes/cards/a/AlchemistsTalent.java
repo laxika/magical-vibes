@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -69,6 +69,6 @@ public class AlchemistsTalent extends Card {
 
         addTrigger(Triggers.youCastSpell().paidWithTreasureMana(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
-                new DealDamageToPlayersEffect(new TargetSpellManaValue(), Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), new TargetSpellManaValue()));
     }
 }

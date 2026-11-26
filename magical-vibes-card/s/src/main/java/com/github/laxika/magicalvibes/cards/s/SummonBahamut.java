@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,10 +22,8 @@ public class SummonBahamut extends Card {
         addTrigger(Triggers.chapter(1), new DestroyTargetPermanentEffect(nonlandPermanent));
         addTrigger(Triggers.chapter(2), new DestroyTargetPermanentEffect(nonlandPermanent));
         addTrigger(Triggers.chapter(3), new DrawCardEffect(2));
-        addTrigger(Triggers.chapter(4), new DealDamageToPlayersEffect(
-                new PermanentManaValueSum(
+        addTrigger(Triggers.chapter(4), DealDamageEffect.to(Subjects.eachOpponent(), new PermanentManaValueSum(
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
-                        CountScope.CONTROLLER),
-                Subjects.eachOpponent()));
+                        CountScope.CONTROLLER)));
     }
 }

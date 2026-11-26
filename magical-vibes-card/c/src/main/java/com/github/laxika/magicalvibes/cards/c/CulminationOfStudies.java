@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +22,7 @@ public class CulminationOfStudies extends Card {
         addSpellEffect(CreateTokenEffect.ofTreasureToken(
                 AmountThisWay.exiledCards(new CardTypePredicate(CardType.LAND))));
         addSpellEffect(new DrawCardEffect(AmountThisWay.exiledCards(new CardColorPredicate(CardColor.BLUE))));
-        addSpellEffect(new DealDamageToPlayersEffect(
-                AmountThisWay.exiledCards(new CardColorPredicate(CardColor.RED)), Subjects.eachOpponent()));
+        addSpellEffect(DealDamageEffect.to(Subjects.eachOpponent(),
+                AmountThisWay.exiledCards(new CardColorPredicate(CardColor.RED))));
     }
 }

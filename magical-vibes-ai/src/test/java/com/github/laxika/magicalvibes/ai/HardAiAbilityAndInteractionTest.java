@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -1537,7 +1538,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
             com.github.laxika.magicalvibes.model.PendingMayAbility pending =
                     new com.github.laxika.magicalvibes.model.PendingMayAbility(
                             sourceCard, player1.getId(),
-                            List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(5, Subjects.you())),
+                            List.of(DealDamageEffect.to(Subjects.you(), 5)),
                             "You may have this deal 5 damage to you");
             gd.pendingMayAbilities.add(pending);
             gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));

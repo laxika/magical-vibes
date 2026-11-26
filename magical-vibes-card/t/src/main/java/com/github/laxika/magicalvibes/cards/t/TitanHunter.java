@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,7 +25,7 @@ public class TitanHunter extends Card {
         // this creature deals 4 damage to that player.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new Morbid())),
-                new DealDamageToPlayersEffect(new Fixed(4), Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), new Fixed(4)));
 
         // {1}{B}, Sacrifice a creature: You gain 4 life.
         addActivatedAbility(new ActivatedAbility(

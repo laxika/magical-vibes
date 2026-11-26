@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,8 +25,8 @@ public class ArmageddonClock extends Card {
     public ArmageddonClock() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.DOOM));
 
-        addTrigger(Triggers.drawStep(ActivePlayer.YOU), new DealDamageToPlayersEffect(
-                new CountersOnSource(CounterType.DOOM), Subjects.eachPlayer()));
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU), DealDamageEffect.to(Subjects.eachPlayer(),
+                new CountersOnSource(CounterType.DOOM)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

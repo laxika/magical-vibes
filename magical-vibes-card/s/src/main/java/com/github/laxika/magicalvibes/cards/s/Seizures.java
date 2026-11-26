@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +17,6 @@ public class Seizures extends Card {
         // to that creature's controller unless that player pays {3}.
         target(TargetFilters.creature()).addTrigger(Triggers.enchantedPermanentBecomesTapped(),
                 UnlessPaysEffect.unlessPays(Subjects.controllerOf(Subjects.triggering()), "{3}",
-                        new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.triggering()))));
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), 3)));
     }
 }

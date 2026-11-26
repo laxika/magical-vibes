@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -216,7 +215,7 @@ class EffectResolutionServiceTest {
 
     // =========================================================================
     // ConditionalEffect
-    // (ConcussiveBolt: DealDamageToPlayersEffect(4, TARGET_PLAYER) + ConditionalEffect(TargetPlayerCreaturesCantBlockThisTurnEffect))
+    // (ConcussiveBolt: DealDamageEffect.to(targetPlayer(), 4) + ConditionalEffect(TargetPlayerCreaturesCantBlockThisTurnEffect))
     // =========================================================================
 
     @Nested
@@ -468,7 +467,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("All effects on a stack entry resolve in sequence")
         void allEffectsOnStackEntryResolveInSequence() {
-            CardEffect damageEffect = new DealDamageToPlayersEffect(4, Subjects.targetPlayer());
+            CardEffect damageEffect = DealDamageEffect.to(Subjects.targetPlayer(), 4);
             CardEffect cantBlockEffect = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
@@ -488,7 +487,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Non-metalcraft effects still resolve when metalcraft conditional is skipped")
         void nonMetalcraftEffectsStillResolveWhenMetalcraftSkips() {
-            CardEffect damageEffect = new DealDamageToPlayersEffect(4, Subjects.targetPlayer());
+            CardEffect damageEffect = DealDamageEffect.to(Subjects.targetPlayer(), 4);
             CardEffect cantBlockEffect = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
@@ -602,7 +601,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Clears pending state after multi-effect spell resolves")
         void clearsPendingStateAfterMultiEffectSpellResolves() {
-            CardEffect damageEffect = new DealDamageToPlayersEffect(4, Subjects.targetPlayer());
+            CardEffect damageEffect = DealDamageEffect.to(Subjects.targetPlayer(), 4);
             CardEffect cantBlockEffect = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,

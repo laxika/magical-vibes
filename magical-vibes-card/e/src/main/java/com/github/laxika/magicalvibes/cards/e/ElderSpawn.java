@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class ElderSpawn extends Card {
     public ElderSpawn() {
         // At the beginning of your upkeep, unless you sacrifice an Island, sacrifice this creature
         // and it deals 6 damage to you.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay(new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Island"), SequenceEffect.of(new SacrificeSelfEffect(), new DealDamageToPlayersEffect(6, Subjects.you()))));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay(new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Island"), SequenceEffect.of(new SacrificeSelfEffect(), DealDamageEffect.to(Subjects.you(), 6))));
 
         // This creature can't be blocked by red creatures.
         addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(

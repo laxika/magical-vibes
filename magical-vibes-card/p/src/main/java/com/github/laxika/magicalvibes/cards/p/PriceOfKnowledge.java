@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,7 +20,6 @@ public class PriceOfKnowledge extends Card {
         // At the beginning of each opponent's upkeep, this enchantment deals damage to that
         // player equal to the number of cards in that player's hand.
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
-                new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER),
-                        Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), new CardsInHand(CountScope.TARGET_PLAYER)));
     }
 }

@@ -371,7 +371,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   `GameData.openDamageEvent`).
 - "That creature deals that much damage" (CR 608.2h) is the entry's event damage source
   (`StackEntry.setEventDamageSource`, keywords recorded as it leaves), dealt through
-  `DealDamageToPlayersEffect.dealtByEventDamageSource()` / `DamageSupport.entryDealtByEventDamageSource`, so its
+  `DealDamageEffect.byEventDamageSource()` / `DamageSupport.entryDealtByEventDamageSource`, so its
   lifelink, infect and colors apply (Greatbow Doyen, Saskia, Kediss). Delayed damage triggers keep the watched
   permanent as damage source, its controller in `StackEntry.damageSourceControllerId`.
 - "When that creature deals combat damage to a player this turn" is a registered delayed ability (Optimus Prime,

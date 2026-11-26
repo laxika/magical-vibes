@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -30,7 +30,7 @@ public class QuintoriusKand extends Card {
 
     public QuintoriusKand() {
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
+                DealDamageEffect.to(Subjects.eachOpponent(), 2),
                 new GainLifeEffect(2));
 
         addActivatedAbility(new ActivatedAbility(

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -19,7 +19,7 @@ public class WormwoodDryad extends Card {
                 "{G}",
                 List.of(
                         new GrantKeywordEffect(Keyword.FORESTWALK, Subjects.source()),
-                        new DealDamageToPlayersEffect(1, Subjects.you())
+                        DealDamageEffect.to(Subjects.you(), 1)
                 ),
                 "{G}: This creature gains forestwalk until end of turn and deals 1 damage to you."
         ));
@@ -28,7 +28,7 @@ public class WormwoodDryad extends Card {
                 "{B}",
                 List.of(
                         new GrantKeywordEffect(Keyword.SWAMPWALK, Subjects.source()),
-                        new DealDamageToPlayersEffect(1, Subjects.you())
+                        DealDamageEffect.to(Subjects.you(), 1)
                 ),
                 "{B}: This creature gains swampwalk until end of turn and deals 1 damage to you."
         ));

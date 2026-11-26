@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -24,15 +24,12 @@ public class Bulwark extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(
-                        new Max(
+                DealDamageEffect.to(Subjects.targetPlayer(), new Max(
                                 new Fixed(0),
                                 new Sum(
                                         new CardsInHand(CountScope.CONTROLLER),
                                         new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1)
                                 )
-                        ),
-                        Subjects.targetPlayer()
-                ));
+                        )));
     }
 }

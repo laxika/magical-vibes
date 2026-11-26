@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToControlledPermanentCountEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -48,7 +50,8 @@ public class MjLnirStormHammer extends Card {
         target(defendingCreature).addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new TapPermanentsEffect(Subjects.target()),
                 new PutCountersEffect(CounterType.STUN),
-                new DealDamageToEachOpponentEqualToControlledPermanentCountEffect(tappedCreature)));
+                DealDamageEffect.eachEvaluatedFor(new PermanentCount(tappedCreature, CountScope.CONTROLLER),
+                        Subjects.eachOpponent())));
 
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

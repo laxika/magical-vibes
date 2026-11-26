@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TeapotSlinger extends Card {
 
     public TeapotSlinger() {
-        addTrigger(Triggers.youCastSpell().expend(4), new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
+        addTrigger(Triggers.youCastSpell().expend(4), DealDamageEffect.to(Subjects.eachOpponent(), 2));
     }
 }

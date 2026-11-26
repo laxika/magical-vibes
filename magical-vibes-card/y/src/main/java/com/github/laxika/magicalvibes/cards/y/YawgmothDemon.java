@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,6 +22,6 @@ public class YawgmothDemon extends Card {
         // At the beginning of your upkeep, you may sacrifice an artifact. If you don't,
         // tap this creature and it deals 2 damage to you.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                UnlessPaysEffect.unlessYouPay(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "artifact", false), SequenceEffect.of(new TapPermanentsEffect(Subjects.source()), new DealDamageToPlayersEffect(2, Subjects.you()))));
+                UnlessPaysEffect.unlessYouPay(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "artifact", false), SequenceEffect.of(new TapPermanentsEffect(Subjects.source()), DealDamageEffect.to(Subjects.you(), 2))));
     }
 }

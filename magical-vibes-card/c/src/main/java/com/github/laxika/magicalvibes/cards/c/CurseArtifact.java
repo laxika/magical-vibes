@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ public class CurseArtifact extends Card {
                         new MayEffect(
                                 new SacrificeSelfEffect(Subjects.attachedAtTrigger(), Subjects.activePlayer()),
                                 "Sacrifice that artifact?",
-                                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()),
+                                DealDamageEffect.to(Subjects.triggeringPlayer(), 2),
                                 MayChoicePlayer.ACTIVE_PLAYER));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -26,6 +26,6 @@ public class GrafReaver extends Card {
         )).addTrigger(Triggers.exploits(), new DestroyTargetPermanentEffect());
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(1, Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), 1));
     }
 }

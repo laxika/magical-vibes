@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -42,7 +42,7 @@ public class MountDoom extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}{R}",
-                List.of(new DealDamageToPlayersEffect(1, Subjects.eachOpponent())),
+                List.of(DealDamageEffect.to(Subjects.eachOpponent(), 1)),
                 "{1}{B}{R}, {T}: Mount Doom deals 1 damage to each opponent."
         ));
 

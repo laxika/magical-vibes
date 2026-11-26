@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -58,7 +58,7 @@ public class KayaOrzhovUsurper extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -5,
                 List.of(
-                        new DealDamageToPlayersEffect(cardsOwnedInExile, Subjects.targetPlayer()),
+                        DealDamageEffect.to(Subjects.targetPlayer(), cardsOwnedInExile),
                         new GainLifeEffect(cardsOwnedInExile)
                 ),
                 "−5: Kaya deals damage to target player equal to the number of cards that player owns in exile and you gain that much life.",

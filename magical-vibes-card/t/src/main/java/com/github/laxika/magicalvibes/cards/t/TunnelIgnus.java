@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -19,6 +19,6 @@ public class TunnelIgnus extends Card {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS),
                 TriggerOptions.DEFAULT.withInterveningIf(new PermanentEnteredThisTurn(
                         new CardTypePredicate(CardType.LAND), 2, CountScope.TARGET_PLAYER)),
-                new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), 3));
     }
 }

@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -186,9 +186,9 @@ class AiManaManagerTest {
                 true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS)), "Add {C}"));
         // Color ability with pain
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new AwardManaEffect(color1), new DealDamageToPlayersEffect(1, Subjects.you())), "Add " + color1));
+                true, null, List.of(new AwardManaEffect(color1), DealDamageEffect.to(Subjects.you(), 1)), "Add " + color1));
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new AwardManaEffect(color2), new DealDamageToPlayersEffect(1, Subjects.you())), "Add " + color2));
+                true, null, List.of(new AwardManaEffect(color2), DealDamageEffect.to(Subjects.you(), 1)), "Add " + color2));
         return card;
     }
 
@@ -1176,7 +1176,7 @@ class AiManaManagerTest {
         @DisplayName("tap + no mana cost + no mana effect = false")
         void tapNoCostNoManaEffect() {
             ActivatedAbility ability = new ActivatedAbility(
-                    true, null, List.of(new DealDamageToPlayersEffect(1, Subjects.you())), "Ouch");
+                    true, null, List.of(DealDamageEffect.to(Subjects.you(), 1)), "Ouch");
             assertThat(AiManaManager.isFreeTapManaAbility(ability)).isFalse();
         }
 
@@ -1591,7 +1591,7 @@ class AiManaManagerTest {
                     null,
                     List.of(
                             new AwardManaEffect(ManaColor.COLORLESS),
-                            new DealDamageToPlayersEffect(1, Subjects.you())),
+                            DealDamageEffect.to(Subjects.you(), 1)),
                     "{T}: Add {C}. This land deals 1 damage to you."));
             Permanent concretePainPermanent = new Permanent(concretePainLand);
             concretePainPermanent.setSummoningSick(false);

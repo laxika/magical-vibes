@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.OpponentDrewAtLeastCardsThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
@@ -21,7 +21,6 @@ public class RuneflareTrap extends Card {
                 new OpponentDrewAtLeastCardsThisTurn(3),
                 false
         ));
-        addSpellEffect(new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER),
-                        Subjects.targetPlayer()));
+        addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), new CardsInHand(CountScope.TARGET_PLAYER)));
     }
 }

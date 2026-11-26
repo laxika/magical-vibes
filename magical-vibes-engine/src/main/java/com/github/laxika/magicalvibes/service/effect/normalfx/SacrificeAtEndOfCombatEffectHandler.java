@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -35,7 +35,7 @@ public class SacrificeAtEndOfCombatEffectHandler implements NormalEffectHandlerB
             int damageToController = ((SacrificeAtEndOfCombatEffect) effect).damageToController();
             List<CardEffect> effects = new ArrayList<>(List.of(new SacrificeSelfEffect()));
             if (damageToController > 0) {
-                effects.add(new DealDamageToPlayersEffect(damageToController, Subjects.you()));
+                effects.add(DealDamageEffect.to(Subjects.you(), damageToController));
             }
             gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     entry.getControllerId(), entry.getCard(),

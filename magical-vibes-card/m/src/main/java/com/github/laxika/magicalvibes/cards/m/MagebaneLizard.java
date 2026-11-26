@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,7 +16,7 @@ public class MagebaneLizard extends Card {
 
     public MagebaneLizard() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
-        addTrigger(Triggers.playerCastsSpell().withFilter(noncreatureSpell), new DealDamageToPlayersEffect(
-                new SpellsCastThisTurn(noncreatureSpell, CountScope.TARGET_PLAYER), Subjects.triggeringPlayer()));
+        addTrigger(Triggers.playerCastsSpell().withFilter(noncreatureSpell), DealDamageEffect.to(Subjects.triggeringPlayer(),
+                new SpellsCastThisTurn(noncreatureSpell, CountScope.TARGET_PLAYER)));
     }
 }

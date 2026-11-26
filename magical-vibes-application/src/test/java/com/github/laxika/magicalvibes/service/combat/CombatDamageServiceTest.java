@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1412,17 +1412,17 @@ class CombatDamageServiceTest {
         }
 
         @Test
-        @DisplayName("DealDamageToPlayersEffect(TARGET_PLAYER) stack entry has defenderId as targetId")
+        @DisplayName("Target-player damage's stack entry has the defender as its target")
         void dealDamageByHandSizeEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
                     Triggers.dealsCombatDamageToPlayer(),
-                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), Subjects.targetPlayer()));
+                    DealDamageEffect.to(Subjects.targetPlayer(), new CardsInHand(CountScope.TARGET_PLAYER)));
 
             combatDamageService.resolveCombatDamage(gameData);
 
             List<StackEntry> triggerEntries = gameData.stack.stream()
                     .filter(se -> se.getEffectsToResolve().stream()
-                            .anyMatch(e -> e instanceof DealDamageToPlayersEffect d && d.player().equals(Subjects.targetPlayer())))
+                            .anyMatch(e -> e instanceof DealDamageEffect d && Subjects.targetPlayer().equals(d.players())))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);

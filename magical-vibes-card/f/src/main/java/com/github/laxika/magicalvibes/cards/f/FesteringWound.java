@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +21,6 @@ public class FesteringWound extends Card {
                         new MayEffect(PutCountersEffect.onSelf(CounterType.INFECTION),
                                 "Put an infection counter on Festering Wound?"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                        new DealDamageToPlayersEffect(new CountersOnSource(CounterType.INFECTION),
-                                Subjects.triggeringPlayer()));
+                        DealDamageEffect.to(Subjects.triggeringPlayer(), new CountersOnSource(CounterType.INFECTION)));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,6 +12,6 @@ public class CurseOfThePiercedHeart extends Card {
 
     public CurseOfThePiercedHeart() {
         addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                DealDamageToPlayersEffect.toPlayerOrTheirPlaneswalker(1, Subjects.triggeringPlayer()));
+                DealDamageEffect.toPlayerOrTheirPlaneswalker(1, Subjects.triggeringPlayer()));
     }
 }

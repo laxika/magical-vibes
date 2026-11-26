@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,6 +19,6 @@ public class CrimsonHonorGuard extends Card {
     public CrimsonHonorGuard() {
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new NotCondition(new TargetPlayerControlsPermanent(new PermanentIsCommanderPredicate())),
-                new DealDamageToPlayersEffect(new Fixed(4), Subjects.triggeringPlayer())));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), new Fixed(4))));
     }
 }

@@ -70,7 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -425,8 +425,8 @@ public class SpellEvaluator {
         if (branch instanceof LoseLifeEffect lose && lose.player().equals(payer)) {
             return -Math.max(0, amountEvaluationService.evaluate(gameData, lose.amount(), context));
         }
-        if (branch instanceof DealDamageToPlayersEffect damage && damage.player().equals(payer)) {
-            return -Math.max(0, amountEvaluationService.evaluate(gameData, damage.amount(), context));
+        if (branch instanceof DealDamageEffect damage && payer.equals(damage.players())) {
+            return -Math.max(0, amountEvaluationService.evaluate(gameData, damage.damage(), context));
         }
         return 0;
     }
@@ -939,7 +939,7 @@ public class SpellEvaluator {
         }
 
         // Damage to creatures / any target. Player-only damage (canDamageCreatures() == false)
-        // falls through to the DealDamageToPlayersEffect survivor branches below, whose recipient
+        // falls through to the player-damage branches below, whose recipient
         // decides the sign — a fact no descriptive interface method expresses.
         if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
             int damage = estimateDamageAmount(gameData, card, dmg.damageAmount(), aiPlayerId);
@@ -947,11 +947,11 @@ public class SpellEvaluator {
                     ? evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId)
                     : evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player().declaresTarget()) {
-            return estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
+        if (effect instanceof DealDamageEffect dmg && dmg.players() != null && dmg.players().declaresTarget()) {
+            return estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId) * 1.5;
         }
-        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player() instanceof PlayerSubject.You) {
-            return -estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
+        if (effect instanceof DealDamageEffect dmg && dmg.players() instanceof PlayerSubject.You) {
+            return -estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId) * 1.5;
         }
 
         // Board wipes

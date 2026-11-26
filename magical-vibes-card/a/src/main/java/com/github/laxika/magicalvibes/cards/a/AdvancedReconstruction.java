@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
@@ -47,7 +47,7 @@ public class AdvancedReconstruction extends Card {
 
         addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

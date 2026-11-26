@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,8 +29,8 @@ public class ChandraLegacyOfFire extends Card {
         PermanentCount planeswalkersYouControl = new PermanentCount(
                 new PermanentIsPlaneswalkerPredicate(), CountScope.CONTROLLER);
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new DealDamageToPlayersEffect(
-                planeswalkersYouControl, Subjects.eachOpponent()));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), DealDamageEffect.to(Subjects.eachOpponent(),
+                planeswalkersYouControl));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

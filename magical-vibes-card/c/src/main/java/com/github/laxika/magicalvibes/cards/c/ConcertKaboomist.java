@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastSinceBeginningOfLastTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,8 +29,8 @@ public class ConcertKaboomist extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(noncreatureSpells, Subjects.targetPlayer()))
+                DealDamageEffect.to(Subjects.targetPlayer(), noncreatureSpells))
                 .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                        new DealDamageToPlayersEffect(noncreatureSpells, Subjects.targetPlayer()));
+                        DealDamageEffect.to(Subjects.targetPlayer(), noncreatureSpells));
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Sizzle extends Card {
 
     public Sizzle() {
-        addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.eachOpponent()));
+        addSpellEffect(DealDamageEffect.to(Subjects.eachOpponent(), 3));
     }
 }

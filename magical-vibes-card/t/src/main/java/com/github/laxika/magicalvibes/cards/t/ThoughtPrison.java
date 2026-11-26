@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,6 +31,6 @@ public class ThoughtPrison extends Card {
 
         addTrigger(Triggers.playerCastsSpell()
                         .withStackEntryFilter(new StackEntrySharesColorOrManaValueWithImprintedCardPredicate()),
-                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 2));
     }
 }

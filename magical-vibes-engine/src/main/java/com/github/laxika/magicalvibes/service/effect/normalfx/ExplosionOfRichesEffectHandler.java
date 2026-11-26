@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExplosionOfRichesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -114,7 +114,7 @@ public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
         for (int i = 0; i < count; i++) {
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             StackEntry damage = ReflexiveAbilitySupport.recordFor(gameData, resolving, sourceCard, controllerId,
-                    List.of(new DealDamageToPlayersEffect(5, Subjects.targetPlayerChosenAtRandom())),
+                    List.of(DealDamageEffect.to(Subjects.targetPlayerChosenAtRandom(), 5)),
                     sourceCard.getName() + "'s reflexive ability", null);
             damage.setTargetFilter(TARGET_OPPONENT);
             triggeredAbilityStackService.putMade(gameData, damage);

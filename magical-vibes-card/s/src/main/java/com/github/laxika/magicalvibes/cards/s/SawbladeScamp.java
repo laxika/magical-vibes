@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ public class SawbladeScamp extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.OIL),
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent())
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1)
                 ),
                 "Remove an oil counter from this creature: It deals 1 damage to each opponent."
         ));

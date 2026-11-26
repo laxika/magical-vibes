@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,6 +28,6 @@ public class Aftershock extends Card {
                 "Target must be an artifact, creature, or land"
         ))
                 .addSpellEffect(new DestroyTargetPermanentEffect(false))
-                .addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.you()));
+                .addSpellEffect(DealDamageEffect.to(Subjects.you(), 3));
     }
 }

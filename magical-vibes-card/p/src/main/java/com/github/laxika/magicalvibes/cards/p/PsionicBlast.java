@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TSB", collectorNumber = "30")
@@ -14,6 +13,6 @@ public class PsionicBlast extends Card {
 
     public PsionicBlast() {
         addSimultaneousSpellEffects(DealDamageEffect.toAnyTarget(4),
-                new DealDamageToPlayersEffect(2, Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), 2));
     }
 }

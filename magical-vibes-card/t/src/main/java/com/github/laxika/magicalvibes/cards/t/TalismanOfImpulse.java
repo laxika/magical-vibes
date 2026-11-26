@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class TalismanOfImpulse extends Card {
                 null,
                 List.of(
                         new AwardManaOfColorsEffect(List.of(ManaColor.RED, ManaColor.GREEN)),
-                        new DealDamageToPlayersEffect(1, Subjects.you())
+                        DealDamageEffect.to(Subjects.you(), 1)
                 ),
                 "{T}: Add {R} or {G}. This artifact deals 1 damage to you."
         ));

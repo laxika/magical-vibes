@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,9 +19,8 @@ public class ThoughtHemorrhage extends Card {
     public ThoughtHemorrhage() {
         addSpellEffect(ChooseCardNameAtResolutionEffect.excluding(CardType.LAND));
         addSpellEffect(RevealCardsFromHandEffect.hand(Subjects.targetPlayer()));
-        addSpellEffect(new DealDamageToPlayersEffect(
-                new Scaled(AmountThisWay.revealedCards(new CardHasNameChosenThisResolutionPredicate()), 3),
-                Subjects.targetPlayer()));
+        addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(),
+                new Scaled(AmountThisWay.revealedCards(new CardHasNameChosenThisResolutionPredicate()), 3)));
         addSpellEffect(ExileCardsWithSameNameEffect.allWithChosenName(Subjects.targetPlayer()));
     }
 }

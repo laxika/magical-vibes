@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,7 +21,7 @@ public class BarbflareGremlin extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
                 SequenceEffect.of(
                         new AddOneOfEachManaTypeProducedByLandEffect(),
-                        new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer())
-                                .dealtByTriggeringPermanent()));
+                        DealDamageEffect.to(Subjects.triggeringPlayer(), 1)
+                                .byTriggeringPermanent()));
     }
 }

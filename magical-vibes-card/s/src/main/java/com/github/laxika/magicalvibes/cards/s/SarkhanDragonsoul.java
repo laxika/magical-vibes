@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -33,7 +32,7 @@ public class SarkhanDragonsoul extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(SequenceEffect.simultaneous(
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1),
                         new DealDamageToEachMatchingPermanentEffect(
                                 1,
                                 new PermanentAllOfPredicate(List.of(

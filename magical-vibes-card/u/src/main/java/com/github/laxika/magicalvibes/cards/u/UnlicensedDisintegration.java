@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,6 +20,6 @@ public class UnlicensedDisintegration extends Card {
         // Destroy target creature. If you control an artifact, Unlicensed Disintegration deals 3
         // damage to that creature's controller.
         target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentEffect())
-                .addSpellEffect(new ConditionalEffect(new ControlsPermanent(new PermanentIsArtifactPredicate()), new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.target()))));
+                .addSpellEffect(new ConditionalEffect(new ControlsPermanent(new PermanentIsArtifactPredicate()), DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 3)));
     }
 }

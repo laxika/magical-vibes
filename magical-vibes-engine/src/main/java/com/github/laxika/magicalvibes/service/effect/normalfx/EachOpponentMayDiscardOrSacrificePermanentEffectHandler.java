@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class EachOpponentMayDiscardOrSacrificePermanentEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final DealDamageEffectHandler dealDamageEffectHandler;
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -105,7 +105,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentEffectHandler
 
     private void dealDamage(GameData gameData, StackEntry sourceEntry, UUID playerId,
             DynamicAmount amount) {
-        var damage = new DealDamageToPlayersEffect(amount, Subjects.targetPlayer());
+        var damage = DealDamageEffect.to(Subjects.targetPlayer(), amount);
         var damageEntry = StackEntry.carrier(sourceEntry.getCard(),
                 sourceEntry.getControllerId(),
                 sourceEntry.getCard().getName() + "'s ability",
@@ -113,7 +113,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentEffectHandler
                 playerId,
                 sourceEntry.getSourcePermanentId());
         damageEntry.setSourcePermanentSnapshot(sourceEntry.getSourcePermanentSnapshot());
-        dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
+        dealDamageEffectHandler.resolve(gameData, damageEntry, damage);
     }
 
     private List<UUID> apnapOpponents(GameData gameData, UUID controllerId) {

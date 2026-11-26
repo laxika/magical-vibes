@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class ControlledCreaturesDealPowerDamageToEachOpponentEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final DealDamageEffectHandler dealDamageEffectHandler;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -70,8 +70,8 @@ public class ControlledCreaturesDealPowerDamageToEachOpponentEffectHandler
                         List.of(),
                         opponentId,
                         source.getId());
-                dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry,
-                        new DealDamageToPlayersEffect(new SourcePower(), Subjects.targetPlayer()));
+                dealDamageEffectHandler.resolve(gameData, damageEntry,
+                        DealDamageEffect.to(Subjects.targetPlayer(), new SourcePower()));
             }
         }
     }

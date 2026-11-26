@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -23,6 +23,6 @@ public class CosmicHorror extends Card {
         // If this creature is destroyed this way, it deals 7 damage to you.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 UnlessPaysEffect.unlessYouPay("{3}{B}{B}{B}", SequenceEffect.of(new DestroyTargetPermanentEffect(Subjects.source()), new ConditionalEffect(HappenedThisWay.destroyed(),
-                                new DealDamageToPlayersEffect(7, Subjects.you())))));
+                                DealDamageEffect.to(Subjects.you(), 7)))));
     }
 }

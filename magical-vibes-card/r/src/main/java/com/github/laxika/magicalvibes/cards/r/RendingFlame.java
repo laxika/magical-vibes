@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +32,7 @@ public class RendingFlame extends Card {
                 .addSpellEffect(DealDamageEffect.toTargetCreatureOrPlaneswalker(5))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)),
-                        new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target()))
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2)
                 ));
     }
 }

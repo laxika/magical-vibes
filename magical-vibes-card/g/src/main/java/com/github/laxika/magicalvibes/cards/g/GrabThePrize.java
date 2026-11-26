@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,6 +22,6 @@ public class GrabThePrize extends Card {
                 new ImprintedCardMatches(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         "not a land card", "discarded card"),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2)));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -30,7 +30,7 @@ public class ImmersturmSkullcairn extends Card {
                 "{1}{B}{R}{R}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToPlayersEffect(3, Subjects.targetPlayer()),
+                        DealDamageEffect.to(Subjects.targetPlayer(), 3),
                         new DiscardEffect(1, Subjects.targetPlayer())
                 ),
                 "{1}{B}{R}{R}, {T}, Sacrifice this land: It deals 3 damage to target player. That player discards a card. Activate only as a sorcery.",

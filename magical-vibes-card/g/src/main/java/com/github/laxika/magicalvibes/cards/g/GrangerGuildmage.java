@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +19,7 @@ public class GrangerGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(true, "{R}",
                 List.of(SequenceEffect.simultaneous(
                         DealDamageEffect.toAnyTarget(1),
-                        new DealDamageToPlayersEffect(1, Subjects.you())
+                        DealDamageEffect.to(Subjects.you(), 1)
                 )),
                 "{R}, {T}: Granger Guildmage deals 1 damage to any target and 1 damage to you."));
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ public class BladeJuggler extends Card {
 
         // When this creature enters, it deals 1 damage to you and you draw a card.
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new DealDamageToPlayersEffect(1, Subjects.you()),
+                DealDamageEffect.to(Subjects.you(), 1),
                 new DrawCardEffect(1)));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,6 +22,6 @@ public class ZhurTaaDruid extends Card {
     public ZhurTaaDruid() {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
         addTrigger(Triggers.tappedForMana(),
-                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 1));
     }
 }

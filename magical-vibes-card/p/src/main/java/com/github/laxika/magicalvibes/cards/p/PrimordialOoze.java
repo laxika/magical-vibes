@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -34,7 +34,7 @@ public class PrimordialOoze extends Card {
                                 PayManaCost.withGenericIncrease("{0}", new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
                                 SequenceEffect.of(
                                         new TapPermanentsEffect(Subjects.source()),
-                                        new DealDamageToPlayersEffect(
-                                                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), Subjects.you())))));
+                                        DealDamageEffect.to(Subjects.you(),
+                                                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))))));
     }
 }

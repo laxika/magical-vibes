@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect.ExileIfItWouldDie;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect.Recipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -35,11 +36,13 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,6 +67,8 @@ import java.util.UUID;
  *       and the amount doesn't itself read the event value: over lethal damage for a creature (1 with the dealer's
  *       deathtouch), over loyalty for a planeswalker (its toughness when that is its loyalty), over defense for a
  *       battle, the greatest for several types.</li>
+ *   <li><b>Players</b> ({@link Recipient#PLAYERS}, {@link Recipient#PLAYER_OR_THEIR_PLANESWALKER}): see
+ *       {@link #damagePlayers}.</li>
  *   <li><b>Non-target subjects</b> (creature kind): {@code source()} through the same path; {@code triggering()} and
  *       {@code thisWay(kind)} with the targeted-creature prevention check; the Aura subjects with the Aura, as it is
  *       or last existed, dealing the damage.</li>
@@ -80,6 +85,7 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
     private final ConditionEvaluationService conditionEvaluationService;
     private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -91,6 +97,10 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
         entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
         DealDamageEffect e = (DealDamageEffect) effect;
+        if (e.recipient().namesPlayers()) {
+            damagePlayers(gameData, entry, e);
+            return;
+        }
         switch (e.subject()) {
             case PermanentSubject.Source ignored -> damageSource(gameData, entry, e);
             case PermanentSubject.Triggering ignored -> damageTriggeringPermanent(gameData, entry, e);
@@ -221,6 +231,8 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
                 }
                 yield entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
             }
+            case PLAYERS, PLAYER_OR_THEIR_PLANESWALKER ->
+                    throw new IllegalStateException("Player damage names its players: " + e.recipient());
         };
         boolean playersAllowed = e.recipient() == Recipient.ANY_TARGET
                 || e.recipient() == Recipient.PLAYER_OR_PLANESWALKER;
@@ -266,9 +278,9 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             return amountEvaluationService.referencesEventValue(boost.powerBoost())
                     || amountEvaluationService.referencesEventValue(boost.toughnessBoost());
         }
-        if (effect instanceof DealDamageToPlayersEffect playerDamage) {
-            return playerDamage.player().equals(Subjects.controllerOf(Subjects.target()))
-                    && amountEvaluationService.referencesEventValue(playerDamage.amount());
+        if (effect instanceof DealDamageEffect playerDamage && playerDamage.recipient() == Recipient.PLAYERS) {
+            return Subjects.controllerOf(Subjects.target()).equals(playerDamage.players())
+                    && amountEvaluationService.referencesEventValue(playerDamage.damage());
         }
         if (effect instanceof GainLifeEffect gainLife) {
             return amountEvaluationService.referencesEventValue(gainLife.amount());
@@ -401,5 +413,165 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, aura));
         damageSupport.dealCreatureDamage(gameData, entry, creature, damage, aura);
+    }
+
+    /**
+     * Deals damage to the players the effect's {@link PlayerSubject} names, found through
+     * {@link SubjectResolutionService} (several in APNAP order), one {@link DamageSupport#dealDamageToPlayer} call per
+     * player, then checks the win condition once. The stack entry's controller id is never remapped, so
+     * opponent-source damage-reduction shields keep applying (the source stays the caster). With
+     * {@code DamageSource.EVENT_DAMAGE_SOURCE} the damage is dealt through
+     * {@link DamageSupport#entryDealtByEventDamageSource}, whose source is the permanent that dealt the trigger event's
+     * damage; with {@code DamageSource.TRIGGERING_PERMANENT} through {@link DamageSupport#entryDealtByTriggeringPermanent},
+     * whose source is the permanent the trigger event was about; the players and the amount are still read from the
+     * resolving entry.
+     *
+     * <p>The amount is evaluated for each player dealt damage, every player's before any damage is dealt (CR 608.2h):
+     * with that player as the controller for {@code eachPlayer()} and with {@code amountForEachPlayer}, as the target
+     * for {@code defendingPlayer()}, else in the resolving entry's own context. "You" and "that creature's controller"
+     * check only the stack entry's own prevention; the other subjects also check prevention of a targeted spell's
+     * damage.
+     */
+    private void damagePlayers(GameData gameData, StackEntry entry, DealDamageEffect e) {
+        // The entry the damage is dealt through: the resolving one, or one whose source is the permanent that dealt
+        // the trigger event's damage ("that Archer deals that much damage"); the players are always read from the
+        // resolving entry.
+        StackEntry dealing = switch (e.damageSource()) {
+            case EVENT_DAMAGE_SOURCE -> damageSupport.entryDealtByEventDamageSource(gameData, entry);
+            case TRIGGERING_PERMANENT -> damageSupport.entryDealtByTriggeringPermanent(gameData, entry);
+            case ABILITY_SOURCE -> entry;
+        };
+        if (dealing == null) {
+            return;
+        }
+        UUID damageSourceId = dealing.getSourcePermanentId() != null
+                ? dealing.getSourcePermanentId() : dealing.getCard().getId();
+        int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
+        boolean previousUnpreventable = gameData.unpreventableDamageInProgress;
+        gameData.unpreventableDamageInProgress = previousUnpreventable || e.alwaysUnpreventable();
+        try {
+            if (e.recipient() == Recipient.PLAYER_OR_THEIR_PLANESWALKER) {
+                damagePlayerOrTheirPlaneswalker(gameData, entry, dealing, e);
+            } else {
+                damageEachPlayer(gameData, entry, dealing, e);
+            }
+            if (dealing != entry) {
+                // Dealt through the permanent that deals it: the damage is this step's.
+                entry.addToStep(StepKind.DEAL_DAMAGE, dealing.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
+            }
+
+            if (e.recordDamageDealt()) {
+                entry.setEventValue(gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0)
+                        - damageBefore);
+            }
+            gameOutcomeService.checkWinCondition(gameData);
+        } finally {
+            gameData.unpreventableDamageInProgress = previousUnpreventable;
+        }
+    }
+
+    private void damageEachPlayer(GameData gameData, StackEntry entry, StackEntry dealing, DealDamageEffect e) {
+        List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.players());
+        if (players.isEmpty() || isPlayerDamagePrevented(gameData, dealing, e, players.getFirst())) {
+            return;
+        }
+        boolean spellController = readsTarget(e, PermanentSubject.TargetSpell.class);
+        // Every amount is determined once, before any of the damage changes the game (CR 608.2h).
+        Map<UUID, Integer> amounts = new LinkedHashMap<>();
+        for (UUID playerId : players) {
+            amounts.put(playerId, evaluatePlayerAmount(gameData, entry, e, playerId));
+        }
+        amounts.forEach((playerId, amount) -> {
+            if (!(spellController && amount <= 0)) {
+                damageSupport.dealDamageToPlayer(gameData, dealing, playerId, amount);
+            }
+        });
+    }
+
+    /**
+     * Whether the damage is prevented before it is dealt. "You" and "that creature's controller" check only the
+     * entry's own prevention, with their own log line; every other subject checks every source-wide prevention.
+     */
+    private boolean isPlayerDamagePrevented(GameData gameData, StackEntry dealing, DealDamageEffect e, UUID playerId) {
+        if (e.players() instanceof PlayerSubject.You) {
+            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, dealing)) {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(dealing.getCard(), "'s damage to controller is prevented."));
+                return true;
+            }
+            return false;
+        }
+        if (readsTarget(e, PermanentSubject.Target.class)) {
+            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, dealing)) {
+                gameLogService.append(gameData, GameLog.text(FaceDownVisibility.sourceName(gameData, dealing)
+                        + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+                return true;
+            }
+            return false;
+        }
+        return damageSupport.isDamageSourcePreventedWithLog(gameData, dealing);
+    }
+
+    private static boolean readsTarget(DealDamageEffect e, Class<? extends PermanentSubject> kind) {
+        return e.players() instanceof PlayerSubject.ControllerOf controllerOf
+                && kind.isInstance(controllerOf.permanent());
+    }
+
+    /**
+     * "That player or a planeswalker that player controls": the player is found once, then, if they control a
+     * planeswalker, the controller chooses without targeting and the effect is resolved again with the answer; with
+     * none, the damage goes to that player, whatever the entry's own target is (a spell-cast trigger's "that player").
+     */
+    private void damagePlayerOrTheirPlaneswalker(GameData gameData, StackEntry entry, StackEntry dealing,
+                                                 DealDamageEffect effect) {
+        UUID player = entry.getOpponentChosenTargetPlayerId();
+        UUID recipient;
+        if (player == null) {
+            player = subjectResolutionService.player(gameData, entry, effect, effect.players());
+            if (player == null || !gameData.playerIds.contains(player)) return;
+            entry.setOpponentChosenTargetPlayerId(player);
+            UUID thatPlayer = player;
+            List<UUID> planeswalkers = gameData.playerBattlefields.getOrDefault(thatPlayer, List.of()).stream()
+                    .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                    .map(Permanent::getId).toList();
+            if (!planeswalkers.isEmpty()) {
+                entry.setTargetId(null);
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.RandomOpponentDamageChoice(entry.getCard(), entry.getControllerId()));
+                playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), planeswalkers,
+                        List.of(thatPlayer), FaceDownVisibility.sourceName(gameData, entry)
+                                + " \u2014 Choose " + gameData.playerIdToName.get(thatPlayer)
+                                + " or a planeswalker they control.");
+                return;
+            }
+            recipient = player;
+        } else {
+            recipient = entry.getTargetId() == null ? player : entry.getTargetId();
+        }
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        if (!damageSupport.isDamageSourcePreventedWithLog(gameData, dealing)) {
+            int amount = evaluatePlayerAmount(gameData, entry, effect, player);
+            damageSupport.resolveAnyTargetDamage(gameData, dealing, recipient, amount, false);
+        }
+    }
+
+    private int evaluatePlayerAmount(GameData gameData, StackEntry entry, DealDamageEffect e, UUID playerId) {
+        // Source-relative amounts use the live source permanent when it is still on the battlefield,
+        // else the last-known snapshot (e.g. sacrificed as an activation cost).
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        AmountContext context = AmountContext.forStackEntry(entry, source);
+        if (e.amountForEachPlayer()
+                || e.players() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL) {
+            context = context.withControllerId(playerId);
+        } else if (e.players() instanceof PlayerSubject.DefendingPlayer) {
+            context = context.withTargetPermanentId(playerId);
+        }
+        return amountEvaluationService.evaluate(gameData, e.damage(), context);
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPlayFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class ArkOfHunger extends Card {
         // to each opponent and you gain 1 life.
         addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE, SequenceEffect.of(
-                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()), new GainLifeEffect(1)));
+                DealDamageEffect.to(Subjects.eachOpponent(), 1), new GainLifeEffect(1)));
 
         // {T}: Mill a card. You may play that card this turn.
         addActivatedAbility(new ActivatedAbility(

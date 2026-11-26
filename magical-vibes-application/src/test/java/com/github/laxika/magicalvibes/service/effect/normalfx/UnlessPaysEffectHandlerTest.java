@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AllOfCost;
 import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -355,7 +355,7 @@ class UnlessPaysEffectHandlerTest {
         assertThat(entry.getAcceptedPlayerIds()).isEmpty();
         assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.PAID);
         assertThat(handler.paymentMadeTogether(gd, entry, effect, 0)).singleElement()
-                .isEqualTo(new DealDamageToPlayersEffect(4, Subjects.acceptedPlayers()));
+                .isEqualTo(DealDamageEffect.to(Subjects.acceptedPlayers(), 4));
         assertThat(entry.getAcceptedPlayerIds()).containsExactly(player1Id, player2Id);
         assertThat(entry.unlessAnswer(0)).isNull();
     }

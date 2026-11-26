@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,6 +24,6 @@ public class ShockerUnshakable extends Card {
         target(TargetFilters.creature()).bindEffect(creatureDamage);
         addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS),
                 creatureDamage,
-                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2));
     }
 }

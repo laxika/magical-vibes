@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class MindWhip extends Card {
         // tap that creature.
         target(TargetFilters.creature()).addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                 UnlessPaysEffect.unlessPays(Subjects.activePlayer(), "{3}", SequenceEffect.of(
-                        new DealDamageToPlayersEffect(2, Subjects.activePlayer()),
+                        DealDamageEffect.to(Subjects.activePlayer(), 2),
                         new TapPermanentsEffect(Subjects.attachedAtTrigger()))));
     }
 }

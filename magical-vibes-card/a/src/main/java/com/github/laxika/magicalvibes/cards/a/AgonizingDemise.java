@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -38,7 +38,7 @@ public class AgonizingDemise extends Card {
                 new DestroyTargetPermanentEffect(true),
                 SequenceEffect.of(
                         new DestroyTargetPermanentEffect(true),
-                        new DealDamageToPlayersEffect(new TargetPower(), Subjects.controllerOf(Subjects.target())))
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), new TargetPower()))
         ));
     }
 }

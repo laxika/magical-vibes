@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class Skullcage extends Card {
         // must still be put on the stack when the opponent has exactly three or four cards.
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(
                 new AnyOf(List.of(new ActivePlayerHandAtMost(2), new ActivePlayerHandAtLeast(5))),
-                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer())));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 2)));
     }
 }

@@ -69,7 +69,7 @@ control" includes the source, "other creatures you control" does not; a one-shot
 |---|---|---|---|
 | `you()` | "you" | no | yes |
 | `targetPlayer()`, `targetPlayer(group)` | "target player", "target opponent" | yes | no |
-| `targetPlayerChosenAtRandom()` | "target opponent chosen at random", "select target player at random": the declared player target, picked at random among the legal players as the spell or ability goes on the stack (`TargetSpec.chosenAtRandom`); an opponent-only target is the card's target filter. Read by `DealDamageToPlayersEffect`, `DiscardEffect` and `GainControlOfTargetEffect.gainedBy` | yes | no |
+| `targetPlayerChosenAtRandom()` | "target opponent chosen at random", "select target player at random": the declared player target, picked at random among the legal players as the spell or ability goes on the stack (`TargetSpec.chosenAtRandom`); an opponent-only target is the card's target filter. Read by `DealDamageEffect.to(PlayerSubject, …)`, `DiscardEffect` and `GainControlOfTargetEffect.gainedBy` | yes | no |
 | `targetPlayerDeclaredElsewhere()` | "target player" whose target the card's target filter or another effect of the ability declares ("target player draws two cards and loses 2 life"); reads the same targets | no | no |
 | `eachPlayer()`, `eachOpponent()` | "each player", "each opponent" (APNAP order) | no | yes |
 | `opponentsOf(player)` | "each of that player's opponents", "each other player" (APNAP order; nobody if `player` names nobody) | no | if `player` may |

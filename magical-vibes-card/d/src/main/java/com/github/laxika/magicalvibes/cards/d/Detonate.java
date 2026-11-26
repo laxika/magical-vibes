@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,7 +36,6 @@ public class Detonate extends Card {
                 "Target must be an artifact with mana value X."
         ))
                 .addSpellEffect(new DestroyTargetPermanentEffect(true))
-                .addSpellEffect(new DealDamageToPlayersEffect(
-                        new XValue(), Subjects.controllerOf(Subjects.target())));
+                .addSpellEffect(DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), new XValue()));
     }
 }

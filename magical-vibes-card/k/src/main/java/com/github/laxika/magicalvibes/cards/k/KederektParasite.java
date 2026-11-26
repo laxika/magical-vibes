@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -24,7 +24,7 @@ public class KederektParasite extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.RED)))),
                 new MayEffect(
-                        new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()),
+                        DealDamageEffect.to(Subjects.triggeringPlayer(), 1),
                         "Have Kederekt Parasite deal 1 damage to that player?"
                 ));
     }

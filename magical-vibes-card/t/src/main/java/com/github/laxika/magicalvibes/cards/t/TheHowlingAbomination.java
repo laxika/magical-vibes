@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,6 +24,6 @@ public class TheHowlingAbomination extends Card {
 
         addTrigger(Triggers.becomesTargetOfSpell(), SequenceEffect.of(
                 BoostEffect.self(2, 2),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2)));
     }
 }

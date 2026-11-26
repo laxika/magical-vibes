@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -19,7 +19,7 @@ public class BloodForTheBloodGod extends Card {
                 new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
         addSpellEffect(new DiscardHandEffect());
         addSpellEffect(new DrawCardEffect(8));
-        addSpellEffect(new DealDamageToPlayersEffect(8, Subjects.eachOpponent()));
+        addSpellEffect(DealDamageEffect.to(Subjects.eachOpponent(), 8));
         addSpellEffect(new ExileSpellEffect());
     }
 }

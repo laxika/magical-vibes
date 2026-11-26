@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -18,6 +18,6 @@ public class MagneticMine extends Card {
     public MagneticMine() {
         addTrigger(Triggers.dies(new PermanentAllOfPredicate(List.of(Triggers.ARTIFACT,
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))), ObjectRelation.ANY),
-                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.triggering())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), 2));
     }
 }

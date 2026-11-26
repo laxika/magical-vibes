@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -28,6 +28,6 @@ public class Misfortune extends Card {
                         List.of(new PutCountersEffect(
                                         Subjects.controlledBy(Subjects.modeChooser(), new PermanentIsCreaturePredicate()),
                                         CounterType.MINUS_ONE_MINUS_ONE),
-                                new DealDamageToPlayersEffect(4, Subjects.modeChooser()))))));
+                                DealDamageEffect.to(Subjects.modeChooser(), 4))))));
     }
 }

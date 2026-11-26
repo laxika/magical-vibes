@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
@@ -37,7 +37,7 @@ public class NicolBolasTheDeceiver extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -11,
                 List.of(
-                        new DealDamageToPlayersEffect(7, Subjects.eachOpponent()),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 7),
                         new DrawCardEffect(7)
                 ),
                 "−11: Nicol Bolas deals 7 damage to each opponent. You draw seven cards."

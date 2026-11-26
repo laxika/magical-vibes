@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -34,7 +34,7 @@ public class WerewolfRansacker extends Card {
         // If that artifact is put into a graveyard this way, deal 3 damage to that artifact's controller.
         addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS), new MayEffect(
                 DestroyTargetPermanentThenEffect.ifDiesThisWay(EventStat.NONE,
-                        new DealDamageToPlayersEffect(3, Subjects.targetPlayer()),
+                        DealDamageEffect.to(Subjects.targetPlayer(), 3),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET, null),
                 "Destroy target artifact?"
         ));

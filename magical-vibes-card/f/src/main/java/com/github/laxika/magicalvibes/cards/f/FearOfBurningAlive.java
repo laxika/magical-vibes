@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,7 +16,7 @@ public class FearOfBurningAlive extends Card {
 
     public FearOfBurningAlive() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(4, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 4));
         addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(),
                 TriggerOptions.DEFAULT.withInterveningIf(new Delirium()),
                 DealDamageEffect.toTargetCreature(new EventValue(), new PermanentControlledByTriggeringPlayerPredicate()));

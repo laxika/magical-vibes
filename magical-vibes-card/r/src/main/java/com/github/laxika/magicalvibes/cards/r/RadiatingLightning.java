@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DOM", collectorNumber = "138")
@@ -11,7 +11,7 @@ public class RadiatingLightning extends Card {
 
     public RadiatingLightning() {
         // Radiating Lightning deals 3 damage to target player and 1 damage to each creature that player controls.
-        addSimultaneousSpellEffects(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()),
+        addSimultaneousSpellEffects(DealDamageEffect.to(Subjects.targetPlayer(), 3),
                 new DealDamageToPermanentsTargetControlsEffect(1));
     }
 }

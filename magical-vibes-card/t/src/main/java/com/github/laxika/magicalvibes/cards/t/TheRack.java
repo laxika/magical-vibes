@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,9 +30,7 @@ public class TheRack extends Card {
         // X = max(0, 3 - cards in hand), floored so a full hand deals no damage.
         addStaticEffect(new ChooseOpponentOnEnterEffect());
         addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
-                new DealDamageToPlayersEffect(
-                        new Max(new Fixed(0),
-                                new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1))),
-                        Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), new Max(new Fixed(0),
+                                new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1)))));
     }
 }

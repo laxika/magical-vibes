@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,13 +20,11 @@ import java.util.List;
 public class BlackMarketTycoon extends Card {
 
     public BlackMarketTycoon() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DealDamageToPlayersEffect(
-                new Scaled(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), DealDamageEffect.to(Subjects.you(), new Scaled(
                         new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE),
                                 CountScope.CONTROLLER),
-                        2),
-                Subjects.you()));
+                        2)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

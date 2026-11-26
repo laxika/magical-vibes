@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
@@ -21,7 +21,7 @@ public class AngryRabble extends Card {
     public AngryRabble() {
         addTrigger(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryMaxManaValuePredicate(3))),
-                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

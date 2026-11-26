@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -92,7 +92,7 @@ public class CommodoreGuff extends Card {
                 -3,
                 List.of(
                         new DrawCardEffect(planeswalkersYouControl),
-                        new DealDamageToPlayersEffect(planeswalkersYouControl, Subjects.eachOpponent())
+                        DealDamageEffect.to(Subjects.eachOpponent(), planeswalkersYouControl)
                 ),
                 "−3: You draw X cards and Commodore Guff deals X damage to each opponent, where X is "
                         + "the number of planeswalkers you control."

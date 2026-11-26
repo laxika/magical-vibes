@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
@@ -26,7 +26,7 @@ public class StormcloudDjinn extends Card {
                 "{R}{R}",
                 List.of(
                         BoostEffect.self(2, 0),
-                        new DealDamageToPlayersEffect(1, Subjects.you())
+                        DealDamageEffect.to(Subjects.you(), 1)
                 ),
                 "{R}{R}: This creature gets +2/+0 until end of turn and deals 1 damage to you."
         ));

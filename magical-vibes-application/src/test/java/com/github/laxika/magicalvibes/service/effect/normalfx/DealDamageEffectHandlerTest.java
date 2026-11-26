@@ -1,5 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import org.junit.jupiter.api.BeforeEach;
+
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -53,7 +60,7 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
     protected void setUpHandler() {
         handler = new DealDamageEffectHandler(damageSupport, gameQueryService, gameOutcomeService,
                 amountEvaluationService, conditionEvaluationService, mock(SubjectResolutionService.class),
-                mock(GameLogService.class));
+                mock(GameLogService.class), mock(PlayerInputService.class));
     }
 
     @Test
@@ -366,5 +373,345 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
                     assertThat(bears.getMarkedDamage()).isEqualTo(4);
                 }
+    }
+
+    /** Player recipients ({@code DealDamageEffect.to(PlayerSubject, ...)}), with a real subject resolver. */
+    @Nested
+    @DisplayName("Player recipients")
+    class Players {
+
+
+        private DealDamageEffectHandler handler;
+
+        @Test
+        @DisplayName("Deals to the triggering permanent's current controller")
+        void damageUsesTriggeringPermanentsCurrentController() {
+            Card source = createCard("Damage source");
+            Permanent land = new Permanent(createCard("Land"));
+            StackEntry entry = createEntry(source, player1Id, player1Id);
+            entry.setTriggeringPermanentId(land.getId());
+            entry.setTriggeringPermanentControllerId(player1Id);
+            when(gameQueryService.findPermanentController(gd, land.getId())).thenReturn(player2Id);
+            when(gameQueryService.findTriggeringPermanentController(gd, entry)).thenCallRealMethod();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), 2));
+
+            assertThat(gd.getLife(player1Id)).isEqualTo(20);
+            assertThat(gd.getLife(player2Id)).isEqualTo(18);
+        }
+
+        @Test
+        @DisplayName("Records the damage actually dealt for a following effect")
+        void recordsActualDamageForFollowingEffect() {
+            StackEntry entry = createEntry(createCard("Damage source"), player1Id, player2Id);
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry,
+                    DealDamageEffect.to(Subjects.eachOpponent(), 2).recordingDamageDealt());
+
+            assertThat(entry.getEventValue()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Deals to the triggering permanent's last-known controller once it has left")
+        void damageUsesLastKnownControllerWhenTriggeringPermanentHasLeft() {
+            StackEntry entry = createEntry(createCard("Damage source"), player1Id, player1Id);
+            UUID landId = UUID.randomUUID();
+            entry.setTriggeringPermanentId(landId);
+            entry.setTriggeringPermanentControllerId(player1Id);
+            entry.getRemovedPermanentControllers().put(landId, player2Id);
+            when(gameQueryService.findTriggeringPermanentController(gd, entry)).thenCallRealMethod();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), 2));
+
+            assertThat(gd.getLife(player1Id)).isEqualTo(20);
+            assertThat(gd.getLife(player2Id)).isEqualTo(18);
+        }
+
+        @Test
+        @DisplayName("Accepted opponents take no damage when no player accepted")
+        void selectedOpponentsTakeNoDamageWhenNoPlayerAccepted() {
+            StackEntry entry = createEntry(createCard("Snort"), player1Id, null);
+
+            handler.resolve(gd, entry, DealDamageEffect.to(Subjects.except(Subjects.acceptedPlayers(), Subjects.you()), 5));
+
+            assertThat(gd.getLife(player1Id)).isEqualTo(20);
+            assertThat(gd.getLife(player2Id)).isEqualTo(20);
+        }
+
+        @BeforeEach
+        void setUpPlayersHandler() {
+            handler = new DealDamageEffectHandler(damageSupport, gameQueryService, gameOutcomeService,
+                    amountEvaluationService, conditionEvaluationService,
+                    new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                            mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)),
+                    gameLogService, mock(PlayerInputService.class));
+        }
+
+        @Nested
+        @DisplayName("targetPlayer() subject")
+        class TargetPlayer {
+
+            @Test
+            @DisplayName("Deals damage to target player")
+            void dealsDamageToTargetPlayer() {
+                Card lavaAxeCard = createCard("Lava Axe");
+                StackEntry entry = createEntry(lavaAxeCard, player1Id, player2Id);
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.targetPlayer(), 5));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
+                verify(lifeSupport).lifeLost(gd, player2Id, 5);
+                assertDamageToPlayer(player2Id, 5);
+            }
+
+            @Test
+            @DisplayName("Does nothing when target is not a player")
+            void doesNothingWhenTargetNotPlayer() {
+                Card lavaAxeCard = createCard("Lava Axe");
+                UUID fakeId = UUID.randomUUID();
+                StackEntry entry = createEntry(lavaAxeCard, player1Id, fakeId);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.targetPlayer(), 5));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+                        }
+
+            @Test
+            @DisplayName("Deals damage equal to target player's hand size (CardsInHand(TARGET_PLAYER))")
+            void dealsDamageEqualToHandSize() {
+                Card impactCard = createCard("Sudden Impact");
+                StackEntry entry = createEntry(impactCard, player1Id, player2Id);
+                for (int i = 0; i < 5; i++) {
+                    gd.playerHands.get(player2Id).add(createCreature("Bear " + i, 2, 2));
+                }
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry,
+                        DealDamageEffect.to(Subjects.targetPlayer(), new CardsInHand(CountScope.TARGET_PLAYER)));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
+                verify(lifeSupport).lifeLost(gd, player2Id, 5);
+            }
+
+            @Test
+            @DisplayName("Deals 0 damage when target has an empty hand")
+            void dealsZeroDamageWhenEmptyHand() {
+                Card impactCard = createCard("Sudden Impact");
+                StackEntry entry = createEntry(impactCard, player1Id, player2Id);
+
+                stubDamageFromSourceNotPrevented();
+
+                handler.resolve(gd, entry,
+                        DealDamageEffect.to(Subjects.targetPlayer(), new CardsInHand(CountScope.TARGET_PLAYER)));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+                        }
+        }
+
+        @Nested
+        @DisplayName("you() subject")
+        class Controller {
+
+            @Test
+            @DisplayName("Deals damage to the controller of the ability")
+            void dealsDamageToController() {
+                Card artilleryCard = createCard("Orcish Artillery");
+                StackEntry entry = createEntry(artilleryCard, player1Id, null);
+
+                stubNoDamageMultiplier();
+                stubDamageFromSourceNotPrevented();
+                stubPlayerDamageCore(player1Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.you(), 3));
+
+                assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(17);
+                verify(lifeSupport).lifeLost(gd, player1Id, 3);
+                assertDamageToPlayer(player1Id, 3);
+            }
+        }
+
+        @Nested
+        @DisplayName("defendingPlayer() subject")
+        class DefendingPlayer {
+
+            @Test
+            @DisplayName("Deals damage to the player attacked by the source")
+            void dealsDamageToDefendingPlayer() {
+                Card sourceCard = createCard("Ghost-Spider, Gwen Stacy");
+                StackEntry entry = createEntry(sourceCard, player1Id, null);
+                entry.setAttackedTargetId(player2Id);
+                when(gameQueryService.defendingPlayerOfAttackTarget(gd, player2Id)).thenReturn(player2Id);
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.defendingPlayer(), 3));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+                assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            }
+
+            @Test
+            @DisplayName("Deals damage to a planeswalker's controller rather than the planeswalker")
+            void dealsDamageToAttackedPlaneswalkersController() {
+                Card sourceCard = createCard("Ghost-Spider, Gwen Stacy");
+                Permanent planeswalker = addPermanent(player2Id, createCard("Jace Beleren"));
+                StackEntry entry = createEntry(sourceCard, player1Id, null);
+                entry.setAttackedTargetId(planeswalker.getId());
+                when(gameQueryService.defendingPlayerOfAttackTarget(gd, planeswalker.getId())).thenReturn(player2Id);
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.defendingPlayer(), 3));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            }
+        }
+
+        @Nested
+        @DisplayName("controllerOf(target()) subject")
+        class TargetPermanentController {
+
+            @Test
+            void usesTheControllerRememberedBeforeAnEarlierEffectDestroyedTheTarget() {
+                UUID removedId = UUID.randomUUID();
+                StackEntry entry = createEntry(createCard("Destruction and damage"), player1Id, removedId);
+                entry.getRemovedPermanentControllers().put(removedId, player2Id);
+                stubNoDamageMultiplier();
+                stubDamageFromSourceNotPrevented();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+                assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            }
+
+            @Test
+            @DisplayName("Deals to the targeted creature's controller as the victim, without remapping the damage source")
+            void dealsToTargetCreatureControllerAndKeepsSourceController() {
+                // Chandra's Outrage: "deals 2 damage to that creature's controller."
+                Card outrageCard = createCard("Chandra's Outrage");
+                Permanent targetCreature = addPermanent(player2Id, createCreature("Bear", 2, 2));
+                StackEntry entry = createEntry(outrageCard, player1Id, targetCreature.getId());
+
+                when(gameQueryService.findPermanentById(gd, targetCreature.getId())).thenReturn(targetCreature);
+                when(gameQueryService.findPermanentController(gd, targetCreature.getId())).thenReturn(player2Id);
+                stubNoDamageMultiplier();
+                stubDamageFromSourceNotPrevented();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+                // The victim is player2, but the damage SOURCE controller stays the caster (player1) so
+                // opponent-source damage-reduction shields keep applying — entry.controllerId is never remapped.
+                assertThat(damageEvents()).anySatisfy(event -> assertThat(event)
+                        .isInstanceOfSatisfying(DamageDealtEvent.ToPlayer.class, dealt -> {
+                            assertThat(dealt.playerId()).isEqualTo(player2Id);
+                            assertThat(dealt.sourceControllerId()).isEqualTo(player1Id);
+                        }));
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            }
+        }
+
+        @Nested
+        @DisplayName("controllerOf(targetSpell()) subject")
+        class TargetSpellController {
+
+            @Test
+            @DisplayName("Deals TargetSpellManaValue damage to the targeted spell's controller")
+            void dealsManaValueDamageToSpellController() {
+                Card refuseCard = createCard("Refuse");
+                Card targetSpellCard = createCard("Counsel of the Soratami");
+                // Printed mana value is left at 0 by createCard; set via xValue on the stack entry
+                // plus a non-zero printed MV isn't available here — use Fixed amount for the recipient path.
+                StackEntry targetSpell = createEntry(targetSpellCard, player2Id, null);
+                gd.stack.add(targetSpell);
+
+                StackEntry entry = createEntry(refuseCard, player1Id, targetSpellCard.getId());
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.controllerOf(Subjects.targetSpell()), 4));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
+            }
+
+            @Test
+            @DisplayName("Does nothing when the targeted spell has left the stack")
+            void doesNothingWhenSpellLeftStack() {
+                Card refuseCard = createCard("Refuse");
+                UUID goneSpellId = UUID.randomUUID();
+                StackEntry entry = createEntry(refuseCard, player1Id, goneSpellId);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.controllerOf(Subjects.targetSpell()), 4));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+                        }
+        }
+
+        @Nested
+        @DisplayName("eachOpponent() subject")
+        class EachOpponent {
+
+            @Test
+            @DisplayName("Deals damage to each opponent but not the controller")
+            void dealsToEachOpponent() {
+                Card paladinCard = createCard("Cabal Paladin");
+                StackEntry entry = createEntry(paladinCard, player1Id, null);
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                stubPlayerDamageCore(player2Id);
+                stubNoInfectOnSource(entry);
+
+                handler.resolve(gd, entry, DealDamageEffect.to(Subjects.eachOpponent(), 2));
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+                assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            }
+        }
     }
 }

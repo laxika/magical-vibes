@@ -54,7 +54,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageToSourceFromCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
@@ -948,7 +947,7 @@ public class ActivatedAbilityExecutionService {
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
         // and its cost and effect don't move cards to or from a library. A "when you do" the card writes
         // after the mana is a reflexive ability of its own, not part of the mana ability (CR 605.5a).
-        // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
+        // Pain lands (e.g. Adarkar Wastes) include a DealDamageEffect.to(you(), 1) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
 
@@ -1811,8 +1810,8 @@ public class ActivatedAbilityExecutionService {
                 for (UUID victimId : nonTargetedLifeRecipients(gameData, playerId, loss.player())) {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, FaceDownVisibility.publicName(gameData, permanent));
                 }
-            } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player() instanceof PlayerSubject.You) {
-                int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
+            } else if (effect instanceof DealDamageEffect dmg && dmg.players() instanceof PlayerSubject.You) {
+                int damage = amountEvaluationService.evaluate(gameData, dmg.damage(),
                         new AmountContext(playerId, permanent, null, 0, 0));
                 StackEntry damageEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY,
                         permanent.getCard(), playerId, FaceDownVisibility.publicName(gameData, permanent) + "'s ability", List.of(dmg),

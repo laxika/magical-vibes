@@ -18,7 +18,7 @@ import java.util.Objects;
  * with {@code controlledBy(eachOpponent(), ...)} each creature and planeswalker the opponents control (Goblin
  * Chainwhirler); with {@link Subjects#otherCreaturesSharing} each other creature sharing a color, a name or a creature
  * type with the target (Brightflame, Homing Lightning, Killer).
- * Non-targeting — piggybacks on a companion targeting effect (e.g. a target-player DealDamageToPlayersEffect)
+ * Non-targeting — piggybacks on a companion targeting effect (e.g. a target-player DealDamageEffect.to(targetPlayer(), n))
  * that provides the target on the same stack entry, or on an explicit {@code target(...)} declaration on the card.
  * "X and Y" in one sentence is one damage event: add it beside the companion with {@code Card.addSimultaneousEffects}
  * or {@link SequenceEffect#simultaneous}. It begins a {@link com.github.laxika.magicalvibes.model.StepKind#DEAL_DAMAGE}

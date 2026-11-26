@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -46,7 +46,7 @@ public class GargantuanGorilla extends Card {
                                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source(), Duration.UNTIL_END_OF_TURN))),
                 "Sacrifice a Forest? If you don't, sacrifice this creature and it deals 7 damage to you.",
-                SequenceEffect.of(new SacrificeSelfEffect(), new DealDamageToPlayersEffect(7, Subjects.you()))));
+                SequenceEffect.of(new SacrificeSelfEffect(), DealDamageEffect.to(Subjects.you(), 7))));
 
         // {T}: This creature deals damage equal to its power to another target creature. That
         // creature deals damage equal to its power to this creature. (fight mechanic)

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -23,6 +23,6 @@ public class FirespitterWhelp extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                                 new CardSubtypePredicate(CardSubtype.DRAGON)))),
-                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 1));
     }
 }

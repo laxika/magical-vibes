@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -21,8 +21,7 @@ public class UnquenchableFury extends Card {
     public UnquenchableFury() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(),
-                        new DealDamageToPlayersEffect(new CardsInHand(CountScope.DEFENDING_PLAYER),
-                                Subjects.defendingPlayer()));
+                        DealDamageEffect.to(Subjects.defendingPlayer(), new CardsInHand(CountScope.DEFENDING_PLAYER)));
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

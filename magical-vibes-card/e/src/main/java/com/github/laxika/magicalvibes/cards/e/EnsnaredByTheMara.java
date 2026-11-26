@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastDiscardedCardWithoutPayingManaCostEffect;
@@ -35,7 +35,7 @@ public class EnsnaredByTheMara extends Card {
                                 StepKind.EXILE, ExileCardsFromTopUntilEffect.NONLAND)))),
                 new ChooseOneEffect.ChooseOneOption(DAMAGE_OPTION, SequenceEffect.of(
                         ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayerDeclaredElsewhere(), 4),
-                        new DealDamageToPlayersEffect(AmountThisWay.exiledManaValue(),
-                                Subjects.targetPlayerDeclaredElsewhere()))))));
+                        DealDamageEffect.to(Subjects.targetPlayerDeclaredElsewhere(),
+                                AmountThisWay.exiledManaValue()))))));
     }
 }

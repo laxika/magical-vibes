@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -18,13 +18,11 @@ import java.util.List;
 public class WingStorm extends Card {
 
     public WingStorm() {
-        addSpellEffect(new DealDamageToPlayersEffect(
-                new Scaled(
+        addSpellEffect(DealDamageEffect.to(Subjects.eachPlayer(), new Scaled(
                         new PermanentCount(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasKeywordPredicate(Keyword.FLYING)
                         )), CountScope.CONTROLLER),
-                        2),
-                Subjects.eachPlayer()));
+                        2)));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -25,14 +25,12 @@ import java.util.List;
 public class PriceOfProgress extends Card {
 
     public PriceOfProgress() {
-        addSpellEffect(new DealDamageToPlayersEffect(
-                new Scaled(new PermanentCount(
+        addSpellEffect(DealDamageEffect.to(Subjects.eachPlayer(), new Scaled(new PermanentCount(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsLandPredicate(),
                                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
                                 )),
                                 CountScope.CONTROLLER
-                        ), 2),
-                Subjects.eachPlayer()));
+                        ), 2)));
     }
 }

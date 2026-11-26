@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 
@@ -92,7 +92,8 @@ public final class InstantCategoryClassifier {
         if (CreatureBoostEffect.targetedBoost(effect) != null) return InstantCategory.COMBAT_TRICK;
 
         // Burn to face
-        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player().declaresTarget()) return InstantCategory.BURN_TO_FACE;
+        if (effect instanceof DealDamageEffect dmg && dmg.players() != null
+                && dmg.players().declaresTarget()) return InstantCategory.BURN_TO_FACE;
 
         // Card advantage
         if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {

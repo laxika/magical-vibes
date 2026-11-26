@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -43,6 +43,6 @@ public class KlothysGodOfDestiny extends Card {
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
                                 SequenceEffect.of(
                                         new GainLifeEffect(2),
-                                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent())))));
+                                        DealDamageEffect.to(Subjects.eachOpponent(), 2)))));
     }
 }

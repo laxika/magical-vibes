@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
@@ -28,7 +28,7 @@ public class ConstructionArsonist extends Card {
                 ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.incorporating(
                         instantOrSorcery,
                         "{R}",
-                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
+                        DealDamageEffect.to(Subjects.eachOpponent(), 2)));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
                 BoostEffect.self(new TriggeringSpellColorCount(), new TriggeringSpellColorCount()));

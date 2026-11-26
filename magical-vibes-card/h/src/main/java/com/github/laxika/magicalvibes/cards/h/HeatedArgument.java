@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,8 +26,7 @@ public class HeatedArgument extends Card {
                                 ExileGraveyardCardsEffect.fromOwnGraveyard(1,
                                         new CardNotPredicate(new CardIsSelfPredicate())),
                                 new ConditionalEffect(HappenedThisWay.exiled(),
-                                        new DealDamageToPlayersEffect(2,
-                                                Subjects.controllerOf(Subjects.target())))),
+                                        DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2))),
                         "Exile a card from your graveyard?"
                 ));
     }

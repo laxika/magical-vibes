@@ -1589,8 +1589,8 @@ public class GameSimulator {
 
     private int scoreAbilityForSim(com.github.laxika.magicalvibes.model.ActivatedAbility ability, ManaCost cost, ManaPool pool) {
         boolean hasSideEffects = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect dmg
-                        && dmg.player() instanceof PlayerSubject.You);
+                .anyMatch(e -> e instanceof DealDamageEffect dmg
+                        && dmg.players() instanceof PlayerSubject.You);
         var coloredCosts = cost.getColoredCosts();
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ManaProducingEffect mp) {

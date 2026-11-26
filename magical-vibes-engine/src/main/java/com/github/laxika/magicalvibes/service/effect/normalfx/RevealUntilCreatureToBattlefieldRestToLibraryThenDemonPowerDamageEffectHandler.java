@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefieldRestToLibraryThenDemonPowerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -35,7 +35,7 @@ public class RevealUntilCreatureToBattlefieldRestToLibraryThenDemonPowerDamageEf
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final DealDamageEffectHandler dealDamageEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -100,8 +100,8 @@ public class RevealUntilCreatureToBattlefieldRestToLibraryThenDemonPowerDamageEf
                     List.of(),
                     null,
                     enteredPermanent.getId());
-            dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry,
-                    new DealDamageToPlayersEffect(new SourcePower(), Subjects.eachOpponent()));
+            dealDamageEffectHandler.resolve(gameData, damageEntry,
+                    DealDamageEffect.to(Subjects.eachOpponent(), new SourcePower()));
         }
 
         log.info("Game {} - {} revealed a creature, entered={}, demon={}",

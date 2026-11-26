@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -36,7 +36,7 @@ public class Urabrask extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
         target(opponent).addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
-                new DealDamageToPlayersEffect(1, Subjects.targetPlayer()),
+                DealDamageEffect.to(Subjects.targetPlayer(), 1),
                 new AwardManaEffect(ManaColor.RED));
 
         addActivatedAbility(new ActivatedAbility(

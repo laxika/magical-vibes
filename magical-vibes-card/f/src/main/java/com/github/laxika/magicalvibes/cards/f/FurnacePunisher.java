@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
@@ -30,6 +30,6 @@ public class FurnacePunisher extends Card {
 
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ConditionalEffect(
                 new NotCondition(activePlayerControlsTwoBasicLands),
-                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer())));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 2)));
     }
 }

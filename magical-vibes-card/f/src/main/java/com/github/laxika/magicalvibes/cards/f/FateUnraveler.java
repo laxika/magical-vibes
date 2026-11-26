@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +13,6 @@ public class FateUnraveler extends Card {
 
     public FateUnraveler() {
         // Whenever an opponent draws a card, this creature deals 1 damage to that player.
-        addTrigger(Triggers.opponentDrawsCard(), new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
+        addTrigger(Triggers.opponentDrawsCard(), DealDamageEffect.to(Subjects.triggeringPlayer(), 1));
     }
 }

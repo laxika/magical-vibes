@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -16,7 +16,7 @@ public class GrimFeast extends Card {
     public GrimFeast() {
         // "At the beginning of your upkeep, this enchantment deals 1 damage to you."
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(1, Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), 1));
 
         // "Whenever a creature is put into an opponent's graveyard from the battlefield, you gain
         // life equal to its toughness." The toughness used is the creature's last-known effective

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -22,7 +21,7 @@ public class BarbarianRing extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.RED), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardManaEffect(ManaColor.RED), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add {R}. This land deals 1 damage to you."
         ));
 

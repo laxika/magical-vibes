@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +12,6 @@ public class CoalhaulerSwine extends Card {
 
     public CoalhaulerSwine() {
         addTrigger(Triggers.dealtDamage(),
-                new DealDamageToPlayersEffect(new EventValue(), Subjects.eachPlayer()));
+                DealDamageEffect.to(Subjects.eachPlayer(), new EventValue()));
     }
 }

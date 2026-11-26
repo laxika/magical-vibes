@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DTK", collectorNumber = "162")
@@ -18,6 +18,6 @@ public class ThunderbreakRegent extends Card {
     public ThunderbreakRegent() {
         addTrigger(Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.triggeringSpell())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.triggeringSpell()), 3));
     }
 }

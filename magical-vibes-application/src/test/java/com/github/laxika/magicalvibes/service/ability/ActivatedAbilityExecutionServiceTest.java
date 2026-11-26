@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -99,7 +98,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class ActivatedAbilityExecutionServiceTest {
@@ -251,7 +249,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandAddsManaAndDealsDamage() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, Subjects.you()));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), DealDamageEffect.to(Subjects.you(), 1));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
@@ -324,7 +322,7 @@ class ActivatedAbilityExecutionServiceTest {
         void eachOpponentRiderQueuesReflexiveTrigger() {
             Card card = createCard("Test Rider Creature", CardType.CREATURE);
             Permanent perm = addReadyPermanent(player1Id, card);
-            DealDamageToPlayersEffect rider = new DealDamageToPlayersEffect(1, Subjects.eachOpponent());
+            DealDamageEffect rider = DealDamageEffect.to(Subjects.eachOpponent(), 1);
             var reflexive = new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(rider);
             List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.RED, 1), reflexive);
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
@@ -355,7 +353,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandBlueAbility() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.BLUE, 1), new DealDamageToPlayersEffect(1, Subjects.you()));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.BLUE, 1), DealDamageEffect.to(Subjects.you(), 1));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {U}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
@@ -1462,7 +1460,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandManaAbilityPreservesPriority() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, Subjects.you()));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), DealDamageEffect.to(Subjects.you(), 1));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
             gameData.priorityPassedBy.add(player2Id);
 

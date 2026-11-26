@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -24,7 +24,7 @@ public class GrandColiseum extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyColorManaEffect(), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardAnyColorManaEffect(), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add one mana of any color. This land deals 1 damage to you."
         ));
     }

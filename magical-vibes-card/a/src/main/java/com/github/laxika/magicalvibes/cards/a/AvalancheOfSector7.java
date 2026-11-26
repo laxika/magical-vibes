@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,6 +20,6 @@ public class AvalancheOfSector7 extends Card {
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.OPPONENTS);
         addStaticEffect(new SetPowerToughnessToAmountEffect(opponentArtifacts, new Fixed(3)));
         addTrigger(Triggers.opponentActivatesAbility().withSource(new PermanentIsArtifactPredicate()),
-                new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.triggering())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), 1));
     }
 }

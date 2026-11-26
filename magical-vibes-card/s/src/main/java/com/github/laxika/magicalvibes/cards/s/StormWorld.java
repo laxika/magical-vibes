@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,10 +19,8 @@ public class StormWorld extends Card {
 
     public StormWorld() {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new DealDamageToPlayersEffect(
-                        new Max(new Fixed(0), new Sum(
+                DealDamageEffect.to(Subjects.triggeringPlayer(), new Max(new Fixed(0), new Sum(
                                 new Fixed(4),
-                                new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1))),
-                        Subjects.triggeringPlayer()));
+                                new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1)))));
     }
 }

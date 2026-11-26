@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -36,7 +36,7 @@ public class RagostDeftGastronaut extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD), "a Food", false),
-                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent())),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 3)),
                 "{1}, {T}, Sacrifice a Food: Ragost deals 3 damage to each opponent."));
 
         addTrigger(Triggers.endStep(ActivePlayer.ANY),

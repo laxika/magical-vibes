@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files). Next: the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files). Next: the damage defect run, then Damage M1, M2, R (Step-10 hand-offs); the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -456,7 +456,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   `to(PermanentSubject, amount)`, `toTargetCreatureOrPlaneswalker`, `toTargetPlayerOrPlaneswalker`, `toTargetOpponentOrPlaneswalker`,
   `toTargetPermanent`; riders `byTriggeringPermanent()`, `unpreventable()`, `unpreventableWhen(c)`, `unpreventableAndUnredirectableWhen(c)`,
   `cantBeRegenerated()`, `withUnconditionalRegenerationPrevention()`, `exilingDamagedCreaturesThatWouldDie()`, `exilingIfItWouldDie()`,
-  `exilingPermanentsDealtDamage()`, `recordingDamageDealt()`, `withDamage(a)`. Every kind: one permanent-damage path (D24), DEAL_DAMAGE
+  `exilingPermanentsDealtDamage()`, `recordingDamageDealt()`, `withDamage(a)`. Run Damage P: the player kinds `to(PlayerSubject, int |
+  DynamicAmount)`, `eachEvaluatedFor(amount, players)` (each amount fixed first, CR 608.2h), `toPlayerOrTheirPlaneswalker`, rider
+  `byEventDamageSource()`; `subject` is null for them. Every kind: one permanent-damage path (D24), DEAL_DAMAGE
   begun, one excess tracker (CR 120.4a, 120.10; the dealer's deathtouch), the win check. The creature kinds loop over the effect's
   targets; the any-target kind can't (Magma Burst kicked: its unbound part would hit the kicked target too).
 - `DamageSupport.entryDealtByTriggeringPermanent` is the one "it deals" carrier: a departed dealer is its departure snapshot first (its
@@ -666,8 +668,8 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
 
 **Damage, prevention, redirection:**
 
-- `DealDamageToPlayersEffect` (`toPlayerOrTheirPlaneswalker`, `eachEvaluatedFor(amount, players)`: per-player amounts fixed before
-  damage, CR 608.2h); `TargetCreatureDealsDamageToControllerEffect.dealtBy`, `TargetCreatureDealsPowerDamageToEachOtherCreatureEffect`,
+- Player damage is `DealDamageEffect.to(PlayerSubject, …)` (run Damage P; Typhoon's "equal to the number of [X] that player controls" is
+  `eachEvaluatedFor(PermanentCount(filter, CONTROLLER), eachOpponent())`); `TargetCreatureDealsDamageToControllerEffect.dealtBy`, `TargetCreatureDealsPowerDamageToEachOtherCreatureEffect`,
   `TargetDealsPowerDamageToTargetEffect`, `SourceFightsTargetCreatureEffect` (`FightSupport.fight`).
 - `PreventDamageToRecipientsEffect` (static prevention: `to(...)`, `toYouAnd(...)`, `toEveryone()`, `fromSpells()`,
   `fromInstantAndSorcerySpells()`, `fromSourcesOfChosenColor()`, `dealtBy(filter)`, `preventing(amount)`); `PreventNextDamageByTargetCreatureEffect`,
@@ -853,6 +855,13 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
   `BoostEffectHandler`), every call site on factories; (Q2) an explicit `AmountsRead {SOURCE, BOOSTED}` set by the factory; (Q3) a target or
   set boost refreshes the boosted creature's waiting abilities' snapshots too (CR 608.2h, 113.7a); (Q4) today's log lines kept; (Q5)
   `CreatureBoostEffect.targetedBoost` by `declaresTarget()`, AI-only; (Q6, Q7, Q8) parity, one defect-queue line each; (Q9) split B1 / B2.
+- **2026-11-26, step 10 runs Damage P to R: orchestrator's decisions (owner to review)**: (Q1) the player kinds leave `subject` null, so a
+  misuse fails loudly; (Q2) Curse of Thirst is `eachEvaluatedFor(PermanentCount(allOf(Curse, PermanentAttachedToSourceControllerPredicate)),
+  triggeringPlayer())`, pinned first; (Q3) the player handler's prevention checks stay before the pool in P (parity) and move in the defect
+  run before M1, failing-first (CR 616.1); (Q4) Typhoon's record is absorbed in P; (Q5) the excess redirect waits for R; (Q6) Aegis of
+  Honor's redirect applied before the player pool in `resolveAnyTargetDamage` is a defect-queue line; the engine's one-damage-event-per-effect
+  rule is cited by no CR number. Run order: P, a defect run (the set handlers' protection-before-pool checks, the missing DEAL_DAMAGE steps,
+  face-down names in logs), M1, M2, R.
 - **2026-11-25, how the rest of the refactor runs** (the owner, after run U3b'): the orchestrator answers the planners' questions itself from
   the Comprehensive Rules, the card rulings and the owner's earlier decisions, and logs each answer here as an orchestrator decision for the
   owner to review; there is no per-run sign-off. It stops only for a question that changes play and that the rules and rulings don't settle,
@@ -928,8 +937,9 @@ there and updates them when it lands.
   of-type / fusion forms) for a "remove all" run, and the mass placements (`PutCounterOnEachControlledPermanentEffect`,
   `PutCounterOnEachMatchingPermanentEffect`, `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect`), which need a batched
   path in `PutCountersEffect` first (owner's decision 2026-11-25).
-- **Damage**: left the player subject record `DealDamageToPlayersEffect` (a `to(PlayerSubject)` fold, its per-player amounts fixed first,
-  CR 608.2h); mass and set damage (`MassDamageEffect`, `DealDamageToEachMatchingPermanentEffect`, `DealDamageToEachTargetEffect`,
+- **Damage**: run Damage P folded the player record (`to(PlayerSubject)`). Next, in order (orchestrator's decisions 2026-11-26): a defect run
+  (the player kinds' and the set handlers' pre-pool prevention and protection checks into the pool, failing-first, CR 616.1; the missing
+  DEAL_DAMAGE steps; the set handlers' face-down names in logs), then M1 (set damage), M2 (mass), R (another dealer); mass and set damage (`MassDamageEffect`, `DealDamageToEachMatchingPermanentEffect`, `DealDamageToEachTargetEffect`,
   `DealDamageToPermanentsTargetControlsEffect`, `DealDamageToDefendingPlayerCreaturesEffect`: a "mass damage" run, one event for many
   recipients); another dealer (bite, fight, `TargetCreatureDealsPowerDamageToAnyTargetEffect`, the `ControlledCreaturesDeal…` records: a
   "dealer" run); divided damage (`DealDividedDamageEffect`, CR 601.2d); excess redirected
@@ -1144,6 +1154,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U7c (2026-11-26): `ForageOrPayManaCost` replaced by `ForageCost` (CR 701.61a); Feed the Cycle an `AnyOfCost`, castable free for {B}
 - Step 10, run Boost B1 (2026-11-26): `BoostTargetCreatureEffect` renamed `BoostEffect` with factories, `BoostSelfEffect` and `BoostTargetPermanentEffect` absorbed (2,542 card files by script); `AmountsRead`, `CreatureBoostEffect.targetedBoost`
 - Step 10, run Boost B2 (2026-11-26): `BoostAllOwnCreaturesEffect` and `BoostAllCreaturesEffect` absorbed into `BoostEffect.creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls` (609 card files by script); the resolver binds a rider's target card
+- Step 10, run Damage P (2026-11-26): `DealDamageEffect` takes the player recipients; `DealDamageToPlayersEffect` and `DealDamageToEachOpponentEqualToControlledPermanentCountEffect` absorbed (704 card files by script)
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2325,6 +2336,55 @@ Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain), as battle cry (Q7).
 
 **For the next run.** The Boost family is done but for what stays out (Step-10 hand-offs); next the rest of the "unless" family or another
 verb there. A follow-on fold can take `BoostOpponentCreaturesByPoisonCountersEffect` and its sibling once `BOOSTED` reads over a set.
+
+### Step 10, run Damage P (players) (2026-11-26)
+
+Run P of the plan `s10-damage2` (orchestrator's decisions under the owner's decisions, 2026-11-26). `DealDamageEffect` keeps its name and
+gains two `Recipient` kinds, `PLAYERS` and `PLAYER_OR_THEIR_PLANESWALKER`, with components `players` and `amountForEachPlayer` (`subject`
+null for them, Q1); factories `to(PlayerSubject, int | DynamicAmount)`, `eachEvaluatedFor`, `toPlayerOrTheirPlaneswalker`, rider
+`byEventDamageSource()`; `unpreventable()`, `recordingDamageDealt()` (now any target or players) and `byTriggeringPermanent()` serve both.
+Absorbed: `DealDamageToPlayersEffect` (and its handler, its body moved verbatim into `DealDamageEffectHandler.damagePlayers`: dealer
+selection, every amount fixed before any damage (CR 608.2h), the pre-pool checks and log lines (Q3), the planeswalker prompt) and
+`DealDamageToEachOpponentEqualToControlledPermanentCountEffect` (Q4). Dropped components: `triggeredTargetFilter` (no caller),
+`attachedCountFilter` (Curse of Thirst, Q2). Ledger: 2 absorbed, 1 survivor. Ratchet 2,910 / 2,290 → 2,908 / 2,288. No
+`CONVERSION_VERSION` bump.
+
+**Card rewrite.** 704 card files (11 in `shared`), 759 calls, by a scratch script (balanced parentheses, 9 shapes, loud failure, leftover-name
+check, imports; written, run, deleted): `new(a, p)` 741 (+ 4 `.byTriggeringPermanent()`, 4 `.byEventDamageSource()`, 1
+`.recordingDamageDealt()`), `(a, you(), true)` 1 (`.unpreventable()`), `eachEvaluatedFor` 2, `toPlayerOrTheirPlaneswalker` 2,
+`selectedOpponents` 1 (`to(except(acceptedPlayers(), you()), 5)`), Typhoon's record 3 (`eachEvaluatedFor(PermanentCount(filter,
+CONTROLLER), eachOpponent())`). By hand: 9 typed locals (the script after a type rename), Curse of Thirst (`eachEvaluatedFor(PermanentCount(
+allOf(Curse, PermanentAttachedToSourceControllerPredicate), ANY_PLAYER), triggeringPlayer())`), 17 engine builders (the injected player
+handler is now `DealDamageEffectHandler`), 8 AI sites (`players()`, `damage()`), 22 test files, 15 agent-docs files. Oracle text checked
+with `get_card` for 51 of 704 files: every specially shaped or hand-rewritten card (28; The Great Work through Urabrask) and 23 sampled;
+all match; not checked: Zone of Flame (MB2, in no feed).
+
+**Behaviour changes** (code only, no card outcome): Typhoon, Treacherous Terrain and Mjölnir now begin a DEAL_DAMAGE step, fix every
+opponent's amount before dealing (CR 608.2h; a land or tapped-creature count can't change between them), deal 0 instead of skipping a
+0 amount (the 0 path deals nothing), and check prevention once through `isDamageSourcePreventedWithLog` (also a
+targeted-spell shield, which the pool already applied) instead of per opponent: the same outcome, another log line.
+
+**Pins added first** (passed on the old code and after): Heartless Hidetsugu with Whip of Erebos, amounts fixed before the lifelink of the
+first damage (CR 608.2h); Spiteful Shadows, a dead creature's last-known lifelink; Agate Instigator, a player prevention and the source's
+lifelink on `eachOpponent()` damage; the existing Curse of Thirst, Curse of the Pierced Heart, Vial Smasher, Greatbow Doyen, Barbflare
+Gremlin, Syphon Soul, Volcano Hellion, Snort, Typhoon, Stormbreath Dragon, Adarkar Wastes and AI mana tests. Failing-first: none (parity).
+
+**Tests changed.** `DealDamageToPlayersEffectHandlerTest` is `DealDamageEffectHandlerTest.Players` (`@Nested`, four `@DisplayName`s
+added); `StepTriggerServiceTest`'s attached-count test now checks the per-player amount (the component is gone); Curse of Thirst's and
+Agate Instigator's unnamed tests got `@DisplayName`s; the rest only build the effect with the factories.
+
+**Tests run** (one Gradle run, XML of this run): 8,067 result files, 73,460 tests, 0 failures: every card test class naming a card of
+`DealDamageEffect` (2,287 cards with back faces' fronts), the `Damage|Prevent|Redirect|Lifelink|Infect|Curse|Planeswalker|PainLand|Ping`
+classes, 59 application classes (the changed ones, both ratchets, `PermanentDamagePathTest`, `StepResultsTest`,
+`SubjectResolutionServiceTest`, `GameDataDeepCopyTest`), the whole AI module.
+
+**Seen, not changed** (defect queue, group 9): Aegis of Honor's redirect applied before the player pool in `resolveAnyTargetDamage`
+(CR 616.1, Q6); the set handlers' face-down names in logs and missing DEAL_DAMAGE steps; the player kinds' pre-pool checks (Q3).
+AGENTS.md's reuse example still names `new DealDamageToPlayersEffect(3, Subjects.you())` (the owner's file).
+
+**For the next run.** The damage defect run (orchestrator's order): move the player kinds' `isPlayerDamagePrevented` /
+`isDamageSourcePreventedWithLog` and the set handlers' protection pre-checks into the pools with D24's failing-first tests (CR 616.1),
+begin DEAL_DAMAGE in the set handlers, read names through `FaceDownVisibility`; then M1 (set damage), M2 (mass), R (another dealer).
 
 ## Prompt
 

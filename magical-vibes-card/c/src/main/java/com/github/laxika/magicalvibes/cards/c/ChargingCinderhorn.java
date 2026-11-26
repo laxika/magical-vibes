@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,6 +21,6 @@ public class ChargingCinderhorn extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new NoCreaturesAttackedThisTurn()),
                 SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.FURY),
-                        new DealDamageToPlayersEffect(new CountersOnSource(CounterType.FURY), Subjects.triggeringPlayer())));
+                        DealDamageEffect.to(Subjects.triggeringPlayer(), new CountersOnSource(CounterType.FURY))));
     }
 }

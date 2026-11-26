@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -28,7 +28,7 @@ public class GrotagSiegeRunner extends Card {
                         new SacrificeSelfCost(),
                         SequenceEffect.of(
                                 new DestroyTargetPermanentEffect(),
-                                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())))
+                                DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2))
                 ),
                 "{R}, Sacrifice Grotag Siege-Runner: Destroy target creature with defender. Grotag Siege-Runner deals 2 damage to that creature's controller.",
                 new PermanentPredicateTargetFilter(

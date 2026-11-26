@@ -86,6 +86,7 @@ class CurseOfThirstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts Curses attached to the enchanted player whoever controls them, not Curses on another player")
     void countsCursesRegardlessOfControllerButOnlyOnEnchantedPlayer() {
         placeCurseOfThirstOnPlayer(player1, player2);
         placeCurseOnPlayer(player2, player2, new CurseOfExhaustion());
@@ -99,6 +100,7 @@ class CurseOfThirstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts the Curses still attached as the trigger resolves")
     void countsCursesAtResolutionAfterAnotherCurseLeaves() {
         placeCurseOfThirstOnPlayer(player1, player2);
         Permanent otherCurse = placeCurseOnPlayer(player1, player2, new CurseOfExhaustion());
@@ -112,6 +114,7 @@ class CurseOfThirstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The trigger still deals damage after Curse of Thirst leaves")
     void triggerStillDealsDamageAfterSourceLeaves() {
         Permanent thirst = placeCurseOfThirstOnPlayer(player1, player2);
         placeCurseOnPlayer(player1, player2, new CurseOfExhaustion());
@@ -125,6 +128,7 @@ class CurseOfThirstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals no damage when no Curse remains attached as it resolves")
     void dealsNoDamageWhenNoCursesRemainAtResolution() {
         Permanent thirst = placeCurseOfThirstOnPlayer(player1, player2);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -137,6 +141,7 @@ class CurseOfThirstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can enchant and damage its own controller")
     void canEnchantAndDamageItsController() {
         harness.setHand(player1, List.of(new CurseOfThirst()));
         harness.addMana(player1, ManaColor.BLACK, 5);

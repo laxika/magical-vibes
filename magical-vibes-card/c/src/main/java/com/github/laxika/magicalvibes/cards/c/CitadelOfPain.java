@@ -12,17 +12,17 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PCY", collectorNumber = "86")
 public class CitadelOfPain extends Card {
 
     public CitadelOfPain() {
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new DealDamageToPlayersEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), DealDamageEffect.to(Subjects.triggeringPlayer(),
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
-                        CountScope.TARGET_PLAYER), Subjects.triggeringPlayer()));
+                        CountScope.TARGET_PLAYER)));
     }
 }

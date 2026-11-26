@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
@@ -34,14 +34,14 @@ public class UndergroundRiver extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLUE), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardManaEffect(ManaColor.BLUE), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add {U}. Underground River deals 1 damage to you."
         ));
         // {T}: Add {B}. Underground River deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLACK), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardManaEffect(ManaColor.BLACK), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add {B}. Underground River deals 1 damage to you."
         ));
     }

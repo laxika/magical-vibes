@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -13,6 +13,6 @@ public class PrickleFaeries extends Card {
     public PrickleFaeries() {
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(2)),
-                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 2));
     }
 }

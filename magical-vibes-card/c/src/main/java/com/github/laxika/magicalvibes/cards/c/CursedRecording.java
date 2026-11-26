@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -36,7 +36,7 @@ public class CursedRecording extends Card {
                                 new SourceCounterThreshold(7, CounterType.TIME),
                                 SequenceEffect.of(
                                         new RemoveAllCountersEffect(CounterType.TIME),
-                                        new DealDamageToPlayersEffect(20, Subjects.you())))));
+                                        DealDamageEffect.to(Subjects.you(), 20)))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

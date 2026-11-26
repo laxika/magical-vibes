@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -32,7 +32,7 @@ public class MurmuringBosk extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardManaEffect(ManaColor.WHITE), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add {W}. Murmuring Bosk deals 1 damage to you."
         ));
 
@@ -40,7 +40,7 @@ public class MurmuringBosk extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLACK), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardManaEffect(ManaColor.BLACK), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add {B}. Murmuring Bosk deals 1 damage to you."
         ));
     }

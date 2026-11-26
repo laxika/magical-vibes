@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,6 +25,6 @@ public class DemandingDragon extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 UnlessPaysEffect.unlessPays(Subjects.targetPlayerDeclaredElsewhere(), new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "creature", false),
-                        new DealDamageToPlayersEffect(5, Subjects.targetPlayerDeclaredElsewhere())));
+                        DealDamageEffect.to(Subjects.targetPlayerDeclaredElsewhere(), 5)));
     }
 }

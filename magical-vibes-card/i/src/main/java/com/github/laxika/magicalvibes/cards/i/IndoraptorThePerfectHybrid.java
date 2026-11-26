@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerAtRandomEffect;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -37,6 +37,6 @@ public class IndoraptorThePerfectHybrid extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                                 "nontoken creature", false),
-                        new DealDamageToPlayersEffect(new SourcePower(), Subjects.playersThisWay(StepKind.CHOOSE)))));
+                        DealDamageEffect.to(Subjects.playersThisWay(StepKind.CHOOSE), new SourcePower()))));
     }
 }

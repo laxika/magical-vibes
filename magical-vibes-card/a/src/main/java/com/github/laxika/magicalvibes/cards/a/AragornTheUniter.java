@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -35,7 +35,7 @@ public class AragornTheUniter extends Card {
         // Whenever you cast a red spell, Aragorn deals 3 damage to target opponent.
         target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardColorPredicate(CardColor.RED)),
-                new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
         // Whenever you cast a green spell, target creature gets +4/+4 until end of turn.
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()

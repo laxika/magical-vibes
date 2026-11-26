@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -44,7 +44,7 @@ public class CavalierOfFlame extends Card {
         CardsInGraveyard landsInGraveyard = new CardsInGraveyard(
                 new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.simultaneous(
-                new DealDamageToPlayersEffect(landsInGraveyard, Subjects.eachOpponent()),
+                DealDamageEffect.to(Subjects.eachOpponent(), landsInGraveyard),
                 new MassDamageEffect(landsInGraveyard, false, true,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsPlaneswalkerPredicate(),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeAtResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardHasCardTypeChosenThisResolutionPredicate;
@@ -22,8 +22,7 @@ public class BloodOath extends Card {
                 "Target must be an opponent"
         )).addSpellEffect(new ChooseCardTypeAtResolutionEffect())
                 .addSpellEffect(RevealCardsFromHandEffect.hand(Subjects.targetPlayer()))
-                .addSpellEffect(new DealDamageToPlayersEffect(
-                        new Scaled(AmountThisWay.revealedCards(new CardHasCardTypeChosenThisResolutionPredicate()), 3),
-                        Subjects.targetPlayer()));
+                .addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(),
+                        new Scaled(AmountThisWay.revealedCards(new CardHasCardTypeChosenThisResolutionPredicate()), 3)));
     }
 }

@@ -122,7 +122,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -2179,7 +2178,7 @@ class MediumAiDecisionEngineTest {
         spell.setType(CardType.INSTANT);
         spell.setManaCost("{X}{B}");
         spell.addSpellEffect(new ExileTargetPlayerGraveyardCardsEffect(1, 1));
-        spell.addSpellEffect(new DealDamageToPlayersEffect(1, Subjects.targetPlayer()));
+        spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 1));
         harness.setHand(aiPlayer, List.of(spell));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);

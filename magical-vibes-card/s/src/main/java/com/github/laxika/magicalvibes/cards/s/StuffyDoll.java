@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +21,7 @@ public class StuffyDoll extends Card {
         addStaticEffect(new ChoosePlayerOnEnterEffect());
 
         addTrigger(Triggers.dealtDamage(),
-                new DealDamageToPlayersEffect(new EventValue(), Subjects.chosenPlayer()));
+                DealDamageEffect.to(Subjects.chosenPlayer(), new EventValue()));
 
         // {T}: This creature deals 1 damage to itself.
         addActivatedAbility(new ActivatedAbility(

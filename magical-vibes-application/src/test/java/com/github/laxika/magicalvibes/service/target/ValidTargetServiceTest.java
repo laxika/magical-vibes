@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -537,7 +536,7 @@ class ValidTargetServiceTest {
         void returnsOnlyPlayers_forPlayerOnlySpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);
@@ -567,7 +566,7 @@ class ValidTargetServiceTest {
         void excludesAlreadySelectedPlayerTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, List.of(player1Id));
@@ -580,7 +579,7 @@ class ValidTargetServiceTest {
         void filtersPlayer_withShroud() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             when(gameQueryService.playerHasShroud(gameData, player1Id)).thenReturn(false);
             when(gameQueryService.playerHasShroud(gameData, player2Id)).thenReturn(true);
@@ -596,7 +595,7 @@ class ValidTargetServiceTest {
         void filtersOpponentPlayer_withHexproof() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             when(gameQueryService.playerHasHexproof(gameData, player2Id)).thenReturn(true);
 
@@ -611,7 +610,7 @@ class ValidTargetServiceTest {
         void allowsSelfTarget_whenOpponentHasHexproof() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             when(gameQueryService.playerHasHexproof(gameData, player2Id)).thenReturn(true);
 
@@ -627,7 +626,7 @@ class ValidTargetServiceTest {
         void restrictsToOpponent_withPlayerRelationFilter() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
             spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent"));
 
@@ -642,7 +641,7 @@ class ValidTargetServiceTest {
         void restrictsToSelf_withPlayerRelationFilter() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
             spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.SELF), "target self"));
 
@@ -824,9 +823,9 @@ class ValidTargetServiceTest {
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent");
             spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target opponent",
-                            new DealDamageToPlayersEffect(3, Subjects.targetPlayer()), opponentFilter),
+                            DealDamageEffect.to(Subjects.targetPlayer(), 3), opponentFilter),
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
-                            new DealDamageToPlayersEffect(3, Subjects.eachPlayer()))
+                            DealDamageEffect.to(Subjects.eachPlayer(), 3))
             )));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
@@ -844,9 +843,9 @@ class ValidTargetServiceTest {
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
                             DealDamageEffect.toTargetCreature(3)),
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
-                            new DealDamageToPlayersEffect(3, Subjects.eachPlayer())),
+                            DealDamageEffect.to(Subjects.eachPlayer(), 3)),
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target player",
-                            new DealDamageToPlayersEffect(3, Subjects.targetPlayer()))
+                            DealDamageEffect.to(Subjects.targetPlayer(), 3))
             ), 2));
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -865,7 +864,7 @@ class ValidTargetServiceTest {
             spell.setColor(CardColor.RED);
             spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
-                            new DealDamageToPlayersEffect(3, Subjects.eachPlayer())),
+                            DealDamageEffect.to(Subjects.eachPlayer(), 3)),
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
                             DealDamageEffect.toTargetCreature(3))
             )));
@@ -912,7 +911,7 @@ class ValidTargetServiceTest {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}",
-                    List.of(new DealDamageToPlayersEffect(2, Subjects.targetPlayer())), "Deal 2 damage to target player");
+                    List.of(DealDamageEffect.to(Subjects.targetPlayer(), 2)), "Deal 2 damage to target player");
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);
@@ -1656,7 +1655,7 @@ class ValidTargetServiceTest {
         void returnsTrue_whenValidPlayerTargetExists() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             boolean result = validTargetService.hasValidTargetsForSpell(gameData, spell, player1Id);
 
@@ -1720,7 +1719,7 @@ class ValidTargetServiceTest {
         void returnsFalse_whenAllPlayersShrouded() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+            spell.addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             when(gameQueryService.playerHasShroud(gameData, player1Id)).thenReturn(true);
             when(gameQueryService.playerHasShroud(gameData, player2Id)).thenReturn(true);

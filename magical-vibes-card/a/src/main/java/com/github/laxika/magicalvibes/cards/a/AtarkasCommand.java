@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
@@ -28,7 +28,7 @@ public class AtarkasCommand extends Card {
                         new PlayersCantGainLifeThisTurnEffect(Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Atarka's Command deals 3 damage to each opponent",
-                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent())),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 3)),
                 new ChooseOneEffect.ChooseOneOption(
                         "You may put a land card from your hand onto the battlefield",
                         new MayEffect(

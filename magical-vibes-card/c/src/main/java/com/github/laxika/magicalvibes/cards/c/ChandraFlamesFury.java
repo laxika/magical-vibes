@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -29,7 +28,7 @@ public class ChandraFlamesFury extends Card {
                 -2,
                 List.of(SequenceEffect.simultaneous(
                         DealDamageEffect.toTargetCreature(4),
-                        new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target()))
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2)
                 )),
                 "−2: Chandra, Flame's Fury deals 4 damage to target creature and 2 damage to that creature's controller."
         ));

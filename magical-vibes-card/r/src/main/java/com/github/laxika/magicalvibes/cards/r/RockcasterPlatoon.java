@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +27,7 @@ public class RockcasterPlatoon extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                                 EachPermanentScope.ALL_PLAYERS),
-                        new DealDamageToPlayersEffect(2, Subjects.eachPlayer()))),
+                        DealDamageEffect.to(Subjects.eachPlayer(), 2))),
                 "{4}{G}: This creature deals 2 damage to each creature with flying and each player."));
     }
 }

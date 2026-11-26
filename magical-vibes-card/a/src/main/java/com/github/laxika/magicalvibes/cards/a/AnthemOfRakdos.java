@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,7 +17,7 @@ public class AnthemOfRakdos extends Card {
     public AnthemOfRakdos() {
         addTrigger(Triggers.creatureYouControlAttacks(), SequenceEffect.of(
                 BoostEffect.target(2, 0),
-                new DealDamageToPlayersEffect(1, Subjects.you())));
+                DealDamageEffect.to(Subjects.you(), 1)));
         addStaticEffect(new ConditionalEffect(
                 new ControllerHandEmpty(), new DoubleControllerDamageEffect(null, true)));
     }

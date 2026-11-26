@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class CriminalEnterprise extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VILLAIN),
                         ObjectRelation.YOU_CONTROL),
                 SequenceEffect.of(
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1),
                         new GainLifeEffect(1)));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -35,7 +35,7 @@ public class CorneredByBlackMages extends Card {
         List<Ability> tokenEffects = List.of(
                 new TriggeredAbility(Triggers.youCastSpell()
                                 .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent())));
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1)));
         addSpellEffect(new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK,
                 List.of(CardSubtype.WIZARD), Set.of(), Set.of(), tokenEffects));

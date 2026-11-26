@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class AcidicSoil extends Card {
 
     public AcidicSoil() {
-        addSpellEffect(new DealDamageToPlayersEffect(
-                new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
-                Subjects.eachPlayer()));
+        addSpellEffect(DealDamageEffect.to(Subjects.eachPlayer(),
+                new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
     }
 }

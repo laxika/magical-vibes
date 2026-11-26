@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -21,7 +21,7 @@ public class IronFistPulverizer extends Card {
                 "Target must be an opponent"
         );
         target(opponent).addTrigger(Triggers.youCastSpell().nthThisTurn(2),
-                new DealDamageToPlayersEffect(2, Subjects.targetPlayer()),
+                DealDamageEffect.to(Subjects.targetPlayer(), 2),
                 new ScryEffect(1));
     }
 }

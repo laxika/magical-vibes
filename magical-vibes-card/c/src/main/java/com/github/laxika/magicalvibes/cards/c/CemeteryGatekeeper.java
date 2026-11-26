@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
@@ -22,7 +22,7 @@ public class CemeteryGatekeeper extends Card {
 
         CardSharesCardTypeWithImprintedCardPredicate sharedType =
                 new CardSharesCardTypeWithImprintedCardPredicate(true);
-        CardEffect damage = new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer());
+        CardEffect damage = DealDamageEffect.to(Subjects.triggeringPlayer(), 2);
         CardEffect conditionalDamage = new ConditionalEffect(new TriggeringCardMatches(sharedType), damage);
 
         addTrigger(Triggers.playerCastsSpell().withFilter(sharedType), conditionalDamage);

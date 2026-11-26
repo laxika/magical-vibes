@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -23,7 +23,7 @@ public class HarshJustice extends Card {
         // damage to its controller.
         addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                 Triggers.creatureDealsCombatDamageToYou().withFilter(new PermanentIsAttackingPredicate()),
-                new DealDamageToPlayersEffect(new EventValue(), Subjects.controllerOf(Subjects.triggering()))
-                        .dealtByEventDamageSource())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), new EventValue())
+                        .byEventDamageSource())));
     }
 }

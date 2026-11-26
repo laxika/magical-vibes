@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,6 +34,6 @@ public class Justice extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentColorInPredicate(Set.of(CardColor.RED)))))
                         .withSpellFilter(new CardColorPredicate(CardColor.RED)),
-                new DealDamageToPlayersEffect(new EventValue(), Subjects.controllerOf(Subjects.triggering())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), new EventValue()));
     }
 }

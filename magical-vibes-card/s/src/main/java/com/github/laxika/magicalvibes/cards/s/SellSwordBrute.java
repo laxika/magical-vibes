@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SellSwordBrute extends Card {
 
     public SellSwordBrute() {
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new DealDamageToPlayersEffect(2, Subjects.you()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DealDamageEffect.to(Subjects.you(), 2));
     }
 }

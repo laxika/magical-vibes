@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
@@ -23,6 +23,6 @@ public class MadcapExperiment extends Card {
         addSpellEffect(new RevealCardsFromTopUntilEffect(artifactCard));
         addSpellEffect(new PutCardsOntoBattlefieldEffect(Subjects.revealedThisWay(artifactCard)));
         addSpellEffect(PutCardsIntoLibraryEffect.onBottomInRandomOrder(Subjects.restRevealedThisWay(artifactCard)));
-        addSpellEffect(new DealDamageToPlayersEffect(new AmountThisWay(StepKind.REVEAL), Subjects.you()));
+        addSpellEffect(DealDamageEffect.to(Subjects.you(), new AmountThisWay(StepKind.REVEAL)));
     }
 }

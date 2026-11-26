@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +25,7 @@ public class RiverSong extends Card {
 
         CardEffect trigger = SequenceEffect.of(
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                new DealDamageToPlayersEffect(new SourcePower(), Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), new SourcePower()));
         addTrigger(Triggers.opponentScries(), trigger);
         addTrigger(Triggers.opponentSurveils(), trigger);
         addTrigger(Triggers.opponentSearchesTheirLibrary(), trigger);

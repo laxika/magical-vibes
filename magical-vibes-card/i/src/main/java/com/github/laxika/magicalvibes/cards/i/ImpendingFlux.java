@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastFromOutsideHandThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -22,7 +22,7 @@ public class ImpendingFlux extends Card {
     public ImpendingFlux() {
         var damage = new Sum(new Fixed(1),
                 new SpellsCastFromOutsideHandThisTurn(CountScope.CONTROLLER));
-        addSimultaneousSpellEffects(new DealDamageToPlayersEffect(damage, Subjects.eachOpponent()),
+        addSimultaneousSpellEffects(DealDamageEffect.to(Subjects.eachOpponent(), damage),
                 new MassDamageEffect(damage, false, false,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addCastingOption(new ForetellCast("{1}{R}{R}"));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -34,7 +34,7 @@ public class TibaltTheFiendBlooded extends Card {
         // −4: Tibalt deals damage equal to the number of cards in target player's hand to that player.
         addActivatedAbility(new ActivatedAbility(
                 -4,
-                List.of(new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), Subjects.targetPlayer())),
+                List.of(DealDamageEffect.to(Subjects.targetPlayer(), new CardsInHand(CountScope.TARGET_PLAYER))),
                 "−4: Tibalt, the Fiend-Blooded deals damage equal to the number of cards in target player's hand to that player."
         ));
 

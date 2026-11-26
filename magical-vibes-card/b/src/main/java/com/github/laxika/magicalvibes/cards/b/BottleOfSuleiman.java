@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,7 +35,7 @@ public class BottleOfSuleiman extends Card {
                         new FlipCoinWinEffect(
                                 new CreateTokenEffect("Djinn", 5, 5, null,
                                         List.of(CardSubtype.DJINN), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)),
-                                new DealDamageToPlayersEffect(5, Subjects.you()))
+                                DealDamageEffect.to(Subjects.you(), 5))
                 ),
                 "{1}, Sacrifice Bottle of Suleiman: Flip a coin. If you win the flip, create a 5/5 colorless "
                         + "Djinn artifact creature token with flying. If you lose the flip, Bottle of Suleiman deals 5 damage to you."

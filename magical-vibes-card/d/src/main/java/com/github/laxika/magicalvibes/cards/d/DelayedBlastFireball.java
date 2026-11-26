@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class DelayedBlastFireball extends Card {
 
     private static SequenceEffect damage(int amount) {
         return SequenceEffect.simultaneous(
-                new DealDamageToPlayersEffect(amount, Subjects.eachOpponent()),
+                DealDamageEffect.to(Subjects.eachOpponent(), amount),
                 new DealDamageToPermanentsTargetControlsEffect(amount,
                         Subjects.controlledBy(Subjects.eachOpponent(), new PermanentIsCreaturePredicate()))
         );

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsHandThenDrawsThatManyEffect;
@@ -30,7 +30,7 @@ public class SycoraxCommander extends Card {
                         new ChooseOneEffect.ChooseOneOption(DISCARD_OPTION,
                                 new TargetPlayerDiscardsHandThenDrawsThatManyEffect(1)),
                         new ChooseOneEffect.ChooseOneOption(DAMAGE_OPTION,
-                                new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER),
-                                        Subjects.targetPlayerDeclaredElsewhere())))));
+                                DealDamageEffect.to(Subjects.targetPlayerDeclaredElsewhere(),
+                                        new CardsInHand(CountScope.TARGET_PLAYER))))));
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
@@ -32,7 +32,7 @@ public class TombOfUrami extends Card {
                         new AwardManaEffect(ManaColor.BLACK),
                         new ConditionalEffect(
                                 new ControlsPermanentCountAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.OGRE)),
-                                new DealDamageToPlayersEffect(1, Subjects.you()))
+                                DealDamageEffect.to(Subjects.you(), 1))
                 ),
                 "{T}: Add {B}. Tomb of Urami deals 1 damage to you if you don't control an Ogre."
         ));

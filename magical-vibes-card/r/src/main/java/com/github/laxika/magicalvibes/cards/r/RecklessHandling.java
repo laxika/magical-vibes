@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,6 +23,6 @@ public class RecklessHandling extends Card {
         addSpellEffect(new DiscardEffect(1, Subjects.you(), true));
         addSpellEffect(new ConditionalEffect(
                 HappenedThisWay.toACard(StepKind.DISCARD, new CardTypePredicate(CardType.ARTIFACT)),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2)));
     }
 }

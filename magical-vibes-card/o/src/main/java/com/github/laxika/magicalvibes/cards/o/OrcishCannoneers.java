@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,7 +18,8 @@ public class OrcishCannoneers extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(SequenceEffect.simultaneous(DealDamageEffect.toAnyTarget(2), new DealDamageToPlayersEffect(3, Subjects.you()))),
+                List.of(SequenceEffect.simultaneous(DealDamageEffect.toAnyTarget(2), DealDamageEffect.to(Subjects.you(),
+                        3))),
                 "{T}: Orcish Cannoneers deals 2 damage to any target and 3 damage to you."
         ));
     }

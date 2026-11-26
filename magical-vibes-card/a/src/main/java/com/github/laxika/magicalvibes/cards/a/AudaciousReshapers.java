@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class AudaciousReshapers extends Card {
                                 LibrarySearchDestination.BATTLEFIELD,
                                 false,
                                 true),
-                        new DealDamageToPlayersEffect(new EventValue(), Subjects.you())
+                        DealDamageEffect.to(Subjects.you(), new EventValue())
                 ),
                 "{T}, Sacrifice an artifact: Reveal cards from the top of your library until you reveal an artifact card."
                         + " Put that card onto the battlefield and the rest on the bottom of your library in a random order."

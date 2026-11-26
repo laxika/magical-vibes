@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LRW", collectorNumber = "183")
@@ -21,6 +20,6 @@ public class LashOut extends Card {
         addSpellEffect(DealDamageEffect.toTargetCreature(3));
         addSpellEffect(new ClashEffect(null));
         addSpellEffect(new ConditionalEffect(new WonClash(),
-                new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.target()))));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 3)));
     }
 }

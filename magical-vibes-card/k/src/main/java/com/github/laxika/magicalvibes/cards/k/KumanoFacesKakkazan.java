@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.e.EtchingOfKumano;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCountersToCastSpellEffect;
@@ -28,7 +28,7 @@ public class KumanoFacesKakkazan extends Card {
         setBackFaceCard(new EtchingOfKumano());
 
         addSimultaneousTrigger(Triggers.chapter(1),
-                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
+                DealDamageEffect.to(Subjects.eachOpponent(), 1),
                 new DealDamageToEachMatchingPermanentEffect(
                         1,
                         new PermanentAllOfPredicate(List.of(

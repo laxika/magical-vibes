@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDragonApproachAndSearchEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class DragonsApproach extends Card {
 
     public DragonsApproach() {
-        addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.eachOpponent()));
+        addSpellEffect(DealDamageEffect.to(Subjects.eachOpponent(), 3));
         addSpellEffect(new MayEffect(
                 new ExileDragonApproachAndSearchEffect(),
                 "Exile Dragon's Approach and four cards named Dragon's Approach from your graveyard?"));

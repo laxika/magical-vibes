@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -68,7 +68,7 @@ public class CaesarLegionsEmperor extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Caesar deals damage equal to the number of creature tokens you control to target opponent",
-                        new DealDamageToPlayersEffect(creatureTokens, Subjects.targetPlayer()),
+                        DealDamageEffect.to(Subjects.targetPlayer(), creatureTokens),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                 "Target must be an opponent"

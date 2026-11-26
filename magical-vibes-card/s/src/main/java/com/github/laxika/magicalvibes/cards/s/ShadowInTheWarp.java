@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -20,6 +20,6 @@ public class ShadowInTheWarp extends Card {
         addTrigger(Triggers.opponentCastsSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
                         .nthThisTurn(1),
-                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.targetSpell())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.targetSpell()), 2));
     }
 }

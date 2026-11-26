@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +17,6 @@ public class Backfire extends Card {
                 // Whenever enchanted creature deals damage to you, this Aura deals that much
                 // damage to that creature's controller.
                 .addTrigger(Triggers.enchantedCreatureDealsDamageToYou(),
-                        new DealDamageToPlayersEffect(new EventValue(), Subjects.controllerOf(Subjects.triggering())));
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), new EventValue()));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTargetCreatureEffect;
@@ -33,6 +33,6 @@ public class TraumaticPrank extends Card {
                         new CantBlockEffect()))
                 .addSpellEffect(new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                        new DealDamageToPlayersEffect(1, Subjects.you()))));
+                        DealDamageEffect.to(Subjects.you(), 1))));
     }
 }

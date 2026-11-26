@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +30,7 @@ public class ShaoJun extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(2, new PermanentIsArtifactPredicate()),
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent())
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1)
                 ),
                 "Tap two untapped artifacts you control: Shao Jun deals 1 damage to each opponent."
         ));

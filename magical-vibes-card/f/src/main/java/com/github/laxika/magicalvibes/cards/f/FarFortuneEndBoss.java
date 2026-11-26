@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FarFortuneEndBoss extends Card {
 
     public FarFortuneEndBoss() {
-        addTrigger(Triggers.youAttack(), new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
+        addTrigger(Triggers.youAttack(), DealDamageEffect.to(Subjects.eachOpponent(), 1));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
     }

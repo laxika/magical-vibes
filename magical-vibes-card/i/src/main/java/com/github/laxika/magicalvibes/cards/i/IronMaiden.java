@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,9 +20,7 @@ public class IronMaiden extends Card {
         // At the beginning of each opponent's upkeep, this artifact deals X damage to that player,
         // where X is the number of cards in their hand minus 4. X cannot be negative.
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
-                new DealDamageToPlayersEffect(
-                        new Max(new Fixed(0),
-                                new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-4))),
-                        Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), new Max(new Fixed(0),
+                                new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-4)))));
     }
 }

@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -54,7 +54,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AddManaOfTypeProdu
 import com.github.laxika.magicalvibes.service.effect.normalfx.AddManaOnEnchantedLandTapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AddManaWhenTappedForManaEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AddOneOfEachManaTypeProducedByLandEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -97,7 +97,7 @@ class TapTriggersTest {
     private AmountEvaluationService amountEvaluationService;
 
     @Mock
-    private DealDamageToPlayersEffectHandler dealDamageHandler;
+    private DealDamageEffectHandler dealDamageHandler;
 
     @Mock
     private TriggeredAbilityQueueService triggeredAbilityQueueService;
@@ -146,7 +146,7 @@ class TapTriggersTest {
         effectHandlerRegistry.register(AddManaOfTypeProducedByTappedPermanentEffect.class,
                 new AddManaOfTypeProducedByTappedPermanentEffectHandler(gameQueryService, gameLogService,
                         interactionHandlerRegistry));
-        effectHandlerRegistry.register(DealDamageToPlayersEffect.class, dealDamageHandler);
+        effectHandlerRegistry.register(DealDamageEffect.class, dealDamageHandler);
     }
 
     private static Card createCard(String name, CardType type) {
@@ -198,7 +198,7 @@ class TapTriggersTest {
             Permanent manabarbs = createPermanent("Manabarbs");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
-            var effect = new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer());
+            var effect = DealDamageEffect.to(Subjects.triggeringPlayer(), 1);
 
             assertThat(tapLand(manabarbs, player1Id, effect, player2Id, forest.getId(), ManaColor.GREEN)).isTrue();
 
@@ -262,7 +262,7 @@ class TapTriggersTest {
         @Test
         @DisplayName("an ability that uses the stack keeps its intervening \"if\" for the check as it resolves")
         void nonManaAbilityKeepsItsInterveningIf() {
-            var damage = new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer());
+            var damage = DealDamageEffect.to(Subjects.triggeringPlayer(), 1);
             var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
                     TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), damage);
 
@@ -513,7 +513,7 @@ class TapTriggersTest {
             Permanent overabundance = createPermanent("Overabundance");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
-            var damage = new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer());
+            var damage = DealDamageEffect.to(Subjects.triggeringPlayer(), 1);
             var effect = SequenceEffect.of(new AddOneOfEachManaTypeProducedByLandEffect(), damage);
 
             assertThat(tapLand(overabundance, player1Id, effect, player2Id, forest.getId())).isTrue();
@@ -533,7 +533,7 @@ class TapTriggersTest {
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
             var sequence = SequenceEffect.of(new AddOneOfEachManaTypeProducedByLandEffect(),
-                    new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()).dealtByTriggeringPermanent());
+                    DealDamageEffect.to(Subjects.triggeringPlayer(), 1).byTriggeringPermanent());
             var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
                     TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), sequence);
             CardEffect effect = TapTriggers.read(ability, Triggers.playerTapsLandForMana())

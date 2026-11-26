@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,9 +31,8 @@ public class PsychicAllergy extends Card {
                 new PermanentHasSourceChosenColorPredicate(),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
-                new DealDamageToPlayersEffect(
-                        new PermanentCount(nontokenPermanentOfChosenColor, CountScope.TARGET_PLAYER),
-                        Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(),
+                        new PermanentCount(nontokenPermanentOfChosenColor, CountScope.TARGET_PLAYER)));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay(new SacrificeMultiplePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Islands"), new DestroyTargetPermanentEffect(Subjects.source())));
     }

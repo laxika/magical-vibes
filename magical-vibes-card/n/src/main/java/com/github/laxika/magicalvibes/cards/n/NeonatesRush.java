@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +24,7 @@ public class NeonatesRush extends Card {
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         // Neonate's Rush deals 1 damage to target creature and 1 damage to its controller. Draw a card.
         addSimultaneousSpellEffects(DealDamageEffect.toTargetCreature(1),
-                new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.target())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 1));
         addSpellEffect(new DrawCardEffect(1));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -33,6 +33,6 @@ public class Sarcomancy extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AnyPlayerControlsPermanentCountAtMost(0,
                                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
-                new DealDamageToPlayersEffect(1, Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), 1));
     }
 }

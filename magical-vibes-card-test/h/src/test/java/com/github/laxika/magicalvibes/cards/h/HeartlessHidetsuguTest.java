@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeartlessHidetsugu.class})
+@CardUsed({HeartlessHidetsugu.class, WhipOfErebos.class})
 class HeartlessHidetsuguTest extends BaseCardTest {
 
     @Test
@@ -129,5 +130,23 @@ class HeartlessHidetsuguTest extends BaseCardTest {
         harness.assertLife(player1, 10);
         harness.assertLife(player2, 10);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Every player's amount is fixed before any damage, so lifelink gained mid-way doesn't change it")
+    void amountsAreFixedBeforeAnyDamage() {
+        addCreatureReady(player2, new HeartlessHidetsugu());
+        harness.addToBattlefield(player2, new WhipOfErebos());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        // Half of each player's life as the ability resolves (CR 608.2h): 10 to player 1, 5 to player 2, even though
+        // the lifelink from player 1's damage raised player 2's life before player 2 was dealt damage.
+        harness.assertLife(player1, 10);
+        assertThat(gameLogContains(player2.getUsername() + " takes 5 damage from")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " takes 10 damage from")).isFalse();
     }
 }

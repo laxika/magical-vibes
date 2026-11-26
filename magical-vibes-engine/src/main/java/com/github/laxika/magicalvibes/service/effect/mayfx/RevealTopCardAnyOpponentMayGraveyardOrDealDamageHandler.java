@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardAnyOpponentMayGraveyardOrDealDamageHandler implements MayEffectHandlerBean {
 
     private final RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffectHandler effectHandler;
-    private final DealDamageToPlayersEffectHandler dealDamageHandler;
+    private final DealDamageEffectHandler dealDamageHandler;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final GraveyardService graveyardService;
@@ -103,8 +103,7 @@ public class RevealTopCardAnyOpponentMayGraveyardOrDealDamageHandler implements 
 
     private void dealDamage(GameData gameData, PendingMayAbility ability,
             RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffect effect, UUID targetPlayerId) {
-        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                effect.manaValue(), Subjects.targetPlayer());
+        DealDamageEffect damage = DealDamageEffect.to(Subjects.targetPlayer(), effect.manaValue());
         StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                 effect.abilityControllerId(),
                 ability.sourceCard().getName() + "'s ability",

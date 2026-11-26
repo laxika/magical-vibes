@@ -184,7 +184,7 @@ Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
 - **`SacrificeSelfThenDealDamageToTargetPlayerEffect` was not unused.** `DrawService:700` constructs it
   at runtime for Booby Trap's draw trigger (its static marker is gone). Deleting it
   outright would have removed Booby Trap's trigger. It is absorbed by `SacrificeSelfThenEffect` instead,
-  with `DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER)` as the payload.
+  with `DealDamageEffect.to(Subjects.targetPlayer(), 10)` as the payload.
 
 **Left for a later step**
 - `SacrificeSelfThenDestroyTargetEffect` (Wasp of the Bitter End) was absorbed later (leave-battlefield redesign

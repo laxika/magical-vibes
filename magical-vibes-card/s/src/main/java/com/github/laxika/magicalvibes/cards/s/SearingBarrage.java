@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,6 +17,6 @@ public class SearingBarrage extends Card {
                 .addSpellEffect(DealDamageEffect.toTargetCreature(5))
                 .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED, 3),
-                        new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.target()))));
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 3)));
     }
 }

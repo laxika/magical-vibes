@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,7 +31,7 @@ public class TheGreatGoblin extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.youPutCountersOnCreatureYouControl()
                         .withFilter(new PermanentHasAnySubtypePredicate(GOBLIN_ORC_ARMY)),
-                new DealDamageToPlayersEffect(2, Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), 2));
 
         addTrigger(Triggers.creatureDies(
                         new PermanentAnyOfPredicate(List.of(

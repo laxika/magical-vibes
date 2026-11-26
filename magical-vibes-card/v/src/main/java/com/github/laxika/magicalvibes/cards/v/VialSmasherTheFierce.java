@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class VialSmasherTheFierce extends Card {
         addTrigger(Triggers.youCastSpell().nthThisTurn(1),
                 SequenceEffect.of(
                         new ChoosePlayerAtRandomEffect(Subjects.eachOpponent()),
-                        DealDamageToPlayersEffect.toPlayerOrTheirPlaneswalker(new TargetSpellManaValue(),
+                        DealDamageEffect.toPlayerOrTheirPlaneswalker(new TargetSpellManaValue(),
                                 Subjects.playersThisWay(StepKind.CHOOSE))));
     }
 }

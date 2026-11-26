@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CurseOfShakenFaith extends Card {
 
     public CurseOfShakenFaith() {
-        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer());
+        DealDamageEffect damage = DealDamageEffect.to(Subjects.triggeringPlayer(), 2);
 
         addTrigger(Triggers.playerCastsSpell()
                         .withStackEntryFilter(new StackEntryControlledByEnchantedPlayerPredicate())

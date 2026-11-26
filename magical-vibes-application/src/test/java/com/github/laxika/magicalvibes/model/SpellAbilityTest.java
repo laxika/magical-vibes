@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +20,7 @@ class SpellAbilityTest {
         // Char: "deals 4 damage to any target and 2 damage to you" is one damage event.
         EffectRegistration toAnyTarget = new EffectRegistration(DealDamageEffect.toAnyTarget(4));
         EffectRegistration toYou = new EffectRegistration(
-                new DealDamageToPlayersEffect(2, Subjects.you()), true);
+                DealDamageEffect.to(Subjects.you(), 2), true);
 
         SpellAbility ability = new SpellAbility(List.of(toAnyTarget, toYou));
 

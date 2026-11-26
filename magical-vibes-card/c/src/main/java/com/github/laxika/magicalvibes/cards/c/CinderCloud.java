@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -23,7 +23,7 @@ public class CinderCloud extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(DestroyTargetPermanentThenEffect.ifDiesThisWay(
                         EventStat.POWER,
-                        new DealDamageToPlayersEffect(new EventValue(), Subjects.targetPlayer()),
+                        DealDamageEffect.to(Subjects.targetPlayer(), new EventValue()),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
     }

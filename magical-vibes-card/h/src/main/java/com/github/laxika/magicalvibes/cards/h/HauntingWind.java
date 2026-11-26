@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
@@ -20,10 +20,10 @@ public class HauntingWind extends Card {
                                 .withFilter(new PermanentIsArtifactPredicate()),
                         Triggers.permanentOpponentControlsBecomesTapped()
                                 .withFilter(new PermanentIsArtifactPredicate())),
-                new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.triggering())));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), 1));
 
         CardEffect artifactActivationTrigger =
-                new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.triggering()));
+                DealDamageEffect.to(Subjects.controllerOf(Subjects.triggering()), 1);
         addTrigger(Triggers.youActivateAbility()
                         .withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST)
                         .withSource(new PermanentIsArtifactPredicate()),

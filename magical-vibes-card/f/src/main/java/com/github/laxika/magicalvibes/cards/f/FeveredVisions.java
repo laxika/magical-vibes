@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,6 +26,6 @@ public class FeveredVisions extends Card {
                 new DrawCardEffect(1, Subjects.triggeringPlayer()),
                 new ConditionalEffect(
                         new AllConditions(List.of(new NotControllerTurn(), new ActivePlayerHandAtLeast(4))),
-                        new DealDamageToPlayersEffect(new Fixed(2), Subjects.triggeringPlayer()))));
+                        DealDamageEffect.to(Subjects.triggeringPlayer(), new Fixed(2)))));
     }
 }

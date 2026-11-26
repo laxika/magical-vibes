@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,7 +18,7 @@ public class SpicyOatmealPizza extends Card {
     public SpicyOatmealPizza() {
         addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS),
                 DealDamageEffect.toAnyTarget(4),
-                new DealDamageToPlayersEffect(3, Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), 3));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

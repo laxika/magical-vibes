@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinForEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,11 +28,11 @@ class FlipCoinForEachOpponentEffectHandlerTest extends AbstractPlayerInteraction
     @Test
     void dispatchesWinBranchForEachOpponent() {
         DrawCardEffect win = new DrawCardEffect();
-        DealDamageToPlayersEffect loss = new DealDamageToPlayersEffect(3, Subjects.triggeringPlayer());
+        DealDamageEffect loss = DealDamageEffect.to(Subjects.triggeringPlayer(), 3);
         EffectHandler winHandler = mock(EffectHandler.class);
         EffectHandler lossHandler = mock(EffectHandler.class);
         registry.register(DrawCardEffect.class, winHandler);
-        registry.register(DealDamageToPlayersEffect.class, lossHandler);
+        registry.register(DealDamageEffect.class, lossHandler);
         when(coinFlipService.flip(gd, player1Id))
                 .thenReturn(new CoinFlipService.CoinFlipResult(true, 1));
 
@@ -49,11 +49,11 @@ class FlipCoinForEachOpponentEffectHandlerTest extends AbstractPlayerInteraction
     @Test
     void bindsTheOpponentToTheLossBranch() {
         DrawCardEffect win = new DrawCardEffect();
-        DealDamageToPlayersEffect loss = new DealDamageToPlayersEffect(3, Subjects.triggeringPlayer());
+        DealDamageEffect loss = DealDamageEffect.to(Subjects.triggeringPlayer(), 3);
         EffectHandler winHandler = mock(EffectHandler.class);
         EffectHandler lossHandler = mock(EffectHandler.class);
         registry.register(DrawCardEffect.class, winHandler);
-        registry.register(DealDamageToPlayersEffect.class, lossHandler);
+        registry.register(DealDamageEffect.class, lossHandler);
         when(coinFlipService.flip(gd, player1Id))
                 .thenReturn(new CoinFlipService.CoinFlipResult(false, 1));
         doAnswer(invocation -> {

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -43,7 +43,7 @@ public class ShadowheartSharranCleric extends Card {
 
     public ShadowheartSharranCleric() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(1, Subjects.eachPlayer()));
+                DealDamageEffect.to(Subjects.eachPlayer(), 1));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);
@@ -81,7 +81,7 @@ public class ShadowheartSharranCleric extends Card {
                     List.of(CardSubtype.KNIGHT), Set.of(), Set.of());
             case BLUE -> new DrawCardEffect();
             case BLACK -> null;
-            case RED -> new DealDamageToPlayersEffect(new EventValue(), Subjects.eachOpponent());
+            case RED -> DealDamageEffect.to(Subjects.eachOpponent(), new EventValue());
             case GREEN -> PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE);
         };
         return effect == null ? null : new TriggeredAbility(Triggers.youLoseLife(),
@@ -152,7 +152,7 @@ public class ShadowheartSharranCleric extends Card {
         }
 
         face.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(1, Subjects.eachPlayer()));
+                DealDamageEffect.to(Subjects.eachPlayer(), 1));
         TriggeredAbility lifeLossAbility = specializedLifeLossAbility(color);
         if (lifeLossAbility != null) {
             face.addTriggeredAbility(lifeLossAbility);

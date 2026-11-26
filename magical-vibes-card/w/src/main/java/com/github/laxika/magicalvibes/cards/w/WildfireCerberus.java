@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,7 +28,7 @@ public class WildfireCerberus extends Card {
         ));
 
         addSimultaneousTrigger(Triggers.becomesMonstrous(),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
+                DealDamageEffect.to(Subjects.eachOpponent(), 2),
                 new DealDamageToEachMatchingPermanentEffect(
                         2,
                         new PermanentAllOfPredicate(List.of(

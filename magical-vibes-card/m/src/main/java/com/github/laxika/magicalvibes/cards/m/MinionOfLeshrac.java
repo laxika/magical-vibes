@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -37,7 +37,8 @@ public class MinionOfLeshrac extends Card {
         // At the beginning of your upkeep, this creature deals 5 damage to you unless you sacrifice
         // a creature other than this creature. If this creature deals damage to you this way, tap it.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                UnlessPaysEffect.unlessYouPay(new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "another creature"), SequenceEffect.of(new DealDamageToPlayersEffect(5, Subjects.you()), new ConditionalEffect(HappenedThisWay.toAPlayer(StepKind.DEAL_DAMAGE, PlayerRelation.SELF),
+                UnlessPaysEffect.unlessYouPay(new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "another creature"), SequenceEffect.of(DealDamageEffect.to(Subjects.you(),
+                        5), new ConditionalEffect(HappenedThisWay.toAPlayer(StepKind.DEAL_DAMAGE, PlayerRelation.SELF),
                                 new TapPermanentsEffect(Subjects.source())))));
 
         // {T}: Destroy target creature or land.

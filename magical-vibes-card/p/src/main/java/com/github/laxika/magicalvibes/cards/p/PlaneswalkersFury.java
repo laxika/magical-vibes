@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -21,7 +21,7 @@ public class PlaneswalkersFury extends Card {
                 false,
                 "{3}{R}",
                 List.of(RevealCardsFromHandEffect.atRandom(Subjects.targetPlayer(), 1),
-                        new DealDamageToPlayersEffect(AmountThisWay.revealedManaValue(), Subjects.targetPlayer())),
+                        DealDamageEffect.to(Subjects.targetPlayer(), AmountThisWay.revealedManaValue())),
                 "{3}{R}: Target opponent reveals a card at random from their hand. This enchantment deals damage equal to that card's mana value to that player. Activate only as a sorcery.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

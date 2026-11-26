@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
@@ -31,14 +31,14 @@ public class YavimayaCoast extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.GREEN), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardManaEffect(ManaColor.GREEN), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add {G}. Yavimaya Coast deals 1 damage to you."
         ));
         // {T}: Add {U}. Yavimaya Coast deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLUE), new DealDamageToPlayersEffect(1, Subjects.you())),
+                List.of(new AwardManaEffect(ManaColor.BLUE), DealDamageEffect.to(Subjects.you(), 1)),
                 "{T}: Add {U}. Yavimaya Coast deals 1 damage to you."
         ));
     }

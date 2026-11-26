@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,7 +24,7 @@ public class MageSiege extends Card {
                 List.of(
                         new TriggeredAbility(Triggers.youCastSpell()
                                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()))),
+                                DealDamageEffect.to(Subjects.eachOpponent(), 1))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

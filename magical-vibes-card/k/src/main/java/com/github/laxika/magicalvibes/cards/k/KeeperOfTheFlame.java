@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,7 +19,7 @@ public class KeeperOfTheFlame extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new DealDamageToPlayersEffect(2, Subjects.targetPlayer())),
+                List.of(DealDamageEffect.to(Subjects.targetPlayer(), 2)),
                 "{R}, {T}: Choose target opponent who has more life than you do as you activate this ability. "
                         + "This creature deals 2 damage to that player.",
                 new PlayerPredicateTargetFilter(

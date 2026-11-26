@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -33,7 +33,7 @@ public class JinxedChoker extends Card {
                 PutCountersEffect.onSelf(CounterType.CHARGE)));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(new CountersOnSource(CounterType.CHARGE), Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), new CountersOnSource(CounterType.CHARGE)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

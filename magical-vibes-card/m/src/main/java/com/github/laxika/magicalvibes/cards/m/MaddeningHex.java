@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToRandomOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,12 +23,12 @@ public class MaddeningHex extends Card {
     public MaddeningHex() {
         AttachSourceAuraToRandomOpponentEffect reattach = new AttachSourceAuraToRandomOpponentEffect();
         RollD6Effect roll = new RollD6Effect(List.of(
-                SequenceEffect.of(new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()), reattach),
-                SequenceEffect.of(new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()), reattach),
-                SequenceEffect.of(new DealDamageToPlayersEffect(3, Subjects.triggeringPlayer()), reattach),
-                SequenceEffect.of(new DealDamageToPlayersEffect(4, Subjects.triggeringPlayer()), reattach),
-                SequenceEffect.of(new DealDamageToPlayersEffect(5, Subjects.triggeringPlayer()), reattach),
-                SequenceEffect.of(new DealDamageToPlayersEffect(6, Subjects.triggeringPlayer()), reattach)));
+                SequenceEffect.of(DealDamageEffect.to(Subjects.triggeringPlayer(), 1), reattach),
+                SequenceEffect.of(DealDamageEffect.to(Subjects.triggeringPlayer(), 2), reattach),
+                SequenceEffect.of(DealDamageEffect.to(Subjects.triggeringPlayer(), 3), reattach),
+                SequenceEffect.of(DealDamageEffect.to(Subjects.triggeringPlayer(), 4), reattach),
+                SequenceEffect.of(DealDamageEffect.to(Subjects.triggeringPlayer(), 5), reattach),
+                SequenceEffect.of(DealDamageEffect.to(Subjects.triggeringPlayer(), 6), reattach)));
 
         addTrigger(Triggers.playerCastsSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,6 +24,6 @@ public class ForceOfNature extends Card {
     public ForceOfNature() {
         // At the beginning of your upkeep, this creature deals 8 damage to you unless you pay {G}{G}{G}{G}.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                UnlessPaysEffect.unlessYouPay("{G}{G}{G}{G}", new DealDamageToPlayersEffect(8, Subjects.you())));
+                UnlessPaysEffect.unlessYouPay("{G}{G}{G}{G}", DealDamageEffect.to(Subjects.you(), 8)));
     }
 }

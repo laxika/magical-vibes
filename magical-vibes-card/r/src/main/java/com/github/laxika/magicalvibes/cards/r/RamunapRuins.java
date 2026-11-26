@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -41,7 +41,7 @@ public class RamunapRuins extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.DESERT),
                                 "Sacrifice a Desert",
                                 false),
-                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent())),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 2)),
                 "{2}{R}{R}, {T}, Sacrifice a Desert: This land deals 2 damage to each opponent."
         ));
     }

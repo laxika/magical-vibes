@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -116,7 +115,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
         entry.setXValue(damage);
         CardEffect reflexiveDamage = e.targetRestriction().admits(TargetPredicate.Kind.PERMANENT)
                 ? DealDamageEffect.toAnyTarget(new XValue())
-                : new DealDamageToPlayersEffect(new XValue(), Subjects.targetPlayer());
+                : DealDamageEffect.to(Subjects.targetPlayer(), new XValue());
         queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(reflexiveDamage));
     }
 

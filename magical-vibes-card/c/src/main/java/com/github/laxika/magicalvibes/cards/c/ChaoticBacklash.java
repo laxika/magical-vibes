@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -17,10 +17,8 @@ public class ChaoticBacklash extends Card {
 
     public ChaoticBacklash() {
         // Deals damage to target player equal to twice the number of white and/or blue permanents they control.
-        addSpellEffect(new DealDamageToPlayersEffect(
-                new Scaled(new PermanentCount(
+        addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), new Scaled(new PermanentCount(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE)),
-                        CountScope.TARGET_PLAYER), 2),
-                Subjects.targetPlayer()));
+                        CountScope.TARGET_PLAYER), 2)));
     }
 }

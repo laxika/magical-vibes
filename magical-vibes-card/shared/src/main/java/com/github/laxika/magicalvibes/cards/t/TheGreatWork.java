@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnFrontEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,8 +24,8 @@ public class TheGreatWork extends Card {
         var opponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
-        DealDamageToPlayersEffect opponentDamage =
-                new DealDamageToPlayersEffect(3, Subjects.targetPlayer());
+        DealDamageEffect opponentDamage =
+                DealDamageEffect.to(Subjects.targetPlayer(), 3);
         DealDamageToPermanentsTargetControlsEffect creatureDamage =
                 new DealDamageToPermanentsTargetControlsEffect(3);
         target(opponent)

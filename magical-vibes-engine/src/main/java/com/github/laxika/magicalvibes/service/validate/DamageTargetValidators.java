@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -28,6 +27,15 @@ public class DamageTargetValidators {
     @ValidatesTarget(DealDamageEffect.class)
     public void validateDealDamageToTargetPlayerOrPlaneswalker(TargetValidationContext ctx,
                                                                DealDamageEffect effect) {
+        if (effect.recipient().namesPlayers()) {
+            // Only a declared player target chooses a player; every other player subject (you, each opponent, that
+            // player, the permanent-controller readers) takes no player target and must not trip this
+            // class-keyed validator, which runs unconditionally.
+            if (effect.players().declaresTarget()) {
+                tvs.requireTargetPlayer(ctx);
+            }
+            return;
+        }
         // Only the "target opponent" wording needs the escape hatch. The plain "target player"
         // wording is fully covered by the declarative spec, which runs before every validator.
         if (effect.playerRelation() != PlayerRelation.OPPONENT) {
@@ -75,15 +83,5 @@ public class DamageTargetValidators {
         // is left for the escape hatch is the zone.
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DealDamageToPlayersEffect.class)
-    public void validateDealDamageToPlayers(TargetValidationContext ctx, DealDamageToPlayersEffect effect) {
-        // Only the TARGET_PLAYER recipient chooses a player target; every other recipient
-        // (CONTROLLER, EACH_*, ENCHANTED_PLAYER, the two permanent-controller riders) takes no
-        // player target and must not trip the class-keyed validator, which runs unconditionally.
-        if (effect.player().declaresTarget()) {
-            tvs.requireTargetPlayer(ctx);
-        }
     }
 }

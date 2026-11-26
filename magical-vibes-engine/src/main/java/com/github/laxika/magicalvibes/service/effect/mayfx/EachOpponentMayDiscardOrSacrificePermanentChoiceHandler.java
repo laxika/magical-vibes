@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements MayEffectHandlerBean {
 
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final DealDamageEffectHandler dealDamageEffectHandler;
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
@@ -160,7 +160,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
 
     private void dealDamage(GameData gameData, PendingMayAbility ability, DynamicAmount amount,
             UUID sourceControllerId) {
-        var damage = new DealDamageToPlayersEffect(amount, Subjects.targetPlayer());
+        var damage = DealDamageEffect.to(Subjects.targetPlayer(), amount);
         var damageEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
@@ -168,6 +168,6 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
                 ability.controllerId(),
                 ability.sourcePermanentId());
         damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-        dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
+        dealDamageEffectHandler.resolve(gameData, damageEntry, damage);
     }
 }

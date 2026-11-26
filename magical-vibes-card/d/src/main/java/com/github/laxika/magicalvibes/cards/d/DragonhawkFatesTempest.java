@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
@@ -35,8 +35,8 @@ public class DragonhawkFatesTempest extends Card {
                         new PermanentCount(powerFourCreatures, CountScope.CONTROLLER), false)
                         .until(Duration.UNTIL_YOUR_NEXT_END_STEP),
                 RegisterDelayedStepTriggerEffect.aboutExiled(Triggers.endStep(ActivePlayer.YOU),
-                                new DealDamageToPlayersEffect(new Scaled(AmountThisWay.stillExiled(), 2),
-                                        Subjects.eachOpponent()))
+                                DealDamageEffect.to(Subjects.eachOpponent(),
+                                        new Scaled(AmountThisWay.stillExiled(), 2)))
                         .evenIfNothingHappened());
         addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         addTrigger(Triggers.attacks(), effect);

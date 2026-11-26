@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,7 +24,7 @@ public class Desolation extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ANY), SequenceEffect.of(
                 new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(),
                         Subjects.matching(Subjects.eachPlayer(), new PlayerTappedLandForManaThisTurnPredicate())),
-                new DealDamageToPlayersEffect(2, Subjects.playersThisWay(StepKind.SACRIFICE,
-                        new PermanentHasSubtypePredicate(CardSubtype.PLAINS)))));
+                DealDamageEffect.to(Subjects.playersThisWay(StepKind.SACRIFICE,
+                        new PermanentHasSubtypePredicate(CardSubtype.PLAINS)), 2)));
     }
 }

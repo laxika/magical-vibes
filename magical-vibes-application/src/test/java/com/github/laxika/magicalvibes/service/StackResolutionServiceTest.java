@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -64,7 +64,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -656,7 +655,7 @@ class StackResolutionServiceTest {
         @DisplayName("Saga ETB pushes chapter I ability onto the stack")
         void sagaEtbTriggersChapterI() {
             Card saga = createSaga("Test Saga");
-            saga.addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
+            saga.addTrigger(Triggers.chapter(1), DealDamageEffect.to(Subjects.eachOpponent(), 2));
             saga.addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
             saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(3));
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,

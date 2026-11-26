@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class FireNationArchers extends Card {
     public FireNationArchers() {
         // {5}: This creature deals 2 damage to each opponent. Create a 2/2 red Soldier creature token.
         addActivatedAbility(new ActivatedAbility(false, "{5}", List.of(
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
+                DealDamageEffect.to(Subjects.eachOpponent(), 2),
                 new CreateTokenEffect("Soldier", 2, 2, CardColor.RED,
                         List.of(CardSubtype.SOLDIER), Set.of(), Set.of())
         ), "{5}: Fire Nation Archers deals 2 damage to each opponent. Create a 2/2 red Soldier creature token."));

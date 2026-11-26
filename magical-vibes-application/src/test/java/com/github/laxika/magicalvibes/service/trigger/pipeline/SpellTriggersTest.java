@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
@@ -60,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -234,7 +232,7 @@ class SpellTriggersTest {
         private CastAbility lordOfPainAbility() {
             SpellTrigger trigger = Triggers.playerCastsSpell().nthThisTurn(1);
             return new CastAbility(trigger.filter(),
-                    List.of(new DealDamageToPlayersEffect(new TargetSpellManaValue(), Subjects.targetPlayer())),
+                    List.of(DealDamageEffect.to(Subjects.targetPlayer(), new TargetSpellManaValue())),
                     null, new PlayerPredicateTargetFilter(new PlayerOtherThanTriggeringPlayerPredicate(),
                             "Target must be another player"));
         }

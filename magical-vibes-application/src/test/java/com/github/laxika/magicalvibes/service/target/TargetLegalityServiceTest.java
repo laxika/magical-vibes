@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -116,8 +115,7 @@ class TargetLegalityServiceTest {
     void playerLifeComparisonIsRecheckedWhenATriggerResolves() {
         Card source = new Card();
         source.setName("Life comparison");
-        var damage = new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(1,
-                Subjects.targetPlayer());
+        var damage = DealDamageEffect.to(Subjects.targetPlayer(), 1);
         var entry = TestStackDoor.triggered(source, player1Id,
                 "Life comparison", List.of(damage), player2Id, (UUID) null);
         entry.setTargetFilter(new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
@@ -869,7 +867,7 @@ class TargetLegalityServiceTest {
         @DisplayName("passes when modal spell with player-targeting mode targets a player")
         void passesWhenModalSpellWithPlayerModeTargetsPlayer() {
             Card spell = createModalSpell("Modal Burn", CardColor.RED,
-                    new DestroyTargetPermanentEffect(), new DealDamageToPlayersEffect(3, Subjects.targetPlayer()));
+                    new DestroyTargetPermanentEffect(), DealDamageEffect.to(Subjects.targetPlayer(), 3));
 
             sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id, true);
         }

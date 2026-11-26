@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
  * evaluated {@code amount} to the controller of the combat opponent baked into the trigger's
  * {@code targetId}. The stack entry's source stays this permanent, so {@code SourcePower} reads it
  * and opponent-source damage shields keep applying. Mirrors the {@code TARGET_PERMANENT_CONTROLLER}
- * branch of {@link DealDamageToPlayersEffectHandler}.
+ * branch of {@link DealDamageEffectHandler}.
  */
 @Component
 @RequiredArgsConstructor

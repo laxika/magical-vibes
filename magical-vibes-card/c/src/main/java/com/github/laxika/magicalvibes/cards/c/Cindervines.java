@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +25,7 @@ public class Cindervines extends Card {
 
     public Cindervines() {
         addTrigger(Triggers.opponentCastsSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -34,7 +34,7 @@ public class Cindervines extends Card {
                         new SacrificeSelfCost(),
                         SequenceEffect.of(
                                 new DestroyTargetPermanentEffect(),
-                                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())))
+                                DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 2))
                 ),
                 "{1}, Sacrifice this enchantment: Destroy target artifact or enchantment. Cindervines deals 2 damage to that permanent's controller.",
                 new PermanentPredicateTargetFilter(

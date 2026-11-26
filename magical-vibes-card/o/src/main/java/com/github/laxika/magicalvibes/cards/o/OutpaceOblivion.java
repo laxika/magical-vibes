@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerWithoutMaxSpeedPredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -33,8 +32,8 @@ public class OutpaceOblivion extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new SacrificeSelfCost(), new DealDamageToPlayersEffect(2,
-                        Subjects.matching(Subjects.eachPlayer(), new PlayerWithoutMaxSpeedPredicate()))),
+                List.of(new SacrificeSelfCost(), DealDamageEffect.to(Subjects.matching(Subjects.eachPlayer(), new PlayerWithoutMaxSpeedPredicate()),
+                        2)),
                 "{2}, Sacrifice this enchantment: It deals 2 damage to each player who doesn't have max speed."
         ));
     }

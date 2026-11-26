@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -16,6 +16,6 @@ public class BurningEarth extends Card {
         // Whenever a player taps a nonbasic land for mana, Burning Earth deals 1 damage to that player.
         addTrigger(Triggers.playerTapsLandForMana().withFilter(
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))),
-                new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 1));
     }
 }

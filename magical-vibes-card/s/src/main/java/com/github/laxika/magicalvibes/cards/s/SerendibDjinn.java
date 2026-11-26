@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,7 +31,7 @@ public class SerendibDjinn extends Card {
                 new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()),
                 new ConditionalEffect(
                         HappenedThisWay.toA(StepKind.SACRIFICE, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                        new DealDamageToPlayersEffect(3, Subjects.you()))));
+                        DealDamageEffect.to(Subjects.you(), 3))));
 
         // When you control no lands, sacrifice this creature. State-triggered ability.
         addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(

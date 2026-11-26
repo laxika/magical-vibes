@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,9 +22,8 @@ public class DarigaazTheIgniter extends Card {
                 UnlessPaysEffect.youMayPay("{2}{R}", SequenceEffect.of(
                                 new ChooseColorAtResolutionEffect(),
                                 RevealCardsFromHandEffect.hand(Subjects.triggeringPlayer()),
-                                new DealDamageToPlayersEffect(
-                                        AmountThisWay.revealedCards(new CardHasChosenSpellColorPredicate()),
-                                        Subjects.triggeringPlayer()),
+                                DealDamageEffect.to(Subjects.triggeringPlayer(),
+                                        AmountThisWay.revealedCards(new CardHasChosenSpellColorPredicate())),
                                 new ClearChosenColorEffect())));
     }
 }

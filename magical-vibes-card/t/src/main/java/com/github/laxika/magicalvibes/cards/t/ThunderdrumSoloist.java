@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,8 +28,8 @@ public class ThunderdrumSoloist extends Card {
                         ))),
                 new ConditionalReplacementEffect(
                         new SpellManaSpentAtLeast(5),
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
-                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent())
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 3)
                 ));
     }
 }

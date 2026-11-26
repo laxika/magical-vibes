@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,6 +19,6 @@ public class WittyDemon extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(startingDeckCondition, new SearchLibraryEffect()),
                 new ConditionalEffect(new NotCondition(startingDeckCondition),
-                        new DealDamageToPlayersEffect(4, Subjects.you())));
+                        DealDamageEffect.to(Subjects.you(), 4)));
     }
 }

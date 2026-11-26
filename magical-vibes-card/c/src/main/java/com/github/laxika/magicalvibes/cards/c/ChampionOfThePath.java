@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,7 +25,7 @@ public class ChampionOfThePath extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new DealDamageToPlayersEffect(new TriggeringPermanentPower(), Subjects.eachOpponent())
-                        .dealtByTriggeringPermanent());
+                DealDamageEffect.to(Subjects.eachOpponent(), new TriggeringPermanentPower())
+                        .byTriggeringPermanent());
     }
 }

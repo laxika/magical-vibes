@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -38,9 +38,8 @@ public class ArmorWars extends Card {
                         new CardTypePredicate(CardType.ARTIFACT), 1));
 
         addTrigger(Triggers.chapter(3),
-                new DealDamageToPlayersEffect(
-                        new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()),
-                        Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(),
+                        new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate())));
         setSagaChapterTargetFilter(3, Set.of(
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

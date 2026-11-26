@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public class ChandraBoldPyromancer extends Card {
         // +1: Add {R}{R}. Chandra deals 2 damage to target player.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new AwardManaEffect(ManaColor.RED, 2), new DealDamageToPlayersEffect(2, Subjects.targetPlayer())),
+                List.of(new AwardManaEffect(ManaColor.RED, 2), DealDamageEffect.to(Subjects.targetPlayer(), 2)),
                 "+1: Add {R}{R}. Chandra, Bold Pyromancer deals 2 damage to target player."
         ));
 
@@ -37,7 +36,7 @@ public class ChandraBoldPyromancer extends Card {
         // −7: Chandra deals 10 damage to target player and each creature and planeswalker they control.
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(SequenceEffect.simultaneous(new DealDamageToPlayersEffect(10, Subjects.targetPlayer()),
+                List.of(SequenceEffect.simultaneous(DealDamageEffect.to(Subjects.targetPlayer(), 10),
                         DealDamageToPermanentsTargetControlsEffect.toTargetedPlayers(10,
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate()))))),

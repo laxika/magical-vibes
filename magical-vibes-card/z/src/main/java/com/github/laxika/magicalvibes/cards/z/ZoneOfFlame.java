@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -23,8 +23,8 @@ public class ZoneOfFlame extends Card {
         setEnchantZone(true);
 
         // Tokens aren't cards, so token entries and departures don't count.
-        DealDamageToPlayersEffect trigger =
-                new DealDamageToPlayersEffect(1, Subjects.eachOpponent());
+        DealDamageEffect trigger =
+                DealDamageEffect.to(Subjects.eachOpponent(), 1);
         addTrigger(new TriggerCondition(Triggers.enters(
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                                 ObjectRelation.ANY)),

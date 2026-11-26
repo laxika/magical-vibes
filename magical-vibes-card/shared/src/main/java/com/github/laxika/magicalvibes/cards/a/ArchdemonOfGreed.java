@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,6 +31,6 @@ public class ArchdemonOfGreed extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN))), Subjects.you()),
                 new ConditionalEffect(new NotCondition(HappenedThisWay.sacrificed()),
-                        SequenceEffect.of(new TapPermanentsEffect(Subjects.source()), new DealDamageToPlayersEffect(9, Subjects.you())))));
+                        SequenceEffect.of(new TapPermanentsEffect(Subjects.source()), DealDamageEffect.to(Subjects.you(), 9)))));
     }
 }

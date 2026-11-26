@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -29,7 +29,7 @@ public class ChandraTorchExileCastSupport {
 
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final GameLogService gameLogService;
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final DealDamageEffectHandler dealDamageEffectHandler;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final SpellCastingService spellCastingService;
@@ -37,14 +37,14 @@ public class ChandraTorchExileCastSupport {
 
     public ChandraTorchExileCastSupport(ExileCastTargetSupport exileCastTargetSupport,
                                         GameLogService gameLogService,
-                                        DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler,
+                                        DealDamageEffectHandler dealDamageEffectHandler,
                                         @Lazy PlayerInputService playerInputService,
                                         @Lazy InputCompletionService inputCompletionService,
                                         @Lazy SpellCastingService spellCastingService,
                                         @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport) {
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.gameLogService = gameLogService;
-        this.dealDamageToPlayersEffectHandler = dealDamageToPlayersEffectHandler;
+        this.dealDamageEffectHandler = dealDamageEffectHandler;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
         this.spellCastingService = spellCastingService;
@@ -132,7 +132,7 @@ public class ChandraTorchExileCastSupport {
     }
 
     public void dealDamage(GameData gameData, UUID controllerId, Card sourceCard, int damage) {
-        DealDamageToPlayersEffect damageEffect = new DealDamageToPlayersEffect(damage, Subjects.eachOpponent());
+        DealDamageEffect damageEffect = DealDamageEffect.to(Subjects.eachOpponent(), damage);
         StackEntry damageEntry = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + " deals " + damage + " damage to each opponent.",
@@ -141,7 +141,7 @@ public class ChandraTorchExileCastSupport {
                 (UUID) null,
                 null
         );
-        dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damageEffect);
+        dealDamageEffectHandler.resolve(gameData, damageEntry, damageEffect);
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " deals " + damage + " damage to each opponent."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

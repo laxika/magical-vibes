@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,8 +28,7 @@ public class Hellfire extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 ))));
-        addSpellEffect(new DealDamageToPlayersEffect(
-                new Sum(AmountThisWay.died(StepKind.DESTROY), new Fixed(3)),
-                Subjects.you()));
+        addSpellEffect(DealDamageEffect.to(Subjects.you(),
+                new Sum(AmountThisWay.died(StepKind.DESTROY), new Fixed(3))));
     }
 }

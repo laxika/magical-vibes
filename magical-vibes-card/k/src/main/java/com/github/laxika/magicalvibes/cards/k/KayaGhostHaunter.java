@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourcePermanentHauntingTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -43,7 +43,7 @@ public class KayaGhostHaunter extends Card {
                 -1,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                                new DealDamageToPlayersEffect(3, Subjects.ownerOf(Subjects.target())))
+                                DealDamageEffect.to(Subjects.ownerOf(Subjects.target()), 3))
                                 .withTargetFilter(HAUNTED_CREATURE),
                         DAMAGE_EMBLEM_TEXT)),
                 "-1: You get an emblem with \"" + DAMAGE_EMBLEM_TEXT + "\"."));

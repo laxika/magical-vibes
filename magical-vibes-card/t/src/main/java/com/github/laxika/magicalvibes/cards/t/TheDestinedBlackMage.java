@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -41,7 +41,7 @@ public class TheDestinedBlackMage extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 new ConditionalReplacementEffect(
                         new FullParty(),
-                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
-                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent())));
+                        DealDamageEffect.to(Subjects.eachOpponent(), 1),
+                        DealDamageEffect.to(Subjects.eachOpponent(), 3)));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,9 +20,7 @@ public class Rackling extends Card {
         // At the beginning of each opponent's upkeep, this creature deals X damage to that player,
         // where X is 3 minus the number of cards in their hand. X cannot be negative.
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
-                new DealDamageToPlayersEffect(
-                        new Max(new Fixed(0),
-                                new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1))),
-                        Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), new Max(new Fixed(0),
+                                new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1)))));
     }
 }

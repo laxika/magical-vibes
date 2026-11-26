@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -40,7 +40,7 @@ public class ManaVault extends Card {
         // At the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.
         addTrigger(Triggers.drawStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
-                new DealDamageToPlayersEffect(1, Subjects.you()));
+                DealDamageEffect.to(Subjects.you(), 1));
 
         // {T}: Add {C}{C}{C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS, 3));

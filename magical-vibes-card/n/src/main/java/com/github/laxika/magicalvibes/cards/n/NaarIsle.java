@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,8 +22,7 @@ public class NaarIsle extends Card {
     public NaarIsle() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 PutCountersEffect.onSelf(CounterType.FLAME),
-                new DealDamageToPlayersEffect(new CountersOnSource(CounterType.FLAME),
-                        Subjects.you())));
+                DealDamageEffect.to(Subjects.you(), new CountersOnSource(CounterType.FLAME))));
 
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),

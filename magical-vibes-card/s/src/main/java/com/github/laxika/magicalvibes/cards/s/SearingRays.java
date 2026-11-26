@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -19,9 +19,10 @@ public class SearingRays extends Card {
 
     public SearingRays() {
         addSpellEffect(new ChooseColorAtResolutionEffect());
-        addSpellEffect(new DealDamageToPlayersEffect(new PermanentCount(new PermanentAllOfPredicate(List.of(
+        addSpellEffect(DealDamageEffect.to(Subjects.eachPlayer(),
+                new PermanentCount(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), new PermanentHasChosenSpellColorPredicate())),
-                CountScope.CONTROLLER), Subjects.eachPlayer()));
+                CountScope.CONTROLLER)));
         addSpellEffect(new ClearChosenColorEffect());
     }
 }

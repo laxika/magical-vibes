@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipCostSuppor
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryExileSupport;
 import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DepartPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -326,7 +326,7 @@ class ResolutionCostPaymentServiceTest {
                     new UnlessAnswer.Choice(payerId, List.of()), new UnlessAnswer.Choice(otherId, List.of())));
 
             assertThat(steps).singleElement().isEqualTo(
-                    new DealDamageToPlayersEffect(new Fixed(6), Subjects.acceptedPlayers()));
+                    DealDamageEffect.to(Subjects.acceptedPlayers(), new Fixed(6)));
             assertThat(entry.getAcceptedPlayerIds()).containsExactly(payerId, otherId);
         }
 

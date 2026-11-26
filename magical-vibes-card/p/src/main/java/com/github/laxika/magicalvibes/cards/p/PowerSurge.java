@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class PowerSurge extends Card {
         // sets the active player as target; UntappedLandsAtTurnStart reads the turn-start snapshot so
         // tapping lands in response can't reduce the damage.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new DealDamageToPlayersEffect(new UntappedLandsAtTurnStart(), Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), new UntappedLandsAtTurnStart()));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,8 +25,8 @@ public class TheFallOfKroog extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET);
 
         landTarget.addSpellEffect(new DestroyTargetPermanentEffect());
-        DealDamageToPlayersEffect opponentDamage =
-                new DealDamageToPlayersEffect(3, Subjects.targetPlayer());
+        DealDamageEffect opponentDamage =
+                DealDamageEffect.to(Subjects.targetPlayer(), 3);
         DealDamageToPermanentsTargetControlsEffect creatureDamage =
                 new DealDamageToPermanentsTargetControlsEffect(1);
         opponentTarget.bindEffect(opponentDamage);

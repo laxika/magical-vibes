@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -22,7 +22,7 @@ public class PyroclasticHellion extends Card {
                 SequenceEffect.of(
                         ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentIsLandPredicate(), "land"),
                         new ConditionalEffect(HappenedThisWay.returned(), new QueueReflexiveAbilityEffect(
-                                new DealDamageToPlayersEffect(2, Subjects.eachOpponent())))),
+                                DealDamageEffect.to(Subjects.eachOpponent(), 2)))),
                 "You may return a land you control to its owner's hand?"));
     }
 }

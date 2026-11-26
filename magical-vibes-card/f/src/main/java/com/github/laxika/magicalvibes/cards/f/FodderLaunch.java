@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -18,6 +18,6 @@ public class FodderLaunch extends Card {
                 "Sacrifice a Goblin"
         ));
         addSpellEffect(BoostEffect.target(-5, -5));
-        addSpellEffect(new DealDamageToPlayersEffect(5, Subjects.controllerOf(Subjects.target())));
+        addSpellEffect(DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), 5));
     }
 }

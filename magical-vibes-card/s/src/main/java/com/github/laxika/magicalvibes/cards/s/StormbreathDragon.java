@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -29,7 +29,6 @@ public class StormbreathDragon extends Card {
                 "{5}{R}{R}: Monstrosity 3."
         ));
         addTrigger(Triggers.becomesMonstrous(),
-                DealDamageToPlayersEffect.eachEvaluatedFor(new CardsInHand(CountScope.CONTROLLER),
-                        Subjects.eachOpponent()));
+                DealDamageEffect.eachEvaluatedFor(new CardsInHand(CountScope.CONTROLLER), Subjects.eachOpponent()));
     }
 }

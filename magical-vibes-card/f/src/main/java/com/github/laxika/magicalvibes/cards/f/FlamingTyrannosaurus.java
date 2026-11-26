@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,6 +30,6 @@ public class FlamingTyrannosaurus extends Card {
 
         // When this creature dies, it deals damage equal to its power to each opponent.
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(new SourcePower(), Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), new SourcePower()));
     }
 }

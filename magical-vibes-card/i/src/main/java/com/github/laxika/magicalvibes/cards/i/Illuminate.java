@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -26,7 +25,7 @@ public class Illuminate extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(DealDamageEffect.toTargetCreature(new XValue()))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new DealDamageToPlayersEffect(new XValue(), Subjects.controllerOf(Subjects.target()))));
+                        DealDamageEffect.to(Subjects.controllerOf(Subjects.target()), new XValue())));
         addSpellEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{3}{U}"),
                 new DrawCardEffect(new XValue())));
     }

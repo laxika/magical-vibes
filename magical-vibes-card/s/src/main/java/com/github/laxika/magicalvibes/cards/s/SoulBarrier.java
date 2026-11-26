@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,6 +17,6 @@ public class SoulBarrier extends Card {
         // Whenever an opponent casts a creature spell, this enchantment deals 2 damage to that player unless they pay {2}.
         addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
                 UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(), "{2}",
-                        new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer())));
+                        DealDamageEffect.to(Subjects.triggeringPlayer(), 2)));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -18,12 +18,12 @@ public class GigglingSkitterspike extends Card {
 
     public GigglingSkitterspike() {
         addTrigger(Triggers.attacks(),
-                new DealDamageToPlayersEffect(new SourcePower(), Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), new SourcePower()));
         addTrigger(Triggers.blocks(),
                 TriggerOptions.ONE_OR_MORE,
-                new DealDamageToPlayersEffect(new SourcePower(), Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), new SourcePower()));
         addTrigger(Triggers.becomesTargetOfSpell(),
-                new DealDamageToPlayersEffect(new SourcePower(), Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), new SourcePower()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

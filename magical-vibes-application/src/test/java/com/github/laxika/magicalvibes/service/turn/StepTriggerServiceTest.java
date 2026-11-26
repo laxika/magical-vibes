@@ -35,7 +35,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
@@ -140,7 +141,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -1291,7 +1291,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Punisher Card");
             card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                     TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(3)),
-                    new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
+                    DealDamageEffect.to(Subjects.triggeringPlayer(), 2));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 2 cards in hand (≤ 3)
@@ -1310,7 +1310,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Punisher Card");
             card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                     TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(3)),
-                    new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
+                    DealDamageEffect.to(Subjects.triggeringPlayer(), 2));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 5 cards in hand (> 3)
@@ -1358,7 +1358,7 @@ class StepTriggerServiceTest {
 
             Card auraCard = createCardWithName("Feedback");
             auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                    new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
+                    DealDamageEffect.to(Subjects.triggeringPlayer(), 1));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
             gd.playerBattlefields.get(player2Id).add(auraPerm);
@@ -1436,7 +1436,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of the Bloody Tome");
             curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                    new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
+                    DealDamageEffect.to(Subjects.triggeringPlayer(), 2));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -1445,19 +1445,20 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
-            DealDamageToPlayersEffect effect =
-                    (DealDamageToPlayersEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-            assertThat(effect.player()).isEqualTo(Subjects.triggeringPlayer());
+            DealDamageEffect effect =
+                    (DealDamageEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(effect.players()).isEqualTo(Subjects.triggeringPlayer());
         }
 
         @Test
-        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER) preserves the attached-count predicate")
-        void enchantedPlayerUpkeepPreservesAttachedCountPredicate() {
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER) keeps an amount evaluated for that player")
+        void enchantedPlayerUpkeepKeepsAnAmountEvaluatedForThatPlayer() {
             gd.turnNumber = 2;
-            PermanentPredicate predicate = new PermanentHasSubtypePredicate(CardSubtype.CURSE);
+            PermanentCount curses = new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.CURSE),
+                    CountScope.ANY_PLAYER);
             Card curseCard = createCardWithName("Curse of Thirst");
             curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                    DealDamageToPlayersEffect.enchantedAttachedCount(predicate));
+                    DealDamageEffect.eachEvaluatedFor(curses, Subjects.triggeringPlayer()));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -1466,10 +1467,11 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
-            DealDamageToPlayersEffect effect =
-                    (DealDamageToPlayersEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-            assertThat(effect.player()).isEqualTo(Subjects.triggeringPlayer());
-            assertThat(effect.attachedCountFilter()).isEqualTo(predicate);
+            DealDamageEffect effect =
+                    (DealDamageEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(effect.players()).isEqualTo(Subjects.triggeringPlayer());
+            assertThat(effect.damage()).isEqualTo(curses);
+            assertThat(effect.amountForEachPlayer()).isTrue();
         }
 
         @Test
@@ -1982,7 +1984,7 @@ class StepTriggerServiceTest {
         void endStepPlayerTargetedEffectBakesActivePlayer() {
             Card card = createCardWithName("Monsoon-like Card");
             card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                    new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
+                    DealDamageEffect.to(Subjects.triggeringPlayer(), 1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);

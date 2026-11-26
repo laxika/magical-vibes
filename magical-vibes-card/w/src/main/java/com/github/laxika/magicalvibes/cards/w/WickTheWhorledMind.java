@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -44,7 +44,7 @@ public class WickTheWhorledMind extends Card {
                 "{U}{B}{R}",
                 List.of(
                         new SacrificePermanentCost(snail, "Sacrifice a Snail", false, true),
-                        new DealDamageToPlayersEffect(new XValue(), Subjects.eachOpponent()),
+                        DealDamageEffect.to(Subjects.eachOpponent(), new XValue()),
                         new DrawCardEffect(new XValue())
                 ),
                 "{U}{B}{R}, Sacrifice a Snail: Wick deals damage equal to the sacrificed creature's power to each opponent. Then draw cards equal to the sacrificed creature's power."

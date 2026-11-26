@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,6 +26,6 @@ public class EternalFlame extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
         )).addSpellEffect(DealDamageEffect.toTargetOpponentOrPlaneswalker(mountains));
-        addSpellEffect(new DealDamageToPlayersEffect(new HalvedRoundedUp(mountains), Subjects.you()));
+        addSpellEffect(DealDamageEffect.to(Subjects.you(), new HalvedRoundedUp(mountains)));
     }
 }

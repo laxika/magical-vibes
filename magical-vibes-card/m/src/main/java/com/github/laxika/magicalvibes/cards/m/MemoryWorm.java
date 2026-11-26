@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -27,7 +27,7 @@ public class MemoryWorm extends Card {
         // deals 2 damage to target player. That player discards a card, then draws a card. Put a
         // +1/+1 counter on this creature.
         List<CardEffect> paradox = List.of(
-                new DealDamageToPlayersEffect(2, Subjects.targetPlayer()),
+                DealDamageEffect.to(Subjects.targetPlayer(), 2),
                 SequenceEffect.of(
                         new DiscardEffect(1, Subjects.targetPlayer()),
                         new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere())),

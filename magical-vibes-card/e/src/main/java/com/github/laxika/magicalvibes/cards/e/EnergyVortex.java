@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,7 +34,7 @@ public class EnergyVortex extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
                 new UnlessPaysEffect(Subjects.chosenPlayer(),
                         PayManaCost.withGenericIncrease("{0}", new CountersOnSource(CounterType.VORTEX)),
-                        new DealDamageToPlayersEffect(3, Subjects.chosenPlayer()), null,
+                        DealDamageEffect.to(Subjects.chosenPlayer(), 3), null,
                         "Pay {1} for each vortex counter? If you don't, it deals 3 damage to you."));
 
         addActivatedAbility(new ActivatedAbility(

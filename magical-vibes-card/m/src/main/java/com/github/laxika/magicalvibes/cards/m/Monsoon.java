@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -20,6 +20,6 @@ public class Monsoon extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ANY), SequenceEffect.of(
                 new TapPermanentsEffect(Subjects.controlledBy(Subjects.triggeringPlayer(),
                         new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
-                new DealDamageToPlayersEffect(new AmountThisWay(StepKind.TAP), Subjects.triggeringPlayer())));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), new AmountThisWay(StepKind.TAP))));
     }
 }

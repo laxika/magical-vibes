@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1008,7 +1007,7 @@ class StepResultsTest extends BaseCardTest {
         @Test
         @DisplayName("Syphon Soul: \"2 damage to each other player. You gain life equal to the damage dealt this way\"")
         void gainsTheDamageDealt() {
-            resolve(player1, null, null, new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
+            resolve(player1, null, null, DealDamageEffect.to(Subjects.eachOpponent(), 2),
                     new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE)));
 
             assertThat(gd.getLife(player2.getId())).isEqualTo(18);
@@ -1085,7 +1084,7 @@ class StepResultsTest extends BaseCardTest {
             Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
             StackEntry entry = resolve(player1, giant.getId(), null,
-                    new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
+                    DealDamageEffect.to(Subjects.eachOpponent(), 2),
                     DealDamageEffect.toTargetPermanent(1),
                     new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE)));
 

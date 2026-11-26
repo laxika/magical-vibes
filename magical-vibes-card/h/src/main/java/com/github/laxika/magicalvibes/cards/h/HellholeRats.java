@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -23,6 +23,6 @@ public class HellholeRats extends Card {
         )).bindEffect(discard);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 discard,
-                new DealDamageToPlayersEffect(new LastDiscardedCardManaValue(), Subjects.targetPlayer()));
+                DealDamageEffect.to(Subjects.targetPlayer(), new LastDiscardedCardManaValue()));
     }
 }

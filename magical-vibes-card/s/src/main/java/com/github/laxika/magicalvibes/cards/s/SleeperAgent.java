@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -21,6 +21,6 @@ public class SleeperAgent extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new TargetPlayerGainsControlOfSourceCreatureEffect());
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DealDamageToPlayersEffect(2, Subjects.you()));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), DealDamageEffect.to(Subjects.you(), 2));
     }
 }

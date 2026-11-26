@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -20,7 +20,7 @@ public class ObNixilisTheHateTwisted extends Card {
     public ObNixilisTheHateTwisted() {
         // Whenever an opponent draws a card, Ob Nixilis deals 1 damage to that player.
         addTrigger(Triggers.opponentDrawsCard(),
-                new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
+                DealDamageEffect.to(Subjects.triggeringPlayer(), 1));
 
         // −2: Destroy target creature. Its controller draws two cards.
         addActivatedAbility(new ActivatedAbility(

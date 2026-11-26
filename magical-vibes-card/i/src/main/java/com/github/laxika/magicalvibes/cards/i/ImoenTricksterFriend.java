@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAlone
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -94,7 +94,7 @@ public class ImoenTricksterFriend extends Card {
                         new SkipNextUntapEffect(Subjects.target())));
             }
             case BLACK -> CreateTokenEffect.blackZombie(1);
-            case RED -> new DealDamageToPlayersEffect(2, Subjects.eachOpponent());
+            case RED -> DealDamageEffect.to(Subjects.eachOpponent(), 2);
             case GREEN -> SequenceEffect.of(new DrawCardEffect(), new PlayAdditionalLandsEffect(1));
         };
         // The specialized face's trigger wraps this in its "you may" (specializedFace).

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -17,7 +17,7 @@ public class OzaisCruelty extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ));
-        addSpellEffect(new DealDamageToPlayersEffect(2, Subjects.targetPlayer()));
+        addSpellEffect(DealDamageEffect.to(Subjects.targetPlayer(), 2));
         addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()));
     }
 }

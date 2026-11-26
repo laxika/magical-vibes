@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastOrDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -26,16 +26,16 @@ public class ExileTopCardMayCastOrDealDamageEffectHandler implements NormalEffec
     private final ExileService exileService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final DealDamageEffectHandler dealDamageEffectHandler;
 
     public ExileTopCardMayCastOrDealDamageEffectHandler(ExileService exileService,
                                                          GameLogService gameLogService,
                                                          @Lazy PlayerInputService playerInputService,
-                                                         DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler) {
+                                                         DealDamageEffectHandler dealDamageEffectHandler) {
         this.exileService = exileService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
-        this.dealDamageToPlayersEffectHandler = dealDamageToPlayersEffectHandler;
+        this.dealDamageEffectHandler = dealDamageEffectHandler;
     }
 
     @Override
@@ -50,16 +50,16 @@ public class ExileTopCardMayCastOrDealDamageEffectHandler implements NormalEffec
         UUID controllerId = entry.getControllerId();
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (library == null || library.isEmpty()) {
-            dealDamageToPlayersEffectHandler.resolve(gameData, entry,
-                    new DealDamageToPlayersEffect(exileEffect.damage(), Subjects.eachOpponent()));
+            dealDamageEffectHandler.resolve(gameData, entry,
+                    DealDamageEffect.to(Subjects.eachOpponent(), exileEffect.damage()));
             return;
         }
 
         Card topCard = library.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard);
         if (topCard.hasType(com.github.laxika.magicalvibes.model.CardType.LAND)) {
-            dealDamageToPlayersEffectHandler.resolve(gameData, entry,
-                    new DealDamageToPlayersEffect(exileEffect.damage(), Subjects.eachOpponent()));
+            dealDamageEffectHandler.resolve(gameData, entry,
+                    DealDamageEffect.to(Subjects.eachOpponent(), exileEffect.damage()));
             return;
         }
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

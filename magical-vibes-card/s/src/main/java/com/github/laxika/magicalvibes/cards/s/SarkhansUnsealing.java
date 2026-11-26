@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
@@ -35,7 +34,7 @@ public class SarkhansUnsealing extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardPowerAtLeastPredicate(7)
                         ))),
-                new DealDamageToPlayersEffect(4, Subjects.eachOpponent()),
+                DealDamageEffect.to(Subjects.eachOpponent(), 4),
                 new DealDamageToPermanentsTargetControlsEffect(4, Subjects.controlledBy(Subjects.eachOpponent(),
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate())))));

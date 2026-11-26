@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,6 +14,6 @@ public class CabalPaladin extends Card {
         // Whenever you cast a historic spell, Cabal Paladin deals 2 damage to each opponent.
         // (Artifacts, legendaries, and Sagas are historic.)
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
-                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
+                DealDamageEffect.to(Subjects.eachOpponent(), 2));
     }
 }

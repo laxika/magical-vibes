@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -28,16 +28,14 @@ public class Anathemancer extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToPlayersEffect(
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.to(Subjects.targetPlayer(),
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
                         )),
                         CountScope.TARGET_PLAYER
-                ),
-                Subjects.targetPlayer()
-        ));
+                )));
 
         // Unearth {5}{B}{R}: Return this card from your graveyard to the battlefield. It gains
         // haste. Exile it at the beginning of the next end step or if it would leave the

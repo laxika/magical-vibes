@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,15 +24,12 @@ public class SunspineLynx extends Card {
     public SunspineLynx() {
         addStaticEffect(new PlayersCantGainLifeEffect());
         addStaticEffect(new DamageCantBePreventedEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToPlayersEffect(
-                new PermanentCount(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.to(Subjects.eachPlayer(), new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
                         )),
                         CountScope.CONTROLLER
-                ),
-                Subjects.eachPlayer()
-        ));
+                )));
     }
 }

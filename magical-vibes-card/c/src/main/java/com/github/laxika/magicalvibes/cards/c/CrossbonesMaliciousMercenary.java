@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,6 +29,6 @@ public class CrossbonesMaliciousMercenary extends Card {
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
+                        DealDamageEffect.to(Subjects.eachOpponent(), 2)));
     }
 }

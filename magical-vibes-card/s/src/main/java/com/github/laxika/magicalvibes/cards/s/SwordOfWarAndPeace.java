@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -33,7 +33,7 @@ public class SwordOfWarAndPeace extends Card {
         // Sword of War and Peace deals damage to that player equal to the number of cards in their hand
         // and you gain 1 life for each card in your hand
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), Subjects.targetPlayer()),
+                DealDamageEffect.to(Subjects.targetPlayer(), new CardsInHand(CountScope.TARGET_PLAYER)),
                 new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
 
         // Equip {2}
