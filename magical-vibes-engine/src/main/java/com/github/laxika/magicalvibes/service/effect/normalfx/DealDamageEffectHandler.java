@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -89,7 +87,6 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final SubjectResolutionService subjectResolutionService;
-    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -662,11 +659,6 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        if (damageSupport.isDamagePreventedForCreature(gameData, entry, triggering)) {
-            return;
-        }
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ")
-                .card(triggering.getCard()).text(".").build());
         damageSupport.dealCreatureDamage(gameData, entry, triggering, damage);
     }
 
@@ -681,8 +673,7 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
         for (Permanent creature : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
-            if (!gameQueryService.isCreature(gameData, creature)
-                    || damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
+            if (!gameQueryService.isCreature(gameData, creature)) {
                 continue;
             }
             damageSupport.dealCreatureDamage(gameData, entry, creature, damage);

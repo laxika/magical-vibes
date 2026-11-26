@@ -33,7 +33,7 @@ public class DealDamageToEndStepPlayerUnlessOpponentWasDealtDamageEffectHandler
         boolean opponentWasDealtDamage = gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(endStepPlayerId))
                 .anyMatch(playerId -> gameData.damageDealtToPlayersThisTurn.getOrDefault(playerId, 0) > 0);
-        if (!opponentWasDealtDamage && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+        if (!opponentWasDealtDamage) {
             int damage = e.damage();
             damageSupport.dealDamageToPlayer(gameData, entry, endStepPlayerId, damage);
         }

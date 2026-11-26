@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -21,7 +19,6 @@ public class EnchantedCreatureDealsDamageToTargetCreatureEffectHandler implement
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,12 +60,6 @@ public class EnchantedCreatureDealsDamageToTargetCreatureEffectHandler implement
         int rawDamage = damage;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
-        if (gameQueryService.isDamagePreventable(gameData)
-                && (gameQueryService.isPreventedFromDealingDamage(gameData, enchantedCreature)
-                || gameQueryService.hasProtectionFromDamageSource(gameData, target, enchantedCreature))) {
-            gameLogService.append(gameData, GameLog.cardThen(enchantedCreature.getCard(), "'s damage is prevented."));
-            return;
-        }
         damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, enchantedCreature);
     }
 

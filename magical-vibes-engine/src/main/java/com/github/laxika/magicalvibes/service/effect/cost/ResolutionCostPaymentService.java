@@ -666,9 +666,7 @@ public class ResolutionCostPaymentService {
                     throw new IllegalArgumentException("Read the damage and name its dealer before paying: " + damage);
                 }
                 // The object whose effect asks deals it, as it exists or last existed (CR 608.2h).
-                if (!damageSupport.isDamageSourcePreventedWithLog(gameData, payment.entry())) {
-                    damageSupport.dealDamageToPlayer(gameData, payment.entry(), payerId, amount);
-                }
+                damageSupport.dealDamageToPlayer(gameData, payment.entry(), payerId, amount);
                 gameOutcomeService.checkWinCondition(gameData);
                 yield afterImmediatePayment(gameData);
             }

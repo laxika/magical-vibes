@@ -22,7 +22,7 @@ class EachCreatureDealsPowerDamageToItselfEffectHandlerTest extends AbstractDama
     @Override
     protected void setUpHandler() {
         handler = new EachCreatureDealsPowerDamageToItselfEffectHandler(
-                damageSupport, gameQueryService, gameLogService, gameOutcomeService,
+                damageSupport, gameQueryService, gameOutcomeService,
                 predicateEvaluationService);
     }
 
@@ -41,10 +41,6 @@ class EachCreatureDealsPowerDamageToItselfEffectHandlerTest extends AbstractDama
         when(gameQueryService.findPermanentById(gd, spider.getId())).thenReturn(spider);
         when(gameQueryService.getPowerBasedDamage(gd, wall)).thenReturn(3);
         when(gameQueryService.getPowerBasedDamage(gd, spider)).thenReturn(2);
-        when(gameQueryService.isPreventedFromDealingDamage(gd, wall)).thenReturn(false);
-        when(gameQueryService.isPreventedFromDealingDamage(gd, spider)).thenReturn(false);
-        when(gameQueryService.hasProtectionFromSource(gd, wall, wall)).thenReturn(false);
-        when(gameQueryService.hasProtectionFromSource(gd, spider, spider)).thenReturn(false);
         lenient().when(gameQueryService.sourceHasKeyword(eq(gd), any(StackEntry.class), eq(wall), any()))
                 .thenReturn(false);
         lenient().when(gameQueryService.sourceHasKeyword(eq(gd), any(StackEntry.class), eq(spider), any()))
@@ -73,8 +69,6 @@ class EachCreatureDealsPowerDamageToItselfEffectHandlerTest extends AbstractDama
         when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
         when(gameQueryService.findPermanentById(gd, tappedWall.getId())).thenReturn(tappedWall);
         when(gameQueryService.getPowerBasedDamage(gd, tappedWall)).thenReturn(3);
-        when(gameQueryService.isPreventedFromDealingDamage(gd, tappedWall)).thenReturn(false);
-        when(gameQueryService.hasProtectionFromSource(gd, tappedWall, tappedWall)).thenReturn(false);
         lenient().when(gameQueryService.sourceHasKeyword(eq(gd), any(StackEntry.class), eq(tappedWall), any()))
                 .thenReturn(false);
         stubCreatureDamageCore(tappedWall, 5);

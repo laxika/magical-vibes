@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachCreatureDealsPowerDamageToItselfEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -24,7 +22,6 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -59,18 +56,6 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
 
             UUID controllerId = gameQueryService.findPermanentController(gameData, liveCreature.getId());
             if (controllerId == null) {
-                continue;
-            }
-
-            if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.isPreventedFromDealingDamage(gameData, liveCreature)) {
-                gameLogService.append(gameData, GameLog.cardThen(liveCreature.getCard(), "'s damage is prevented."));
-                continue;
-            }
-
-            if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, liveCreature, liveCreature)) {
-                gameLogService.append(gameData, GameLog.cardThen(liveCreature.getCard(), "'s damage is prevented."));
                 continue;
             }
 

@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -25,7 +23,6 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -44,9 +41,6 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
         int damage = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, null));
         int rawDamage = damage;
-        String cardName = entry.getCard().getName();
-
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
         // Determine the affected player: if target is a player, use directly;
         // if target is a planeswalker, use its controller
@@ -63,11 +57,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
             affectedPlayerId = gameQueryService.findPermanentController(gameData, targetId);
             if (affectedPlayerId == null) return;
 
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard(), entry.getControllerId())) {
-                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPw.getCard(), " is prevented."));
-            } else {
-                damageSupport.dealCreatureDamage(gameData, entry, targetPw, rawDamage);
-            }
+            damageSupport.dealCreatureDamage(gameData, entry, targetPw, rawDamage);
         }
 
         // Deal damage to each creature the affected player controls
@@ -77,10 +67,6 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
                 if (!gameQueryService.isCreature(gameData, creature)) continue;
                 // Skip the planeswalker target (already dealt damage above)
                 if (!targetIsPlayer && creature.getId().equals(targetId)) continue;
-                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())) {
-                    gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
-                    continue;
-                }
                 restoreSimultaneousShields(gameData, shieldsAtStart, restoredShields);
                 damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
             }

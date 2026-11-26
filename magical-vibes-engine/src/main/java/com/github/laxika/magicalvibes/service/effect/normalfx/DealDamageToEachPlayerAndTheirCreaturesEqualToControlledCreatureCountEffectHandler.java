@@ -30,10 +30,6 @@ public class DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCou
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            return;
-        }
-
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
             int creatureCount = (int) battlefield.stream()

@@ -2452,9 +2452,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (entry == null) {
             entry = new StackEntry(context.sourceCard(), context.controllerId());
         }
-        if (!damageSupport.isDamagePreventedForCreature(gameData, entry, chosen)) {
-            damageSupport.dealCreatureDamage(gameData, entry, chosen, context.damage());
-        }
+        damageSupport.dealCreatureDamage(gameData, entry, chosen, context.damage());
 
         Permanent other = gameQueryService.findPermanentById(gameData, otherId);
         if (other != null) {
@@ -2496,12 +2494,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             for (Map.Entry<UUID, Integer> share : assigned.entrySet()) {
                 Permanent hunter = gameQueryService.findPermanentById(gameData, share.getKey());
                 if (hunter == null) {
-                    continue;
-                }
-                if (gameQueryService.isDamagePreventable(gameData)
-                        && gameQueryService.hasProtectionFromSource(gameData, hunter, damageSource)) {
-                    gameLogService.append(gameData, GameLog.cardTextCard(damageSource.getCard(),
-                            "'s damage to ", hunter.getCard(), " is prevented."));
                     continue;
                 }
                 damageSupport.dealCreatureDamage(gameData, entry, hunter, share.getValue(), damageSource);

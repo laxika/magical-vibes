@@ -104,9 +104,7 @@ public class DealDamageToOneOfTwoTargetCreaturesThenOtherCantBlockEffectHandler
         if (chosen == null) {
             return;
         }
-        if (!damageSupport.isDamagePreventedForCreature(gameData, entry, chosen)) {
-            damageSupport.dealCreatureDamage(gameData, entry, chosen, damage);
-        }
+        damageSupport.dealCreatureDamage(gameData, entry, chosen, damage);
 
         if (otherId != null) {
             Permanent other = gameQueryService.findPermanentById(gameData, otherId);

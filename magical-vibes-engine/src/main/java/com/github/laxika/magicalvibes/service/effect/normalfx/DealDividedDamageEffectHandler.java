@@ -181,11 +181,6 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
     private void dealToAssignments(GameData gameData, StackEntry entry, DealDividedDamageEffect e,
                                    Map<UUID, Integer> assignments) {
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
-
-        String cardName = entry.getCard().getName();
-        
-
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();
             if (!entry.isAssignmentTargetLegal(targetId)) continue;
@@ -212,10 +207,6 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
             if (targetIsPlayer) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
-            } else if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromDamageSource(
-                    gameData, targetPermanent, entry.getCard(), entry.getControllerId())) {
-                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
             } else {
                 int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
                 boolean creatureWasDamaged = damageDealt > 0 && gameQueryService.isCreature(gameData, targetPermanent);

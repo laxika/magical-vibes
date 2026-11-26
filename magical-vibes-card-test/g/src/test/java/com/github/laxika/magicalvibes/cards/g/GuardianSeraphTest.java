@@ -12,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -180,5 +182,18 @@ class GuardianSeraphTest extends BaseCardTest {
         perm.setSummoningSick(false);
         perm.setAttacking(true);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A face-down Guardian Seraph has no text, so an opponent's damage is not prevented")
+    void faceDownSeraphDoesNotPrevent() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefieldAndReturn(player1, new GuardianSeraph()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 }

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -127,5 +129,18 @@ class CallousGiantTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Callous Giant");
         harness.assertInGraveyard(player2, "Callous Giant");
+    }
+
+    @Test
+    @DisplayName("A face-down Callous Giant has no text, so damage to it is not prevented")
+    void faceDownGiantDoesNotPrevent() {
+        Permanent giant = addCreatureReady(player2, new CallousGiant());
+        giant.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1, giant.getId());
+
+        assertThat(giant.getMarkedDamage()).isEqualTo(1);
     }
 }

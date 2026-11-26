@@ -71,8 +71,6 @@ public class PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffectHand
         if (creature == null || !gameQueryService.isCreature(gameData, creature)) {
             return;
         }
-        if (!damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
-            damageSupport.dealCreatureDamage(gameData, entry, creature, power);
-        }
+        damageSupport.dealCreatureDamage(gameData, entry, creature, power);
     }
 }

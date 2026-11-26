@@ -40,11 +40,9 @@ public class DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffectHandler i
             return;
         }
 
-        boolean sourceDamagePrevented = damageSupport.isDamageSourcePreventedWithLog(gameData, entry);
-
         UUID firstTargetId = targets.getFirst();
         UUID affectedPlayerId = resolveAffectedPlayer(gameData, entry, e, firstTargetId);
-        if (!sourceDamagePrevented && affectedPlayerId != null && entry.isTargetLegal(0)) {
+        if (affectedPlayerId != null && entry.isTargetLegal(0)) {
             int playerDamage = e.playerDamage();
             damageSupport.resolveAnyTargetDamage(gameData, entry, firstTargetId, playerDamage, false);
         }
@@ -56,10 +54,7 @@ public class DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffectHandler i
             if (creature == null || !gameQueryService.isCreature(gameData, creature)) {
                 continue;
             }
-            if (!sourceDamagePrevented && !damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
-                int creatureDamage = e.creatureDamage();
-                damageSupport.dealCreatureDamage(gameData, entry, creature, creatureDamage);
-            }
+            damageSupport.dealCreatureDamage(gameData, entry, creature, e.creatureDamage());
             // The can't-block rider is a separate part of the effect, so it applies even when the
             // damage itself was prevented.
             if (e.creaturesCantBlock()) {

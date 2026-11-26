@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
@@ -31,7 +29,6 @@ public class FightSupport {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
     /** Has {@code first} and {@code second} fight each other; either being gone is a no-op. */
@@ -87,14 +84,6 @@ public class FightSupport {
 
     private void dealMutualDamage(GameData gameData, StackEntry entry, Permanent source,
                                    Permanent recipient, int baseDamage) {
-        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, source)) {
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage is prevented."));
-            return;
-        }
-        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, recipient, source)) {
-            gameLogService.append(gameData, GameLog.cardTextCard(recipient.getCard(), " has protection — damage from ", source.getCard(), " prevented."));
-            return;
-        }
         StackEntry damageEntry = StackEntry.carrier(source.getCard(), gameQueryService.findPermanentController(gameData, source.getId()),
                 FaceDownVisibility.publicName(gameData, source) + " deals fight damage", java.util.List.of(),
                 recipient.getId(), source.getId());

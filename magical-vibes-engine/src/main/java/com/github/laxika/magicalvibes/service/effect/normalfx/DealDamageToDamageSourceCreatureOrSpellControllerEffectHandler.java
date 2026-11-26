@@ -47,8 +47,7 @@ public class DealDamageToDamageSourceCreatureOrSpellControllerEffectHandler
         }
 
         UUID spellControllerId = entry.getTriggeringPermanentControllerId();
-        if (spellControllerId == null || !gameData.playerIds.contains(spellControllerId)
-                || damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+        if (spellControllerId == null || !gameData.playerIds.contains(spellControllerId)) {
             return;
         }
 

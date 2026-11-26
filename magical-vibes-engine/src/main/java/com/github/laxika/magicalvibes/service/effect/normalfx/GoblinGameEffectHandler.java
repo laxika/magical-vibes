@@ -135,13 +135,11 @@ public class GoblinGameEffectHandler implements NormalEffectHandlerBean, AsksDea
                 }
             }
         } else if (effect.discardNonLowestAndDrawSeven()) {
-            if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-                int damage = winningNumber;
-                for (UUID playerId : winningPlayers) {
-                    damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
-                }
-                gameOutcomeService.checkWinCondition(gameData);
+            int damage = winningNumber;
+            for (UUID playerId : winningPlayers) {
+                damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
             }
+            gameOutcomeService.checkWinCondition(gameData);
 
             for (UUID playerId : state.order) {
                 if (state.itemCounts.get(playerId) != lowestNumber) {

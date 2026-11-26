@@ -15,6 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -200,5 +202,19 @@ class CoverOfWinterTest extends BaseCardTest {
         Permanent attacker = addReadyCreature(player);
         attacker.setAttacking(true);
         return attacker;
+    }
+
+    @Test
+    @DisplayName("A face-down Cover of Winter has no text, so combat damage to its controller is not prevented")
+    void faceDownCoverDoesNotPrevent() {
+        Permanent cover = harness.addToBattlefieldAndReturn(player1, new CoverOfWinter());
+        cover.setCounterCount(CounterType.AGE, 2);
+        cover.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        addAttacker(player2);
+
+        harness.setLife(player1, 20);
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 }

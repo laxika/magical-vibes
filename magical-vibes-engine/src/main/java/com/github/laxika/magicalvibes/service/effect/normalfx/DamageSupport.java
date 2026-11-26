@@ -849,20 +849,6 @@ public class DamageSupport {
         return damageEntry;
     }
 
-    public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
-        Card source = entry.getEffectiveDamageSourceCard();
-        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
-            gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
-            return true;
-        }
-        if (gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)
-                && gameQueryService.getTargetSpellDamagePreventionShield(gameData, entry).lifeGainPlayerId() == null) {
-            gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
-            return true;
-        }
-        return false;
-    }
-
     public void gainLifeForTargetSpellDamage(GameData gameData, StackEntry entry, int damage) {
         if (damage <= 0) return;
         var shield = gameQueryService.getTargetSpellDamagePreventionShield(gameData, entry);
@@ -899,23 +885,6 @@ public class DamageSupport {
                 target.getMarkedDamage(), sourceHasDeathtouch) > 0) {
             gameData.recordExcessDamageToPermanent(target.getId());
         }
-    }
-
-    public boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
-        Card source = entry.getEffectiveDamageSourceCard();
-        if (!gameData.damageCantBePreventedOrRedirected(target.getId())
-                && gameQueryService.isDamagePreventable(gameData)
-                && (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)
-                    || gameQueryService.hasProtectionFromDamageSource(gameData, target, source,
-                        entry.getControllerId()))) {
-            gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
-            return true;
-        }
-        return false;
-    }
-
-    public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
-        return isSourcePermanentPreventedFromDealingDamage(gameData, entry, true);
     }
 
     /**
@@ -1951,8 +1920,6 @@ public class DamageSupport {
                 sourcePermanentId
         );
 
-        if (isDamageSourcePreventedWithLog(gameData, tempEntry)) return;
-
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();
             int rawDamage = assignment.getValue();
@@ -1971,12 +1938,7 @@ public class DamageSupport {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, tempEntry, targetId, rawDamage);
             } else {
-                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, sourceCard, tempEntry.getControllerId()))) {
-                    dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage);
-                } else {
-                    gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
-                            "'s damage to ", targetPermanent.getCard(), " is prevented."));
-                }
+                dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage);
             }
         }
 

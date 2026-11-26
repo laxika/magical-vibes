@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerMayPayToPreventDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -13,6 +16,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.replacement.DamageJournalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,11 +24,11 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Resolves {@link EnchantedControllerMayPayToPreventDamageEffect} (Power Leak): the enchanted
- * permanent's controller (the stack entry's {@code targetId}) may pay any amount of mana, then the
- * source deals {@code amount} damage to them with that much prevented. The payment prompt allows
- * any amount the player can pay; the remaining
- * {@code amount - paid} damage goes through the normal damage system.
+ * Resolves {@link EnchantedControllerMayPayToPreventDamageEffect} (Power Leak, Errant Minion): the enchanted
+ * permanent's controller (the stack entry's {@code targetId}) may pay any amount of mana, then the source deals
+ * {@code amount} damage to them, and X of that damage is prevented, X the mana paid. The prevention is a shield of X
+ * against the source's damage to that player (CR 615.1), an option of the player's damage pool ordered with the
+ * others (CR 616.1); what it doesn't use ends once that damage is dealt, as it prevents only that damage.
  */
 @Slf4j
 @Component
@@ -37,6 +41,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final GameQueryService gameQueryService;
+    private final DamageJournalService damageJournalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,6 +56,13 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
 
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(playerId);
+
+        // Resolved again after the damage waited for the player to order its preventions: it was paid for already.
+        if (damageJournalService.isResolvedAgain(gameData)) {
+            dealDamage(gameData, entry, playerId, e.amount());
+            gameOutcomeService.checkWinCondition(gameData);
+            return;
+        }
 
         // Re-entry after the enchanted controller chose how much mana to pay.
         if (gameData.chosenXValue != null) {
@@ -81,7 +93,12 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
                 log.info("Game {} - {} pays {} to prevent damage from {}", gameData.id, playerName, paid, cardName);
             }
 
-            dealRemainingDamage(gameData, entry, playerId, e.amount() - prevented);
+            if (prevented > 0) {
+                gameData.addShield(cardName, entry.getSourcePermanentId(), entry.getControllerId(), playerId,
+                        new TargetSourceDamagePreventionShield(playerId, sourceKey(entry), prevented),
+                        Duration.UNTIL_END_OF_TURN);
+            }
+            dealDamage(gameData, entry, playerId, e.amount());
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }
@@ -90,7 +107,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
         // The cap includes untapped mana sources so an empty pool with untapped lands still
         // opens the prompt (CR 605.3a — mana abilities during the payment).
         if (maxPayable(gameData, playerId) <= 0) {
-            dealRemainingDamage(gameData, entry, playerId, e.amount());
+            dealDamage(gameData, entry, playerId, e.amount());
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }
@@ -128,10 +145,27 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
         return low;
     }
 
-    private void dealRemainingDamage(GameData gameData, StackEntry entry, UUID playerId, int remaining) {
-        if (remaining <= 0) return;
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
-        int rawDamage = remaining;
-        damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
+    /**
+     * Deals the damage; once it is dealt (not waiting for the player's order), the payment's prevention has
+     * prevented all it may, so what it didn't use ends.
+     */
+    private void dealDamage(GameData gameData, StackEntry entry, UUID playerId, int amount) {
+        damageSupport.dealDamageToPlayer(gameData, entry, playerId, amount);
+        if (damageJournalService.isHoldingEvents(gameData)) {
+            return;
+        }
+        UUID sourceKey = sourceKey(entry);
+        for (FloatingContinuousEffect fe : gameData.shieldEffects(TargetSourceDamagePreventionShield.class)) {
+            var shield = (TargetSourceDamagePreventionShield) fe.effect();
+            if (shield.targetId().equals(playerId) && shield.sourceId().equals(sourceKey)
+                    && entry.getCard().getName().equals(fe.sourceCardName())) {
+                gameData.endFloatingEffect(fe);
+            }
+        }
+    }
+
+    /** The identity the player's damage pool keys a source's shields by: the source permanent, or the card. */
+    private static UUID sourceKey(StackEntry entry) {
+        return entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getCard().getId();
     }
 }

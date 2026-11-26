@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -23,7 +21,6 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -38,8 +35,6 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
 
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) return;
-
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null) return;
@@ -57,13 +52,7 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
         if (perCreature <= 0) return;
 
         int rawDamage = perCreature;
-        String cardName = entry.getCard().getName();
-
         for (Permanent creature : creatures) {
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())) {
-                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
-                continue;
-            }
             damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
         }
 

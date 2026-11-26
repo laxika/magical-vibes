@@ -60,7 +60,7 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
     protected void setUpHandler() {
         handler = new DealDamageEffectHandler(damageSupport, gameQueryService, gameOutcomeService,
                 amountEvaluationService, conditionEvaluationService, mock(SubjectResolutionService.class),
-                mock(GameLogService.class), mock(PlayerInputService.class));
+                mock(PlayerInputService.class));
     }
 
     @Test
@@ -463,7 +463,7 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                     amountEvaluationService, conditionEvaluationService,
                     new SubjectResolutionService(gameQueryService, predicateEvaluationService,
                             mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)),
-                    gameLogService, mock(PlayerInputService.class));
+                    mock(PlayerInputService.class));
         }
 
         @Nested
@@ -731,7 +731,7 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                     amountEvaluationService, conditionEvaluationService,
                     new SubjectResolutionService(gameQueryService, predicateEvaluationService,
                             mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)),
-                    gameLogService, mock(PlayerInputService.class));
+                    mock(PlayerInputService.class));
             // The set's filter ("each creature") admits every permanent of these tests.
             lenient().when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), any(), any()))
                     .thenReturn(true);

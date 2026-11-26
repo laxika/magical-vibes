@@ -39,7 +39,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | Track | Runs | Status |
 |---|---|---|
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
-| DM Damage | DM-1, DM-2, DM-3 | open |
+| DM Damage | DM-1, DM-2, DM-3 | DM-1 done 2026-11-27; DM-2, DM-3 open |
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | open |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | open |
@@ -212,7 +212,13 @@ Notes: The goal is one way for damage to be prevented, so that every prevention 
 direction; read their Findings in `git show 3b0d60d42d4:effect-cleanup-refactor.md`). Do the handlers in batches by shape, and run
 each batch's card tests.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: O54, O55, E13, F7 (deleted from entry 18); O9 and O57 fixed for every effect handler and edited
+down (O9: Bomb Squad's handler, an owner question in entry 17, and the combat damage step; O57: combat protection). Dropped: O58
+(the pool already reads the source's "can't be prevented", pinned in `PrePoolDamageChecksTest`), O62 (no card deals can't-be-redirected
+damage to a player; Lava Burst's applies to creatures only). About 35 handler and choice-completion pre-checks gone (CR 616.1);
+`isDamageSourcePreventedWithLog` / `isDamagePreventedForCreature` deleted; the pool's protection rule covers any noncombat dealer;
+Errant Minion / Power Leak float the paid X as a source-and-player shield; `DamagePreventionService`'s static scans read active
+statics. No effect class added or deleted, so no ledger or ratchet change. Tests: 1,072 XML files, 8,968 tests, 0 failures.
 
 #### DM-2. Simultaneous damage and damage results
 

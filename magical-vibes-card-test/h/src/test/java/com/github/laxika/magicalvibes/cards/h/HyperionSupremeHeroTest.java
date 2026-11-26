@@ -12,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -149,5 +151,18 @@ class HyperionSupremeHeroTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, hero.getId());
 
         assertThat(hero.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A face-down Hyperion has no text, so damage to its controller is not reduced")
+    void faceDownHyperionDoesNotProtectController() {
+        addCreatureReady(player1, new HyperionSupremeHero()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
     }
 }

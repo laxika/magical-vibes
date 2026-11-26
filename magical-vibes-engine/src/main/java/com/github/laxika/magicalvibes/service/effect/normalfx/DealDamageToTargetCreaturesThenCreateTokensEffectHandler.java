@@ -40,7 +40,7 @@ public class DealDamageToTargetCreaturesThenCreateTokensEffectHandler implements
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
-        if (targetIds.isEmpty() || damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+        if (targetIds.isEmpty()) {
             return;
         }
 
@@ -60,8 +60,7 @@ public class DealDamageToTargetCreaturesThenCreateTokensEffectHandler implements
         Set<UUID> damagedCreatureIds = new HashSet<>();
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null || !gameQueryService.isCreature(gameData, target)
-                    || damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
+            if (target == null || !gameQueryService.isCreature(gameData, target)) {
                 continue;
             }
             if (damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage) > 0) {

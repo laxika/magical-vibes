@@ -73,28 +73,14 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         int sourcePower = gameQueryService.getPowerBasedDamage(gameData, sourceForPower);
         int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
 
-        // Source deals damage equal to its power to target
-        if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard(), entry.getControllerId()))) {
-            int sourceDamage = sourcePower;
-            damageSupport.dealCreatureDamage(gameData, entry, target, sourceDamage);
-            gameLogService.append(gameData, GameLog.textCardText(cardName + " deals " + sourceDamage + " damage to ", target.getCard(), "."));
-        } else {
-            gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
-        }
+        damageSupport.dealCreatureDamage(gameData, entry, target, sourcePower);
 
         if (source == null) {
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }
 
-        if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard(),
-                gameQueryService.findPermanentController(gameData, target.getId())))) {
-            int targetDamage = targetPower;
-            damageSupport.dealCreatureDamage(gameData, entry, source, targetDamage, target);
-            gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetDamage + " damage to " + cardName + ".").build());
-        } else {
-            gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text("'s damage to " + cardName + " is prevented.").build());
-        }
+        damageSupport.dealCreatureDamage(gameData, entry, source, targetPower, target);
 
         gameOutcomeService.checkWinCondition(gameData);
     }

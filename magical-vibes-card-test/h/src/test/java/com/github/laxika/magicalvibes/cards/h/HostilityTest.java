@@ -13,6 +13,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -167,5 +169,20 @@ class HostilityTest extends BaseCardTest {
 
         harness.assertNotInGraveyard(player1, "Hostility");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hostility);
+    }
+
+    @Test
+    @DisplayName("A face-down Hostility has no text, so its controller's spell damages the opponent")
+    void faceDownHostilityDoesNotPrevent() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefieldAndReturn(player1, new Hostility()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Elemental Shaman"));
     }
 }

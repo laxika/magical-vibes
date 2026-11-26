@@ -88,7 +88,7 @@ public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEf
         int spellManaValue = amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
                 AmountContext.forStackEntry(entry, null));
         int damageAmount = Math.abs(spellManaValue - hit.getManaValue());
-        if (damageAmount > 0 && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+        if (damageAmount > 0) {
             int damage = damageAmount;
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!playerId.equals(entry.getControllerId())) {

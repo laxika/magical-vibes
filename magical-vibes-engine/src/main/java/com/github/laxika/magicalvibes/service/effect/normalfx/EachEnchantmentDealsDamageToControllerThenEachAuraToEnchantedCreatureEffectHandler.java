@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,6 @@ public class EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatu
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -65,11 +62,6 @@ public class EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatu
             }
             UUID controllerId = gameQueryService.findPermanentController(gameData, aura.getId());
             if (controllerId == null) {
-                continue;
-            }
-            if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.isPreventedFromDealingDamage(gameData, aura)) {
-                gameLogService.append(gameData, GameLog.cardThen(aura.getCard(), "'s damage is prevented."));
                 continue;
             }
             StackEntry damageEntry = sourceEntry(aura, controllerId);

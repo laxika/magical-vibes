@@ -32,13 +32,10 @@ public class DealDamageToBlockedAttackersOnDeathEffectHandler implements NormalE
             return;
         }
         int damage = e.damage();
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
         for (UUID blockedId : List.copyOf(dying.getBlockedAttackerIdsThisCombat())) {
             Permanent blocked = gameQueryService.findPermanentById(gameData, blockedId);
             if (blocked == null) continue;
-            if (!damageSupport.isDamagePreventedForCreature(gameData, entry, blocked)) {
-                damageSupport.dealCreatureDamage(gameData, entry, blocked, damage);
-            }
+            damageSupport.dealCreatureDamage(gameData, entry, blocked, damage);
         }
     }
 }

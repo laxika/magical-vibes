@@ -13,6 +13,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.s.SelflessSquire;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -223,5 +226,50 @@ class ErrantMinionTest extends BaseCardTest {
     private void attachErrantMinion(Permanent creature) {
         Permanent errantMinion = harness.addToBattlefieldAndReturn(player1, new ErrantMinion());
         errantMinion.setAttachedTo(creature.getId());
+    }
+
+    @Test
+    @CardUsed(SelflessSquire.class)
+    @DisplayName("The paid mana prevents that damage, so Selfless Squire sees it prevented")
+    void paymentIsAPreventionSelflessSquireSees() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent squire = harness.addToBattlefieldAndReturn(player2, new SelflessSquire());
+        attachErrantMinion(creature);
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player2, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The paid prevention and a prevention shield: the damaged player orders them")
+    void paymentPreventionIsOrderedWithAShield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        attachErrantMinion(creature);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 5);
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player2, 1);
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).as("player 2 is asked to order the two preventions").isNotNull();
+        assertThat(order.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        harness.handleListChoice(player2, order.options().stream()
+                .filter(option -> !option.startsWith("Prevent the next"))
+                .findFirst().orElseThrow());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(4);
     }
 }

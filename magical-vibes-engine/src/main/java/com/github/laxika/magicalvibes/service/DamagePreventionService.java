@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDama
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
@@ -114,7 +113,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -148,7 +146,6 @@ public class DamagePreventionService {
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
     private final DamagePreventionReplacementSupport damagePreventionReplacementSupport;
-    private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
     private final ObjectProvider<CreatureControlService> creatureControlServiceProvider;
     private final ObjectProvider<PlayerInputService> playerInputServiceProvider;
@@ -162,7 +159,6 @@ public class DamagePreventionService {
                                    LifeSupport lifeSupport, DrawService drawService,
                                    AmountEvaluationService amountEvaluationService,
                                    DamagePreventionReplacementSupport damagePreventionReplacementSupport,
-                                   StaticEffectConditionResolver staticEffectConditionResolver,
                                    ObjectProvider<PermanentControlSupport> permanentControlSupportProvider,
                                    ObjectProvider<CreatureControlService> creatureControlServiceProvider,
                                    ObjectProvider<PlayerInputService> playerInputServiceProvider,
@@ -176,7 +172,6 @@ public class DamagePreventionService {
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
         this.damagePreventionReplacementSupport = damagePreventionReplacementSupport;
-        this.staticEffectConditionResolver = staticEffectConditionResolver;
         this.permanentControlSupportProvider = permanentControlSupportProvider;
         this.creatureControlServiceProvider = creatureControlServiceProvider;
         this.playerInputServiceProvider = playerInputServiceProvider;
@@ -1073,8 +1068,7 @@ public class DamagePreventionService {
     }
 
     private int selfDamagePrevented(GameData gameData, Permanent permanent, int damage) {
-        int prevented = gameQueryService.hasLostPrintedAbilities(gameData, permanent) ? 0
-                : permanent.getCard().getStaticEffects().stream()
+        int prevented = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                 .filter(SelfDamagePreventionEffect.class::isInstance)
                 .map(SelfDamagePreventionEffect.class::cast)
                 .mapToInt(effect -> effect.preventedDamage(damage))
@@ -1087,7 +1081,7 @@ public class DamagePreventionService {
     }
 
     private boolean hasControlChangeOnPrevention(GameData gameData, Permanent permanent) {
-        return permanent.getCard().getStaticEffects().stream()
+        return gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                 .anyMatch(DamagePreventionControlChangeEffect.class::isInstance)
                 || gameQueryService.getGrantedEffects(gameData, permanent).stream()
                 .anyMatch(DamagePreventionControlChangeEffect.class::isInstance);
@@ -1229,8 +1223,7 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(recipientId);
         if (battlefield == null) return damage;
         for (Permanent p : battlefield) {
-            if (gameQueryService.hasLostPrintedAbilities(gameData, p)) continue;
-            for (CardEffect effect : p.getCard().getStaticEffects()) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, p, recipientId)) {
                 if (effect instanceof PreventHalfDamageToControllerAndTheirPermanentsEffect) {
                     damage /= 2;
                     if (damage == 0) return 0;
@@ -1255,10 +1248,8 @@ public class DamagePreventionService {
         int reduction = 0;
         boolean sourceIsCreature = damageSource != null && gameQueryService.isCreature(gameData, damageSource);
         for (Permanent source : battlefield) {
-            for (CardEffect effect : source.getCard().getStaticEffects()) {
-                CardEffect resolved = staticEffectConditionResolver.resolve(
-                        gameData, source, controllerId, effect);
-                if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source, controllerId)) {
+                if (effect instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
                         && (!prevention.creatureSourcesOnly() || sourceIsCreature)) {
                     reduction += amountEvaluationService.evaluate(gameData, prevention.amount(),
@@ -1286,10 +1277,8 @@ public class DamagePreventionService {
 
         int reduction = 0;
         for (Permanent source : battlefield) {
-            for (CardEffect effect : source.getCard().getStaticEffects()) {
-                CardEffect resolved = staticEffectConditionResolver.resolve(
-                        gameData, source, controllerId, effect);
-                if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source, controllerId)) {
+                if (effect instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
                         && (!prevention.creatureSourcesOnly() || gameQueryService.isCreature(gameData, damageSource))) {
                     int amount = amountEvaluationService.evaluate(gameData, prevention.amount(),
@@ -2735,11 +2724,7 @@ public class DamagePreventionService {
 
         long totalReduction = 0;
         for (Permanent permanent : battlefield) {
-            List<CardEffect> statics = LayerSystemService.currentCard(gameData, permanent)
-                    .getStaticEffects();
-            if (statics.stream().noneMatch(PreventDamageFromOpponentSourcesEffect.class::isInstance)
-                    || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : statics) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, playerId)) {
                 if (effect instanceof PreventDamageFromOpponentSourcesEffect e
                         && (!toPermanent || e.includesPermanents())) {
                     totalReduction += e.amount();
@@ -2895,27 +2880,6 @@ public class DamagePreventionService {
         return false;
     }
 
-    public int applyControllerPerClericDamagePrevention(GameData gameData, UUID playerId, int damage) {
-        return applyControllerPerClericDamagePrevention(gameData, playerId, damage, false);
-    }
-
-    public int applyControllerPerClericDamagePrevention(GameData gameData, UUID playerId, int damage,
-                                                         boolean combatDamage) {
-        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
-        if (damage <= 0) return 0;
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return 0;
-
-        long shields = battlefield.stream().filter(p ->
-                p.getCard().getStaticEffects().stream()
-                        .anyMatch(e -> e instanceof PreventDamageToControllerPerClericEffect)).count();
-        if (shields == 0) return 0;
-
-        long clerics = gameQueryService.countControlledSubtypePermanents(gameData, playerId, CardSubtype.CLERIC);
-        return (int) Math.min(damage, clerics * shields);
-    }
-
     /**
      * Urza's Armor-style prevention: "If a source would deal damage to you, prevent N of that damage."
      * Modeled on the controller of the permanent. Prevents up to the summed {@code amount} of every such
@@ -2985,8 +2949,7 @@ public class DamagePreventionService {
 
         int reduction = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, playerId)) {
                 if (effect instanceof PreventFixedDamagePerSourceToControllerEffect prevention) {
                     if (prevention.combatOnly() && !combatDamage) continue;
                     if (prevention.requiresUntappedSource() && permanent.isTapped()) continue;
@@ -3043,8 +3006,7 @@ public class DamagePreventionService {
                                                   Predicate<PreventAllButOneDamageToControllerAndPermanentsEffect> applies) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         boolean hasPrevention = battlefield != null && battlefield.stream()
-                .filter(p -> !gameQueryService.hasLostAllAbilities(gameData, p))
-                .flatMap(p -> p.getCard().getStaticEffects().stream())
+                .flatMap(p -> gameQueryService.getActiveStaticEffects(gameData, p, controllerId).stream())
                 .anyMatch(effect -> effect instanceof PreventAllButOneDamageToControllerAndPermanentsEffect prevention
                         && applies.test(prevention));
         if (hasPrevention) return true;
@@ -3080,8 +3042,7 @@ public class DamagePreventionService {
         if (battlefield == null) return null;
 
         return battlefield.stream()
-                .filter(p -> !gameQueryService.hasLostAllAbilities(gameData, p))
-                .flatMap(p -> p.getCard().getStaticEffects().stream())
+                .flatMap(p -> gameQueryService.getActiveStaticEffects(gameData, p, spellControllerId).stream())
                 .filter(e -> e instanceof PreventSpellDamageToOpponentAndCreateTokensEffect)
                 .map(e -> (PreventSpellDamageToOpponentAndCreateTokensEffect) e)
                 .findFirst().orElse(null);
@@ -3134,10 +3095,8 @@ public class DamagePreventionService {
      */
     private boolean grantedAttachedPreventionSurvives(GameData gameData, Permanent creature) {
         return gameData.anyPermanentMatches(p -> p.isAttached() && p.getAttachedTo().equals(creature.getId())
-                && p.getCard().getStaticEffects().stream().anyMatch(effect ->
-                        effect instanceof PreventAllDamageToAttachedCreatureEffect
-                                || effect instanceof ConditionalEffect conditional
-                                && conditional.wrapped() instanceof PreventAllDamageToAttachedCreatureEffect)
+                && gameQueryService.getActiveStaticEffects(gameData, p).stream()
+                .anyMatch(PreventAllDamageToAttachedCreatureEffect.class::isInstance)
                 && gameQueryService.grantedAbilitySurvivesRemoval(gameData, creature, p.getTimestamp()));
     }
 
@@ -3337,10 +3296,8 @@ public class DamagePreventionService {
     /** Whether Gisela-style effects halve damage to {@code recipientId}. */
     public boolean hasHalfDamagePrevention(GameData gameData, UUID recipientId) {
         return gameData.playerBattlefields.getOrDefault(recipientId, List.of()).stream()
-                .anyMatch(permanent -> LayerSystemService.currentCard(gameData, permanent)
-                        .getStaticEffects().stream()
-                        .anyMatch(PreventHalfDamageToControllerAndTheirPermanentsEffect.class::isInstance)
-                        && !gameQueryService.hasLostPrintedAbilities(gameData, permanent));
+                .anyMatch(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent, recipientId)
+                        .stream().anyMatch(PreventHalfDamageToControllerAndTheirPermanentsEffect.class::isInstance));
     }
 
     /**

@@ -11,6 +11,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -142,5 +144,19 @@ class SphereOfPurityTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Myr Enforcer");
         harness.assertInGraveyard(player2, "Myr Enforcer");
+    }
+
+    @Test
+    @DisplayName("A face-down Sphere of Purity has no text, so an artifact's damage is not prevented")
+    void faceDownSphereDoesNotPrevent() {
+        harness.addToBattlefieldAndReturn(player1, new SphereOfPurity()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addToBattlefield(player2, new GraniteShard());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
     }
 }

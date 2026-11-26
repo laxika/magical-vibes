@@ -106,6 +106,15 @@ public class DamageJournalService {
         gameData.damageJournal = null;
     }
 
+    /**
+     * Whether the resolving effect is being resolved again because damage it started waited for its player to order
+     * replacement effects, so a handler that chose or paid something before that damage doesn't ask again.
+     */
+    public boolean isResolvedAgain(GameData gameData) {
+        DamageJournal journal = gameData.damageJournal;
+        return journal != null && journal.isActive() && journal.isRerunRequested();
+    }
+
     /** Whether damage starting now is the resolving effect's own rather than damage other damage caused. */
     public boolean isEffectDamage(GameData gameData) {
         DamageJournal journal = gameData.damageJournal;

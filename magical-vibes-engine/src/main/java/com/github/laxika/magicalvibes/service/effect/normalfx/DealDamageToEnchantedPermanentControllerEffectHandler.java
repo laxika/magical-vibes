@@ -55,7 +55,7 @@ public class DealDamageToEnchantedPermanentControllerEffectHandler implements No
 
     private void dealDamage(GameData gameData, StackEntry entry, DealDamageToEnchantedPermanentControllerEffect e) {
         UUID controllerId = findEnchantedPermanentController(gameData, entry);
-        if (controllerId == null || damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+        if (controllerId == null) {
             return;
         }
 

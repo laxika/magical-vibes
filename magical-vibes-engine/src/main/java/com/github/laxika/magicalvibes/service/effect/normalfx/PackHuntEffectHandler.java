@@ -66,13 +66,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
         // Step 2: Each creature tapped this way deals damage equal to its power to target creature
         for (Permanent hunter : tappedHunters) {
             int hunterPower = gameQueryService.getPowerBasedDamage(gameData, hunter);
-            if (!(gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, target, hunter))) {
-                int damage = hunterPower;
-                damageSupport.dealCreatureDamage(gameData, entry, target, damage, hunter);
-            } else {
-                gameLogService.append(gameData, GameLog.cardTextCard(hunter.getCard(), "'s damage to ", target.getCard(), " is prevented."));
-            }
+            damageSupport.dealCreatureDamage(gameData, entry, target, hunterPower, hunter);
         }
 
         // Step 3: Target creature deals damage equal to its power divided as its controller chooses
@@ -81,12 +75,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
         if (targetPower > 0) {
             if (tappedHunters.size() == 1) {
                 Permanent hunter = tappedHunters.getFirst();
-                if (!(gameQueryService.isDamagePreventable(gameData)
-                        && gameQueryService.hasProtectionFromSource(gameData, hunter, target))) {
-                    damageSupport.dealCreatureDamage(gameData, entry, hunter, targetPower, target);
-                } else {
-                    gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), "'s damage to ", hunter.getCard(), " is prevented."));
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, hunter, targetPower, target);
             } else {
                 UUID choosingPlayerId = gameQueryService.findPermanentController(gameData, target.getId());
                 List<UUID> hunterIds = tappedHunters.stream().map(Permanent::getId).toList();

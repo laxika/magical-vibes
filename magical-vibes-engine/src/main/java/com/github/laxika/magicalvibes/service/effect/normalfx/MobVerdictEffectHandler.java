@@ -55,9 +55,6 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void dealDamageToPlayerAndCreatures(GameData gameData, StackEntry entry, UUID playerId) {
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            return;
-        }
         damageSupport.dealDamageToPlayer(gameData, entry, playerId, DAMAGE_PER_VOTE);
         List<Permanent> battlefield = new ArrayList<>(gameData.playerBattlefields.getOrDefault(playerId, List.of()));
         damageSupport.damageFilteredCreatures(gameData, entry, DAMAGE_PER_VOTE, battlefield,

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.i.ImmovableRod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -227,4 +228,27 @@ class CaduceusStaffOfHermesTest extends BaseCardTest {
         perm.setSummoningSick(false);
         return perm;
     }
+
+    @Test
+    @DisplayName("A Caduceus that lost its abilities no longer prevents damage to the equipped creature")
+    @CardUsed({ImmovableRod.class})
+    void staffWithoutAbilitiesDoesNotPrevent() {
+        harness.setLife(player1, 30);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent staff = addStaffReady(player1);
+        staff.setAttachedTo(creature.getId());
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new ImmovableRod());
+        rod.setSummoningSick(false);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(rod), null, staff.getId());
+        harness.passBothPriorities();
+
+        castAtCreature(player2, new Shock(), creature);
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
 }

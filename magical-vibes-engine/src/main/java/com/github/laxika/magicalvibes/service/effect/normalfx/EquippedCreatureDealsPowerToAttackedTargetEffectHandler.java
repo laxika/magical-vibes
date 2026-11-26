@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsPowerToAttackedTargetEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -33,7 +30,6 @@ public class EquippedCreatureDealsPowerToAttackedTargetEffectHandler implements 
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -68,24 +64,13 @@ public class EquippedCreatureDealsPowerToAttackedTargetEffectHandler implements 
         int power = gameQueryService.getPowerBasedDamage(gameData, equippedCreature);
 
         if (gameData.playerIds.contains(targetId)) {
-            if (!damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
-                damageSupport.dealDamageToPlayer(gameData, damageEntry, targetId, power);
-            }
+            damageSupport.dealDamageToPlayer(gameData, damageEntry, targetId, power);
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null || !target.getCard().hasType(CardType.PLANESWALKER)) return;
-        Card source = damageEntry.getEffectiveDamageSourceCard();
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)
-                || damageSupport.isSourcePermanentPreventedFromDealingDamage(gameData, damageEntry)
-                || gameQueryService.hasProtectionFromSource(gameData, target, source,
-                    damageEntry.getControllerId())) {
-            gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
-            return;
-        }
-
         damageSupport.dealCreatureDamage(gameData, damageEntry, target, power);
         gameOutcomeService.checkWinCondition(gameData);
     }

@@ -125,8 +125,7 @@ public class EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage
                         Condition damageCondition,
                         Map<UUID, Integer> exiledPowers) {
         if (!conditionEvaluationService.isMet(gameData, damageCondition,
-                ConditionContext.forStackEntry(entry), entry.getEventValue())
-                || damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+                ConditionContext.forStackEntry(entry), entry.getEventValue())) {
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }

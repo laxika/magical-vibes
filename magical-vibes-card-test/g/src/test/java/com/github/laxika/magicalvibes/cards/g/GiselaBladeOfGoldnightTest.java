@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -263,5 +266,20 @@ class GiselaBladeOfGoldnightTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Serra Angel");
         assertThat(angel.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A face-down Gisela has no text, so damage to its controller is not halved")
+    @CardUsed({Shock.class})
+    void faceDownGiselaDoesNotHalveDamage() {
+        harness.addToBattlefieldAndReturn(player1, new GiselaBladeOfGoldnight())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 }

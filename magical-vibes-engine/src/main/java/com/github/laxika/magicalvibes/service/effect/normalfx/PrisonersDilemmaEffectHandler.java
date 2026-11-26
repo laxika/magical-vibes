@@ -84,15 +84,11 @@ public class PrisonersDilemmaEffectHandler implements NormalEffectHandlerBean {
         boolean allSnitch = !choices.isEmpty() && choices.values().stream()
                 .allMatch(ChoiceContext.PrisonersDilemmaChoice.SNITCH::equals);
 
-        if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            for (Map.Entry<UUID, String> choice : choices.entrySet()) {
-                if (allSnitch || allSilence
-                        || ChoiceContext.PrisonersDilemmaChoice.SILENCE.equals(choice.getValue())) {
-                    int damage = allSilence ? 4 : allSnitch ? 8 : 12;
-                    damageSupport.dealDamageToPlayer(
-                            gameData, entry, choice.getKey(),
-                            damage);
-                }
+        for (Map.Entry<UUID, String> choice : choices.entrySet()) {
+            if (allSnitch || allSilence
+                    || ChoiceContext.PrisonersDilemmaChoice.SILENCE.equals(choice.getValue())) {
+                int damage = allSilence ? 4 : allSnitch ? 8 : 12;
+                damageSupport.dealDamageToPlayer(gameData, entry, choice.getKey(), damage);
             }
         }
         gameOutcomeService.checkWinCondition(gameData);

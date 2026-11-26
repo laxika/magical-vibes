@@ -47,7 +47,7 @@ public class DealDamageToEachOpponentFromTriggeringSpellEffectHandler implements
         int amount = Math.max(0, amountEvaluationService.evaluate(gameData,
                 ((DealDamageToEachOpponentFromTriggeringSpellEffect) effect).amount(),
                 AmountContext.forStackEntry(damageEntry, null)));
-        if (amount <= 0 || damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
+        if (amount <= 0) {
             return;
         }
 

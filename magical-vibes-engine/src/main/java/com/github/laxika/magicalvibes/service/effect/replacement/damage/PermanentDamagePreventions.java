@@ -343,20 +343,17 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
 
     /**
      * Protection (CR 702.16e): damage from a source with the stated quality is prevented. A spell or ability's own
-     * damage is judged by its card and controller; noncombat damage that the dealing entry's own source permanent
-     * deals as itself ("it deals 4 damage to each creature blocking it", read live or as it last existed; a fight or
-     * bite carrier's dealer) by that permanent. Any other permanent dealing damage itself (combat, a dealer that isn't
-     * the entry's source) only when the damaged permanent also has its own +1/+1-counter prevention to order it
-     * against (Phantom Centaur).
+     * damage is judged by its card and controller; noncombat damage a permanent deals as itself (the entry's own
+     * source, read live or as it last existed; a fight or bite carrier's dealer; the creature an Aura's ability makes
+     * deal damage) by that permanent. Combat damage, whose protection the combat damage step applies, only when the
+     * damaged permanent also has its own +1/+1-counter prevention to order it against (Phantom Centaur).
      */
     private boolean protectionPrevents(PermanentDamageContext ctx) {
         if (!gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())) {
             return false;
         }
         Permanent source = ctx.damageSource();
-        boolean abilitySourceDealsIt = source != null && !ctx.combat()
-                && source.getId().equals(ctx.entry().getSourcePermanentId());
-        if (source != null && (abilitySourceDealsIt
+        if (source != null && (!ctx.combat()
                 || prevention.hasPreventRemovePlusOneCountersEffect(ctx.gameData(), ctx.target()))
                 && !gameQueryService.damageCantBePreventedFromSource(ctx.gameData(), source, ctx.combat())
                 && gameQueryService.hasProtectionFromDamageSource(ctx.gameData(), ctx.target(), source)) {

@@ -61,8 +61,7 @@ public class DestroySourceThenDealDamageToControllerEffectHandler implements Nor
             destructionSupport.tryDestroyAndLog(gameData, livingSource, entry.getCard().getName());
         }
 
-        if (!gameData.playerIds.contains(entry.getControllerId())
-                || damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
+        if (!gameData.playerIds.contains(entry.getControllerId())) {
             return;
         }
 
