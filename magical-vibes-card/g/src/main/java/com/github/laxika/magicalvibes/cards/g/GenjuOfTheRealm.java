@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,7 +32,7 @@ public class GenjuOfTheRealm extends Card {
                         CardSupertype.LEGENDARY, Subjects.attached())
         ), "Enchanted land becomes a legendary 8/12 Spirit creature with trample until end of turn. It's still a land."));
         addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new MayEffect(
-                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                new PutCardsIntoHandEffect(Subjects.sourceCard()),
                 "Return Genju of the Realm to your hand?"));
     }
 }

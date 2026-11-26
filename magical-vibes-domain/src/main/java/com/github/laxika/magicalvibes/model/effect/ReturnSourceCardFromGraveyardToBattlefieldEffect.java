@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * Immediately returns the source card from its owner's graveyard to the
  * battlefield under that owner's control, optionally tapped and with an optional counter.
  *
- * <p>Battlefield analogue of {@link ReturnSourceCardFromGraveyardToOwnerHandEffect}. Unlike
+ * <p>Battlefield analogue of {@link PutCardsIntoHandEffect} over {@code Subjects.sourceCard()}. Unlike
  * a delayed return ({@link RegisterDelayedStepTriggerEffect#aboutCardAtNext}) the return happens right away instead of
  * being queued for a later step, and is granted by a card rather than pushed by the engine.
  *

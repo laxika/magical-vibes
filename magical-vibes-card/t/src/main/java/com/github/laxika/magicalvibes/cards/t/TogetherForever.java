@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +36,7 @@ public class TogetherForever extends Card {
                 false,
                 "{1}",
                 List.of(new ResolveEffectOnTargetDeathThisTurnEffect(
-                        new ReturnTriggeringCardToOwnerHandEffect())),
+                        new PutCardsIntoHandEffect(Subjects.triggeringCards()))),
                 "{1}: Choose target creature with a counter on it. When that creature dies this turn, return that card to its owner's hand.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

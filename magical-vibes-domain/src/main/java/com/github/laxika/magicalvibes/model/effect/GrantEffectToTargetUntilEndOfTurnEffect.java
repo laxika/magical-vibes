@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
  * cleanup step ends.
  *
  * <p>Example: Verdant Rebirth grants "when this dies" +
- * {@link ReturnSourceCardFromGraveyardToOwnerHandEffect} until end of turn.
+ * {@code PutCardsIntoHandEffect(Subjects.sourceCard())} until end of turn.
  *
  * @param grantedAbility the granted ability
  * @param delayedTrigger registers a spell-sourced delayed trigger watching the target instead

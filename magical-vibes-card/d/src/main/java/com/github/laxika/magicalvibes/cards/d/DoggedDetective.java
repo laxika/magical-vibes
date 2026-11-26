@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,7 +22,7 @@ public class DoggedDetective extends Card {
         addTrigger(new TriggerCondition(Triggers.opponentDrawsSecondCardEachTurn(), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 new MayEffect(
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()),
                         "Return Dogged Detective from your graveyard to your hand?"));
     }
 }

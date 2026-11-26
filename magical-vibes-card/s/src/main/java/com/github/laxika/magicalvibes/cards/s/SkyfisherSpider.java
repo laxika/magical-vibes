@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -45,7 +45,7 @@ public class SkyfisherSpider extends Card {
                 SequenceEffect.of(
                         new GainLifeEffect(new CardsInGraveyard(
                                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)),
-                        new ExileSourceCardFromGraveyardEffect(true)),
+                        ExileGraveyardCardsEffect.cards(Subjects.inYourGraveyard(Subjects.sourceCard()))),
                 "Gain life and exile Skyfisher Spider from your graveyard?"));
     }
 }

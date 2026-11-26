@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,6 +29,6 @@ public class AngelicDestiny extends Card {
                 .addStaticEffect(new GrantSubtypeEffect(CardSubtype.ANGEL, Subjects.attachedCreature()))
                 // When enchanted creature dies, return this card to its owner's hand.
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()));
     }
 }

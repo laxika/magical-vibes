@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class CreepingChill extends Card {
                 new SourceCardInGraveyard(),
                 new MayEffect(
                         SequenceEffect.of(
-                                new ExileSourceCardFromGraveyardEffect(),
+                                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                                 DealDamageEffect.to(Subjects.eachOpponent(), 3),
                                 new GainLifeEffect(3)),
                         "Exile Creeping Chill and deal 3 damage to each opponent?")));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,6 +23,7 @@ public class FlameWreathedPhoenix extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new TributeNotPaidEffect(SequenceEffect.of(
                 new SetSelfKeywordIndefinitelyEffect(Keyword.HASTE, true),
                 new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect()), Duration.PERMANENT, false, Subjects.source()))));
+                        new PutCardsIntoHandEffect(Subjects.sourceCard())), Duration.PERMANENT, false,
+                        Subjects.source()))));
     }
 }

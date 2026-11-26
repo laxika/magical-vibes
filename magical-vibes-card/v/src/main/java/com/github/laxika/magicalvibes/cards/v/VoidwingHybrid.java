@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -15,6 +16,6 @@ public class VoidwingHybrid extends Card {
     public VoidwingHybrid() {
         addStaticEffect(new ToxicEffect(1));
         addTrigger(new TriggerCondition(Triggers.youProliferate(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                new PutCardsIntoHandEffect(Subjects.sourceCard()));
     }
 }

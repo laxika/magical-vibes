@@ -34,6 +34,18 @@ class CyclopeanMummyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The exile is logged as Cyclopean Mummy exiling itself from its owner's graveyard")
+    void logsTheExileFromTheGraveyard() {
+        harness.addToBattlefield(player1, new CyclopeanMummy());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("Cyclopean Mummy exiles Cyclopean Mummy from "
+                + gd.playerIdToName.get(player1.getId()) + "'s graveyard.")).isTrue();
+    }
+
+    @Test
     @DisplayName("The mummy enters the graveyard before its exile trigger resolves")
     void deathTriggerUsesTheStack() {
         harness.addToBattlefield(player1, new CyclopeanMummy());

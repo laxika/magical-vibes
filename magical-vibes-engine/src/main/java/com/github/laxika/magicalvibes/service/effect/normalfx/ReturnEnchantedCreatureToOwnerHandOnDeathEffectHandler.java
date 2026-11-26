@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -75,7 +76,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
             if (effectIndex >= 0) {
                 UnlessPaysEffect returnSource = UnlessPaysEffect.youMayPay(e.followUpManaCost(),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()));
                 entry.insertEffectsToResolve(effectIndex + 1, List.of(e.followUpPrompt() == null
                         ? returnSource : returnSource.withPrompt(e.followUpPrompt())));
             }

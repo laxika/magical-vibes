@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.R
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -37,7 +38,7 @@ public class RelentlessDead extends Card {
         // graveyard incarnation is still there when the ability resolves (CR 400.7).
         addTrigger(Triggers.dies(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{B}",
                         new ConditionalEffect(new SourceCardInGraveyard(),
-                                new ReturnSourceCardFromGraveyardToOwnerHandEffect()))
+                                new PutCardsIntoHandEffect(Subjects.sourceCard())))
                 .withPrompt("Pay {B} to return Relentless Dead to its owner's hand?"));
 
         // The target is chosen as the ability goes on the stack, X only as it resolves (CR 118.12).

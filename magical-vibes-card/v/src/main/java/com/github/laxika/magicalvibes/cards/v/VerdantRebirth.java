@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,7 +16,8 @@ public class VerdantRebirth extends Card {
 
     public VerdantRebirth() {
         target(TargetFilters.creature()).addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToOwnerHandEffect())))
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()))))
           .addSpellEffect(new DrawCardEffect());
     }
 }

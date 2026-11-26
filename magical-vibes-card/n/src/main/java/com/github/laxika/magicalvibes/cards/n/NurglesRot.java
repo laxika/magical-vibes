@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,6 +25,6 @@ public class NurglesRot extends Card {
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                        SequenceEffect.of(new ReturnSourceCardFromGraveyardToOwnerHandEffect(), plaguebearer));
+                        SequenceEffect.of(new PutCardsIntoHandEffect(Subjects.sourceCard()), plaguebearer));
     }
 }

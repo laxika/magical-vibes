@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,7 +29,7 @@ public class UnscytheKillerOfKings extends Card {
         addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_ATTACHED),
                 new MayEffect(
                         SequenceEffect.of(
-                                new ExileTriggeringCardFromGraveyardEffect(),
+                                ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
                                 new ConditionalEffect(HappenedThisWay.exiled(), CreateTokenEffect.blackZombie(1))),
                         "Exile that creature card and create a 2/2 black Zombie?"));
 

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalLoyaltyCountersToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -56,7 +56,7 @@ public class DarkIntimations extends Card {
                                 new CardSubtypePredicate(CardSubtype.BOLAS)
                         ))), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new ExileSourceCardFromGraveyardEffect(),
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                 new GrantAdditionalLoyaltyCountersToCastSpellEffect(1));
     }
 }

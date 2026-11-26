@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +21,7 @@ public class CurseOfClingingWebs extends Card {
 
     public CurseOfClingingWebs() {
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ENCHANTED_PLAYER_CONTROLS),
-                SequenceEffect.of(new ExileTriggeringCardFromGraveyardEffect(),
+                SequenceEffect.of(ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
                         new CreateTokenEffect(1, "Spider", 1, 2, CardColor.GREEN,
                                 List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of())));
     }

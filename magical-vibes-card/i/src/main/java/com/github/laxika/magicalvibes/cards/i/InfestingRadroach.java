@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,7 +25,7 @@ public class InfestingRadroach extends Card {
         addTrigger(new TriggerCondition(Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new MayEffect(
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()),
                         "Return Infesting Radroach from your graveyard to your hand?"));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromAmongExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
@@ -24,7 +24,7 @@ public class GrolnokTheOmnivore extends Card {
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.FROG)),
                 new MillEffect(3, Subjects.you()));
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.PERMANENT_CARD, ObjectRelation.YOU_OWN),
-                new ExileTriggeringCardFromGraveyardEffect(),
+                ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
                 PutCounterOnExiledCardsEffect.onCardsExiledThisWay(CounterType.CROAK));
         addStaticEffect(new PlayFromAmongExiledCardsEffect(Subjects.exiledCards(Subjects.you(),
                 new CardHasCounterInExilePredicate(CounterType.CROAK))));

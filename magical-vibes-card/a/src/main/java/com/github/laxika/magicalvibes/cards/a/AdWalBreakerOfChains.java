@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -38,7 +39,7 @@ public class AdWalBreakerOfChains extends Card {
                         AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 new MayEffect(
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()),
                         "return this card from your graveyard to your hand"));
     }
 }

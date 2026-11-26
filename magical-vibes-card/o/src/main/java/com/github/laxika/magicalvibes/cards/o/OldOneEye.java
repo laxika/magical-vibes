@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -41,7 +41,7 @@ public class OldOneEye extends Card {
                         SequenceEffect.of(
                                 new DiscardEffect(2, Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.atLeast(StepKind.DISCARD, 2),
-                                        new ReturnSourceCardFromGraveyardToOwnerHandEffect()))),
+                                        new PutCardsIntoHandEffect(Subjects.sourceCard())))),
                 "Discard two cards to return Old One Eye to your hand?"));
     }
 }

@@ -3,14 +3,15 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "174")
 @CardRegistration(set = "ECC", collectorNumber = "110")
@@ -23,7 +24,7 @@ public class GreenwardenOfMurasa extends Card {
                 .targetGraveyard(true)
                 .build(), "Return the targeted card from your graveyard to your hand?"));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
-                SequenceEffect.of(new ExileSourceCardFromGraveyardEffect(),
+                SequenceEffect.of(ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                         new ConditionalEffect(HappenedThisWay.exiled(), ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .targetGraveyard(true)

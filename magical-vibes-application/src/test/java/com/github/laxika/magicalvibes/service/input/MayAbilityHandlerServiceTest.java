@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -141,7 +141,7 @@ class MayAbilityHandlerServiceTest {
         gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>(List.of(targetCard)));
 
         CardEffect sequence = SequenceEffect.of(
-                new ExileSourceCardFromGraveyardEffect(),
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
                         .targetGraveyard(true)

@@ -178,7 +178,8 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Balduvian Bears");
-        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dead);
+        assertThat(gameLogContains("into their hand")).isFalse();
     }
 
     @Test
@@ -207,7 +208,7 @@ class EnduringRenewalTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().toString().equals(tokenId));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().toString().equals(tokenId));
-        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gameLogContains("into their hand")).isFalse();
     }
 
     @Test

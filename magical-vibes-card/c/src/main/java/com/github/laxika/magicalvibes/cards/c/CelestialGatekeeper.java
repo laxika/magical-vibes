@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -20,7 +21,7 @@ public class CelestialGatekeeper extends Card {
 
     public CelestialGatekeeper() {
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                new ExileSourceCardFromGraveyardEffect(),
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardIsPermanentPredicate(),

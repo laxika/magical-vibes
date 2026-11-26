@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTopCreatureCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -19,7 +19,7 @@ public class MistmoonGriffin extends Card {
         // before the reanimation is looked up — otherwise the Griffin itself would be the top
         // creature card.
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                new ExileSourceCardFromGraveyardEffect(),
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                 new ReturnTopCreatureCardFromGraveyardToBattlefieldEffect(Subjects.you(), false)));
     }
 }

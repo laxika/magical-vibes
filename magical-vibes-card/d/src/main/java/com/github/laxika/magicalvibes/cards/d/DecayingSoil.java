@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -34,7 +34,8 @@ public class DecayingSoil extends Card {
                                                 Triggers.CREATURE,
                                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                                         ObjectRelation.YOU_OWN),
-                                UnlessPaysEffect.youMayPay("{1}", new ReturnTriggeringCardToOwnerHandEffect())
+                                UnlessPaysEffect.youMayPay("{1}",
+                                        new PutCardsIntoHandEffect(Subjects.triggeringCards()))
                                         .withPrompt("Pay {1} to return that card to your hand?")),
                         Subjects.source())));
     }

@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +19,7 @@ public class Barishi extends Card {
         // into your library. One triggered ability, so both halves are a single SequenceEffect —
         // and the self-exile has to precede the shuffle, otherwise Barishi would shuffle itself in.
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                new ExileSourceCardFromGraveyardEffect(),
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                 new ShuffleGraveyardIntoLibraryEffect(false, new CardTypePredicate(CardType.CREATURE))));
     }
 }

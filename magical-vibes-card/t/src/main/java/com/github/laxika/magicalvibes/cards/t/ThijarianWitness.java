@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOrBlockingAlonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,6 +16,7 @@ public class ThijarianWitness extends Card {
 
     public ThijarianWitness() {
         addTrigger(Triggers.creatureDies(new PermanentIsAttackingOrBlockingAlonePredicate(), ObjectRelation.ANOTHER),
-                SequenceEffect.of(new ExileTriggeringCardFromGraveyardEffect(), CreateTokenEffect.ofClueToken(1)));
+                SequenceEffect.of(ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
+                        CreateTokenEffect.ofClueToken(1)));
     }
 }

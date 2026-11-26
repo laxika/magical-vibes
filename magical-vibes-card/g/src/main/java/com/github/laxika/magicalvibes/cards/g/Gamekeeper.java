@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
@@ -27,7 +27,7 @@ public class Gamekeeper extends Card {
                 new SourceCardInGraveyard(),
                 new MayEffect(
                         SequenceEffect.of(
-                                new ExileSourceCardFromGraveyardEffect(),
+                                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                                 new RevealCardsFromTopUntilEffect(creatureCard),
                                 new PutCardsOntoBattlefieldEffect(Subjects.revealedThisWay(creatureCard)),
                                 new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.restRevealedThisWay(creatureCard))),

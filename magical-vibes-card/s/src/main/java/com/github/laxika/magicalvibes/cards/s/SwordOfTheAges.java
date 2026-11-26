@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSacrificedCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public class SwordOfTheAges extends Card {
                         new SacrificeAnyNumberOfPermanentsCost(
                                 new PermanentIsCreaturePredicate(), true, true),
                         DealDamageEffect.toAnyTarget(new XValue()),
-                        new ExileSourceCardFromGraveyardEffect(),
+                        ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                         new ExileSacrificedCardsFromGraveyardEffect()),
                 "{T}, Sacrifice this artifact and any number of creatures you control: This artifact deals X damage to any target, where X is the total power of the creatures sacrificed this way, then exile this artifact and those creature cards."));
     }

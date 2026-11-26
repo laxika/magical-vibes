@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -48,7 +48,7 @@ public class BrenardGingerSculptor extends Card {
         ));
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new MayEffect(
                 SequenceEffect.of(
-                        new ExileTriggeringCardFromGraveyardEffect(),
+                        ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
                         new ConditionalEffect(HappenedThisWay.exiled(), foodGolemCopy().ofTriggeringPermanent())),
                 "Exile that creature to create a Food Golem token copy?"
         ));

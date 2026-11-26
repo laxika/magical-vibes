@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +27,7 @@ public class NightmareShepherd extends Card {
         // it last existed on the battlefield (its ruling, CR 707.2).
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new MayEffect(
                 SequenceEffect.of(
-                        new ExileTriggeringCardFromGraveyardEffect(),
+                        ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
                         new ConditionalEffect(HappenedThisWay.exiled(),
                                 new CreateTokenCopyOfTargetPermanentEffect(
                                         List.of(CardSubtype.NIGHTMARE), Set.of(), 1, 1, Map.of())

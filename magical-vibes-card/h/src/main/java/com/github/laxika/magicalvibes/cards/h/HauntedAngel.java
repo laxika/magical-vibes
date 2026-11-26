@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,7 +21,7 @@ public class HauntedAngel extends Card {
 
     public HauntedAngel() {
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                new ExileSourceCardFromGraveyardEffect(),
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                 new EachPlayerCreatesTokenEffect(new CreateTokenEffect(
                         "Angel", 3, 3, CardColor.BLACK, List.of(CardSubtype.ANGEL),
                         Set.of(Keyword.FLYING), Set.of()), Subjects.eachOpponent())));

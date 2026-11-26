@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -29,7 +29,7 @@ public class UndeadButler extends Card {
                 new ConditionalEffect(
                         new SourceCardInGraveyard(),
                         SequenceEffect.of(
-                                new ExileSourceCardFromGraveyardEffect(),
+                                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                                 new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.HAND)
                                         .filter(new CardTypePredicate(CardType.CREATURE))

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,7 +15,8 @@ public class SwordOfTheRealms extends Card {
     public SwordOfTheRealms() {
         addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
         addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature()));
-        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new ReturnTriggeringCardToOwnerHandEffect());
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
+                new PutCardsIntoHandEffect(Subjects.triggeringCards()));
         addActivatedAbility(new EquipActivatedAbility("{1}{W}"));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -36,6 +36,6 @@ public class DraconicDestiny extends Card {
                         Subjects.attachedCreature()
                 ))
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()));
     }
 }

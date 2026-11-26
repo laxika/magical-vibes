@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnOtherCreatureCardsWithTotalPowerFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +16,6 @@ public class MoorlandRescuer extends Card {
     public MoorlandRescuer() {
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new ReturnOtherCreatureCardsWithTotalPowerFromGraveyardToBattlefieldEffect(),
-                new ExileSourceCardFromGraveyardEffect()));
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard())));
     }
 }

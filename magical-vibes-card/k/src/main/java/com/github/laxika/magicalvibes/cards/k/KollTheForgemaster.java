@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class KollTheForgemaster extends Card {
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                                 enchantedOrEquipped)),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new ReturnTriggeringCardToOwnerHandEffect());
+                new PutCardsIntoHandEffect(Subjects.triggeringCards()));
 
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                 new PermanentAllOfPredicate(List.of(

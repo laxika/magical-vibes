@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.VoteResult;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
@@ -334,7 +333,7 @@ class StepResultsTest extends BaseCardTest {
             Card kavu = new GrizzlyBears();
             gd.playerGraveyards.get(player1.getId()).add(kavu);
 
-            StackEntry entry = resolveFor(kavu, new ExileSourceCardFromGraveyardEffect(),
+            StackEntry entry = resolveFor(kavu, ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                     ifDone(StepKind.EXILE, new GainLifeEffect(2)));
 
             assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds()).containsExactly(kavu.getId());
@@ -346,7 +345,7 @@ class StepResultsTest extends BaseCardTest {
         void sourceCardGoneFromItsGraveyard() {
             Card kavu = new GrizzlyBears();
 
-            StackEntry entry = resolveFor(kavu, new ExileSourceCardFromGraveyardEffect(),
+            StackEntry entry = resolveFor(kavu, ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                     ifDone(StepKind.EXILE, new GainLifeEffect(2)));
 
             assertThat(entry.getResolutionResults().outcome(StepKind.EXILE)).isEqualTo(StepOutcome.NONE);

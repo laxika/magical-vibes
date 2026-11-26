@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +39,7 @@ public class ErebossTitan extends Card {
                         SequenceEffect.of(
                                 new DiscardEffect(1, Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.discarded(),
-                                        new ReturnSourceCardFromGraveyardToOwnerHandEffect())),
+                                        new PutCardsIntoHandEffect(Subjects.sourceCard()))),
                         "Discard a card to return Erebos's Titan from your graveyard to your hand?"));
     }
 }

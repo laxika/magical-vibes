@@ -5,15 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "130")
 @CardRegistration(set = "PD3", collectorNumber = "22")
@@ -32,7 +33,7 @@ public class DiabolicServitude extends Card {
                 .build());
         addTrigger(Triggers.creatureDies(new PermanentIsChosenPermanentPredicate(), ObjectRelation.ANY),
                 SequenceEffect.of(
-                        new ExileTriggeringCardFromGraveyardEffect(),
+                        ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
                         ReturnToHandEffect.self()));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));

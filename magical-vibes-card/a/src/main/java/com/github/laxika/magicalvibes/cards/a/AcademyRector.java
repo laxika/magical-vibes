@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -23,7 +24,7 @@ public class AcademyRector extends Card {
         // resolution-time "you may" that gates the search, so both steps live inside one MayEffect.
         addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(new SourceCardInGraveyard(), new MayEffect(
                 SequenceEffect.of(
-                        new ExileSourceCardFromGraveyardEffect(),
+                        ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                         new SearchLibraryEffect(new CardTypePredicate(CardType.ENCHANTMENT),
                                 LibrarySearchDestination.BATTLEFIELD)),
                 "Exile Academy Rector to search your library for an enchantment?")));

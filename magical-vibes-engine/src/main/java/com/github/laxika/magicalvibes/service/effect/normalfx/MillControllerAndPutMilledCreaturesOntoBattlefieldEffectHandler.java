@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutMilledCreaturesOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -33,7 +34,7 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
-    private final ReturnSourceCardFromGraveyardToOwnerHandEffectHandler sourceReturnHandler;
+    private final PutCardsIntoHandEffectHandler sourceReturnHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,7 +64,7 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
                 .toList();
         if (eligibleCards.isEmpty()) {
             if (millEffect.returnSourceToHand()) {
-                sourceReturnHandler.resolve(gameData, entry, new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                sourceReturnHandler.resolve(gameData, entry, new PutCardsIntoHandEffect(Subjects.sourceCard()));
             }
             return;
         }
@@ -88,7 +89,7 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             if (effect.returnSourceToHand()) {
-                sourceReturnHandler.resolve(gameData, entry, new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                sourceReturnHandler.resolve(gameData, entry, new PutCardsIntoHandEffect(Subjects.sourceCard()));
             }
             returnHandler.resolveForController(
                     gameData,

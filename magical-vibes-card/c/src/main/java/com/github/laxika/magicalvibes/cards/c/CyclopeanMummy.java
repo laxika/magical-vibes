@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +14,6 @@ public class CyclopeanMummy extends Card {
 
     public CyclopeanMummy() {
         // When this creature dies, exile it.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ExileSourceCardFromGraveyardEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ExileGraveyardCardsEffect.cards(Subjects.sourceCard()));
     }
 }

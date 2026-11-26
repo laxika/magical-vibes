@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -18,7 +18,7 @@ public class MoonstoneHarshMistress extends Card {
         // your next turn, you may play that card.
         addTrigger(Triggers.youDiscardCard(), new MayEffect(
                 SequenceEffect.of(
-                        new ExileTriggeringCardFromGraveyardEffect(),
+                        ExileGraveyardCardsEffect.cards(Subjects.triggeringCards()),
                         AllowPlayCardsFromExileEffect.untilEndOfYourNextTurn(Subjects.cardsThisWay(StepKind.EXILE))),
                 "Exile that card from your graveyard?"));
     }

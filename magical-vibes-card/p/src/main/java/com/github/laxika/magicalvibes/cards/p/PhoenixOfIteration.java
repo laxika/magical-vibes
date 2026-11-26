@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
@@ -45,7 +45,7 @@ public class PhoenixOfIteration extends Card {
                         new MayEffect(
                                 SequenceEffect.of(
                                         new ExileTargetPermanentEffect(Subjects.source()),
-                                        new ExileSourceCardFromGraveyardEffect(),
+                                        ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                                         new ReturnSourceCardFromExileToBattlefieldEffect(true)),
                                 "Exile Phoenix of Iteration, then return it to the battlefield tapped?")));
     }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -60,7 +60,7 @@ public class TamiyoTheMoonSage extends Card {
                                 new TriggeredAbility(
                                         Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN,
                                                 ObjectRelation.YOU_OWN),
-                                        new MayEffect(new ReturnTriggeringCardToOwnerHandEffect(),
+                                        new MayEffect(new PutCardsIntoHandEffect(Subjects.triggeringCards()),
                                                 "Return that card to your hand?")),
                                 "Whenever a card is put into your graveyard from anywhere, you may "
                                         + "return it to your hand.")),

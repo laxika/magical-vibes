@@ -994,6 +994,11 @@ entwine with two modes (P09).
   every player's permanents (`controlledBy(eachPlayer(), …)`, M1's all-player each-matching cards included) is now the AI's board
   sweep (`DealDamageEffect.sweepsBoard()`, the hard AI's board-wipe value, `BoardEvaluator`, the easy AI); a set over one player's
   permanents or each target (Simoon) is still unscored.
+- `CloneService.exileCopiedCardAbility` (Superior Spider-Man, Activated Sleeper, The Mimeoplasm and the other "enter as a copy of a
+  creature card in a graveyard; when you do, exile that card" cards) names the copied card by `setTriggeringCardId` with no graveyard
+  stay, so a card that left the graveyard and came back before the reflexive ability resolves is still exiled; it is a new object
+  (CR 400.7). Record the stay as the ability is made (`setTriggeringCard(id, graveyardEntryVersion)`), failing-first. Step 10 run A
+  (seen, not changed: the absorbed record behaved the same). Sure of the code, not tested.
 
 **Proposed defect runs** (about 15 to 20 lines each; a line marked "Fold:" can wait for its fold run instead, 58 lines):
 

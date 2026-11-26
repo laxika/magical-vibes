@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -15,7 +17,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSameCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
@@ -161,7 +162,7 @@ class ClassKeyedRecordCollectorTest extends BaseCardTest {
         auraCard.setType(CardType.ENCHANTMENT);
         auraCard.setSubtypes(List.of(CardSubtype.AURA));
         auraCard.setManaCost("{1}");
-        auraCard.addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new ExileSourceCardFromGraveyardEffect());
+        auraCard.addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), ExileGraveyardCardsEffect.cards(Subjects.sourceCard()));
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, auraCard);
         aura.setAttachedTo(bears.getId());

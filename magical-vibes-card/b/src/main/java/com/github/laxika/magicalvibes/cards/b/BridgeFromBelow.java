@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -35,6 +36,6 @@ public class BridgeFromBelow extends Card {
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.OPPONENT_OWNS),
                 AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
-                new ExileSourceCardFromGraveyardEffect());
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard()));
     }
 }

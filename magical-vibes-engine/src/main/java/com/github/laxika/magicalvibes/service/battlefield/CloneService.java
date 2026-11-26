@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
@@ -34,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -768,7 +768,7 @@ public class CloneService {
     private static StackEntry exileCopiedCardAbility(Permanent perm, UUID controllerId, Card copiedCard) {
         StackEntry ability = TriggeredAbilityStackService.madeAbility(perm.getCard(), controllerId,
                 FaceDownVisibility.publicName(perm) + "'s reflexive ability",
-                List.of(new ExileTriggeringCardFromGraveyardEffect()), 0, perm.getId());
+                List.of(ExileGraveyardCardsEffect.cards(Subjects.triggeringCards())), 0, perm.getId());
         ability.setTriggeringCardId(copiedCard.getId());
         return ability;
     }

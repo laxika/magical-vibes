@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -27,7 +27,7 @@ public class Gigapede extends Card {
                         SequenceEffect.of(
                                 new DiscardEffect(1, Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.discarded(),
-                                        new ReturnSourceCardFromGraveyardToOwnerHandEffect())),
+                                        new PutCardsIntoHandEffect(Subjects.sourceCard()))),
                         "Discard a card to return Gigapede from your graveyard to your hand?"));
     }
 }

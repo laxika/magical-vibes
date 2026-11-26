@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersAndGainSuspendEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +21,7 @@ public class SinisterConcierge extends Card {
     public SinisterConcierge() {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                        new MayEffect(new ExileSourceCardFromGraveyardEffect(),
+                        new MayEffect(ExileGraveyardCardsEffect.cards(Subjects.sourceCard()),
                                 "Exile Sinister Concierge with three time counters?"),
                         PutTimeCountersAndGainSuspendEffect.onCardsExiledThisWay(3),
                         new ConditionalEffect(new SourceCardSuspended(), SequenceEffect.of(

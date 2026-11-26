@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -35,7 +35,7 @@ public class EntropicEidolon extends Card {
         addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 new MayEffect(
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard()),
                         "Return Entropic Eidolon from your graveyard to your hand?"));
     }
 }

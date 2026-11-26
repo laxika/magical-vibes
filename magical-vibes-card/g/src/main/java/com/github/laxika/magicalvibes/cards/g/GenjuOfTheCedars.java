@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -34,7 +34,7 @@ public class GenjuOfTheCedars extends Card {
                         Duration.UNTIL_END_OF_TURN)
         ), "Enchanted Forest becomes a 4/4 green Spirit creature until end of turn. It's still a land."));
         addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new MayEffect(
-                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                new PutCardsIntoHandEffect(Subjects.sourceCard()),
                 "Return Genju of the Cedars to your hand?"));
     }
 }

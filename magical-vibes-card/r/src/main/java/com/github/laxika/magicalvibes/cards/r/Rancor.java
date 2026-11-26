@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -35,6 +35,6 @@ public class Rancor extends Card {
                 .addStaticEffect(new StaticBoostEffect(
                         2, 0, Set.of(Keyword.TRAMPLE), Subjects.attachedCreature()))
                 // When this Aura is put into a graveyard from the battlefield, return it to its owner's hand.
-                .addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCardsIntoHandEffect(Subjects.sourceCard()));
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -23,7 +24,7 @@ public class BloodOperative extends Card {
         ));
         addTrigger(new TriggerCondition(Triggers.youSurveil(), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
-                UnlessPaysEffect.youMayPayLife(3, new ReturnSourceCardFromGraveyardToOwnerHandEffect())
+                UnlessPaysEffect.youMayPayLife(3, new PutCardsIntoHandEffect(Subjects.sourceCard()))
                         .withPrompt("Pay 3 life to return Blood Operative from your graveyard to your hand?"));
     }
 }

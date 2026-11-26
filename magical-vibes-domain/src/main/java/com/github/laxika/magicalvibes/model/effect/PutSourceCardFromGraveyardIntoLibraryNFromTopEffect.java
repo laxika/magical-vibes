@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>This is the graveyard-source analogue of
  * {@link PutTargetPermanentIntoLibraryNFromTopEffect}, and the library sibling of
- * {@link ReturnSourceCardFromGraveyardToOwnerHandEffect}. Used by Undying Beast
+ * {@link PutCardsIntoHandEffect} over {@code Subjects.sourceCard()}. Used by Undying Beast
  * ({@code position = 0}) and Enigma Sphinx ({@code position = 2}, "third from the top").
  */
 public record PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(int position) implements CardEffect {

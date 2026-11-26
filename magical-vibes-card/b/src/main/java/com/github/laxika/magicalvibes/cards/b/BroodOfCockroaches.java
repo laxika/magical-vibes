@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,6 +20,6 @@ public class BroodOfCockroaches extends Card {
         addTrigger(Triggers.dies(new PermanentOwnedBySourceControllerPredicate(), ObjectRelation.THIS),
                 RegisterDelayedStepTriggerEffect.aboutCardAtNext(Triggers.endStep(ActivePlayer.ANY),
                         Subjects.sourceCard(), new LoseLifeEffect(1),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect()).evenIfNothingHappened());
+                        new PutCardsIntoHandEffect(Subjects.sourceCard())).evenIfNothingHappened());
     }
 }

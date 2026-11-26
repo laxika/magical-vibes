@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -91,6 +92,48 @@ class AngelicDestinyTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Angelic Destiny"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Angelic Destiny"));
+    }
+
+    @Test
+    @DisplayName("The return is logged as its owner putting Angelic Destiny from their graveyard into their hand")
+    void logsTheReturnFromTheGraveyard() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attachDestiny(player1, bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        resolveStack();
+
+        assertThat(gameLogContains(gd.playerIdToName.get(player1.getId())
+                + " puts Angelic Destiny from their graveyard into their hand.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Angelic Destiny that left its graveyard and came back is a new object and stays there")
+    void doesNotReturnANewGraveyardObject() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = attachDestiny(player1, bears);
+        Card destiny = aura.getCard();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Angelic Destiny");
+
+        gd.markGraveyardExit(destiny.getId());
+        gd.markGraveyardEntry(destiny);
+        resolveStack();
+
+        harness.assertInGraveyard(player1, "Angelic Destiny");
+        harness.assertNotInHand(player1, "Angelic Destiny");
     }
 
     @Test

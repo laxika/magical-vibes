@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,7 +22,7 @@ public class MasterOfDeath extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
-                UnlessPaysEffect.youMayPayLife(1, new ReturnSourceCardFromGraveyardToOwnerHandEffect())
+                UnlessPaysEffect.youMayPayLife(1, new PutCardsIntoHandEffect(Subjects.sourceCard()))
                         .withPrompt("Pay 1 life to return Master of Death to your hand?"));
     }
 }

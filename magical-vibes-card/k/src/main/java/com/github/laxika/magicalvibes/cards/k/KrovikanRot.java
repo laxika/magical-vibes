@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -32,8 +33,8 @@ public class KrovikanRot extends Card {
 
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.YOU_OWN),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                UnlessPaysEffect.youMayPay("{1}{B}{B}", new ReturnSourceCardFromGraveyardToOwnerHandEffect())
-                        .ifNotPaid(new ExileSourceCardFromGraveyardEffect())
+                UnlessPaysEffect.youMayPay("{1}{B}{B}", new PutCardsIntoHandEffect(Subjects.sourceCard()))
+                        .ifNotPaid(ExileGraveyardCardsEffect.cards(Subjects.sourceCard()))
                         .withPrompt("Pay {1}{B}{B} to return Krovikan Rot from your graveyard to your hand?"));
     }
 }

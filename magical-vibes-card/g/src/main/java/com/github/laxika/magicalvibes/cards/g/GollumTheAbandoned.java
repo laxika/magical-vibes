@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -37,7 +37,7 @@ public class GollumTheAbandoned extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate())),
                                 "an artifact or creature", false),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect()),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard())),
                 "{2}, Sacrifice an artifact or creature: Return this card from your graveyard to your hand. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

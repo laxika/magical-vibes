@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +21,6 @@ public class BogardanPhoenix extends Card {
         addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalReplacementEffect(
                 new SourceCounterThreshold(1, CounterType.DEATH),
                 new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(false, true, CounterType.DEATH, 1),
-                new ExileSourceCardFromGraveyardEffect()));
+                ExileGraveyardCardsEffect.cards(Subjects.sourceCard())));
     }
 }

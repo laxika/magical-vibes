@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,6 +22,6 @@ public class CuriousCadaver extends Card {
                                 ObjectRelation.YOU_CONTROL),
                         AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                new PutCardsIntoHandEffect(Subjects.sourceCard()));
     }
 }

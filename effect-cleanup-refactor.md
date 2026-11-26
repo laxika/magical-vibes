@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D26 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (218 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files). Next: the excess redirect with Ram Through (Step-10 hand-offs); the rest of the "unless" family (Step-10 hand-offs), then the other verbs there |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a to U4d (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect`, `MayAbilityHandlerService`'s generic mana branch and `ForcedCostOrElseEffect` with both its handlers are gone: U4a and U4b moved its 159 card files and four engine builders, U4c echo, U4d cumulative upkeep; U5 the damage ransoms, five records and Worms of the Earth's; U6 the for-each loop `UnlessPaysEffect.forEach` with Cut the Tethers, Cleansing and Giant Albatross; U6b `forEachCard` (Sirocco, Sword-Point Diplomacy) and the discard paid together (Ob Nixilis, Professor Onyx); U6c the same on The Long Reach of Night and Possessed Portal; U7a the non-mana `XOrY…Cost` records as a cast-time `AnyOfCost`, U7b the five mana ones with `PayManaCost` paid in the total cost, U7c `ForageCost`; Boost B1: `BoostEffect`, renamed from `BoostTargetCreatureEffect`, absorbed `BoostSelfEffect` and `BoostTargetPermanentEffect`, 2,542 card files; Boost B2: the two mass records as `creaturesYouControl` / `allCreatures` / `creaturesTargetPlayerControls`, 609 card files; Damage P: `DealDamageEffect` took the player recipients, `DealDamageToPlayersEffect` and Typhoon's record absorbed, 704 card files; Damage M1: the four set records as `toEach(set)` / `toEachTarget`, 112 card files; Damage M2: `MassDamageEffect` as `toEachCreature` / `toEachCreatureAndPlaneswalker` / `eachEvaluatedFor(amount, set)` with `.andTo(players)`, 241 card files; Damage R: the other-dealer records as the rider `.dealtBy(dealers)` with `bite`, `targetCreatureToItself`, `toEachOther`, 138 card files; run A: the four graveyard card movers into `PutCardsIntoHandEffect` / `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()`, 122 card files). Next: the rest-of-step-10 runs in the order of the orchestrator's decisions 2026-11-26 (X, S, G, D, P / O / U, C1, C2, K / K2, then R2, J, T, U8) |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -859,6 +859,13 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
   line; (Q7) the split U7a / U7b / U7c; the engine's free-cast chooser for every shape and the exile / library-top request fields are in
   scope.
 
+- **2026-11-26, the rest of step 10: orchestrator's decisions (owner to review)** (the plan `s10-rest`, its section 6): (Q1) run S's
+  survivor is `CantAttackOrBlockUnlessEffect` with `attack` / `block` / `attackOrBlock` factories; (Q2) run D fixes every player's
+  amount before anyone draws (CR 608.2h); (Q3) run D's AI own-draw rule is in scope and logged; (Q4) R2's "this card" is
+  `sourceObjectCard()` (the owner's "it" decision 2026-11-25); (Q5) run T checks Esix's and Mirrormind Crown's rulings and stops if they
+  don't settle the offer; (Q6) `MakeAllCreaturesUnblockableEffect` stays out (CR 611.2c, Venser's ruling); `ExileGraveyardCardsEffect.eventValueFilter`
+  stays (7 users); the log line of the survivor wins. Run order: A, X, S, G, D, P / O / U, C1, C2-pre and C2, D-Destroy and K / K2, then
+  R2, J, T, U8 after their prerequisites.
 - **2026-11-26, step 10 run Boost: orchestrator's decisions (owner to review)**: (Q1) the survivor is `BoostEffect` (handler
   `BoostEffectHandler`), every call site on factories; (Q2) an explicit `AmountsRead {SOURCE, BOOSTED}` set by the factory; (Q3) a target or
   set boost refreshes the boosted creature's waiting abilities' snapshots too (CR 608.2h, 113.7a); (Q4) today's log lines kept; (Q5)
@@ -963,7 +970,7 @@ there and updates them when it lands.
 - **Other pairs**: subtype grant, choose-one-for-target, perpetual boost, the returns from a graveyard; the reveal heads of three or more
   cards; the graveyard-ability grant with the scavenge record; `GrantSupertypeEffect` with its 4-card enchanted twin; a copy verb with a
   copier subject (Mirrorform).
-- **Leftover to drop in a collapse**: `ExileGraveyardCardsEffect.eventValueFilter` (no card left).
+- **`ExileGraveyardCardsEffect.eventValueFilter` stays**: the earlier "no card left" note was false; 7 card files set it (rest-of-step-10 plan, orchestrator's decision 2026-11-26).
 - **Player grants**: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` (10 cards, Angel's Grace) is `GrantStaticEffectToPlayerEffect.untilEndOfTurn`
   over a list, plus its escape-grant snapshot; merge them.
 
@@ -1169,6 +1176,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run Damage M1 (2026-11-26): `DealDamageEffect` takes the set recipients (`toEach`, `toEachTarget`); the four set records absorbed (112 card files by script)
 - Step 10, run Damage M2 (2026-11-26): `MassDamageEffect` absorbed into `DealDamageEffect`'s set kind (`toEachCreature`, `toEachCreatureAndPlaneswalker`, `eachEvaluatedFor`, `andTo`; 241 card files by script); Riveteers Confluence spares its controller's planeswalkers
 - Step 10, run Damage R (2026-11-26): ten other-dealer records absorbed into `DealDamageEffect.dealtBy(dealers)` (`bite`, `targetCreatureToItself`, `toEachOther`; 138 card files by script); the bite's pre-pool checks are pool options (CR 616.1); Vengeful Ancestor's attacker deals as the triggering permanent
+- Step 10, run A (2026-11-26): the four graveyard card movers absorbed into `PutCardsIntoHandEffect` and `ExileGraveyardCardsEffect.cards` over `sourceCard()` / `triggeringCards()` (122 card files by script); the survivors' log lines
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -2595,6 +2603,46 @@ Left out (Step-10 hand-offs): Ram Through, fight, the one-card dealer records, E
 **For the next run.** The excess redirect (`DealDamageToTargetCreatureWithExcessToControllerEffect`, 4 cards) with Ram Through as one
 rider "excess dealt to that creature's controller instead" (CR 120.4a), optionally when the dealer has trample; then the rest of the
 "unless" family.
+
+### Step 10, run A (card movers) (2026-11-26)
+
+Run A of the plan `s10-rest` (orchestrator's decisions 2026-11-26, "the rest of step 10", entered by this run). Absorbed, with their
+handlers: `ReturnSourceCardFromGraveyardToOwnerHandEffect` and `ReturnTriggeringCardToOwnerHandEffect` into `new PutCardsIntoHandEffect(
+Subjects.sourceCard() | triggeringCards())`, `ExileSourceCardFromGraveyardEffect` and `ExileTriggeringCardFromGraveyardEffect` into
+`ExileGraveyardCardsEffect.cards(...)`. Ledger: 4 absorbed, 2 survivor. Ratchet 2,893 / 2,273 → 2,889 / 2,269. No `CONVERSION_VERSION` bump.
+
+**Premises.** Held: each handler found its card as the subject does (`sourceCard()`: the entry's card in its recorded graveyard stay;
+`triggeringCards()`: the triggering card with `isTriggeringCardIncarnation`; a per-card event sets no `triggeringCards` list, so no second
+card is named); no `MayEffect` / `ChooseOne` pre-check or AI reader names them. Not held: (a) `PutCardsIntoHandEffect` records no RETURN
+step, and neither did the old hand records, so nothing changes there; the exile records already recorded EXILE as the survivor does.
+(b) The `(true)` file (Skyfisher Spider, "exile this card from your graveyard") takes `Subjects.inYourGraveyard(sourceCard())`, the wording's
+own subject, not the plan's `ownedBy(…, you())` (same result).
+
+**Card rewrite.** 122 card files (1 in `shared`), 130 calls, by a scratch script (balanced parentheses, five shapes, loud failure on any
+other, leftover-name check, imports; written, run, deleted): hand `sourceCard()` 57, hand `triggeringCards()` 11, exile `sourceCard()` 45,
+`inYourGraveyard(sourceCard())` 1, exile `triggeringCards()` 16; new long lines wrapped. By hand: the Avatar Destiny mill handler (injects
+`PutCardsIntoHandEffectHandler`), `ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler`'s follow-up (Puppet Master, the Zendikons),
+`CloneService`'s reflexive "exile that card", three sibling Javadocs, 4 test files, 7 agent-docs files. Oracle text checked with `get_card`
+for 121 of 122 files (Bone Rattler, MB1 35, isn't in the data); all match the new expression.
+
+**Behaviour changes** (log only; the survivor's line wins): "P puts X from their graveyard into their hand." for "X returns from graveyard
+to P's hand."; "S exiles X from P's graveyard." for "X is exiled." / "X is exiled by S."; the "'s ability fizzles (card not in graveyard)."
+line is gone. Failing-first: `AngelicDestinyTest.logsTheReturnFromTheGraveyard`, `CyclopeanMummyTest.logsTheExileFromTheGraveyard`.
+
+**Pins** (passed on the old code and after): `AngelicDestinyTest.doesNotReturnANewGraveyardObject` (CR 400.7, new); the existing
+Skyfisher Spider (stolen Spider), Enduring Renewal and Planar Void (left and came back), Cyclopean Mummy, Avatar Destiny (no creature
+milled, Tormod's one batch), Puppet Master, Ashnod's Intervention (the exile trigger) and `StepResultsTest` cases.
+
+**Tests changed.** `EnduringRenewalTest` (2): asserted the deleted "fizzles" line; now that no card goes to a hand (and the moved card
+stays in exile). `StepResultsTest`, `MayAbilityHandlerServiceTest`, `ClassKeyedRecordCollectorTest`, `BridgeFromBelowTest`: the factory.
+**Tests run** (one Gradle run, XML of this run): 539 classes (3 abstract skipped), 744 result files, 5,872 tests, 2 failures (the
+`EnduringRenewalTest` log lines, fixed; rerun 14 tests, 0 failures): every changed card's class and the 219 classes naming one, the
+`Return|Hand|Graveyard|Exile|Dredge|Recursion|Bounce` classes, the readers' tests, the AI module's 59 classes, the ratchets.
+
+**Seen, not changed** (defect queue): `CloneService`'s reflexive "exile that card" records no graveyard stay (CR 400.7). AGENTS.md
+names no deleted class.
+
+**For the next run.** X (the excess redirect with Ram Through, `s10-rest` plan section 4), then S.
 
 ## Prompt
 
