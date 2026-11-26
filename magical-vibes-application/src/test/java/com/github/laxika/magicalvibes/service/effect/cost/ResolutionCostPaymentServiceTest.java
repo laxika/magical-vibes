@@ -26,6 +26,11 @@ import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import org.junit.jupiter.api.Nested;
 import com.github.laxika.magicalvibes.model.effect.LandDropCost;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost;
@@ -445,6 +450,139 @@ class ResolutionCostPaymentServiceTest {
             assertThatThrownBy(() -> ResolutionCostPaymentService.manaCostOf(
                     PayManaCost.perAmount("{G}", new CountersOnSource(CounterType.WIND))))
                     .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("The forced-cost ransoms: energy, milling, returning several, counters, the graveyard to the library")
+    class ForcedCostRansoms {
+
+        private PredicateEvaluationService predicates;
+        private PlayerInputService input;
+        private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport counters;
+        private com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyards;
+        private Player payer;
+
+        @BeforeEach
+        void withCollaborators() {
+            payer = new Player(payerId, "Payer");
+            predicates = org.mockito.Mockito.mock(PredicateEvaluationService.class);
+            input = org.mockito.Mockito.mock(PlayerInputService.class);
+            counters = org.mockito.Mockito.mock(
+                    com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport.class);
+            graveyards = org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.graveyard.GraveyardService.class);
+            ReflectionTestUtils.setField(service, "predicateEvaluationService", predicates);
+            ReflectionTestUtils.setField(service, "playerInputService", input);
+            ReflectionTestUtils.setField(service, "permanentCounterSupport", counters);
+            ReflectionTestUtils.setField(service, "graveyardService", graveyards);
+            gd.playerBattlefields.put(payerId, new ArrayList<>());
+        }
+
+        private ResolutionCostPaymentService.Payment payment(StackEntry entry) {
+            return new ResolutionCostPaymentService.Payment(new GrizzlyBears(), payerId, null, entry);
+        }
+
+        @Test
+        @DisplayName("Energy can't be paid beyond what the payer has; paying removes it and counts as paid this turn")
+        void energyIsPaidOnlyInFull() {
+            gd.setPlayerEnergyCounters(payerId, 2);
+
+            assertThat(service.canPay(gd, payerId, new PayEnergyCost(3), null)).isFalse();
+            assertThat(service.pay(gd, payer, new PayEnergyCost(3), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.NOT_PAID);
+            assertThat(gd.playerEnergyCounters.get(payerId)).isEqualTo(2);
+
+            assertThat(service.pay(gd, payer, new PayEnergyCost(2), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            assertThat(gd.playerEnergyCounters.get(payerId)).isZero();
+            assertThat(gd.energyCountersPaidOrLostThisTurn.get(payerId)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Milling two needs two cards in the library and mills through the mill action")
+        void millingNeedsTheCards() {
+            gd.playerDecks.put(payerId, new ArrayList<>(List.of(new GrizzlyBears())));
+            assertThat(service.canPay(gd, payerId, new MillControllerCost(2), null)).isFalse();
+
+            gd.playerDecks.get(payerId).add(new GrizzlyBears());
+            assertThat(service.pay(gd, payer, new MillControllerCost(2), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(graveyards).resolveMillPlayer(gd, payerId, 2);
+        }
+
+        @Test
+        @DisplayName("Returning two needs two of the payer's matching permanents, and the payer picks both at once")
+        void returningTwoAsksForBoth() {
+            Permanent first = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(payerId).add(first);
+            when(predicates.matchesPermanentPredicate(eq(gd), any(Permanent.class), any())).thenReturn(true);
+            ReturnPermanentToHandCost two = ReturnPermanentToHandCost.youControl(2, new PermanentTruePredicate(),
+                    "Forests you control");
+
+            assertThat(service.canPay(gd, payerId, two, null)).isFalse();
+
+            Permanent second = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(payerId).add(second);
+            assertThat(service.pay(gd, payer, two, payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.ASKING);
+            verify(input).beginMultiPermanentChoice(eq(gd), eq(payerId), eq(List.of(first.getId(), second.getId())),
+                    eq(2), any(), eq("Choose 2 Forests you control to return to their owner's hand."));
+        }
+
+        @Test
+        @DisplayName("Removing two oil counters needs them on the entry's source, removed through the counter action")
+        void sourceCountersAreRemovedFromTheSource() {
+            Permanent source = new Permanent(new GrizzlyBears());
+            source.setCounterCount(CounterType.OIL, 1);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(), payerId, "ability",
+                    List.of(), null, source.getId());
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            RemoveCounterFromSourceCost twoOil = new RemoveCounterFromSourceCost(2, CounterType.OIL);
+
+            assertThat(service.canPay(gd, payerId, twoOil, null, entry)).isFalse();
+
+            source.setCounterCount(CounterType.OIL, 2);
+            assertThat(service.pay(gd, payer, twoOil, payment(entry)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(counters).removeCounterFromPermanent(gd, source, CounterType.OIL, 2);
+        }
+
+        @Test
+        @DisplayName("Three quest counters are counted from among the payer's permanents; one holder of them pays unasked")
+        void countersFromAmongPermanents() {
+            Permanent holder = new Permanent(new GrizzlyBears());
+            holder.setCounterCount(CounterType.QUEST, 2);
+            gd.playerBattlefields.get(payerId).add(holder);
+            RemoveCounterFromControlledPermanentCost three = new RemoveCounterFromControlledPermanentCost(
+                    List.of(CounterType.QUEST), 3, null, false);
+
+            assertThat(service.canPay(gd, payerId, three, null)).isFalse();
+
+            holder.setCounterCount(CounterType.QUEST, 3);
+            assertThat(service.pay(gd, payer, three, payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(counters).removeCounterFromPermanent(gd, holder, CounterType.QUEST, 3);
+        }
+
+        @Test
+        @DisplayName("Putting two cards on the bottom of the library needs two cards in the graveyard")
+        void libraryBottomNeedsTheCards() {
+            gd.playerGraveyards.put(payerId, new ArrayList<>(List.of(new GrizzlyBears())));
+            assertThat(service.canPay(gd, payerId, new PutCardsFromGraveyardOnBottomOfLibraryCost(2), null))
+                    .isFalse();
+            assertThat(service.canPay(gd, payerId, new PutCardsFromGraveyardOnBottomOfLibraryCost(1), null))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("A Phyrexian symbol with an empty pool is paid with 2 life (CR 107.4f)")
+        void phyrexianManaIsPaidWithLife() {
+            when(gameQueryService.canPlayerLoseLife(gd, payerId)).thenReturn(true);
+
+            assertThat(service.canPay(gd, payerId, new PayManaCost("{W/P}"), null)).isTrue();
+            assertThat(service.pay(gd, payer, new PayManaCost("{W/P}"), payment(null)))
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(lifeSupport).applyLifePayment(eq(gd), eq(payerId), eq(2), any());
         }
     }
 

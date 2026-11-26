@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,12 +24,9 @@ public class FiligreeRacer extends Card {
 
     public FiligreeRacer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(4));
-        addTrigger(Triggers.attacks(), new ForcedCostOrElseEffect(
-                new PayEnergyCost(2),
-                List.of(),
-                true,
-                List.of(new QueueReflexiveAbilityEffect(new GrantFlashbackToTargetGraveyardCardEffect(
-                        Set.of(CardType.INSTANT, CardType.SORCERY), GrantedCardAbilityEffect.Ability.JUMP_START)))));
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(new PayEnergyCost(2),
+                new QueueReflexiveAbilityEffect(new GrantFlashbackToTargetGraveyardCardEffect(
+                        Set.of(CardType.INSTANT, CardType.SORCERY), GrantedCardAbilityEffect.Ability.JUMP_START))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
-import com.github.laxika.magicalvibes.model.effect.PutCardFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -756,18 +755,6 @@ public class MayPenaltyChoiceHandlerService {
                 return;
             }
             // Accepted but the graveyard no longer holds a matching card — fall through to the penalty.
-        }
-
-        if (accepted && effect.forcedCost() instanceof PutCardFromGraveyardOnBottomOfLibraryCost) {
-            List<Card> graveyard = gameData.playerGraveyards.get(sourceControllerId);
-            if (graveyard != null && !graveyard.isEmpty()) {
-                gameData.pendingEffectResolutionEntry = null;
-                gameData.pendingEffectResolutionIndex = 0;
-                clearAnyPlayerPayState(gameData);
-                forcedCostOrElseEffectHandler.beginGraveyardBottomChoice(gameData, sourceControllerId);
-                return;
-            }
-            // Accepted but the graveyard is empty — fall through to the penalty.
         }
 
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {

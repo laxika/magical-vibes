@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -61,13 +61,10 @@ public class TheMotherlodeExcavator extends Card {
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
                 "Target must be a nonbasic land defending player controls")).addTrigger(Triggers.attacks(),
-                new ForcedCostOrElseEffect(
-                        new PayEnergyCost(4),
-                        List.of(),
-                        true,
-                        List.of(new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                UnlessPaysEffect.youMayPay(new PayEnergyCost(4),
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new DestroyTargetPermanentEffect(),
                                 new CantBlockThisTurnEffect(
-                                        Subjects.controlledBy(Subjects.eachPlayer(), DEFENDING_PLAYER_NONFLYING_CREATURE)))))));
+                                        Subjects.controlledBy(Subjects.eachPlayer(), DEFENDING_PLAYER_NONFLYING_CREATURE))))));
     }
 }

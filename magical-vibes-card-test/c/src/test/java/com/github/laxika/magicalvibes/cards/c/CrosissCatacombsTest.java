@@ -28,6 +28,7 @@ class CrosissCatacombsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Crosis's Catacombs");
         harness.assertNotOnBattlefield(player1, "Terminal Moraine");
@@ -71,8 +72,8 @@ class CrosissCatacombsTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, firstLand.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent == secondLand)
@@ -129,6 +130,7 @@ class CrosissCatacombsTest extends BaseCardTest {
         playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertInHand(player1, "Terminal Moraine");
         harness.assertNotOnBattlefield(player1, "Terminal Moraine");
@@ -154,6 +156,7 @@ class CrosissCatacombsTest extends BaseCardTest {
         playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertInHand(player2, "Terminal Moraine");
         harness.assertNotInHand(player1, "Terminal Moraine");

@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Cytoshape;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.u.UginTheSpiritDragon;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,7 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SatyaAetherfluxGenius.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({SatyaAetherfluxGenius.class, GrizzlyBears.class, Ornithopter.class, Cytoshape.class, HillGiant.class})
 class SatyaAetherfluxGeniusTest extends BaseCardTest {
 
     @Test
@@ -67,6 +70,41 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+    }
+
+    @Test
+    @DisplayName("The energy paid is the token's mana value as the delayed ability resolves, not as it was created")
+    void paysTheTokensManaValueAsTheDelayedAbilityResolves() {
+        addCreatureReady(player1, new SatyaAetherfluxGenius());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bears.getId());
+            resolveAllTriggers();
+        });
+        Permanent token = findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst()
+                .orElseThrow();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Cytoshape()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, token.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
+        gd.setPlayerEnergyCounters(player1.getId(), 5);
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
     }
 

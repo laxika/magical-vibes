@@ -8,18 +8,17 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "M3C", collectorNumber = "55")
 @CardRegistration(set = "M3C", collectorNumber = "107")
@@ -35,8 +34,6 @@ public class BlasterHulk extends Card {
         registerEffectTargetIndex(damage, 0);
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new EnergyCountersEffect(2),
-                new ForcedCostOrElseEffect(
-                        new PayEnergyCost(8), List.of(), true,
-                        List.of(new QueueReflexiveAbilityEffect(damage)))));
+                UnlessPaysEffect.youMayPay(new PayEnergyCost(8), new QueueReflexiveAbilityEffect(damage))));
     }
 }

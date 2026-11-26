@@ -95,6 +95,7 @@ class OvinomancerTest extends BaseCardTest {
         castOvinomancer();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(basicLandsControlledBy(player1.getId())).isEqualTo(0);
@@ -294,6 +295,7 @@ class OvinomancerTest extends BaseCardTest {
         castOvinomancer();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Ovinomancer");
         assertThat(basicLandsControlledBy(player1.getId())).isZero();

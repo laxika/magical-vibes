@@ -2191,6 +2191,33 @@ public sealed interface ChoiceContext {
     record CounterSelection(UUID permanentId, CounterType counterType) {
     }
 
+    /**
+     * The payer of a resolution ransom "remove N counters from among permanents you control" chooses, one counter at a
+     * time, the permanent and the kind of the next counter removed ({@code ResolutionCostPaymentService}); the asking
+     * resolution resumes once {@code remaining} reaches zero.
+     *
+     * @param payerId           who pays
+     * @param cost              the ransom
+     * @param sourcePermanentId the asking entry's source, left out when the cost says so
+     * @param remaining         the counters still to remove, this pick included
+     * @param permanentOptions  each option's permanent and counter kind
+     */
+    record ResolutionCostCounterRemoval(UUID payerId,
+                                        com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost cost,
+                                        UUID sourcePermanentId, int remaining,
+                                        Map<String, CounterSelection> permanentOptions)
+            implements ChoiceContext {
+
+        public ResolutionCostCounterRemoval {
+            permanentOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(permanentOptions));
+        }
+
+        public List<String> options() {
+            return List.copyOf(permanentOptions.keySet());
+        }
+    }
+
     record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                   List<CounterType> counterTypes, boolean requireControl)
             implements ChoiceContext {

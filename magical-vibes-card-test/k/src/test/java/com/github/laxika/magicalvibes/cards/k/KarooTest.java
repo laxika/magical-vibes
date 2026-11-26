@@ -64,6 +64,7 @@ class KarooTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Karoo");
@@ -79,10 +80,10 @@ class KarooTest extends BaseCardTest {
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         UUID plainsId = findPermanent(player1, "Plains").getId();
-        harness.handleMultiplePermanentsChosen(player1, List.of(plainsId));
+        harness.handlePermanentChosen(player1, plainsId);
 
         harness.assertOnBattlefield(player1, "Karoo");
         assertThat(countPermanents(player1, "Plains")).isEqualTo(1);
@@ -98,6 +99,7 @@ class KarooTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Karoo");
         harness.assertNotOnBattlefield(player1, "Plains");
@@ -141,6 +143,7 @@ class KarooTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Karoo");

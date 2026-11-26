@@ -46,12 +46,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -2706,9 +2705,7 @@ public class CardChoiceHandlerService {
                     ActivePlayer.ANY);
         }
 
-        // Flash: "sacrifice it unless you pay its mana cost reduced by {N}." Prompt a pay-or-sacrifice
-        // may ability against the just-entered creature — accepting charges the reduced cost, declining
-        // (or being unable to pay) sacrifices it via the ForcedCostOrElse SacrificeSelf penalty.
+        // Flash: "sacrifice it unless you pay its mana cost reduced by {N}."
         if (sacrificeUnlessPayGenericReduction != null && (card.getManaCost() == null || card.getManaCost().isEmpty())) {
             // CR 118.6: a card with no mana cost has an unpayable cost, so it is sacrificed without a payment prompt.
             // It has just entered, so this completion can't be redone; the sacrifice is the next step of the parked
@@ -2719,14 +2716,18 @@ public class CardChoiceHandlerService {
                 destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
             }
         } else if (sacrificeUnlessPayGenericReduction != null) {
+            // "Sacrifice it unless you pay its mana cost reduced by {2}" is the next step of the parked resolution
+            // (CR 118.12a): "it" is the creature put onto the battlefield, recorded as the creature the resolution
+            // chose to put (its CHOOSE step).
+            StackEntry parked = gameData.pendingEffectResolutionEntry;
+            if (parked == null) {
+                throw new IllegalStateException("No resolution waits for the creature " + card.getName() + " put");
+            }
             String reducedCost = reduceGenericCost(card.getManaCost(), sacrificeUnlessPayGenericReduction);
-            ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
-                    new PayManaCost(reducedCost), List.of(new SacrificeSelfEffect()), true);
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    card, playerId, List.of(payOrSacrifice),
-                    card.getName() + " - Pay " + reducedCost + " or sacrifice it?",
-                    null, reducedCost, permanent.getId()));
-            playerInputService.processNextMayAbility(gameData);
+            parked.recordStep(StepKind.CHOOSE, StepOutcome.ofObjects(List.of(permanent.getId()), List.of(playerId)));
+            parked.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(
+                    UnlessPaysEffect.unlessYouPay(reducedCost,
+                            new SacrificeSelfEffect(Subjects.thisWay(StepKind.CHOOSE)))));
         }
         if (chooseAttackTarget) {
             if (gameData.interaction.isAwaitingInput()) {

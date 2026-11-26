@@ -499,4 +499,33 @@ class UnlessPaysEffectHandlerTest {
                 .SacrificeMultiplePermanentsCost(2, new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(),
                 "Swamps"), new SacrificeSelfEffect()))).isEqualTo("Sacrifice two Swamps");
     }
+
+    @Test
+    @DisplayName("The energy, mill, graveyard and counter ransoms ask in the Oracle text's words")
+    void forcedCostRansomsAskInTheirWords() {
+        StackEntry entry = counterEntry(UnlessPaysEffect.counterUnlessPays(1));
+        java.util.function.Function<com.github.laxika.magicalvibes.model.effect.CostEffect, String> action =
+                cost -> handler.ransom(gd, entry, UnlessPaysEffect.unlessYouPay(cost, new SacrificeSelfEffect()))
+                        .action();
+        when(amountEvaluationService.evaluate(eq(gd), eq(new com.github.laxika.magicalvibes.model.amount.Fixed(2)), any()))
+                .thenReturn(2);
+
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.PayEnergyCost(2)))
+                .isEqualTo("Pay {E}{E}");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.MillControllerCost(2)))
+                .isEqualTo("Mill two cards");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost(
+                com.github.laxika.magicalvibes.model.CardType.CREATURE)))
+                .isEqualTo("Exile the top creature card of your graveyard");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost(2)))
+                .isEqualTo("Put two cards from your graveyard on the bottom of your library");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost()))
+                .isEqualTo("Remove a counter from a permanent you control");
+        assertThat(action.apply(new com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost(
+                List.of(com.github.laxika.magicalvibes.model.CounterType.QUEST), 3, null, false)))
+                .isEqualTo("Remove three quest counters from among permanents you control");
+        assertThat(action.apply(com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost.youControl(2,
+                new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(), "Forests you control")))
+                .isEqualTo("Return two Forests you control to their owner's hand");
+    }
 }

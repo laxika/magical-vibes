@@ -200,7 +200,9 @@ class CycleOfLifeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature put back onto the battlefield by Flash wasn't cast this turn, so it can't be targeted")
     void rejectsPreviouslyCastCreatureReturnedWithoutCastingAgain() {
+        giveManaSource(player1);
         Permanent knight = castKnight();
         harness.addToBattlefield(player1, new CycleOfLife());
 

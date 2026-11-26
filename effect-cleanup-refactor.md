@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (210 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone; U4a moved 121 `ForcedCostOrElseEffect` card files). Next: "unless" runs U4b, U4c, U4d, U5, U6, U7; then the other verbs under Step-10 hand-offs |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a and U4b (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone; U4a and U4b moved 159 `ForcedCostOrElseEffect` card files and its four engine builders). Next: "unless" runs U4c, U4d, U5, U6, U7; then the other verbs under Step-10 hand-offs |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -496,7 +496,13 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   binds both branches. The hard AI scores it as value(`ifPaid`) − value(`ifNotPaid`) for the payer (`SpellEvaluator`), a branch making the payer lose life or take damage (named by the payer's own subject) on the ransom's life scale, an any-of ransom priced by the alternative asked (U3b1). Card tests answer an any-of ransom with `BaseCardTest.payUnlessAlternative(payer, action)` (U3b1). U3b2: `eachUnless(payers, ransom, players -> X(players))` is "each of them [does X] unless they pay": every payer chooses, then X happens to those who didn't, together (CR 101.4), `UnlessAnswer.paidPlayerIds` being the entry's accepted players at the branch; a payer `targetPlayer()` declares the target when no branch does (harmful); ransoms `ReturnPermanentToHandCost.youControl` / `.anyPlayers`, `PutCardFromHandOnTopOfLibraryCost`, `LandDropCost`, `SacrificeCreaturesWithTotalPowerCost`, `PayManaCost.perAmount(symbols, amount)`; amount `PlayerCount(PlayerSubject)`. Engine-built
   "you may pay" steps insert an `UnlessPaysEffect`. U4a: `PayManaCost.forSourceManaCost()` is "its mana cost" (the source live, else as it
   last existed, {X} as 0; face down or none is unpayable and not asked, CR 708.2, 118.6); a sacrifice description may carry its
-  determiner ("another creature"); "do X. If you can't, Y" is `SacrificePermanentsEffect` + `ConditionalEffect(NotCondition(sacrificed()), Y)`.
+  determiner ("another creature"); "do X. If you can't, Y" is `SacrificePermanentsEffect` + `ConditionalEffect(NotCondition(sacrificed()), Y)`. U4b
+  ransoms (each a service case): `PayEnergyCost` (any amount, read as it resolves; `SourcePermanentManaValue` is "its mana value"),
+  `ExileTopCardOfGraveyardCost`, `RemoveCounterFromSourceCost` of one kind, `RemoveCounterFromControlledPermanentCost` (one pick per
+  counter, `ChoiceContext.ResolutionCostCounterRemoval`), `PutCardsFromGraveyardOnBottomOfLibraryCost(n)`, `ReturnCardFromGraveyardToHandCost`,
+  `MillControllerCost`, `PutTypedCounterOnSourceCost` (put by the payer), `ReturnPermanentToHandCost.youControl(count, filter, words)`; a
+  Phyrexian symbol is paid with its colour or 2 life (CR 107.4f); mandatory "pay {E}{E}. If you can't" is `PayEnergyEffect` +
+  `ConditionalEffect(NotCondition(new HappenedThisWay(PAY_ENERGY)), …)`.
 - `ResolutionCostPaymentService` (`service/effect/cost`, D25): a cost a resolving effect asks any player for (CR 118.12, 118.12a). A new
   ransom kind is a case here. `couldPossiblyPay(gd, payerId, cost, sourceCard)` (takes the resolving entry) answers "no" only when it
   is certain (owner's rule): life alone that `canPayLife` refuses (CR 119.4, 119.8); mana the pool can't pay ({B} as life under K'rrik
@@ -868,11 +874,12 @@ there and updates them when it lands.
   Away, Tidal Flats, Heroism, Sword-Point Diplomacy, Decoy Gambit, Killing Wave): a per-object iteration with the outcomes batched;
   **U7**, the `XOrY…Cost` records as a cast-time `AnyOfCost` (the `ForageCost` rename, the engine fold with the AI, the client chooser);
   U4a moved `ForcedCostOrElseEffect`'s 121 card files on paid ransoms, the mandatory "if you can't" files (steps) and Midnight Crusader
-  Shuttle (a villainous choice); **U4b**, the 34 new-ransom files (`ReturnMultiplePermanentsToHandCost` into `ReturnPermanentToHandCost`
-  with a count, `PayEnergyCost`, the graveyard, mill and source-counter costs, each a service case), Egon / Charnel Troll / Greenbelt
-  Rampager as steps, Satya (`PayEnergyCost` of the token's mana value read as it resolves), Koya's split, Ashling, Flash, and Ogre
-  Marauder (its "gains 'this creature can't be blocked' until end of turn" needs a one-shot timed ability grant over a subject; today's
-  `MakeCreatureUnblockableEffect` grants the rule effect); **U4c**, echo (51 cards, a `PayEchoCost` case, "when echo is paid" stays a
+  Shuttle (a villainous choice); U4b the other 38 card files (nine new ransom cases, Egon / Charnel Troll / Greenbelt Rampager as steps,
+  Ogre Marauder's granted ability), the Satya, Ashling and Flash builders and Koya's split, so no card file names the record; left
+  beside it: Confiscation Coup (`UnlessPaysEffect.youMayPay(new PayEnergyCost(new TargetManaValue()), …)` now expresses it) and Behemoth
+  of Vault 0 (its "when you do, destroy that permanent" is about the declared target, which `QueueReflexiveAbilityEffect` would choose
+  again), and `ReturnMultiplePermanentsToHandCost`'s 26 activation-cost cards (fold into `ReturnPermanentToHandCost.count` with the
+  activation path); **U4c**, echo (51 cards, a `PayEchoCost` case, "when echo is paid" stays a
   trigger); **U4d**, cumulative upkeep (84 cards, its 12 cost kinds, `AmountThisWay.manaPaid(colours)` for Balduvian Fallen), then the
   record, both handlers, `MayPenaltyChoiceHandlerService`'s branch and `DestructionSupport.resolveForcedCostElseEffects` go; U5, "unless takes damage" (`DamageFromSourceCost`, a case in the service, dealt by the resolving entry;
   `DestroyTargetPermanentUnlessControllerTakesDamageEffect` belongs here). Whirlwind Denial stays its own record (owner's decision U2; its
@@ -1098,6 +1105,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U3b1 (2026-11-26): 25 single-verb "unless" / "may pay" records (44 card files) onto `UnlessPaysEffect`'s existing factories; Erosion's, Arcum's Whistle's, Aether Rift's and Spelltithe Enforcer's payers fixed
 - Step 10, run U3b2 (2026-11-26): 15 single-verb records (24 card files) onto `UnlessPaysEffect` with `eachUnless`, the payer's target and four ransoms; Spinecrawler, Read the Runes, The Dalek Emperor, Overencumbered fixed
 - Step 10, run U4a (2026-11-26): 121 `ForcedCostOrElseEffect` card files onto `UnlessPaysEffect` and steps (Cosmic Horror's and Minion of Leshrac's fused records split); every player asked in "any player may pay", a payer with no mana source left unasked, Fraying Line's exile one event
+- Step 10, run U4b (2026-11-26): the last 38 `ForcedCostOrElseEffect` card files and its Satya, Ashling and Flash builders onto `UnlessPaysEffect` (nine new ransom cases) and steps, Koya's record split; Satya pays the token's mana value as it resolves, a Phyrexian symbol in a ransom is paid with its colour or 2 life
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -1802,6 +1810,54 @@ the payer rule and the pick, fixed). Compiled every module's main and test sourc
 **For the next run.** U4b: the 34 new-ransom files (each kind a case in the record's check, the handler's words, the service and
 `SpellEvaluator.ransomCost`), Egon / Charnel / Greenbelt as steps, Satya, Koya, Ashling, Flash, Ogre Marauder. Tests whose payer is asked
 with an empty pool need `giveManaSource`; a lone-candidate pick needs `answerForcedPick`.
+
+### Step 10, run U4b ("unless": forced costs, part B) (2026-11-26)
+
+The plan's part B (`scratchpad/s10-unless/u4b-plan.md`) with the orchestrator's U4 decisions (4 Satya, 6 AI parity, 7 Flash). The last 38
+card files naming `ForcedCostOrElseEffect` moved by hand (none names it now; echo and cumulative upkeep still build it), and its Satya, Ashling
+and Flash builders. Split: Koya's `ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffect` (+ handler) into `ExileTargetPermanentEffect` +
+`RegisterDelayedStepTriggerEffect.aboutExiled(…, unlessYouPay("{3}{B}", PutCardsOntoBattlefieldEffect(cardsThisWay(EXILE)))).evenIfNothingHappened()`.
+Absorbed: `PutCardFromGraveyardOnBottomOfLibraryCost` (`PutCardsFromGraveyardOnBottomOfLibraryCost(1)`). New: `PayEnergyEffect` (+ handler), the
+amount `SourcePermanentManaValue`, `ReturnPermanentToHandCost.count`, `ChoiceContext.ResolutionCostCounterRemoval`,
+`GraveyardTargetOperationState.resolutionCostLibraryBottom`. Ratchet 2,937 / 2,318 → 2,936 / 2,318. Ledger: 1 split, 1 absorbed, 1 unique, 3
+blocked-other re-noted, `ForcedCostOrElseEffect` re-noted "U4c-d". No `CONVERSION_VERSION` bump (no mapper or enum change).
+**Engine.** Nine ransom cases (record check, handler words, `ResolutionCostPaymentService.canPay` / `pay` / completion, `SpellEvaluator.ransomCost`),
+each through the action its other payments use: energy `GameData.setPlayerEnergyCounters`; `ExileTopCardOfGraveyardCost` `GraveyardTopExileSupport`;
+the two counter-removal costs `removeCounterFromPermanent`; graveyard-to-library-bottom and graveyard-to-hand the shared `GraveyardChoice` (a
+multi-card choice for two); mill `resolveMillPlayer`; `PutTypedCounterOnSourceCost` `placeCounterOnPermanentForPlayer` by the payer; a return of
+several one multi-pick and the shared bounce. Rotting Giant / Treacherous Vampire use `ExileNCardsFromGraveyardCost(1, null)`. Steps: Charnel Troll
+`ExileGraveyardCardsEffect.fromOwnGraveyard(1, creature)` + conditionals on `exiled()`; Egon the exile of two inside `GraveyardCardThreshold(2)` (ruling:
+one card isn't exiled); Greenbelt `PayEnergyEffect(2)` + `NotCondition(PAY_ENERGY)` (rulings). Ogre Marauder: `GrantEffectToTargetUntilEndOfTurnEffect(
+StaticAbility.of(CantBeBlockedEffect), source())` (Lockjaw's grant). Flash: the creature put is the parked entry's CHOOSE step, the "unless" its next step.
+**Cards.** Oracle text checked with `get_card` for all 42; rulings for Egon, Satya, Koya, Flash, Overseer, Greenbelt, Ogre. CR 101.4, 107.4f, 107.14,
+118.3, 118.6, 118.12, 118.12a, 400.7, 603.10a, 603.12, 605.3a, 608.2d, 608.2h, 613.1f, 616.1, 708.2a verified.
+**Behaviour changes:**
+- Satya's delayed ability pays the token's mana value as it resolves, last known once it left (decision 4, CR 608.2h):
+  `SatyaAetherfluxGeniusTest.paysTheTokensManaValueAsTheDelayedAbilityResolves` (failed first: paid 2 for a token now a Hill Giant copy).
+- A Phyrexian symbol in a resolution mana ransom is paid with its colour, else 2 life (CR 107.4f); the service paid nothing for it before (Flash
+  reached it now; Disruption Aura's and Ice Cave's "its mana cost" reach it too): `ResolutionCostPaymentServiceTest.ForcedCostRansoms.phyrexianManaIsPaidWithLife`
+  (not run on the old code; by reading), Flash's two Phyrexian tests.
+- A payer with no mana source isn't asked (owner's rule): Ashling's {W}{U}{B}{R}{G}, Flash. Prompts read the ransom ("Pay {E}{E}?"); a lone return
+  or sacrifice candidate is the shared pick (U3c's line); Egon's two cards are picked one at a time (the shared exile step). The hard AI prices the
+  new ransoms (energy 0.5, mill 0.25, a graveyard card 0.5, a counter 1, a return its mana value) instead of 0.
+**Pins** (passed before and after): the 42 cards' existing tests (Egon's rulings, Greenbelt's single {E}, Cheering Crowd under Vorinclex and
+Solemnity, Koya with no target, Ogre on a planeswalker and losing abilities, Flash's death replacement, Satya's 0-mana-value copy).
+**Tests changed** (owner's rule, U3c's pick line): `answerForcedPick` or a single `PermanentChoice` in the 12 Karoo / Lair / Waterspout / Living Tsunami
+classes (about 40 methods), Bull Elephant 3, Ovinomancer 2, Ogre 1; Egon 1 (two graveyard picks); a `giveManaSource` `@BeforeEach` in Ashling and
+Flash, `giveManaSource` in `CycleOfLifeTest`'s Flash method; `CostEffectClassificationTest` drops the absorbed cost. Added: Satya 1,
+`ResolutionCostPaymentServiceTest.ForcedCostRansoms` (7), `UnlessPaysEffectHandlerTest.forcedCostRansomsAskInTheirWords`,
+`SpellEvaluatorTest.forcedCostRansomsAreNotFree`.
+**Tests run** (XML of this run): 1,503 classes (the 42 cards and the 71 classes naming one, every `UnlessPaysEffect` card, `u4/cardtests.txt`, the
+name-pattern classes, the readers of `DestructionSupport` / both handlers / the service / the choice services, the plan's application tests, every
+architecture test, the whole AI module): 1,627 files, 15,172 tests, 1 failure (Cycle of Life's Flash method, the owner's rule; fixed, class rerun with
+the ratchet, 13 tests, 0 failures). Compiled every module's main and test sources and all card-test modules.
+**Seen, not changed** (defect queue, "step 10 run U4b"): a ransom's several returned permanents leave one by one, not as one departure (CR 603.10a;
+not observable in the pool); Confiscation Coup now foldable, Behemoth of Vault 0 needs a reflexive ability about the declared target;
+`ReturnMultiplePermanentsToHandCost` stays for 26 activation costs.
+
+**For the next run.** U4c (echo): `PayEchoCost` as a ransom case with its alternative, hand-card and dynamic forms read as the ransom is read;
+the `ForcedCostOrElseEffectHandler` / `MayPenaltyChoiceHandlerService` branches for energy, mill, graveyard and counter costs now serve only echo
+and cumulative upkeep.
 
 ## Prompt
 

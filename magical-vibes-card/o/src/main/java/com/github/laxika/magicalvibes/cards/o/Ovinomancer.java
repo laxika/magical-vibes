@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -35,10 +35,9 @@ public class Ovinomancer extends Card {
     public Ovinomancer() {
         // When this creature enters, sacrifice it unless you return three basic lands you control
         // to their owner's hand.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ForcedCostOrElseEffect(
-                new ReturnMultiplePermanentsToHandCost(3, BASIC_LAND),
-                List.of(new SacrificeSelfEffect()),
-                true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.unlessYouPay(
+                ReturnPermanentToHandCost.youControl(3, BASIC_LAND, "basic lands you control"),
+                new SacrificeSelfEffect()));
 
         // {T}, Return this creature to its owner's hand: Destroy target creature. It can't be
         // regenerated. That creature's controller creates a 0/1 green Sheep creature token.

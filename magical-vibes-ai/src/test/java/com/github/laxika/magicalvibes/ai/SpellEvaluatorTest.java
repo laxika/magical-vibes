@@ -1667,4 +1667,20 @@ class SpellEvaluatorTest {
                 new com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost(2),
                 player2.getId())).isPositive().isFinite();
     }
+
+    @Test
+    @DisplayName("Energy, milling, graveyard and counter ransoms are never priced as free")
+    void forcedCostRansomsAreNotFree() {
+        java.util.UUID payer = player2.getId();
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.PayEnergyCost(2),
+                payer)).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.MillControllerCost(2),
+                payer)).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd,
+                new com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost(2),
+                payer)).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd,
+                new com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost(1,
+                        com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE), payer)).isPositive();
+    }
 }

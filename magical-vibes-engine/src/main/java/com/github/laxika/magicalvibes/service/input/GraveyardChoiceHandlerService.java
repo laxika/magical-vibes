@@ -820,6 +820,14 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionCostLibraryBottom != null) {
+            // Cards put on the bottom of a library to pay a ransom; the asking resolution resumes (CR 118.12).
+            gameData.interaction.clearAwaitingInput();
+            resolutionCostPaymentService.completeLibraryBottom(gameData, player, cardIds);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         validateCardTypeAssignedSelection(gameData, cardIds);
         validateGraveyardMultiTargetConstraint(gameData, cardIds);
 

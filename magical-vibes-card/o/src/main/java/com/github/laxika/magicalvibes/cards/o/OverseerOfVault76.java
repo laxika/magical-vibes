@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -35,15 +35,12 @@ public class OverseerOfVault76 extends Card {
                 PutCountersEffect.onSelf(CounterType.QUEST));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new RemoveCounterFromControlledPermanentCost(
+                UnlessPaysEffect.youMayPay(new RemoveCounterFromControlledPermanentCost(
                                 List.of(CounterType.QUEST), 3, new PermanentTruePredicate(), false),
-                        List.of(),
-                        true,
-                        List.of(new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new PutCounterOnEachControlledPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                                         new PermanentIsCreaturePredicate()),
-                                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl()))))));
+                                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())))));
     }
 }

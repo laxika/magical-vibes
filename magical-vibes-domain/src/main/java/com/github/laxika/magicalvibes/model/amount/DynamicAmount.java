@@ -233,6 +233,7 @@ public sealed interface DynamicAmount permits
         SourceCardPower,
         SourceIntensity,
         SourceManaValueMinusOne,
+        SourcePermanentManaValue,
         SourceCardManaValue,
         SourcePower,
         SourceToughness,

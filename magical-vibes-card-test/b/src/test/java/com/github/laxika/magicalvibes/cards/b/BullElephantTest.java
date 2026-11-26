@@ -82,6 +82,7 @@ class BullElephantTest extends BaseCardTest {
         castBullElephant();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(forestsControlledBy(player1.getId())).isZero();
@@ -110,6 +111,7 @@ class BullElephantTest extends BaseCardTest {
         castBullElephant();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(0);
@@ -130,6 +132,7 @@ class BullElephantTest extends BaseCardTest {
         castBullElephant();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(player1Forest.getId()));
         assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card.getId().equals(player2Forest.getId()));

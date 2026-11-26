@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -100,6 +101,7 @@ class EgonGodOfDeathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With more than two cards in the graveyard, the controller chooses the two exiled one at a time")
     void choosesExactlyTwoCardsWhenMoreAreAvailable() {
         Permanent egon = harness.addToBattlefieldAndReturn(player1, new EgonGodOfDeath());
         Card first = new SnowCoveredForest();
@@ -109,7 +111,8 @@ class EgonGodOfDeathTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(first));
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(second));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(egon);

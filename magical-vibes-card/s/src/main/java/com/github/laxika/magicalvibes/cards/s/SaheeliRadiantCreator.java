@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,11 +32,8 @@ public class SaheeliRadiantCreator extends Card {
                 new EnergyCountersEffect(1));
 
         target(TargetFilters.permanentYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
-                        new PayEnergyCost(3),
-                        List.of(),
-                        true,
-                        List.of(new QueueReflexiveAbilityEffect(
+                UnlessPaysEffect.youMayPay(new PayEnergyCost(3),
+                        new QueueReflexiveAbilityEffect(
                                 new CreateTokenCopyOfTargetPermanentEffect(
                                         List.of(),
                                         Set.of(CardType.ARTIFACT, CardType.CREATURE),
@@ -50,6 +47,6 @@ public class SaheeliRadiantCreator extends Card {
                                         false,
                                         false,
                                         null,
-                                        Set.of(Keyword.HASTE))))));
+                                        Set.of(Keyword.HASTE)))));
     }
 }

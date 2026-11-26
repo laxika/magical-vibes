@@ -24,6 +24,7 @@ class DarigaazsCalderaTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == enteringCaldera)
@@ -69,8 +70,8 @@ class DarigaazsCalderaTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, firstLand.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(secondLand)
@@ -165,6 +166,7 @@ class DarigaazsCalderaTest extends BaseCardTest {
         DarigaazsCaldera caldera = playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(existingLair)

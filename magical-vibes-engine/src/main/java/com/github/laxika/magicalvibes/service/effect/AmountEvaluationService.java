@@ -249,6 +249,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
+import com.github.laxika.magicalvibes.model.amount.SourcePermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpellThisTurn;
@@ -1101,6 +1102,13 @@ public class AmountEvaluationService {
                 yield gameData.getCardIntensity(ctx.sourceCard() != null
                         ? ctx.sourceCard()
                         : ctx.stackEntry() == null ? null : ctx.stackEntry().getCard());
+            }
+            case SourcePermanentManaValue ignored -> {
+                Permanent source = ctx.sourcePermanent();
+                if (source == null && ctx.stackEntry() != null) {
+                    source = ctx.stackEntry().getSourcePermanentSnapshot();
+                }
+                yield source == null ? 0 : gameQueryService.getPermanentManaValue(source);
             }
             case SourceManaValueMinusOne ignored ->
                     ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;

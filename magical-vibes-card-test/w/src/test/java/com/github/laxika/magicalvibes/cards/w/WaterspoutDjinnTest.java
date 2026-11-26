@@ -48,6 +48,7 @@ class WaterspoutDjinnTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
@@ -66,10 +67,10 @@ class WaterspoutDjinnTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         UUID islandId = findPermanent(player1, "Island").getId();
-        harness.handleMultiplePermanentsChosen(player1, List.of(islandId));
+        harness.handlePermanentChosen(player1, islandId);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
         assertThat(countPermanents(player1, "Island")).isEqualTo(1);
@@ -134,6 +135,7 @@ class WaterspoutDjinnTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
         harness.assertNotOnBattlefield(player1, "Island");
@@ -152,6 +154,7 @@ class WaterspoutDjinnTest extends BaseCardTest {
         tappedIsland.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -168,6 +171,7 @@ class WaterspoutDjinnTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
         harness.assertOnBattlefield(player1, "Waterspout Djinn");
 
         advanceToUpkeep(player1);

@@ -53,6 +53,7 @@ class JungleBasinTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Jungle Basin");
@@ -68,10 +69,10 @@ class JungleBasinTest extends BaseCardTest {
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         UUID forestId = harness.getPermanentId(player1, "Forest");
-        harness.handleMultiplePermanentsChosen(player1, List.of(forestId));
+        harness.handlePermanentChosen(player1, forestId);
 
         harness.assertOnBattlefield(player1, "Jungle Basin");
         assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
@@ -88,6 +89,7 @@ class JungleBasinTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Jungle Basin");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(tappedForest).doesNotContain(untappedForest);
@@ -117,6 +119,7 @@ class JungleBasinTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Jungle Basin");
         harness.assertNotOnBattlefield(player1, "Forest");

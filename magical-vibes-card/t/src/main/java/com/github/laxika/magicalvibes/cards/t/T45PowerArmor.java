@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -36,13 +37,9 @@ public class T45PowerArmor extends Card {
 
         // At the beginning of your upkeep, you may pay one energy counter. If you do, untap
         // equipped creature, then put your choice of a menace, trample, or lifelink counter on it.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
-                new PayEnergyCost(1),
-                List.of(),
-                true,
-                List.of(
-                        new UntapPermanentsEffect(Subjects.attached()),
-                        chooseKeywordCounter())));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.youMayPay(new PayEnergyCost(1), SequenceEffect.of(
+                new UntapPermanentsEffect(Subjects.attached()),
+                chooseKeywordCounter())));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

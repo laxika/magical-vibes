@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -33,9 +33,8 @@ public class MagmaticSprinter extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCountersEffect(CounterType.OIL, 2));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
+                UnlessPaysEffect.unlessYouPay(
                         new RemoveCounterFromSourceCost(2, CounterType.OIL),
-                        List.of(ReturnToHandEffect.self()),
-                        true));
+                        ReturnToHandEffect.self()));
     }
 }

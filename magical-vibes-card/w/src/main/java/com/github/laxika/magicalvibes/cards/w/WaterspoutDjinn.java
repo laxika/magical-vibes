@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -28,9 +28,8 @@ public class WaterspoutDjinn extends Card {
         // Flying is a printed keyword loaded from Scryfall.
         // At the beginning of your upkeep, sacrifice this creature unless you return an untapped
         // Island you control to its owner's hand.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
-                new ReturnMultiplePermanentsToHandCost(1, UNTAPPED_ISLAND),
-                List.of(new SacrificeSelfEffect()),
-                true));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay(
+                ReturnPermanentToHandCost.youControl(UNTAPPED_ISLAND, "untapped Island you control"),
+                new SacrificeSelfEffect()));
     }
 }

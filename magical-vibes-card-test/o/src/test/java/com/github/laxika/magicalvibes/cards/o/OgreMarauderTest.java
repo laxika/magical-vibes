@@ -36,6 +36,7 @@ class OgreMarauderTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
+        answerForcedPick(player2);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gqs.hasCantBeBlocked(gd, ogre)).isFalse();

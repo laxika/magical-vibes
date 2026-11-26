@@ -52,6 +52,7 @@ class CoralAtollTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Coral Atoll");
@@ -67,10 +68,10 @@ class CoralAtollTest extends BaseCardTest {
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         UUID islandId = findPermanents(player1, "Island").getFirst().getId();
-        harness.handleMultiplePermanentsChosen(player1, List.of(islandId));
+        harness.handlePermanentChosen(player1, islandId);
 
         harness.assertOnBattlefield(player1, "Coral Atoll");
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -88,6 +89,7 @@ class CoralAtollTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Coral Atoll");
         harness.assertNotOnBattlefield(player1, "Island");
@@ -161,6 +163,7 @@ class CoralAtollTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Coral Atoll");

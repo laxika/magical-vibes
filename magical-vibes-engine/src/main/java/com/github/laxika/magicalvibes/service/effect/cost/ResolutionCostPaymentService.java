@@ -1,6 +1,20 @@
 package com.github.laxika.magicalvibes.service.effect.cost;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandCost;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardTopExileSupport;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -279,6 +293,9 @@ public class ResolutionCostPaymentService {
     @Autowired
     @Lazy
     private InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    @Lazy
+    private GraveyardTopExileSupport graveyardTopExileSupport;
 
     public ResolutionCostPaymentService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
@@ -326,8 +343,23 @@ public class ResolutionCostPaymentService {
                     .size() >= tapCount(gameData, tap, entry);
             case ExileCardsCost exile -> !cardsToExile(gameData, entry, exile).isEmpty();
             case SourceControllerDrawsCost ignored -> true;
-            case ReturnPermanentToHandCost toHand -> !returnCandidates(gameData, payerId, toHand, entry).isEmpty();
+            case ReturnPermanentToHandCost toHand ->
+                    returnCandidates(gameData, payerId, toHand, entry).size() >= toHand.count();
             case PutCardFromHandOnTopOfLibraryCost ignored -> handSize(gameData, payerId) >= 1;
+            case PayEnergyCost energy -> gameData.playerEnergyCounters.getOrDefault(payerId, 0)
+                    >= energy.fixedAmount();
+            case ExileTopCardOfGraveyardCost top ->
+                    graveyardTopExileSupport.findTopMatching(gameData, payerId, top.requiredType()) != null;
+            case RemoveCounterFromSourceCost counters -> sourceWithCounters(gameData, entry, counters) != null;
+            case RemoveCounterFromControlledPermanentCost counters ->
+                    removableCounters(gameData, payerId, counters, entry) >= counters.count();
+            case PutCardsFromGraveyardOnBottomOfLibraryCost bottom ->
+                    gameData.playerGraveyards.getOrDefault(payerId, List.of()).size() >= bottom.count();
+            case ReturnCardFromGraveyardToHandCost toHand ->
+                    !graveyardReturnIndices(gameData, payerId, toHand, entry).isEmpty();
+            case MillControllerCost mill -> gameData.playerDecks.getOrDefault(payerId, List.of()).size()
+                    >= mill.count();
+            case PutTypedCounterOnSourceCost counter -> sourceForCounter(gameData, entry, counter) != null;
             case LandDropCost ignored -> hasLandDropLeft(gameData, payerId);
             case SacrificeCreaturesWithTotalPowerCost power ->
                     reachablePower(gameData, powerCandidates(gameData, payerId, entry)) >= power.totalPower();
@@ -669,6 +701,97 @@ public class ResolutionCostPaymentService {
                 }
                 yield afterImmediatePayment(gameData);
             }
+            case ReturnPermanentToHandCost toHand when toHand.count() > 1 -> {
+                List<UUID> candidates = returnCandidates(gameData, payerId, toHand, payment.entry());
+                if (candidates.size() < toHand.count()) {
+                    yield Outcome.NOT_PAID;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, toHand.count(),
+                        new MultiPermanentChoiceContext.ResolutionCostPayment(toHand, payerId, payment.sourceCard(),
+                                payment.sourceControllerId(), toHand.count()),
+                        "Choose " + toHand.count() + " "
+                                + (toHand.description() == null ? "permanents you control" : toHand.description())
+                                + " to return to their owner's hand.");
+                yield Outcome.ASKING;
+            }
+            case PayEnergyCost energy -> {
+                int amount = energy.fixedAmount();
+                int has = gameData.playerEnergyCounters.getOrDefault(payerId, 0);
+                if (has < amount) {
+                    yield Outcome.NOT_PAID;
+                }
+                gameData.setPlayerEnergyCounters(payerId, has - amount);
+                yield Outcome.PAID;
+            }
+            case ExileTopCardOfGraveyardCost top ->
+                    graveyardTopExileSupport.exileTopMatching(gameData, payerId, top.requiredType())
+                            ? afterImmediatePayment(gameData) : Outcome.NOT_PAID;
+            case RemoveCounterFromSourceCost counters -> {
+                Permanent source = sourceWithCounters(gameData, payment.entry(), counters);
+                if (source == null) {
+                    yield Outcome.NOT_PAID;
+                }
+                permanentCounterSupport.removeCounterFromPermanent(gameData, source, counters.counterType(),
+                        counters.count());
+                yield afterImmediatePayment(gameData);
+            }
+            case RemoveCounterFromControlledPermanentCost counters -> {
+                if (removableCounters(gameData, payerId, counters, payment.entry()) < counters.count()) {
+                    yield Outcome.NOT_PAID;
+                }
+                yield removeNextCounters(gameData, payerId, counters,
+                        payment.entry() == null ? null : payment.entry().getSourcePermanentId(), counters.count(), true);
+            }
+            case PutCardsFromGraveyardOnBottomOfLibraryCost bottom -> {
+                List<Card> graveyard = gameData.playerGraveyards.getOrDefault(payerId, List.of());
+                if (graveyard.size() < bottom.count()) {
+                    yield Outcome.NOT_PAID;
+                }
+                if (bottom.count() == 1) {
+                    interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                            .builder(payerId, java.util.stream.IntStream.range(0, graveyard.size()).boxed().toList(),
+                                    GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY,
+                                    "Choose a card to put on the bottom of your library.")
+                            .mandatory(true)
+                            .build());
+                    yield Outcome.ASKING;
+                }
+                gameData.graveyardTargetOperation.resolutionCostLibraryBottom =
+                        new GraveyardTargetOperationState.ResolutionCostLibraryBottomContext(payerId, bottom.count());
+                playerInputService.beginMultiGraveyardChoice(gameData, payerId, new ArrayList<>(graveyard),
+                        bottom.count(), bottom.count(), "Choose " + bottom.count()
+                                + " cards from your graveyard to put on the bottom of your library.");
+                yield Outcome.ASKING;
+            }
+            case ReturnCardFromGraveyardToHandCost toHand -> {
+                List<Integer> indices = graveyardReturnIndices(gameData, payerId, toHand, payment.entry());
+                if (indices.isEmpty()) {
+                    yield Outcome.NOT_PAID;
+                }
+                interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                        .builder(payerId, indices, GraveyardChoiceDestination.HAND,
+                                "Choose " + withArticle(CardPredicateUtils.describeFilter(toHand.predicate()))
+                                        + " to return to your hand.")
+                        .mandatory(true)
+                        .build());
+                yield Outcome.ASKING;
+            }
+            case MillControllerCost mill -> {
+                if (gameData.playerDecks.getOrDefault(payerId, List.of()).size() < mill.count()) {
+                    yield Outcome.NOT_PAID;
+                }
+                graveyardService.resolveMillPlayer(gameData, payerId, mill.count());
+                yield afterImmediatePayment(gameData);
+            }
+            case PutTypedCounterOnSourceCost counter -> {
+                Permanent source = sourceForCounter(gameData, payment.entry(), counter);
+                if (source == null) {
+                    yield Outcome.NOT_PAID;
+                }
+                permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData, payment.entry(), source,
+                        counter.counterType(), counter.count(), payerId);
+                yield afterImmediatePayment(gameData);
+            }
             case ReturnPermanentToHandCost toHand -> {
                 List<UUID> candidates = returnCandidates(gameData, payerId, toHand, payment.entry());
                 if (candidates.isEmpty()) {
@@ -963,6 +1086,15 @@ public class ResolutionCostPaymentService {
                     throw new IllegalStateException("Selected creatures have total power below " + power.totalPower());
                 }
             }
+            case ReturnPermanentToHandCost toHand -> {
+                if (permanentIds.size() != toHand.count()) {
+                    throw new IllegalStateException("Must select exactly " + toHand.count() + " permanents");
+                }
+                if (!returnCandidates(gameData, playerId, toHand, gameData.pendingEffectResolutionEntry)
+                        .containsAll(permanentIds)) {
+                    throw new IllegalStateException("A selected permanent can't be returned for this cost");
+                }
+            }
             case WaterbendCost waterbend -> {
                 if (permanentIds.size() < context.minimum() || permanentIds.size() > waterbend.amount()) {
                     throw new IllegalStateException("Must tap at least " + context.minimum()
@@ -1002,10 +1134,204 @@ public class ResolutionCostPaymentService {
                 destructionSupport.performSimultaneousSacrifice(gameData, chosen);
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
+            case ReturnPermanentToHandCost ignored -> returnToHandTogether(gameData, playerId, permanentIds);
             case WaterbendCost waterbend -> payWaterbend(gameData, playerId, waterbend, context.sourceCard(),
                     context.sourceControllerId(), permanentIds);
             default -> throw new IllegalStateException("No multi-permanent choice pays " + context.cost());
         }
+    }
+
+    /**
+     * The payer returns the permanents they chose, still theirs, to their owners' hands by the one instruction, through
+     * the shared bounce: no ability resolves between them.
+     */
+    private void returnToHandTogether(GameData gameData, UUID payerId, List<UUID> permanentIds) {
+        List<Card> returned = new ArrayList<>();
+        for (UUID permanentId : permanentIds) {
+            Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+            if (chosen != null && payerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
+                    && permanentRemovalService.removePermanentToHand(gameData, chosen)) {
+                returned.add(chosen.getCard());
+            }
+        }
+        if (!returned.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            GameLog.Builder line = GameLog.builder().text(gameData.playerIdToName.get(payerId) + " returns ");
+            for (int i = 0; i < returned.size(); i++) {
+                if (i > 0) {
+                    line.text(", ");
+                }
+                line.card(returned.get(i));
+            }
+            gameLogService.append(gameData, line.text(" to their owner's hand.").build());
+        }
+    }
+
+    /**
+     * The resolving entry's source while it is that permanent (CR 400.7) with {@code counters}' counters on it, from
+     * which "remove two oil counters from it" removes them; else {@code null}.
+     */
+    private Permanent sourceWithCounters(GameData gameData, StackEntry entry, RemoveCounterFromSourceCost counters) {
+        Permanent source = entry == null || entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return source != null && source.getCounterCount(counters.counterType()) >= counters.count() ? source : null;
+    }
+
+    /** The resolving entry's source while it is that permanent and can get {@code counter}'s kind of counter. */
+    private Permanent sourceForCounter(GameData gameData, StackEntry entry, PutTypedCounterOnSourceCost counter) {
+        Permanent source = entry == null || entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null || gameQueryService.cantHaveCounters(gameData, source)) {
+            return null;
+        }
+        boolean blocked = switch (counter.counterType()) {
+            case MINUS_ONE_MINUS_ONE -> gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source);
+            case PLUS_ONE_PLUS_ONE -> gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source);
+            default -> false;
+        };
+        return blocked ? null : source;
+    }
+
+    /** The graveyard indices of {@code payerId}'s cards {@code toHand} may return, judged from the entry's source. */
+    private List<Integer> graveyardReturnIndices(GameData gameData, UUID payerId,
+                                                 ReturnCardFromGraveyardToHandCost toHand, StackEntry entry) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(payerId, List.of());
+        UUID sourceCardId = entry == null || entry.getCard() == null ? null : entry.getCard().getId();
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), toHand.predicate(), sourceCardId,
+                    gameData, payerId)) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    /**
+     * Completes a {@link GraveyardTargetOperationState.ResolutionCostLibraryBottomContext}: the chosen cards, still in
+     * the payer's graveyard, go to the bottom of their library. The caller ends through the epilogue, which resumes
+     * the asking resolution.
+     */
+    public void completeLibraryBottom(GameData gameData, Player payer, List<UUID> cardIds) {
+        GraveyardTargetOperationState.ResolutionCostLibraryBottomContext context =
+                gameData.graveyardTargetOperation.resolutionCostLibraryBottom;
+        gameData.graveyardTargetOperation.resolutionCostLibraryBottom = null;
+        if (cardIds.size() != context.count()) {
+            throw new IllegalStateException("Choose exactly " + context.count() + " cards");
+        }
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(payer.getId(), List.of());
+        putOnBottomOfLibrary(gameData, payer, graveyard.stream().filter(card -> cardIds.contains(card.getId()))
+                .toList());
+    }
+
+    /** {@code cards} of {@code payer}'s graveyard put on the bottom of their library, in that order. */
+    private void putOnBottomOfLibrary(GameData gameData, Player payer, List<Card> cards) {
+        for (Card card : cards) {
+            permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+            gameData.playerDecks.get(payer.getId()).addLast(card);
+            gameLogService.append(gameData, GameLog.textCardText(payer.getUsername() + " puts ", card,
+                    " on the bottom of their library."));
+        }
+    }
+
+    /**
+     * The counters {@code payerId} could remove for {@code counters}: those of an allowed kind on the permanents they
+     * control that the cost allows, the entry's source left out when it says so (silver counters are on exiled cards,
+     * never on permanents).
+     */
+    private int removableCounters(GameData gameData, UUID payerId, RemoveCounterFromControlledPermanentCost counters,
+                                  StackEntry entry) {
+        UUID sourceId = entry == null ? null : entry.getSourcePermanentId();
+        return counterCandidates(gameData, payerId, counters, sourceId).stream()
+                .mapToInt(permanent -> removableKinds(permanent, counters).stream()
+                        .mapToInt(permanent::getCounterCount).sum())
+                .sum();
+    }
+
+    private List<Permanent> counterCandidates(GameData gameData, UUID payerId,
+                                              RemoveCounterFromControlledPermanentCost counters, UUID sourceId) {
+        return gameData.playerBattlefields.getOrDefault(payerId, List.of()).stream()
+                .filter(permanent -> !(counters.excludeSource() && permanent.getId().equals(sourceId)))
+                .filter(permanent -> counters.permanentFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
+                        counters.permanentFilter()))
+                .filter(permanent -> !removableKinds(permanent, counters).isEmpty())
+                .toList();
+    }
+
+    /** The kinds of counter on {@code permanent} that {@code counters} allows, in a fixed order. */
+    private static List<CounterType> removableKinds(Permanent permanent,
+                                                    RemoveCounterFromControlledPermanentCost counters) {
+        return permanent.getCounters().entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
+                .map(Map.Entry::getKey)
+                .filter(kind -> kind != CounterType.ANY && kind != CounterType.SILVER && counters.allows(kind))
+                .sorted()
+                .toList();
+    }
+
+    /**
+     * Removes the next of {@code remaining} counters for {@code counters}: all of them at once, on the first pick, when
+     * one permanent with one allowed kind has them (nothing to choose), else the payer picks the permanent and kind of
+     * the next one ({@link ChoiceContext.ResolutionCostCounterRemoval}).
+     */
+    private Outcome removeNextCounters(GameData gameData, UUID payerId,
+                                       RemoveCounterFromControlledPermanentCost counters, UUID sourceId,
+                                       int remaining, boolean firstPick) {
+        List<Permanent> candidates = counterCandidates(gameData, payerId, counters, sourceId);
+        if (firstPick && candidates.size() == 1 && removableKinds(candidates.getFirst(), counters).size() == 1) {
+            Permanent only = candidates.getFirst();
+            permanentCounterSupport.removeCounterFromPermanent(gameData, only,
+                    removableKinds(only, counters).getFirst(), remaining);
+            return afterImmediatePayment(gameData);
+        }
+        Map<String, ChoiceContext.CounterSelection> options = new java.util.LinkedHashMap<>();
+        Map<String, Integer> names = new java.util.HashMap<>();
+        candidates.forEach(permanent -> names.merge(FaceDownVisibility.publicName(permanent), 1, Integer::sum));
+        Map<String, Integer> seen = new java.util.HashMap<>();
+        for (Permanent permanent : candidates) {
+            String name = FaceDownVisibility.publicName(permanent);
+            int occurrence = seen.merge(name, 1, Integer::sum);
+            String label = names.get(name) == 1 ? name : name + " (" + occurrence + ")";
+            List<CounterType> kinds = removableKinds(permanent, counters);
+            for (CounterType kind : kinds) {
+                String kindLabel = ChoiceContext.AdjustChosenCounterTypeChoice.counterLabel(kind);
+                options.put(kinds.size() == 1 ? label : candidates.size() == 1 ? kindLabel : label + " - " + kindLabel,
+                        new ChoiceContext.CounterSelection(permanent.getId(), kind));
+            }
+        }
+        var context = new ChoiceContext.ResolutionCostCounterRemoval(payerId, counters, sourceId, remaining, options);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(payerId, null, null, context,
+                context.options(), "Choose a permanent to remove a counter from (" + remaining + " remaining)."));
+        return Outcome.ASKING;
+    }
+
+    /**
+     * Completes one pick of a {@link ChoiceContext.ResolutionCostCounterRemoval}: that counter is removed through the
+     * counter action; while more are to be removed the next pick is asked (or the rest removed when nothing is left to
+     * choose). Returns whether the payment is complete, after which the caller ends through the epilogue that resumes
+     * the asking resolution.
+     */
+    public boolean completeCounterRemoval(GameData gameData, String option,
+                                          ChoiceContext.ResolutionCostCounterRemoval context) {
+        ChoiceContext.CounterSelection selection = context.permanentOptions().get(option);
+        if (selection == null) {
+            throw new IllegalArgumentException("Invalid permanent choice: " + option);
+        }
+        Permanent permanent = gameQueryService.findPermanentById(gameData, selection.permanentId());
+        if (permanent == null || !context.payerId().equals(
+                gameQueryService.findPermanentController(gameData, permanent.getId()))
+                || !removableKinds(permanent, context.cost()).contains(selection.counterType())) {
+            throw new IllegalArgumentException("That permanent can't pay this counter removal");
+        }
+        gameData.interaction.clearAwaitingInput();
+        permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, selection.counterType(), 1);
+        int remaining = context.remaining() - 1;
+        if (remaining <= 0) {
+            return true;
+        }
+        return removeNextCounters(gameData, context.payerId(), context.cost(), context.sourcePermanentId(), remaining,
+                false) != Outcome.ASKING;
     }
 
     /**
@@ -1184,18 +1510,37 @@ public class ResolutionCostPaymentService {
      * only their pool (the answer).
      */
     private int lifeForMana(GameData gameData, UUID payerId, PayManaCost mana, boolean potential) {
-        ManaCost cost = manaCostOf(mana);
-        int lifeForBlack = 0;
-        if (cost != null && !canPayManaNow(gameData, payerId, cost, potential)) {
-            ManaCost blackAsLife = cost.withBlackManaAsPhyrexian();
-            if (blackAsLife == cost || !gameQueryService.canPayBlackManaWithLife(gameData, payerId)
-                    || !canPayManaNow(gameData, payerId, blackAsLife, potential)) {
-                return -1;
-            }
-            lifeForBlack = blackAsLife.payPhyrexianManaAuto(new ManaPool(gameData.playerManaPools.get(payerId)), 0);
+        ManaCost cost = phyrexianPayment(gameData, payerId, manaCostOf(mana), potential);
+        if (cost == UNPAYABLE) {
+            return -1;
         }
-        int life = mana.lifeAmount() + lifeForBlack;
+        int lifeForPhyrexian = cost != null && cost.hasPhyrexianMana()
+                ? cost.payPhyrexianManaAuto(new ManaPool(gameData.playerManaPools.get(payerId)), 0) : 0;
+        int life = mana.lifeAmount() + lifeForPhyrexian;
         return canPayLife(gameData, payerId, life) ? life : -1;
+    }
+
+    /** {@link #phyrexianPayment}'s answer for mana that can't be paid. */
+    private static final ManaCost UNPAYABLE = new ManaCost("{0}");
+
+    /**
+     * {@code cost} as {@code payerId} pays it: its Phyrexian symbols with their colour, else 2 life each (the mana check
+     * leaves them out; CR 107.4f), {B} with 2 life under K'rrik, Son of Yawgmoth when the mana falls short; {@link #UNPAYABLE} when the mana can't be paid,
+     * {@code null} for no mana.
+     */
+    private ManaCost phyrexianPayment(GameData gameData, UUID payerId, ManaCost cost, boolean potential) {
+        if (cost == null) {
+            return null;
+        }
+        if (canPayManaNow(gameData, payerId, cost, potential)) {
+            return cost;
+        }
+        ManaCost blackAsLife = cost.withBlackManaAsPhyrexian();
+        if (blackAsLife == cost || !gameQueryService.canPayBlackManaWithLife(gameData, payerId)
+                || !canPayManaNow(gameData, payerId, blackAsLife, potential)) {
+            return UNPAYABLE;
+        }
+        return blackAsLife;
     }
 
     private boolean canPayManaNow(GameData gameData, UUID payerId, ManaCost cost, boolean potential) {
@@ -1209,14 +1554,12 @@ public class ResolutionCostPaymentService {
         if (life < 0) {
             return Outcome.NOT_PAID;
         }
-        ManaCost cost = manaCostOf(mana);
+        ManaCost toPay = phyrexianPayment(gameData, payerId, manaCostOf(mana), false);
         ManaPool pool = gameData.playerManaPools.get(payerId);
-        boolean phyrexian = cost != null && !cost.canPayResolutionCost(pool);
         Runnable payManaThenLife = () -> {
-            if (cost != null) {
-                ManaCost toPay = phyrexian ? cost.withBlackManaAsPhyrexian() : cost;
+            if (toPay != null) {
                 int before = pool.getTotalAllMana();
-                if (phyrexian) {
+                if (toPay.hasPhyrexianMana()) {
                     toPay.payPhyrexianManaAuto(pool, 0);
                 }
                 toPay.payResolutionCost(pool);

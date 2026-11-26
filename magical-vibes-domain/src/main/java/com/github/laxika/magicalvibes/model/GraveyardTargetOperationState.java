@@ -57,6 +57,8 @@ public class GraveyardTargetOperationState {
     public ControllerGraveyardPaymentContext controllerGraveyardPayment;
     /** In-progress replacement effect that exiles a chosen number of cards from a player's graveyard. */
     public ReplacementGraveyardExileContext replacementGraveyardExile;
+    /** In-progress resolution ransom that puts cards from the payer's graveyard on the bottom of their library. */
+    public ResolutionCostLibraryBottomContext resolutionCostLibraryBottom;
 
     public record CumulativeUpkeepPaymentContext(UUID sourceControllerId, Card sourceCard,
                                                   UUID sourcePermanentId, ForcedCostOrElseEffect forcedCost,
@@ -70,6 +72,13 @@ public class GraveyardTargetOperationState {
     public record ControllerGraveyardPaymentContext(UUID sourceControllerId, Card sourceCard,
                                                      UUID sourcePermanentId,
                                                      ForcedCostOrElseEffect forcedCost, int count) {
+    }
+
+    /**
+     * The payer of a resolution ransom "put {@code count} cards from your graveyard on the bottom of your library"
+     * chooses which ({@code ResolutionCostPaymentService}); the asking resolution resumes once they are put there.
+     */
+    public record ResolutionCostLibraryBottomContext(UUID payerId, int count) {
     }
 
     /** Nefarious Lich: {@code playerId} chooses exactly {@code count} cards to exile instead of taking damage. */

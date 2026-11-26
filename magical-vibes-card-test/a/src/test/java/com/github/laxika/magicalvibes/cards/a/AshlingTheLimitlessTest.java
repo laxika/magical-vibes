@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AshlingTheLimitless.class, AirElemental.class, Mulldrifter.class})
 class AshlingTheLimitlessTest extends BaseCardTest {
+
+    /** The token's controller has a mana source, so "unless you pay {W}{U}{B}{R}{G}" with an empty pool is asked. */
+    @BeforeEach
+    void giveTheControllerAManaSource() {
+        giveManaSource(player1);
+    }
 
     @Test
     void grantsEvokeAndCopiesTheSacrificedElementalWithHaste() {

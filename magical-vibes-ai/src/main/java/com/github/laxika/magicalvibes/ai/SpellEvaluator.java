@@ -5,6 +5,14 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -286,6 +294,15 @@ public class SpellEvaluator {
             case LandDropCost ignored -> 1.0;
             case SacrificeCreaturesWithTotalPowerCost power -> sacrificesReachingPower(gameData, payerId, opponentId,
                     power.totalPower());
+            case PayEnergyCost energy -> Math.max(0, amountEvaluationService.evaluate(gameData, energy.amount(),
+                    context)) * 0.5;
+            case ExileTopCardOfGraveyardCost ignored -> 0.5;
+            case PutCardsFromGraveyardOnBottomOfLibraryCost bottom -> bottom.count() * 0.5;
+            case ReturnCardFromGraveyardToHandCost ignored -> 0;
+            case MillControllerCost mill -> mill.count() * 0.25;
+            case RemoveCounterFromSourceCost counters -> counters.count() * 1.0;
+            case RemoveCounterFromControlledPermanentCost counters -> counters.count() * 1.0;
+            case PutTypedCounterOnSourceCost ignored -> 0;
             default -> 0;
         };
     }
@@ -295,12 +312,16 @@ public class SpellEvaluator {
      * return; a permanent the payer doesn't control returned to its owner costs them nothing.
      */
     private double cheapestReturn(GameData gameData, UUID payerId, ReturnPermanentToHandCost toHand) {
-        return gameData.playerBattlefields.getOrDefault(payerId, List.of()).stream()
+        double[] costs = gameData.playerBattlefields.getOrDefault(payerId, List.of()).stream()
                 .filter(p -> toHand.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData,
                         p, toHand.filter()))
                 .mapToDouble(p -> Math.max(1.0, p.getCard().getManaValue()))
-                .min()
-                .orElse(toHand.anyController() ? 0.0 : Double.POSITIVE_INFINITY);
+                .sorted()
+                .toArray();
+        if (costs.length < toHand.count()) {
+            return toHand.anyController() ? 0.0 : Double.POSITIVE_INFINITY;
+        }
+        return java.util.Arrays.stream(costs, 0, toHand.count()).sum();
     }
 
     /**

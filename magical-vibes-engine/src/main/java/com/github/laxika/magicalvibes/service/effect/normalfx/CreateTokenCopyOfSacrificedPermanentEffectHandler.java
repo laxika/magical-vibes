@@ -8,15 +8,12 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSacrificedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -70,7 +67,6 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
                 token -> gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.endStep(ActivePlayer.YOU), controllerId, entry.getCard(),
                         token.getId(), token.getId(),
-                        new ForcedCostOrElseEffect(new PayManaCost(TOKEN_SACRIFICE_COST),
-                                new ArrayList<>(List.of(new SacrificeSelfEffect())), true))));
+                        UnlessPaysEffect.unlessYouPay(TOKEN_SACRIFICE_COST, new SacrificeSelfEffect()))));
     }
 }

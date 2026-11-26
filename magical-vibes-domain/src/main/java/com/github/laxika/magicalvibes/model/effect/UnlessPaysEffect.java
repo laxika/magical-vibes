@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -35,7 +36,10 @@ import java.util.Objects;
  * {@link GetPoisonCountersCost}, {@link DamageFromSourceCost}, {@link WaterbendCost}, {@link SacrificeSelfCost},
  * {@link ExileNCardsFromGraveyardCost}, {@link TapMultiplePermanentsCost} with a fixed count, {@link ExileCardsCost},
  * {@link SourceControllerDrawsCost}, {@link ReturnPermanentToHandCost}, {@link PutCardFromHandOnTopOfLibraryCost},
- * {@link LandDropCost}, {@link SacrificeCreaturesWithTotalPowerCost},
+ * {@link LandDropCost}, {@link SacrificeCreaturesWithTotalPowerCost}, {@link PayEnergyCost} (an amount read as it
+ * resolves, CR 608.2h), {@link ExileTopCardOfGraveyardCost}, {@link RemoveCounterFromSourceCost} of one kind,
+ * {@link RemoveCounterFromControlledPermanentCost}, {@link PutCardsFromGraveyardOnBottomOfLibraryCost},
+ * {@link ReturnCardFromGraveyardToHandCost}, {@link MillControllerCost}, {@link PutTypedCounterOnSourceCost},
  * {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
  * factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter target spell unless its controller pays
  * {3}" and ward {3}.
@@ -123,7 +127,7 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             case SacrificePermanentCost ignored -> true;
             case SacrificeMultiplePermanentsCost ignored -> true;
             case PutCounterOnControlledCreatureCost counters ->
-                    counters.counterType() == com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE
+                    counters.counterType() == CounterType.MINUS_ONE_MINUS_ONE
                             && counters.amount() instanceof Fixed && !counters.optional();
             case CollectEvidenceCost evidence -> evidence.triggersCollectEvidence() && evidence.cardFilter() == null
                     && evidence.manaSymbolColor() == null && !evidence.usesTargetManaValue() && !evidence.optional();
@@ -140,6 +144,14 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             case PutCardFromHandOnTopOfLibraryCost ignored -> true;
             case LandDropCost ignored -> true;
             case SacrificeCreaturesWithTotalPowerCost ignored -> true;
+            case PayEnergyCost ignored -> true;
+            case ExileTopCardOfGraveyardCost ignored -> true;
+            case RemoveCounterFromSourceCost counters -> counters.counterType() != CounterType.ANY;
+            case RemoveCounterFromControlledPermanentCost ignored -> true;
+            case PutCardsFromGraveyardOnBottomOfLibraryCost ignored -> true;
+            case ReturnCardFromGraveyardToHandCost ignored -> true;
+            case MillControllerCost ignored -> true;
+            case PutTypedCounterOnSourceCost ignored -> true;
             default -> false;
         };
         if (!payable) {

@@ -27,6 +27,7 @@ class RithsGroveTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == enteringGrove)
@@ -83,8 +84,8 @@ class RithsGroveTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, firstLand.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(secondLand)
@@ -162,6 +163,7 @@ class RithsGroveTest extends BaseCardTest {
         RithsGrove grove = playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(moraine.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId()))

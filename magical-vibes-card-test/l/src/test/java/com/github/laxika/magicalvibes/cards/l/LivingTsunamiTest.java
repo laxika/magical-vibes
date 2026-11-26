@@ -44,6 +44,7 @@ class LivingTsunamiTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(tsunami);
         harness.assertNotOnBattlefield(player1, "Island");
@@ -60,6 +61,7 @@ class LivingTsunamiTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(tsunami);
         harness.assertNotOnBattlefield(player1, "Island");
@@ -118,11 +120,11 @@ class LivingTsunamiTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        PendingInteraction.MultiPermanentChoice choice =
-                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(island.getId(), plains.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(plains.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(island.getId(), plains.getId());
+        harness.handlePermanentChosen(player1, plains.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(tsunami, island).doesNotContain(plains);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingIsland);
@@ -138,6 +140,7 @@ class LivingTsunamiTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Living Tsunami");
         harness.assertNotOnBattlefield(player1, "Island");

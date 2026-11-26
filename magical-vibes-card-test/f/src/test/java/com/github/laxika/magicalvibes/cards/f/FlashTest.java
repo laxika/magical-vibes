@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({Flash.class, EkunduGriffin.class, GrinningTotem.class, LightningSerpent.class,
         PorcelainLegionnaire.class, VenerableMonk.class, DryadArbor.class, ReaperKing.class})
 class FlashTest extends BaseCardTest {
+
+    /** The caster has a mana source, so "unless you pay" with an empty pool is still asked (CR 605.3a). */
+    @BeforeEach
+    void giveTheCasterAManaSource() {
+        giveManaSource(player1);
+    }
 
     private void castFlash() {
         // Flash costs {1}{U}.

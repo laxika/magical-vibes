@@ -717,6 +717,15 @@ public class ChoiceHandlerService {
             unlockControlledRoomDoorEffectHandler.completeChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ResolutionCostCounterRemoval ctx) {
+            // A counter removed for a ransom; the asking resolution resumes once the last one is (CR 118.12).
+            if (resolutionCostPaymentService.completeCounterRemoval(gameData, colorName, ctx)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            } else {
+                inputCompletionService.publishStateAfterInput(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RemoveCountersFromForcedCostOrElse ctx) {
             boolean complete = forcedCostOrElseEffectHandler.completeControlledCounterChoice(
                     gameData, colorName, ctx);

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,9 +27,8 @@ public class CirclingVultures extends Card {
         // creature card of your graveyard." Optional cost: with no creature card in the graveyard
         // it can't be paid and the Vultures are sacrificed without a prompt.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ForcedCostOrElseEffect(
+                UnlessPaysEffect.unlessYouPay(
                         new ExileTopCardOfGraveyardCost(CardType.CREATURE),
-                        List.of(new SacrificeSelfEffect()),
-                        true));
+                        new SacrificeSelfEffect()));
     }
 }

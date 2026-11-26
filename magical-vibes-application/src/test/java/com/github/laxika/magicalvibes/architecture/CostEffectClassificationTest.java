@@ -88,7 +88,6 @@ class CostEffectClassificationTest {
             "PutTypedCounterOnSourceCost",
             "PutCardsFromSingleGraveyardOnBottomOfLibraryCost",
             "PutCardsFromGraveyardOnBottomOfLibraryCost",
-            "PutCardFromGraveyardOnBottomOfLibraryCost",
             "PutCardExiledWithSourceIntoGraveyardCost",
             "PutCardFromHandOnTopOfLibraryCost",
             "PutSelfOnBottomOfOwnersLibraryCost",

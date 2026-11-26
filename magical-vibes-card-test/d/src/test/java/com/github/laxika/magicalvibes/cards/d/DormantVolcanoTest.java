@@ -51,6 +51,7 @@ class DormantVolcanoTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Dormant Volcano");
@@ -66,10 +67,9 @@ class DormantVolcanoTest extends BaseCardTest {
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(
-                findPermanents(player1, "Mountain").getFirst().getId()));
+        harness.handlePermanentChosen(player1, findPermanents(player1, "Mountain").getFirst().getId());
 
         harness.assertOnBattlefield(player1, "Dormant Volcano");
         assertThat(countPermanents(player1, "Mountain")).isEqualTo(1);
@@ -86,6 +86,7 @@ class DormantVolcanoTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Dormant Volcano");
         harness.assertNotOnBattlefield(player1, "Mountain");
@@ -161,6 +162,7 @@ class DormantVolcanoTest extends BaseCardTest {
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Dormant Volcano");

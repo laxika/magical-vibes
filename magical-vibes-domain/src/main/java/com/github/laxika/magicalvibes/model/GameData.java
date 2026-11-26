@@ -10717,6 +10717,8 @@ public class GameData {
                 this.graveyardTargetOperation.controllerGraveyardPayment;
         copy.graveyardTargetOperation.replacementGraveyardExile =
                 this.graveyardTargetOperation.replacementGraveyardExile;
+        copy.graveyardTargetOperation.resolutionCostLibraryBottom =
+                this.graveyardTargetOperation.resolutionCostLibraryBottom;
         copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
         copy.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects =
                 this.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects == null

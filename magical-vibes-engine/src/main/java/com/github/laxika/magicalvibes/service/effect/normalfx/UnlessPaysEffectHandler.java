@@ -1,6 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandCost;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -504,10 +514,61 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 yield new Ransom(cost, "Have " + drawer + " draw " + cards, "has " + drawer + " draw " + cards,
                         "have " + drawer + " draw " + cards);
             }
+            case ReturnPermanentToHandCost toHand when toHand.count() > 1 -> {
+                String what = countWord(toHand.count()) + " "
+                        + (toHand.description() == null ? "permanents you control" : toHand.description());
+                yield new Ransom(cost, "Return " + what + " to their owner's hand",
+                        "returns " + what + " to their owner's hand", "return " + what + " to their owner's hand");
+            }
             case ReturnPermanentToHandCost toHand -> {
                 String what = article(toHand.description() == null ? "permanent you control" : toHand.description());
                 yield new Ransom(cost, "Return " + what + " to its owner's hand",
                         "returns " + what + " to its owner's hand", "return " + what + " to its owner's hand");
+            }
+            case PayEnergyCost energy -> {
+                int amount = Math.max(0, amountEvaluationService.evaluate(gameData, energy.amount(),
+                        amountContext(gameData, entry)));
+                String text = amount == 0 ? "0 {E}" : "{E}".repeat(amount);
+                yield new Ransom(new PayEnergyCost(amount), "Pay " + text, "pays " + text, "pay " + text);
+            }
+            case ExileTopCardOfGraveyardCost top -> {
+                String what = "the top " + (top.requiredType() == null ? ""
+                        : top.requiredType().name().toLowerCase() + " ") + "card of ";
+                yield new Ransom(cost, "Exile " + what + "your graveyard", "exiles " + what + "their graveyard",
+                        "exile " + what + "their graveyard");
+            }
+            case RemoveCounterFromSourceCost counters -> {
+                String what = counters(counters.count(), counters.counterType()) + " from "
+                        + FaceDownVisibility.sourceName(gameData, entry);
+                yield new Ransom(cost, "Remove " + what, "removes " + what, "remove " + what);
+            }
+            case RemoveCounterFromControlledPermanentCost counters -> {
+                CounterType kind = counters.allowedCounterTypes().size() == 1
+                        ? counters.allowedCounterTypes().getFirst() : CounterType.ANY;
+                String what = counters(counters.count(), kind) + (counters.count() == 1
+                        ? " from a permanent you control" : " from among permanents you control");
+                yield new Ransom(cost, "Remove " + what, "removes " + what, "remove " + what);
+            }
+            case PutCardsFromGraveyardOnBottomOfLibraryCost bottom -> {
+                String cards = bottom.count() == 1 ? "a card" : countWord(bottom.count()) + " cards";
+                yield new Ransom(cost, "Put " + cards + " from your graveyard on the bottom of your library",
+                        "puts " + cards + " from their graveyard on the bottom of their library",
+                        "put " + cards + " from their graveyard on the bottom of their library");
+            }
+            case ReturnCardFromGraveyardToHandCost toHand -> {
+                String card = article(CardPredicateUtils.describeFilter(toHand.predicate()));
+                yield new Ransom(cost, "Return " + card + " from your graveyard to your hand",
+                        "returns " + card + " from their graveyard to their hand",
+                        "return " + card + " from their graveyard to their hand");
+            }
+            case MillControllerCost mill -> {
+                String cards = mill.count() == 1 ? "a card" : countWord(mill.count()) + " cards";
+                yield new Ransom(cost, "Mill " + cards, "mills " + cards, "mill " + cards);
+            }
+            case PutTypedCounterOnSourceCost counter -> {
+                String what = counters(counter.count(), counter.counterType()) + " on "
+                        + FaceDownVisibility.sourceName(gameData, entry);
+                yield new Ransom(cost, "Put " + what, "puts " + what, "put " + what);
             }
             case PutCardFromHandOnTopOfLibraryCost ignored -> new Ransom(cost,
                     "Put a card from your hand on top of your library",
@@ -587,6 +648,20 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             case 5 -> "five";
             default -> String.valueOf(count);
         };
+    }
+
+    /** "a +1/+1 counter", "two oil counters", "a counter" (any kind). */
+    private static String counters(int count, CounterType kind) {
+        String name = switch (kind) {
+            case ANY -> "";
+            case PLUS_ONE_PLUS_ONE -> "+1/+1 ";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1 ";
+            default -> kind.name().toLowerCase().replace('_', ' ') + " ";
+        };
+        if (count == 1) {
+            return article(name + "counter");
+        }
+        return countWord(count) + " " + name + "counters";
     }
 
     /** "a creature", "an Island"; a description that already reads with its determiner ("another creature") as it is. */
