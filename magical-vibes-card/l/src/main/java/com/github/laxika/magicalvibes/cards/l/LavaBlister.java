@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -27,11 +26,8 @@ public class LavaBlister extends Card {
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
                 )),
                 "Target must be a nonbasic land"
-        )).addSpellEffect(new MayEffect(
-                new DealDamageToPlayersEffect(6, Subjects.controllerOf(Subjects.target())),
-                "Have Lava Blister deal 6 damage to you?",
-                new DestroyTargetPermanentEffect(),
-                MayChoicePlayer.TARGET_PERMANENT_CONTROLLER
-        ));
+        )).addSpellEffect(UnlessPaysEffect.unlessPays(
+                Subjects.controllerOf(Subjects.target()), DamageFromSourceCost.of(6),
+                new DestroyTargetPermanentEffect()));
     }
 }

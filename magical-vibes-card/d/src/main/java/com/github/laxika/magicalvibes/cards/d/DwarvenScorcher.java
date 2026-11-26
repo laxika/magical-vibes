@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
@@ -17,7 +20,8 @@ public class DwarvenScorcher extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToTargetCreatureUnlessControllerTakesDamageEffect(1, 2)
+                        UnlessPaysEffect.unlessPays(Subjects.controllerOf(Subjects.target()),
+                                DamageFromSourceCost.of(2), DealDamageEffect.toTargetCreature(1))
                 ),
                 "Sacrifice this creature: This creature deals 1 damage to target creature unless that creature's controller has this creature deal 2 damage to them.",
                 TargetFilters.creature()

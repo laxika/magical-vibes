@@ -289,6 +289,23 @@ class UnlessPaysEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("A damage ransom read from the source (\"equal to his power\") is asked with its amount as it resolves")
+    void damageRansomIsReadAsItResolves() {
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessPays(Subjects.controllerOf(Subjects.target()),
+                new DamageFromSourceCost(new com.github.laxika.magicalvibes.model.amount.SourcePower()),
+                new DrawCardEffect(1));
+        StackEntry entry = counterEntry(effect);
+        when(amountEvaluationService.evaluate(eq(gd),
+                eq(new com.github.laxika.magicalvibes.model.amount.SourcePower()), any())).thenReturn(5);
+
+        UnlessPaysEffectHandler.Ransom ransom = handler.ransom(gd, entry, effect);
+
+        assertThat(ransom.cost()).isEqualTo(DamageFromSourceCost.of(5));
+        assertThat(ransom.action()).isEqualTo("Have Spiketail Hatchling deal 5 damage to you");
+        assertThat(ransom.done()).isEqualTo("has Spiketail Hatchling deal 5 damage to them");
+    }
+
+    @Test
     @DisplayName("Paid together: each answer only chooses, and after the last one the damage comes as one step (CR 101.4)")
     void paidTogetherChoosesThenPaysOnceAfterTheLastAnswer() {
         gd.playerIdToName.put(player1Id, "Player1");

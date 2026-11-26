@@ -142,7 +142,7 @@ class TibaltWickedTormentorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting rummage with an empty hand does not draw a card")
+    @DisplayName("With an empty hand the rummage isn't offered and no card is drawn")
     void cannotDrawWithoutDiscarding() {
         addReadyTibalt(player1, 3);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -153,8 +153,8 @@ class TibaltWickedTormentorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
     }

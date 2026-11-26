@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GaeasTouch;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.cards.s.SigardaHostOfHerons;
 import com.github.laxika.magicalvibes.cards.s.SoulSummons;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -96,6 +97,8 @@ class WormsOfTheEarthTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertNotOnBattlefield(player1, "Worms of the Earth");
         harness.assertInGraveyard(player1, "Forest");
@@ -118,6 +121,7 @@ class WormsOfTheEarthTest extends BaseCardTest {
                 .map(permanent -> permanent.getId())
                 .toList();
         harness.handleMultiplePermanentsChosen(player1, forestIds.subList(0, 2));
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertNotOnBattlefield(player1, "Worms of the Earth");
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -135,6 +139,7 @@ class WormsOfTheEarthTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, 15);
         harness.assertNotOnBattlefield(player1, "Worms of the Earth");
@@ -193,6 +198,7 @@ class WormsOfTheEarthTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, 15);
         harness.assertNotOnBattlefield(player1, "Worms of the Earth");
@@ -208,10 +214,12 @@ class WormsOfTheEarthTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         assertDeathReplacementAskedWhileLandsStay(arbor);
 
         harness.handleListChoice(player1, MAGEMARK_RETURN);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertArborReturnedAndWormsDestroyed(arbor);
     }
@@ -232,6 +240,7 @@ class WormsOfTheEarthTest extends BaseCardTest {
         assertDeathReplacementAskedWhileLandsStay(arbor);
 
         harness.handleListChoice(player1, MAGEMARK_RETURN);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertArborReturnedAndWormsDestroyed(arbor);
         assertThat(findPermanents(player1, "Forest")).hasSize(1);
@@ -252,6 +261,7 @@ class WormsOfTheEarthTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.handleListChoice(player1, MAGEMARK_RETURN);
 
@@ -261,11 +271,49 @@ class WormsOfTheEarthTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Worms of the Earth");
 
         harness.handleListChoice(player1, MAGEMARK_RETURN);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(firstArbor.getCard(), secondArbor.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstArbor, secondArbor);
         harness.assertNotOnBattlefield(player1, "Worms of the Earth");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Every player is asked even after one paid, and Worms of the Earth is destroyed after the last answer")
+    void everyPlayerIsAskedEvenAfterOnePaid() {
+        harness.addToBattlefield(player1, new WormsOfTheEarth());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertOnBattlefield(player1, "Worms of the Earth");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Worms of the Earth");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed(SigardaHostOfHerons.class)
+    @DisplayName("A player whose opponents' effects can't make them sacrifice is offered only the damage")
+    void sigardasControllerIsOfferedOnlyTheDamage() {
+        harness.addToBattlefield(player2, new WormsOfTheEarth());
+        harness.addToBattlefield(player1, new SigardaHostOfHerons());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 15);
+        assertThat(findPermanents(player1, "Forest")).hasSize(2);
     }
 
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";

@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSu
 import com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutUpToNControlledPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromTwoCreaturesThenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnChosenPermanentsToHandEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
@@ -258,7 +257,6 @@ public class MultiPermanentChoiceHandlerService {
             culturalExchangeSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final WormsOfTheEarthEffectHandler wormsOfTheEarthEffectHandler;
     private final AbilityActivationService abilityActivationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayerChoosesUpToPermanentsThenSacrificesRestEffectHandler
@@ -493,10 +491,6 @@ public class MultiPermanentChoiceHandlerService {
                 }
             }
         }
-        if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
-                && permanentIds.size() != 2) {
-            throw new IllegalStateException("Exactly two lands must be selected");
-        }
         if (context instanceof MultiPermanentChoiceContext.SacrificeAttackCost attackCost
                 && permanentIds.size() != attackCost.requiredCount()) {
             throw new IllegalStateException("Exactly " + attackCost.requiredCount()
@@ -506,15 +500,6 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != returnCost.requiredCount()) {
             throw new IllegalStateException("Exactly " + returnCost.requiredCount()
                     + " permanents must be selected");
-        }
-        if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands worms
-                && permanentIds.stream().anyMatch(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent == null
-                            || !worms.playerId().equals(gameQueryService.findPermanentController(gameData, id))
-                            || !gameQueryService.isLand(gameData, permanent);
-                })) {
-            throw new IllegalStateException("A selected permanent is no longer a land you control");
         }
         if (context instanceof MultiPermanentChoiceContext.CulturalExchange culturalExchange
                 && !culturalExchange.firstSelection()
@@ -1518,8 +1503,6 @@ public class MultiPermanentChoiceHandlerService {
      * and only prompts for the next player's land before its batch; its basic land searches come after.
      * {@link MultiPermanentChoiceContext.ResolutionCostPayment} of a sacrifice (a ransom of several permanents) asks
      * its whole selection before the first sacrifice, and its asking effect resumes only after the sacrifices.
-     * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} sacrifices both chosen lands as one
-     * batch, asking both before either leaves; Worms of the Earth itself is destroyed after, as a step of its own.
      * The "choose, then remove the chosen" contexts only read their picks before one batch:
      * {@link MultiPermanentChoiceContext.ForcedDestroy} destroys, and
      * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} sacrifices, with its draws, "if you do"
@@ -1561,7 +1544,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.ResolutionCostPayment payment
                         && (payment.cost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost
                         || payment.cost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesWithTotalPowerCost)
-                || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice
@@ -1719,13 +1701,6 @@ public class MultiPermanentChoiceHandlerService {
             case MultiPermanentChoiceContext.ResolutionCostPayment ctx -> {
                 resolutionCostPaymentService.completeMultiPermanentChoice(gameData, playerId, permanentIds, ctx);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-                return;
-            }
-            case MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx -> {
-                wormsOfTheEarthEffectHandler.sacrificeAndDestroy(
-                        gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
-                permanentRemovalService.removeOrphanedAuras(gameData);
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
             case MultiPermanentChoiceContext.FreeCastTapCost ctx -> {

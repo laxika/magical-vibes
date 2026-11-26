@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -135,4 +138,30 @@ class DwarvenDrillerTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(driller.isTapped()).isTrue();
     }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Declining the damage asks the destroyed Dryad Arbor's death replacements before it leaves")
+    void decliningAsksTheDestroyedLandsDeathReplacementsFirst() {
+        Permanent driller = addCreatureReady(player1, new DwarvenDriller());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, driller), 0, null, arbor.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor);
+        harness.assertLife(player2, 20);
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 }

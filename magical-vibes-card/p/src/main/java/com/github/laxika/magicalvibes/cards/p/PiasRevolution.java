@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -17,6 +20,7 @@ public class PiasRevolution extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.dies(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.YOU_OWN),
-                new ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect(3));
+                UnlessPaysEffect.unlessPays(Subjects.targetPlayer(), DamageFromSourceCost.of(3),
+                        new PutCardsIntoHandEffect(Subjects.triggeringCards())));
     }
 }

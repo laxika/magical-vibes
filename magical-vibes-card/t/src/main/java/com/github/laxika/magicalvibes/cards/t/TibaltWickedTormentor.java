@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -12,7 +15,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
@@ -58,9 +60,9 @@ public class TibaltWickedTormentor extends Card {
         // Tibalt deal 4 damage to them. If they do, you may discard a card. If you do, draw a card.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamageEffect(
-                        4, 4, new MayEffect(new DiscardAndDrawCardEffect(),
-                        "Discard a card to draw a card?"))),
+                List.of(UnlessPaysEffect.unlessPays(Subjects.controllerOf(Subjects.target()),
+                                DamageFromSourceCost.of(4), DealDamageEffect.toTargetCreatureOrPlaneswalker(4))
+                        .ifPaid(new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"))),
                 "+1: Tibalt, Wicked Tormentor deals 4 damage to target creature or planeswalker unless "
                         + "its controller has Tibalt deal 4 damage to them. If they do, you may discard a "
                         + "card. If you do, draw a card."

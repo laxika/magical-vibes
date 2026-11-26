@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -18,11 +17,8 @@ public class Skullscorch extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new MayEffect(
-                new DealDamageToPlayersEffect(4, Subjects.targetPlayer()),
-                "Have Skullscorch deal 4 damage to you?",
-                new DiscardEffect(2, Subjects.targetPlayer(), true),
-                MayChoicePlayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER
-        ));
+        )).addSpellEffect(UnlessPaysEffect.unlessPays(
+                Subjects.targetPlayer(), DamageFromSourceCost.of(4),
+                new DiscardEffect(2, Subjects.targetPlayer(), true)));
     }
 }
