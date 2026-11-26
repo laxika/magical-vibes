@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
@@ -100,7 +101,8 @@ import org.springframework.stereotype.Component;
  * asked, CR 605.3a); mana that can be spent only on {X} for an announced-X ransom; 2 life for each {B} under K'rrik,
  * Son of Yawgmoth; life only while the payer can lose life (CR 119.4, 119.8); the other costs as
  * {@link ResolutionCostPaymentService} judges and pays them, through the shared actions. An amount read from the source
- * reads the source on the battlefield, else as it last existed (CR 608.2h).
+ * reads the source on the battlefield, else as it last existed (CR 608.2h). An echo cost ({@link PayEchoCost}) is
+ * asked and paid as the cost it names ({@link #alternatives}).
  */
 @Slf4j
 @Component
@@ -422,10 +424,32 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
      * life, rounded up": Temporal Extortion), every other amount against the resolving entry.
      */
     public List<Ransom> alternatives(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UUID payerId) {
-        if (unless.ransom() instanceof AnyOfCost anyOf) {
+        CostEffect asked = unless.ransom() instanceof PayEchoCost echo ? echoCost(gameData, entry, echo)
+                : unless.ransom();
+        if (asked instanceof AnyOfCost anyOf) {
             return anyOf.alternatives().stream().map(cost -> ransom(gameData, entry, cost, payerId)).toList();
         }
-        return List.of(ransom(gameData, entry, unless.ransom(), payerId));
+        return List.of(ransom(gameData, entry, asked, payerId));
+    }
+
+    /**
+     * Echo's cost as it is paid now (CR 702.30a): the cost it names, an {X} read as the ability resolves (Volcano
+     * Hellion's ruling: the life total then). Under "you may pay {0} rather than pay the echo cost for permanents you
+     * control" (Thick-Skinned Goblin) the payer may pay that, or the echo cost, or neither (its ruling): the
+     * alternative first, then the echo cost.
+     */
+    private CostEffect echoCost(GameData gameData, StackEntry entry, PayEchoCost echo) {
+        CostEffect printed = echo.handCardCost() != null ? echo.handCardCost()
+                : echo.cost() != null ? echo.cost()
+                : echo.dynamicEchoCost() != null ? PayManaCost.withGenericIncrease("{0}", echo.dynamicEchoCost())
+                : new PayManaCost(echo.echoCost());
+        String alternative = gameQueryService.findAlternativeEchoCost(gameData, entry.getControllerId());
+        if (alternative == null
+                || printed instanceof PayManaCost mana && mana.genericIncrease() == null
+                && alternative.equals(mana.manaCost())) {
+            return printed;
+        }
+        return AnyOfCost.of(new PayManaCost(alternative), printed);
     }
 
     /** {@code unless}'s ransom with its amounts read as it resolves (the first alternative of an any-of ransom). */

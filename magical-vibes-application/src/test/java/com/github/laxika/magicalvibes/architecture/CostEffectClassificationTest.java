@@ -46,6 +46,7 @@ class CostEffectClassificationTest {
             "ExileCardsCost",
             "ExileGraveyardCost",
             "GetPoisonCountersCost",
+            "PayEchoCost",
             "SacrificeCreaturesWithTotalPowerCost",
             "SourceControllerDrawsCost");
 
@@ -79,7 +80,6 @@ class CostEffectClassificationTest {
             "OpponentCreatesTokensCost",
             "OpponentGainsLifeCost",
             "GainControlOfPermanentsCost",
-            "PayEchoCost",
             "PayEnergyCost",
             "PayManaCost",
             "PayMulticoloredSourceManaCost",

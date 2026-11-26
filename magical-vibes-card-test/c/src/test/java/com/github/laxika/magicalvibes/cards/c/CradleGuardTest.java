@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CradleGuard.class, GorillaWarrior.class})
 class CradleGuardTest extends BaseCardTest {
+
+    /** An echo payer is asked only while they could possibly pay (CR 118.3, 608.2d): each player gets a mana source. */
+    @BeforeEach
+    void giveEchoPayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     void decliningEchoSacrificesCradleGuard() {

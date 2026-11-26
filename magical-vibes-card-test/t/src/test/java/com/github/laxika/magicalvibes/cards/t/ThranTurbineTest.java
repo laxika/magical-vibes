@@ -166,6 +166,7 @@ class ThranTurbineTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addToBattlefield(player1, new ThranTurbine());
 
+        giveManaSource(player1);
         harness.withAutoStop(TurnStep.UPKEEP, () -> {
             advanceToUpkeep(player1);
             harness.passBothPriorities();

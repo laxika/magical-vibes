@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +19,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({RingOfGix.class, DefenseGrid.class, GiantCockroach.class,
         ForbiddingWatchtower.class, DefenseOfTheHeart.class})
 class RingOfGixTest extends BaseCardTest {
+
+    /** An echo payer is asked only while they could possibly pay (CR 118.3, 608.2d): each player gets a mana source. */
+    @BeforeEach
+    void giveEchoPayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Taps a target artifact")

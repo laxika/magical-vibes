@@ -11,6 +11,6 @@ public class SkizzikSurger extends Card {
 
     public SkizzikSurger() {
         addStaticEffect(new EchoEffect(
-                        new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate())));
+                        new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate(), "lands")));
     }
 }

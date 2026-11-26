@@ -20,8 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
@@ -190,14 +188,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         }
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
-        // Echo's "if" wraps its effect to be judged again as it resolves (CR 603.4).
-        boolean echoPayment = forcedCost instanceof PayEchoCost
-                || pendingEntry != null && pendingEntry.getEffectsToResolve().stream().anyMatch(effect ->
-                (effect instanceof ConditionalEffect conditional ? conditional.wrapped() : effect)
-                        instanceof ForcedCostOrElseEffect pending && pending.forcedCost() instanceof PayEchoCost);
         if (pendingEntry != null
                 && !cumulativeUpkeep
-                && !echoPayment
                 && pendingEntry.getControllerId().equals(controllerId)
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0
@@ -222,10 +214,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             }
             return;
         }
-        if (echoPayment || cumulativeUpkeep) {
-            // "When this creature's echo is paid, ..." (Shah of Naar Isle) and "whenever this creature's cumulative
-            // upkeep is paid, ..." (Balduvian Fallen, Hibernation's End) are triggered abilities of their own, which the
-            // payment triggers (CR 603.2): they go on the stack through the stack door.
+        if (cumulativeUpkeep) {
+            // "Whenever this creature's cumulative upkeep is paid, ..." (Balduvian Fallen, Hibernation's End) is a
+            // triggered ability of its own, which the payment triggers (CR 603.2): it goes on the stack through the
+            // stack door.
             triggeredAbilityStackService.putMade(gameData, entry);
             return;
         }
@@ -375,32 +367,6 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                     cost.count(), cost.count(), "Choose " + cost.count() + " cards to exile from your graveyard.");
             return;
         }
-        if (e.forcedCost() instanceof PayEchoCost echoCost) {
-            String alternativeCost = gameQueryService.findAlternativeEchoCost(gameData, entry.getControllerId());
-            CostEffect resolvedEchoCost;
-            if (alternativeCost != null) {
-                resolvedEchoCost = new com.github.laxika.magicalvibes.model.effect.PayManaCost(alternativeCost);
-            } else if (echoCost.handCardCost() != null) {
-                resolvedEchoCost = echoCost.handCardCost();
-            } else if (echoCost.cost() != null) {
-                resolvedEchoCost = echoCost.cost();
-            } else if (echoCost.dynamicEchoCost() != null) {
-                Permanent echoSource = entry.getSourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                int amount = amountEvaluationService.evaluate(gameData, echoCost.dynamicEchoCost(),
-                        new com.github.laxika.magicalvibes.service.effect.AmountContext(
-                                entry.getControllerId(), echoSource, null, 0, 0));
-                resolvedEchoCost = new com.github.laxika.magicalvibes.model.effect.PayManaCost(
-                        "{" + Math.max(0, amount) + "}");
-            } else {
-                resolvedEchoCost = new com.github.laxika.magicalvibes.model.effect.PayManaCost(echoCost.echoCost());
-            }
-            e = new ForcedCostOrElseEffect(
-                    resolvedEchoCost,
-                    e.elseEffects(), e.optional(), e.anyPlayerMayPay(), e.payerIsEnchantedController(),
-                    e.payerIsDefendingPlayer(), e.paidEffects(), e.villainousChoice());
-        }
-
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
             UUID payer = resolvePayer(gameData, entry, e);
             if (payer == null || coinFlipCostSupport == null) {

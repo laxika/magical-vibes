@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
@@ -264,7 +265,7 @@ public class SpellEvaluator {
      * point, the cheapest matching permanents to sacrifice, each permanent tapped, each card discarded, each card the
      * source's controller draws, each graveyard card exiled. {@link Double#POSITIVE_INFINITY} for a life payment or
      * damage at or above the payer's life total, which the AI never pays. Mana ransoms are scored by the caller from
-     * the mana itself (0 here); an any-of ransom is priced by the alternative asked.
+     * the mana itself (0 here); an any-of ransom is priced by the alternative asked, an echo cost as the cost it names.
      */
     public double ransomCost(GameData gameData, CostEffect ransom, UUID payerId) {
         UUID opponentId = getOpponentId(gameData, payerId);
@@ -303,6 +304,8 @@ public class SpellEvaluator {
             case RemoveCounterFromSourceCost counters -> counters.count() * 1.0;
             case RemoveCounterFromControlledPermanentCost counters -> counters.count() * 1.0;
             case PutTypedCounterOnSourceCost ignored -> 0;
+            case PayEchoCost echo -> echo.handCardCost() != null ? ransomCost(gameData, echo.handCardCost(), payerId)
+                    : echo.cost() != null ? ransomCost(gameData, echo.cost(), payerId) : 0;
             default -> 0;
         };
     }

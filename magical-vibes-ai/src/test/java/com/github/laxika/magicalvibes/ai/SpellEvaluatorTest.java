@@ -1683,4 +1683,16 @@ class SpellEvaluatorTest {
                 new com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost(1,
                         com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE), payer)).isPositive();
     }
+
+    @Test
+    @DisplayName("An echo cost is priced as the cost it names: a discard as a discard, mana as nothing here")
+    void echoCostIsPricedAsTheCostItNames() {
+        java.util.UUID payer = player2.getId();
+        com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost discard =
+                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null);
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.PayEchoCost(discard),
+                payer)).isEqualTo(spellEvaluator.ransomCost(gd, discard, payer)).isPositive();
+        assertThat(spellEvaluator.ransomCost(gd, new com.github.laxika.magicalvibes.model.effect.PayEchoCost("{2}"),
+                payer)).isZero();
+    }
 }

@@ -528,4 +528,36 @@ class UnlessPaysEffectHandlerTest {
                 new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(), "Forests you control")))
                 .isEqualTo("Return two Forests you control to their owner's hand");
     }
+
+    @Test
+    @DisplayName("Echo's cost is asked as the cost it names, an {X} read as it resolves, and a \"rather than pay the "
+            + "echo cost\" {0} is offered first, the echo cost after it")
+    void echoCostIsAskedAsTheCostItNames() {
+        StackEntry entry = counterEntry(UnlessPaysEffect.counterUnlessPays(1));
+        java.util.function.Function<com.github.laxika.magicalvibes.model.effect.PayEchoCost, List<String>> actions =
+                echo -> handler.alternatives(gd, entry, UnlessPaysEffect.unlessYouPay(echo, new SacrificeSelfEffect()))
+                        .stream().map(UnlessPaysEffectHandler.Ransom::action).toList();
+        com.github.laxika.magicalvibes.model.amount.DynamicAmount life =
+                new com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal();
+        when(amountEvaluationService.evaluate(eq(gd), eq(life), any())).thenReturn(17);
+
+        assertThat(actions.apply(new com.github.laxika.magicalvibes.model.effect.PayEchoCost("{1}{G}")))
+                .containsExactly("Pay {1}{G}");
+        assertThat(actions.apply(new com.github.laxika.magicalvibes.model.effect.PayEchoCost(null, null, null, life)))
+                .containsExactly("Pay {17}");
+        assertThat(actions.apply(new com.github.laxika.magicalvibes.model.effect.PayEchoCost(
+                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null))))
+                .containsExactly("Discard a card");
+        assertThat(actions.apply(new com.github.laxika.magicalvibes.model.effect.PayEchoCost(
+                new com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost(2,
+                        new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(), "lands"))))
+                .containsExactly("Sacrifice two lands");
+
+        when(gameQueryService.findAlternativeEchoCost(gd, player2Id)).thenReturn("{0}");
+        assertThat(actions.apply(new com.github.laxika.magicalvibes.model.effect.PayEchoCost(
+                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null))))
+                .containsExactly("Pay {0}", "Discard a card");
+        assertThat(actions.apply(new com.github.laxika.magicalvibes.model.effect.PayEchoCost("{0}")))
+                .containsExactly("Pay {0}");
+    }
 }

@@ -40,7 +40,8 @@ import java.util.Objects;
  * resolves, CR 608.2h), {@link ExileTopCardOfGraveyardCost}, {@link RemoveCounterFromSourceCost} of one kind,
  * {@link RemoveCounterFromControlledPermanentCost}, {@link PutCardsFromGraveyardOnBottomOfLibraryCost},
  * {@link ReturnCardFromGraveyardToHandCost}, {@link MillControllerCost}, {@link PutTypedCounterOnSourceCost},
- * {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
+ * {@link PayEchoCost} (echo's cost, paid as the cost it names as it resolves, with a "rather than pay the echo cost"
+ * alternative as an any-of choice), {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
  * factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter target spell unless its controller pays
  * {3}" and ward {3}.
  *
@@ -152,11 +153,24 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             case ReturnCardFromGraveyardToHandCost ignored -> true;
             case MillControllerCost ignored -> true;
             case PutTypedCounterOnSourceCost ignored -> true;
+            case PayEchoCost echo -> echoPayable(echo);
             default -> false;
         };
         if (!payable) {
             throw new IllegalArgumentException("No resolution-time payment for this ransom: " + ransom);
         }
+    }
+
+    /** An echo cost is paid as the cost it names: a mana cost, an {X} read as it resolves, or another payable cost. */
+    private static boolean echoPayable(PayEchoCost echo) {
+        if (echo.handCardCost() != null) {
+            requirePayableAtResolution(echo.handCardCost());
+        } else if (echo.cost() != null) {
+            requirePayableAtResolution(echo.cost());
+        } else if (echo.dynamicEchoCost() == null && echo.echoCost() == null) {
+            throw new IllegalArgumentException("An echo cost names a cost: " + echo);
+        }
+        return true;
     }
 
     /** "Counter target spell (or ability) unless its controller pays {@code {amount}}"; ward {N}. */

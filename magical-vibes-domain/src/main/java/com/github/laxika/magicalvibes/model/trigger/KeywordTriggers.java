@@ -12,13 +12,17 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanS
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourceToughness;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -66,14 +70,19 @@ public final class KeywordTriggers {
     /**
      * Echo: "At the beginning of your upkeep, if this permanent came under your control since the beginning of your
      * last upkeep, sacrifice it unless you pay [cost]" (CR 702.30a), for the cost and paid effects {@code echo} names.
-     * The cost is optional to pay and its "if" is judged as it triggers and again as it resolves (CR 603.4).
+     * Its "if" is judged as it triggers and again as it resolves (CR 603.4); "unless you pay" is "you may pay; if you
+     * don't, sacrifice it" (CR 118.12a). "When this creature's echo cost is paid, ..." is a triggered ability the
+     * payment triggers, put on the stack after the echo ability resolves.
      */
     public static TriggeredAbility echo(EchoEffect echo) {
+        List<CardEffect> paid = echo.paidEffects();
+        CardEffect whenPaid = paid.isEmpty() ? null
+                : new QueueReflexiveAbilityEffect(paid.size() == 1 ? paid.getFirst() : new SequenceEffect(paid));
         return new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new CameUnderControlSinceLastUpkeep()),
-                new ForcedCostOrElseEffect(
+                new UnlessPaysEffect(Subjects.you(),
                         new PayEchoCost(echo.manaCost(), echo.handCardCost(), echo.cost(), echo.dynamicManaCost()),
-                        List.of(new SacrificeSelfEffect()), true, echo.paidEffects()));
+                        new SacrificeSelfEffect(), whenPaid));
     }
 
     /**

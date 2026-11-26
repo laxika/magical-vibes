@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +17,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KarmicGuide.class, AngelicCurator.class, BlessedReversal.class})
 class KarmicGuideTest extends BaseCardTest {
+
+    /** An echo payer is asked only while they could possibly pay (CR 118.3, 608.2d): each player gets a mana source. */
+    @BeforeEach
+    void giveEchoPayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("ETB returns a targeted creature card from your graveyard to the battlefield")

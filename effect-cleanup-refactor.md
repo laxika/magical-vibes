@@ -27,7 +27,7 @@ their introductions and the rows of your run, not every row. To start a step, us
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless" went to step 10's "unless" runs, owner's decision 2026-11-25) |
 | 9 | Sweep the single-card tail (repeatable) | open, nearly done. Every rare record has a ledger verdict; the fold queue is closed (fold run 50c; no `step-9` row left); defect runs 1, 2 and D10 to D25 are done. Left: the defect queue's open lines in `effect-cleanup-queues.md` (210 not struck through, each with what it needs) and the `blocked-*` rows (Blocked causes below). Waiting on the owner: 2 rows (gift opponent, deferred), Tribute's reduced-placement reading (CR 702.104b), "if you do" after a replaced draw (D14 L17), Nowhere to Run's any-player hexproof option (D16 L12), set exchanges under CR 701.12a (D19 L22), Reality Twist on unlisted types and Boseiju's rider under a land-mana replacement (D21), and a seeded game random source. |
-| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a and U4b (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone; U4a and U4b moved 159 `ForcedCostOrElseEffect` card files and its four engine builders). Next: "unless" runs U4c, U4d, U5, U6, U7; then the other verbs under Step-10 hand-offs |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open. Done: runs Counters (`PutCountersEffect`), Remove counters (`RemoveCountersEffect`), Damage (`DealDamageEffect`, after defect run D24), U1, U2, U3a, U3b', U3c, U3b1, U3b2 and U4a, U4b and U4c (`UnlessPaysEffect`, with D25's `ResolutionCostPaymentService`; `MayPayManaEffect` and `MayAbilityHandlerService`'s generic mana branch are gone; U4a and U4b moved 159 `ForcedCostOrElseEffect` card files and its four engine builders, U4c echo). Next: "unless" runs U4d, U5, U6, U7; then the other verbs under Step-10 hand-offs |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
 ## Why
@@ -502,7 +502,9 @@ the git history named at the top. Each shared piece's factories and Oracle wordi
   counter, `ChoiceContext.ResolutionCostCounterRemoval`), `PutCardsFromGraveyardOnBottomOfLibraryCost(n)`, `ReturnCardFromGraveyardToHandCost`,
   `MillControllerCost`, `PutTypedCounterOnSourceCost` (put by the payer), `ReturnPermanentToHandCost.youControl(count, filter, words)`; a
   Phyrexian symbol is paid with its colour or 2 life (CR 107.4f); mandatory "pay {E}{E}. If you can't" is `PayEnergyEffect` +
-  `ConditionalEffect(NotCondition(new HappenedThisWay(PAY_ENERGY)), …)`.
+  `ConditionalEffect(NotCondition(new HappenedThisWay(PAY_ENERGY)), …)`. U4c: `PayEchoCost` (echo, `KeywordTriggers.echo`) is read by
+  `UnlessPaysEffectHandler.alternatives` as the cost it names and paid through that cost's case; an `AlternativeEchoCostEffect` makes it
+  `AnyOfCost({0}, echo cost)`; "when its echo cost is paid" is `ifPaid` = `QueueReflexiveAbilityEffect` (a trigger on the stack).
 - `ResolutionCostPaymentService` (`service/effect/cost`, D25): a cost a resolving effect asks any player for (CR 118.12, 118.12a). A new
   ransom kind is a case here. `couldPossiblyPay(gd, payerId, cost, sourceCard)` (takes the resolving entry) answers "no" only when it
   is certain (owner's rule): life alone that `canPayLife` refuses (CR 119.4, 119.8); mana the pool can't pay ({B} as life under K'rrik
@@ -879,8 +881,8 @@ there and updates them when it lands.
   beside it: Confiscation Coup (`UnlessPaysEffect.youMayPay(new PayEnergyCost(new TargetManaValue()), …)` now expresses it) and Behemoth
   of Vault 0 (its "when you do, destroy that permanent" is about the declared target, which `QueueReflexiveAbilityEffect` would choose
   again), and `ReturnMultiplePermanentsToHandCost`'s 26 activation-cost cards (fold into `ReturnPermanentToHandCost.count` with the
-  activation path); **U4c**, echo (51 cards, a `PayEchoCost` case, "when echo is paid" stays a
-  trigger); **U4d**, cumulative upkeep (84 cards, its 12 cost kinds, `AmountThisWay.manaPaid(colours)` for Balduvian Fallen), then the
+  activation path); U4c moved echo (`KeywordTriggers.echo` builds `UnlessPaysEffect` with `PayEchoCost`, the ForcedCostOrElseEffectHandler echo branch
+  is gone); **U4d**, cumulative upkeep (84 cards, its 12 cost kinds, `AmountThisWay.manaPaid(colours)` for Balduvian Fallen), then the
   record, both handlers, `MayPenaltyChoiceHandlerService`'s branch and `DestructionSupport.resolveForcedCostElseEffects` go; U5, "unless takes damage" (`DamageFromSourceCost`, a case in the service, dealt by the resolving entry;
   `DestroyTargetPermanentUnlessControllerTakesDamageEffect` belongs here). Whirlwind Denial stays its own record (owner's decision U2; its
   payment is on the service). `PendingMayAbility.tapPermanentsCost` is null everywhere (a component to drop with the record's next change).
@@ -1106,6 +1108,7 @@ Each run adds its line to the list below and appends its section after the last 
 - Step 10, run U3b2 (2026-11-26): 15 single-verb records (24 card files) onto `UnlessPaysEffect` with `eachUnless`, the payer's target and four ransoms; Spinecrawler, Read the Runes, The Dalek Emperor, Overencumbered fixed
 - Step 10, run U4a (2026-11-26): 121 `ForcedCostOrElseEffect` card files onto `UnlessPaysEffect` and steps (Cosmic Horror's and Minion of Leshrac's fused records split); every player asked in "any player may pay", a payer with no mana source left unasked, Fraying Line's exile one event
 - Step 10, run U4b (2026-11-26): the last 38 `ForcedCostOrElseEffect` card files and its Satya, Ashling and Flash builders onto `UnlessPaysEffect` (nine new ransom cases) and steps, Koya's record split; Satya pays the token's mana value as it resolves, a Phyrexian symbol in a ransom is paid with its colour or 2 life
+- Step 10, run U4c (2026-11-26): echo (51 cards) onto `UnlessPaysEffect` with `PayEchoCost` read as the cost it names; Thick-Skinned Goblin's {0} offered beside the echo cost (its ruling), an echo mana payer with no mana source left unasked
 
 **Kept in full** (the sections the remaining runs read): step 10's runs and defect runs D24 and D25.
 
@@ -1858,6 +1861,50 @@ not observable in the pool); Confiscation Coup now foldable, Behemoth of Vault 0
 **For the next run.** U4c (echo): `PayEchoCost` as a ransom case with its alternative, hand-card and dynamic forms read as the ransom is read;
 the `ForcedCostOrElseEffectHandler` / `MayPenaltyChoiceHandlerService` branches for energy, mill, graveyard and counter costs now serve only echo
 and cumulative upkeep.
+
+### Step 10, run U4c ("unless": echo) (2026-11-26)
+
+The plan (`scratchpad/s10-unless/u4c-plan.md`) with the orchestrator's U4 decisions (the strict "could possibly pay" rule, hard AI
+parity). `KeywordTriggers.echo` builds `UnlessPaysEffect(you(), PayEchoCost, SacrificeSelfEffect, ifPaid)`, so only cumulative
+upkeep (U4d) builds `ForcedCostOrElseEffect`; its handler's `PayEchoCost` branch and echo `putMade` path are gone. No record or handler
+added or removed: ratchet 2,936 / 2,318 unchanged. Ledger: `PayEchoCost` survivor, `ForcedCostOrElseEffect` re-noted "U4d". No
+`CONVERSION_VERSION` bump (no mapper or enum change).
+**The case.** Echo's cost kinds (Oracle text of all 51 echo cards and Thick-Skinned Goblin checked with `get_card`): fixed mana (47, Shah's
+{0}), {X} = your life total (Volcano Hellion: `PayManaCost.withGenericIncrease`, read as it resolves, its ruling), discard a card (Deepcavern
+Imp, Rakdos Headliner), sacrifice two lands (Skizzik Surger; its cost now says "lands" for the prompt). `UnlessPaysEffectHandler.alternatives`
+reads `PayEchoCost` as that cost, then every existing path follows (words, `couldPossiblyPay`, `pay`, completion): each kind pays through the
+case its cost type already has, no second payment path. `UnlessPaysEffect.requirePayableAtResolution` checks the named cost;
+`SpellEvaluator.ransomCost` prices it as the named cost. "When this creature's echo cost is paid" (Shah) is `ifPaid` =
+`QueueReflexiveAbilityEffect(…)`, a triggered ability the payment puts on the stack, as today's `putMade` did.
+**Behaviour changes:**
+- Thick-Skinned Goblin's "rather than pay the echo cost" offers {0}, then the echo cost (`AnyOfCost`): its ruling ("you may pay {0}, pay its
+  echo cost, or choose not to pay"); today only {0} was offered. `ThickSkinnedGoblinTest.mayPayThePrintedEchoCostInsteadOfZero` (failed first).
+- An echo mana payer with no mana source isn't asked and the permanent is sacrificed (owner's rule, CR 118.3, 608.2d):
+  `KeywordTriggersTest.echoPayerWithNoManaSourceIsNotAsked` (failed first).
+- Prompts and log lines are the ransom's ("Pay {1}{G}?", "Discard a card?" where the old discard prompt said "cumulative upkeep";
+  `echoAsksInTheCostsWords` failed first); the two lands are the shared pick (U3c's line).
+**Pins** (passed before and after, `KeywordTriggersTest`): echo for the player who gained control (Persuasion); a token copy has echo, the
+copied original doesn't trigger; a face-down echo card has no echo (CR 708.2a); a control change in response makes the "if" false on
+resolution, nothing asked (CR 603.4); a permanent that left in response is judged by last-known information, still asked, nothing
+sacrificed (CR 608.2h; the condition's documented reading, owner's decision 2). Existing: Shah's separate trigger, Volcano Hellion's life
+total in response, Skizzik's two lands, the Goblin with lost abilities or gone.
+**Tests changed** (owner's rule, U3c's pick line): a `@BeforeEach` `giveManaSource` for both players in 46 echo card classes (their payer was
+asked with no mana source), `giveManaSource` in 4 Volcano Hellion, 3 Thick-Skinned Goblin, 1 Thran Turbine and 1 `KeywordTriggersTest`
+methods; `answerForcedPick` in 3 Skizzik methods; `CostEffectClassificationTest` lists `PayEchoCost` as resolution-only; DisplayNames on
+the Goblin's 8 and Skizzik's 10 methods. Added: 7 `KeywordTriggersTest`, 1 Goblin, `UnlessPaysEffectHandlerTest.echoCostIsAskedAsTheCostItNames`,
+`SpellEvaluatorTest.echoCostIsPricedAsTheCostItNames`. CR 101.4, 118.3, 118.12a, 603.2, 603.3a, 603.4, 603.12, 605.3a, 608.2d, 608.2h,
+701.21a, 702.30a, 708.2a verified.
+**Tests run** (XML of this run): 1,343 classes (`u4/cardtests.txt`, the 53 echo / Goblin / Skizzik classes and the 82 naming one, the
+readers of `DestructionSupport` / both handlers / `KeywordTriggers` / the service, every `UnlessPaysEffect` card class, the name-pattern
+classes, the plan's application tests, the architecture ratchets, the whole AI module): 1,439 files, 13,738 tests, 165 failures, all
+the owner's rule in 47 classes (fixed; those 47 rerun: 354 tests, 0 failures). Compiled every module's main and test sources and all
+card-test modules.
+**Seen, not changed** (defect queue, "step 10 run U4c"): `ORACLE_TEXT_EFFECT_MAP.md` still shows `ForcedCostOrElseEffect` shapes for
+cards U4a moved (docs only); the hard AI still never pays echo (decision 6's line).
+
+**For the next run.** U4d (cumulative upkeep): `CumulativeUpkeepEffectHandler` is the last builder; its paid trigger ("whenever ... is
+paid") can be `ifPaid` = `QueueReflexiveAbilityEffect` as echo's is; Braid of Fire's mana is the payment itself. Then the record, both
+handlers, `MayPenaltyChoiceHandlerService`'s branch and `DestructionSupport.resolveForcedCostElseEffects` go.
 
 ## Prompt
 

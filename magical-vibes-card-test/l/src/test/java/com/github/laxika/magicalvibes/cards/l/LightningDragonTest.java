@@ -8,12 +8,20 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed(LightningDragon.class)
 class LightningDragonTest extends BaseCardTest {
+
+    /** An echo payer is asked only while they could possibly pay (CR 118.3, 608.2d): each player gets a mana source. */
+    @BeforeEach
+    void giveEchoPayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Declining echo sacrifices Lightning Dragon at its next upkeep")

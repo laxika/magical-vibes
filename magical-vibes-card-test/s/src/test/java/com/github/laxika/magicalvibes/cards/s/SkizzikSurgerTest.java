@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SkizzikSurgerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering puts no echo trigger on the stack")
     void enteringDoesNotCreateAnEnterTheBattlefieldTrigger() {
         harness.setHand(player1, List.of(new SkizzikSurger()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -30,6 +32,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's lands can't pay the echo cost")
     void opponentsLandsCannotPayEcho() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -45,6 +48,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Echo waits for its controller's upkeep")
     void opponentsUpkeepDoesNotConsumeEcho() {
         castSkizzikSurger();
 
@@ -60,6 +64,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With fewer than two lands it is sacrificed unasked")
     void insufficientLandsSacrificeSkizzikSurger() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -73,6 +78,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying echo sacrifices two lands and keeps it")
     void acceptingEchoSacrificesTwoLandsAndKeepsSkizzikSurger() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -81,12 +87,14 @@ class SkizzikSurgerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Skizzik Surger");
         assertThat(landCount(player1)).isZero();
     }
 
     @Test
+    @DisplayName("The payer chooses exactly two lands to sacrifice")
     void choosingEchoLandsSacrificesExactlyTwo() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -103,6 +111,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining echo sacrifices it")
     void decliningEchoSacrificesSkizzikSurger() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -118,6 +127,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Echo is paid only once")
     void echoIsOneShot() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -126,6 +136,7 @@ class SkizzikSurgerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         advanceToUpkeep(player1);
 
@@ -134,6 +145,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only lands can pay the echo cost")
     void echoOnlyAllowsLandsToBeSacrificed() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -143,6 +155,7 @@ class SkizzikSurgerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        answerForcedPick(player1);
 
         harness.assertOnBattlefield(player1, "Skizzik Surger");
         harness.assertOnBattlefield(player1, "Imperiosaur");
@@ -150,6 +163,7 @@ class SkizzikSurgerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Haste lets it attack the turn it enters")
     void hasteAllowsSkizzikSurgerToAttackTheTurnItEnters() {
         castSkizzikSurger();
 

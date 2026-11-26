@@ -59,6 +59,7 @@ class VolcanoHellionTest extends BaseCardTest {
     void unpaidEchoSacrificesVolcanoHellion() {
         castAndChooseDamage(3);
 
+        giveManaSource(player1);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
@@ -75,6 +76,7 @@ class VolcanoHellionTest extends BaseCardTest {
         castAndChooseDamage(3);
         harness.setLife(player1, 5);
 
+        giveManaSource(player1);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
@@ -102,6 +104,7 @@ class VolcanoHellionTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Volcano Hellion");
 
+        giveManaSource(player1);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -156,6 +159,7 @@ class VolcanoHellionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Volcano Hellion");
 
+        giveManaSource(player1);
         advanceToUpkeep(player1);
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
