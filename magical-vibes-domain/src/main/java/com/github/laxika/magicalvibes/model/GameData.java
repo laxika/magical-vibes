@@ -1012,23 +1012,6 @@ public class GameData {
     public PendingInteraction.DiscardChoice pendingDiscardToLibraryChoice;
     public int pendingDiscardToLibraryCardIndex = -1;
     public Boolean pendingDiscardToLibraryDecision;
-    /**
-     * DestroyCreaturesThatDamagedSourceUnlessControllerPaysLife: ids of the damaging creatures still
-     * to be offered the pay-or-destroy prompt after the one currently being decided. Cleared when the
-     * queue drains.
-     */
-    public final List<UUID> destroyDamagersUnlessPaysRemaining = new ArrayList<>();
-    /**
-     * DestroyCreaturesThatDamagedSourceUnlessControllerPaysLife: ids of the damaging creatures already decided
-     * unpaid. They are destroyed together once the last decision is made (CR 101.4). Cleared with the queue.
-     */
-    public final List<UUID> destroyDamagersUnlessPaysUnpaid = new ArrayList<>();
-    /**
-     * ReturnMatchingPermanentsUnlessOwnerPays: ids of the matching permanents still to be
-     * offered the pay-or-be-bounced prompt (each to that permanent's owner) after the one
-     * currently being decided. Cleared when the queue drains.
-     */
-    public final List<UUID> bounceUnlessPaysRemaining = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final QueenKaylaBinKroogOperationState queenKaylaBinKroogOperation =
             new QueenKaylaBinKroogOperationState();
@@ -10675,9 +10658,6 @@ public class GameData {
                 ? null : this.pendingDiscardToLibraryChoice.deepCopy();
         copy.pendingDiscardToLibraryCardIndex = this.pendingDiscardToLibraryCardIndex;
         copy.pendingDiscardToLibraryDecision = this.pendingDiscardToLibraryDecision;
-        copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
-        copy.destroyDamagersUnlessPaysUnpaid.addAll(this.destroyDamagersUnlessPaysUnpaid);
-        copy.bounceUnlessPaysRemaining.addAll(this.bounceUnlessPaysRemaining);
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---

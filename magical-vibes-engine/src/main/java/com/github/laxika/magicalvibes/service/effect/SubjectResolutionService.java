@@ -203,6 +203,19 @@ public class SubjectResolutionService {
         return players(new Context(gameData, entry, effect, null, entry.getControllerId()), subject);
     }
 
+    /**
+     * The controller of the permanent {@code permanentId} for a resolving effect: its current one, else the one it last
+     * had (CR 608.2h); {@code null} when neither is known.
+     */
+    public UUID controllerOf(GameData gameData, StackEntry entry, CardEffect effect, UUID permanentId) {
+        return controllerOf(new Context(gameData, entry, effect, null, entry.getControllerId()), permanentId);
+    }
+
+    /** The owner of the permanent {@code permanentId} for a resolving effect, as it is or last existed (CR 608.2h). */
+    public UUID ownerOf(GameData gameData, StackEntry entry, CardEffect effect, UUID permanentId) {
+        return ownerOf(new Context(gameData, entry, effect, null, entry.getControllerId()), permanentId);
+    }
+
     /** The first player {@code subject} names, or {@code null}. */
     public UUID player(GameData gameData, StackEntry entry, CardEffect effect, PlayerSubject subject) {
         List<UUID> players = players(gameData, entry, effect, subject);

@@ -651,6 +651,12 @@ public class SpellEvaluator {
         }
         // "If no one does, destroy all creatures" (Breaking Point): the wipe behind a punisher payment.
         if (effect instanceof UnlessPaysEffect unless) {
+            // "For each Spirit, return it unless that player pays {3}": a sweep of every player's matching permanents.
+            if (unless.forEach() instanceof PermanentSubject.ControlledBy objects
+                    && objects.players() instanceof PlayerSubject.Each
+                    && unless.ifNotPaid() instanceof BoardWipeEffect) {
+                return true;
+            }
             return unless.ifPaid() != null && isBoardWipeEffect(unless.ifPaid())
                     || unless.ifNotPaid() != null && isBoardWipeEffect(unless.ifNotPaid());
         }

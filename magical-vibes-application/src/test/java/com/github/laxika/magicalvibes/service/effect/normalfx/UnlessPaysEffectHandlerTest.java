@@ -606,4 +606,88 @@ class UnlessPaysEffectHandlerTest {
                 new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(), "land")))
                 .isEqualTo("Sacrifice a land");
     }
+
+    private Permanent permanentNamed(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        return new Permanent(card);
+    }
+
+    /** "For each creature, … unless its controller pays {1}" over {@code first} (player 1's) and {@code second}'s. */
+    private UnlessPaysEffect forEachCreature(StackEntry[] entryHolder, Permanent first, Permanent second) {
+        UnlessPaysEffect effect = UnlessPaysEffect.forEach(Subjects.allCreatures(),
+                Subjects.controllerOf(Subjects.allCreatures()), new PayManaCost("{1}"),
+                com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect::new);
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        entryHolder[0] = entry;
+        when(subjectResolutionService.players(gd, entry, effect, Subjects.eachPlayer()))
+                .thenReturn(List.of(player1Id, player2Id));
+        when(subjectResolutionService.permanentIds(gd, entry, effect, Subjects.allCreatures()))
+                .thenReturn(List.of(second.getId(), first.getId()));
+        lenient().when(subjectResolutionService.controllerOf(gd, entry, effect, first.getId())).thenReturn(player1Id);
+        lenient().when(subjectResolutionService.controllerOf(gd, entry, effect, second.getId())).thenReturn(player2Id);
+        lenient().when(gameQueryService.findPermanentById(gd, first.getId())).thenReturn(first);
+        lenient().when(gameQueryService.findPermanentById(gd, second.getId())).thenReturn(second);
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+        return effect;
+    }
+
+    @Test
+    @DisplayName("For each object: each object's controller is asked in APNAP order, then the unpaid ones are recorded")
+    void forEachAsksEachObjectsPayerThenRecordsTheUnpaidObjects() {
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+        gd.playerManaPools.put(player2Id, new ManaPool());
+        gd.playerManaPools.get(player2Id).add(ManaColor.GREEN, 1);
+        Permanent bears = permanentNamed("Grizzly Bears");
+        Permanent elves = permanentNamed("Llanowar Elves");
+        StackEntry[] holder = new StackEntry[1];
+        UnlessPaysEffect effect = forEachCreature(holder, bears, elves);
+        StackEntry entry = holder[0];
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        PendingMayAbility first = gd.pendingMayAbilities.removeFirst();
+        assertThat(first.controllerId()).isEqualTo(player1Id);
+        assertThat(first.description()).isEqualTo("Pay {1} for Grizzly Bears?");
+        handler.answer(gd, new Player(player1Id, "Player1"), true, first, effect);
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        PendingMayAbility second = gd.pendingMayAbilities.removeFirst();
+        assertThat(second.controllerId()).isEqualTo(player2Id);
+        assertThat(second.targetCardId()).isEqualTo(elves.getId());
+        handler.answer(gd, new Player(player2Id, "Player2"), false, second, effect);
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOT_PAID);
+        assertThat(entry.getResolutionResults().outcome(com.github.laxika.magicalvibes.model.StepKind.CHOOSE)
+                .objectIds()).containsExactly(elves.getId());
+        assertThat(entry.unlessAnswer(0)).isNull();
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("For each object: an object gone before its turn is skipped, and with every other paid for nothing happens")
+    void forEachSkipsAGoneObjectAndDoesNothingWhenEveryOtherWasPaidFor() {
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+        Permanent bears = permanentNamed("Grizzly Bears");
+        Permanent elves = permanentNamed("Llanowar Elves");
+        StackEntry[] holder = new StackEntry[1];
+        UnlessPaysEffect effect = forEachCreature(holder, bears, elves);
+        StackEntry entry = holder[0];
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player1Id, "Player1"), true, gd.pendingMayAbilities.removeFirst(), effect);
+        when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(null);
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOTHING);
+        assertThat(entry.getResolutionResults().outcome(com.github.laxika.magicalvibes.model.StepKind.CHOOSE)
+                .objectIds()).isEmpty();
+    }
 }

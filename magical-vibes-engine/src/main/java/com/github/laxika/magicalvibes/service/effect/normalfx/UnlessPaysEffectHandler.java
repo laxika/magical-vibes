@@ -26,6 +26,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.UnlessAnswer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllOfCost;
@@ -104,6 +107,12 @@ import org.springframework.stereotype.Component;
  * priority while the players answer and a triggered ability waits to be put on the stack until one would (CR 603.3),
  * so paying as each player accepts and countering after the last answer, as the plain loop does, can't be told apart
  * from countering at the first payment ("as soon as any player performs the action", the PLC punisher rulings).
+ *
+ * <p>"For each [object] … unless" ({@link UnlessPaysEffect#forEach}): the objects are found once and asked about one
+ * at a time in the APNAP order of their payers ({@link UnlessAnswer#remainingObjects}), each by its own payers (its
+ * controller or owner, or every player the subject names); an object that left before its turn is skipped. After the
+ * last answer the objects nobody paid for are recorded as the entry's {@code CHOOSE} step and {@code ifNotPaid},
+ * which acts on them, resolves once (CR 608.2c, 101.4).
  *
  * <p>What can pay: the payer's mana pool and the mana they could still make (they may activate mana abilities while
  * asked, CR 605.3a); mana that can be spent only on {X} for an announced-X ransom; 2 life for each {B} under K'rrik,
@@ -227,7 +236,10 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         PAID,
         /** Every payer answered (or could pay in no way at all) and none paid: {@code ifNotPaid}. */
         NOT_PAID,
-        /** Nobody is asked and nothing happens: the spell the effect is about left the stack. */
+        /**
+         * Nothing happens: the spell the effect is about left the stack, or a payment was made for every object of
+         * "for each [object] … unless".
+         */
         NOTHING,
         /** A part of an all-of ransom asks the payer a choice; the resolution waits on this effect for it. */
         PAYING
@@ -258,12 +270,15 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         int asked = Math.min(state.alternative(), alternatives.size() - 1);
         Ransom ransom = alternatives.get(asked);
         StackEntry spell = spellAskedAbout(gameData, entry, unless);
+        UUID object = state.currentObject();
         String prompt = unless.prompt() != null && alternatives.size() == 1 ? unless.prompt()
-                : ransom.action() + suffix(gameData, entry, unless, spell, payerId) + "?";
+                : ransom.action() + suffix(gameData, entry, unless, spell, payerId) + objectSuffix(gameData, object)
+                + "?";
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), payerId, List.of(unless), prompt,
-                spell == null ? entry.getTargetId() : spell.getTargetableId(), ransom.manaCost(),
+                object != null ? object : spell == null ? entry.getTargetId() : spell.getTargetableId(),
+                ransom.manaCost(),
                 entry.getSourcePermanentId(), null, 0, ransom.life(), null, null, null,
                 entry.getSourcePermanentSnapshot(), entry.getControllerId()));
     }
@@ -289,6 +304,11 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             }
             state = entry.unlessAnswer(index);
         }
+        if (state == null && unless.forEach() != null) {
+            List<UUID> objects = objectsToAskAbout(gameData, entry, unless);
+            state = UnlessAnswer.askingAbout(index, objects,
+                    objects.isEmpty() ? List.of() : objectPayers(gameData, entry, unless, objects.getFirst()));
+        }
         if (state == null) {
             List<UUID> payers = payers(gameData, entry, unless);
             if (payers == null) {
@@ -297,16 +317,39 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             state = UnlessAnswer.asking(index, payers);
         }
         boolean actionTaken = onceEachTurnActionTaken(gameData, entry);
-        while (state.currentPayer() != null) {
-            UUID head = state.currentPayer();
-            int payable = actionTaken || !gameData.playerIds.contains(head) ? -1
-                    : firstPayable(gameData, entry, head, alternatives(gameData, entry, unless, head),
-                    state.alternative());
-            if (payable >= 0) {
-                state = state.askingAlternative(payable);
+        while (true) {
+            while (state.currentPayer() != null) {
+                UUID head = state.currentPayer();
+                int payable = actionTaken || !gameData.playerIds.contains(head) ? -1
+                        : firstPayable(gameData, entry, head, alternatives(gameData, entry, unless, head),
+                        state.alternative());
+                if (payable >= 0) {
+                    state = state.askingAlternative(payable);
+                    break;
+                }
+                state = state.answered(false);
+            }
+            if (state.currentPayer() != null || state.currentObject() == null) {
                 break;
             }
-            state = state.answered(false);
+            // Every payer answered for this object: on to the next one still on the battlefield.
+            state = nextObject(gameData, entry, unless, state, false);
+            while (state.currentObject() != null
+                    && gameQueryService.findPermanentById(gameData, state.currentObject()) == null) {
+                state = nextObject(gameData, entry, unless, state, true);
+            }
+            if (state.currentObject() == null) {
+                break;
+            }
+        }
+        if (state.currentPayer() == null && unless.forEach() != null) {
+            // The branch acts once on every object nobody paid for, together (CR 608.2c, 101.4).
+            List<UUID> unpaid = state.unpaidObjectIds();
+            entry.recordStep(StepKind.CHOOSE, unpaid.isEmpty() ? StepOutcome.NONE : StepOutcome.ofObjects(unpaid,
+                    unpaid.stream().map(id -> subjectResolutionService.controllerOf(gameData, entry, unless, id))
+                            .filter(java.util.Objects::nonNull).distinct().toList()));
+            entry.clearUnlessAnswer(index);
+            return unpaid.isEmpty() ? Step.NOTHING : Step.NOT_PAID;
         }
         if (state.currentPayer() == null) {
             // "Those who didn't pay" (eachUnless) reads the payers who chose to pay (CR 101.4).
@@ -321,6 +364,63 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         }
         entry.setUnlessAnswer(state);
         return Step.ASK;
+    }
+
+    /**
+     * The objects "for each [object] … unless" asks about, found once (CR 608.2h): those of {@code unless.forEach()} on
+     * the battlefield, in the APNAP order of the player who answers for them (CR 101.4): their controller, or their
+     * owner for "its owner", in the order the subject names them within one player's.
+     */
+    private List<UUID> objectsToAskAbout(GameData gameData, StackEntry entry, UnlessPaysEffect unless) {
+        List<UUID> apnap = subjectResolutionService.players(gameData, entry, unless, Subjects.eachPlayer());
+        List<UUID> objects = new ArrayList<>(subjectResolutionService.permanentIds(gameData, entry, unless,
+                unless.forEach()).stream()
+                .distinct()
+                .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
+                .toList());
+        boolean byOwner = unless.payer() instanceof PlayerSubject.OwnerOf && unless.payerReadPerObject();
+        objects.sort(Comparator.comparingInt(id -> {
+            UUID player = byOwner ? subjectResolutionService.ownerOf(gameData, entry, unless, id)
+                    : subjectResolutionService.controllerOf(gameData, entry, unless, id);
+            int place = apnap.indexOf(player);
+            return place < 0 ? Integer.MAX_VALUE : place;
+        }));
+        return objects;
+    }
+
+    /**
+     * The players asked to pay for {@code objectId}: its controller or owner as it is now ({@code controllerOf} /
+     * {@code ownerOf} the objects, CR 608.2h), else every player the payer subject names, in APNAP order.
+     */
+    private List<UUID> objectPayers(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UUID objectId) {
+        if (!unless.payerReadPerObject()) {
+            return subjectResolutionService.players(gameData, entry, unless, unless.payer());
+        }
+        UUID player = unless.payer() instanceof PlayerSubject.OwnerOf
+                ? subjectResolutionService.ownerOf(gameData, entry, unless, objectId)
+                : subjectResolutionService.controllerOf(gameData, entry, unless, objectId);
+        return player == null ? List.of() : List.of(player);
+    }
+
+    /**
+     * {@code state} after every payer answered for its object ({@code skipped}: the object was gone): the next object
+     * is asked about, by its own payers.
+     */
+    private UnlessAnswer nextObject(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UnlessAnswer state,
+                                    boolean skipped) {
+        List<UUID> objects = state.remainingObjects();
+        UUID next = objects.size() > 1 ? objects.get(1) : null;
+        return state.nextObject(skipped, next == null || gameQueryService.findPermanentById(gameData, next) == null
+                ? List.of() : objectPayers(gameData, entry, unless, next));
+    }
+
+    /** " for Lantern Kami": the object "for each [object] … unless" asks about, by the name every player may read. */
+    private String objectSuffix(GameData gameData, UUID objectId) {
+        if (objectId == null) {
+            return "";
+        }
+        Permanent object = gameQueryService.findPermanentById(gameData, objectId);
+        return object == null ? "" : " for " + FaceDownVisibility.publicName(gameData, object);
     }
 
     /**

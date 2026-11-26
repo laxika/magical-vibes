@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -58,6 +59,9 @@ import java.util.Objects;
  * (CR 101.4). The players who chose to pay are the entry's accepted players
  * ({@code Subjects.acceptedPlayers()}) when the branch resolves.
  *
+ * <p>"For each [object], [do X to] it unless [P] pays" is a question for each object ({@link #forEach}): every
+ * object's payers choose, one object after another, then X happens once to the objects nobody paid for, together.
+ *
  * <p>A payer that is the effect's own target ("unless target opponent pays 3 life") declares that target when no
  * branch does ({@link #targetSpec()}).
  *
@@ -78,9 +82,10 @@ import java.util.Objects;
  * @param ifPaid    what happens when they pay, or {@code null} for nothing
  * @param prompt    the question asked, or {@code null} for the one the ransom reads ("Pay {1}?")
  * @param paidTogether whether every chosen payment is made together after the last answer ({@link #payingTogether()})
+ * @param forEach   the objects "for each [object] … unless" asks about one at a time ({@link #forEach}), or {@code null}
  */
 public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid,
-                               String prompt, boolean paidTogether)
+                               String prompt, boolean paidTogether, PermanentSubject forEach)
         implements CardEffect {
 
     public UnlessPaysEffect {
@@ -99,6 +104,15 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         if (paidTogether && !payableTogether(ransom)) {
             throw new IllegalArgumentException("No payment made together for this ransom: " + ransom);
         }
+        if (forEach != null && (ifNotPaid == null || ifPaid != null || paidTogether || forEach.declaresTarget())) {
+            throw new IllegalArgumentException("\"For each [object] … unless\" acts on the unpaid objects only, "
+                    + "paid as each player answers, and its objects aren't targets: " + forEach);
+        }
+    }
+
+    public UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid,
+                            String prompt, boolean paidTogether) {
+        this(payer, ransom, ifNotPaid, ifPaid, prompt, paidTogether, null);
     }
 
     public UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid) {
@@ -392,6 +406,36 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
                 effect.apply(Subjects.except(payers, Subjects.acceptedPlayers())));
     }
 
+    /**
+     * "For each {@code objects}, [do X to] that object unless {@code payer} {@code ransom}" ("for each Spirit, return it
+     * to its owner's hand unless that player pays {3}", "for each land, destroy that land unless any player pays 1
+     * life"). The objects are found once, as it resolves (CR 608.2h), and asked about one at a time, in the APNAP order
+     * of their payers (CR 101.4); for each one, its payer is {@code Subjects.controllerOf(objects)} or
+     * {@code Subjects.ownerOf(objects)} read for that object ("its controller", "that player"), or every player another
+     * subject names ("any player": each asked, every one even after another paid). Each payment is made as it is
+     * chosen. After the last answer, {@code effect} happens once to every object nobody paid for, together
+     * ({@code effect.apply(Subjects.thisWay(StepKind.CHOOSE))}: the unpaid objects are recorded as a {@code CHOOSE}
+     * step): one destroy or return event (CR 608.2c, 101.4). An object that left before it is asked about is skipped.
+     *
+     * @param effect the branch over the objects nobody paid for
+     */
+    public static UnlessPaysEffect forEach(PermanentSubject objects, PlayerSubject payer, CostEffect ransom,
+                                           java.util.function.Function<PermanentSubject, CardEffect> effect) {
+        return new UnlessPaysEffect(payer, ransom,
+                Objects.requireNonNull(effect.apply(Subjects.thisWay(StepKind.CHOOSE)),
+                        "effect"), null, null, false, Objects.requireNonNull(objects, "objects"));
+    }
+
+    /**
+     * Whether {@code payer} is read for each object of {@link #forEach} ("its controller", "its owner"), rather than
+     * naming the same players for every object.
+     */
+    public boolean payerReadPerObject() {
+        return forEach != null && (payer instanceof PlayerSubject.ControllerOf(PermanentSubject objects)
+                && objects.equals(forEach)
+                || payer instanceof PlayerSubject.OwnerOf(PermanentSubject owned) && owned.equals(forEach));
+    }
+
     private static UnlessPaysEffect counter(CostEffect ransom) {
         return new UnlessPaysEffect(Subjects.controllerOf(Subjects.targetSpell()), ransom, new CounterSpellEffect(), null);
     }
@@ -402,25 +446,25 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             throw new IllegalStateException("Only a counter exiles what it counters: " + ifNotPaid);
         }
         return new UnlessPaysEffect(payer, ransom,
-                new CounterSpellEffect(CounteredSpellDestination.EXILE, counter.spell()), ifPaid, prompt, paidTogether);
+                new CounterSpellEffect(CounteredSpellDestination.EXILE, counter.spell()), ifPaid, prompt, paidTogether, forEach);
     }
 
     /** "If they do / If that player pays, [effect]." */
     public UnlessPaysEffect ifPaid(CardEffect effect) {
         return new UnlessPaysEffect(payer, ransom, ifNotPaid, Objects.requireNonNull(effect, "effect"), prompt,
-                paidTogether);
+                paidTogether, forEach);
     }
 
     /** "If they don't / If you don't, [effect]." */
     public UnlessPaysEffect ifNotPaid(CardEffect effect) {
         return new UnlessPaysEffect(payer, ransom, Objects.requireNonNull(effect, "effect"), ifPaid, prompt,
-                paidTogether);
+                paidTogether, forEach);
     }
 
     /** This payment asked with {@code question} rather than the question its ransom reads ("Pay {1}?"). */
     public UnlessPaysEffect withPrompt(String question) {
         return new UnlessPaysEffect(payer, ransom, ifNotPaid, ifPaid, Objects.requireNonNull(question, "question"),
-                paidTogether);
+                paidTogether, forEach);
     }
 
     /**
@@ -429,7 +473,7 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
      * sacrifice, a tap, damage from the source or "has you draw a card".
      */
     public UnlessPaysEffect payingTogether() {
-        return new UnlessPaysEffect(payer, ransom, ifNotPaid, ifPaid, prompt, true);
+        return new UnlessPaysEffect(payer, ransom, ifNotPaid, ifPaid, prompt, true, forEach);
     }
 
     /**

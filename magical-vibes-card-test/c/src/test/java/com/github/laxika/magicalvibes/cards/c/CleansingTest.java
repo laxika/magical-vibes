@@ -58,11 +58,31 @@ class CleansingTest extends BaseCardTest {
         castCleansing();
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(findPermanents(player2, "City of Shadows")).hasSize(1);
         harness.assertLife(player1, life1 - 1);
+    }
+
+    @Test
+    @DisplayName("Every player is asked for a land, even after another player paid for it (CR 101.4)")
+    void everyPlayerIsAskedEvenAfterOnePaid() {
+        harness.addToBattlefield(player2, new CityOfShadows());
+        int life1 = gd.getLife(player1.getId());
+        int life2 = gd.getLife(player2.getId());
+        castCleansing();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "City of Shadows");
+        harness.assertLife(player1, life1 - 1);
+        harness.assertLife(player2, life2 - 1);
     }
 
     @Test
@@ -203,6 +223,7 @@ class CleansingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertDeathReplacementAskedWhileArborStays(player1, arbor);
         harness.assertLife(player1, 19);

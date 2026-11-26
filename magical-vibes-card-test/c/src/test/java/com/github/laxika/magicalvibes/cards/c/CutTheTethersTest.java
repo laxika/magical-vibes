@@ -177,7 +177,41 @@ class CutTheTethersTest extends BaseCardTest {
         return spirit;
     }
 
+    @Test
+    @DisplayName("Declined Spirits are returned together, after the last answer")
+    void declinedSpiritsAreReturnedTogetherAfterTheLastAnswer() {
+        harness.addToBattlefield(player2, new LanternKami());
+        harness.addToBattlefield(player2, new LanternKami());
+        castCutTheTethers();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(countPermanents(player2, "Lantern Kami")).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(countPermanents(player2, "Lantern Kami")).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).filteredOn(card -> card.getName().equals("Lantern Kami"))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An owner with no way at all to make mana isn't asked, and the Spirit is returned")
+    void ownerWithNoManaSourceIsNotAsked() {
+        harness.addToBattlefield(player2, new LanternKami());
+        harness.castFromHand(player1, new CutTheTethers(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Lantern Kami");
+    }
+
+    /** Both players have a way to make mana, so each owner is asked (a payer with none isn't, CR 118.3, 608.2d). */
     private void castCutTheTethers() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.castFromHand(player1, new CutTheTethers(), "{2}{U}{U}");
         harness.passBothPriorities();
     }

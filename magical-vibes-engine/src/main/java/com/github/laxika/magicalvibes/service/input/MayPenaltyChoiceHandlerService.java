@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
@@ -41,8 +39,6 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler returnMatchingPermanentsUnlessOwnerPaysEffectHandler;
     private final LifeSupport lifeSupport;
     private final ResolutionCostPaymentService resolutionCostPaymentService;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
@@ -153,67 +149,6 @@ public class MayPenaltyChoiceHandlerService {
 
         revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler.afterCardDecision(
                 gameData, ability, effect, targetPlayerId, false);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Giant Albatross: the damaging creature's controller either pays the life or that creature is
-     * destroyed and can't be regenerated; either way the next queued damaging creature is offered, and
-     * after the last decision the unpaid creatures are destroyed together (CR 101.4).
-     */
-    public void handleDestroyCreaturesThatDamagedSourceUnlessPaysLifeChoice(GameData gameData, Player player,
-            boolean accepted, PendingMayAbility ability,
-            DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect effect) {
-        UUID payingPlayerId = ability.controllerId(); // the damaging creature's controller — decision maker
-
-        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, payingPlayerId)
-                && gameData.getLife(payingPlayerId) >= effect.lifeCost();
-        if (accepted && canPay) {
-            payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(payingPlayerId, effect.lifeCost()),
-                    () -> {
-                        destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
-                                gameData, ability, effect, true, () -> {
-                                    lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
-                                            ability.sourceCard().getName());
-                                    log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
-                                            player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
-                                });
-                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-                    });
-            return;
-        }
-
-        destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
-                gameData, ability, effect, false, () -> { });
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Cut the Tethers: one pay-or-be-bounced decision per matching permanent, made by that
-     * permanent's OWNER ("unless that player pays" refers back to the owner just named, so a
-     * stolen permanent is paid for by the player whose hand it would return to). Accepting spends
-     * the mana and keeps it; declining (or accepting without the mana) returns it to its owner's
-     * hand. Either way the next queued permanent is then offered.
-     */
-    public void handleReturnMatchingPermanentsUnlessOwnerPaysChoice(GameData gameData, Player player,
-            boolean accepted, PendingMayAbility ability,
-            ReturnMatchingPermanentsUnlessOwnerPaysEffect effect) {
-        UUID payingPlayerId = ability.controllerId();
-
-        boolean paid = false;
-        if (accepted) {
-            if (resolutionCostPaymentService.payManaFromPool(gameData, payingPlayerId,
-                    new ManaCost(effect.manaCost()), ability.sourceControllerId())) {
-                paid = true;
-                gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));
-                log.info("Game {} - {} pays {} to keep a permanent ({})", gameData.id,
-                        player.getUsername(), effect.manaCost(), ability.sourceCard().getName());
-            }
-        }
-
-        returnMatchingPermanentsUnlessOwnerPaysEffectHandler.afterPermanentDecision(
-                gameData, ability, effect, paid);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

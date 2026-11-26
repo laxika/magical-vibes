@@ -312,6 +312,7 @@ class TaxTakerTest extends BaseCardTest {
         void cutTheTethersPayment() {
             harness.addToBattlefield(player1, new TaxTaker());
             harness.addToBattlefield(player2, new LanternKami());
+            giveManaSource(player2);
             harness.castFromHand(player1, new CutTheTethers(), "{2}{U}{U}");
             harness.passBothPriorities();
 
