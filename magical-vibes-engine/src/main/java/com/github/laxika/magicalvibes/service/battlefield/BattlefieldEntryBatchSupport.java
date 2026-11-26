@@ -389,10 +389,10 @@ public class BattlefieldEntryBatchSupport {
         var as = candidate.entering();
         if (as == null) return;
         UUID controllerId = candidate.controllerId();
-        if (as.counter() != null && as.counters() > 0
+        if (as.counter() != null && as.counterCount() > 0
                 && !gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
             int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
-                    as.counter(), as.counters(), controllerId);
+                    as.counter(), as.counterCount(), controllerId);
             if (counters > 0) {
                 permanent.setCounterCount(as.counter(), permanent.getCounterCount(as.counter()) + counters);
                 permanent.setCounterTimestamp(as.counter(), gameData.nextTimestamp());

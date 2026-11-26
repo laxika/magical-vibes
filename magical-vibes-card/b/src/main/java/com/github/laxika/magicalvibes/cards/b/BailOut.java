@@ -25,7 +25,7 @@ public class BailOut extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{B}{B}"))));
 
         SequenceEffect returnAndDamage = SequenceEffect.of(
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true, false, java.util.Set.of(), null, false, true),
+                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true, false, true),
                 DealDamageEffect.to(Subjects.eachOpponent(), 1));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),

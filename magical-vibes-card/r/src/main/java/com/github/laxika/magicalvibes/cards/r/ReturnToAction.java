@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 @CardRegistration(set = "NEO", collectorNumber = "121")
 public class ReturnToAction extends Card {
@@ -23,6 +23,6 @@ public class ReturnToAction extends Card {
                 .addSpellEffect(BoostEffect.target(1, 0))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToBattlefieldEffect(true))));
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped())));
     }
 }

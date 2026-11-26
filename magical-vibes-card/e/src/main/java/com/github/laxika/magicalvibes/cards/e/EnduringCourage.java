@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
 @CardRegistration(set = "DSK", collectorNumber = "133")
 public class EnduringCourage extends Card {
@@ -23,6 +24,7 @@ public class EnduringCourage extends Card {
                         BoostEffect.of(Subjects.triggering(), 2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering())));
         addTrigger(Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS),
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT)));
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard())
+                .enteringWith(new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.target())));
     }
 }

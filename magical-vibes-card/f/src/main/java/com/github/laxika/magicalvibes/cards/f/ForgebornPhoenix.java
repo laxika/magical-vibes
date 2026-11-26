@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -28,6 +27,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 @CardRegistration(set = "YNEO", collectorNumber = "23")
 public class ForgebornPhoenix extends Card {
@@ -37,7 +37,7 @@ public class ForgebornPhoenix extends Card {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.source(),
                 Duration.WHILE_ATTACHED));
 
-        var returnTrigger = new ReturnSourceCardFromGraveyardToBattlefieldEffect(true);
+        var returnTrigger = new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped();
         var returnAbility = new TriggeredAbility(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker().withFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentIsEquippedPredicate()))),
                         AbilityZones.GRAVEYARD),
                 returnTrigger);

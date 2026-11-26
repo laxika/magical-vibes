@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YEOE", collectorNumber = "9")
 public class CantorOfTheRefrain extends Card {
@@ -24,7 +25,7 @@ public class CantorOfTheRefrain extends Card {
                         .withStackEntryFilter(new StackEntryCastWithWarpCostPredicate()), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 SequenceEffect.of(
-                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),
+                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()),
                         new PerpetuallyBoostCardEffect(this, 1, 0)));
     }
 }

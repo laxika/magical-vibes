@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "100")
 public class PresumedDead extends Card {
@@ -22,7 +22,7 @@ public class PresumedDead extends Card {
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         SequenceEffect.of(
-                                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()),
                                 new SuspectEffect(Subjects.returnedThisResolution())))));
     }
 }

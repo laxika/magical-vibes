@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FDN", collectorNumber = "174")
 @CardRegistration(set = "OTJ", collectorNumber = "87")
@@ -23,7 +24,7 @@ public class FakeYourOwnDeath extends Card {
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         SequenceEffect.of(
-                                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true),
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped(),
                                 CreateTokenEffect.ofTreasureToken(1)))));
     }
 }

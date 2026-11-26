@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbnormalEndurance.class, GreenwoodSentinel.class, Murder.class})
+@CardUsed({AbnormalEndurance.class, GreenwoodSentinel.class, Murder.class, Clone.class})
 class AbnormalEnduranceTest extends BaseCardTest {
 
     private void castOn(Permanent target) {
@@ -147,5 +149,45 @@ class AbnormalEnduranceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(creatureCard.getId()) && p.isTapped());
+    }
+
+    @Test
+    @DisplayName("A Clone copying a creature returns as its own card and may copy again as it enters")
+    void cloneReturnsAsItsOwnCard() {
+        harness.addToBattlefield(player2, new GreenwoodSentinel());
+        Clone cloneCard = new Clone();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, cloneCard, "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Greenwood Sentinel"));
+        Permanent clone = findPermanent(player1, "Greenwood Sentinel");
+
+        castOn(clone);
+        murder(player2, clone);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Greenwood Sentinel"));
+
+        Permanent returned = findPermanent(player1, "Greenwood Sentinel");
+        assertThat(returned.getOriginalCard().getId()).isEqualTo(cloneCard.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(cloneCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Logs the returned creature entering the battlefield")
+    void logsTheReturn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
+
+        castOn(creature);
+        murder(player2, creature);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("Greenwood Sentinel enters the battlefield.")).isTrue();
     }
 }

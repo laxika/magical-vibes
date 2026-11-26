@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 @CardRegistration(set = "YBRO", collectorNumber = "11")
 public class TomakulPhoenix extends Card {
@@ -23,7 +23,7 @@ public class TomakulPhoenix extends Card {
         addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 new UnlessPaysEffect(Subjects.you(), PayManaCost.withGenericIncrease("{R}", new SourceCardPower()), null,
-                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),
+                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()),
                         "Pay {X}{R}, where X is Tomakul Phoenix's power, to return it from your graveyard to the battlefield?"));
     }
 }

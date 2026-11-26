@@ -13,6 +13,6 @@ public class RunebladeRaiser extends Card {
     public RunebladeRaiser() {
         addStaticEffect(new EntersTappedEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, false, true));
+                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, true, false));
     }
 }

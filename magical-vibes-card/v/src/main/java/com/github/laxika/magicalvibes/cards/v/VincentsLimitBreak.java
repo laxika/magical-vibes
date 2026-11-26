@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FIN", collectorNumber = "126")
 public class VincentsLimitBreak extends Card {
@@ -25,7 +26,7 @@ public class VincentsLimitBreak extends Card {
                                 new SetBasePowerToughnessEffect(3, 2),
                                 new GrantEffectToTargetUntilEndOfTurnEffect(
                                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)))),
+                                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped()))),
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Death Gigas — {1} — 5/2",
@@ -33,7 +34,7 @@ public class VincentsLimitBreak extends Card {
                                 new SetBasePowerToughnessEffect(5, 2),
                                 new GrantEffectToTargetUntilEndOfTurnEffect(
                                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)))),
+                                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped()))),
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Hellmasker — {3} — 7/2",
@@ -41,7 +42,7 @@ public class VincentsLimitBreak extends Card {
                                 new SetBasePowerToughnessEffect(7, 2),
                                 new GrantEffectToTargetUntilEndOfTurnEffect(
                                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)))),
+                                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped()))),
                         TargetFilters.creatureYouControl())
         )));
         addCastingCost(new TieredManaCost(List.of("", "{1}", "{3}")));

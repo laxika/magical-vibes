@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PCY", collectorNumber = "60")
 public class CoffinPuppets extends Card {
@@ -23,7 +24,7 @@ public class CoffinPuppets extends Card {
                 null,
                 List.of(
                         new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate()),
-                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(false)
+                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard())
                 ),
                 "Sacrifice two lands: Return this card from your graveyard to the battlefield. "
                         + "Activate only during your upkeep and only if you control a Swamp.",

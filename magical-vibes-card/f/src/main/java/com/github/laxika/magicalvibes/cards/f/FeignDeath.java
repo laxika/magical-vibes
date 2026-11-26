@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AFR", collectorNumber = "103")
 public class FeignDeath extends Card {
@@ -17,7 +18,7 @@ public class FeignDeath extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true,
-                                CounterType.PLUS_ONE_PLUS_ONE))));
+                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped()
+                                .withCounters(CounterType.PLUS_ONE_PLUS_ONE, 1))));
     }
 }

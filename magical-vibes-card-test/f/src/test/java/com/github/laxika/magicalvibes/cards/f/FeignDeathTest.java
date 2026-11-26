@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FeignDeath.class, PowerWordKill.class, DireWolfProwler.class})
+@CardUsed({FeignDeath.class, PowerWordKill.class, DireWolfProwler.class, GrafdiggersCage.class})
 class FeignDeathTest extends BaseCardTest {
 
     @Test
@@ -150,6 +151,23 @@ class FeignDeathTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(creatureCard.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
+    @Test
+    @DisplayName("Grafdigger's Cage keeps the dead creature in its graveyard")
+    void grafdiggersCageKeepsItInTheGraveyard() {
+        Permanent creature = addCreature(player1);
+        var creatureCard = creature.getCard();
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+
+        castOn(creature);
+        destroy(player2, creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(creatureCard.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(creatureCard.getId()));
+    }
+
     private Permanent addCreature(Player player) {
         return addCreatureReady(player, new DireWolfProwler());
     }

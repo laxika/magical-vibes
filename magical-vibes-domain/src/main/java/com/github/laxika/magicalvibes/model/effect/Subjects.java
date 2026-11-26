@@ -454,7 +454,9 @@ public final class Subjects {
 
     /**
      * "This card", "it" of the ability's own object wherever the ability refers to it, while it is still that object
-     * ({@link CardSubject.SourceObjectCard}); only for the perpetual verbs and a graveyard cast permission.
+     * ({@link CardSubject.SourceObjectCard}): for the perpetual verbs, a graveyard cast permission and "return this card
+     * / it to the battlefield" ({@link PutCardsOntoBattlefieldEffect}), where a copy's dies trigger returns the copying
+     * card and a card that left the graveyard and came back is a new object (CR 400.7, 400.7e).
      */
     public static CardSubject sourceObjectCard() {
         return new CardSubject.SourceObjectCard();

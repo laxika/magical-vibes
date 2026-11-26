@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -20,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M3C", collectorNumber = "1")
 @CardRegistration(set = "M3C", collectorNumber = "12")
@@ -34,7 +35,7 @@ public class DisaTheRestless extends Card {
         addTrigger(Triggers.putIntoGraveyardFromAnywhereButBattlefield(new PermanentAllOfPredicate(List.of(
                         Triggers.PERMANENT_CARD, new PermanentHasSubtypePredicate(CardSubtype.LHURGOYF))),
                         ObjectRelation.ANOTHER_YOU_OWN),
-                new ReturnTriggeringCardFromGraveyardToBattlefieldEffect());
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards()));
 
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);

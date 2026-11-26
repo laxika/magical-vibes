@@ -2,19 +2,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -27,6 +21,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Returns the source card from its graveyard to the battlefield for Runeblade Raiser and Bail Out
+ * ({@link ReturnSourceCardFromGraveyardToBattlefieldEffect}): the source permanent's own card (a copy's, its copying
+ * card), in the graveyard stay the ability recorded.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -84,31 +83,7 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
         if (e.tapped()) {
             permanent.tap();
         }
-        if (e.enterWithCounter() != null) {
-            int counterCount = gameQueryService.cantHaveCountersForController(gameData, permanent, ownerId)
-                    ? 0
-                    : e.enterWithCounter() == CounterType.PLUS_ONE_PLUS_ONE
-                    ? gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, ownerId, 1)
-                    : gameQueryService.replaceCounters(gameData, permanent, ownerId,
-                    e.enterWithCounter(), 1, entry.getControllerId());
-            if (counterCount > 0) {
-                permanent.setCounterCount(e.enterWithCounter(), counterCount);
-            }
-        }
-        if (e.losesAllAbilities()) {
-            // "Return it to the battlefield ... and it loses all abilities": it has none as it enters, so its own
-            // entry abilities don't apply.
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), card.getName(), null,
-                    entry.getControllerId(), new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT),
-                    permanent.getId(), null, null, Duration.PERMANENT, 0));
-        }
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
-        if (!e.overriddenCardTypes().isEmpty()) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), card.getName(), null, entry.getControllerId(),
-                    new SetCardTypesEffect(e.overriddenCardTypes(), Subjects.target()),
-                    permanent.getId(), null, null, Duration.PERMANENT, 0));
-        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(ownerId);

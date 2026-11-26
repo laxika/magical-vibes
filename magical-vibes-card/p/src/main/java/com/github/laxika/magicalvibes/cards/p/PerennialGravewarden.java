@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YECL", collectorNumber = "24")
 public class PerennialGravewarden extends Card {
@@ -34,6 +35,6 @@ public class PerennialGravewarden extends Card {
                                 new PermanentEnteredThisTurn(
                                         new CardTypePredicate(CardType.CREATURE), 1, CountScope.ANY_PLAYER),
                                 new CreaturesDiedThisTurnAtLeast(1)))),
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true));
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped());
     }
 }

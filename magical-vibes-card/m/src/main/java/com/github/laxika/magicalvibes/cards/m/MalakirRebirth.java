@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZNR", collectorNumber = "111")
 public class MalakirRebirth extends Card {
@@ -28,7 +29,7 @@ public class MalakirRebirth extends Card {
                                 new LoseLifeEffect(2),
                                 new GrantEffectToTargetUntilEndOfTurnEffect(
                                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)))),
+                                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped()))),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption("Malakir Mire", List.of())
         )));

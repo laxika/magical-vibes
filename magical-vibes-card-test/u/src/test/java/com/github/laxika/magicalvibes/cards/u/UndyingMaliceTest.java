@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.cards.h.HerosDownfall;
 import com.github.laxika.magicalvibes.cards.t.TravelingMinister;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UndyingMalice.class, HerosDownfall.class, TravelingMinister.class})
+@CardUsed({UndyingMalice.class, HerosDownfall.class, TravelingMinister.class, HardenedScales.class})
 class UndyingMaliceTest extends BaseCardTest {
 
     @Test
@@ -156,6 +157,20 @@ class UndyingMaliceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Traveling Minister");
         harness.assertNotOnBattlefield(player1, "Traveling Minister");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hardened Scales gives the returning creature one more +1/+1 counter")
+    void hardenedScalesAddsACounterToTheReturn() {
+        Permanent target = addCreature(player1);
+        harness.addToBattlefield(player1, new HardenedScales());
+
+        castUndyingMalice(player1, target.getId());
+        castRemoval(player2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Traveling Minister")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private Permanent addCreature(Player player) {

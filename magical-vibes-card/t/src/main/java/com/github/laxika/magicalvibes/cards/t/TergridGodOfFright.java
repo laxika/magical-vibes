@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KHM", collectorNumber = "112")
 @CardRegistration(set = "KHM", collectorNumber = "307")
@@ -23,7 +24,7 @@ public class TergridGodOfFright extends Card {
         setModalDoubleFaced(true);
 
         MayEffect returnSacrificedPermanent = new MayEffect(
-                new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(false, true),
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards()).underControlOf(Subjects.you()),
                 "Put that card onto the battlefield under your control?");
         addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS), returnSacrificedPermanent);
 

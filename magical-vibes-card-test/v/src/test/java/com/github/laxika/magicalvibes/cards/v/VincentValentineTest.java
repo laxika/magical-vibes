@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -147,6 +148,25 @@ class VincentValentineTest extends BaseCardTest {
         assertThat(returned.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(originalCard.getId()));
+    }
+
+    @Test
+    @DisplayName("A stolen Galian Beast returns under the control of the player who controlled it")
+    void stolenGalianBeastReturnsUnderItsControllersControl() {
+        Permanent galian = harness.addToBattlefieldAndReturn(player2, new VincentValentine());
+        galian.setCard(galian.getOriginalCard().getBackFaceCard());
+        galian.setTransformed(true);
+        gd.stolenCreatures.put(galian.getId(), player1.getId());
+        Card originalCard = galian.getOriginalCard();
+        galian.setMarkedDamage(gqs.getEffectiveToughness(gd, galian));
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getOriginalCard().getId().equals(originalCard.getId())
+                        && permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getOriginalCard().getId().equals(originalCard.getId()));
     }
 
     private Permanent addVincent(Player player) {

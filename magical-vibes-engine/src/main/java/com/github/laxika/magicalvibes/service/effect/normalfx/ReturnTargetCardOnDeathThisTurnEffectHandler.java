@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -44,11 +45,15 @@ public class ReturnTargetCardOnDeathThisTurnEffectHandler implements NormalEffec
         var register = (ReturnTargetCardOnDeathThisTurnEffect) effect;
         PermanentPredicate filter = register.requireControllerGraveyard()
                 ? new PermanentOwnedBySourceControllerPredicate() : null;
+        PutCardsOntoBattlefieldEffect returnIt = new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards(),
+                register.enterTapped());
+        if (register.returnUnderController()) {
+            returnIt = returnIt.underControlOf(Subjects.you());
+        }
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(Triggers.dies(filter, ObjectRelation.THIS),
-                        new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(register.enterTapped(),
-                                register.returnUnderController())),
+                        returnIt),
                 target.getId(), entry.getSourcePermanentId(), true));
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, return it to the battlefield",

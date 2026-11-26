@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,20 +36,38 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
      *
      * @param faceDown its face-down characteristics (CR 708.2); {@code null} for face up
      * @param counter  a kind of counter it enters with; {@code null} for none
-     * @param counters how many of those counters
+     * @param counters how many of those counters, worked out once as the effect is applied (CR 608.2h): "with one fewer
+     *                 revival counter on it" of a delayed return reads the number its maker noted
      * @param host     what it enters attached to ("attached to a creature that shares a creature type with that
      *                 creature", "attached to you"); {@code null} where the effect names nothing (CR 303.4f)
      * @param grants   continuous effects without a duration on it, each reading {@code Subjects.target()}, in effect
      *                 as it enters ("that creature is a black Zombie in addition to its other colors and types",
      *                 "she's a land named Moon")
      */
-    public record EnteringAs(FaceDown faceDown, CounterType counter, int counters, List<CardEffect> grants,
+    public record EnteringAs(FaceDown faceDown, CounterType counter, DynamicAmount counters, List<CardEffect> grants,
                              AttachedTo host) {
 
-        static final EnteringAs NOTHING_ELSE = new EnteringAs(null, null, 0, List.of(), null);
+        static final EnteringAs NOTHING_ELSE = new EnteringAs(null, null, new Fixed(0), List.of(), null);
 
         public EnteringAs {
+            Objects.requireNonNull(counters, "counters");
             grants = List.copyOf(grants);
+        }
+
+        /** This, with its counter count worked out as {@code count}. */
+        public EnteringAs withCounterCount(int count) {
+            return new EnteringAs(faceDown, counter, new Fixed(count), grants, host);
+        }
+
+        /**
+         * How many counters it enters with, once the effect putting it there has worked the count out
+         * ({@link #withCounterCount}).
+         */
+        public int counterCount() {
+            if (!(counters instanceof Fixed(int value))) {
+                throw new IllegalStateException("The counter count is worked out as the effect is applied: " + counters);
+            }
+            return value;
         }
     }
 
@@ -140,6 +160,14 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
 
     /** These cards each entering with {@code count} counters of that kind. */
     public PutCardsOntoBattlefieldEffect withCounters(CounterType counter, int count) {
+        return withCounters(counter, new Fixed(count));
+    }
+
+    /**
+     * These cards each entering with that many counters of that kind, the number worked out once as the effect is
+     * applied (CR 608.2h).
+     */
+    public PutCardsOntoBattlefieldEffect withCounters(CounterType counter, DynamicAmount count) {
         EnteringAs as = enteringAs();
         return new PutCardsOntoBattlefieldEffect(cards, tapped, controller,
                 new EnteringAs(as.faceDown(), counter, count, as.grants(), as.host()));

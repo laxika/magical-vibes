@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AKH", collectorNumber = "111")
 @CardRegistration(set = "AKR", collectorNumber = "126")
@@ -24,6 +25,6 @@ public class SupernaturalStamina extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(BoostEffect.target(2, 0))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToBattlefieldEffect(true))));
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped())));
     }
 }

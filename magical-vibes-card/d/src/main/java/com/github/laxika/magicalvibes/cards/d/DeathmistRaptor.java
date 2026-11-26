@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -31,7 +30,7 @@ public class DeathmistRaptor extends Card {
                 new MayEffect(
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("Face up",
-                                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false)),
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard())),
                         new ChooseOneEffect.ChooseOneOption("Face down",
                                 new PutCardsOntoBattlefieldEffect(Subjects.sourceCard()).faceDown())
                 )),

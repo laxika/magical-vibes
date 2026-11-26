@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M21", collectorNumber = "122")
 @CardRegistration(set = "C21", collectorNumber = "154")
@@ -24,7 +25,7 @@ public class SilversmoteGhoul extends Card {
         // card from your graveyard to the battlefield tapped.
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn(3)),
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true));
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped());
 
         // {1}{B}, Sacrifice this creature: Draw a card.
         addActivatedAbility(new ActivatedAbility(

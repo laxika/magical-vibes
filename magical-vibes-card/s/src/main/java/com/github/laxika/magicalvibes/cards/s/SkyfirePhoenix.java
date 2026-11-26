@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "C19", collectorNumber = "28")
 public class SkyfirePhoenix extends Card {
@@ -16,6 +17,6 @@ public class SkyfirePhoenix extends Card {
         addTrigger(new TriggerCondition(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntrySourceIsCommanderPredicate()), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false));
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()));
     }
 }

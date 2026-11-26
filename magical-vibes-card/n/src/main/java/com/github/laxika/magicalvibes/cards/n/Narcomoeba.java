@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "GRN", collectorNumber = "47")
 @CardRegistration(set = "FUT", collectorNumber = "54")
@@ -18,7 +19,7 @@ public class Narcomoeba extends Card {
 
     public Narcomoeba() {
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, ObjectRelation.THIS), new MayEffect(
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()),
                 "Put Narcomoeba onto the battlefield?"));
     }
 }

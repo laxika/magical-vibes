@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "117")
 public class MoltenFirebird extends Card {
@@ -23,7 +23,7 @@ public class MoltenFirebird extends Card {
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 RegisterDelayedStepTriggerEffect.aboutCardAtNext(
                         Triggers.endStep(ActivePlayer.ANY), Subjects.sourceCard(),
-                        new ReturnTriggeringCardFromGraveyardToBattlefieldEffect()),
+                        new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())),
                 new SkipNextEffect(SkipKind.DRAW_STEP)));
 
         addActivatedAbility(new ActivatedAbility(false, "{4}{R}",

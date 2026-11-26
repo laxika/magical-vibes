@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1345")
 @CardRegistration(set = "VOC", collectorNumber = "31")
@@ -52,7 +52,7 @@ public class BreathkeeperSeraph extends Card {
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                                 RegisterDelayedStepTriggerEffect.aboutCardAtNext(
                                         Triggers.upkeep(ActivePlayer.YOU), Subjects.sourceCard(),
-                                        new MayEffect(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(),
+                                        new MayEffect(new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards()),
                                                 "Return this creature to the battlefield?"))),
                         Subjects.sourceAndPaired())));
     }

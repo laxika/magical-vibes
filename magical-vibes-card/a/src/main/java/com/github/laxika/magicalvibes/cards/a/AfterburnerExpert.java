@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DFT", collectorNumber = "150")
 public class AfterburnerExpert extends Card {
@@ -27,6 +28,6 @@ public class AfterburnerExpert extends Card {
 
         addTrigger(new TriggerCondition(Triggers.youActivateExhaustAbility(), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false));
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()));
     }
 }

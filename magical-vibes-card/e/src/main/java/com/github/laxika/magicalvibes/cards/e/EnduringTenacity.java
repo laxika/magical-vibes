@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
 @CardRegistration(set = "DSK", collectorNumber = "95")
 public class EnduringTenacity extends Card {
@@ -25,6 +26,7 @@ public class EnduringTenacity extends Card {
         )).addTrigger(Triggers.youGainLife(),
                 new LoseLifeEffect(new EventValue(), Subjects.targetPlayer()));
         addTrigger(Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS),
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT)));
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard())
+                .enteringWith(new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.target())));
     }
 }

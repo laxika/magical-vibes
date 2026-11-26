@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfSourceCardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -27,6 +26,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
 @CardRegistration(set = "YDSK", collectorNumber = "20")
 public class EnduringFriendship extends Card {
@@ -48,6 +49,7 @@ public class EnduringFriendship extends Card {
                         new PermanentIsEnchantmentPredicate()))));
 
         addTrigger(Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS),
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT)));
+                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard())
+                .enteringWith(new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.target())));
     }
 }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "101")
 public class NotDeadAfterAll extends Card {
@@ -30,7 +30,7 @@ public class NotDeadAfterAll extends Card {
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         SequenceEffect.of(
-                                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true),
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard()).enteringTapped(),
                                 new CreateTokenAttachedToTargetEffect(
                                         wickedRoleToken(), Subjects.returnedThisResolution())))));
     }

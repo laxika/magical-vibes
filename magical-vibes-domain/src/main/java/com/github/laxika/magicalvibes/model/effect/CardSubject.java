@@ -17,7 +17,7 @@ import java.util.Objects;
  * {@link InLibrary}, {@link TopmostInLibrary}, {@link TriggeringCardsInHand}, {@link Owned} and {@link OutsideTheGame}
  * ({@link #inHiddenZone()}): they say nothing about who may see those cards. {@link Owned}, {@link CardsOf} and
  * {@link SourceObjectCard} also name the cards of permanents and spells, so only the perpetual verbs and a verb that
- * looks at the zone it is given (a graveyard cast permission) read them.
+ * looks at the zone it is given (a graveyard cast permission, a put onto the battlefield) read them.
  *
  * <p>{@link TargetCard} and {@link TargetExiledCard} declare a card target, and a variant of a target player's cards
  * that player ({@link #declaresTarget()}, {@link #targetSpec()}). A static ability can use {@link InExile},
@@ -156,9 +156,11 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * source permanent's own card while it is that permanent, the card in the graveyard or exile stay its ability works
      * from or its dies trigger found it in (CR 400.7e), the card in the hand its ability was activated from, or the
      * permanent this resolution returned it as (CR 400.7j); nothing once it has changed zones since (CR 400.7). Unlike
-     * {@link SourceCard} it never names the card a battlefield ability's permanent became in a graveyard. Only for the
-     * perpetual verbs and "you may cast it from your graveyard this turn" (Ichor Aberration), which grants the
-     * permission only to a card it names in a graveyard.
+     * {@link SourceCard} it never names the card a battlefield ability's permanent became in a graveyard; a copy's
+     * ability names the copying card. Only for the perpetual verbs, "you may cast it from your graveyard this turn"
+     * (Ichor Aberration), which grants the permission only to a card it names in a graveyard, and "return this card / it
+     * to the battlefield" ({@link PutCardsOntoBattlefieldEffect}), which puts only a card it names outside the
+     * battlefield.
      */
     record SourceObjectCard() implements CardSubject {
     }

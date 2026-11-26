@@ -17,10 +17,9 @@ import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "MSH", collectorNumber = "239")
 public class WinterSoldierIcyAssassin extends Card {
@@ -32,14 +31,15 @@ public class WinterSoldierIcyAssassin extends Card {
                 false,
                 "{3}{W}{B}",
                 List.of(
-                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(
-                                false, false, Set.of(), CounterType.FINALITY, false, true),
+                        new PutCardsOntoBattlefieldEffect(Subjects.sourceObjectCard())
+                                .withCounters(CounterType.FINALITY, 1),
                         new MayEffect(
                                 SequenceEffect.of(
                                         ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
                                         new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)), "an Equipment you control")
-                                        .thatCanBeAttachedTo(Subjects.source()),
-                                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), Subjects.source())),
+                                        .thatCanBeAttachedTo(Subjects.returnedThisResolution()),
+                                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                                Subjects.returnedThisResolution())),
                                 "Attach an Equipment you control to Winter Soldier?")),
                 "{3}{W}{B}: Return this card from your graveyard to the battlefield with a finality counter on it. "
                         + "Then you may attach an Equipment you control to it."
