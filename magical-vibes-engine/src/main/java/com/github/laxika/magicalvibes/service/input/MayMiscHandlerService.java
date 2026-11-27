@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -551,55 +552,6 @@ public class MayMiscHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleRevealTopCardMayBottomChoice(GameData gameData, Player player, boolean accepted) {
-        UUID controllerId = player.getId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-
-        if (accepted && !deck.isEmpty()) {
-            Card topCard = deck.removeFirst();
-            deck.add(topCard);
-            
-            gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" on the bottom of their library.").build());
-            log.info("Game {} - {} puts {} on the bottom of library",
-                    gameData.id, player.getUsername(), topCard.getName());
-        } else {
-            String logEntry = player.getUsername() + " leaves the revealed card on top of their library.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} leaves revealed card on top", gameData.id, player.getUsername());
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * The Maelstrom's reveal: the revealed permanent card goes onto the battlefield. An Aura with no legal
-     * object to enchant can't enter, so it is not put onto the battlefield and goes to the bottom of the
-     * library instead (The Maelstrom: "If you revealed a card but didn't put it onto the battlefield, put it
-     * on the bottom of your library.").
-     */
-    public void handleRevealedPermanentPutOntoBattlefieldOrBottomChoice(GameData gameData, Player player) {
-        List<Card> deck = gameData.playerDecks.get(player.getId());
-        if (!deck.isEmpty() && deck.getFirst().isAura() && !hasLegalAuraHost(gameData, deck.getFirst(), player.getId())) {
-            handleRevealTopCardMayBottomChoice(gameData, player, true);
-            return;
-        }
-        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, true);
-    }
-
-    private boolean hasLegalAuraHost(GameData gameData, Card aura, UUID controllerId) {
-        boolean permanentHost = gameData.orderedPlayerIds.stream()
-                .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
-                .anyMatch(candidate -> auraAttachmentService.canEnchant(gameData, aura, controllerId, candidate)
-                        && !gameQueryService.cantBeChosen(gameData, candidate));
-        boolean playerHost = aura.isEnchantPlayer() && gameData.orderedPlayerIds.stream()
-                .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
-        return permanentHost || playerHost;
-    }
-
-    public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted) {
-        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted, false, false);
-    }
-
     /**
      * The looked-at or revealed top card goes onto the battlefield when {@code accepted}, recorded on the parked
      * resolution as its {@code StepKind.RETURN} step (an Aura first asks what it enchants); otherwise it goes into the
@@ -613,23 +565,14 @@ public class MayMiscHandlerService {
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.getFirst();
             if (topCard.isAura()) {
-                List<UUID> permanentIds = gameData.orderedPlayerIds.stream()
-                        .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
-                        .filter(candidate -> auraAttachmentService.canEnchant(gameData, topCard, controllerId, candidate))
-                        .filter(candidate -> !gameQueryService.cantBeChosen(gameData, candidate))
-                        .map(Permanent::getId).toList();
-                List<UUID> playerIds = topCard.isEnchantPlayer() ? gameData.orderedPlayerIds.stream()
-                        .filter(playerId -> auraAttachmentService.canEnchantPlayer(gameData, topCard, controllerId, playerId))
-                        .toList() : List.of();
-                if (permanentIds.isEmpty() && playerIds.isEmpty()) {
+                // CR 303.4f: its controller chooses what it enchants as it enters; the batch leaves it on top when
+                // nothing can be enchanted, and records it as this resolution's RETURN step when it enters.
+                battlefieldEntryBatchSupport.begin(gameData, List.of(new BattlefieldEntryCard(controllerId,
+                        controllerId, topCard, Zone.LIBRARY, null, null, null, List.of(), enterTapped, null, null,
+                        StepKind.RETURN)));
+                if (!gameData.interaction.isAwaitingInput()) {
                     inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                    return;
                 }
-                deck.removeFirst();
-                gameData.interaction.setPendingAuraCard(topCard);
-                gameData.interaction.setPendingAuraOwnerId(controllerId);
-                playerInputService.beginAnyTargetChoice(gameData, controllerId, permanentIds, playerIds,
-                        "Choose what " + topCard.getName() + " enchants as it enters.");
                 return;
             }
             deck.removeFirst();

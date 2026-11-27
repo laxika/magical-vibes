@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TerrorOfThePeaks.class, HillGiant.class, GrizzlyBears.class, LightningBolt.class, VampireNighthawk.class})
+@CardUsed({TerrorOfThePeaks.class, BenalishMarshal.class, HillGiant.class, GrizzlyBears.class, LightningBolt.class, VampireNighthawk.class})
 class TerrorOfThePeaksTest extends BaseCardTest {
 
     @Test
@@ -181,6 +182,30 @@ class TerrorOfThePeaksTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Hill Giant");
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("The entering creature's last known power counts a lord that left the battlefield with it")
+    void lastKnownPowerCountsALordThatLeftWithIt() {
+        harness.addToBattlefield(player1, new TerrorOfThePeaks());
+        Permanent marshal = harness.addToBattlefieldAndReturn(player1, new BenalishMarshal());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        // The Marshal and the 4/4 Giant leave as one event, the Marshal first in the batch's own order.
+        Permanent giant = findPermanent(player1, "Hill Giant");
+        var removal = harness.getPermanentRemovalService();
+        removal.removeTogether(gd, List.of(marshal, giant), () -> {
+            removal.removePermanentToGraveyard(gd, marshal);
+            removal.removePermanentToGraveyard(gd, giant);
+        });
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertLife(player2, 16);
     }
 
     private void prepareOpponentCast(LightningBolt spell, ManaColor color, int amount) {

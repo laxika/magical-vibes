@@ -299,8 +299,8 @@ public class SubjectResolutionService {
 
     /**
      * {@code filter} with each {@link CardSharesCardTypeWithCardsPredicate} bound to the card types the cards its subject
-     * names have as the effect applies ("a card that doesn't share a card type with the discarded card"): it becomes
-     * "is any of those types", which matches nothing when the subject names no card; and each
+     * names have as the effect applies ({@link #boundCards}: "a card that doesn't share a card type with the discarded
+     * card"): it becomes "is any of those types", which matches nothing when the subject names no card; and each
      * {@link CardSharesNameWithPermanentsPredicate} to the names those permanents have ({@link #names}), which matches
      * nothing when they have none; each {@link CardSharesCardTypeWithPermanentsPredicate} to their card types
      * ({@link #cardTypes}); each {@link CardSharesCreatureTypeWithPermanentsPredicate} to their creature types
@@ -312,7 +312,7 @@ public class SubjectResolutionService {
             case null -> null;
             case CardSharesCardTypeWithCardsPredicate shares -> {
                 Set<CardType> types = EnumSet.noneOf(CardType.class);
-                for (LocatedCard located : locatedCards(gameData, entry, effect, shares.cards())) {
+                for (LocatedCard located : boundCards(gameData, entry, effect, shares.cards())) {
                     for (CardType type : CardType.values()) {
                         if (gameQueryService.cardHasType(located.card(), type, gameData, located.ownerId())) {
                             types.add(type);
@@ -334,7 +334,7 @@ public class SubjectResolutionService {
                             .<CardPredicate>map(CardSubtypePredicate::new).toList());
             case CardSharesNameWithCardsPredicate shares -> {
                 Set<String> cardNames = new LinkedHashSet<>();
-                for (LocatedCard located : locatedCards(gameData, entry, effect, shares.cards())) {
+                for (LocatedCard located : boundCards(gameData, entry, effect, shares.cards())) {
                     if (located.card().getName() != null && !located.card().getName().isEmpty()) {
                         cardNames.addAll(located.card().getNames());
                     }
@@ -348,6 +348,17 @@ public class SubjectResolutionService {
             case CardNotPredicate not -> new CardNotPredicate(bindCardSubjects(gameData, entry, effect, not.predicate()));
             default -> filter;
         };
+    }
+
+    /**
+     * The cards whose characteristics {@link #bindCardSubjects} reads: {@link #locatedCards}, but the cards a
+     * {@link CardSubject.TriggeringCards} names also once they left the zone the event put them in, as they last
+     * existed there (CR 608.2h: "shares a card type with one of the discarded cards" after one was exiled instead).
+     */
+    private List<LocatedCard> boundCards(GameData gameData, StackEntry entry, CardEffect effect, CardSubject subject) {
+        return subject instanceof CardSubject.TriggeringCards triggering
+                ? triggeringCardsAsLastKnown(gameData, entry, triggering)
+                : locatedCards(gameData, entry, effect, subject);
     }
 
     /**

@@ -2453,16 +2453,12 @@ public class PermanentRemovalService {
                     if (target.getId().equals(entry.getTargetId())
                             || entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.rememberRemovedPermanentController(target.getId(), playerId);
-                        entry.getLastKnownPermanentPowers().put(target.getId(),
-                                gameQueryService.getEffectivePower(gameData, target));
-                        entry.getLastKnownPermanentToughnesses().put(target.getId(),
-                                gameQueryService.getEffectiveToughness(gameData, target));
+                        entry.getLastKnownPermanentPowers().put(target.getId(), target.getLastKnownPower());
+                        entry.getLastKnownPermanentToughnesses().put(target.getId(), target.getLastKnownToughness());
                     }
                     if (target.getId().equals(entry.getTriggeringPermanentId())) {
-                        entry.getLastKnownPermanentPowers().put(target.getId(),
-                                gameQueryService.getEffectivePower(gameData, target));
-                        entry.getLastKnownPermanentToughnesses().put(target.getId(),
-                                gameQueryService.getEffectiveToughness(gameData, target));
+                        entry.getLastKnownPermanentPowers().put(target.getId(), target.getLastKnownPower());
+                        entry.getLastKnownPermanentToughnesses().put(target.getId(), target.getLastKnownToughness());
                     }
                     if (target.getId().equals(entry.getAttackedTargetId())) {
                         if (gameQueryService.isBattle(gameData, target)) {
@@ -2483,10 +2479,9 @@ public class PermanentRemovalService {
                     if (target.getId().equals(entry.getTriggeringPermanentId())) {
                         entry.rememberLastKnownPermanentCard(target.getId(), lastKnownCard);
                         entry.getRemovedPermanentControllers().put(target.getId(), playerId);
-                        entry.setTriggeringPermanentPowerAtTrigger(
-                                gameQueryService.getEffectivePower(gameData, target));
-                        entry.setTriggeringPermanentToughnessAtTrigger(
-                                gameQueryService.getEffectiveToughness(gameData, target));
+                        // As it last existed, with what left in the same event still applying (CR 608.2h).
+                        entry.setTriggeringPermanentPowerAtTrigger(target.getLastKnownPower());
+                        entry.setTriggeringPermanentToughnessAtTrigger(target.getLastKnownToughness());
                     }
                 }
                 Integer powerAtDeparture = wasCreature ? gameQueryService.getEffectivePower(gameData, target) : null;

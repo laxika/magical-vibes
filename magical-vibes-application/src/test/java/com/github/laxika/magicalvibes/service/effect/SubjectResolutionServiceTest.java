@@ -226,6 +226,24 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(predicates.matchesPermanentPredicate(gd, runeclaw, permanents)).isTrue();
             assertThat(predicates.matchesPermanentPredicate(gd, giant, permanents)).isFalse();
         }
+
+        @Test
+        @DisplayName("Binds a shared-card-type filter over the triggering cards to a discarded card's last-known types once it left its graveyard")
+        void bindsSharedCardTypeFilterToTriggeringCardsThatLeft() {
+            // The discarded creature card was exiled instead of reaching the graveyard (Rest in Peace).
+            Card discarded = new GrizzlyBears();
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringCards(List.of(discarded));
+            PredicateEvaluationService predicates =
+                    GameTestEngineContext.get().getBean(PredicateEvaluationService.class);
+
+            CardPredicate bound = subjects.bindCardSubjects(gd, entry, EFFECT,
+                    new com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate(
+                            Subjects.triggeringCards()));
+
+            assertThat(predicates.matchesCardPredicate(new HillGiant(), bound, null, gd, player1.getId())).isTrue();
+            assertThat(predicates.matchesCardPredicate(new Forest(), bound, null, gd, player1.getId())).isFalse();
+        }
     }
 
     @Nested
@@ -444,6 +462,21 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             leaveBattlefield(pacifism);
 
             assertThat(permanents(entry, attached())).containsExactly(bears);
+        }
+
+        @Test
+        @DisplayName("Is the creature the Aura was attached to as it last existed, once both left as one event")
+        void auraThatLeftTogetherWithItsHost() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+            var removal = harness.getPermanentRemovalService();
+            removal.removeTogether(gd, List.of(bears, pacifism), () -> {
+                removal.removePermanentToGraveyard(gd, bears);
+                removal.removePermanentToGraveyard(gd, pacifism);
+            });
+
+            assertThat(subjects.permanentIds(gd, entry, EFFECT, attached())).containsExactly(bears.getId());
         }
 
         @Test

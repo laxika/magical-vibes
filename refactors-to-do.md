@@ -426,7 +426,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
 - Eye for an Eye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle: their chosen-source handlers now ask `DamageSourceChoiceSupport.choosable` (rules-fixes DM-3); fold them onto `ChooseDamageSourceEffect` plus a step that reads the choice.
 
-#### Blocked records by cause (692)
+#### Blocked records by cause (691)
 
 #### The first half prompts mid-step (blocked-step-model) (127)
 
@@ -976,7 +976,7 @@ Waits on the owner (no gift opponent is recorded; "Waiting on the owner" below).
 - `EachOtherPlayerDrawsCardEffect`: the 4 non-gift files moved (Words of Wisdom, Deadpool Trading Card, Master of the Feast to DrawCardEffect(1, eachOpponent()); Baleful Mastery to ChoosePlayerEffect.opponent() + DrawCardEffect(1, playersThisWay(CHOOSE)), its multiplayer ruling).
 - `TargetOpponentCreatesTokenEffect`: declares no target and derives the opponent (two players): the target or promised opponent must reach the entry before it can be a subject; also fires the gift-given event.
 
-#### Other (each note names the missing part) (197)
+#### Other (each note names the missing part) (196)
 
 - `ActivePlayerExilesCardFromGraveyardEffect`: "if the player doesn't" also covers an accepted exile from an empty graveyard: needs the player graveyard choice to record an EXILE step (Web of Inertia).
 - `ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffect`: the handler now enters the creature through the entry batch (as-enters choices, a card that can't enter from the library stays there); still blocked on the record declaring Oath of Druids' player target.
@@ -1162,7 +1162,6 @@ Waits on the owner (no gift opponent is recorded; "Waiting on the owner" below).
 - `SacrificePermanentAndReturnTargetCardsFromGraveyardEffect`: its cast-time graveyard targets are special-cased by class in SpellCastingService, TargetLegalityService and GameActionAvailabilityService; Victimize.
 - `SacrificePermanentThenEffect`: run 7 split 111 of its 121 cards (SacrificePermanentsEffect + ConditionalEffect(sacrificed(), X | QueueReflexiveAbilityEffect(X))); kept for engine-internal uses (Forage, MayPayTapAndSacrificePermanent.
 - `SacrificeSelfUnlessEscapedEffect`: conditional (not escaped) wrapper around SacrificeSelfEffect: a ConditionalEffect once an escaped condition exists (step 9).
-- `SeekCardSharingCardTypeWithDiscardedCardsEffect`: Diviner of Fates: triggeringCards() names a discarded card only in its graveyard stay, so one exiled instead (Rest in Peace) or moved since gives no type, while 'shares a card type with one of the discarded cards' reads last-known types (CR 608.2h).
 - `SourcePermanentDealsPowerDamageToUpToOneTargetCreatureEffect`: carries the OptionalTargetEffect marker, which the survivor can't implement per shape.
 - `TargetLandDealsDamageToTriggeringCreatureEffect`: fixed amount from a target land to the triggering creature; the power survivor has no amount component.
 - `TargetOpponentMayDrawCardEffect`: Phelddagrif and Tataru Taru moved to MayEffect(DrawCardEffect(1, targetPlayerDeclaredElsewhere()), TARGET_PLAYER) and the chosen-target form went.
@@ -1323,13 +1322,12 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (13)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (12)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
 - Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses (CR 121.2c). Unverified.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
-- `ParleyEffect`'s token form (Cutthroat Negotiator, Innocuous Researcher) creates the tokens inside its own handler, so a token-creation prompt pauses it after the draws' order is set and a rerun would reveal and draw again; Storm Fleet Negotiator and Phabine now use the step form. Unsure (by reading).
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
 - `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the tokens' creator after Crafty Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling applies entering-control changes after (CR 616.1). Fairly sure.
 - The two remaining fixed-order `getTokenMultiplier` callers (`CreateTokensAttachedToControlledCreaturesEffectHandler`, `ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler`) skip the ordered token event.
@@ -1339,7 +1337,7 @@ Don't commit.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 - `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (9)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (8)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
 - A draw replaced by exactly one draw of the same player (Enduring Renewal, Aladdin's Lamp) still reveals: `DrawService` reports no replacement. Unverified.
@@ -1347,20 +1345,17 @@ Don't commit.
 - The library-search flows handled before the generic path (same-name, subtype and colour picks, basic-land queues, held-out pools, `HAND_OR_GRAVEYARD`) record no found cards in SEARCH. Sure of the code.
 - The selection-follow-up drafts (`LibraryRevealChoice`: Support Skyforge, Adaptive Armorer, Dragon Typhoon, Masterpiece Vault) record no CONJURE step.
 - An "and/or" search (`SearchLibraryAndOrGraveyardChoice`: Last Light of Durin's Day's "search your hand and/or library", every "library and/or graveyard" card) has no "do you search your library?": a pick of nothing counts as a library search (search triggers, shuffle) and a pick from another zone as none, so a player can't search only the hand or graveyard and find nothing, or search the library too and take a graveyard card. Needs the zones chosen before the pool is shown (CR 701.23a; `MaySearchLibraryChoice` asks it for a single library). Sure, low; LS-1 left it (about 48 cards' tests).
-- `MayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice`'s Aura put path records no RETURN step, so an "if you didn't put a card onto the battlefield" after an Aura put would misread. Sure.
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (16)
+#### Wrong targets and choices (14)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
-- `CardSubject.TriggeringCards` names a card only in the stay its event put it in, so `bindCardSubjects` reads no type for a discarded card that was exiled instead or has left the graveyard, where the text reads last-known characteristics (CR 608.2h; Diviner of Fates' fold). Sure of the code.
 - Soundwave's "from their graveyard" is the damaged player's; the scope admits any opponent's. Unverified.
 - Opposition Agent's player can take a cast-only card as the find; the AI's search strategy answers only for the searcher. Unverified.
 - `beginAnyTargetChoice` and the permanent-or-player prompt don't drop what can't be chosen; about 400 counting callers unswept. Unverified.
 - A name prompt that requires a type offers a copy's name by the copy's types (CR 201.4a). Unverified.
 - The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Unverified.
-- `SubjectResolutionService.attachedId` gives no host for an Aura that left together with its host when the entry has no source snapshot (the shuffle survivor reads the captured target instead). Sure of the code, low.
 - Kefnet, Reversal of Fortune, Spellweaver Volute: a copy of a card is created and cast in exile, not in the card's own zone (CR 707.12; Kefnet and Reversal rulings), so a "cast from hand / graveyard" trigger misses it. Sure.
 - The Clone Saga (SPM 28) chapter II offers new targets for the copy although the text doesn't say it may (CR 707.10, 707.10c). Fairly sure.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
@@ -1408,7 +1403,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (57)
+#### Other (55)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1416,7 +1411,6 @@ Don't commit.
 - Cards with no printing identity: the `Supplier`-built conjures and spellbook drafts, the hand paths not marking a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn, Oracle of the Alpha built by hand, Juggernaut Peddler, Calim, Mephidross Slime by constructor or `Supplier`, Goblin Influx Array's Reckless Ringleader a blank `new Card()` (P16). Sure.
 - `ConjureCardToBattlefieldEffectHandler` gives a conjured land no land-enter handling. Unverified for a land with an enter ability (Mishra's Foundry and Forest have none).
 - `isPreventedFromDealingDamage` pre-checks left before the damage pools skip the damage event (Selfless Squire misses them) and the CR 616.1 order: Bomb Squad's `RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler` (asked before the destruction; the creature deals the damage as it last existed, an owner question in entry 17) and the combat damage step (`CombatDamageService`'s three `isPreventedFromDealingDamage(…, true)` checks) (CR 616.1). Sure of the code.
-- `TriggeringPermanentPower` / `Toughness` prefer the trigger-time value over a departed permanent's snapshot (CR 608.2h). Unverified.
 - The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`; CR 701.12a's set reading unsettled. Unverified.
 - Enduring Angel that can't transform skips its replacement (differs only under "can't lose the game"). Fairly sure, low.
 - Fear of Sleep Paralysis' lock is read only by the untap replacement, not other stun removals. Fairly sure, low.
@@ -1434,7 +1428,6 @@ Don't commit.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): the copied return reads cards the copier exiled with its own abilities; it should read only cards its copied exile ability exiled (CR 607.1, 607.2a). Fairly sure.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.
-- Terminal Velocity: its `PutCardToBattlefieldThenEffect` then-steps grant haste and triggers over `Subjects.source()` / `toSourcePermanent`, which may name the spell rather than the put permanent (CR 608.2h). Unverified.
 - `PerpetuallyGrantKeywordToSourceEffect` (6 cards): on the battlefield the keyword goes onto a copy of the permanent's card, so it is lost when the permanent changes zones (not perpetual); off the battlefield it is granted by card id in any zone (CR 400.7).
 - `PerpetuallyGrantStaticEffectToSourceEffect` (Craving of Yeenoghu, Gale): the same card swap, not perpetual. Fairly sure.
 - `PerpetuallyBoostSourceEffect`: the graveyard path rewrites the card's printed P/T instead of using the perpetual store, so a later perpetual base-P/T change overrides the boost. Fairly sure.

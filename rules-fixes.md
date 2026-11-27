@@ -46,7 +46,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
-| TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1 done 2026-11-27; TR-2, TR-3 open |
+| TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2 done 2026-11-27; TR-3 open |
 | LS Library searches and reveals | LS-1, LS-2 | LS-1 done 2026-11-27; LS-2 open |
 | TK Tokens and copies | TK-1, TK-2 | open |
 | FD Face-down and hidden reads | FD-1, FD-2 | open |
@@ -708,7 +708,22 @@ Aura put records no RETURN step), S11 (`ParleyEffect`'s token form creates token
 Likely touches: `SubjectResolutionService`, `DynamicAmount` readers, `MayMiscHandlerService`.
 Avoid: FD-2.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: T2, O10, E12 (deleted from entry 18). Dropped: T10, O40, S11. T2: `bindCardSubjects` reads the
+cards a `triggeringCards()` subject names as they last existed once they left the zone the event put them in (CR 608.2h), so
+"shares a card type with one of the discarded cards" still reads a discarded card exiled instead or moved since; Diviner of
+Fates folds onto `SeekCardsToHandEffect(Fixed(1), CardSharesCardTypeWithCardsPredicate(triggeringCards()))` and
+`SeekCardSharingCardTypeWithDiscardedCardsEffect` and its handler went (ledger row; ratchet 2854 records, 2238 handlers). O10:
+a departing permanent's last-known power and toughness on the entries that target it or were triggered by it (and
+`TriggeringPermanentPower`'s refreshed value) are its `lastKnownPower` / `lastKnownToughness`, judged with what left in the same
+event still applying, not its power after an earlier member of the batch was already gone (Terror of the Peaks with a Benalish
+Marshal leaving alongside, CR 608.2h, 603.10a); the resolving-entry gap is N40. E12: the top-card put's Aura branch goes through
+the entry batch with a RETURN record (CR 303.4f), so Rulik's "if you don't put a card onto the battlefield" reads a put land
+Aura; the dead Maelstrom-era `handleRevealedPermanentPutOntoBattlefieldOrBottomChoice`, `handleRevealTopCardMayBottomChoice`
+and the three-argument overload went. T10: not a defect: `PermanentRemovalService` gives every entry whose source leaves a
+source snapshot, also when the Aura and its host leave as one event (pinned in `SubjectResolutionServiceTest`). O40: not a
+defect: the then-steps run with the put permanent as the entry's target, and `TerminalVelocityTest` already shows haste and
+both granted triggers on it. S11: already fixed by defect run D14 (the token form queues the tokens and the draws as later
+steps), pinned in `InnocuousResearcherTest` with Esix. New line N40 (MC-2).
 
 #### TR-3. Target and choice prompts
 
@@ -1032,6 +1047,11 @@ cast" readers; unverified.
 O25 (Caged Sun, left by PY-2, see its Outcome): a land's mana ability without {T} (Calciform Pools, Rain of Filth) raises no
 "a land's ability causes you to add" event; needs that event beside `LandTappedForMana`, a trigger key, `TapTriggers` and
 `PotentialManaService`'s estimate.
+
+New line N40 (seen in TR-2): `PermanentRemovalService` refreshes a departing triggering permanent's last-known power and
+toughness on the stack entries, trigger records and the parked entry, but not on `gameData.resolvingEntry`, so a triggering
+permanent that leaves while its own ability resolves, after a change since the trigger, keeps its trigger-time power for
+`TriggeringPermanentPower` (CR 608.2h); no card found that changes and then removes it mid-resolution; unverified.
 
 Outcome:
 

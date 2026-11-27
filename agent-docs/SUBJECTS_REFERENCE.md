@@ -151,7 +151,7 @@ play that card this turn / until the end of your next turn / for as long as it r
 `PerpetuallyBoostCardEffect.toCards(cards, p, t)`, `PerpetuallyChangeCastCostEffect(cards, change)`,
 `CopyImprintedCardAndMayCastCopyEffect.of(cards)` ("copy it. You may cast the copy": cards in exile, a graveyard or a hand), `ExileGraveyardCardsEffect.cards(cards)` ("exile it
 from your graveyard") and, in a filter, `CardSharesCardTypeWithCardsPredicate(cards)` ("a card that doesn't share a card type with the
-discarded card"; bound by `SubjectResolutionService.bindCardSubjects`).
+discarded card"; bound by `SubjectResolutionService.bindCardSubjects`, which reads `triggeringCards()` as they last existed).
 
 A value a lasting rule or a next-spell grant needs from the resolution is written into its filter as it is registered,
 by `SubjectResolutionService.bindChosenValues` (CR 608.2h): `PermanentHasTypeChosenThisResolutionPredicate`, the

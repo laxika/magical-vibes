@@ -2,17 +2,20 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NishobaBrawler;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -129,6 +132,29 @@ class RulikMonsWarrenChiefTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherTopCard);
         assertThat(findPermanents(player1, "Forest")).isEmpty();
         assertThat(findPermanents(player2, "Goblin")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land Aura put onto the battlefield from the top counts as put, so no Goblin is created")
+    void landAuraPutOntoTheBattlefieldCreatesNoGoblin() {
+        addReadyRulik();
+        Card landAura = new Card();
+        landAura.setName("Land Aura");
+        landAura.setType(CardType.LAND);
+        landAura.setAdditionalTypes(Set.of(CardType.ENCHANTMENT));
+        landAura.setSubtypes(List.of(CardSubtype.AURA));
+        landAura.target(TargetFilters.land());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(landAura));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        assertThat(findPermanent(player1, "Land Aura").getAttachedTo()).isEqualTo(forest.getId());
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
     }
 
     private void addReadyRulik() {
