@@ -23,13 +23,13 @@ import java.util.Set;
 public class ElvishFarmer extends Card {
 
     public ElvishFarmer() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.FUNGUS));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.SPORE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(3, CounterType.FUNGUS),
+                        new RemoveCounterFromSourceCost(3, CounterType.SPORE),
                         new CreateTokenEffect(
                                 "Saproling",
                                 1,

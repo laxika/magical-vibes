@@ -24,7 +24,7 @@ class ThallidDevourerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(devourer.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -34,19 +34,19 @@ class ThallidDevourerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(devourer.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent devourer = addDevourer();
-        devourer.setCounterCount(CounterType.FUNGUS, 3);
+        devourer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(devourer.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -54,12 +54,12 @@ class ThallidDevourerTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves any additional spore counters")
     void removesExactlyThreeSporeCounters() {
         Permanent devourer = addDevourer();
-        devourer.setCounterCount(CounterType.FUNGUS, 4);
+        devourer.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(devourer.getCounterCount(CounterType.SPORE)).isOne();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -67,7 +67,7 @@ class ThallidDevourerTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling gives Thallid Devourer +1/+2")
     void sacrificingSaprolingBoostsDevourer() {
         Permanent devourer = addDevourer();
-        devourer.setCounterCount(CounterType.FUNGUS, 3);
+        devourer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -82,7 +82,7 @@ class ThallidDevourerTest extends BaseCardTest {
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addDevourer().setCounterCount(CounterType.FUNGUS, 2);
+        addDevourer().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -114,7 +114,7 @@ class ThallidDevourerTest extends BaseCardTest {
     @DisplayName("The boost wears off during cleanup")
     void boostWearsOffAtEndOfTurn() {
         Permanent devourer = addDevourer();
-        devourer.setCounterCount(CounterType.FUNGUS, 3);
+        devourer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -135,11 +135,11 @@ class ThallidDevourerTest extends BaseCardTest {
         Permanent devourer = harness.addToBattlefieldAndReturn(player1, new ThallidDevourer());
         devourer.setSummoningSick(true);
         devourer.tap();
-        devourer.setCounterCount(CounterType.FUNGUS, 3);
+        devourer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(devourer.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         harness.passBothPriorities();
 
@@ -155,7 +155,7 @@ class ThallidDevourerTest extends BaseCardTest {
     @DisplayName("Sacrifice is paid before resolution and repeated boosts accumulate")
     void sacrificeIsImmediateAndBoostsAccumulate() {
         Permanent devourer = addDevourer();
-        devourer.setCounterCount(CounterType.FUNGUS, 6);
+        devourer.setCounterCount(CounterType.SPORE, 6);
 
         for (int activation = 0; activation < 2; activation++) {
             harness.activateAbility(player1, 0, null, null);
@@ -168,7 +168,7 @@ class ThallidDevourerTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(devourer.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(PermanentGrants.powerBoostOf(gd, devourer)).isEqualTo(2);
         assertThat(PermanentGrants.toughnessBoostOf(gd, devourer)).isEqualTo(4);
     }
@@ -177,7 +177,7 @@ class ThallidDevourerTest extends BaseCardTest {
     @DisplayName("An opponent's Saproling cannot pay the sacrifice cost")
     void cannotSacrificeOpponentsSaproling() {
         Permanent opponentDevourer = harness.addToBattlefieldAndReturn(player2, new ThallidDevourer());
-        opponentDevourer.setCounterCount(CounterType.FUNGUS, 3);
+        opponentDevourer.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
         Permanent devourer = addDevourer();

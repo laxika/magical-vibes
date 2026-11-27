@@ -22,13 +22,13 @@ import java.util.Set;
 public class SporesowerThallid extends Card {
 
     public SporesowerThallid() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onEachYouControl(CounterType.FUNGUS, 1, new PermanentHasSubtypePredicate(CardSubtype.FUNGUS)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onEachYouControl(CounterType.SPORE, 1, new PermanentHasSubtypePredicate(CardSubtype.FUNGUS)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(3, CounterType.FUNGUS),
+                        new RemoveCounterFromSourceCost(3, CounterType.SPORE),
                         new CreateTokenEffect(
                                 "Saproling",
                                 1,

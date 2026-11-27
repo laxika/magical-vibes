@@ -27,7 +27,7 @@ class PsychotropeThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(psychotropeThallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(psychotropeThallid.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
@@ -38,19 +38,19 @@ class PsychotropeThallidTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(psychotropeThallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(psychotropeThallid.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent psychotropeThallid = addPsychotropeThallid();
-        psychotropeThallid.setCounterCount(CounterType.FUNGUS, 3);
+        psychotropeThallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(psychotropeThallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(psychotropeThallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -58,7 +58,7 @@ class PsychotropeThallidTest extends BaseCardTest {
     @DisplayName("The token ability creates a 1/1 green Saproling creature token")
     void createdTokenHasSaprolingCharacteristics() {
         Permanent psychotropeThallid = addPsychotropeThallid();
-        psychotropeThallid.setCounterCount(CounterType.FUNGUS, 3);
+        psychotropeThallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -76,18 +76,18 @@ class PsychotropeThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves additional counters")
     void removesExactlyThreeSporeCounters() {
         Permanent psychotropeThallid = addPsychotropeThallid();
-        psychotropeThallid.setCounterCount(CounterType.FUNGUS, 4);
+        psychotropeThallid.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(psychotropeThallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(psychotropeThallid.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addPsychotropeThallid().setCounterCount(CounterType.FUNGUS, 2);
+        addPsychotropeThallid().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -134,11 +134,11 @@ class PsychotropeThallidTest extends BaseCardTest {
     @DisplayName("Spore counters are paid immediately and cannot fund a second activation")
     void sporeCountersArePaidBeforeResolution() {
         Permanent thallid = addPsychotropeThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         harness.assertNotOnBattlefield(player1, "Saproling");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -153,7 +153,7 @@ class PsychotropeThallidTest extends BaseCardTest {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new PsychotropeThallid());
         thallid.setSummoningSick(true);
         thallid.tap();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.setHand(player1, List.of());
         PsychotropeThallid drawnCard = new PsychotropeThallid();
         harness.setLibrary(player1, List.of(drawnCard));
@@ -191,7 +191,7 @@ class PsychotropeThallidTest extends BaseCardTest {
 
     private Permanent addSaproling() {
         Permanent psychotropeThallid = addPsychotropeThallid();
-        psychotropeThallid.setCounterCount(CounterType.FUNGUS, 3);
+        psychotropeThallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

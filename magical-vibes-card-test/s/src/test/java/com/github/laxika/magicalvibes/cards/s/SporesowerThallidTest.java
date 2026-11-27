@@ -28,10 +28,10 @@ class SporesowerThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(sporesower.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
-        assertThat(ownFungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
-        assertThat(opponentFungus.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(ownNonFungus.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(sporesower.getCounterCount(CounterType.SPORE)).isEqualTo(1);
+        assertThat(ownFungus.getCounterCount(CounterType.SPORE)).isEqualTo(1);
+        assertThat(opponentFungus.getCounterCount(CounterType.SPORE)).isZero();
+        assertThat(ownNonFungus.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
@@ -48,7 +48,7 @@ class SporesowerThallidTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(sporesower), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sporesower.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(sporesower.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).singleElement().satisfies(token -> {
             assertThat(token.getCard().isToken()).isTrue();
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SAPROLING);
@@ -67,7 +67,7 @@ class SporesowerThallidTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(sporesower), 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(sporesower.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(sporesower.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
@@ -77,7 +77,7 @@ class SporesowerThallidTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(sporesower.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(sporesower.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
@@ -90,9 +90,9 @@ class SporesowerThallidTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
-        assertThat(second.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(first.getCounterCount(CounterType.SPORE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.SPORE)).isEqualTo(2);
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isEqualTo(2);
     }
 
     @Test
@@ -105,13 +105,13 @@ class SporesowerThallidTest extends BaseCardTest {
         Permanent fungus = harness.addToBattlefieldAndReturn(player1, new FungusSliver());
         harness.passBothPriorities();
 
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
     void paysCountersImmediatelyAndCanActivateWhileTappedAndSummoningSick() {
         Permanent sporesower = harness.addToBattlefieldAndReturn(player1, new SporesowerThallid());
-        sporesower.setCounterCount(CounterType.FUNGUS, 5);
+        sporesower.setCounterCount(CounterType.SPORE, 5);
         sporesower.tap();
         sporesower.setSummoningSick(true);
         harness.forceActivePlayer(player2);
@@ -120,11 +120,11 @@ class SporesowerThallidTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(sporesower), 0, null, null);
 
-        assertThat(sporesower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(sporesower.getCounterCount(CounterType.SPORE)).isEqualTo(2);
         assertThat(countPermanents(player1, "Saproling")).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(sporesower), 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(sporesower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(sporesower.getCounterCount(CounterType.SPORE)).isEqualTo(2);
 
         gd.playerBattlefields.get(player1.getId()).remove(sporesower);
         gd.playerGraveyards.get(player1.getId()).add(sporesower.getCard());

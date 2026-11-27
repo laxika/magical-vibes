@@ -27,7 +27,7 @@ class SporolothAncientTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(ancient.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -35,7 +35,7 @@ class SporolothAncientTest extends BaseCardTest {
     void controlledCreatureUsesGrantedAbility() {
         harness.addToBattlefield(player1, new SporolothAncient());
         Permanent creature = addCreatureReady(player1, new FomoriNomad());
-        creature.setCounterCount(CounterType.FUNGUS, 2);
+        creature.setCounterCount(CounterType.SPORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -43,7 +43,7 @@ class SporolothAncientTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(creature.getCounterCount(CounterType.SPORE)).isZero();
         List<Permanent> saprolings = controlledSaprolings();
         assertThat(saprolings).hasSize(1);
 
@@ -57,12 +57,12 @@ class SporolothAncientTest extends BaseCardTest {
     @DisplayName("Sporoloth Ancient can use the ability it grants")
     void sourceUsesGrantedAbility() {
         Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
-        ancient.setCounterCount(CounterType.FUNGUS, 2);
+        ancient.setCounterCount(CounterType.SPORE, 2);
 
         harness.activateAbility(player1, battlefieldIndex(ancient), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(ancient.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(controlledSaprolings()).hasSize(1);
     }
 
@@ -70,7 +70,7 @@ class SporolothAncientTest extends BaseCardTest {
     @DisplayName("The granted ability requires two spore counters")
     void requiresTwoSporeCounters() {
         Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
-        ancient.setCounterCount(CounterType.FUNGUS, 1);
+        ancient.setCounterCount(CounterType.SPORE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -78,7 +78,7 @@ class SporolothAncientTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(ancient), 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(ancient.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -86,7 +86,7 @@ class SporolothAncientTest extends BaseCardTest {
     void doesNotGrantAbilityToOpponentCreatures() {
         harness.addToBattlefield(player1, new SporolothAncient());
         Permanent opponentCreature = addCreatureReady(player2, new FomoriNomad());
-        opponentCreature.setCounterCount(CounterType.FUNGUS, 2);
+        opponentCreature.setCounterCount(CounterType.SPORE, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -106,8 +106,8 @@ class SporolothAncientTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(ancient.getCounterCount(CounterType.SPORE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
@@ -119,26 +119,26 @@ class SporolothAncientTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
-        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(ancient.getCounterCount(CounterType.SPORE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("A tapped, summoning-sick creature can pay the cost during an opponent's turn")
     void tappedSummoningSickCreatureCanActivateOnOpponentTurn() {
         Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
-        ancient.setCounterCount(CounterType.FUNGUS, 3);
+        ancient.setCounterCount(CounterType.SPORE, 3);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
         creature.setSummoningSick(true);
         creature.tap();
-        creature.setCounterCount(CounterType.FUNGUS, 3);
+        creature.setCounterCount(CounterType.SPORE, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
 
-        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
-        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
+        assertThat(creature.getCounterCount(CounterType.SPORE)).isEqualTo(1);
+        assertThat(ancient.getCounterCount(CounterType.SPORE)).isEqualTo(3);
         assertThat(controlledSaprolings()).isEmpty();
 
         harness.passBothPriorities();
@@ -151,15 +151,15 @@ class SporolothAncientTest extends BaseCardTest {
     @DisplayName("Spore counters on Ancient cannot pay another creature's activation cost")
     void cannotSpendCountersFromGrantingAncient() {
         Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
-        ancient.setCounterCount(CounterType.FUNGUS, 2);
+        ancient.setCounterCount(CounterType.SPORE, 2);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
-        creature.setCounterCount(CounterType.FUNGUS, 1);
+        creature.setCounterCount(CounterType.SPORE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
-        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(ancient.getCounterCount(CounterType.SPORE)).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.SPORE)).isEqualTo(1);
         assertThat(controlledSaprolings()).isEmpty();
     }
 
@@ -168,18 +168,37 @@ class SporolothAncientTest extends BaseCardTest {
     void grantedAbilityResolvesAfterAncientLeaves() {
         Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
-        creature.setCounterCount(CounterType.FUNGUS, 4);
+        creature.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
         gd.playerBattlefields.get(player1.getId()).remove(ancient);
         harness.passBothPriorities();
 
         assertThat(controlledSaprolings()).hasSize(1);
-        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.SPORE)).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
-        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.SPORE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The granted ability is paid with spore counters, not fungus counters")
+    void grantedAbilityRemovesSporeCountersNotFungusCounters() {
+        harness.addToBattlefield(player1, new SporolothAncient());
+        Permanent sporeCreature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+        sporeCreature.setCounterCount(CounterType.SPORE, 2);
+        Permanent fungusCreature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+        fungusCreature.setCounterCount(CounterType.FUNGUS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(fungusCreature), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, battlefieldIndex(sporeCreature), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sporeCreature.getCounterCount(CounterType.SPORE)).isZero();
+        assertThat(fungusCreature.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(controlledSaprolings()).hasSize(1);
     }
 
     private int battlefieldIndex(Permanent permanent) {

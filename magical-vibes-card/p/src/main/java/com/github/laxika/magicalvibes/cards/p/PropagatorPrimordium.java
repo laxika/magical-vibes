@@ -30,13 +30,13 @@ public class PropagatorPrimordium extends Card {
                         new ConjureCardToGraveyardEffect("YLCI", "20"),
                         new ConjureCardToGraveyardEffect("YLCI", "20")));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.FUNGUS));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.SPORE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(3, CounterType.FUNGUS),
+                        new RemoveCounterFromSourceCost(3, CounterType.SPORE),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardAllOfPredicate(List.of(

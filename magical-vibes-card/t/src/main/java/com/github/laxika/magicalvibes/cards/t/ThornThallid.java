@@ -23,13 +23,13 @@ import java.util.List;
 public class ThornThallid extends Card {
 
     public ThornThallid() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.FUNGUS));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.SPORE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(3, CounterType.FUNGUS),
+                        new RemoveCounterFromSourceCost(3, CounterType.SPORE),
                         DealDamageEffect.toAnyTarget(1)
                 ),
                 "Remove three spore counters from Thorn Thallid: It deals 1 damage to any target."

@@ -27,7 +27,7 @@ class ElvishFarmerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(farmer.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(farmer.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -37,19 +37,19 @@ class ElvishFarmerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(farmer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(farmer.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling")
     void removesThreeSporeCountersAndCreatesSaproling() {
         Permanent farmer = addFarmer();
-        farmer.setCounterCount(CounterType.FUNGUS, 3);
+        farmer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(farmer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(farmer.getCounterCount(CounterType.SPORE)).isZero();
         Permanent saproling = findPermanents(player1, "Saproling").getFirst();
         assertThat(saproling.getCard().getPower()).isEqualTo(1);
         assertThat(saproling.getCard().getToughness()).isEqualTo(1);
@@ -62,12 +62,12 @@ class ElvishFarmerTest extends BaseCardTest {
     @DisplayName("The token ability removes exactly three spore counters")
     void tokenAbilityRemovesExactlyThreeSporeCounters() {
         Permanent farmer = addFarmer();
-        farmer.setCounterCount(CounterType.FUNGUS, 4);
+        farmer.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(farmer.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(farmer.getCounterCount(CounterType.SPORE)).isEqualTo(1);
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -75,7 +75,7 @@ class ElvishFarmerTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling gains two life")
     void sacrificingSaprolingGainsTwoLife() {
         Permanent farmer = addFarmer();
-        farmer.setCounterCount(CounterType.FUNGUS, 3);
+        farmer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -124,7 +124,7 @@ class ElvishFarmerTest extends BaseCardTest {
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
         Permanent farmer = addFarmer();
-        farmer.setCounterCount(CounterType.FUNGUS, 2);
+        farmer.setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -152,11 +152,11 @@ class ElvishFarmerTest extends BaseCardTest {
         Permanent farmer = harness.addToBattlefieldAndReturn(player1, new ElvishFarmer());
         farmer.setSummoningSick(true);
         farmer.tap();
-        farmer.setCounterCount(CounterType.FUNGUS, 3);
+        farmer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(farmer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(farmer.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
 
         harness.passBothPriorities();
@@ -178,7 +178,7 @@ class ElvishFarmerTest extends BaseCardTest {
     void lifeGainAbilityCannotSacrificeOpponentsSaproling() {
         addFarmer();
         Permanent opponentFarmer = addCreatureReady(player2, new ElvishFarmer());
-        opponentFarmer.setCounterCount(CounterType.FUNGUS, 3);
+        opponentFarmer.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();

@@ -43,7 +43,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3, FC-4 | FC-1, FC-2, FC-3 done 2026-11-27 |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
-| CT Counters | CT-1, CT-2 | CT-1 done 2026-11-27; CT-2 open |
+| CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2 done 2026-11-27; EB-3 open |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1 done 2026-11-27; PY-2, PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | open |
@@ -380,6 +380,11 @@ graveyard-exile or forage alternative), O91's rest (exile and library-top casts 
 N4, N5, N6 (the declined-payment half: the uncast card stays in exile and the caster chooses the hand card), N12, N13. Read
 FC-3's Outcome first. If a line needs client work, do the server part and add the client part to UI-1.
 
+New line N32 (seen in CT-2): `SpellCastingService.removeOneCounter` pays a `CounterType.ANY` casting cost (Falco Spara,
+Pactweaver's "removing a counter from a creature you control") by removing a -1/-1 counter, else a +1/+1 counter, so from a
+creature with only other kinds (Falco's own shield counter) it removes nothing, and with several kinds the caster never chooses;
+sure of the code, not tested.
+
 Outcome:
 
 ### CP. Casting permissions and cost readers
@@ -467,7 +472,19 @@ kind; P1 and P20 need one kind choice per counter, the `SourceCounterCostTypeCho
 wildcard), O50 (the spore-counter cards use `FUNGUS`), O53 (`DistributeCountersAmongTargetsEffectHandler`'s delayed removals and
 a hexproof gained meanwhile).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: P1, O50. Dropped: P20, O38, O53. All deleted from entry 18. P1: Moxite Refinery's "remove X
+counters" from a permanent with several kinds and more than X counters now asks the kind of each counter, one at a time
+(CR 601.2h via 602.2b: the payer pays the cost), through `ChoiceContext.ControlledCounterCostTypeChoice`, which gained
+`required` and `chosenSoFar` like `SourceCounterCostTypeChoice`; the forced picks are filled by one helper both choices share,
+and `RemoveCounterFromControlledPermanentsCostHandler` spends `GameData.chosenCostCounterTypes`. O50: the 19 spore-counter cards
+(Oracle "spore counter") now use `CounterType.SPORE`; only Sporogenesis and Mindbender Spores keep `FUNGUS` (CR 122.1: only
+counters with the same name are interchangeable), so Thelon of Havenwood no longer counts fungus counters and Sporoloth Ancient's
+granted ability spends Thallid Shell-Dweller's spore counters. P20 not a defect: since PY-1 the resolution-time removal asks the
+payer the permanent and kind (Chisei's "ki counters" test already pins it). O38 unreachable: silver counters exist only on cards
+exiled by Karn, Scion of Urza, and counters cease to exist when the card leaves exile (CR 122.2), so no permanent can have one;
+`Permanent.setCounterCount` rejects SILVER. O53 not a defect: the delayed removal declares no target, so a shroud gained
+meanwhile doesn't stop it (CR 603.7c; pinned in `SystemsOverrideTest`). New line N32 (FC-4). No effect class added or deleted,
+so no ledger or ratchet change.
 
 ### EB. Entry and leave batches
 

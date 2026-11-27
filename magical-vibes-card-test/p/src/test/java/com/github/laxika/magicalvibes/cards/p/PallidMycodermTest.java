@@ -29,19 +29,19 @@ class PallidMycodermTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(mycoderm.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent mycoderm = addMycoderm();
-        mycoderm.setCounterCount(CounterType.FUNGUS, 4);
+        mycoderm.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(mycoderm.getCounterCount(CounterType.SPORE)).isOne();
         Permanent saproling = findPermanent(player1, "Saproling");
         assertThat(saproling.getCard().isToken()).isTrue();
         assertThat(saproling.getCard().getType()).isEqualTo(CardType.CREATURE);
@@ -56,7 +56,7 @@ class PallidMycodermTest extends BaseCardTest {
     void sacrificingSaprolingBoostsFungusesOnly() {
         Permanent mycoderm = addMycoderm();
         Permanent otherCreature = addCreatureReady(player1, new Stingscourger());
-        mycoderm.setCounterCount(CounterType.FUNGUS, 3);
+        mycoderm.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -84,7 +84,7 @@ class PallidMycodermTest extends BaseCardTest {
         Permanent otherFungus = addCreatureReady(player1, new PallidMycoderm());
         Permanent otherCreature = addCreatureReady(player1, new Stingscourger());
         Permanent opponentFungus = addCreatureReady(player2, new PallidMycoderm());
-        mycoderm.setCounterCount(CounterType.FUNGUS, 6);
+        mycoderm.setCounterCount(CounterType.SPORE, 6);
 
         int mycodermIndex = gd.playerBattlefields.get(player1.getId()).indexOf(mycoderm);
         harness.activateAbility(player1, mycodermIndex, 0, null, null);
@@ -138,19 +138,19 @@ class PallidMycodermTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(mycoderm.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Fewer than three spore counters cannot pay the token ability's cost")
     void tokenAbilityRequiresThreeCounters() {
         Permanent mycoderm = addMycoderm();
-        mycoderm.setCounterCount(CounterType.FUNGUS, 2);
+        mycoderm.setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(mycoderm.getCounterCount(CounterType.SPORE)).isEqualTo(2);
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
@@ -161,11 +161,11 @@ class PallidMycodermTest extends BaseCardTest {
         Permanent mycoderm = addMycoderm();
         mycoderm.setSummoningSick(true);
         mycoderm.tap();
-        mycoderm.setCounterCount(CounterType.FUNGUS, 3);
+        mycoderm.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(mycoderm.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
@@ -176,7 +176,7 @@ class PallidMycodermTest extends BaseCardTest {
     @DisplayName("Sacrifice is paid before resolution and later Saprolings do not receive the boost")
     void sacrificeIsImmediateAndBoostDoesNotAffectLaterTokens() {
         Permanent mycoderm = addMycoderm();
-        mycoderm.setCounterCount(CounterType.FUNGUS, 6);
+        mycoderm.setCounterCount(CounterType.SPORE, 6);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 

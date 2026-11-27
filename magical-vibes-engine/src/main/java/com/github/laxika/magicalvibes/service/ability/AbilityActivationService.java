@@ -6031,7 +6031,13 @@ public class AbilityActivationService {
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(Objects::nonNull)
                 .anyMatch(candidate -> counterHandler.removableKinds(candidate).size() > 1);
-        if (!counterKindChoice && handler.shouldAutoPayAll(gameData, playerId, required)) {
+        boolean severalCounterKindChoice = handler instanceof RemoveCounterFromControlledPermanentsCostHandler multiHandler
+                && gameData.chosenCostCounterTypes == null
+                && handler.getValidChoiceIds(gameData, playerId).stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(Objects::nonNull)
+                .anyMatch(multiHandler::needsKindChoice);
+        if (!counterKindChoice && !severalCounterKindChoice && handler.shouldAutoPayAll(gameData, playerId, required)) {
             try {
                 List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 for (UUID id : validIds) {
@@ -6073,7 +6079,15 @@ public class AbilityActivationService {
         if (counterKindChoice && validIds.size() == 1
                 && handler instanceof RemoveCounterFromPermanentCostHandler counterHandler) {
             beginControlledCounterKindChoice(gameData, playerId, costChoice, validIds.getFirst(),
-                    counterHandler.removableKinds(gameQueryService.findPermanentById(gameData, validIds.getFirst())));
+                    counterHandler.removableKinds(gameQueryService.findPermanentById(gameData, validIds.getFirst())),
+                    1, List.of());
+            return true;
+        }
+        if (severalCounterKindChoice && validIds.size() == 1
+                && handler instanceof RemoveCounterFromControlledPermanentsCostHandler multiHandler) {
+            beginControlledCounterKindChoice(gameData, playerId, costChoice, validIds.getFirst(),
+                    multiHandler.removableKinds(gameQueryService.findPermanentById(gameData, validIds.getFirst())),
+                    handler.requiredCount(), List.of());
             return true;
         }
         gameData.interaction.setPermanentChoiceContext(costChoice);
@@ -6085,11 +6099,15 @@ public class AbilityActivationService {
 
     private void beginControlledCounterKindChoice(GameData gameData, UUID playerId,
                                                   PermanentChoiceContext.ActivatedAbilityCostChoice costChoice,
-                                                  UUID chosenPermanentId, List<CounterType> kinds) {
-        ChoiceContext.ControlledCounterCostTypeChoice kindChoice =
-                new ChoiceContext.ControlledCounterCostTypeChoice(costChoice, chosenPermanentId, kinds);
+                                                  UUID chosenPermanentId, List<CounterType> kinds,
+                                                  int required, List<CounterType> chosenSoFar) {
+        ChoiceContext.ControlledCounterCostTypeChoice kindChoice = new ChoiceContext.ControlledCounterCostTypeChoice(
+                costChoice, chosenPermanentId, kinds, required, chosenSoFar);
+        String prompt = required > 1
+                ? "Choose a kind of counter to remove (" + (chosenSoFar.size() + 1) + " of " + required + ")."
+                : "Choose a kind of counter to remove.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, kindChoice, kindChoice.options(), "Choose a kind of counter to remove."));
+                playerId, null, null, kindChoice, kindChoice.options(), prompt));
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
@@ -6225,9 +6243,17 @@ public class AbilityActivationService {
                 && handler.getValidChoiceIds(gameData, playerId).contains(chosenPermanentId)) {
             List<CounterType> kinds = counterHandler.removableKinds(chosen);
             if (kinds.size() > 1) {
-                beginControlledCounterKindChoice(gameData, playerId, context, chosenPermanentId, kinds);
+                beginControlledCounterKindChoice(gameData, playerId, context, chosenPermanentId, kinds, 1, List.of());
                 return;
             }
+        }
+        if (handler instanceof RemoveCounterFromControlledPermanentsCostHandler multiHandler
+                && gameData.chosenCostCounterTypes == null
+                && handler.getValidChoiceIds(gameData, playerId).contains(chosenPermanentId)
+                && multiHandler.needsKindChoice(chosen)) {
+            beginControlledCounterKindChoice(gameData, playerId, context, chosenPermanentId,
+                    multiHandler.removableKinds(chosen), handler.requiredCount(), List.of());
+            return;
         }
 
         // Capture sacrificed creature's tracked values before sacrifice (e.g. Birthing Pod, Fling)
@@ -8439,32 +8465,17 @@ public class AbilityActivationService {
         if (choice.required() > 1) {
             pickedKinds = new ArrayList<>(choice.chosenSoFar());
             pickedKinds.add(chosen);
-            while (pickedKinds.size() < choice.required()) {
-                List<CounterType> remainingKinds = remainingCounterKinds(source, pickedKinds);
-                int remainingCounters = 0;
-                for (CounterType kind : remainingKinds) {
-                    remainingCounters += source.getCounterCount(kind) - Collections.frequency(pickedKinds, kind);
-                }
-                int stillNeeded = choice.required() - pickedKinds.size();
-                if (remainingKinds.size() > 1 && remainingCounters > stillNeeded) {
-                    ChoiceContext.SourceCounterCostTypeChoice nextChoice = new ChoiceContext.SourceCounterCostTypeChoice(
-                            choice.sourcePermanentId(), choice.abilityIndex(), choice.xValue(), choice.targetId(),
-                            choice.targetZone(), choice.targetIds(), choice.damageAssignments(), remainingKinds,
-                            choice.required(), pickedKinds);
-                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                            player.getId(), null, null, nextChoice, nextChoice.options(),
-                            FaceDownVisibility.publicName(gameData, source) + " - Choose a kind of counter to remove ("
-                                    + (pickedKinds.size() + 1) + " of " + choice.required() + ")."));
-                    return;
-                }
-                if (remainingKinds.size() == 1) {
-                    pickedKinds.add(remainingKinds.getFirst());
-                } else {
-                    for (CounterType kind : remainingKinds) {
-                        int available = source.getCounterCount(kind) - Collections.frequency(pickedKinds, kind);
-                        for (int i = 0; i < available; i++) pickedKinds.add(kind);
-                    }
-                }
+            List<CounterType> remainingKinds = fillForcedCounterKinds(source, pickedKinds, choice.required());
+            if (!remainingKinds.isEmpty()) {
+                ChoiceContext.SourceCounterCostTypeChoice nextChoice = new ChoiceContext.SourceCounterCostTypeChoice(
+                        choice.sourcePermanentId(), choice.abilityIndex(), choice.xValue(), choice.targetId(),
+                        choice.targetZone(), choice.targetIds(), choice.damageAssignments(), remainingKinds,
+                        choice.required(), pickedKinds);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        player.getId(), null, null, nextChoice, nextChoice.options(),
+                        FaceDownVisibility.publicName(gameData, source) + " - Choose a kind of counter to remove ("
+                                + (pickedKinds.size() + 1) + " of " + choice.required() + ")."));
+                return;
             }
         }
         gameData.chosenCostCounterType = choice.required() > 1 ? null : chosen;
@@ -8477,6 +8488,34 @@ public class AbilityActivationService {
             gameData.chosenCostCounterType = null;
             gameData.chosenCostCounterTypes = null;
         }
+    }
+
+    /**
+     * Adds to {@code pickedKinds}, the kinds already picked for the counters a cost removes from
+     * {@code permanent}, every pick left with nothing to choose, until {@code required} are picked. Returns
+     * the kinds the payer still chooses the next counter from, or an empty list once every pick is made.
+     */
+    private static List<CounterType> fillForcedCounterKinds(Permanent permanent, List<CounterType> pickedKinds,
+                                                            int required) {
+        while (pickedKinds.size() < required) {
+            List<CounterType> remainingKinds = remainingCounterKinds(permanent, pickedKinds);
+            int remainingCounters = 0;
+            for (CounterType kind : remainingKinds) {
+                remainingCounters += permanent.getCounterCount(kind) - Collections.frequency(pickedKinds, kind);
+            }
+            if (remainingKinds.size() > 1 && remainingCounters > required - pickedKinds.size()) {
+                return remainingKinds;
+            }
+            if (remainingKinds.size() == 1) {
+                pickedKinds.add(remainingKinds.getFirst());
+            } else {
+                for (CounterType kind : remainingKinds) {
+                    int available = permanent.getCounterCount(kind) - Collections.frequency(pickedKinds, kind);
+                    for (int i = 0; i < available; i++) pickedKinds.add(kind);
+                }
+            }
+        }
+        return List.of();
     }
 
     private static List<CounterType> remainingCounterKinds(Permanent permanent, List<CounterType> picked) {
@@ -8494,11 +8533,32 @@ public class AbilityActivationService {
                                                       String label) {
         CounterType chosen = pickCounterKind(choice.counterTypes(), label);
         gameData.interaction.clearAwaitingInput();
-        gameData.chosenCostCounterType = chosen;
+        if (!(choice.costChoice().costEffect() instanceof RemoveOneOrMoreCountersFromControlledPermanentsCost)) {
+            gameData.chosenCostCounterType = chosen;
+            try {
+                completeActivatedAbilityCostChoice(gameData, player, choice.costChoice(), choice.chosenPermanentId());
+            } finally {
+                gameData.chosenCostCounterType = null;
+            }
+            return;
+        }
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, choice.chosenPermanentId());
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("The chosen permanent is no longer on the battlefield");
+        }
+        List<CounterType> pickedKinds = new ArrayList<>(choice.chosenSoFar());
+        pickedKinds.add(chosen);
+        List<CounterType> remainingKinds = fillForcedCounterKinds(chosenPermanent, pickedKinds, choice.required());
+        if (!remainingKinds.isEmpty()) {
+            beginControlledCounterKindChoice(gameData, player.getId(), choice.costChoice(), choice.chosenPermanentId(),
+                    remainingKinds, choice.required(), pickedKinds);
+            return;
+        }
+        gameData.chosenCostCounterTypes = pickedKinds;
         try {
             completeActivatedAbilityCostChoice(gameData, player, choice.costChoice(), choice.chosenPermanentId());
         } finally {
-            gameData.chosenCostCounterType = null;
+            gameData.chosenCostCounterTypes = null;
         }
     }
 

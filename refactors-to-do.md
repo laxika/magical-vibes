@@ -1377,9 +1377,8 @@ Don't commit.
 - Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Sure, low.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
-#### Payments and costs (12)
+#### Payments and costs (10)
 
-- Moxite Refinery's `CounterType.ANY` cost removes kinds in enum order; the player should choose (the kind prompt serves one counter only).
 - Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
 - Jaya Ballard's emblem grants flashback (an alternative cost, CR 702.34a, 118.9a) where the text permits casting for the mana cost. Fairly sure.
 - Charmed Pendant offers a monocoloured hybrid symbol's generic half; Animation Module offers only poison and energy player counters; Thran Portal's added life cost applies to its non-mana abilities.
@@ -1388,7 +1387,6 @@ Don't commit.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
 - `AbilityActivationService.getActivatedAbilityAdditionalGenericCost`: with a {0} equip or power-up cost, the tax is returned without cost reductions applied (CR 601.2f). Fairly sure of the code.
 - "Mana of any type" exile and graveyard permissions (`withAnyManaType`, `spendingManaOfAnyType`: Mnemonic Betrayal, Gonti, Dire Fleet Daredevil and others) are paid as any colour when the cost has {C} (`SpellCastingService` `anyColorForColoredSymbols`), so coloured mana can't pay {C} (CR 106.1b, 609.4b). Sure.
-- Chisei, Heart of Oceans' `ForcedCostOrElseEffect` counter removal may take the first kind of counter instead of letting the payer choose. Unverified.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
@@ -1422,7 +1420,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (76)
+#### Other (73)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1452,7 +1450,6 @@ Don't commit.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.
 - `ManaSourceColorSupport` non-land branch: an `AwardAnyColorManaEffect` whose amount is 0 still counts every colour (CR 106.7). Sure of the code, low.
-- SILVER is treated as a wildcard like ANY in `PermanentCounterSupport.removableCounterKinds`, `DoubleCountersOnTargetPermanentEffectHandler`, `AdjustEachCounterKindOnTargetEffectHandler` and others, but silver counters are real (Karn). Unverified reachability.
 - Coastal Piracy (and other "a creature you control deals combat damage to an opponent" cards): the to-player trigger has no `AttackedTargetIsOpponent` condition, so damage redirected to its controller triggers. Fairly sure.
 - Terminal Velocity: its `PutCardToBattlefieldThenEffect` then-steps grant haste and triggers over `Subjects.source()` / `toSourcePermanent`, which may name the spell rather than the put permanent (CR 608.2h). Unverified.
 - `PerpetuallyGrantKeywordToSourceEffect` (6 cards): on the battlefield the keyword goes onto a copy of the permanent's card, so it is lost when the permanent changes zones (not perpetual); off the battlefield it is granted by card id in any zone (CR 400.7).
@@ -1464,9 +1461,7 @@ Don't commit.
 - A card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b).
 - Myr Welder, Territory Forge, Idris, Locus of Enlightenment: their printed exiles record no link, so a card exiled by a borrowed linkless exile ability counts as "exiled with it" (CR 607.2a). Sure of the code.
 - A borrowed "X is the mana value of the exiled card" ability (Prototype Portal) is dropped from exile borrowers instead of granted as one that does nothing. Unsure.
-- The spore-counter cards (the Thallids, Sporoloth Ancient, Fungal Bloom, Thelon of Havenwood, Propagator Primordium) use `CounterType.FUNGUS`, also the real fungus counters of Sporogenesis and Mindbender Spores, while Thallid Shell-Dweller uses `SPORE`: Thelon counts fungus counters as spore counters and Sporoloth's granted "remove two spore counters" can't use Shell-Dweller's (CR 122.1). Sure of the code.
 - Voracious Brood: "whenever one or more creature cards are put into your graveyard from anywhere, put that many +1/+1 counters" is one trigger per card outside the library path, not one per event (CR 603.2c). Fairly sure, minor.
-- `DistributeCountersAmongTargetsEffectHandler`'s delayed cleanup / end-step removals (Broodlord, Systems Override, The Earth Crystal, Vhal) are `RemoveCountersEffect.fromTarget` on the delayed ability's entry: the delayed ability refers to that permanent, which it still affects while it stays on the battlefield (CR 603.7c), and declares no target, so `Subjects.named(id)` would say it; whether a shroud or hexproof gained meanwhile stops today's removal was not checked. Unverified.
 - A "this creature or another [X] enters" ability that its own source triggers (Scourge of Valkas, Hawkeye) records no triggering permanent on its entry, so a `Subjects.triggering()` or `TriggeringPermanentPower` read in such an ability finds nothing; the damage carrier now falls back to the source (step 10 run Damage), other readers weren't checked. Fairly sure of the entry, unsure which cards read it.
 - Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.
 - "May pay" mana paid from the pool without the tax-paid event (Tax Taker): Reflect (`ReflectMayEffectHandler`) still pays with `payResolutionCost`; its only card, Mirrored Lotus, reflects for {0}, so no mana and no event. The others were fixed in PY-1 (`TaxTakerTest.EffectPromptTaxes`). Latent.

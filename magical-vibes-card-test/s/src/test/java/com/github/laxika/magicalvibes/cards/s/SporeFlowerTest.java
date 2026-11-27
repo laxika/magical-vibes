@@ -27,7 +27,7 @@ class SporeFlowerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(flower.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -37,19 +37,19 @@ class SporeFlowerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(flower.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters prevents all combat damage this turn")
     void removesThreeSporeCountersAndPreventsCombatDamage() {
         Permanent flower = addFlower();
-        flower.setCounterCount(CounterType.FUNGUS, 3);
+        flower.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(flower.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
@@ -58,7 +58,7 @@ class SporeFlowerTest extends BaseCardTest {
     @DisplayName("Removing three spore counters prevents combat damage from reaching a player")
     void preventsCombatDamageFromReachingPlayer() {
         Permanent flower = addFlower();
-        flower.setCounterCount(CounterType.FUNGUS, 3);
+        flower.setCounterCount(CounterType.SPORE, 3);
         addCreatureReady(player1, new IcatianPriest());
 
         harness.activateAbility(player1, 0, null, null);
@@ -75,7 +75,7 @@ class SporeFlowerTest extends BaseCardTest {
     @DisplayName("Combat damage prevention does not prevent noncombat damage")
     void doesNotPreventNoncombatDamage() {
         Permanent flower = addFlower();
-        flower.setCounterCount(CounterType.FUNGUS, 3);
+        flower.setCounterCount(CounterType.SPORE, 3);
         Permanent javelineers = addCreatureReady(player1, new IcatianJavelineers());
         javelineers.setCounterCount(CounterType.JAVELIN, 1);
 
@@ -92,7 +92,7 @@ class SporeFlowerTest extends BaseCardTest {
     @DisplayName("The prevention ability requires three spore counters")
     void preventionAbilityRequiresThreeSporeCounters() {
         Permanent flower = addFlower();
-        flower.setCounterCount(CounterType.FUNGUS, 2);
+        flower.setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -102,18 +102,18 @@ class SporeFlowerTest extends BaseCardTest {
     @DisplayName("Spore counters are paid immediately and only three are removed")
     void countersArePaidBeforeResolution() {
         Permanent flower = addFlower();
-        flower.setCounterCount(CounterType.FUNGUS, 5);
+        flower.setCounterCount(CounterType.SPORE, 5);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(flower.getCounterCount(CounterType.SPORE)).isEqualTo(2);
         assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passBothPriorities();
 
-        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(flower.getCounterCount(CounterType.SPORE)).isEqualTo(2);
         assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
@@ -123,12 +123,12 @@ class SporeFlowerTest extends BaseCardTest {
         Permanent flower = addFlower();
         flower.setSummoningSick(true);
         flower.tap();
-        flower.setCounterCount(CounterType.FUNGUS, 3);
+        flower.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(flower.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
@@ -137,7 +137,7 @@ class SporeFlowerTest extends BaseCardTest {
     @DisplayName("The activated ability resolves even after Spore Flower leaves the battlefield")
     void preventionResolvesWithoutSource() {
         Permanent flower = addFlower();
-        flower.setCounterCount(CounterType.FUNGUS, 3);
+        flower.setCounterCount(CounterType.SPORE, 3);
         addCreatureReady(player2, new IcatianPriest());
 
         harness.activateAbility(player1, 0, null, null);
@@ -156,7 +156,7 @@ class SporeFlowerTest extends BaseCardTest {
     @DisplayName("Combat damage is prevented for attacking and blocking creatures")
     void preventsCombatDamageToBothCreatures() {
         Permanent flower = addFlower();
-        flower.setCounterCount(CounterType.FUNGUS, 3);
+        flower.setCounterCount(CounterType.SPORE, 3);
         Permanent attacker = addCreatureReady(player1, new IcatianPriest());
         Permanent blocker = addCreatureReady(player2, new IcatianPriest());
 

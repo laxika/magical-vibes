@@ -25,19 +25,19 @@ class ThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -45,7 +45,7 @@ class ThallidTest extends BaseCardTest {
     @DisplayName("Created token is a 1/1 green Saproling creature")
     void createdTokenHasRequiredCharacteristics() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -63,19 +63,19 @@ class ThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves any additional spore counters")
     void removesExactlyThreeSporeCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 4);
+        thallid.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isOne();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addThallid().setCounterCount(CounterType.FUNGUS, 2);
+        addThallid().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -106,7 +106,7 @@ class ThallidTest extends BaseCardTest {
         advanceThroughPlayerOneUntap();
         resolveAllTriggers();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(2);
     }
 
     private Permanent addThallid() {
@@ -122,19 +122,19 @@ class ThallidTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(ours.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(theirs.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(ours.getCounterCount(CounterType.SPORE)).isZero();
+        assertThat(theirs.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
     @DisplayName("Spore counters are paid before the token ability resolves")
     void counterCostIsPaidImmediately() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -150,13 +150,13 @@ class ThallidTest extends BaseCardTest {
         Permanent thallid = addThallid();
         thallid.setSummoningSick(true);
         thallid.tap();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
         assertThat(thallid.isTapped()).isTrue();
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -164,14 +164,14 @@ class ThallidTest extends BaseCardTest {
     @DisplayName("Each activation spends three counters and creates one token")
     void canActivateAgainWithEnoughRemainingCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 6);
+        thallid.setCounterCount(CounterType.SPORE, 6);
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(2);
     }
 

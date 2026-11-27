@@ -34,19 +34,19 @@ class DeathsporeThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling"))
                 .singleElement()
                 .satisfies(token -> {
@@ -62,12 +62,12 @@ class DeathsporeThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves additional counters")
     void removesExactlyThreeSporeCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 4);
+        thallid.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isOne();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -75,7 +75,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling gives a creature -1/-1")
     void sacrificingSaprolingDebuffsTargetCreature() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new AshcoatBear());
 
         harness.activateAbility(player1, 0, null, null);
@@ -92,7 +92,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     @DisplayName("The debuff puts a creature with zero toughness into the graveyard")
     void debuffPutsZeroToughnessCreatureIntoGraveyard() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new DeathsporeThallid());
 
         harness.activateAbility(player1, 0, null, null);
@@ -107,7 +107,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addThallid().setCounterCount(CounterType.FUNGUS, 2);
+        addThallid().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -128,7 +128,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     @DisplayName("The debuff ability requires a creature target")
     void debuffAbilityRequiresCreatureTarget() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.activateAbility(player1, 0, null, null);
@@ -143,7 +143,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     @DisplayName("The debuff wears off during cleanup")
     void debuffWearsOffAtEndOfTurn() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new AshcoatBear());
 
         harness.activateAbility(player1, 0, null, null);
@@ -167,7 +167,7 @@ class DeathsporeThallidTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
@@ -176,11 +176,11 @@ class DeathsporeThallidTest extends BaseCardTest {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new DeathsporeThallid());
         thallid.setSummoningSick(true);
         thallid.tap();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
@@ -191,7 +191,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     @DisplayName("The targeted Saproling may itself pay the sacrifice cost")
     void canSacrificeTargetedSaproling() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         Permanent token = findPermanent(player1, "Saproling");
@@ -208,7 +208,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     @DisplayName("The token ability resolves after its source dies")
     void tokenAbilityResolvesAfterSourceDies() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 6);
+        thallid.setCounterCount(CounterType.SPORE, 6);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

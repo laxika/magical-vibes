@@ -17,13 +17,13 @@ import java.util.List;
 public class FeralThallid extends Card {
 
     public FeralThallid() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.FUNGUS));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.SPORE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(3, CounterType.FUNGUS),
+                        new RemoveCounterFromSourceCost(3, CounterType.SPORE),
                         new RegenerateEffect()
                 ),
                 "Remove three spore counters from Feral Thallid: Regenerate Feral Thallid."

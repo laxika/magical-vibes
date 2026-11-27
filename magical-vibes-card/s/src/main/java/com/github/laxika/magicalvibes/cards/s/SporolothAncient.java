@@ -23,14 +23,14 @@ import java.util.Set;
 public class SporolothAncient extends Card {
 
     public SporolothAncient() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.FUNGUS));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.SPORE));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         null,
                         List.of(
-                                new RemoveCounterFromSourceCost(2, CounterType.FUNGUS),
+                                new RemoveCounterFromSourceCost(2, CounterType.SPORE),
                                 new CreateTokenEffect(
                                         "Saproling",
                                         1,

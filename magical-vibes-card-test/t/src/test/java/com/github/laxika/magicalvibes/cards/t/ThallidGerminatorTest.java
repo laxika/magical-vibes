@@ -30,19 +30,19 @@ class ThallidGerminatorTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -50,7 +50,7 @@ class ThallidGerminatorTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling boosts a creature")
     void sacrificingSaprolingBoostsTargetCreature() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
@@ -66,7 +66,7 @@ class ThallidGerminatorTest extends BaseCardTest {
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addThallid().setCounterCount(CounterType.FUNGUS, 2);
+        addThallid().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -87,7 +87,7 @@ class ThallidGerminatorTest extends BaseCardTest {
     @DisplayName("The boost wears off during cleanup")
     void boostWearsOffAtEndOfTurn() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
@@ -109,24 +109,24 @@ class ThallidGerminatorTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
     @Test
     void counterCostIsPaidBeforeTokenResolvesAndPreservesExtraCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 5);
+        thallid.setCounterCount(CounterType.SPORE, 5);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(2);
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
 
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(2);
     }
 
     @Test
@@ -134,7 +134,7 @@ class ThallidGerminatorTest extends BaseCardTest {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new ThallidGerminator());
         thallid.setSummoningSick(true);
         thallid.tap();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -152,7 +152,7 @@ class ThallidGerminatorTest extends BaseCardTest {
     @Test
     void canTargetTheSaprolingSacrificedToPayTheCost() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         Permanent saproling = findPermanent(player1, "Saproling");
@@ -172,7 +172,7 @@ class ThallidGerminatorTest extends BaseCardTest {
     void cannotSacrificeAnOpponentsSaproling() {
         Permanent thallid = addThallid();
         Permanent opponentThallid = harness.addToBattlefieldAndReturn(player2, new ThallidGerminator());
-        opponentThallid.setCounterCount(CounterType.FUNGUS, 3);
+        opponentThallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 

@@ -19,7 +19,7 @@ public class FungalBloom extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}{G}",
-                List.of(new PutCountersEffect(CounterType.FUNGUS)),
+                List.of(new PutCountersEffect(CounterType.SPORE)),
                 "{G}{G}: Put a spore counter on target Fungus.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.FUNGUS),

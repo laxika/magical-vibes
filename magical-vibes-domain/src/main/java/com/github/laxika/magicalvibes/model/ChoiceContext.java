@@ -2304,14 +2304,18 @@ public sealed interface ChoiceContext {
     /**
      * The controller picks which kind of counter to remove from the permanent they chose to pay a
      * "remove a counter from a creature you control" activation cost with. Carries the suspended
-     * permanent-choice context so payment can resume with the chosen kind.
+     * permanent-choice context so payment can resume with the chosen kind. When the cost removes
+     * several counters from that permanent ({@code required} above one, Moxite Refinery's "remove X
+     * counters") the kinds are picked one counter at a time and {@code chosenSoFar} holds the earlier picks.
      */
     record ControlledCounterCostTypeChoice(PermanentChoiceContext.ActivatedAbilityCostChoice costChoice,
                                            UUID chosenPermanentId,
-                                           List<CounterType> counterTypes) implements ChoiceContext {
+                                           List<CounterType> counterTypes, int required,
+                                           List<CounterType> chosenSoFar) implements ChoiceContext {
 
         public ControlledCounterCostTypeChoice {
             counterTypes = List.copyOf(counterTypes);
+            chosenSoFar = List.copyOf(chosenSoFar);
         }
 
         public List<String> options() {

@@ -21,19 +21,19 @@ class FeralThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Removing three spore counters grants a regeneration shield")
     void removesThreeSporeCountersAndRegenerates() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
@@ -41,12 +41,12 @@ class FeralThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves any additional spore counters")
     void removesExactlyThreeSporeCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 4);
+        thallid.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(1);
         assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
@@ -54,7 +54,7 @@ class FeralThallidTest extends BaseCardTest {
     @DisplayName("The regeneration ability requires three spore counters")
     void regenerationAbilityRequiresThreeSporeCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 2);
+        thallid.setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -72,18 +72,18 @@ class FeralThallidTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(own.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(opposing.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(own.getCounterCount(CounterType.SPORE)).isZero();
+        assertThat(opposing.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
     void countersArePaidBeforeRegenerationResolves() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.regenerationShieldCount(thallid.getId())).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -97,19 +97,19 @@ class FeralThallidTest extends BaseCardTest {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new FeralThallid());
         thallid.setSummoningSick(true);
         thallid.tap();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
     @Test
     void regenerationPreventsLethalDamageDestructionOnce() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

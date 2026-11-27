@@ -28,7 +28,7 @@ class VitasporeThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
@@ -38,19 +38,19 @@ class VitasporeThallidTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 4);
+        thallid.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isOne();
         Permanent saproling = findPermanent(player1, "Saproling");
         assertThat(saproling.getCard().isToken()).isTrue();
         assertThat(saproling.getCard().getType()).isEqualTo(CardType.CREATURE);
@@ -64,7 +64,7 @@ class VitasporeThallidTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling gives a target creature haste until end of turn")
     void sacrificingSaprolingGivesTargetCreatureHaste() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new SerraSphinx());
 
         harness.activateAbility(player1, 0, null, null);
@@ -85,7 +85,7 @@ class VitasporeThallidTest extends BaseCardTest {
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addThallid().setCounterCount(CounterType.FUNGUS, 2);
+        addThallid().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -100,7 +100,7 @@ class VitasporeThallidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, noncreature.getId()))
@@ -128,11 +128,11 @@ class VitasporeThallidTest extends BaseCardTest {
     void countersArePaidImmediatelyWhileSummoningSick() {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new VitasporeThallid());
         thallid.setSummoningSick(true);
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
@@ -143,7 +143,7 @@ class VitasporeThallidTest extends BaseCardTest {
     void cannotSacrificeOpponentsSaproling() {
         Permanent thallid = addThallid();
         Permanent opponentThallid = addCreatureReady(player2, new VitasporeThallid());
-        opponentThallid.setCounterCount(CounterType.FUNGUS, 3);
+        opponentThallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 

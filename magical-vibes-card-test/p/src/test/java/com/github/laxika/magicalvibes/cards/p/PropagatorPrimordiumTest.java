@@ -42,21 +42,21 @@ class PropagatorPrimordiumTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(propagator.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
     @DisplayName("Removes three spore counters to return a Fungus creature")
     void returnsTargetFungusCreature() {
         Permanent propagator = addPropagator();
-        propagator.setCounterCount(CounterType.FUNGUS, 3);
+        propagator.setCounterCount(CounterType.SPORE, 3);
         Card target = new FeralThallid();
         harness.setGraveyard(player1, List.of(target));
 
         harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(propagator.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(target.getId()));
     }
@@ -65,7 +65,7 @@ class PropagatorPrimordiumTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Fungus creature card")
     void rejectsNonFungusCreatureTarget() {
         Permanent propagator = addPropagator();
-        propagator.setCounterCount(CounterType.FUNGUS, 3);
+        propagator.setCounterCount(CounterType.SPORE, 3);
         Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
 
@@ -82,21 +82,21 @@ class PropagatorPrimordiumTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(propagator.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Cannot return a Fungus from an opponent's graveyard")
     void rejectsOpponentsGraveyard() {
         Permanent propagator = addPropagator();
-        propagator.setCounterCount(CounterType.FUNGUS, 3);
+        propagator.setCounterCount(CounterType.SPORE, 3);
         Card target = new PropagatorPrimordium();
         harness.setGraveyard(player2, List.of(target));
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, null, target.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
+        assertThat(propagator.getCounterCount(CounterType.SPORE)).isEqualTo(3);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
     }
 
@@ -104,14 +104,14 @@ class PropagatorPrimordiumTest extends BaseCardTest {
     @DisplayName("Cannot activate with fewer than three spore counters")
     void rejectsInsufficientCounters() {
         Permanent propagator = addPropagator();
-        propagator.setCounterCount(CounterType.FUNGUS, 2);
+        propagator.setCounterCount(CounterType.SPORE, 2);
         Card target = new PropagatorPrimordium();
         harness.setGraveyard(player1, List.of(target));
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, null, target.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(propagator.getCounterCount(CounterType.SPORE)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
     }
 
@@ -121,12 +121,12 @@ class PropagatorPrimordiumTest extends BaseCardTest {
         Permanent propagator = harness.enterBattlefieldAndReturn(player1, new PropagatorPrimordium());
         resolveAllTriggers();
         Card target = gd.playerGraveyards.get(player1.getId()).getFirst();
-        propagator.setCounterCount(CounterType.FUNGUS, 4);
+        propagator.setCounterCount(CounterType.SPORE, 4);
         propagator.tap();
 
         harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
 
-        assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(propagator.getCounterCount(CounterType.SPORE)).isOne();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
         resolveAllTriggers();
 
@@ -145,7 +145,7 @@ class PropagatorPrimordiumTest extends BaseCardTest {
     @DisplayName("Counter costs stay paid when the target leaves the graveyard")
     void targetLeavingGraveyardDoesNotRefundCounters() {
         Permanent propagator = addPropagator();
-        propagator.setCounterCount(CounterType.FUNGUS, 3);
+        propagator.setCounterCount(CounterType.SPORE, 3);
         Card target = new PropagatorPrimordium();
         harness.setGraveyard(player1, List.of(target));
 
@@ -153,7 +153,7 @@ class PropagatorPrimordiumTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         resolveAllTriggers();
 
-        assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(propagator.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(propagator);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }

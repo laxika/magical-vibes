@@ -28,7 +28,7 @@ class SavageThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -39,19 +39,19 @@ class SavageThallidTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling"))
                 .singleElement()
                 .satisfies(token -> {
@@ -67,12 +67,12 @@ class SavageThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves additional counters")
     void removesExactlyThreeSporeCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 4);
+        thallid.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isOne();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -80,7 +80,7 @@ class SavageThallidTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling regenerates the target Fungus")
     void sacrificingSaprolingRegeneratesTargetFungus() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new SavageThallid());
 
         harness.activateAbility(player1, 0, null, null);
@@ -95,7 +95,7 @@ class SavageThallidTest extends BaseCardTest {
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addThallid().setCounterCount(CounterType.FUNGUS, 2);
+        addThallid().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -105,7 +105,7 @@ class SavageThallidTest extends BaseCardTest {
     @DisplayName("The regeneration ability cannot target a non-Fungus")
     void regenerationAbilityRequiresFungusTarget() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new HavenwoodWurm());
 
         harness.activateAbility(player1, 0, null, null);
@@ -131,7 +131,7 @@ class SavageThallidTest extends BaseCardTest {
     @DisplayName("Regeneration protects the source from lethal damage and consumes the shield")
     void regenerationProtectsSourceFromLethalDamage() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
@@ -159,7 +159,7 @@ class SavageThallidTest extends BaseCardTest {
     void cannotSacrificeOpponentsSaproling() {
         Permanent thallid = addThallid();
         Permanent opponentThallid = addCreatureReady(player2, new SavageThallid());
-        opponentThallid.setCounterCount(CounterType.FUNGUS, 3);
+        opponentThallid.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
@@ -175,10 +175,10 @@ class SavageThallidTest extends BaseCardTest {
         Permanent thallid = addThallid();
         thallid.setSummoningSick(true);
         thallid.tap();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         harness.passBothPriorities();
 

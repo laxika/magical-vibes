@@ -16,7 +16,9 @@ import java.util.UUID;
 /**
  * Handles variable counter costs paid from matching permanents the activating player controls: X counters from among
  * them, or, with {@link RemoveOneOrMoreCountersFromControlledPermanentsCost#fromOnePermanent()}, all X from the one
- * permanent chosen. X = 0 is a cost paid by removing nothing when the cost allows it.
+ * permanent chosen. X = 0 is a cost paid by removing nothing when the cost allows it. A cost of any kind of counter
+ * removes, from a permanent with several kinds, the kind its payer picks for each counter
+ * ({@link #needsKindChoice}, {@code GameData.chosenCostCounterTypes}).
  */
 public class RemoveCounterFromControlledPermanentsCostHandler implements PermanentChoiceCostHandler {
 
@@ -98,7 +100,7 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
             throw new IllegalStateException("Not enough " + counterLabel() + " counters on the chosen permanent");
         }
 
-        removeCounters(chosen, toRemove);
+        removeCounters(chosen, toRemove, gameData.chosenCostCounterTypes);
         lastRemoved = toRemove;
         String counterWord = toRemove == 1
                 ? "a " + counterLabel() + " counter"
@@ -149,6 +151,24 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
         return false;
     }
 
+    /**
+     * Whether paying with {@code chosen} needs its payer to pick the kind of each counter removed: a cost of any kind of
+     * counter, all X from the one chosen permanent, where that permanent has several kinds and more counters than X.
+     */
+    public boolean needsKindChoice(Permanent chosen) {
+        return cost.counterType() == CounterType.ANY && cost.fromOnePermanent() && requiredCount > 0
+                && removableKinds(chosen).size() > 1 && chosen.getTotalCounterCount() > requiredCount;
+    }
+
+    /** The kinds of counter on {@code permanent} this cost could remove, in {@link CounterType} order. */
+    public List<CounterType> removableKinds(Permanent permanent) {
+        return java.util.Arrays.stream(CounterType.values())
+                .filter(type -> type != CounterType.ANY && type != CounterType.SILVER
+                        && (cost.counterType() == CounterType.ANY || type == cost.counterType())
+                        && permanent.getCounterCount(type) > 0)
+                .toList();
+    }
+
     private boolean matchesFilter(GameData gameData, Permanent permanent) {
         return cost.permanentPredicate() == null
                 || predicateEvaluationService.matchesPermanentPredicate(
@@ -173,9 +193,20 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
         return permanent.getTotalCounterCount();
     }
 
-    private void removeCounters(Permanent permanent, int count) {
+    private void removeCounters(Permanent permanent, int count, List<CounterType> pickedKinds) {
         if (cost.counterType() != CounterType.ANY) {
             permanent.setCounterCount(cost.counterType(), permanent.getCounterCount(cost.counterType()) - count);
+            return;
+        }
+        if (pickedKinds != null && pickedKinds.size() == count) {
+            for (CounterType kind : pickedKinds) {
+                if (permanent.getCounterCount(kind) < java.util.Collections.frequency(pickedKinds, kind)) {
+                    throw new IllegalStateException("Not enough " + counterLabel() + " counters on the chosen permanent");
+                }
+            }
+            for (CounterType kind : pickedKinds) {
+                permanent.setCounterCount(kind, permanent.getCounterCount(kind) - 1);
+            }
             return;
         }
 

@@ -26,7 +26,7 @@ class FungalBloomTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, fungus.getId());
         harness.passBothPriorities();
 
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -59,17 +59,17 @@ class FungalBloomTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             harness.activateAbility(player1, 0, null, fungus.getId());
-            assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(i);
+            assertThat(fungus.getCounterCount(CounterType.SPORE)).isEqualTo(i);
             harness.passBothPriorities();
         }
 
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isEqualTo(3);
         assertThat(bloom.isTapped()).isFalse();
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -84,7 +84,7 @@ class FungalBloomTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(bloom.getCard());
         harness.passBothPriorities();
 
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -98,7 +98,7 @@ class FungalBloomTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(fungus.getCard());
         harness.passBothPriorities();
 
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -111,6 +111,6 @@ class FungalBloomTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, fungus.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(fungus.getCounterCount(CounterType.SPORE)).isZero();
     }
 }

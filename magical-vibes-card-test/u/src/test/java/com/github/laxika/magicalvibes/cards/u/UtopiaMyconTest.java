@@ -25,7 +25,7 @@ class UtopiaMyconTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(mycon.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
@@ -36,19 +36,19 @@ class UtopiaMyconTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(mycon.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent mycon = addMycon();
-        mycon.setCounterCount(CounterType.FUNGUS, 4);
+        mycon.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(mycon.getCounterCount(CounterType.SPORE)).isOne();
         Permanent saproling = findPermanent(player1, "Saproling");
         assertThat(gqs.getEffectivePower(gd, saproling)).isOne();
         assertThat(gqs.getEffectiveToughness(gd, saproling)).isOne();
@@ -59,7 +59,7 @@ class UtopiaMyconTest extends BaseCardTest {
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addMycon().setCounterCount(CounterType.FUNGUS, 2);
+        addMycon().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -69,7 +69,7 @@ class UtopiaMyconTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling adds one mana of the chosen color")
     void sacrificingSaprolingAddsChosenColorMana() {
         Permanent mycon = addMycon();
-        mycon.setCounterCount(CounterType.FUNGUS, 3);
+        mycon.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
@@ -108,11 +108,11 @@ class UtopiaMyconTest extends BaseCardTest {
     @DisplayName("Spore counters are paid immediately while the token waits for resolution")
     void countersArePaidBeforeTokenResolves() {
         Permanent mycon = addMycon();
-        mycon.setCounterCount(CounterType.FUNGUS, 3);
+        mycon.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(mycon.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         assertThat(gd.stack).hasSize(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -129,7 +129,7 @@ class UtopiaMyconTest extends BaseCardTest {
         Permanent mycon = addMycon();
         mycon.setSummoningSick(true);
         mycon.tap();
-        mycon.setCounterCount(CounterType.FUNGUS, 3);
+        mycon.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -150,7 +150,7 @@ class UtopiaMyconTest extends BaseCardTest {
     void cannotSacrificeOpponentsSaproling() {
         addMycon();
         Permanent opposingMycon = addCreatureReady(player2, new UtopiaMycon());
-        opposingMycon.setCounterCount(CounterType.FUNGUS, 3);
+        opposingMycon.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 

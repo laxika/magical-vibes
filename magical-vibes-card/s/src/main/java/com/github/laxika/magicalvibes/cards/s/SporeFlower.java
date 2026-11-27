@@ -18,13 +18,13 @@ import java.util.List;
 public class SporeFlower extends Card {
 
     public SporeFlower() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.FUNGUS));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), PutCountersEffect.onSelf(CounterType.SPORE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(3, CounterType.FUNGUS),
+                        new RemoveCounterFromSourceCost(3, CounterType.SPORE),
                         PreventDamageEffect.allCombat()
                 ),
                 "Remove three spore counters from Spore Flower: Prevent all combat damage that would be dealt this turn."

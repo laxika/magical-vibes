@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -136,6 +137,53 @@ class MoxiteRefineryTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("With several kinds of counter on the permanent, the player chooses the kind of each counter removed")
+    void playerChoosesKindOfEachCounterRemoved() {
+        addReadyRefinery();
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MishrasBauble());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        source.setCounterCount(CounterType.CHARGE, 2);
+        source.setCounterCount(CounterType.KI, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, 2, target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "ki counters");
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.KI)).isZero();
+        assertThat(source.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("After choosing which of several permanents pays, the player chooses the kinds of its counters")
+    void playerChoosesKindsAfterChoosingThePermanent() {
+        addReadyRefinery();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MishrasBauble());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MishrasBauble());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.CHARGE, 2);
+        second.setCounterCount(CounterType.CHARGE, 1);
+        second.setCounterCount(CounterType.KI, 1);
+        second.setCounterCount(CounterType.OIL, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, 2, target.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleListChoice(player1, "oil counters");
+        harness.handleListChoice(player1, "ki counters");
+        harness.passBothPriorities();
+
+        assertThat(second.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.KI)).isZero();
+        assertThat(second.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(first.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private Permanent addReadyRefinery() {

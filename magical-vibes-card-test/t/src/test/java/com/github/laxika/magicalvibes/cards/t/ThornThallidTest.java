@@ -24,7 +24,7 @@ class ThornThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(1);
     }
 
     @Test
@@ -34,20 +34,20 @@ class ThornThallidTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Removing three spore counters deals 1 damage to a target creature")
     void removesThreeSporeCountersAndDealsDamage() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent target = addCreatureReady(player2, new Thallid());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -55,13 +55,13 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves any additional spore counters")
     void removesExactlyThreeSporeCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 4);
+        thallid.setCounterCount(CounterType.SPORE, 4);
         Permanent target = addCreatureReady(player2, new Thallid());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isOne();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -69,7 +69,7 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters deals 1 damage to a target player")
     void removesThreeSporeCountersAndDealsDamageToPlayer() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -82,7 +82,7 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("Removing three spore counters deals 1 damage to a target planeswalker")
     void removesThreeSporeCountersAndDealsDamageToPlaneswalker() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
 
@@ -96,7 +96,7 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("The damage ability requires three spore counters")
     void damageAbilityRequiresThreeSporeCounters() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 2);
+        thallid.setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -106,7 +106,7 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("The damage ability does not require the source to be untapped")
     void damageAbilityDoesNotRequireUntappedSource() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         thallid.tap();
         Permanent target = addCreatureReady(player2, new Thallid());
 
@@ -121,24 +121,24 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("The damage ability cannot target a noncreature permanent")
     void damageAbilityCannotTargetArtifact() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Aeolipile());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Spore counters are paid immediately and cannot pay for a second activation")
     void countersArePaidBeforeResolution() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -152,13 +152,13 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("A summoning-sick Thorn Thallid can damage itself")
     void summoningSickSourceCanTargetItself() {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new ThornThallid());
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, thallid.getId());
         harness.passBothPriorities();
 
         assertThat(thallid.getMarkedDamage()).isEqualTo(1);
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         harness.assertOnBattlefield(player1, "Thorn Thallid");
     }
 
@@ -166,13 +166,13 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("Six spore counters can pay for two independent activations")
     void canActivateTwiceBeforeEitherAbilityResolves() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 6);
+        thallid.setCounterCount(CounterType.SPORE, 6);
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(thallid.getCounterCount(CounterType.SPORE)).isZero();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -183,7 +183,7 @@ class ThornThallidTest extends BaseCardTest {
     @DisplayName("The damage ability resolves even after Thorn Thallid dies")
     void damageResolvesAfterSourceDies() {
         Permanent thallid = addThallid();
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
         harness.addToBattlefield(player2, new Aeolipile());
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.setLife(player2, 20);

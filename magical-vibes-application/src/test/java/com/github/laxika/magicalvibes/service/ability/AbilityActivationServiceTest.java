@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
@@ -1326,6 +1327,38 @@ class AbilityActivationServiceTest {
                             && kinds.counterTypes().size() == 2));
             assertThat(perm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
             assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Remove X counters of any kind from one permanent: asks the kind of each counter when several kinds are present")
+        void removeXCountersFromOnePermanentAsksForEachKind() {
+            Card card = new Card();
+            card.setName("Test Refinery");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            card.setColor(null);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(
+                            RemoveOneOrMoreCountersFromControlledPermanentsCost.xFromOnePermanent(CounterType.ANY, null),
+                            PutCountersEffect.onSelf(CounterType.CHARGE)),
+                    "Remove X counters from a permanent you control: Put a charge counter on this artifact."
+            ).withXValue());
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            perm.setCounterCount(CounterType.KI, 1);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.findPermanentById(gameData, perm.getId())).thenReturn(perm);
+
+            service.activateAbility(gameData, player1, 0, null, 2, null, null);
+
+            verify(interactionHandlerRegistry).begin(eq(gameData), argThat(interaction ->
+                    interaction instanceof PendingInteraction.ColorChoice choice
+                            && choice.context() instanceof com.github.laxika.magicalvibes.model.ChoiceContext.ControlledCounterCostTypeChoice kinds
+                            && java.util.Set.copyOf(kinds.counterTypes()).equals(java.util.Set.of(CounterType.PLUS_ONE_PLUS_ONE, CounterType.KI))
+                            && kinds.required() == 2 && kinds.chosenSoFar().isEmpty()));
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+            assertThat(perm.getCounterCount(CounterType.KI)).isEqualTo(1);
         }
 
         @Test

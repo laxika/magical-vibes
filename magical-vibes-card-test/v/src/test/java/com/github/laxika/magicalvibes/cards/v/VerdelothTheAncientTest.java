@@ -49,7 +49,7 @@ class VerdelothTheAncientTest extends BaseCardTest {
     void buffsOpponentSaproling() {
         harness.addToBattlefieldAndReturn(player1, new VerdelothTheAncient());
         Permanent thallid = harness.addToBattlefieldAndReturn(player2, new Thallid());
-        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        thallid.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player2, 0, null, null);
         resolveAllTriggers();

@@ -29,19 +29,19 @@ class MycologistTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(mycologist.getCounterCount(CounterType.SPORE)).isOne();
     }
 
     @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent mycologist = addMycologist();
-        mycologist.setCounterCount(CounterType.FUNGUS, 3);
+        mycologist.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(mycologist.getCounterCount(CounterType.SPORE)).isZero();
         Permanent saproling = findPermanent(player1, "Saproling");
         assertThat(saproling.getCard().isToken()).isTrue();
         assertThat(saproling.getCard().getType()).isEqualTo(CardType.CREATURE);
@@ -55,19 +55,19 @@ class MycologistTest extends BaseCardTest {
     @DisplayName("Removing three spore counters leaves additional counters")
     void removesExactlyThreeSporeCounters() {
         Permanent mycologist = addMycologist();
-        mycologist.setCounterCount(CounterType.FUNGUS, 4);
+        mycologist.setCounterCount(CounterType.SPORE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(mycologist.getCounterCount(CounterType.SPORE)).isOne();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
     @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
-        addMycologist().setCounterCount(CounterType.FUNGUS, 2);
+        addMycologist().setCounterCount(CounterType.SPORE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -77,7 +77,7 @@ class MycologistTest extends BaseCardTest {
     @DisplayName("Sacrificing a Saproling gains 2 life")
     void sacrificingSaprolingGainsLife() {
         Permanent mycologist = addMycologist();
-        mycologist.setCounterCount(CounterType.FUNGUS, 3);
+        mycologist.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -108,18 +108,18 @@ class MycologistTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(mycologist.getCounterCount(CounterType.SPORE)).isZero();
     }
 
     @Test
     @DisplayName("Spore counters are paid before the Saproling is created")
     void sporeCountersAreAnActivationCost() {
         Permanent mycologist = addMycologist();
-        mycologist.setCounterCount(CounterType.FUNGUS, 3);
+        mycologist.setCounterCount(CounterType.SPORE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(mycologist.getCounterCount(CounterType.SPORE)).isZero();
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -135,7 +135,7 @@ class MycologistTest extends BaseCardTest {
         Permanent mycologist = harness.addToBattlefieldAndReturn(player1, new Mycologist());
         mycologist.setSummoningSick(true);
         mycologist.tap();
-        mycologist.setCounterCount(CounterType.FUNGUS, 3);
+        mycologist.setCounterCount(CounterType.SPORE, 3);
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, null, null);
@@ -154,7 +154,7 @@ class MycologistTest extends BaseCardTest {
     @DisplayName("An opponent's Saproling cannot pay the sacrifice cost")
     void cannotSacrificeOpponentsSaproling() {
         Permanent opponentMycologist = addCreatureReady(player2, new Mycologist());
-        opponentMycologist.setCounterCount(CounterType.FUNGUS, 3);
+        opponentMycologist.setCounterCount(CounterType.SPORE, 3);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
         addMycologist();

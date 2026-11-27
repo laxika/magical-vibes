@@ -20,14 +20,14 @@ public class ThelonOfHavenwood extends Card {
     public ThelonOfHavenwood() {
         var fungus = new PermanentHasSubtypePredicate(CardSubtype.FUNGUS);
         addStaticEffect(new StaticBoostEffect(
-                1, 1, Subjects.allCreatures(), fungus, CounterType.FUNGUS, true));
+                1, 1, Subjects.allCreatures(), fungus, CounterType.SPORE, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}{G}",
                 List.of(
                         new ExileCardFromGraveyardCost(CardSubtype.FUNGUS, true),
-                        PutCountersEffect.onEach(CounterType.FUNGUS, 1, fungus)
+                        PutCountersEffect.onEach(CounterType.SPORE, 1, fungus)
                 ),
                 "{B}{G}, Exile a Fungus card from a graveyard: Put a spore counter on each Fungus on the battlefield."
         ));

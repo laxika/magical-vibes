@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +56,23 @@ class SystemsOverrideTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The end-step removal still removes the counters from a Spacecraft that gained shroud meanwhile")
+    void removalIgnoresShroudGainedMeanwhile() {
+        Permanent spacecraft = addPermanent(player2, "Target Spacecraft", CardType.ARTIFACT,
+                CardSubtype.SPACECRAFT);
+
+        cast(spacecraft);
+        PermanentGrants.keywordUntilEndOfTurn(gd, spacecraft, Keyword.SHROUD);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isZero();
     }
 
     @Test
