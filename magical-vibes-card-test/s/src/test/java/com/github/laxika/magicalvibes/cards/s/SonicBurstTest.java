@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.w.WallOfNets;
 import com.github.laxika.magicalvibes.cards.w.WoodElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SonicBurst.class, WoodElves.class, WallOfNets.class})
+@CardUsed({SonicBurst.class, WoodElves.class, WallOfNets.class, FieryTemper.class})
 class SonicBurstTest extends BaseCardTest {
 
     @Test
@@ -99,5 +100,20 @@ class SonicBurstTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must discard a card at random");
+    }
+
+    @Test
+    @DisplayName("A madness card discarded at random for the cost is exiled and its madness ability triggers")
+    void randomCostDiscardAppliesMadness() {
+        FieryTemper temper = new FieryTemper();
+        harness.setHand(player1, List.of(new SonicBurst(), temper));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getId().equals(temper.getId()));
+        harness.assertNotInGraveyard(player1, "Fiery Temper");
+        assertThat(gd.stack).anyMatch(entry -> entry.getDescription().contains("madness"));
     }
 }

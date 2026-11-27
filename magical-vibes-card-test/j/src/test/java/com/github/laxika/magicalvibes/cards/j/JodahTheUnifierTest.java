@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
 import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
+import com.github.laxika.magicalvibes.cards.s.SoullessJailer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JodahTheUnifier.class, CaptainSisay.class, EsikaGodOfTheTree.class, GrizzlyBears.class, MoxAmber.class, AdelizTheCinderWind.class, HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class,
+@CardUsed({JodahTheUnifier.class, SoullessJailer.class, CaptainSisay.class, EsikaGodOfTheTree.class, GrizzlyBears.class, MoxAmber.class, AdelizTheCinderWind.class, HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class,
         RoamingThrone.class})
 class JodahTheUnifierTest extends BaseCardTest {
 
@@ -228,6 +229,32 @@ class JodahTheUnifierTest extends BaseCardTest {
         assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .hasSize(2)
                 .allMatch(entry -> entry.getCard().getName().equals("Jodah, the Unifier"));
+    }
+
+    @Test
+    @DisplayName("Under Soulless Jailer, a modal double-faced hit is cast only as its creature front face")
+    void soullessJailerLeavesOnlyTheCreatureFace() {
+        prepareCasterTurn();
+        harness.addToBattlefield(player1, new JodahTheUnifier());
+        harness.addToBattlefield(player2, new SoullessJailer());
+        harness.setLibrary(player1, List.of(new EsikaGodOfTheTree()));
+        harness.setHand(player1, List.of(new CaptainSisay()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.ColorChoice faceChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (faceChoice != null) {
+            assertThat(faceChoice.options()).containsExactly("Esika, God of the Tree");
+            harness.handleListChoice(player1, "Esika, God of the Tree");
+        }
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Esika, God of the Tree");
+        harness.assertNotOnBattlefield(player1, "The Prismatic Bridge");
     }
 
     private void prepareCasterTurn() {

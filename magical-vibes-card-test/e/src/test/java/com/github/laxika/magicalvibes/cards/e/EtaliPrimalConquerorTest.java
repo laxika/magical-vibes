@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.c.CorruptedConviction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -17,7 +18,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EtaliPrimalConqueror.class, EtaliPrimalSickness.class, Forest.class, GrizzlyBears.class, CorruptedConviction.class})
+@CardUsed({EtaliPrimalConqueror.class, EtaliPrimalSickness.class, Forest.class, GrizzlyBears.class, CorruptedConviction.class,
+        BonecrusherGiant.class})
 class EtaliPrimalConquerorTest extends BaseCardTest {
 
     @Test
@@ -105,6 +107,26 @@ class EtaliPrimalConquerorTest extends BaseCardTest {
                 .extracting(permanent -> permanent.getCard().getId())
                 .contains(ownSpell.getId(), opponentsSpell.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An exiled adventurer card may be cast as either the creature or its Adventure, as its caster chooses")
+    void offersBothFacesOfAnAdventurerCard() {
+        BonecrusherGiant giant = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(giant, new Forest()));
+        harness.setLibrary(player2, List.of());
+        harness.enterBattlefieldAndReturn(player1, new EtaliPrimalConqueror());
+        resolveAllTriggers();
+
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
+
+        PendingInteraction.ColorChoice faceChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(faceChoice).isNotNull();
+        assertThat(faceChoice.options()).containsExactly("Cast Bonecrusher Giant", "Cast Stomp");
+
+        harness.handleListChoice(player1, "Cast Bonecrusher Giant");
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(giant.getId()));
     }
 
     @Test

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BeanstalkGiant;
+import com.github.laxika.magicalvibes.cards.e.EnlistedWurm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HalvarGodOfBattle;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.m.MuseVortex;
 import com.github.laxika.magicalvibes.cards.p.Ponder;
@@ -12,6 +14,9 @@ import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,7 +30,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SoullessJailer.class, GrizzlyBears.class, IcyManipulator.class,
         ObzedatsAid.class, RiseFromTheGrave.class, Shock.class, ThinkTwice.class, TurnToFrog.class,
-        MuseVortex.class, Ponder.class, BeanstalkGiant.class, Forest.class})
+        MuseVortex.class, Ponder.class, BeanstalkGiant.class, Forest.class, EnlistedWurm.class,
+        HalvarGodOfBattle.class})
 class SoullessJailerTest extends BaseCardTest {
 
     @Test
@@ -207,6 +213,30 @@ class SoullessJailerTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(giant.getId()));
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(giant);
+    }
+
+    @Test
+    @DisplayName("A cascade into a modal double-faced card casts only its creature face, never its noncreature back face")
+    void cascadeIntoModalDoubleFacedCardCastsOnlyItsCreatureFace() {
+        HalvarGodOfBattle halvar = new HalvarGodOfBattle();
+        harness.addToBattlefield(player2, new SoullessJailer());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.setLibrary(player1, List.of(halvar));
+
+        harness.castFromHand(player1, new EnlistedWurm(), "{4}{G}{W}");
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        }
+
+        PendingInteraction.ColorChoice faceChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (faceChoice != null) {
+            assertThat(faceChoice.options()).containsExactly("Halvar, God of Battle");
+            harness.handleListChoice(player1, "Halvar, God of Battle");
+        }
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(halvar.getId())
+                && entry.getCard().getName().equals("Halvar, God of Battle"));
     }
 
     private void castMuseVortex(int xValue, List<Card> library) {

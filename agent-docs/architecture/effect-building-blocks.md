@@ -376,7 +376,8 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   `CopyImprintedCardAndMayCastCopyEffect.of(cards)` (`.castingUpTo`, `.castingAnyNumber`), `ExileTopCardsAndMayCastSpellsEffect`
   (`controllerMayPlayUpTo`, CR 305.2, 305.3). A producer of the free-cast queue offers each card through
   `ExileFreeCastQueueSupport.offerFaces`: an adventurer card whose Adventure alone fits is cast as it, one whose faces
-  both fit is cast as the face its caster chooses (CR 716.3, 716.3a).
+  both fit is cast as the face its caster chooses (CR 716.3, 716.3a); a modal double-faced card is offered only the
+  faces that fit, its back face counting its own mana value against a shared total (CR 712.8c).
 
 **Permissions, restrictions and grants:**
 

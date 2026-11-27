@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InvasionOfAlara.class, AwakenTheMaelstrom.class, CounselOfTheSoratami.class,
-        GrizzlyBears.class, HillGiant.class, Plains.class})
+        GrizzlyBears.class, HillGiant.class, Plains.class, ThaliaGuardianOfThraben.class})
 class InvasionOfAlaraTest extends BaseCardTest {
 
     @Test
@@ -84,6 +85,31 @@ class InvasionOfAlaraTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(first);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining to pay the chosen card's cost increase lets the caster choose the hand card; the other stays exiled")
+    void unpaidCostIncreaseLeavesTheHandChoice() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        GrizzlyBears bears = new GrizzlyBears();
+        setLibrary(List.of(counsel, bears));
+        castInvasion();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        harness.addToBattlefield(player1, new Plains());
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bears);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(counsel);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(counsel);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == counsel);
     }
 
     private void castInvasion() {

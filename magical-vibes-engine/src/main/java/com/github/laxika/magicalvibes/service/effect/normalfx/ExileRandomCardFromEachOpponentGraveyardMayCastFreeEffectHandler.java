@@ -32,6 +32,7 @@ public class ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler
     private final PermanentRemovalService permanentRemovalService;
     private final ExileService exileService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,7 +63,8 @@ public class ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler
             }
             exileService.exileCard(gameData, opponentId, exiled);
 
-            if (!exiled.hasType(CardType.LAND)) {
+            // Either face of an adventurer or modal double-faced card may be the spell cast (CR 716.3a, 712.8c).
+            if (exileFreeCastQueueSupport.offerFaces(gameData, exiled, face -> !face.hasType(CardType.LAND))) {
                 castableSpellIds.add(exiled.getId());
                 gameData.pendingFreeCastLifeLosses.add(new PendingFreeCastLifeLoss(
                         exiled.getId(), opponentId, exiled.getManaValue(), entry.getCard().getName()));

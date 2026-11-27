@@ -88,6 +88,14 @@ public class PayFreeCastCostIncreaseHandler implements MayEffectHandlerBean {
                     .resumeLibraryTopCastAfterCostIncreaseDecision(gameData, player, top, paid);
             case PayFreeCastCostIncreaseEffect.SplitCast split -> splitCardCastSupport
                     .resumeAfterCostIncreaseDecision(gameData, split.targeting(), paid);
+            case PayFreeCastCostIncreaseEffect.GraveyardSpellCast graveyard -> mayCastHandlerService
+                    .resumeGraveyardCastAfterCostIncreaseDecision(gameData, player, graveyard, paid);
+            case PayFreeCastCostIncreaseEffect.GraveyardCardCast graveyard -> mayCastHandlerService
+                    .resumeGraveyardCastAfterCostIncreaseDecision(gameData, player, graveyard, paid);
+            case PayFreeCastCostIncreaseEffect.GraveyardPlay graveyard -> mayCastHandlerService
+                    .resumeGraveyardCastAfterCostIncreaseDecision(gameData, player, graveyard, paid);
+            case PayFreeCastCostIncreaseEffect.CastOneOtherToHand castOne -> libraryChoiceHandlerService
+                    .resumeCastOneAfterCostIncreaseDecision(gameData, player, castOne, paid);
         }
     }
 }

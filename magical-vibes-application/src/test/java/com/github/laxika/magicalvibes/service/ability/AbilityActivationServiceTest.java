@@ -682,7 +682,8 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             assertThat(gameData.playerHands.get(player1Id)).isEmpty();
-            verify(graveyardService, times(2)).addCardToGraveyard(eq(gameData), eq(player1Id), any(Card.class), eq(Zone.HAND));
+            // Each is discarded through the discard action, so madness applies (CR 702.35a).
+            verify(graveyardService, times(2)).discardCard(eq(gameData), eq(player1Id), any(Card.class), eq(false));
         }
 
         @Test

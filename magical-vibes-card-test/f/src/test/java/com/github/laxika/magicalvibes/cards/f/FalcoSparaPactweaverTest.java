@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -172,5 +174,27 @@ class FalcoSparaPactweaverTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Civic Gardener");
         assertThat(falco.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The caster chooses which kind of counter to remove from a creature with several kinds")
+    void casterChoosesCounterKindToRemove() {
+        Permanent falco = harness.enterBattlefieldAndReturn(player1, new FalcoSparaPactweaver());
+        falco.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new CivicGardener()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castFromLibraryTop(player1, List.of(falco.getId()));
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("SHIELD", "PLUS_ONE_PLUS_ONE");
+
+        harness.handleListChoice(player1, "SHIELD");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Civic Gardener");
+        assertThat(falco.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(falco.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

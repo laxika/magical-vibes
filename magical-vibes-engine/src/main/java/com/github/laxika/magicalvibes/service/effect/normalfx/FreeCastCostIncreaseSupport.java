@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
@@ -89,5 +90,15 @@ public class FreeCastCostIncreaseSupport {
         int increase = castingCostService.getCastCostModifier(gameData, casterId, card, 0, zone);
         return new ManaCost("{0}").canPayWithAdditionalGenericCost(
                 potentialManaService.buildVirtualManaPool(gameData, casterId), 0, increase);
+    }
+
+    /**
+     * Whether the caster can pay {@code cost}, an optional mana cost offered during a free cast (a kicker), from the
+     * pool or with the mana their untapped sources could make while the offer is asked (CR 601.2g).
+     */
+    public boolean manaPayableWithManaAbilities(GameData gameData, UUID casterId, ManaCost cost) {
+        ManaPool pool = gameData.playerManaPools.get(casterId);
+        return pool != null && cost.canPay(pool, 0)
+                || cost.canPay(potentialManaService.buildVirtualManaPool(gameData, casterId), 0);
     }
 }

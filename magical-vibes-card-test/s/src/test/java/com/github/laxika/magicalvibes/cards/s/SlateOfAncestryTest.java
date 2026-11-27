@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SlateOfAncestry.class, ElvishWarrior.class})
+@CardUsed({SlateOfAncestry.class, ElvishWarrior.class, FieryTemper.class})
 class SlateOfAncestryTest extends BaseCardTest {
 
     @Test
@@ -168,5 +169,22 @@ class SlateOfAncestryTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A madness card discarded with the hand for the cost is exiled and its madness ability triggers")
+    void discardHandCostAppliesMadness() {
+        addReadySlate(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        FieryTemper temper = new FieryTemper();
+        harness.setHand(player1, List.of(temper, new ElvishWarrior()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getId().equals(temper.getId()));
+        harness.assertNotInGraveyard(player1, "Fiery Temper");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        assertThat(gd.stack).anyMatch(entry -> entry.getDescription().contains("madness"));
     }
 }

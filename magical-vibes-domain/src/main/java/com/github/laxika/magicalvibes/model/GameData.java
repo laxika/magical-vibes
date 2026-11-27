@@ -2045,10 +2045,16 @@ public class GameData {
     public final Set<UUID> pendingFreeCastLandPlayIds = ConcurrentHashMap.newKeySet();
 
     /**
-     * Adventurer cards in {@link #pendingFreeCastQueue} that are cast as their Adventure rather than as
-     * the card itself, because only the Adventure's mana value fits the effect's limit (CR 716.3a).
+     * Cards in {@link #pendingFreeCastQueue} that may be cast only as their other face, because only it fits the
+     * effect: an adventurer card as its Adventure (CR 716.3a), a modal double-faced card as its back face (CR 712.8c).
      */
     public final Set<UUID> pendingFreeCastAdventureIds = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Modal double-faced cards in {@link #pendingFreeCastQueue} that may be cast only as their front face, because
+     * their back face doesn't fit the effect that offered them (CR 712.8c).
+     */
+    public final Set<UUID> pendingFreeCastFrontFaceIds = ConcurrentHashMap.newKeySet();
 
     /**
      * Adventurer cards in {@link #pendingFreeCastQueue} that the effect lets their caster cast as either the card or
@@ -2363,14 +2369,18 @@ public class GameData {
      * A spell cast from the top of a library stopped once its costs were validated and before any of them was paid,
      * so that a permanent it sacrifices as a cost could have its death replacement chosen first (CR 616.1,
      * CR 601.2h): the cast request to make again once every answer is in, while {@code castCardId} is still the top
-     * card of {@code libraryOwnerId}'s library.
+     * card of {@code libraryOwnerId}'s library. {@code chosenCounterTypes} are the kinds already chosen for its
+     * counter-removal cost, one per entry of {@code counterCostPermanentIds} in order.
      */
     public record LibraryTopCastReplay(Player player, Integer xValue, UUID targetId,
                                        java.util.List<UUID> counterCostPermanentIds,
                                        java.util.List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
                                        boolean castAsAdventure, UUID castCardId, UUID libraryOwnerId,
-                                       Integer discardHandCardIndex)
+                                       Integer discardHandCardIndex, java.util.List<CounterType> chosenCounterTypes)
             implements DeathReplacementChoiceReplay {
+        public LibraryTopCastReplay {
+            chosenCounterTypes = chosenCounterTypes == null ? java.util.List.of() : java.util.List.copyOf(chosenCounterTypes);
+        }
     }
 
     /**
@@ -11192,6 +11202,7 @@ public class GameData {
         copy.pendingFreeCastLandPlayIds.addAll(this.pendingFreeCastLandPlayIds);
         copy.pendingFreeCastAdventureIds.addAll(this.pendingFreeCastAdventureIds);
         copy.pendingFreeCastEitherFaceIds.addAll(this.pendingFreeCastEitherFaceIds);
+        copy.pendingFreeCastFrontFaceIds.addAll(this.pendingFreeCastFrontFaceIds);
         copy.pendingFreeCastManaValueBudget = this.pendingFreeCastManaValueBudget;
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
         copy.pendingExileFreeCastRemainderToLibraryBottom.addAll(this.pendingExileFreeCastRemainderToLibraryBottom);

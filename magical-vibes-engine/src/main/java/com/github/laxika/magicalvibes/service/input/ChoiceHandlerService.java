@@ -330,6 +330,13 @@ public class ChoiceHandlerService {
             spellCastingService.completeExileCounterTypeChoice(gameData, player, choice, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.LibraryTopCastCounterTypeChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) throw new IllegalStateException("Not your turn to choose");
+            if (!colorChoice.options().contains(colorName)) throw new IllegalArgumentException("Invalid counter type");
+            gameData.interaction.clearAwaitingInput();
+            spellCastingService.completeLibraryTopCounterTypeChoice(gameData, player, choice, colorName);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CreaturePreventionLifeGainChoice choice) {
             if (!player.getId().equals(colorChoice.playerId())) {
                 throw new IllegalStateException("Not your turn to choose");

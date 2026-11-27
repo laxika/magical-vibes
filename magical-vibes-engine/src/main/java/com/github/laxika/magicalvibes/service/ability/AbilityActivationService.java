@@ -2990,7 +2990,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
+                graveyardService.discardCard(gameData, playerId, card, false);
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
             }
@@ -9826,7 +9826,7 @@ public class AbilityActivationService {
         hand.clear();
         gameData.discardCausedByOpponent = false;
         for (Card card : discarded) {
-            graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
+            graveyardService.discardCard(gameData, playerId, card, false);
             collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
         }
 
@@ -9847,7 +9847,7 @@ public class AbilityActivationService {
         for (int i = 0; i < count && !hand.isEmpty(); i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
             lastDiscarded = discarded;
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
+            graveyardService.discardCard(gameData, playerId, discarded, false);
             gameData.discardCausedByOpponent = false;
             collectDiscardTriggersAsAbilityCost(gameData, playerId, discarded);
 

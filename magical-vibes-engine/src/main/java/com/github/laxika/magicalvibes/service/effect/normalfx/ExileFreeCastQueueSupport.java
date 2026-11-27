@@ -136,10 +136,23 @@ public class ExileFreeCastQueueSupport {
      * which face: an adventurer card is offered when the card or its Adventure fits, each judged by its own
      * characteristics (CR 716.3a). When only the Adventure fits it is cast as the Adventure
      * ({@link GameData#pendingFreeCastAdventureIds}); when both do, the caster chooses as the queue reaches it
-     * ({@link GameData#pendingFreeCastEitherFaceIds}, CR 716.3).
+     * ({@link GameData#pendingFreeCastEitherFaceIds}, CR 716.3). A modal double-faced card is offered when either face
+     * fits, each judged alone (CR 712.8c): a back face alone is cast as the back face
+     * ({@link GameData#pendingFreeCastAdventureIds}), a front face alone as the front
+     * ({@link GameData#pendingFreeCastFrontFaceIds}), and with both the caster picks the face as it is cast.
      */
     public boolean offerFaces(GameData gameData, Card card, java.util.function.Predicate<Card> faceFits) {
         boolean cardFits = faceFits.test(card);
+        Card back = modalBackFace(card);
+        if (back != null) {
+            boolean backFits = faceFits.test(back);
+            if (cardFits && !backFits) {
+                gameData.pendingFreeCastFrontFaceIds.add(card.getId());
+            } else if (backFits && !cardFits) {
+                gameData.pendingFreeCastAdventureIds.add(card.getId());
+            }
+            return cardFits || backFits;
+        }
         boolean adventureFits = card.getBackFaceCard() != null
                 && card.getCastingOption(AdventureCast.class).isPresent()
                 && faceFits.test(card.getBackFaceCard());
@@ -157,6 +170,14 @@ public class ExileFreeCastQueueSupport {
      * against it before the faces and halves are chosen.
      */
     public static int smallestFreeCastManaValue(GameData gameData, Card card) {
+        Card back = modalBackFace(card);
+        if (back != null) {
+            if (gameData.pendingFreeCastAdventureIds.contains(card.getId())) {
+                return back.getManaValue();
+            }
+            return gameData.pendingFreeCastFrontFaceIds.contains(card.getId())
+                    ? card.getManaValue() : Math.min(card.getManaValue(), back.getManaValue());
+        }
         Card adventure = card.getBackFaceCard();
         if (adventure != null && card.getCastingOption(AdventureCast.class).isPresent()) {
             if (gameData.pendingFreeCastAdventureIds.contains(card.getId())) {
@@ -318,7 +339,8 @@ public class ExileFreeCastQueueSupport {
             if (!gameData.interaction.isAwaitingInput()) castNextFromQueue(gameData, playerId);
             return;
         }
-        if (!castableFromExile(gameData, playerId, queuedFace(gameData, exiledEntry))) {
+        if (!castableFromExile(gameData, playerId, queuedFace(gameData, exiledEntry))
+                && !backFaceCastableFromExile(gameData, playerId, card)) {
             if (asCopy) {
                 gameData.removeFromExile(cardId);
             }
@@ -327,6 +349,8 @@ public class ExileFreeCastQueueSupport {
             castNextFromQueue(gameData, playerId);
             return;
         }
+        boolean backFaceOnly = modalBackFace(card) != null && gameData.pendingFreeCastAdventureIds.contains(cardId);
+        boolean frontFaceOnly = gameData.pendingFreeCastFrontFaceIds.remove(cardId);
         boolean asAdventure = !asCopy && gameData.pendingFreeCastAdventureIds.remove(cardId)
                 && card.getBackFaceCard() != null
                 && card.getCastingOption(AdventureCast.class).isPresent();
@@ -366,8 +390,12 @@ public class ExileFreeCastQueueSupport {
                 return;
             }
             Card runtimeCard = cardToCast.createRuntimeCopy();
-            List<Integer> offeredModes = legalNextModeIndices(
-                    gameData, runtimeCard, playerId, modal, List.of(), maximumChoices);
+            List<Integer> offeredModes = new ArrayList<>(legalNextModeIndices(
+                    gameData, runtimeCard, playerId, modal, List.of(), maximumChoices));
+            if (card.isModalDoubleFaced() && card.getBackFaceCard() != null) {
+                // Only the faces the effect offered may be cast (CR 712.8c).
+                offeredModes.removeIf(modeIndex -> modeIndex == 0 ? backFaceOnly : frontFaceOnly);
+            }
             if (offeredModes.isEmpty()) {
                 skipCardWithoutLegalMode(gameData, playerId, card, asCopy);
                 return;
@@ -564,6 +592,12 @@ public class ExileFreeCastQueueSupport {
             if (SplitCardCastSupport.isFusedMode(card, modeIndex)) {
                 continue;
             }
+            // A modal double-faced card's mode casts one face, which the zone restrictions judge alone (CR 712.8c).
+            if (card.isModalDoubleFaced() && card.getBackFaceCard() != null
+                    && !castableFromExile(gameData, controllerId,
+                    modeIndex == 1 ? card.createRuntimeCopyWithFace(card.getBackFaceCard()) : card)) {
+                continue;
+            }
             List<Integer> trial = new ArrayList<>(chosenModeIndices);
             trial.add(modeIndex);
             if (trial.size() < modal.choicesRequired()
@@ -580,7 +614,10 @@ public class ExileFreeCastQueueSupport {
         try {
             PreparedModalCast prepared = prepareModalCast(
                     gameData, card, controllerId, modal, chosenModeIndices, null, maximumChoices);
-            if (prepared.card().getManaValue() > availableManaValue(gameData)) {
+            int manaValue = card.isModalDoubleFaced() && card.getBackFaceCard() != null
+                    && chosenModeIndices.equals(List.of(1))
+                    ? card.getBackFaceCard().getManaValue() : prepared.card().getManaValue();
+            if (manaValue > availableManaValue(gameData)) {
                 return false;
             }
             if (!needsCastTarget(prepared.card(), prepared.effects())) {
@@ -1296,6 +1333,22 @@ public class ExileFreeCastQueueSupport {
         castNextFromQueue(gameData, playerId);
     }
 
+    /**
+     * Whether {@code card} is a modal double-faced card whose nonland back face may be cast from exile now, judged by
+     * the back face's own characteristics (CR 712.8c, 601.3): its front face's restrictions don't decide that cast.
+     */
+    private boolean backFaceCastableFromExile(GameData gameData, UUID playerId, Card card) {
+        Card back = modalBackFace(card);
+        return back != null && castableFromExile(gameData, playerId, back);
+    }
+
+    /** {@code card}'s nonland back face as a runtime copy keeping the card's id, or null for any other card. */
+    private static Card modalBackFace(Card card) {
+        return card.isModalDoubleFaced() && card.getBackFaceCard() != null
+                && !card.getBackFaceCard().hasType(CardType.LAND)
+                ? card.createRuntimeCopyWithFace(card.getBackFaceCard()) : null;
+    }
+
     /** The face the queued card will be cast as: its Adventure when the queue says so, else the card. */
     private static Card queuedFace(GameData gameData, ExiledCardEntry exiled) {
         Card card = exiled.card();
@@ -1316,6 +1369,7 @@ public class ExileFreeCastQueueSupport {
             gameData.pendingFreeCastXValues.remove(cardId);
             gameData.pendingFreeCastAdventureIds.remove(cardId);
             gameData.pendingFreeCastEitherFaceIds.remove(cardId);
+            gameData.pendingFreeCastFrontFaceIds.remove(cardId);
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             if (exiled != null) {
                 logUnpaidCostIncrease(gameData, exiled.card(), asCopy);
@@ -1452,6 +1506,7 @@ public class ExileFreeCastQueueSupport {
         gameData.pendingFreeCastLandPlayIds.clear();
         gameData.pendingFreeCastAdventureIds.clear();
         gameData.pendingFreeCastEitherFaceIds.clear();
+        gameData.pendingFreeCastFrontFaceIds.clear();
         gameData.freeCastEscalateModeCounts.clear();
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);

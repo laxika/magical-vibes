@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.p.ProtectiveBubble;
 import com.github.laxika.magicalvibes.cards.s.Smokebraider;
 import com.github.laxika.magicalvibes.cards.t.ThornOfAmethyst;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -233,6 +234,32 @@ class HordeOfNotionsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Smokebraider");
+    }
+
+    @Test
+    @DisplayName("The cost increase may be paid with mana from a land tapped while its payment is asked for")
+    void paysCostIncreaseWithManaAbilityDuringThePrompt() {
+        addReadyHorde();
+        harness.addToBattlefield(player2, new ThornOfAmethyst());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Smokebraider());
+        NamelessInversion spell = new NamelessInversion();
+        harness.setGraveyard(player1, List.of(spell));
+        addWubrg(1);
+        harness.activateAbility(player1, 0, 0, null, spell.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.INSTANT_SPELL
+                && e.getCard() == spell);
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

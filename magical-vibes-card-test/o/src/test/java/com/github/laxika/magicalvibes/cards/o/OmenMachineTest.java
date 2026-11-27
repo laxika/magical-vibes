@@ -538,4 +538,31 @@ class OmenMachineTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
+
+    @Test
+    @CardUsed(BurstLightning.class)
+    @DisplayName("Its kicker may be paid with mana from lands tapped while the kicker is offered")
+    void kickerOfferedWhenPayableWithManaAbilities() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new Mountain());
+        }
+        Card burst = new BurstLightning();
+        harness.setLibrary(player1, List.of(burst));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        for (int i = 0; i < gd.playerBattlefields.get(player1.getId()).size(); i++) {
+            if (gd.playerBattlefields.get(player1.getId()).get(i).getCard().getName().equals("Mountain")) {
+                harness.tapPermanent(player1, i);
+            }
+        }
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
 }

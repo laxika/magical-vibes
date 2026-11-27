@@ -4827,6 +4827,24 @@ public class LibraryChoiceHandlerService
         return faces;
     }
 
+    /**
+     * Whether {@code face}, the characteristics a spell is cast with, may be cast from {@code sourceZone} while an
+     * effect resolves: no zone restriction, casting prohibition or "cast only during" restriction stops it (CR 601.3).
+     * A modal double-faced card's faces are judged apart (CR 712.8c).
+     */
+    private boolean faceMayBeCast(GameData gameData, UUID controllerId, Card face, Zone sourceZone) {
+        return gameQueryService.canCastSpellFromZone(gameData, face, sourceZone, controllerId)
+                && castingPermissionService.canCastDuringResolution(gameData, controllerId, face)
+                && castingPermissionService.canCastWithSpellTimingRestriction(gameData, controllerId, face);
+    }
+
+    /** {@code card}'s nonland back face as a runtime copy keeping the card's id, or null for any other card. */
+    private static Card modalBackFace(Card card) {
+        return card.isModalDoubleFaced() && card.getBackFaceCard() != null
+                && !card.getBackFaceCard().hasType(CardType.LAND)
+                ? card.createRuntimeCopyWithFace(card.getBackFaceCard()) : null;
+    }
+
     private static boolean allows(Set<SpellFace> allowedFaces, SpellFace face) {
         return allowedFaces.isEmpty() || allowedFaces.contains(face);
     }
@@ -5061,6 +5079,19 @@ public class LibraryChoiceHandlerService
             beginPutOneIntoHandChoice(gameData, searchCards, sourceCards, player.getId());
             return;
         }
+        // A cost increase the pool can't pay is asked about before any card moves, so a cast that isn't paid for
+        // leaves the caster the choice of the card for the hand (CR 601.2f, 601.2g; Invasion of Alara's ruling).
+        if (!spellCastingService.canPayFreeCastCostIncreases(gameData, player.getId(), chosenCard, Zone.EXILE)) {
+            FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData,
+                    player.getId(), chosenCard, chosenCard.getId(), Zone.EXILE,
+                    new PayFreeCastCostIncreaseEffect.CastOneOtherToHand(searchCards, sourceCards, cardIndex));
+            if (payment == FreeCastCostIncreaseSupport.Payment.UNPAYABLE) {
+                beginPutOneIntoHandChoice(gameData, searchCards, sourceCards, player.getId());
+            }
+            if (payment != FreeCastCostIncreaseSupport.Payment.PAID) {
+                return;
+            }
+        }
 
         Card handCard = searchCards.stream()
                 .filter(card -> !card.getId().equals(chosenCard.getId()))
@@ -5079,6 +5110,24 @@ public class LibraryChoiceHandlerService
                     " is put into " + player.getUsername() + "'s hand."));
         }
         castCardWithoutPaying(gameData, player, chosenCard, IfNotCast.LIBRARY_BOTTOM, player.getId());
+    }
+
+    /**
+     * Answers the cost-increase question {@link #handleCastOneAndPutOtherIntoHandChoice} asked before any card moved:
+     * paid, the chosen card is cast (from the pool) and the other goes to the hand; otherwise the caster chooses the
+     * card for the hand.
+     */
+    public void resumeCastOneAfterCostIncreaseDecision(GameData gameData, Player player,
+                                                       PayFreeCastCostIncreaseEffect.CastOneOtherToHand cast,
+                                                       boolean paid) {
+        List<Card> searchCards = new ArrayList<>(cast.searchCards());
+        List<Card> sourceCards = new ArrayList<>(cast.sourceCards());
+        if (paid) {
+            handleCastOneAndPutOtherIntoHandChoice(gameData, player, cast.cardIndex(), searchCards, sourceCards,
+                    gameData.playerDecks.get(player.getId()));
+            return;
+        }
+        beginPutOneIntoHandChoice(gameData, searchCards, sourceCards, player.getId());
     }
 
     private void handleCastOneAndPutRestIntoHandChoice(GameData gameData, Player player, int cardIndex,
@@ -5295,15 +5344,17 @@ public class LibraryChoiceHandlerService
      */
     private LegalModalOptions legalModalOptions(GameData gameData, Card card, UUID controllerId,
                                                 int spellManaValueLimit) {
-        return legalModalOptions(gameData, card, controllerId, spellManaValueLimit, Set.of());
+        return legalModalOptions(gameData, card, controllerId, spellManaValueLimit, Set.of(),
+                gameData.findExiledCard(card.getId()) == null ? Zone.LIBRARY : Zone.EXILE);
     }
 
     /**
      * As above, among the modes that cast one of {@code faces} (empty for any): a modal double-faced card's first mode
-     * casts its front face and its second its back face, each judged by that face's mana value (CR 712.8b).
+     * casts its front face and its second its back face, each judged by that face's mana value and by whether that
+     * face may be cast from {@code sourceZone} (CR 712.8c, 601.3).
      */
     private LegalModalOptions legalModalOptions(GameData gameData, Card card, UUID controllerId,
-                                                int spellManaValueLimit, Set<SpellFace> faces) {
+                                                int spellManaValueLimit, Set<SpellFace> faces, Zone sourceZone) {
         ChooseOneEffect modal = spellModal(card);
         if (modal == null || modal.choicesRequired() != 1 || modal.choicesMax() != 1) {
             return null;
@@ -5319,6 +5370,10 @@ public class LibraryChoiceHandlerService
             }
             boolean backFaceMode = card.isModalDoubleFaced() && card.getBackFaceCard() != null && modeIndex == 1;
             if (card.isModalDoubleFaced() && !allows(faces, backFaceMode ? SpellFace.BACK_FACE : SpellFace.CARD)) {
+                continue;
+            }
+            if (card.isModalDoubleFaced() && card.getBackFaceCard() != null && !faceMayBeCast(gameData, controllerId,
+                    backFaceMode ? card.createRuntimeCopyWithFace(card.getBackFaceCard()) : card, sourceZone)) {
                 continue;
             }
             ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);
@@ -5558,16 +5613,19 @@ public class LibraryChoiceHandlerService
 
     private String freeCastRefusal(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
                                    Zone sourceZone, Set<SpellFace> faces) {
-        if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)
-                || !castingPermissionService.canCastDuringResolution(gameData, controllerId, card)
-                || !castingPermissionService.canCastWithSpellTimingRestriction(gameData, controllerId, card)) {
+        Card back = modalBackFace(card);
+        boolean anyFaceCastable = back == null
+                ? faceMayBeCast(gameData, controllerId, card, sourceZone)
+                : allows(faces, SpellFace.CARD) && faceMayBeCast(gameData, controllerId, card, sourceZone)
+                || allows(faces, SpellFace.BACK_FACE) && faceMayBeCast(gameData, controllerId, back, sourceZone);
+        if (!anyFaceCastable) {
             return " can't be cast";
         }
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, card)) {
             return " can't be cast: its additional cost can't be paid";
         }
         boolean legalChoices = spellModal(card) != null
-                ? legalModalOptions(gameData, card, controllerId, spellManaValueLimit, faces) != null
+                ? legalModalOptions(gameData, card, controllerId, spellManaValueLimit, faces, sourceZone) != null
                 : !(EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))
                 || !computeCastWithoutPayingTargets(gameData, card, controllerId).isEmpty();
         if (!legalChoices) {
@@ -5667,7 +5725,8 @@ public class LibraryChoiceHandlerService
         // Cast the chosen card without paying its mana cost
         StackEntryType spellType = mapCardTypeToSpellType(castCard);
 
-        LegalModalOptions modalOptions = legalModalOptions(gameData, castCard, playerId, spellManaValueLimit, faces);
+        LegalModalOptions modalOptions = legalModalOptions(gameData, castCard, playerId, spellManaValueLimit, faces,
+                sourceZone);
         if (modalOptions != null) {
             Card runtimeCard = castCard.createRuntimeCopy();
             playerInputService.beginLibraryCastModeChoice(gameData, playerId, runtimeCard,

@@ -22,6 +22,7 @@ public class PlarggAndNassariCardChoiceInteractionHandler
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<PendingInteraction.PlarggAndNassariCardChoice> handledType() {
@@ -51,10 +52,16 @@ public class PlarggAndNassariCardChoiceInteractionHandler
                                 .filter(cardId -> !cardId.equals(excludedCardId))
                                 .filter(cardId -> {
                                     var exiled = gameData.findExiledCard(cardId);
-                                    return exiled != null && isSpell(exiled.card());
+                                    // Either face may be the spell cast (CR 716.3a, 712.8c).
+                                    return exiled != null && exileFreeCastQueueSupport.offerFaces(
+                                            gameData, exiled.card(), PlarggAndNassariCardChoiceInteractionHandler::isSpell);
                                 }),
                         interaction.adventureLandIds().stream()
-                                .filter(cardId -> gameData.findExiledCard(cardId) != null))
+                                .filter(cardId -> {
+                                    var exiled = gameData.findExiledCard(cardId);
+                                    return exiled != null && exileFreeCastQueueSupport.offerFaces(
+                                            gameData, exiled.card(), PlarggAndNassariCardChoiceInteractionHandler::isSpell);
+                                }))
                 .toList();
 
         gameData.interaction.clearAwaitingInput();

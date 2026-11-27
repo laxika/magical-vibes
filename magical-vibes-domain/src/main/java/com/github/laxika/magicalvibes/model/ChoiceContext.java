@@ -40,6 +40,14 @@ public sealed interface ChoiceContext {
     }
 
 
+    /**
+     * The caster of a spell from the top of a library chooses which kind of counter to remove from a creature for
+     * the permission's counter-removal cost (Falco Spara, Pactweaver); {@code cast} is the request to make again with
+     * the kinds chosen so far.
+     */
+    record LibraryTopCastCounterTypeChoice(GameData.LibraryTopCastReplay cast) implements ChoiceContext {
+    }
+
     /** Retains an exile cast while its controller chooses the types of counters to remove. */
     record ExileCastCounterTypeChoice(UUID exileCardId, Integer xValue, UUID targetId,
                                       List<UUID> counterPermanentIds, List<UUID> convokeCreatureIds,

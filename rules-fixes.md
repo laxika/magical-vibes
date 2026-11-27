@@ -40,7 +40,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 |---|---|---|
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
 | DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2, DM-3 done 2026-11-27 |
-| FC Free casts and casting from other zones | FC-1, FC-2, FC-3, FC-4 | FC-1, FC-2, FC-3 done 2026-11-27 |
+| FC Free casts and casting from other zones | FC-1, FC-2, FC-3, FC-4 | FC-1 to FC-4 done 2026-11-27 (FC-4: O86, O90, O91, N77 left) |
 | CP Casting permissions and cost readers | CP-1 | CP-1 done 2026-11-27 (N11 left: needs N77; O14's Lukka subtype left) |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1, MP-2 done 2026-11-27 (Triskaidekaphobia, H7 for the owner) |
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
@@ -398,7 +398,29 @@ New line N78 (seen in CP-1): the library free-cast flow (`LibraryChoiceHandlerSe
 `canCastSpellFromZone` of a modal double-faced card's front face for either face, so Soulless Jailer lets cascade cast a
 noncreature back face from exile (CR 712.8b, 601.3); sure of the code, not tested.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: N58, N78, N13, N4, N6; N32, N12 and N5 in part. N58: every cast and activation cost discard
+(random, discard-X, discard-hand, buyback, morph, retrace, jump-start, the alternative discards, and `AbilityActivationService`'s
+hand, random and hand-ability discards) goes through `GraveyardService.discardCard`, so madness exiles the card (CR 702.35a).
+N32: Falco's library-top cast already removes any kind (its shield-only case was pinned and passes; no card sends
+`CounterType.ANY` to `removeOneCounter`); the caster now chooses the kind on a creature with several, as the exile cast did
+(`ChoiceContext.LibraryTopCastCounterTypeChoice`, `LibraryTopCastReplay.chosenCounterTypes`, CR 601.2h). N78: the library flow
+(`freeCastRefusal`, `legalModalOptions` with the cast's zone) and the free-cast queue's mode choice judge each modal double-faced
+face by its own zone restrictions and prohibitions (CR 712.8c, 601.3): Soulless Jailer leaves Halvar's and Esika's creature
+fronts. N13 and N12: `offerFaces` offers a modal double-faced card's faces that fit (`GameData.pendingFreeCastFrontFaceIds`, the
+back alone in `pendingFreeCastAdventureIds`), its back face counts its own mana value against Primeval Spawn's total (its ruling),
+and Kefka, Etali and Fevered Suspicion, and Plargg and Nassari offer through it (CR 716.3, 716.3a). N4: the graveyard casts and
+plays without paying their mana cost pay through `FreeCastCostIncreaseSupport.payOrAsk` with the card still in the graveyard
+(`PausedCast` `GraveyardSpellCast`, `GraveyardCardCast`, `GraveyardPlay`; CR 601.2f, 601.2g). N5: a free cast's mana kicker is
+offered when mana abilities could pay it, and its question names the cost so they can be activated (CR 601.2g). N6: Invasion of
+Alara asks a cost increase the pool can't pay before any card moves; declined, the caster chooses the hand card and the other
+stays exiled (`CastOneOtherToHand`, its ruling). Left: O86 (the free-cast "[A] or [B]" chooser still comes after the targets:
+moving it needs the chosen alternative carried through every free-cast target prompt, `ExileCastSpellTarget`,
+`LibraryCastSpellTarget` and `GraveyardCastSpellTarget`, to `beginSacrificeCostIfNeeded`), O90 (needs a free-cast graveyard-exile
+picker and a Food picker on the prepared entry), O91's rest (tap, blight and graveyard-exile alternatives from exile and library
+top: the same pickers plus request fields), N77 and with it N11 and N12's Nathan Drake part (an exile cast of an Adventure through
+a play permission; `ExileReducedCastSupport.castFromExileWithNormalCostDuringResolution` casts only the card), and N5's non-mana
+kicker costs (a sacrifice, tap or discard kicker is still never offered to a free cast). No effect class added or deleted, so no
+ledger or ratchet change; no `CONVERSION_VERSION` change. New lines N87, N88 (MC-2d).
 
 ### CP. Casting permissions and cost readers
 
@@ -1300,7 +1322,7 @@ Outcome already settled.
 - MC-2a, the AI (`magical-vibes-ai`): N19, N20, N21, N22, N23.
 - MC-2b, hidden information and colours: N33, N55, N56, N57, N60, N61, N62, N63, N85.
 - MC-2c, multiplayer opponent readers and draws: N49, N50, N51, N65, N66, N67, N68, N69, N79.
-- MC-2d, casting, costs and the stack: N16, N17, N25, N26, N38, N39, N59, N80, O25 (Caged Sun).
+- MC-2d, casting, costs and the stack: N16, N17, N25, N26, N38, N39, N59, N80, N87, N88, O25 (Caged Sun).
 - MC-2e, zone moves and single cards: S3 and S21 (Ezuri's Predation), O5, O7, S8, O79's Behemoth part, N28, N36, N40, N54,
   N70, N84, N86.
 - MC-2f, layers, perpetual changes and links: N64, N71, N73, N74, N75, N76, N81, N82, N83.
@@ -1532,6 +1554,14 @@ New line N86 (seen in FT-1): a creature an effect makes block an attacker that i
 becomes-blocked reader only for a newly blocked one, but CR 509.3d says it triggers if the blocker wasn't already blocking that
 attacker (Sawtooth Ogre, Auras' "enchanted creature becomes blocked by a creature", No Quarter, the Ring's level 3). Of the
 code, unverified by a test.
+
+New line N87 (seen in FC-4): cascade casts a modal double-faced card's back face whatever its mana value
+(`CascadeEffectHandler` sets no mana value limit on its free cast), though CR 702.85a allows the cast only if the resulting
+spell's mana value is less than the cascading spell's; sure of the code for the back face, unverified for split halves.
+
+New line N88 (seen in FC-4): Kefka, Dancing Mad records each exiled card's mana value as it is exiled
+(`ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler`'s `PendingFreeCastLifeLoss`), so a card cast as its Adventure
+or back face makes its owner lose the card's mana value, not the spell's ("loses life equal to its mana value"); sure of the code.
 
 Outcome:
 

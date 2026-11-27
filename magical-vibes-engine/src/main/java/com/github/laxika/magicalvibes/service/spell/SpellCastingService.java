@@ -790,7 +790,7 @@ public class SpellCastingService {
         for (int effectiveIndex : effectiveIndices) {
             Card toDiscard = hand.get(effectiveIndex);
             hand.remove(effectiveIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
+            graveyardService.discardCard(gameData, playerId, toDiscard, false);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
@@ -867,7 +867,7 @@ public class SpellCastingService {
                 .toList();
         Card discarded = eligibleCards.get(ThreadLocalRandom.current().nextInt(eligibleCards.size()));
         hand.remove(discarded);
-        graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
+        graveyardService.discardCard(gameData, playerId, discarded, false);
         gameData.discardCausedByOpponent = false;
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
@@ -903,7 +903,7 @@ public class SpellCastingService {
                 Card toDiscard = eligibleCards.get(ThreadLocalRandom.current().nextInt(eligibleCards.size()));
                 discardedManaValue += toDiscard.getManaValue();
                 hand.remove(toDiscard);
-                graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
+                graveyardService.discardCard(gameData, playerId, toDiscard, false);
                 gameData.discardCausedByOpponent = false;
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " discards ")
@@ -927,7 +927,7 @@ public class SpellCastingService {
             Card toDiscard = hand.get(effectiveIndex);
             discardedManaValue += toDiscard.getManaValue();
             hand.remove(effectiveIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
+            graveyardService.discardCard(gameData, playerId, toDiscard, false);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
@@ -3301,7 +3301,7 @@ public class SpellCastingService {
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
         Card toDiscard = hand.remove(effectiveIndex);
-        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
+        graveyardService.discardCard(gameData, playerId, toDiscard, false);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
@@ -9544,7 +9544,7 @@ public class SpellCastingService {
         gameData.discardCausedByOpponent = false;
         gameData.beginDiscardEvent(playerId);
         for (Card discardedCard : discarded) {
-            graveyardService.addCardToGraveyard(gameData, playerId, discardedCard, Zone.HAND);
+            graveyardService.discardCard(gameData, playerId, discardedCard, false);
             gameData.discarded(playerId, discardedCard);
         }
         gameData.finishDiscardEvent();
@@ -13235,22 +13235,48 @@ public class SpellCastingService {
 
     private boolean beginExileCounterTypeChoice(GameData gameData, Player player,
             com.github.laxika.magicalvibes.model.ChoiceContext.ExileCastCounterTypeChoice cast) {
-        List<CounterType> chosen = new ArrayList<>(cast.chosenTypes());
+        CounterKindStep step = nextCounterKindStep(gameData, cast.counterPermanentIds(), cast.chosenTypes());
+        if (step.promptPermanent() != null) {
+            interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                    player.getId(), null, null, exileCounterChoiceWithTypes(cast, step.chosen()), step.options(),
+                    "Choose a counter to remove from " + FaceDownVisibility.publicName(gameData, step.promptPermanent()) + "."));
+            return true;
+        }
+        if (!cast.chosenTypes().isEmpty() && step.chosen().size() != cast.chosenTypes().size()) {
+            resumeExileCounterCast(gameData, player, exileCounterChoiceWithTypes(cast, step.chosen()));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * The counter kinds chosen so far for a "remove a counter from a creature you control" cost, one per selected
+     * permanent (a permanent named twice gives two counters), extended with every kind that is the only one left on
+     * its permanent; {@code promptPermanent} is the next permanent whose kind the caster must choose (CR 601.2h: the
+     * caster pays the cost, so the caster picks which counter), with {@code options} its kinds, or null once every
+     * kind is known.
+     */
+    private record CounterKindStep(List<CounterType> chosen, Permanent promptPermanent, List<String> options) {
+    }
+
+    private CounterKindStep nextCounterKindStep(GameData gameData, List<UUID> counterPermanentIds,
+                                                List<CounterType> chosenSoFar) {
+        List<CounterType> chosen = new ArrayList<>(chosenSoFar);
         Map<UUID, Map<CounterType, Integer>> selectedByType = new HashMap<>();
         for (int index = 0; index < chosen.size(); index++) {
-            UUID permanentId = cast.counterPermanentIds().get(index);
+            UUID permanentId = counterPermanentIds.get(index);
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             CounterType type = chosen.get(index);
             int selected = selectedByType.computeIfAbsent(permanentId, ignored -> new HashMap<>())
                     .merge(type, 1, Integer::sum);
-            if (type == CounterType.ANY || type == CounterType.SILVER
+            if (permanent == null || type == CounterType.ANY || type == CounterType.SILVER
                     || permanent.getCounterCount(type) < selected) {
                 throw new IllegalStateException("Selected counters are no longer available");
             }
         }
-        while (chosen.size() < cast.counterPermanentIds().size()) {
+        while (chosen.size() < counterPermanentIds.size()) {
             int index = chosen.size();
-            UUID permanentId = cast.counterPermanentIds().get(index);
+            UUID permanentId = counterPermanentIds.get(index);
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             Map<CounterType, Integer> available = new java.util.LinkedHashMap<>();
             for (CounterType type : CounterType.values()) {
@@ -13259,30 +13285,23 @@ public class SpellCastingService {
                 }
             }
             for (int previous = 0; previous < index; previous++) {
-                if (cast.counterPermanentIds().get(previous).equals(permanentId)) {
+                if (counterPermanentIds.get(previous).equals(permanentId)) {
                     available.computeIfPresent(chosen.get(previous), (type, amount) -> amount - 1);
                 }
             }
             available.entrySet().removeIf(entry -> entry.getValue() <= 0);
             if (available.isEmpty()) throw new IllegalStateException("Selected counters are no longer available");
-            long remainingFromPermanent = cast.counterPermanentIds().subList(index, cast.counterPermanentIds().size())
+            long remainingFromPermanent = counterPermanentIds.subList(index, counterPermanentIds.size())
                     .stream().filter(permanentId::equals).count();
             int remainingCounters = available.values().stream().mapToInt(Integer::intValue).sum();
             if (available.size() == 1 || remainingFromPermanent == remainingCounters) {
                 chosen.add(available.keySet().iterator().next());
                 continue;
             }
-            var next = exileCounterChoiceWithTypes(cast, chosen);
-            interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
-                    player.getId(), null, null, next, available.keySet().stream().map(Enum::name).toList(),
-                    "Choose a counter to remove from " + FaceDownVisibility.publicName(gameData, permanent) + "."));
-            return true;
+            return new CounterKindStep(List.copyOf(chosen), permanent,
+                    available.keySet().stream().map(Enum::name).toList());
         }
-        if (!cast.chosenTypes().isEmpty() && chosen.size() != cast.chosenTypes().size()) {
-            resumeExileCounterCast(gameData, player, exileCounterChoiceWithTypes(cast, chosen));
-            return true;
-        }
-        return false;
+        return new CounterKindStep(List.copyOf(chosen), null, List.of());
     }
 
     private com.github.laxika.magicalvibes.model.ChoiceContext.ExileCastCounterTypeChoice exileCounterChoiceWithTypes(
@@ -13411,21 +13430,44 @@ public class SpellCastingService {
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
                                        boolean castAsAdventure, UUID requestedLibraryOwnerId,
                                        Integer discardHandCardIndex) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds,
+                additionalCostSacrificePermanentIds, castFaceDown, castAsAdventure, requestedLibraryOwnerId,
+                discardHandCardIndex, List.of());
+    }
+
+    private void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                        List<UUID> counterCostPermanentIds,
+                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
+                                        boolean castAsAdventure, UUID requestedLibraryOwnerId,
+                                        Integer discardHandCardIndex, List<CounterType> chosenCounterTypes) {
         UUID libraryOwnerId = castingPermissionService.resolveLibraryTopOwner(
                 gameData, player.getId(), requestedLibraryOwnerId);
         List<Card> library = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
         UUID topCardId = library == null || library.isEmpty() ? null : library.getFirst().getId();
+        GameData.LibraryTopCastReplay request = new GameData.LibraryTopCastReplay(player, xValue,
+                targetId, immutableCopy(counterCostPermanentIds),
+                immutableCopy(additionalCostSacrificePermanentIds), castFaceDown, castAsAdventure, topCardId,
+                libraryOwnerId, discardHandCardIndex, chosenCounterTypes);
         try {
             playCardFromLibraryTopOnce(gameData, player, xValue, targetId, counterCostPermanentIds,
                     additionalCostSacrificePermanentIds, castFaceDown, castAsAdventure, libraryOwnerId,
-                    discardHandCardIndex);
+                    discardHandCardIndex, request);
         } catch (CastStoppedForCostSacrificeAnswers stopped) {
-            gameData.pendingDeathReplacementChoiceReplay = new GameData.LibraryTopCastReplay(player, xValue,
-                    targetId, immutableCopy(counterCostPermanentIds),
-                    immutableCopy(additionalCostSacrificePermanentIds), castFaceDown, castAsAdventure, topCardId,
-                    libraryOwnerId, discardHandCardIndex);
+            gameData.pendingDeathReplacementChoiceReplay = request;
             mutationCoordinator.invalidateAllPlayerViews(gameData);
         }
+    }
+
+    /**
+     * Makes again the library-top cast that stopped to ask which kind of counter its counter-removal cost removes
+     * from the next creature, with {@code choice} added to the kinds chosen so far.
+     */
+    public void completeLibraryTopCounterTypeChoice(GameData gameData, Player player,
+            com.github.laxika.magicalvibes.model.ChoiceContext.LibraryTopCastCounterTypeChoice choice, String kind) {
+        GameData.LibraryTopCastReplay cast = choice.cast();
+        List<CounterType> chosen = new ArrayList<>(cast.chosenCounterTypes());
+        chosen.add(CounterType.valueOf(kind));
+        playLibraryTopReplay(gameData, cast, chosen);
     }
 
     /**
@@ -13434,6 +13476,11 @@ public class SpellCastingService {
      */
     public void completeLibraryTopCastAfterCostSacrificeAnswers(GameData gameData,
                                                                 GameData.LibraryTopCastReplay replay) {
+        playLibraryTopReplay(gameData, replay, replay.chosenCounterTypes());
+    }
+
+    private void playLibraryTopReplay(GameData gameData, GameData.LibraryTopCastReplay replay,
+                                      List<CounterType> chosenCounterTypes) {
         UUID libraryOwnerId = replay.libraryOwnerId();
         List<Card> library = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
         if (library == null || library.isEmpty() || !library.getFirst().getId().equals(replay.castCardId())) {
@@ -13441,7 +13488,8 @@ public class SpellCastingService {
         }
         playCardFromLibraryTop(gameData, replay.player(), replay.xValue(), replay.targetId(),
                 replay.counterCostPermanentIds(), replay.additionalCostSacrificePermanentIds(),
-                replay.castFaceDown(), replay.castAsAdventure(), libraryOwnerId, replay.discardHandCardIndex());
+                replay.castFaceDown(), replay.castAsAdventure(), libraryOwnerId, replay.discardHandCardIndex(),
+                chosenCounterTypes);
     }
 
     /** Whether {@code effect} is "forage or pay {m}", the "[A] or [B]" cost a graveyard cast pays. */
@@ -13465,7 +13513,8 @@ public class SpellCastingService {
     private void playCardFromLibraryTopOnce(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
-                                       boolean castAsAdventure, UUID libraryOwnerId, Integer discardHandCardIndex) {
+                                       boolean castAsAdventure, UUID libraryOwnerId, Integer discardHandCardIndex,
+                                       GameData.LibraryTopCastReplay request) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -13737,6 +13786,25 @@ public class SpellCastingService {
                 gameData, playerId, card).orElse(0)
                 : 0;
         validateExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
+        List<CounterType> counterKinds = List.of();
+        if (additionalCounterCost > 0) {
+            CounterKindStep step = nextCounterKindStep(gameData, counterCostPermanentIds,
+                    request.chosenCounterTypes());
+            if (step.promptPermanent() != null) {
+                GameData.LibraryTopCastReplay next = new GameData.LibraryTopCastReplay(request.player(),
+                        request.xValue(), request.targetId(), request.counterCostPermanentIds(),
+                        request.additionalCostSacrificePermanentIds(), request.castFaceDown(),
+                        request.castAsAdventure(), request.castCardId(), request.libraryOwnerId(),
+                        request.discardHandCardIndex(), step.chosen());
+                interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                        playerId, null, null,
+                        new com.github.laxika.magicalvibes.model.ChoiceContext.LibraryTopCastCounterTypeChoice(next),
+                        step.options(), "Choose a counter to remove from "
+                        + FaceDownVisibility.nameShownTo(gameData, step.promptPermanent(), playerId) + "."));
+                return;
+            }
+            counterKinds = step.chosen();
+        }
         Set<UUID> topLibrarySacrificedIds = new java.util.LinkedHashSet<>();
         addCastingCostSacrificeIds(topLibrarySacrificedIds, topLibraryAdditionalCosts, topLibrarySacrificeIds);
         int topLibraryLifePayments = (useManaValueLifeAlternative && card.getManaValue() > 0 ? 1 : 0)
@@ -13782,7 +13850,7 @@ public class SpellCastingService {
         if (libraryTopDiscardCost != null) {
             payDiscardCost(gameData, player, card, libraryTopDiscardCost, discardHandCardIndex, -1);
         }
-        payExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
+        payExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds, counterKinds);
         deck.remove(physicalCard);
         if (freeTopPlay) {
             gameData.floatingEffectsOnPlayer(playerId, RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)
@@ -15918,7 +15986,7 @@ public class SpellCastingService {
         gameData.beginDiscardEvent(playerId);
         for (int i = 0; i < count; i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
+            graveyardService.discardCard(gameData, playerId, discarded, false);
             gameData.discardCausedByOpponent = false;
             gameData.discarded(playerId, discarded);
             gameLogService.append(gameData, GameLog.builder()
@@ -16708,7 +16776,7 @@ public class SpellCastingService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card toDiscard = hand.get(discardHandCardIndex);
         hand.remove((int) discardHandCardIndex);
-        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
+        graveyardService.discardCard(gameData, playerId, toDiscard, false);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
@@ -17038,7 +17106,7 @@ public class SpellCastingService {
                 .sorted(java.util.Comparator.reverseOrder()).toList();
         for (int handIndex : descendingIndices) {
             Card discarded = gameData.playerHands.get(player.getId()).remove(handIndex);
-            graveyardService.addCardToGraveyard(gameData, player.getId(), discarded, Zone.HAND);
+            graveyardService.discardCard(gameData, player.getId(), discarded, false);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(discarded)
@@ -17744,7 +17812,7 @@ public class SpellCastingService {
                 gameData, player.getId(), card, discardHandCardIndex, spellCardIndex);
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card toDiscard = hand.remove(effectiveIndex);
-        graveyardService.addCardToGraveyard(gameData, player.getId(), toDiscard, Zone.HAND);
+        graveyardService.discardCard(gameData, player.getId(), toDiscard, false);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
@@ -17950,7 +18018,7 @@ public class SpellCastingService {
             int effectiveIndex = validateDiscardFromHandAlternateCost(gameData, playerId, card,
                     selection.cost(), selection.handIndex(), spellCardIndex);
             Card toDiscard = hand.remove(effectiveIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
+            graveyardService.discardCard(gameData, playerId, toDiscard, false);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)

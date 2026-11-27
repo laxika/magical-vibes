@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.FreeCastKickerOffer;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayKickerForFreeCastEffect;
@@ -442,7 +441,7 @@ public class ExileFreeCastSupport {
     /**
      * Kicker is an optional additional cost, so a spell cast without paying its mana cost may still be
      * kicked (CR 118.9, CR 601.2b), a mandatory cast ("casts it ... if able", suspend) too. Offers a
-     * mana-only kicker the controller can currently afford and pauses the cast until that offer is
+     * mana-only kicker the controller can afford with the pool or their mana abilities and pauses the cast until that offer is
      * answered. The answer resumes the cast through the input epilogue; a cast made inside a running
      * resolution only puts the question up, and that resolution parks behind it.
      *
@@ -464,15 +463,16 @@ public class ExileFreeCastSupport {
             return false;
         }
         ManaCost cost = new ManaCost(kicker.cost());
-        ManaPool pool = gameData.playerManaPools.get(player.getId());
-        if (cost.hasX() || pool == null || !cost.canPay(pool, 0)) {
+        if (cost.hasX() || !freeCastCostIncreaseSupport.manaPayableWithManaAbilities(gameData, player.getId(), cost)) {
             return false;
         }
         gameData.pendingFreeCastKickerOffers.put(exileCardId, new FreeCastKickerOffer(offer.grantHaste(),
                 offer.returnToHandIfUnable(), offer.suspendHaste(), true, offer.face()));
+        // The offer names its cost, so mana abilities may be activated while it is asked (CR 601.2g).
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(card, player.getId(),
                 List.of(new MayPayKickerForFreeCastEffect()),
-                "Pay the kicker cost " + kicker.cost() + " for " + card.getName() + "?", exileCardId));
+                "Pay the kicker cost " + kicker.cost() + " for " + card.getName() + "?", exileCardId,
+                kicker.cost()));
         if (offer.completeInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         } else if (!gameData.interaction.isAwaitingInput()) {

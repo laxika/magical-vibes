@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.SpellFace;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +27,7 @@ public record PayFreeCastCostIncreaseEffect(UUID cardId, Zone zone, PausedCast p
 
     /** The cast flow the payment paused. */
     public sealed interface PausedCast permits ExileCast, QueueCast, HandCast, LibraryCast, RevealedCast, SplitCast,
-            LibraryTopCast {
+            LibraryTopCast, GraveyardSpellCast, GraveyardCardCast, GraveyardPlay, CastOneOtherToHand {
     }
 
     /** A single cast from exile ({@code ExileFreeCastSupport}), resumed with its options. */
@@ -128,6 +129,65 @@ public record PayFreeCastCostIncreaseEffect(UUID cardId, Zone zone, PausedCast p
         public LibraryTopCast {
             Objects.requireNonNull(ability, "ability");
             Objects.requireNonNull(notPlayedDestination, "notPlayedDestination");
+        }
+    }
+
+    /**
+     * An instant or sorcery card cast from a graveyard without paying its mana cost
+     * ({@link CastTargetInstantOrSorceryFromGraveyardEffect}); the card stays in the graveyard until it is cast.
+     */
+    public record GraveyardSpellCast(PendingMayAbility ability, CastTargetInstantOrSorceryFromGraveyardEffect castEffect,
+                                     int maxSpellManaValue) implements PausedCast {
+        public GraveyardSpellCast {
+            Objects.requireNonNull(ability, "ability");
+            Objects.requireNonNull(castEffect, "castEffect");
+        }
+    }
+
+    /**
+     * A card cast from a graveyard without paying its mana cost ({@link CastCardFromGraveyardEffect}), with its
+     * announced X and mode; the card stays in the graveyard until it is cast.
+     */
+    public record GraveyardCardCast(PendingMayAbility ability, CastCardFromGraveyardEffect castEffect, Integer chosenX,
+                                    Integer chosenMode) implements PausedCast {
+        public GraveyardCardCast {
+            Objects.requireNonNull(ability, "ability");
+            Objects.requireNonNull(castEffect, "castEffect");
+        }
+    }
+
+    /**
+     * A card played from a graveyard without paying its mana cost
+     * ({@link PlayTargetCardFromGraveyardWithoutPayingManaCostEffect} and the other graveyard plays); the card stays in
+     * the graveyard until it is cast.
+     *
+     * @param filter                   what the card must still match, or null
+     * @param graveyardOwnerId         whose graveyard the card must still be in
+     * @param exileInsteadOfGraveyard  whether the spell is exiled instead of going to a graveyard
+     * @param allowLand                whether a land card may be played
+     */
+    public record GraveyardPlay(PendingMayAbility ability, CardPredicate filter, UUID graveyardOwnerId,
+                                boolean exileInsteadOfGraveyard, boolean allowLand) implements PausedCast {
+        public GraveyardPlay {
+            Objects.requireNonNull(ability, "ability");
+            Objects.requireNonNull(graveyardOwnerId, "graveyardOwnerId");
+        }
+    }
+
+    /**
+     * "You may cast one of them without paying its mana cost. Put the other into your hand" (Invasion of Alara), asked
+     * before any of the exiled cards moves: paid, the chosen card is cast and the other goes to the hand; otherwise
+     * the caster chooses the card for the hand and the uncast one stays in exile (the card's ruling).
+     *
+     * @param searchCards the cards that may be cast or put into the hand
+     * @param sourceCards every card the effect exiled
+     * @param cardIndex   the index in {@code searchCards} of the card being cast
+     */
+    public record CastOneOtherToHand(List<Card> searchCards, List<Card> sourceCards, int cardIndex)
+            implements PausedCast {
+        public CastOneOtherToHand {
+            searchCards = List.copyOf(searchCards);
+            sourceCards = List.copyOf(sourceCards);
         }
     }
 

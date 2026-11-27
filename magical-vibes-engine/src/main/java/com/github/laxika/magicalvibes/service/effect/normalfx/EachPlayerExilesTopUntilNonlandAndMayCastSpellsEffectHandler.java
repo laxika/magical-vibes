@@ -29,6 +29,7 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final SubjectResolutionService subjectResolutionService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,12 +57,17 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
                         .text(" from the top of their library (" + sourceName + ").")
                         .build());
 
+                // Either face of an adventurer or modal double-faced card may be the spell cast (CR 716.3a, 712.8c);
+                // a land card's Adventure is offered without stopping the exiling.
+                boolean offered = !exileEffect.opponentChoosesCard()
+                        && exileFreeCastQueueSupport.offerFaces(gameData, card,
+                        EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler::isSpell);
                 if (card.hasType(CardType.LAND) && card.getCastingOption(AdventureCast.class).isPresent()) {
                     adventureLandIds.add(card.getId());
                 }
                 if (!card.hasType(CardType.LAND)) {
                     nonlandCardIds.add(card.getId());
-                    if (isSpell(card)) {
+                    if (offered) {
                         castableSpellIds.add(card.getId());
                     }
                     break;

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.e.EssenceOfTheWild;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HalvarGodOfBattle;
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.InkwellLeviathan;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BonecrusherGiant.class, PrimevalSpawn.class, AvatarOfMight.class, GrizzlyBears.class, Forest.class,
         Humility.class, SolRing.class, WearTear.class, EssenceOfTheWild.class, InkwellLeviathan.class,
-        GloriousAnthem.class})
+        GloriousAnthem.class, HalvarGodOfBattle.class})
 class PrimevalSpawnTest extends BaseCardTest {
 
     @Test
@@ -162,6 +163,30 @@ class PrimevalSpawnTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Glorious Anthem");
         harness.assertOnBattlefield(player2, "Sol Ring");
         harness.assertOnBattlefield(player1, "Inkwell Leviathan");
+    }
+
+    @Test
+    @DisplayName("A modal double-faced card counts its back face's mana value, so Avatar of Might and Sword of the Realms fit")
+    void modalDoubleFacedCardCountsItsBackFace() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PrimevalSpawn());
+        AvatarOfMight avatar = new AvatarOfMight();
+        HalvarGodOfBattle halvar = new HalvarGodOfBattle();
+        harness.setLibrary(player1, List.of(avatar, halvar));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(avatar.getId(), halvar.getId()));
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("Sword of the Realms");
+        harness.handleListChoice(player1, "Sword of the Realms");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Avatar of Might");
+        harness.assertOnBattlefield(player1, "Sword of the Realms");
+        harness.assertNotOnBattlefield(player1, "Halvar, God of Battle");
     }
 
     @Test

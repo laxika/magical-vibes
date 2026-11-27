@@ -974,7 +974,8 @@ public class MayCastHandlerService {
         handleCastFromGraveyardChoice(gameData, player, accepted, ability,
                 castEffect.scope(), castEffect.filter(), castEffect.withoutPayingManaCost(),
                 castEffect.exileInsteadOfGraveyard(), castEffect.anyManaType(), castEffect.copyCount(),
-                castEffect.afterSuccessfulCastEffect(), maxSpellManaValue);
+                castEffect.afterSuccessfulCastEffect(), maxSpellManaValue,
+                new PayFreeCastCostIncreaseEffect.GraveyardSpellCast(ability, castEffect, maxSpellManaValue));
     }
 
     private void handleCastFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
@@ -982,7 +983,8 @@ public class MayCastHandlerService {
                                                CardPredicate filter, boolean withoutPayingManaCost,
                                                boolean exileInsteadOfGraveyard, boolean anyManaType,
                                                int copyCount, CardEffect afterSuccessfulCastEffect,
-                                               int maxSpellManaValue) {
+                                               int maxSpellManaValue,
+                                               PayFreeCastCostIncreaseEffect.PausedCast paused) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
         String castLabel = withoutPayingManaCost ? " without paying its mana cost" : "";
@@ -1061,10 +1063,8 @@ public class MayCastHandlerService {
                             // No valid targets — card goes to owner's graveyard
                             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
                             log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());
-                        } else if (withoutPayingManaCost && !payGraveyardPlayCostIncrease(gameData, player, cardToCast)) {
-                            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                                    " can't be cast: its cost increase can't be paid."));
-                            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                        } else if (withoutPayingManaCost
+                                && !payGraveyardCostIncrease(gameData, player, cardToCast, paused)) {
                             return;
                         } else {
                             permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
@@ -1086,10 +1086,8 @@ public class MayCastHandlerService {
                         }
                     } else {
                         // Non-targeted spell — put directly on stack
-                        if (withoutPayingManaCost && !payGraveyardPlayCostIncrease(gameData, player, cardToCast)) {
-                            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                                    " can't be cast: its cost increase can't be paid."));
-                            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                        if (withoutPayingManaCost
+                                && !payGraveyardCostIncrease(gameData, player, cardToCast, paused)) {
                             return;
                         }
                         if (!withoutPayingManaCost) {
@@ -1328,10 +1326,8 @@ public class MayCastHandlerService {
 
             // Without paying its mana cost, the total cost is still its cost increases (CR 601.2f).
             if (castEffect.withoutPayingManaCost() && tieredManaCost.isEmpty()
-                    && !payGraveyardPlayCostIncrease(gameData, player, spellCard)) {
-                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                        " can't be cast: its cost increase can't be paid."));
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    && !payGraveyardCostIncrease(gameData, player, spellCard,
+                    new PayFreeCastCostIncreaseEffect.GraveyardCardCast(ability, castEffect, chosenX, chosenMode))) {
                 return;
             }
             permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
@@ -1361,11 +1357,9 @@ public class MayCastHandlerService {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-        } else if (!payGraveyardPlayCostIncrease(gameData, player, spellCard)) {
+        } else if (!payGraveyardCostIncrease(gameData, player, spellCard,
+                new PayFreeCastCostIncreaseEffect.GraveyardCardCast(ability, castEffect, chosenX, chosenMode))) {
             // Without paying its mana cost, the total cost is still its cost increases (CR 601.2f).
-            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                    " can't be cast: its cost increase can't be paid."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -1454,23 +1448,54 @@ public class MayCastHandlerService {
     }
 
     /**
-     * Pays the generic cost increases that apply to a spell cast from a graveyard without paying its
-     * mana cost (CR 601.2f): the total cost is the increase alone, so the increase must still be paid
-     * from the pool. Returns {@code false} without paying when the pool cannot cover it.
+     * Pays the cost increases of a spell cast from a graveyard without paying its mana cost (CR 601.2f: the increases
+     * are its whole total cost), from the pool or after a question during which mana abilities may be activated
+     * (CR 601.2g). Returns whether the cast goes on; {@code false} when it paused on the question (its answer comes
+     * back through {@link #resumeGraveyardCastAfterCostIncreaseDecision}) or when the increase can't be paid, which
+     * leaves the card in the graveyard and ends the input.
      */
-    private boolean payGraveyardPlayCostIncrease(GameData gameData, Player player, Card cardToPlay) {
-        int increase = castingCostService.getCastCostModifier(
-                gameData, player.getId(), cardToPlay, 0, Zone.GRAVEYARD);
-        if (increase <= 0) {
+    private boolean payGraveyardCostIncrease(GameData gameData, Player player, Card card,
+                                             PayFreeCastCostIncreaseEffect.PausedCast paused) {
+        FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, player.getId(),
+                card, card.getId(), Zone.GRAVEYARD, paused);
+        if (payment == FreeCastCostIncreaseSupport.Payment.PAID) {
             return true;
         }
-        ManaPool pool = gameData.playerManaPools.get(player.getId());
-        ManaCost increaseCost = new ManaCost("{0}");
-        if (!increaseCost.canPayWithAdditionalGenericCost(pool, 0, increase)) {
+        if (payment == FreeCastCostIncreaseSupport.Payment.UNPAYABLE) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " can't be cast: its cost increase can't be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+        return false;
+    }
+
+    /** Whether {@code card} played from a graveyard needs a target and has none (CR 601.2c). */
+    private boolean targetedWithoutLegalTarget(GameData gameData, Player player, Card card) {
+        if (!EffectResolution.needsTarget(card) && !EffectResolution.needsSpellTarget(card)) {
             return false;
         }
-        increaseCost.payWithAdditionalGenericCost(pool, 0, increase);
-        return true;
+        List<CardEffect> spellEffects = permanentSpell(card)
+                ? new ArrayList<>(card.getCastingCosts())
+                : new ArrayList<>(card.getCastingCostsAndSpellEffects());
+        return buildValidSpellTargets(gameData, card, spellEffects, player.getId()).isEmpty();
+    }
+
+    /**
+     * Answers the cost-increase payment question a graveyard cast paused on ({@link #payGraveyardCostIncrease}): the
+     * cast is made again, paying from the pool when it was paid, else declined.
+     */
+    public void resumeGraveyardCastAfterCostIncreaseDecision(GameData gameData, Player player,
+                                                             PayFreeCastCostIncreaseEffect.PausedCast paused,
+                                                             boolean paid) {
+        switch (paused) {
+            case PayFreeCastCostIncreaseEffect.GraveyardSpellCast cast -> handleCastFromGraveyardChoice(gameData, player,
+                    paid, cast.ability(), cast.castEffect(), cast.maxSpellManaValue());
+            case PayFreeCastCostIncreaseEffect.GraveyardCardCast cast -> handleCastCardFromGraveyardChoice(gameData,
+                    player, paid, cast.ability(), cast.castEffect(), cast.chosenX(), cast.chosenMode());
+            case PayFreeCastCostIncreaseEffect.GraveyardPlay play -> handlePlayFromGraveyardChoice(gameData, player,
+                    paid, play.ability(), play.filter(), play.graveyardOwnerId(), play.exileInsteadOfGraveyard(),
+                    play.allowLand());
+            default -> throw new IllegalStateException("Not a graveyard cast: " + paused);
+        }
     }
 
     public void handleCastFromSpecificGraveyardChoice(GameData gameData, Player player, boolean accepted,
@@ -1556,6 +1581,15 @@ public class MayCastHandlerService {
             return;
         }
 
+        // Its cost increases are paid while the card is still in the graveyard, so a question about them leaves it there
+        // (CR 601.2f, 601.2g); a targeted spell with no legal target pays nothing.
+        if (!cardToPlay.hasType(CardType.LAND) && !targetedWithoutLegalTarget(gameData, player, cardToPlay)
+                && !payGraveyardCostIncrease(gameData, player, cardToPlay,
+                new PayFreeCastCostIncreaseEffect.GraveyardPlay(ability, filter, expectedGraveyardOwnerId,
+                        exileInsteadOfGraveyard, allowLand))) {
+            return;
+        }
+
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardToPlay.getId());
 
         if (cardToPlay.hasType(CardType.LAND)) {
@@ -1615,13 +1649,6 @@ public class MayCastHandlerService {
                 return;
             }
 
-            if (!payGraveyardPlayCostIncrease(gameData, player, cardToPlay)) {
-                graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToPlay);
-                gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast: its cost increase can't be paid."));
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                return;
-            }
-
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.GraveyardCastSpellTarget(cardToPlay, player.getId(), spellEffects,
                             spellType, exileInsteadOfGraveyard, true, graveyardOwnerId));
@@ -1632,13 +1659,6 @@ public class MayCastHandlerService {
                     " from their graveyard without paying its mana cost — choosing target."));
             log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToPlay.getName());
             return; // Wait for target choice
-        }
-
-        if (!payGraveyardPlayCostIncrease(gameData, player, cardToPlay)) {
-            graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToPlay);
-            gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast: its cost increase can't be paid."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
         }
 
         StackEntry stackEntry = new StackEntry(
