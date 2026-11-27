@@ -115,7 +115,7 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
             String prompt = "Pay any amount of life for " + cardName
                     + ". You will create a 1/1 Rat token for each 1 life paid.";
             interactionHandlerRegistry.begin(gameData,
-                    new PendingInteraction.XValueChoice(playerId, life, prompt, cardName));
+                    PendingInteraction.XValueChoice.lifePayment(playerId, life, prompt, cardName));
             return;
         }
     }

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -3274,13 +3275,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     // ===== Smart Choice Overrides =====
 
     /**
-     * Evaluates "may" abilities using SpellEvaluator instead of always accepting.
-     * Accepts the ability if the net value of its effects is positive, considering
-     * the current board state. For example, a "may draw a card and lose 1 life"
-     * trigger is evaluated as draw value minus life loss, and declined when the
-     * AI is at very low life.
-     */
-    /**
      * The ransom {@code unless} asks for now: an any-of ransom ("sacrifice a nonland permanent or discard a card") is
      * asked one alternative at a time, the one the waiting resolution's {@code UnlessAnswer} names.
      */
@@ -3294,6 +3288,28 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         return anyOf.alternatives().get(asked);
     }
 
+    /**
+     * What accepting {@code pending} gains this AI before its mana: an "unless" payment as the payer sees its branches
+     * ({@link SpellEvaluator#unlessPaymentValue}); the cost-increase payment of a free cast, the spell it casts;
+     * else the ability's effects.
+     */
+    private double mayAbilityValue(GameData gameData, PendingMayAbility pending) {
+        if (pending.effects().size() == 1 && pending.effects().getFirst() instanceof UnlessPaysEffect unless) {
+            return spellEvaluator.unlessPaymentValue(gameData, pending, unless, aiPlayer.getId());
+        }
+        if (pending.effects().size() == 1 && pending.effects().getFirst() instanceof PayFreeCastCostIncreaseEffect) {
+            return spellEvaluator.estimateSpellValue(gameData, pending.sourceCard(), aiPlayer.getId());
+        }
+        return spellEvaluator.evaluateAbilityEffects(gameData, pending.effects(), aiPlayer.getId());
+    }
+
+    /**
+     * Evaluates "may" abilities using SpellEvaluator instead of always accepting.
+     * Accepts the ability if the net value of its effects is positive, considering
+     * the current board state. For example, a "may draw a card and lose 1 life"
+     * trigger is evaluated as draw value minus life loss, and declined when the
+     * AI is at very low life.
+     */
     @Override
     protected void handleMayAbilityChoice(GameData gameData) {
         PendingInteraction.MayAbilityChoice mayChoice =
@@ -3320,7 +3336,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         PendingMayAbility pending = gameData.pendingMayAbilities.getFirst();
-        double value = spellEvaluator.evaluateAbilityEffects(gameData, pending.effects(), aiPlayer.getId());
+        double value = mayAbilityValue(gameData, pending);
         // An "unless" ransom other than mana (life, damage, a sacrifice, a discard) costs what it takes; life or damage
         // at or above the AI's life total is never paid. A mana ransom is weighed below from the mana itself.
         if (pending.manaCost() == null || pending.manaCost().isEmpty()) {

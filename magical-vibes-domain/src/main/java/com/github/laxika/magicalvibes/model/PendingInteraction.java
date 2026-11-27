@@ -301,20 +301,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * "Choose a value for X" (e.g. Vigil for the Lost's ETB payment, Jaya's rummage count).
      * {@code manaPayment} marks prompts whose X is charged from the mana pool — those open
      * the CR 605.3a window so the player may tap mana sources while the prompt is up.
+     * {@code lifePayment} marks "pay any amount of life" prompts, whose number is life the player pays
+     * ({@link #lifePayment(UUID, int, String, String)}).
      */
     record XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
                         boolean manaPayment, String manaCost, PendingMayAbility graveyardCastAbility,
-                        ChoiceContext.CounterDistributionAssignment distribution)
+                        ChoiceContext.CounterDistributionAssignment distribution, boolean lifePayment)
             implements PendingInteraction {
 
         public XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
                             boolean manaPayment, String manaCost, PendingMayAbility graveyardCastAbility) {
-            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, graveyardCastAbility, null);
+            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, graveyardCastAbility, null,
+                    false);
         }
 
         public XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
                             boolean manaPayment, String manaCost) {
-            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, null, null);
+            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, null, null, false);
+        }
+
+        /** "Pay any amount of life" (CR 119.4): a number from 0 to {@code maxValue}, the life the player pays. */
+        public static XValueChoice lifePayment(UUID playerId, int maxValue, String prompt, String cardName) {
+            return new XValueChoice(playerId, 0, maxValue, prompt, cardName, false, null, null, null, true);
         }
 
         /**
@@ -324,7 +332,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public static XValueChoice forDistribution(UUID playerId, int minValue, int maxValue, String prompt,
                                                    String cardName,
                                                    ChoiceContext.CounterDistributionAssignment distribution) {
-            return new XValueChoice(playerId, minValue, maxValue, prompt, cardName, false, null, null, distribution);
+            return new XValueChoice(playerId, minValue, maxValue, prompt, cardName, false, null, null, distribution,
+                    false);
         }
 
         /** Non-mana number pick (discard counts, life payments, bids). */

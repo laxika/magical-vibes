@@ -16,8 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UpkeepRansomAiTest extends HardAiDecisionEngineTestSupport {
 
     @Test
-    @DisplayName("Phantasmal Forces: the hard AI scores the sacrifice of its source as nothing and declines to pay {U}")
-    void hardAiDeclinesTheUpkeepPayment() {
+    @DisplayName("Phantasmal Forces: the hard AI pays {U} to keep its creature")
+    void hardAiPaysTheUpkeepToKeepItsSource() {
         HardAiDecisionEngine ai = createHardAi(player2);
         harness.addToBattlefield(player2, new PhantasmalForces());
         givePlayerIslands(player2, 1);
@@ -39,8 +39,8 @@ class UpkeepRansomAiTest extends HardAiDecisionEngineTestSupport {
         }
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Phantasmal Forces"));
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Phantasmal Forces"));
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Phantasmal Forces"));
+                .noneMatch(card -> card.getName().equals("Phantasmal Forces"));
     }
 }

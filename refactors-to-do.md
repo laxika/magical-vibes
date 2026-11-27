@@ -1392,7 +1392,7 @@ Don't commit.
 - Avatar's Wrath's airbend is scored by `SpellEvaluator` as single-target exile removal (AI). Unverified.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
-#### Payments and costs (22)
+#### Payments and costs (21)
 
 - Moxite Refinery's `CounterType.ANY` cost removes kinds in enum order; the player should choose (the kind prompt serves one counter only).
 - Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
@@ -1404,7 +1404,6 @@ Don't commit.
 - Whispersteel Dagger and Xanathar's "as though it were mana of any color" is applied as any type, so coloured mana pays {C} (CR 609.4b). Fairly sure.
 - The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
-- `XValueChoiceAiStrategy` answers a life payment with its maximum, so the AI pays its whole life (Plunge into Darkness, Vizkopa Confessor; CR 119.4). Sure of the code.
 - `AbilityActivationService.getActivatedAbilityAdditionalGenericCost`: with a {0} equip or power-up cost, the tax is returned without cost reductions applied (CR 601.2f). Fairly sure of the code.
 - "Mana of any type" exile and graveyard permissions (`withAnyManaType`, `spendingManaOfAnyType`: Mnemonic Betrayal, Gonti, Dire Fleet Daredevil and others) are paid as any colour when the cost has {C} (`SpellCastingService` `anyColorForColoredSymbols`), so coloured mana can't pay {C} (CR 106.1b, 609.4b). Sure.
 - Flotsam // Jetsam (Jetsam) refuses Bone Shards, Minion Missile and Souls of the Lost instead of letting their sacrifice-or-discard cost be paid (CR 118.9d); before fold run 49b it cast them with the cost skipped. Sure of the code.
@@ -1451,7 +1450,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (100)
+#### Other (95)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code); Knowledge Pool ignores the chosen card's "cast only during" (its ruling); `SplitCardCastSupport.beginFromExile` judges the whole split card (CR 709.3a, code); the may-cast offers don't ask the shared check; suspend asks no type restriction (Cease-Fire; CR 601.3); an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified.
 - Outside the entry batch: fixed in fold run 8; but a Painter's Servant it puts onto the battlefield got no as-enters colour prompt in a fold run 8 test (check whether `PutCardsOntoBattlefieldEffect` asks as-enters choices; unsure), fixed in fold run 21b (no observable test), fixed in fold run 10b, Karlach's specialize return (its "perpetually can't block" a static on a runtime copy; P02, low), Knickknack Ouphe's Auras attached after they enter (CR 303.4f, 303.4g; P02, fold: aura-host).
@@ -1478,7 +1477,6 @@ Don't commit.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
 - `TappedLandManaSupport.producedManaTypes`' basic-land-type fallback (Mana Flare, `AddManaForEachOtherLandWithSameNameEffect`) adds mana for a tap that reported none (CR 106.12a). Unsure.
 - Reality Scramble stays blocked: `PutTargetOnBottomOfLibraryEffect` records no `DepartureResult`, so `departedThisWay` has nothing to read (the filter exists since fold run 29c). Sure.
-- AI: the Hard AI likely scores `PayFreeCastCostIncreaseEffect`'s "may" at 0 and declines a paid free cast. Unverified.
 - `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. Sure.
 - Bow of Nylea and The Moonbase wait in blocked-other for a subject naming every target card: the activation path (`AbilityActivationService`'s `TargetedGraveyardCardsEffect` keying) needs the `targetGraveyardCards` branch the cast path got in fold run 50c. Sure.
 - Panglacial Wurm can't be cast during the later picks of a multi-pick search; cast-only cards are offered only on the first prompt ("while you're searching"). Sure of the code.
@@ -1512,20 +1510,16 @@ Don't commit.
 - Ward—Waterbend's payability (`WaterbendPaymentService.canPay`) counts the pool and the untapped artifacts and creatures, not mana the payer could still make (CR 118.3, 605.3a), so a payer with untapped lands and an empty pool isn't asked. Sure of the code.
 - Perplex's discard-hand ransom names the payer as the discard's cause, so an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege: not settled by the rules (an owner question in entry 17, CT-1). Unsure.
 - Gix, Yawgmoth Praetor: "whenever a creature deals combat damage to one of your opponents, its controller may pay 1 life. Sure of the Oracle text and the code.
-- The hard AI scores an `UnlessPaysEffect` as value(ifPaid) − value(ifNotPaid) for the payer (step 10 run U3a), but `CounterSpellEffect` is valued as the AI's own counterspell, so a ward or "counter unless" asked of the AI about its own spell scores negative and is declined (it scored 0 and was declined before). Sure of the code.
 - Timothar, Baron of Bats: when a replacement creates more than one Bat, only the last one is linked to the exiled card (`CreateTokenLinkedToCardsExiledThisWayEffectHandler` gives each exile entry one source); the ruling says every such Bat has the linked ability and any of them returns the card. Sure of the ruling and the code.
 - Ice Cave: a Phyrexian or hybrid symbol in the triggering spell's mana cost is paid by the pool payment as any resolution cost; whether 2 life can pay {W/P} there is unchecked. Unsure.
 - The sacrifice ransom's pick prompt reads "Choose a Aura attached to Three Dog to sacrifice." (`ResolutionCostPaymentService.pay`, article). Sure.
 - Mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay` but can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a); no implemented card has one today. Sure, harmless today.
 - Quenchable Fire, Glass Asp, Nafs Asp, Sabertooth Cobra: the special action that pays before the delayed trigger (`AbilityActivationService.payDelayedTriggerCost`, CR 116.2c) raises no tax-paid event, so Tax Taker doesn't see mana an opponent pays for your spell's or creature's delayed ability; it changes play only with Tax Taker and the rules don't say whether it is a "tax". Sure of the code.
 - A one-permanent sacrifice ransom (`ResolutionCostPaymentService.pay`, `SacrificePermanentCost`) still asks the forced pick: Ravenous Vampire, Crovax and Indoraptor, which sacrificed a lone candidate unasked before step 10 run U3b1, now ask it (the U3c line above; CR 608.2d convention). Sure.
-- The hard AI valued a "that player loses N life / is dealt N damage unless they pay" branch at 0 when its player subject isn't `you()` (`SpellEvaluator`): step 10 run U3b1 reads a branch naming the payer's own subject as the payer's life loss (ransom scale); other branch effects aimed at the payer (discarding the hand, losing permanents) are still valued from the AI's side. Sure of the code.
 - Acererak the Archlich's tokens are created as the step after the paid-together sacrifices (`UnlessPaysEffect.payingTogether()` then the branch), not in the same event as the sacrifices (its ruling: "creatures are sacrificed and tokens are created simultaneously"); nothing can be done between them and no trigger sees one without the other. Unsure it is observable.
 - `UnlessPaysEffectHandler.nextStep` now sets the entry's accepted players to the payers who chose to pay before every branch (for `eachUnless`); an entry that also had a `TemptingOfferEffect` or Snort's discard set them before its "unless" would lose that list. Sure of the code.
-- The hard AI scores an "unless" branch that sacrifices (or destroys, exiles, phases out) its own source as nothing (`SpellEvaluator`), so it never pays an upkeep to keep a permanent (Phantasmal Forces, the Elder Dragons, the lands): score that branch as the source's value (AI only; `UpkeepRansomAiTest` pins today's parity).
 - Several permanents returned for one ransom (Bull Elephant's two Forests, Ovinomancer's three lands) leave one by one inside the one instruction through `PermanentRemovalService.removePermanentToHand`, not as one departure batch, so a leaves-the-battlefield look-back (CR 603.10a) of one wouldn't see the others leave; no ability resolves between them and no card in the pool observes it (the same as the old `returnPlayerMatchingPermanents`). Unsure it is observable.
 - Behemoth of Vault 0: "when you do, destroy that permanent" is a reflexive ability about the declared target, which `QueueReflexiveAbilityEffect` would target again (needs a reflexive ability about an earlier target) (CR 118.3).
-- The hard AI asked to pay for one object of an `UnlessPaysEffect.forEach` scores the branch effect as a whole (`SpellEvaluator.evaluateAbilityEffect`), not the object asked about (its own Spirit, land or creature). Unsure.
 - Sword-Point Diplomacy asks about the revealed cards in library order; its ruling lets the caster choose the order the cards are processed in (it matters only when an opponent's life runs short). Unsure it is worth a prompt.
 - Decoy Gambit (`ReturnTargetCreaturesUnlessControllersDrawEffect`) still offers "have you draw a card" when its caster can't draw; whether an opponent may choose it then (CR 608.2d: an impossible option can't be chosen; CR 121.3 bars a player who can't draw from choosing to draw, but here another player makes the choice) is not settled by the rules or its rulings. Sure the question is open.
 - Varchild's War-Riders and Wall of Shards pay their cumulative upkeep to `getOpponentId` (the first opponent); their rulings let each age counter's token or life go to any opponent, chosen separately. Sure of the rulings and the code.

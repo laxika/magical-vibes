@@ -56,7 +56,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | PP Perpetual changes | PP-1 | open |
 | PL Each player chooses, then all act | PL-1 | open |
 | MC Single cards | MC-1, MC-2 | open |
-| AI Hard / easy AI | AI-1, AI-2 | open |
+| AI Hard / easy AI | AI-1, AI-2 | AI-1 done 2026-11-27; AI-2 open |
 | UI Frontend | UI-1 | open |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | open |
 | FT Missing features | FT-1, FT-2 | open |
@@ -731,7 +731,15 @@ other than life loss are valued from the AI's side), O77 (an "unless" branch tha
 `UpkeepRansomAiTest` pins today's parity), O80 (`UnlessPaysEffect.forEach` scores the branch as a whole), O28
 (`PayFreeCastCostIncreaseEffect`'s "may" likely scores 0), P14 (`XValueChoiceAiStrategy` pays its whole life).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: O67, O74, O77, O80, O28, P14 (deleted from entry 18). The hard AI scores an "unless" it is asked
+through the new `SpellEvaluator.unlessPaymentValue`: a branch is read as its payer sees it (CR 118.12a); one written by
+another player's ability is scored from that controller's side and its sign turned, so ward or Mana Leak on its own spell
+(CR 702.21a) and a discard aimed at it (Tainted Specter) are its losses; a branch that sacrifices,
+destroys, exiles, bounces or phases out the source is the source's value (Phantasmal Forces is kept, `UpkeepRansomAiTest`
+flipped); "for each [object] … unless" is the object asked about (Cleansing: its own land kept, an opponent's not). A free
+cast's cost increase is scored as the spell it casts. `XValueChoice` gained `lifePayment` (`XValueChoice.lifePayment`, used by
+`EachPlayerPaysAnyManaEffect`'s LIFE and `EachPlayerPaysAnyLifeForTokensEffect`); the AI pays at most half its life (CR 119.4).
+No effect class added or deleted, so no ledger or ratchet change.
 
 #### AI-2. Targeting and value
 
@@ -744,6 +752,9 @@ menace), T21 (Avatar's Wrath's airbend scored as single-target exile).
 
 Notes: Keep any owner decision recorded in a line (O52: 2026-11-25). A change to a decision rule needs a pin test for the old
 case it must keep.
+
+New line N9 (seen in AI-1): an "unless" branch `SpellEvaluator` has no score for (Wand of Ith's `DiscardCardsEffect` of the
+revealed card) is worth 0 to the hard AI either way, so it never pays to keep the card; unverified by a test.
 
 Outcome:
 

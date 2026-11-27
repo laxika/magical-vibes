@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -74,6 +75,9 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -371,9 +375,7 @@ public class SpellEvaluator {
         return gameData.playerBattlefields.getOrDefault(payerId, List.of()).stream()
                 .filter(p -> filter == null || predicateEvaluationService.matchesPermanentPredicate(gameData, p,
                         filter))
-                .mapToDouble(p -> gameQueryService.isCreature(gameData, p)
-                        ? boardEvaluator.sacrificeCost(gameData, p, payerId, opponentId)
-                        : Math.max(3.0, p.getCard().getManaValue() * 3.0))
+                .mapToDouble(p -> permanentValue(gameData, p, payerId, opponentId))
                 .sorted()
                 .limit(count)
                 .sum();
@@ -427,6 +429,95 @@ public class SpellEvaluator {
             return -Math.max(0, amountEvaluationService.evaluate(gameData, damage.damage(), context));
         }
         return 0;
+    }
+
+    /**
+     * What paying the "unless" of {@code pending} gains {@code payerId}, who is asked it: the branch paid for over the
+     * branch paid to avoid, each as the payer sees it (the ransom itself is weighed by the caller,
+     * {@link #ransomCost}).
+     * <ul>
+     *   <li>"For each [object] … unless" asked about one object ({@code pending}'s target): the object leaving, a loss
+     *       of its value to its controller, the payer's loss when it is theirs and their gain when it is an
+     *       opponent's.</li>
+     *   <li>A branch that sacrifices, destroys, exiles, bounces or phases out the source (an upkeep "sacrifice this
+     *       unless you pay", Vexing Devil): the source's value, the same way round.</li>
+     *   <li>The payer losing life or being dealt damage: on the ransom's life scale.</li>
+     *   <li>Any other branch is written from its controller's side ("you" is the controller). Asked of the controller,
+     *       it is scored as written; asked of another player (ward and "counter it unless" on the payer's spell, a
+     *       discard aimed at the payer, a draw for the controller), it is scored from the controller's side, with the payer
+     *       as the opponent, and its sign turned: what the controller gains, the payer loses.</li>
+     * </ul>
+     */
+    public double unlessPaymentValue(GameData gameData, PendingMayAbility pending, UnlessPaysEffect unless,
+                                     UUID payerId) {
+        if (unless.forEach() != null) {
+            return -unlessBranchValue(gameData, pending, unless, unless.ifNotPaid(), payerId);
+        }
+        return unlessBranchValue(gameData, pending, unless, unless.ifPaid(), payerId)
+                - unlessBranchValue(gameData, pending, unless, unless.ifNotPaid(), payerId);
+    }
+
+    private double unlessBranchValue(GameData gameData, PendingMayAbility pending, UnlessPaysEffect unless,
+                                     CardEffect branch, UUID payerId) {
+        if (branch == null) {
+            return 0;
+        }
+        if (unless.forEach() != null) {
+            Permanent object = gameQueryService.findPermanentById(gameData, pending.targetCardId());
+            double factor = branch instanceof ReturnToHandEffect ? 0.6 : 1.0;
+            return object == null ? 0 : factor * permanentValueTo(gameData, object, payerId);
+        }
+        if (removesSource(branch) && pending.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            return source == null ? 0 : permanentValueTo(gameData, source, payerId);
+        }
+        int lifeLost = payerLosesLife(gameData, branch, unless.payer(), payerId);
+        if (lifeLost < 0) {
+            return lifeLost * 1.5;
+        }
+        UUID controllerId = pending.sourceControllerId();
+        if (controllerId == null || controllerId.equals(payerId)) {
+            UUID opponentId = getOpponentId(gameData, payerId);
+            return evaluateAbilityEffect(gameData, branch, payerId, opponentId,
+                    gameData.playerBattlefields.getOrDefault(payerId, List.of()),
+                    gameData.playerBattlefields.getOrDefault(opponentId, List.of()));
+        }
+        return -evaluateAbilityEffect(gameData, branch, controllerId, payerId,
+                gameData.playerBattlefields.getOrDefault(controllerId, List.of()),
+                gameData.playerBattlefields.getOrDefault(payerId, List.of()));
+    }
+
+    /** Whether {@code effect} takes its own source off the battlefield: sacrificed, destroyed, exiled, bounced, phased out. */
+    private static boolean removesSource(CardEffect effect) {
+        PermanentSubject subject = switch (effect) {
+            case SacrificeSelfEffect sacrifice -> sacrifice.subject();
+            case DestroyTargetPermanentEffect destroy -> destroy.subject();
+            case ExileTargetPermanentEffect exile -> exile.subject();
+            case ReturnToHandEffect bounce -> bounce.subject();
+            case PhaseOutEffect phaseOut -> phaseOut.subject();
+            default -> null;
+        };
+        return subject instanceof PermanentSubject.Source;
+    }
+
+    /**
+     * Losing {@code permanent} as {@code playerId} sees it: its value as a negative number when they control it, as a
+     * positive one when someone else does.
+     */
+    private double permanentValueTo(GameData gameData, Permanent permanent, UUID playerId) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) {
+            return 0;
+        }
+        double value = permanentValue(gameData, permanent, controllerId, getOpponentId(gameData, controllerId));
+        return controllerId.equals(playerId) ? -value : value;
+    }
+
+    /** A permanent's worth to its controller: a creature's sacrifice cost, else 3 per mana value (at least 3). */
+    private double permanentValue(GameData gameData, Permanent permanent, UUID controllerId, UUID opponentId) {
+        return gameQueryService.isCreature(gameData, permanent)
+                ? boardEvaluator.sacrificeCost(gameData, permanent, controllerId, opponentId)
+                : Math.max(3.0, permanent.getCard().getManaValue() * 3.0);
     }
 
     private double evaluateAbilityEffect(GameData gameData, CardEffect effect,

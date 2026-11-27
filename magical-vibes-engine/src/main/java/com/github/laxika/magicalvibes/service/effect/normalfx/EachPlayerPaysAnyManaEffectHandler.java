@@ -126,11 +126,12 @@ public class EachPlayerPaysAnyManaEffectHandler implements NormalEffectHandlerBe
 
     private void prompt(GameData gameData, UUID playerId, String cardName, Resource resource) {
         gameData.eachPlayerPayMana.currentPlayerId = playerId;
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(playerId,
-                maxPotential(gameData, playerId, resource), resource == Resource.X_MANA
-                ? "Choose X to pay {X} for " + cardName + "."
-                : "Pay any amount of " + resourceName(resource) + " for " + cardName + ".",
-                cardName, resource.isMana()));
+        int max = maxPotential(gameData, playerId, resource);
+        String prompt = resource == Resource.X_MANA ? "Choose X to pay {X} for " + cardName + "."
+                : "Pay any amount of " + resourceName(resource) + " for " + cardName + ".";
+        interactionHandlerRegistry.begin(gameData, resource == Resource.LIFE
+                ? PendingInteraction.XValueChoice.lifePayment(playerId, max, prompt, cardName)
+                : new PendingInteraction.XValueChoice(playerId, max, prompt, cardName, resource.isMana()));
     }
 
     /**

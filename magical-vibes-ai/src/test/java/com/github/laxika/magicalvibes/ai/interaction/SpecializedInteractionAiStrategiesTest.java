@@ -336,6 +336,19 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    @DisplayName("A life payment is capped at half the AI's life, not its whole life")
+    void xValueChoiceLifePaymentKeepsHalfTheLife() throws Exception {
+        gameData.playerLifeTotals.put(aiPlayerId, 15);
+
+        new XValueChoiceAiStrategy().answer(
+                PendingInteraction.XValueChoice.lifePayment(
+                        aiPlayerId, 15, "Pay any amount of life.", "Plunge into Darkness"),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(7));
+    }
+
+    @Test
     void turnFaceUpXValueChoiceReservesFixedManaComponents() throws Exception {
         ManaPool manaPool = new ManaPool();
         manaPool.add(ManaColor.WHITE, 4);
