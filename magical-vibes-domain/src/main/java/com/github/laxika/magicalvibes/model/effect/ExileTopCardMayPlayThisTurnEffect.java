@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -22,9 +23,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param library     whose library: each player it names exiles from their own, in APNAP order; {@code targetPlayer()}
  *                    declares the (harmful) player target
  * @param castOnly    "you may cast that card": a land card gets no permission (Ragavan, Daxos)
- * @param anyManaType "and you may spend mana as though it were mana of any color to cast that spell": for each
- *                    card exiled this way that can be cast (a nonland card, or a land card's Adventure), for as long
- *                    as the permission lasts
+ * @param anyManaType "and mana of any type can be spent to cast that spell" (or, with {@code asThoughAnyColor}, "you
+ *                    may spend mana as though it were mana of any color"): for each card exiled this way that can be
+ *                    cast (a nonland card, or a land card's Adventure), for as long as the permission lasts
  * @param duration    how long the permission lasts: {@link Duration#UNTIL_END_OF_TURN} ("this turn"),
  *                    {@link Duration#UNTIL_YOUR_NEXT_END_STEP}, {@link Duration#UNTIL_END_OF_YOUR_NEXT_TURN},
  *                    {@link Duration#UNTIL_CONTROLLERS_NEXT_UPKEEP}, {@link Duration#DURING_YOUR_NEXT_TURN} ("during
@@ -45,6 +46,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                    among those cards": how many of the permitted cards may be played in all; 0 for no limit
  * @param chooseOne   "choose one of them. You may play that card": the {@code player} chooses one exiled card as the
  *                    effect resolves (a prompt at the end of the step) and only it gets the permission
+ * @param asThoughAnyColor with {@code anyManaType}, the any-color wording: a {C} symbol is still paid only with
+ *                    colorless mana (CR 107.4c)
  */
 public record ExileTopCardMayPlayThisTurnEffect(
         DynamicAmount count,
@@ -61,7 +64,8 @@ public record ExileTopCardMayPlayThisTurnEffect(
         Condition permissionCondition,
         CardPredicate castFilter,
         int playLimit,
-        boolean chooseOne
+        boolean chooseOne,
+        boolean asThoughAnyColor
 ) implements ExileTopCardsMayPlayThisTurnDrawReplacementEffect {
 
     public ExileTopCardMayPlayThisTurnEffect {
@@ -82,6 +86,16 @@ public record ExileTopCardMayPlayThisTurnEffect(
             throw new IllegalArgumentException("A chosen card's permission takes only a duration, a holder, free play "
                     + "and any-type mana");
         }
+    }
+
+    public ExileTopCardMayPlayThisTurnEffect(
+            DynamicAmount count, boolean withoutPayingManaCost, CardPredicate freeCastFilter,
+            boolean duringTurnsLoreCounterPutOnSource, PlayerSubject library, boolean castOnly, boolean anyManaType,
+            Duration duration, boolean faceDown, boolean forLife, PlayerSubject player, Condition permissionCondition,
+            CardPredicate castFilter, int playLimit, boolean chooseOne) {
+        this(count, withoutPayingManaCost, freeCastFilter, duringTurnsLoreCounterPutOnSource, library, castOnly,
+                anyManaType, duration, faceDown, forLife, player, permissionCondition, castFilter, playLimit, chooseOne,
+                false);
     }
 
     public ExileTopCardMayPlayThisTurnEffect(
@@ -169,56 +183,68 @@ public record ExileTopCardMayPlayThisTurnEffect(
     public ExileTopCardMayPlayThisTurnEffect fromLibraryOf(PlayerSubject library) {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife,
-                player, permissionCondition, castFilter, playLimit, chooseOne);
+                player, permissionCondition, castFilter, playLimit, chooseOne, asThoughAnyColor);
     }
 
     /** "You may cast that card": no permission for a land card. */
     public ExileTopCardMayPlayThisTurnEffect mayOnlyCast() {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, true, anyManaType, duration, faceDown, forLife,
-                player, permissionCondition, castFilter, playLimit, chooseOne);
+                player, permissionCondition, castFilter, playLimit, chooseOne, asThoughAnyColor);
     }
 
-    /** "And you may spend mana as though it were mana of any color to cast that spell." */
+    /** "And mana of any type can be spent to cast that spell." */
     public ExileTopCardMayPlayThisTurnEffect withAnyManaType() {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, true, duration, faceDown, forLife,
-                player, permissionCondition, castFilter, playLimit, chooseOne);
+                player, permissionCondition, castFilter, playLimit, chooseOne, false);
+    }
+
+    /** "And you may spend mana as though it were mana of any color to cast that spell" (not {C}, CR 107.4c). */
+    public ExileTopCardMayPlayThisTurnEffect withManaAsThoughAnyColor() {
+        return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
+                duringTurnsLoreCounterPutOnSource, library, castOnly, true, duration, faceDown, forLife,
+                player, permissionCondition, castFilter, playLimit, chooseOne, true);
+    }
+
+    /** How mana may be spent to cast a card exiled this way. */
+    public AnyManaSpending manaSpending() {
+        return AnyManaSpending.of(anyManaType, asThoughAnyColor);
     }
 
     /** The permission lasts for {@code duration} instead of until end of turn ("until your next end step"). */
     public ExileTopCardMayPlayThisTurnEffect until(Duration duration) {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife,
-                player, permissionCondition, castFilter, playLimit, chooseOne);
+                player, permissionCondition, castFilter, playLimit, chooseOne, asThoughAnyColor);
     }
 
     /** "Exile ... face down. You may look at and play that card." */
     public ExileTopCardMayPlayThisTurnEffect exiledFaceDown() {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, true, forLife,
-                player, permissionCondition, castFilter, playLimit, chooseOne);
+                player, permissionCondition, castFilter, playLimit, chooseOne, asThoughAnyColor);
     }
 
     /** "If you cast a spell this way, pay life equal to its mana value rather than pay its mana cost." */
     public ExileTopCardMayPlayThisTurnEffect payingLifeEqualToManaValue() {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, true,
-                player, permissionCondition, castFilter, playLimit, chooseOne);
+                player, permissionCondition, castFilter, playLimit, chooseOne, asThoughAnyColor);
     }
 
     /** The cards may be played by {@code player} instead of the controller ("they may play those cards"). */
     public ExileTopCardMayPlayThisTurnEffect playableBy(PlayerSubject player) {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife, player,
-                permissionCondition, castFilter, playLimit, chooseOne);
+                permissionCondition, castFilter, playLimit, chooseOne, asThoughAnyColor);
     }
 
     /** The cards may be played only while {@code condition} holds ("during any turn you attacked with a token"). */
     public ExileTopCardMayPlayThisTurnEffect playableOnlyIf(Condition condition) {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife, player,
-                condition, castFilter, playLimit, chooseOne);
+                condition, castFilter, playLimit, chooseOne, asThoughAnyColor);
     }
 
     /**
@@ -228,21 +254,21 @@ public record ExileTopCardMayPlayThisTurnEffect(
     public ExileTopCardMayPlayThisTurnEffect mayOnlyCast(CardPredicate filter) {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, true, anyManaType, duration, faceDown, forLife, player,
-                permissionCondition, filter, playLimit, chooseOne);
+                permissionCondition, filter, playLimit, chooseOne, asThoughAnyColor);
     }
 
     /** "You may play one of those cards", "up to two of those cards": at most {@code limit} of them may be played. */
     public ExileTopCardMayPlayThisTurnEffect upTo(int limit) {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife, player,
-                permissionCondition, castFilter, limit, chooseOne);
+                permissionCondition, castFilter, limit, chooseOne, asThoughAnyColor);
     }
 
     /** "Choose one of them. You may play that card": the permission goes only to the card chosen as it resolves. */
     public ExileTopCardMayPlayThisTurnEffect choosingOne() {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
                 duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife, player,
-                permissionCondition, castFilter, playLimit, true);
+                permissionCondition, castFilter, playLimit, true, asThoughAnyColor);
     }
 
     /**

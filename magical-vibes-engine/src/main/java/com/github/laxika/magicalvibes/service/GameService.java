@@ -345,7 +345,8 @@ public class GameService {
             case PendingInteraction.MultiPermanentChoice mc ->
                     mc.playerId().equals(player.getId())
                             && (mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.FadeAwayKeep
-                            || mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.PayManaPerCreatureUntap);
+                            || mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.PayManaPerCreatureUntap
+                            || mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.CopySpellForEachOtherCreatureWithMana);
             case null, default -> false;
         };
     }

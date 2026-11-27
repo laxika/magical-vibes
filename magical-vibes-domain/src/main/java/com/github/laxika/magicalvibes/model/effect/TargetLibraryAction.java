@@ -22,7 +22,11 @@ public enum TargetLibraryAction {
     REVEAL_AND_PUT_ONE_INTO_GRAVEYARD,
     /** The controller exiles one of the looked-at cards (mandatory); the rest go back on top in any order (Sealed Fate). */
     EXILE_ONE,
-    /** The controller exiles one card face down, grants a cast permission for it, and puts the rest on the bottom randomly (Siphon Insight, which lets the card be played). */
+    /**
+     * The controller exiles one card face down, grants a play permission for it, and puts the rest on the bottom randomly
+     * (Siphon Insight); mana may be spent as though it were mana of any color to cast it, so not on {C} (CR 107.4c). The
+     * other face-down actions let mana of any type be spent.
+     */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
     /**
      * As {@link #EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM}, but the permission is only to <em>cast</em>

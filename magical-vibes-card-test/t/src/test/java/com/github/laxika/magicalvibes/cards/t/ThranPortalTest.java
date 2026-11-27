@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -123,6 +124,35 @@ class ThranPortalTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getName().equals("Squirrel"));
+    }
+
+    @Test
+    @DisplayName("A granted non-mana ability costs no additional life while the Portal has a chosen basic land type")
+    void grantedNonManaAbilityDoesNotCostLifeWithChosenType() {
+        Permanent portal = addReadyPortal(CardSubtype.ISLAND);
+        harness.setHand(player1, List.of(new SquirrelNest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, portal.getId());
+        harness.passBothPriorities();
+        harness.setLife(player1, 5);
+
+        int nestAbility = abilityIndexOf(portal, "Squirrel");
+        harness.activateAbility(player1, 0, nestAbility, null, null);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(5);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    private int abilityIndexOf(Permanent permanent, String descriptionPart) {
+        List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities =
+                gs.getEffectiveActivatedAbilities(gd, permanent);
+        for (int i = 0; i < abilities.size(); i++) {
+            if (abilities.get(i).getDescription().contains(descriptionPart)) {
+                return i;
+            }
+        }
+        throw new AssertionError("No ability with " + descriptionPart);
     }
 
     private void playPortal() {

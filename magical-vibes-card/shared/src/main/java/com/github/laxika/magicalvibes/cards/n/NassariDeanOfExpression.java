@@ -15,7 +15,7 @@ public class NassariDeanOfExpression extends Card {
 
     public NassariDeanOfExpression() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ExileTopCardMayPlayThisTurnEffect(false)
-                .fromLibraryOf(Subjects.eachOpponent()).mayOnlyCast().withAnyManaType());
+                .fromLibraryOf(Subjects.eachOpponent()).mayOnlyCast().withManaAsThoughAnyColor());
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
                 PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE));
     }

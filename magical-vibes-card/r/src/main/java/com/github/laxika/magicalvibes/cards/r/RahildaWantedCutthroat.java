@@ -37,7 +37,7 @@ public class RahildaWantedCutthroat extends Card {
         return SequenceEffect.of(
                 ExileCardAtRandomEffect.fromLibrary(Subjects.triggeringPlayer(), ExileCardsFromTopUntilEffect.NONLAND),
                 AllowPlayCardsFromExileEffect.whileExiled(Subjects.cardsThisWay(StepKind.EXILE))
-                        .withAnyManaType()
+                        .withManaAsThoughAnyColor()
                         .playableOnlyIf(new AnyOf(List.of(
                                 new AttackedWithCreaturesOfSubtypeThisTurn(1, CardSubtype.WOLF),
                                 new AttackedWithCreaturesOfSubtypeThisTurn(1, CardSubtype.WEREWOLF)))));

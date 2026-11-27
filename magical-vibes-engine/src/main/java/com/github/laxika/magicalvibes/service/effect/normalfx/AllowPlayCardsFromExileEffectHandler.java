@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.ExilePlayGrantBySource;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -67,7 +68,7 @@ public class AllowPlayCardsFromExileEffectHandler implements NormalEffectHandler
                 gameData.setExilePlayWithoutPayingManaCost(cardId, true);
             } else if (permission.anyManaType()) {
                 // On a land card too: it may have a spell to cast (an Adventure), and playing a land costs no mana.
-                gameData.grantExileAnyManaType(cardId, holderId, permission.duration());
+                gameData.grantExileManaSpending(cardId, holderId, permission.duration(), permission.manaSpending());
             }
             if (permission.exileInsteadOfGraveyard()) {
                 gameData.exileInsteadOfGraveyard(entry, cardId);
@@ -83,7 +84,7 @@ public class AllowPlayCardsFromExileEffectHandler implements NormalEffectHandler
                     permission.cards(), new ExilePlayPermissionEffect(controllerId)
                     .withCondition(permission.playCondition())
                     .withWithoutPayingManaCost(permission.freeCast())
-                    .withAnyManaType(permission.anyManaType() && !permission.freeCast())));
+                    .withManaSpending(permission.freeCast() ? AnyManaSpending.NONE : permission.manaSpending())));
         }
     }
 }

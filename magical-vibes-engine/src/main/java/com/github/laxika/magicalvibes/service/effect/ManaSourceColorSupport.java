@@ -59,17 +59,21 @@ public class ManaSourceColorSupport {
 
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
         for (ActivatedAbility ability : abilities) {
-            addColors(ability.getEffects(), source, colors);
+            addColors(gameData, ability.getEffects(), source, colors);
         }
         colors.retainAll(ManaColor.COLORS);
         return Set.copyOf(colors);
     }
 
-    private static void addColors(List<CardEffect> effects, Permanent source, Set<ManaColor> colors) {
+    private void addColors(GameData gameData, List<CardEffect> effects, Permanent source, Set<ManaColor> colors) {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect mana) {
                 add(colors, mana.color());
             } else if (effect instanceof AwardAnyColorManaEffect anyColor) {
+                if (!landManaTypeSupport.producesAnyMana(gameData, source, anyColor.amount())) {
+                    // An ability that would add no mana now gives no type of mana it could produce (CR 106.7).
+                    continue;
+                }
                 if (anyColor.restriction() == ManaSpendRestriction.CHOSEN_COLORS) {
                     source.getChosenColors().stream()
                             .map(color -> ManaColor.valueOf(color.name()))

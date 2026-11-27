@@ -19,6 +19,6 @@ public class IxhelScionOfAtraxa extends Card {
                 new ExileTopCardMayPlayThisTurnEffect(false)
                         .fromLibraryOf(Subjects.matching(Subjects.eachOpponent(),
                                 new PlayerHasPoisonCountersAtLeastPredicate(3)))
-                        .exiledFaceDown().withAnyManaType().until(Duration.PERMANENT));
+                        .exiledFaceDown().withManaAsThoughAnyColor().until(Duration.PERMANENT));
     }
 }

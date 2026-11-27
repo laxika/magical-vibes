@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 
 import java.util.Objects;
@@ -32,10 +33,13 @@ import java.util.Objects;
  *                               covers the cards {@link #cards()} names that are exiled with the source later this turn,
  *                               as it changes only the rules of the game (CR 611.2c); only over
  *                               {@code Subjects.exiledWithSource(...)} and for this turn
+ * @param asThoughAnyColor       with {@code anyManaType}, "you may spend mana as though it were mana of any color to
+ *                               cast that spell": a {C} symbol is still paid only with colorless mana (CR 107.4c)
  */
 public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration, boolean freeCast,
                                             boolean anyManaType, boolean exileInsteadOfGraveyard,
-                                            Condition playCondition, boolean ownerPlays, boolean laterExiles)
+                                            Condition playCondition, boolean ownerPlays, boolean laterExiles,
+                                            boolean asThoughAnyColor)
         implements CardEffect {
 
     public AllowPlayCardsFromExileEffect {
@@ -56,7 +60,7 @@ public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration
 
     public AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration, boolean freeCast, boolean anyManaType,
                                          boolean exileInsteadOfGraveyard) {
-        this(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard, null, false, false);
+        this(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard, null, false, false, false);
     }
 
     /** "You may play that card for as long as it remains exiled." */
@@ -82,31 +86,42 @@ public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration
     /** "… without paying its mana cost." */
     public AllowPlayCardsFromExileEffect withoutPayingManaCost() {
         return new AllowPlayCardsFromExileEffect(cards, duration, true, anyManaType, exileInsteadOfGraveyard,
-                playCondition, ownerPlays, laterExiles);
+                playCondition, ownerPlays, laterExiles, asThoughAnyColor);
     }
 
     /** "… and mana of any type can be spent to cast that spell." */
     public AllowPlayCardsFromExileEffect withAnyManaType() {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, true, exileInsteadOfGraveyard,
-                playCondition, ownerPlays, laterExiles);
+                playCondition, ownerPlays, laterExiles, false);
+    }
+
+    /** "… and you may spend mana as though it were mana of any color to cast that spell" (not {C}, CR 107.4c). */
+    public AllowPlayCardsFromExileEffect withManaAsThoughAnyColor() {
+        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, true, exileInsteadOfGraveyard,
+                playCondition, ownerPlays, laterExiles, true);
+    }
+
+    /** How mana may be spent to cast a card this way. */
+    public AnyManaSpending manaSpending() {
+        return AnyManaSpending.of(anyManaType, asThoughAnyColor);
     }
 
     /** "If that spell would be put into a graveyard, exile it instead." */
     public AllowPlayCardsFromExileEffect exilingInsteadOfGraveyard() {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, true, playCondition,
-                ownerPlays, laterExiles);
+                ownerPlays, laterExiles, asThoughAnyColor);
     }
 
     /** "During any turn [condition], you may cast that card", "… as long as [condition]". */
     public AllowPlayCardsFromExileEffect playableOnlyIf(Condition condition) {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
-                Objects.requireNonNull(condition, "condition"), ownerPlays, laterExiles);
+                Objects.requireNonNull(condition, "condition"), ownerPlays, laterExiles, asThoughAnyColor);
     }
 
     /** "Its owner may play it": each card's owner, not you, may play it. */
     public AllowPlayCardsFromExileEffect playableByOwner() {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
-                playCondition, true, laterExiles);
+                playCondition, true, laterExiles, asThoughAnyColor);
     }
 
     /**
@@ -115,6 +130,6 @@ public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration
      */
     public AllowPlayCardsFromExileEffect alsoCardsExiledLaterThisTurn() {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
-                playCondition, ownerPlays, true);
+                playCondition, ownerPlays, true, asThoughAnyColor);
     }
 }

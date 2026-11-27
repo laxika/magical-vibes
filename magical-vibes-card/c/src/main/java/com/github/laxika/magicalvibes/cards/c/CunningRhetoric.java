@@ -17,6 +17,6 @@ public class CunningRhetoric extends Card {
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(1)),
                 new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.triggeringPlayer())
-                        .withAnyManaType().until(Duration.PERMANENT));
+                        .withManaAsThoughAnyColor().until(Duration.PERMANENT));
     }
 }

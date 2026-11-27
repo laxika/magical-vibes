@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MatterReshaper;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CruelclawsHeist.class, Forest.class, LlanowarElves.class})
+@CardUsed({CruelclawsHeist.class, Forest.class, LlanowarElves.class, MatterReshaper.class})
 class CruelclawsHeistTest extends BaseCardTest {
 
     @Test
@@ -163,5 +165,24 @@ class CruelclawsHeistTest extends BaseCardTest {
     }
 
     private record HandSetup(Card stolenCard, Card remainingLand) {
+    }
+
+    @Test
+    @DisplayName("Mana of any type pays the {C} symbol of the gifted card with colored mana")
+    void anyTypePaysColorlessSymbolWithColoredMana() {
+        Card reshaper = new MatterReshaper();
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(reshaper));
+        harness.setHand(player1, List.of(new CruelclawsHeist()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorceryWithGift(player1, 0, player2.getId(), true);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(reshaper.getId()));
+
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castFromExile(player1, reshaper.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Matter Reshaper");
     }
 }

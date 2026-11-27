@@ -301,6 +301,8 @@ class SpellCastingServiceTest {
         lenient().when(gameQueryService.withQueryScope(any(), any()))
                 .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
         lenient().when(castingPermissionService.canCastWithCastCondition(any(), any(), any())).thenReturn(true);
+        lenient().when(castingPermissionService.anyManaSpending(any(), any(), any()))
+                .thenReturn(com.github.laxika.magicalvibes.model.AnyManaSpending.NONE);
         lenient().when(castingPermissionService.isFlashCastTargetPermissionSatisfied(
                 any(), any(), any(), any(), any())).thenReturn(true);
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);

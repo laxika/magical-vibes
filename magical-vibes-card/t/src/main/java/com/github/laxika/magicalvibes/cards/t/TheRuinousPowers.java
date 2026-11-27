@@ -33,7 +33,7 @@ public class TheRuinousPowers extends Card {
                         AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE, LAND)),
                         AllowPlayCardsFromExileEffect.thisTurn(
                                         Subjects.cardsThisWay(StepKind.EXILE, new CardNotPredicate(LAND)))
-                                .withAnyManaType(),
+                                .withManaAsThoughAnyColor(),
                         RegisterDelayedEventTriggerEffect.whenYouCastExiledCard(
                                 new LoseLifeEffect(new TargetSpellManaValue(),
                                         Subjects.ownerOf(Subjects.triggeringCard())))));

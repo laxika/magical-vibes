@@ -16,6 +16,6 @@ public class BreechesBrazenPlunderer extends Card {
         addTrigger(Triggers.creaturesYouControlDealDamageToOpponent()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
                 new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.triggeringPlayer())
-                        .withAnyManaType());
+                        .withManaAsThoughAnyColor());
     }
 }

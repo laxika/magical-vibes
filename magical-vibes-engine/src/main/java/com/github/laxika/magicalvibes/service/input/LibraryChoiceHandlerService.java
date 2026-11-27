@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StepKind;
@@ -596,8 +597,9 @@ public class LibraryChoiceHandlerService
                             gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withSpellFilter(
                                     new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
                         }
-                        if (librarySearch.allowAnyManaType()) {
-                            gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withAnyManaType(true));
+                        if (librarySearch.exileManaSpending().isAny()) {
+                            gameData.updateExilePlayPermission(chosenCard.getId(),
+                                    granted -> granted.withManaSpending(librarySearch.exileManaSpending()));
                         }
                         if (librarySearch.exilePlayPermissionFilter() != null) {
                             gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withSpellFilter(librarySearch.exilePlayPermissionFilter()));
@@ -2253,7 +2255,9 @@ public class LibraryChoiceHandlerService
         }
         exileService.exileCard(gameData, deckOwnerId, chosenCard);
         gameData.grantExilePlayPermission(chosenCard.getId(), agentControllerId, Duration.PERMANENT);
-        gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withAnyManaType(true));
+        // "You may spend mana as though it were mana of any color to cast them": not {C} (CR 107.4c).
+        gameData.updateExilePlayPermission(chosenCard.getId(),
+                granted -> granted.withManaSpending(AnyManaSpending.AS_THOUGH_ANY_COLOR));
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", chosenCard, " and may play it for as long as it remains exiled."));
     }

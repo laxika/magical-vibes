@@ -172,7 +172,7 @@ public class ExileSupport {
             UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
                     ? gameData.findExiledCard(exiledCard.getId()).ownerId() : sourceControllerId;
             ExilePlayPermissionEffect granted = new ExilePlayPermissionEffect(permittedPlayer)
-                    .withAnyManaType(permission.anyManaType())
+                    .withManaSpending(permission.manaSpending())
                     .withWithoutPayingManaCost(permission.withoutPayingManaCost());
             gameData.grantExilePlayPermission(exiledCard.getId(), granted, null, permittedPlayer,
                     Duration.PERMANENT);

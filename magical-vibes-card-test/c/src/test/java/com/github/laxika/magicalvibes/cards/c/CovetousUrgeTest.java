@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RovingKeep;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.m.MatterReshaper;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CovetousUrge.class, Divination.class, GrizzlyBears.class, RovingKeep.class, Swamp.class})
+@CardUsed({CovetousUrge.class, Divination.class, GrizzlyBears.class, RovingKeep.class, Swamp.class,
+        MatterReshaper.class})
 class CovetousUrgeTest extends BaseCardTest {
 
     @Test
@@ -116,5 +119,26 @@ class CovetousUrgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CovetousUrge()));
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+    }
+
+    @Test
+    @DisplayName("Mana spent as though it were any color can't pay the {C} symbol of the exiled card")
+    void anyColorManaDoesNotPayColorlessSymbol() {
+        Card reshaper = new MatterReshaper();
+        harness.setHand(player2, List.of(new Swamp()));
+        harness.setGraveyard(player2, List.of(reshaper));
+        castCovetousUrge();
+        harness.handleMultipleCardsChosen(player1, List.of(reshaper.getId()));
+
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        assertThatThrownBy(() -> harness.castFromExile(player1, reshaper.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(reshaper);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, reshaper.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Matter Reshaper");
     }
 }

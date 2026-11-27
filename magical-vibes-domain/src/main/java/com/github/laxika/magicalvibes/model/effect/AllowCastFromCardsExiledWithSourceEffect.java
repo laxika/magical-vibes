@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -41,6 +42,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * @param notOwnedOnly whether the permission excludes cards owned by the casting player
  * @param fetchCounterOnly whether this permission applies to cards marked with fetch counters
  * @param countsLandPlayForOncePerTurn whether {@code oncePerTurn} also limits playing a land
+ * @param asThoughAnyColor with {@code anyManaType}, the "as though it were mana of any color" wording: a {C} symbol
+ *                         is still paid only with colorless mana (CR 107.4c)
  */
 public record AllowCastFromCardsExiledWithSourceEffect(
         boolean anyManaType,
@@ -60,8 +63,23 @@ public record AllowCastFromCardsExiledWithSourceEffect(
         boolean waterbendManaValue,
         CounterType entryCounterType,
         boolean oneShot, boolean payLifeEqualToManaValue, boolean notOwnedOnly,
-        boolean fetchCounterOnly, boolean countsLandPlayForOncePerTurn)
+        boolean fetchCounterOnly, boolean countsLandPlayForOncePerTurn, boolean asThoughAnyColor)
         implements CardEffect {
+
+    public AllowCastFromCardsExiledWithSourceEffect(
+            boolean anyManaType, CardPredicate filter, boolean ownOnly, boolean controllerTurnOnly,
+            int additionalCounterCost, DynamicAmount manaValueLimit, boolean oncePerTurn,
+            boolean thisTurnOnly, boolean withoutPayingManaCost, ExileAccessScope accessScope,
+            boolean stashCounterOnly, boolean collectionCounterOnly,
+            boolean persistsAfterSourceLeaves, boolean grantsFlash, boolean waterbendManaValue,
+            CounterType entryCounterType, boolean oneShot, boolean payLifeEqualToManaValue,
+            boolean notOwnedOnly, boolean fetchCounterOnly, boolean countsLandPlayForOncePerTurn) {
+        this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
+                manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost, accessScope,
+                stashCounterOnly, collectionCounterOnly, persistsAfterSourceLeaves, grantsFlash,
+                waterbendManaValue, entryCounterType, oneShot, payLifeEqualToManaValue,
+                notOwnedOnly, fetchCounterOnly, countsLandPlayForOncePerTurn, false);
+    }
 
     public AllowCastFromCardsExiledWithSourceEffect(
             boolean anyManaType, CardPredicate filter, boolean ownOnly, boolean controllerTurnOnly,
@@ -183,11 +201,28 @@ public record AllowCastFromCardsExiledWithSourceEffect(
                 ExileAccessScope.CONTROLLER, false, false, false, false, false, null, false, false, false, true);
     }
 
-    /** Static permission for Share the Spoils: one land or spell each turn for the active player. */
+    /**
+     * Static permission for Share the Spoils: one land or spell each turn for the active player, spending mana as
+     * though it were mana of any color.
+     */
     public static AllowCastFromCardsExiledWithSourceEffect activePlayerOneCardPerTurnWithAnyMana() {
         return new AllowCastFromCardsExiledWithSourceEffect(
                 true, null, false, false, 0, null, true, false, false,
                 ExileAccessScope.ACTIVE_PLAYER, false, false, false, false, false, null,
-                false, false, false, false, true);
+                false, false, false, false, true, true);
+    }
+
+    /** "… and you may spend mana as though it were mana of any color to cast those spells" (not {C}, CR 107.4c). */
+    public AllowCastFromCardsExiledWithSourceEffect withManaAsThoughAnyColor() {
+        return new AllowCastFromCardsExiledWithSourceEffect(true, filter, ownOnly, controllerTurnOnly,
+                additionalCounterCost, manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost, accessScope,
+                stashCounterOnly, collectionCounterOnly, persistsAfterSourceLeaves, grantsFlash, waterbendManaValue,
+                entryCounterType, oneShot, payLifeEqualToManaValue, notOwnedOnly, fetchCounterOnly,
+                countsLandPlayForOncePerTurn, true);
+    }
+
+    /** How mana may be spent to cast a spell this way. */
+    public AnyManaSpending manaSpending() {
+        return AnyManaSpending.of(anyManaType, asThoughAnyColor);
     }
 }

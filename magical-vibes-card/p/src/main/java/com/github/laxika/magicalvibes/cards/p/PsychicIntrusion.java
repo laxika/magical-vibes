@@ -14,6 +14,6 @@ public class PsychicIntrusion extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
-        )).addSpellEffect(new ExileNonlandCardFromTargetHandOrGraveyardEffect());
+        )).addSpellEffect(new ExileNonlandCardFromTargetHandOrGraveyardEffect().withManaAsThoughAnyColor());
     }
 }

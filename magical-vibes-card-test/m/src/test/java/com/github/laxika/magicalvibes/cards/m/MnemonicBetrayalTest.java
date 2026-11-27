@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MnemonicBetrayal.class, Forest.class, Shock.class, VedalkenMesmerist.class})
+@CardUsed({MnemonicBetrayal.class, Forest.class, Shock.class, VedalkenMesmerist.class, MatterReshaper.class})
 class MnemonicBetrayalTest extends BaseCardTest {
 
     @Test
@@ -149,6 +149,20 @@ class MnemonicBetrayalTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mana of any type pays a {C} symbol of a spell cast this way with colored mana")
+    void anyTypePaysColorlessSymbolWithColoredMana() {
+        MatterReshaper reshaper = new MatterReshaper();
+        harness.setGraveyard(player2, List.of(reshaper));
+        castMnemonicBetrayal();
+
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castFromExile(player1, reshaper.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Matter Reshaper");
     }
 
     private MnemonicBetrayal castMnemonicBetrayal() {

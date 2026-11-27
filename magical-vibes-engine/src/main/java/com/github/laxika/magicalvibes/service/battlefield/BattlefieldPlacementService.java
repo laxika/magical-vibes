@@ -2638,6 +2638,12 @@ public class BattlefieldPlacementService {
                                     counterType, Math.max(0, replacementCount), Integer::sum));
                 } else {
                     CounterType counterType = replacement.counterType();
+                    if (replacement.amountReadsEnteringPermanent() && !permanent.isCast()) {
+                        // Not entering as its cast spell: a new object (CR 400.7) no mana was spent to cast, whatever
+                        // an earlier spell of its card (one countered, say) had recorded.
+                        gameData.clearSpellCastTreasureManaSpent(permanent.getCard().getId());
+                        gameData.clearSpellCastArtifactManaSpent(permanent.getCard().getId());
+                    }
                     AmountContext amountContext = replacement.amountReadsEnteringPermanent()
                             ? AmountContext.forEnteringPermanent(controllerId, permanent, 0)
                             : new AmountContext(controllerId, source, null, 0, 0);

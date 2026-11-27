@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
@@ -58,10 +59,11 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         Duration duration = interaction.duration();
         gameData.grantExilePlayPermission(chosenId, new ExilePlayPermissionEffect(interaction.playerId())
                         .withWithoutPayingManaCost(interaction.withoutPayingManaCost())
-                        .withAnyManaType(interaction.anyManaType() && Duration.PERMANENT.equals(duration)),
+                        .withManaSpending(Duration.PERMANENT.equals(duration)
+                                ? interaction.manaSpending() : AnyManaSpending.NONE),
                 null, interaction.playerId(), duration);
-        if (interaction.anyManaType() && !Duration.PERMANENT.equals(duration)) {
-            gameData.grantExileAnyManaType(chosenId, interaction.playerId(), duration);
+        if (!Duration.PERMANENT.equals(duration)) {
+            gameData.grantExileManaSpending(chosenId, interaction.playerId(), duration, interaction.manaSpending());
         }
         String durationDescription;
         if (Duration.PERMANENT.equals(duration)) {

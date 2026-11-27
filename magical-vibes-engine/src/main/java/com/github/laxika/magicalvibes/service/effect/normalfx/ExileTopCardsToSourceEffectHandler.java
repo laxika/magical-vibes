@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
@@ -194,10 +195,11 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                     boolean thisTurnOnly = permission.thisTurnOnly();
                     gameData.grantExilePlayPermission(card.getId(), new ExilePlayPermissionEffect(permittedPlayer)
                                     .withCondition(persistent.condition())
-                                    .withAnyManaType(permission.anyManaType() && !thisTurnOnly),
+                                    .withManaSpending(thisTurnOnly ? AnyManaSpending.NONE : permission.manaSpending()),
                             null, permittedPlayer, thisTurnOnly ? Duration.UNTIL_END_OF_TURN : Duration.PERMANENT);
-                    if (permission.anyManaType() && thisTurnOnly) {
-                        gameData.grantExileAnyManaType(card.getId(), Duration.UNTIL_END_OF_TURN);
+                    if (thisTurnOnly) {
+                        gameData.grantExileManaSpending(card.getId(), null, Duration.UNTIL_END_OF_TURN,
+                                permission.manaSpending());
                     }
                     break;
                 }

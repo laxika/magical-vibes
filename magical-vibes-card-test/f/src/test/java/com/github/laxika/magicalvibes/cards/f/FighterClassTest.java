@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.d.DuelingRapier;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SuppressionField;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-@CardUsed({FighterClass.class, Bonesplitter.class, DuelingRapier.class, GrizzlyBears.class})
+@CardUsed({FighterClass.class, Bonesplitter.class, DuelingRapier.class, GrizzlyBears.class, SuppressionField.class})
 class FighterClassTest extends BaseCardTest {
 
     @Test
@@ -245,6 +247,24 @@ class FighterClassTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("The equip reduction also reduces a cost increase on the equip ability")
+    void levelTwoReductionAlsoReducesCostIncrease() {
+        Permanent fighterClass = harness.addToBattlefieldAndReturn(player1, new FighterClass());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        levelUpToTwo(fighterClass);
+        harness.addToBattlefield(player2, new SuppressionField());
+
+        prepareForSorcery();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(equipment), null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private void levelUpToTwo(Permanent fighterClass) {

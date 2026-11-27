@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
@@ -12304,8 +12305,9 @@ public class SpellCastingService {
                 || collectionCounterPermission
                 || waterbendCast
                 || castForForetell;
-        boolean anyManaType = !fromOutsideGame && castingPermissionService.hasAnyManaTypePermission(
-                gameData, playerId, exileCardId);
+        AnyManaSpending exileManaSpending = fromOutsideGame ? AnyManaSpending.NONE
+                : castingPermissionService.anyManaSpending(gameData, playerId, exileCardId);
+        boolean anyManaType = exileManaSpending.isAny();
         int additionalCounterCost = directExilePlayPermission
                 ? 0 : sourceCounterCost.orElse(0);
         if (sourceManaValueLifeAlternative
@@ -12679,6 +12681,16 @@ public class SpellCastingService {
                             flashforwardManaCost);
                 } finally {
                     pool.setSnowManaSpendableAsAnyColor(false);
+                }
+            } else if (exileManaSpending == AnyManaSpending.ANY_TYPE && card.getManaCost() != null
+                    && hasColorlessSymbol(card)) {
+                // Mana of any type pays a {C} symbol too (CR 118.14), which the any-color conversion leaves to
+                // colorless mana.
+                phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
+                        gameData, playerId, card, effectiveXValue, sourceZone, convokeContributions,
+                        AnyManaSpending.ANY_TYPE, flashforwardManaCost, false, null);
+                if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
+                    gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
                 }
             } else if (anyManaType && card.getManaCost() != null) {
                 boolean existingAnyColorPermission = pool.isAllManaSpendableAsAnyColor();
@@ -13746,9 +13758,11 @@ public class SpellCastingService {
         } else if (!freeTopPlay) {
             phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
                     gameData, playerId, card, effectiveXValue, Zone.LIBRARY, List.of(),
-                    castingPermissionService.hasLibraryTopPermission(gameData, playerId, libraryOwnerId),
+                    // Xanathar: "spend mana as though it were mana of any color", so not on {C} (CR 107.4c).
+                    castingPermissionService.hasLibraryTopPermission(gameData, playerId, libraryOwnerId)
+                            ? AnyManaSpending.AS_THOUGH_ANY_COLOR : AnyManaSpending.NONE,
                     castFaceDown ? "{3}" : !additionalLibraryManaCost.isEmpty()
-                            ? card.getManaCost() + additionalLibraryManaCost : null, castFaceDown);
+                            ? card.getManaCost() + additionalLibraryManaCost : null, castFaceDown, null);
             if (usesNormalTopLibraryPermission) {
                 permissionGrantedKeywords = castingPermissionService.findTopLibraryCastGrantedKeywords(
                         gameData, playerId, card);
@@ -14345,6 +14359,12 @@ public class SpellCastingService {
         return spectacle.getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
     }
 
+    /** Whether the spell's mana cost has a {C} symbol, the one symbol the two any-mana wordings treat apart. */
+    private static boolean hasColorlessSymbol(Card card) {
+        return card.getParsedManaCost() != null
+                && card.getParsedManaCost().getColoredCosts().containsKey(ManaColor.COLORLESS);
+    }
+
     private int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card,
                                                 int effectiveXValue, Zone sourceZone,
                                                 List<ManaColor> convokeContributions,
@@ -14366,6 +14386,29 @@ public class SpellCastingService {
                                                 List<ManaColor> convokeContributions,
                                                 boolean anyManaType, String replacementManaCost, boolean castFaceDown,
                                                 String additionalManaCost) {
+        return paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue, sourceZone,
+                convokeContributions, AnyManaSpending.of(anyManaType, false), replacementManaCost, castFaceDown,
+                additionalManaCost);
+    }
+
+    /**
+     * As {@link #paySpellManaCostFromNonHandZone(GameData, UUID, Card, int, Zone, boolean, String)}, spending mana as
+     * {@code manaSpending} lets: {@link AnyManaSpending#ANY_TYPE} pays every symbol with any mana, {C} included
+     * (CR 118.14); {@link AnyManaSpending#AS_THOUGH_ANY_COLOR} pays colored symbols with any mana but leaves {C} to
+     * colorless mana (CR 107.4c).
+     */
+    public int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card, int effectiveXValue,
+                                               Zone sourceZone, AnyManaSpending manaSpending,
+                                               String replacementManaCost) {
+        return paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue, sourceZone, List.of(),
+                manaSpending, replacementManaCost, false, null);
+    }
+
+    private int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card,
+                                                int effectiveXValue, Zone sourceZone,
+                                                List<ManaColor> convokeContributions,
+                                                AnyManaSpending manaSpending, String replacementManaCost,
+                                                boolean castFaceDown, String additionalManaCost) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int treasureManaBefore = pool.getTreasureManaTotal();
@@ -14389,9 +14432,10 @@ public class SpellCastingService {
                 ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : null;
         SpellManaPayment payment;
         // A {C} symbol can be paid only with colorless mana (CR 107.4c), so an any-color permission
-        // converts only the colored symbols; the generic shortcut would let any mana pay {C}.
-        boolean anyColorForColoredSymbols = anyManaType && card.getParsedManaCost() != null
-                && card.getParsedManaCost().getColoredCosts().containsKey(ManaColor.COLORLESS);
+        // converts only the colored symbols; the generic shortcut, any type's, lets any mana pay {C} (CR 118.14).
+        boolean anyManaType = manaSpending.isAny();
+        boolean anyColorForColoredSymbols = manaSpending == AnyManaSpending.AS_THOUGH_ANY_COLOR
+                && hasColorlessSymbol(card);
         boolean existingAnyColorPermission = pool.isAllManaSpendableAsAnyColor();
         try {
             if (anyColorForColoredSymbols) {
@@ -17177,57 +17221,70 @@ public class SpellCastingService {
                     new ManaCost(withoutPayingManaCost ? "" : grantedFlashbackManaCost), cardHasFlashback);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            boolean anyManaType = castingPermissionService.hasAnyManaTypePermission(
+            AnyManaSpending manaSpending = castingPermissionService.anyManaSpending(
                     gameData, playerId, card.getId());
+            // "As though it were mana of any color" leaves a {C} symbol to colorless mana (CR 107.4c): such a cost is
+            // paid with the any-color conversion; otherwise both wordings pay every symbol with any mana (CR 118.14).
+            boolean anyColorForColoredSymbols = manaSpending == AnyManaSpending.AS_THOUGH_ANY_COLOR
+                    && cost.getColoredCosts().containsKey(ManaColor.COLORLESS);
+            boolean anyManaType = manaSpending.isAny() && !anyColorForColoredSymbols;
             int paymentAdditionalCost = additionalCost - delveReduction;
-            withInstantSorceryOnlyManaForGraveyardCast(gameData, playerId, card, () -> {
-                if (card.isRequiresNoMana()) {
-                    int manaXValue = cost.hasX() ? effectiveXValue : 0;
-                    ManaPool noManaPool = new ManaPool();
-                    if (!cost.canPayWithConvoke(noManaPool, paymentAdditionalCost + manaXValue,
-                            convokeContributions)) {
-                        throw new IllegalStateException("This spell must be cast using convoke and delve");
+            boolean existingAnyColorPermission = pool.isAllManaSpendableAsAnyColor();
+            if (anyColorForColoredSymbols) {
+                pool.setAllManaSpendableAsAnyColor(true);
+            }
+            try {
+                withInstantSorceryOnlyManaForGraveyardCast(gameData, playerId, card, () -> {
+                    if (card.isRequiresNoMana()) {
+                        int manaXValue = cost.hasX() ? effectiveXValue : 0;
+                        ManaPool noManaPool = new ManaPool();
+                        if (!cost.canPayWithConvoke(noManaPool, paymentAdditionalCost + manaXValue,
+                                convokeContributions)) {
+                            throw new IllegalStateException("This spell must be cast using convoke and delve");
+                        }
+                        cost.payWithConvoke(noManaPool, paymentAdditionalCost + manaXValue, convokeContributions);
+                    } else if (anyManaType) {
+                        if (!cost.canPayAsGeneric(pool, effectiveXValue, paymentAdditionalCost)) {
+                            throw new IllegalStateException("Not enough mana to pay casting cost");
+                        }
+                        cost.payAsGeneric(pool, effectiveXValue, paymentAdditionalCost);
+                        if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
+                            gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
+                        }
+                    } else if (cardHasFlashback) {
+                        int manaXValue = cost.hasX() ? effectiveXValue : 0;
+                        if (!cost.canPayFlashbackFromGraveyard(pool, manaXValue + paymentAdditionalCost)) {
+                            throw new IllegalStateException("Not enough mana to pay flashback cost");
+                        }
+                        cost.payFlashbackFromGraveyard(pool, manaXValue + paymentAdditionalCost);
+                    } else if (isGrantedCyclingGraveyardCast
+                            && castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
+                            .filter(permission -> permission.permission().requiresLifeLossAbilityMana()).isPresent()) {
+                        int manaXValue = cost.hasX() ? effectiveXValue : 0;
+                        ManaPool lifeLossPool = pool.lifeLossAbilityManaPool();
+                        if (!cost.canPayFromGraveyard(lifeLossPool, manaXValue + paymentAdditionalCost)) {
+                            throw new IllegalStateException("Not enough mana from abilities that caused life loss");
+                        }
+                        Map<ManaColor, Integer> lifeLossBefore = new EnumMap<>(ManaColor.class);
+                        for (ManaColor color : ManaColor.values()) {
+                            lifeLossBefore.put(color, lifeLossPool.get(color));
+                        }
+                        cost.payFromGraveyard(lifeLossPool, manaXValue + paymentAdditionalCost);
+                        for (ManaColor color : ManaColor.values()) {
+                            pool.spendLifeLossAbilityMana(color, lifeLossBefore.get(color) - lifeLossPool.get(color));
+                        }
+                    } else {
+                        int manaXValue = cost.hasX() ? effectiveXValue : 0;
+                        if (!cost.canPayFromGraveyard(pool, manaXValue + paymentAdditionalCost)) {
+                            throw new IllegalStateException("Not enough mana to pay casting cost");
+                        }
+                        cost.payFromGraveyard(pool, manaXValue + paymentAdditionalCost);
                     }
-                    cost.payWithConvoke(noManaPool, paymentAdditionalCost + manaXValue, convokeContributions);
-                } else if (anyManaType) {
-                    if (!cost.canPayAsGeneric(pool, effectiveXValue, paymentAdditionalCost)) {
-                        throw new IllegalStateException("Not enough mana to pay casting cost");
-                    }
-                    cost.payAsGeneric(pool, effectiveXValue, paymentAdditionalCost);
-                    if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
-                        gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
-                    }
-                } else if (cardHasFlashback) {
-                    int manaXValue = cost.hasX() ? effectiveXValue : 0;
-                    if (!cost.canPayFlashbackFromGraveyard(pool, manaXValue + paymentAdditionalCost)) {
-                        throw new IllegalStateException("Not enough mana to pay flashback cost");
-                    }
-                    cost.payFlashbackFromGraveyard(pool, manaXValue + paymentAdditionalCost);
-                } else if (isGrantedCyclingGraveyardCast
-                        && castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
-                        .filter(permission -> permission.permission().requiresLifeLossAbilityMana()).isPresent()) {
-                    int manaXValue = cost.hasX() ? effectiveXValue : 0;
-                    ManaPool lifeLossPool = pool.lifeLossAbilityManaPool();
-                    if (!cost.canPayFromGraveyard(lifeLossPool, manaXValue + paymentAdditionalCost)) {
-                        throw new IllegalStateException("Not enough mana from abilities that caused life loss");
-                    }
-                    Map<ManaColor, Integer> lifeLossBefore = new EnumMap<>(ManaColor.class);
-                    for (ManaColor color : ManaColor.values()) {
-                        lifeLossBefore.put(color, lifeLossPool.get(color));
-                    }
-                    cost.payFromGraveyard(lifeLossPool, manaXValue + paymentAdditionalCost);
-                    for (ManaColor color : ManaColor.values()) {
-                        pool.spendLifeLossAbilityMana(color, lifeLossBefore.get(color) - lifeLossPool.get(color));
-                    }
-                } else {
-                    int manaXValue = cost.hasX() ? effectiveXValue : 0;
-                    if (!cost.canPayFromGraveyard(pool, manaXValue + paymentAdditionalCost)) {
-                        throw new IllegalStateException("Not enough mana to pay casting cost");
-                    }
-                    cost.payFromGraveyard(pool, manaXValue + paymentAdditionalCost);
-                }
-                return null;
-            });
+                    return null;
+                });
+            } finally {
+                pool.setAllManaSpendableAsAnyColor(existingAnyColorPermission);
+            }
             manaSpent = before - pool.getTotalAllMana();
         } else {
             FlashbackCast flashback = flashbackOpt.orElseThrow(() -> new IllegalStateException("Flashback has no cost"));

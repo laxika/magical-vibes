@@ -21,6 +21,6 @@ public class AuthorOfShadows extends Card {
                 ExileGraveyardCardsEffect.allOpponentsWithSource(),
                 ChooseCardEffect.oneOf(Subjects.cardsThisWay(StepKind.EXILE,
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))), "a nonland card exiled this way"),
-                AllowPlayCardsFromExileEffect.whileExiled(Subjects.cardsThisWay(StepKind.CHOOSE)).withAnyManaType());
+                AllowPlayCardsFromExileEffect.whileExiled(Subjects.cardsThisWay(StepKind.CHOOSE)).withManaAsThoughAnyColor());
     }
 }

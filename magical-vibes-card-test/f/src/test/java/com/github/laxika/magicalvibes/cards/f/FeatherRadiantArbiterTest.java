@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hammerhand;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,13 +12,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FeatherRadiantArbiter.class, GiantGrowth.class, GrizzlyBears.class, Hammerhand.class, Dominate.class, SerraAngel.class})
+@CardUsed({FeatherRadiantArbiter.class, GiantGrowth.class, GrizzlyBears.class, Hammerhand.class, Dominate.class, SerraAngel.class,
+        Mountain.class})
 class FeatherRadiantArbiterTest extends BaseCardTest {
 
     @Test
@@ -147,5 +150,34 @@ class FeatherRadiantArbiterTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(bear.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(bear.getId()));
+    }
+
+    @Test
+    @DisplayName("The {2} for each creature may be paid with mana abilities activated while choosing")
+    void perCreatureCostMayBePaidWithManaAbilities() {
+        Permanent feather = harness.addToBattlefieldAndReturn(player1, new FeatherRadiantArbiter());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent secondMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, feather.getId());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(bear.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        gs.tapPermanent(gd, player1, battlefield.indexOf(firstMountain));
+        gs.tapPermanent(gd, player1, battlefield.indexOf(secondMountain));
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy)
+                .extracting(StackEntry::getTargetId)
+                .containsExactly(bear.getId());
     }
 }

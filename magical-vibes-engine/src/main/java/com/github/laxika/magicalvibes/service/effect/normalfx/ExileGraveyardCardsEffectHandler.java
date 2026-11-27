@@ -577,7 +577,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                     ? exilerId : sourceControllerId;
             gameData.grantExilePlayPermission(card.getId(), permittedPlayer, Duration.PERMANENT);
             if (permission.anyManaType()) {
-                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
+                gameData.updateExilePlayPermission(card.getId(),
+                        granted -> granted.withManaSpending(permission.manaSpending()));
             }
             if (permission.withoutPayingManaCost()) {
                 gameData.setExilePlayWithoutPayingManaCost(card.getId(), true);

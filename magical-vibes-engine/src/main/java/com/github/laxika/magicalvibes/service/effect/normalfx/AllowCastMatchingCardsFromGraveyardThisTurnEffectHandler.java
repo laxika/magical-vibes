@@ -47,7 +47,8 @@ public class AllowCastMatchingCardsFromGraveyardThisTurnEffectHandler implements
         gameData.addPlayerEffect(entry, new GameData.GraveyardCastFilterPermission(controllerId, e.filter(),
                         e.singleUse(), e.entryCounterType(), e.grantedSubtype(), anyGraveyard,
                         e.exileInsteadOfGraveyard(), e.additionalCost(), e.enterWithCounter(),
-                        e.enterWithCounterCount(), graveyardOwnerId, e.anyManaType()),
+                        e.enterWithCounterCount(), graveyardOwnerId, e.manaAsThoughAnyColor(),
+                        e.manaAsThoughAnyColor()),
                 controllerId, Duration.UNTIL_END_OF_TURN);
 
         String graveyard = anyGraveyard ? "any graveyard"

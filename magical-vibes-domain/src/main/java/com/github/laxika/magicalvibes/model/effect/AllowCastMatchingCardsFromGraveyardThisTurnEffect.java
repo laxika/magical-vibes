@@ -17,7 +17,8 @@ import java.util.Objects;
  * <p>{@code graveyards} names whose graveyard the spells may be cast from: {@link Subjects#you()} by default, one
  * player ("from that player's graveyard", {@link Subjects#triggeringPlayer()}), or every player ("from any graveyard",
  * {@link Subjects#eachPlayer()}). {@code exileInsteadOfGraveyard} is "if a spell cast this way would be put into a
- * graveyard, exile it instead"; {@code anyManaType} lets mana of any type be spent to cast those spells.
+ * graveyard, exile it instead"; {@code manaAsThoughAnyColor} is "and you may spend mana as though it were mana of any
+ * color to cast that spell", which leaves a {C} symbol to colorless mana (CR 107.4c).
  */
 public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
         CardPredicate filter,
@@ -29,7 +30,7 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
         int enterWithCounterCount,
         PlayerSubject graveyards,
         boolean exileInsteadOfGraveyard,
-        boolean anyManaType) implements CardEffect {
+        boolean manaAsThoughAnyColor) implements CardEffect {
 
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect {
         Objects.requireNonNull(graveyards, "graveyards");
@@ -46,18 +47,18 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect fromGraveyardsOf(PlayerSubject players) {
         return new AllowCastMatchingCardsFromGraveyardThisTurnEffect(filter, singleUse, entryCounterType,
                 grantedSubtype, additionalCost, enterWithCounter, enterWithCounterCount, players,
-                exileInsteadOfGraveyard, anyManaType);
+                exileInsteadOfGraveyard, manaAsThoughAnyColor);
     }
 
     /** "If a spell cast this way would be put into a graveyard, exile it instead." */
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect exilingInsteadOfGraveyard() {
         return new AllowCastMatchingCardsFromGraveyardThisTurnEffect(filter, singleUse, entryCounterType,
                 grantedSubtype, additionalCost, enterWithCounter, enterWithCounterCount, graveyards, true,
-                anyManaType);
+                manaAsThoughAnyColor);
     }
 
-    /** "… and you may spend mana as though it were mana of any type to cast that spell." */
-    public AllowCastMatchingCardsFromGraveyardThisTurnEffect spendingManaOfAnyType() {
+    /** "… and you may spend mana as though it were mana of any color to cast that spell." */
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect spendingManaAsThoughAnyColor() {
         return new AllowCastMatchingCardsFromGraveyardThisTurnEffect(filter, singleUse, entryCounterType,
                 grantedSubtype, additionalCost, enterWithCounter, enterWithCounterCount, graveyards,
                 exileInsteadOfGraveyard, true);

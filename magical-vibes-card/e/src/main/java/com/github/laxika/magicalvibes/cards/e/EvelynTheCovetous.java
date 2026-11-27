@@ -22,6 +22,6 @@ public class EvelynTheCovetous extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new ExileTopCardOfEachPlayersLibraryWithCollectionCounterEffect());
-        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true).withManaAsThoughAnyColor());
     }
 }

@@ -6801,11 +6801,17 @@ public class AbilityActivationService {
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
         if (abilityCost == null
                 || castingCostService.paysZeroRatherThanAbilityCost(gameData, playerId, ability)) {
-            if (abilityCost == null && additionalGenericCost > 0) {
-                int taxReduction = castingCostService.getActivatedAbilityActivationCostReduction(
-                        gameData, permanent, ability, targetId, targetIds,
-                        Math.max(0, additionalGenericCost - 1));
-                additionalGenericCost -= Math.min(taxReduction, additionalGenericCost);
+            // No mana cost, or {0} paid rather than it: the increases and reductions still apply to that cost
+            // (CR 118.9d, 601.2f, 602.2b), so a reduction lowers an increase, never below {0}.
+            if (additionalGenericCost > 0) {
+                int maximumForMinimumOneMana = Math.max(0, additionalGenericCost - 1);
+                int reduction = castingCostService.getActivatedAbilityActivationCostReduction(
+                        gameData, permanent, ability, targetId, targetIds, maximumForMinimumOneMana);
+                if (abilityCost != null) {
+                    reduction += castingCostService.getActivatedAbilityCostReduction(
+                            gameData, playerId, permanent, ability, targetId, targetIds, maximumForMinimumOneMana);
+                }
+                additionalGenericCost -= Math.min(reduction, additionalGenericCost);
             }
             return additionalGenericCost;
         }
@@ -6814,11 +6820,12 @@ public class AbilityActivationService {
         int totalManaCost = manaCost.getManaValue()
                 + effectiveXValue * manaCost.getXSymbolCount();
         int genericCost = manaCost.getGenericCost();
+        // A reduction lowers the total cost, its increases included (CR 601.2f), down to no generic mana.
         int equipReduction = Math.min(
                 castingCostService.getActivatedAbilityCostReduction(
                         gameData, playerId, permanent, ability, targetId, targetIds,
                         Math.max(0, totalManaCost + additionalGenericCost - 1)),
-                genericCost + effectiveXValue * manaCost.getXSymbolCount());
+                Math.max(0, genericCost + effectiveXValue * manaCost.getXSymbolCount() + additionalGenericCost));
         additionalGenericCost -= equipReduction;
         int battlefieldReduction = castingCostService.getActivatedAbilityActivationCostReduction(
                 gameData, permanent, ability,

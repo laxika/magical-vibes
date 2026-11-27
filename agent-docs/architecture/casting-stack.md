@@ -50,6 +50,16 @@ Permanents chosen for sacrifice costs stay on the battlefield until every cost c
 Owner: `ActivatedAbilityExecutionService.completeActivationAfterCosts`, `AbilityActivationService.sacrificeChosenCostPermanents`, `SpellCastingService.askCastCostSacrificesFirst`.
 Why: a mid-payment question cannot be undone; separate sacrifices miss each other's dies triggers.
 
+### "Mana of any type" pays {C}; "as though any color" doesn't (CR 118.14, 107.4c)
+A permission to spend mana on a spell carries its wording as `AnyManaSpending`; payment pays every symbol as generic for `ANY_TYPE` and converts only colored symbols for `AS_THOUGH_ANY_COLOR`.
+Owner: `CastingPermissionService.anyManaSpending`, `SpellCastingService` (non-hand, exile and graveyard payments).
+Why: one boolean served both wordings, so one of them was always wrong on a {C} cost.
+
+### Activation cost reductions apply to the total cost (CR 601.2f, 118.9d)
+An equip or activation reduction lowers the activation cost with its increases (Suppression Field), and a {0} paid rather than the cost (Bruenor Battlehammer) still takes both.
+Owner: `AbilityActivationService.getActivatedAbilityAdditionalGenericCost`.
+Why: a reduction capped at the printed generic cost left a tax unreduced.
+
 ### Sacrificed-to-activate excludes mana abilities
 `StackEntry.sacrificedCardIds` holds the chosen permanents, the source and the granting Equipment only.
 Owner: `ActivatedAbilityExecutionService`.

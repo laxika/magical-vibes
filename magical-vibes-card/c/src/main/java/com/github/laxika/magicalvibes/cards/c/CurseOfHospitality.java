@@ -22,6 +22,6 @@ public class CurseOfHospitality extends Card {
                 new ExileTopCardMayPlayThisTurnEffect(1, false)
                         .fromLibraryOf(Subjects.triggeringPlayer())
                         .playableBy(Subjects.controllerOf(Subjects.triggering()))
-                        .withAnyManaType());
+                        .withManaAsThoughAnyColor());
     }
 }

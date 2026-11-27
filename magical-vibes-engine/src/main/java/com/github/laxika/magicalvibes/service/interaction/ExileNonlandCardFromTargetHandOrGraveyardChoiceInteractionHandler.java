@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -71,7 +72,8 @@ public class ExileNonlandCardFromTargetHandOrGraveyardChoiceInteractionHandler
         exileService.exileCard(gameData, targetPlayerId, chosenCard);
         if (interaction.grantPlayPermission()) {
             gameData.grantExilePlayPermission(chosenCardId, interaction.playerId(), Duration.PERMANENT);
-            gameData.updateExilePlayPermission(chosenCardId, granted -> granted.withAnyManaType(true));
+            gameData.updateExilePlayPermission(chosenCardId, granted -> granted.withManaSpending(
+                    AnyManaSpending.of(true, interaction.manaAsThoughAnyColor())));
         }
 
         String chooserName = gameData.playerIdToName.get(interaction.playerId());

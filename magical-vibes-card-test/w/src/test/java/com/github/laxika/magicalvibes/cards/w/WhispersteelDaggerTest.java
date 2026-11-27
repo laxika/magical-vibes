@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MatterReshaper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WhispersteelDagger.class, GrizzlyBears.class})
+@CardUsed({WhispersteelDagger.class, GrizzlyBears.class, MatterReshaper.class})
 class WhispersteelDaggerTest extends BaseCardTest {
 
     @Test
@@ -97,5 +98,52 @@ class WhispersteelDaggerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cast from graveyard");
+    }
+
+    @Test
+    @DisplayName("Mana spent as though it were any color can't pay the {C} symbol of the granted creature spell")
+    void anyColorDoesNotPayColorlessSymbol() {
+        Card reshaper = new MatterReshaper();
+        harness.setGraveyard(player2, List.of(reshaper));
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent dagger = harness.addToBattlefieldAndReturn(player1, new WhispersteelDagger());
+        dagger.setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, reshaper.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(reshaper);
+    }
+
+    @Test
+    @DisplayName("Mana spent as though it were any color pays the colored symbols, colorless mana the {C}")
+    void anyColorPaysColoredSymbolsAndColorlessPaysColorlessSymbol() {
+        Card reshaper = new MatterReshaper();
+        harness.setGraveyard(player2, List.of(reshaper));
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent dagger = harness.addToBattlefieldAndReturn(player1, new WhispersteelDagger());
+        dagger.setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromGraveyard(player1, reshaper.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Matter Reshaper");
     }
 }

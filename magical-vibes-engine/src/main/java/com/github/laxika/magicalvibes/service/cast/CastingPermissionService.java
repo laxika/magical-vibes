@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
@@ -3345,27 +3346,41 @@ public class CastingPermissionService {
     }
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
+        return anyManaSpending(gameData, playerId, cardId).isAny();
+    }
+
+    /**
+     * How the permissions that apply to {@code playerId} casting {@code cardId} from outside their hand let mana be
+     * spent: {@link AnyManaSpending#ANY_TYPE} if any one of them lets mana of any type be spent (CR 118.14),
+     * {@link AnyManaSpending#AS_THOUGH_ANY_COLOR} if they only let it be spent as though it were mana of any color, which
+     * leaves a {C} symbol to colorless mana (CR 107.4c).
+     */
+    public AnyManaSpending anyManaSpending(GameData gameData, UUID playerId, UUID cardId) {
+        AnyManaSpending spending = AnyManaSpending.NONE;
         if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
-            return true;
+            return AnyManaSpending.ANY_TYPE;
         }
         GameData.GraveyardCardCastPermission graveyardPermission =
                 gameData.graveyardCardCastPermission(cardId, playerId).orElse(null);
         if (graveyardPermission != null && graveyardPermission.anyManaType()) {
-            return true;
+            return AnyManaSpending.ANY_TYPE;
         }
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        if (card != null && findGraveyardCastFilterPermission(gameData, card, playerId)
-                .map(GameData.GraveyardCastFilterPermission::anyManaType)
-                .orElse(false)) {
-            return true;
+        if (card != null) {
+            spending = spending.or(findGraveyardCastFilterPermission(gameData, card, playerId)
+                    .map(GameData.GraveyardCastFilterPermission::manaSpending)
+                    .orElse(AnyManaSpending.NONE));
         }
-        if (hasStashCounterPermission(gameData, playerId, cardId, true)) return true;
-        if (hasCollectionCounterPermission(gameData, playerId, cardId, true)) return true;
-        if (hasFetchCounterPermission(gameData, playerId, cardId, true)) return true;
+        spending = spending.or(stashCounterManaSpending(gameData, playerId, cardId));
+        spending = spending.or(collectionCounterManaSpending(gameData, playerId, cardId));
+        spending = spending.or(fetchCounterManaSpending(gameData, playerId, cardId));
         // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
-        if (gameData.hasExileAnyManaType(cardId)
-                || (gameData.exilePlayPermission(cardId).filter(ExilePlayPermissionEffect::anyManaType).isPresent()
-                && hasExilePlayPermission(gameData, playerId, cardId))) return true;
+        spending = spending.or(gameData.exileManaSpending(cardId));
+        AnyManaSpending playPermission = gameData.exilePlayPermission(cardId)
+                .map(ExilePlayPermissionEffect::manaSpending).orElse(AnyManaSpending.NONE);
+        if (playPermission.isAny() && hasExilePlayPermission(gameData, playerId, cardId)) {
+            spending = spending.or(playPermission);
+        }
 
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
@@ -3373,18 +3388,21 @@ public class CastingPermissionService {
             for (Permanent perm : battlefield) {
                 for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
                         perm.getId(), perm.getCard().getId())) {
-                    if (entry.card().getId().equals(cardId)
-                            && activeExileCastPermissions(gameData, perm, sourceControllerId)
-                            .anyMatch(effect -> !effect.waterbendManaValue()
-                                    && effect.anyManaType()
-                                    && canAccessExiledEntry(gameData, perm, sourceControllerId, effect, entry, playerId)
-                                    && applies(effect, gameData, playerId, perm, entry))) {
-                        return true;
+                    if (!entry.card().getId().equals(cardId)) {
+                        continue;
+                    }
+                    for (AllowCastFromCardsExiledWithSourceEffect effect
+                            : activeExileCastPermissions(gameData, perm, sourceControllerId).toList()) {
+                        if (!effect.waterbendManaValue() && effect.anyManaType()
+                                && canAccessExiledEntry(gameData, perm, sourceControllerId, effect, entry, playerId)
+                                && applies(effect, gameData, playerId, perm, entry)) {
+                            spending = spending.or(effect.manaSpending());
+                        }
                     }
                 }
             }
         }
-        return false;
+        return spending;
     }
 
     public boolean hasCollectionCounterPermission(GameData gameData, UUID playerId, UUID cardId) {
@@ -3393,41 +3411,61 @@ public class CastingPermissionService {
 
     private boolean hasCollectionCounterPermission(GameData gameData, UUID playerId, UUID cardId,
                                                     boolean anyManaTypeRequired) {
+        return collectionCounterPermissions(gameData, playerId, cardId)
+                .anyMatch(effect -> !anyManaTypeRequired || effect.anyManaType());
+    }
+
+    private AnyManaSpending collectionCounterManaSpending(GameData gameData, UUID playerId, UUID cardId) {
+        return collectionCounterPermissions(gameData, playerId, cardId)
+                .map(AllowCastFromCardsExiledWithSourceEffect::manaSpending)
+                .reduce(AnyManaSpending.NONE, AnyManaSpending::or);
+    }
+
+    private Stream<AllowCastFromCardsExiledWithSourceEffect> collectionCounterPermissions(GameData gameData,
+                                                                                         UUID playerId, UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null || !gameData.exiledCardHasCounter(cardId, CounterType.COLLECTION)
                 || !playerId.equals(entry.exilerId())) {
-            return false;
+            return Stream.empty();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent source : battlefield) {
-            boolean permission = activeExileCastPermissions(gameData, source, playerId)
-                    .anyMatch(effect -> effect.collectionCounterOnly()
-                            && (!anyManaTypeRequired || effect.anyManaType())
-                            && (!effect.oncePerTurn()
-                            || !gameData.freeCastPermanentUsedThisTurn.contains(source.getId()))
-                            && (effect.filter() == null
-                            || predicateEvaluationService.matchesCardPredicate(
-                            entry.card(), effect.filter(), null)));
-            if (permission) return true;
-        }
-        return false;
+        if (battlefield == null) return Stream.empty();
+        return battlefield.stream().flatMap(source -> activeExileCastPermissions(gameData, source, playerId)
+                .filter(effect -> effect.collectionCounterOnly()
+                        && (!effect.oncePerTurn()
+                        || !gameData.freeCastPermanentUsedThisTurn.contains(source.getId()))
+                        && (effect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        entry.card(), effect.filter(), null))))
+                .toList().stream();
     }
 
     private boolean hasFetchCounterPermission(GameData gameData, UUID playerId, UUID cardId,
                                                boolean anyManaTypeRequired) {
-        if (!gameData.exiledCardHasCounter(cardId, CounterType.FETCH)) return false;
+        return fetchCounterPermissions(gameData, playerId, cardId)
+                .anyMatch(effect -> !anyManaTypeRequired || effect.anyManaType());
+    }
+
+    private AnyManaSpending fetchCounterManaSpending(GameData gameData, UUID playerId, UUID cardId) {
+        return fetchCounterPermissions(gameData, playerId, cardId)
+                .map(AllowCastFromCardsExiledWithSourceEffect::manaSpending)
+                .reduce(AnyManaSpending.NONE, AnyManaSpending::or);
+    }
+
+    private Stream<AllowCastFromCardsExiledWithSourceEffect> fetchCounterPermissions(GameData gameData,
+                                                                                    UUID playerId, UUID cardId) {
+        if (!gameData.exiledCardHasCounter(cardId, CounterType.FETCH)) return Stream.empty();
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
-        if (entry == null || !playerId.equals(entry.exilerId())) return false;
+        if (entry == null || !playerId.equals(entry.exilerId())) return Stream.empty();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
+        if (battlefield == null) return Stream.empty();
         return battlefield.stream()
-                .anyMatch(source -> activeExileCastPermissions(gameData, source, playerId)
-                        .anyMatch(effect -> effect.fetchCounterOnly()
-                                && (!anyManaTypeRequired || effect.anyManaType())
+                .flatMap(source -> activeExileCastPermissions(gameData, source, playerId)
+                        .filter(effect -> effect.fetchCounterOnly()
                                 && (effect.filter() == null
                                 || predicateEvaluationService.matchesCardPredicate(
-                                entry.card(), effect.filter(), null))));
+                                entry.card(), effect.filter(), null))))
+                .toList().stream();
     }
 
     /** Returns whether the player may spend snow mana as any color for an exiled card (Draugr Necromancer). */
@@ -3437,16 +3475,28 @@ public class CastingPermissionService {
 
     private boolean hasStashCounterPermission(GameData gameData, UUID playerId, UUID cardId,
                                               boolean anyManaTypeRequired) {
-        if (!gameData.exiledCardHasCounter(cardId, CounterType.STASH)) return false;
+        return stashCounterPermissions(gameData, playerId, cardId)
+                .anyMatch(permission -> !anyManaTypeRequired || permission.anyManaType());
+    }
+
+    private AnyManaSpending stashCounterManaSpending(GameData gameData, UUID playerId, UUID cardId) {
+        return stashCounterPermissions(gameData, playerId, cardId)
+                .map(AllowCastFromCardsExiledWithSourceEffect::manaSpending)
+                .reduce(AnyManaSpending.NONE, AnyManaSpending::or);
+    }
+
+    private Stream<AllowCastFromCardsExiledWithSourceEffect> stashCounterPermissions(GameData gameData,
+                                                                                    UUID playerId, UUID cardId) {
+        if (!gameData.exiledCardHasCounter(cardId, CounterType.STASH)) return Stream.empty();
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
-        if (entry == null) return false;
+        if (entry == null) return Stream.empty();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
+        if (battlefield == null) return Stream.empty();
         return battlefield.stream()
-                .anyMatch(source -> activeExileCastPermissions(gameData, source, playerId)
-                        .anyMatch(permission -> permission.stashCounterOnly()
-                                && (!anyManaTypeRequired || permission.anyManaType())
-                                && applies(permission, gameData, playerId, source, entry)));
+                .flatMap(source -> activeExileCastPermissions(gameData, source, playerId)
+                        .filter(permission -> permission.stashCounterOnly()
+                                && applies(permission, gameData, playerId, source, entry)))
+                .toList().stream();
     }
 
     /**

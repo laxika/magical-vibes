@@ -40,7 +40,7 @@ public class KingNarfisBetrayal extends Card {
 
         var nonlandCard = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
         var castSpellsFromAmongExiled = AllowPlayCardsFromExileEffect.thisTurn(
-                Subjects.exiledWithSourceMatching(nonlandCard)).withAnyManaType().alsoCardsExiledLaterThisTurn();
+                Subjects.exiledWithSourceMatching(nonlandCard)).withManaAsThoughAnyColor().alsoCardsExiledLaterThisTurn();
         addTrigger(Triggers.chapter(2), castSpellsFromAmongExiled);
         addTrigger(Triggers.chapter(3), castSpellsFromAmongExiled);
     }

@@ -5,20 +5,23 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.Greataxe;
 import com.github.laxika.magicalvibes.cards.l.LeatherArmor;
+import com.github.laxika.magicalvibes.cards.n.NahiriStormOfStone;
 import com.github.laxika.magicalvibes.cards.s.SteadfastPaladin;
+import com.github.laxika.magicalvibes.cards.s.SuppressionField;
 import com.github.laxika.magicalvibes.cards.s.SwiftfootBoots;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BruenorBattlehammer.class, GrizzlyBears.class, SwiftfootBoots.class,
-        Greataxe.class, LeatherArmor.class, SteadfastPaladin.class})
+        Greataxe.class, LeatherArmor.class, SteadfastPaladin.class, SuppressionField.class, NahiriStormOfStone.class})
 class BruenorBattlehammerTest extends BaseCardTest {
 
     @Test
@@ -152,6 +155,26 @@ class BruenorBattlehammerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(equipment.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Paying {0} rather than the equip cost still applies the cost increases and reductions to it")
+    void zeroEquipCostTakesIncreasesAndReductions() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new BruenorBattlehammer());
+        harness.addToBattlefield(player1, new SuppressionField());
+        harness.addToBattlefield(player1, new NahiriStormOfStone());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new SwiftfootBoots());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(equipment), 0, null,
+                creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

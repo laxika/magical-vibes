@@ -293,7 +293,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                     ? gameData.activePlayerId : exilerId;
             gameData.grantExilePlayPermission(card.getId(), permittedPlayer, Duration.PERMANENT);
             if (permission.anyManaType()) {
-                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
+                gameData.updateExilePlayPermission(card.getId(),
+                        granted -> granted.withManaSpending(permission.manaSpending()));
             }
             break;
         }

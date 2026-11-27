@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KalainReclusivePainter.class, WilyGoblin.class, FugitiveWizard.class, GrizzlyBears.class,
-        PowerWordKill.class})
+        PowerWordKill.class, Counterspell.class})
 class KalainReclusivePainterTest extends BaseCardTest {
 
     @Test
@@ -169,6 +170,29 @@ class KalainReclusivePainterTest extends BaseCardTest {
         sacrificeTreasureFor(ManaColor.BLUE);
 
         Permanent wizard = harness.enterBattlefieldAndReturn(player1, new FugitiveWizard());
+        resolveAllTriggers();
+
+        assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A countered creature card that later enters is a new object: no counters for the earlier cast")
+    void counteredCreatureEnteringLaterGetsNoCounters() {
+        addReadyKalain(player1);
+        createTreasure();
+        sacrificeTreasureFor(ManaColor.BLUE);
+        FugitiveWizard wizardCard = new FugitiveWizard();
+        harness.setHand(player1, List.of(wizardCard));
+        harness.castCreature(player1, 0);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, wizardCard.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
+
+        gd.playerGraveyards.get(player1.getId()).remove(wizardCard);
+        Permanent wizard = harness.enterBattlefieldAndReturn(player1, wizardCard);
         resolveAllTriggers();
 
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

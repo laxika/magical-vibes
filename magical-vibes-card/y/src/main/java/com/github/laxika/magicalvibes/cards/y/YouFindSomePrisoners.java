@@ -31,7 +31,7 @@ public class YouFindSomePrisoners extends Card {
                         new ExileTopCardMayPlayThisTurnEffect(3, false)
                                 .fromLibraryOf(Subjects.targetPlayer())
                                 .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)
-                                .withAnyManaType()
+                                .withManaAsThoughAnyColor()
                                 .choosingOne(),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

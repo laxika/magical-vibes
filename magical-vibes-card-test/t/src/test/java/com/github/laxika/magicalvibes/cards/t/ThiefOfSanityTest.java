@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ThiefOfSanity.class, DimirGuildgate.class, SelesnyaGuildgate.class,
-        VernadiShieldmate.class, DirectCurrent.class, HealersHawk.class, ConniveConcoct.class})
+        VernadiShieldmate.class, DirectCurrent.class, HealersHawk.class, ConniveConcoct.class, ThoughtKnotSeer.class})
 class ThiefOfSanityTest extends BaseCardTest {
 
     @Test
@@ -282,5 +282,25 @@ class ThiefOfSanityTest extends BaseCardTest {
     private void resolveCombatAndTrigger() {
         resolveCombat();
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Mana of any type pays the {C} symbol of the exiled card with colored mana")
+    void anyTypePaysColorlessSymbolWithColoredMana() {
+        Card stolenCard = new ThoughtKnotSeer();
+        harness.setLibrary(player2, List.of(stolenCard, new SelesnyaGuildgate(), new DimirGuildgate()));
+        addAttackingThief();
+        resolveCombatAndTrigger();
+        harness.handleCardChosen(player1, 0);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castFromExile(player1, stolenCard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(stolenCard.getId()));
     }
 }

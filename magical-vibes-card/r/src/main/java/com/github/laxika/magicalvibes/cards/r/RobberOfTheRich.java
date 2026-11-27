@@ -27,6 +27,6 @@ public class RobberOfTheRich extends Card {
                 new AttackedWithCreaturesOfSubtypeThisTurn(1, CardSubtype.ROGUE),
                 new AllowCastFromCardsExiledWithSourceEffect(
                         true, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), false, false, 0, null,
-                        false, false, false, true)));
+                        false, false, false, true).withManaAsThoughAnyColor()));
     }
 }

@@ -23,7 +23,7 @@ public class DaxosOfMeletis extends Card {
                 SequenceEffect.of(
                         new ExileTopCardMayPlayThisTurnEffect(1, false)
                                 .fromLibraryOf(Subjects.triggeringPlayer())
-                                .mayOnlyCast().withAnyManaType(),
+                                .mayOnlyCast().withManaAsThoughAnyColor(),
                         new GainLifeEffect(AmountThisWay.exiledManaValue(), Subjects.you())));
     }
 }

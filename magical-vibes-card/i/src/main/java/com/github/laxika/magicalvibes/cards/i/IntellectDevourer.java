@@ -13,6 +13,6 @@ public class IntellectDevourer extends Card {
     public IntellectDevourer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 EachOpponentExilesFromHandEffect.withReturnOnSourceLeave(1));
-        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(true));
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(true).withManaAsThoughAnyColor());
     }
 }

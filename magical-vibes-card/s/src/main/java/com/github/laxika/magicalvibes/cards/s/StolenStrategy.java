@@ -23,6 +23,6 @@ public class StolenStrategy extends Card {
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true,
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                false, false, 0, null, false, true, false, true));
+                false, false, 0, null, false, true, false, true).withManaAsThoughAnyColor());
     }
 }

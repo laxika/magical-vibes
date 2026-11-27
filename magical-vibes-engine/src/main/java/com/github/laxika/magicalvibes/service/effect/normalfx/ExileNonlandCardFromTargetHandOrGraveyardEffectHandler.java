@@ -63,7 +63,7 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
                 new PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice(
                         entry.getControllerId(), targetPlayerId,
                         candidates.stream().map(Card::getId).toList(),
-                        exileEffect.grantPlayPermission()));
+                        exileEffect.grantPlayPermission(), exileEffect.manaAsThoughAnyColor()));
     }
 
     private List<Card> matchingCards(List<Card> cards, CardPredicate filter,

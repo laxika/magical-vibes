@@ -23,7 +23,7 @@ public class BrainstealerDragon extends Card {
     public BrainstealerDragon() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.eachOpponent())
-                        .withAnyManaType().until(Duration.PERMANENT));
+                        .withManaAsThoughAnyColor().until(Duration.PERMANENT));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),

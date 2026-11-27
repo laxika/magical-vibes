@@ -1873,22 +1873,28 @@ public class GameData {
                                                 CounterType enterWithCounter,
                                                 int enterWithCounterCount,
                                                 UUID graveyardOwnerId,
-                                                boolean anyManaType) implements CardEffect {
+                                                boolean anyManaType,
+                                                boolean asThoughAnyColor) implements CardEffect {
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {
-            this(playerId, filter, false, null, null, false, false, null, null, 0, null, false);
+            this(playerId, filter, false, null, null, false, false, null, null, 0, null, false, false);
+        }
+
+        /** How mana may be spent to cast a card this way. */
+        public AnyManaSpending manaSpending() {
+            return AnyManaSpending.of(anyManaType, asThoughAnyColor);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean singleUse, CounterType entryCounterType,
                                              CardSubtype grantedSubtype) {
             this(playerId, filter, singleUse, entryCounterType, grantedSubtype,
-                    false, false, null, null, 0, null, false);
+                    false, false, null, null, 0, null, false, false);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean anyGraveyard, boolean exileInsteadOfGraveyard) {
             this(playerId, filter, false, null, null, anyGraveyard,
-                    exileInsteadOfGraveyard, null, null, 0, null, false);
+                    exileInsteadOfGraveyard, null, null, 0, null, false, false);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
@@ -1900,13 +1906,13 @@ public class GameData {
                                              int enterWithCounterCount) {
             this(playerId, filter, singleUse, entryCounterType, grantedSubtype, anyGraveyard,
                     exileInsteadOfGraveyard, additionalCost, enterWithCounter,
-                    enterWithCounterCount, null, false);
+                    enterWithCounterCount, null, false, false);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter, boolean singleUse,
                                              UUID graveyardOwnerId, boolean anyManaType) {
             this(playerId, filter, singleUse, null, null, false, false, null, null, 0,
-                    graveyardOwnerId, anyManaType);
+                    graveyardOwnerId, anyManaType, false);
         }
     }
 
@@ -9270,8 +9276,20 @@ public class GameData {
      * lets it be cast. {@code controllerId} is the player a duration's "your" names.
      */
     public void grantExileAnyManaType(UUID cardId, UUID controllerId, Duration duration) {
+        grantExileManaSpending(cardId, controllerId, duration, AnyManaSpending.ANY_TYPE);
+    }
+
+    /**
+     * Lets mana be spent as {@code spending} says to cast the exiled card {@code cardId} for {@code duration},
+     * whichever permission lets it be cast; {@link AnyManaSpending#NONE} grants nothing.
+     */
+    public void grantExileManaSpending(UUID cardId, UUID controllerId, Duration duration, AnyManaSpending spending) {
+        if (!spending.isAny()) {
+            return;
+        }
         addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), null, controllerId,
-                new ExileAnyManaTypeEffect(), cardId, Zone.EXILE, duration));
+                new ExileAnyManaTypeEffect(spending == AnyManaSpending.AS_THOUGH_ANY_COLOR), cardId, Zone.EXILE,
+                duration));
     }
 
     /** Lets mana of any type be spent to cast the exiled card {@code cardId} for {@code duration}. */
@@ -9282,6 +9300,17 @@ public class GameData {
     /** Whether mana of any type may be spent to cast the exiled card {@code cardId} whichever permission casts it. */
     public boolean hasExileAnyManaType(UUID cardId) {
         return hasFloatingEffectOnCard(cardId, ExileAnyManaTypeEffect.class);
+    }
+
+    /** How the any-mana effects on the exiled card {@code cardId} let mana be spent to cast it, the widest first. */
+    public AnyManaSpending exileManaSpending(UUID cardId) {
+        AnyManaSpending spending = AnyManaSpending.NONE;
+        for (FloatingContinuousEffect fe : floatingEffectsOfTypes(ExileAnyManaTypeEffect.class)) {
+            if (cardId.equals(fe.affectedCardId())) {
+                spending = spending.or(AnyManaSpending.of(true, ((ExileAnyManaTypeEffect) fe.effect()).asThoughAnyColor()));
+            }
+        }
+        return spending;
     }
 
     /**

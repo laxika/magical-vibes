@@ -808,7 +808,7 @@ Folding would add a component only this card sets (the guard rail "never add a p
 - `BoostOwnCreaturesByManaSymbolEffect`: a chroma amount of the amount source's own mana cost would be read only by Light from Within.
 - `CantAttackOrBlockUnlessTapEffect`: a non-mana combat cost (tap an untapped creature not declared this combat) through CombatTapCostEffect / CombatTapCostService and the AI; one user, a payment mechanic the mana survivor lacks; step 10's cost-combinator merge.
 - `CantAttackUnlessReturnToHandEffect`: a non-mana attack cost (return N matching permanents) picked and paid by AttackReturnToHandCostService at declaration; the mana survivor has no payment path for it and only this card would set a return cost.
-- `CopySpellForEachOtherCreatureWithManaEffect`: Feather, Radiant Arbiter, cost-shape: 'pay {2} for each of those creatures' is paid from the pool inside the record's own choice completion (no mana abilities, open defect).
+- `CopySpellForEachOtherCreatureWithManaEffect`: Feather, Radiant Arbiter, cost-shape: 'pay {2} for each of those creatures' is paid from the pool inside the record's own choice completion (mana abilities may be activated while it asks, PY-2).
 - `EachCreatureControllerSacrificesPermanentUnlessPaysEffect`: left: each player chooses which of their creatures to pay for in one choice and sacrifices that many permanents together (rulings); not one yes/no per object.
 - `EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect`: left: the object is chosen per player (ties) and the ransom is that creature's mana cost: a ransom read from the object, one card (Tariff).
 - `EmblemGrantsFlashbackEffect`: not folded: Jaya's emblem as CastSpellsFromGraveyardEffect(instant or sorcery) needs an exile-instead option no other user of that record sets (guard rail), and emblem graveyard permissions are not read by ….
@@ -1370,20 +1370,16 @@ Don't commit.
 - Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Sure, low.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
-#### Payments and costs (10)
+#### Payments and costs (6)
 
-- Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
 - Jaya Ballard's emblem grants flashback (an alternative cost, CR 702.34a, 118.9a) where the text permits casting for the mana cost. Fairly sure.
-- Charmed Pendant offers a monocoloured hybrid symbol's generic half; Animation Module offers only poison and energy player counters; Thran Portal's added life cost applies to its non-mana abilities.
-- Whispersteel Dagger and Xanathar's "as though it were mana of any color" is applied as any type, so coloured mana pays {C} (CR 609.4b). Fairly sure.
+- Animation Module offers only poison and energy player counters.
 - The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
-- `AbilityActivationService.getActivatedAbilityAdditionalGenericCost`: with a {0} equip or power-up cost, the tax is returned without cost reductions applied (CR 601.2f). Fairly sure of the code.
-- "Mana of any type" exile and graveyard permissions (`withAnyManaType`, `spendingManaOfAnyType`: Mnemonic Betrayal, Gonti, Dire Fleet Daredevil and others) are paid as any colour when the cost has {C} (`SpellCastingService` `anyColorForColoredSymbols`), so coloured mana can't pay {C} (CR 106.1b, 609.4b). Sure.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
-#### Layers and copy values (15)
+#### Layers and copy values (14)
 
 - Wickerwing Effigy's "becomes a black Bird ... Fairly sure, low.
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
@@ -1395,7 +1391,6 @@ Don't commit.
 - Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order, so a three-borrower cycle can miss a lender's borrowed abilities. Sure of the code, rare.
 - `ProtectionFromColorsEffectHandler` gives a self-subject fixed protection to the host when its source is attached (a bestowed or reconfigured creature with printed protection); CR 702.16a makes it the object's own. Sure of the code.
 - Mask of Law and Grace, Shield of Duty and Reason, Strength of Isolation and Strength of Lunacy stay exempt from their own protection when recoloured, though they have no "doesn't remove" text (CR 702.16c). Fairly sure.
-- Kalain and Coin of Mastery read cast-time mana snapshots keyed by card id, so a copy of a permanent spell or a countered spell that later enters may read a stale amount (CR 707.10). Unverified.
 - `BecomeCreatureEffect` (Opal Acrolith, Hidden Stag, 24 cards) replaces the card instead of floating a layer-4 and layer-7b effect, so a later copy effect drops the type change (CR 613.1a, 613.1d). Sure of the code.
 - `PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler`, `PerpetuallyGrantStaticEffectToSourceEffectHandler`, `DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler`, `PerpetuallyBecomeCreatureEffectHandler` and `ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler` write perpetual changes into an exchanged card, which a copy then copies (CR 707.2). Sure of the code.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
@@ -1413,7 +1408,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (63)
+#### Other (61)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1433,14 +1428,12 @@ Don't commit.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
-- `TappedLandManaSupport.producedManaTypes`' basic-land-type fallback (Mana Flare, `AddManaForEachOtherLandWithSameNameEffect`) adds mana for a tap that reported none (CR 106.12a). Unsure.
 - `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. Sure.
 - Bow of Nylea and The Moonbase wait in blocked-other for a subject naming every target card: the activation path (`AbilityActivationService`'s `TargetedGraveyardCardsEffect` keying) needs the `targetGraveyardCards` branch the cast path got in fold run 50c. Sure.
 - Panglacial Wurm can't be cast during the later picks of a multi-pick search; cast-only cards are offered only on the first prompt ("while you're searching"). Sure of the code.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): the copied return reads cards the copier exiled with its own abilities; it should read only cards its copied exile ability exiled (CR 607.1, 607.2a). Fairly sure.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.
-- `ManaSourceColorSupport` non-land branch: an `AwardAnyColorManaEffect` whose amount is 0 still counts every colour (CR 106.7). Sure of the code, low.
 - Terminal Velocity: its `PutCardToBattlefieldThenEffect` then-steps grant haste and triggers over `Subjects.source()` / `toSourcePermanent`, which may name the spell rather than the put permanent (CR 608.2h). Unverified.
 - `PerpetuallyGrantKeywordToSourceEffect` (6 cards): on the battlefield the keyword goes onto a copy of the permanent's card, so it is lost when the permanent changes zones (not perpetual); off the battlefield it is granted by card id in any zone (CR 400.7).
 - `PerpetuallyGrantStaticEffectToSourceEffect` (Craving of Yeenoghu, Gale): the same card swap, not perpetual. Fairly sure.

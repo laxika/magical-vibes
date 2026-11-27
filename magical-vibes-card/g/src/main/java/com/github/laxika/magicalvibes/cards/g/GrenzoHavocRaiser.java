@@ -42,6 +42,6 @@ public class GrenzoHavocRaiser extends Card {
                                 "Exile the top card",
                                 new ExileTopCardMayPlayThisTurnEffect(1, false)
                                         .fromLibraryOf(Subjects.triggeringPlayer())
-                                        .mayOnlyCast().withAnyManaType()))));
+                                        .mayOnlyCast().withManaAsThoughAnyColor()))));
     }
 }

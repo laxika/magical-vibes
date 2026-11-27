@@ -20,7 +20,7 @@ public class GalesRedirection extends Card {
                 SequenceEffect.of(
                         new ExileTargetSpellEffect(),
                         AllowPlayCardsFromExileEffect.whileExiled(Subjects.cardsThisWay(StepKind.EXILE))
-                                .withAnyManaType()),
+                                .withManaAsThoughAnyColor()),
                 SequenceEffect.of(
                         new ExileTargetSpellEffect(),
                         AllowPlayCardsFromExileEffect.whileExiled(Subjects.cardsThisWay(StepKind.EXILE))

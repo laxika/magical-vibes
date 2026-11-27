@@ -18,7 +18,7 @@ public class WhispersteelDagger extends Card {
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 new AllowCastMatchingCardsFromGraveyardThisTurnEffect(new CardTypePredicate(CardType.CREATURE), true)
                         .fromGraveyardsOf(Subjects.triggeringPlayer())
-                        .spendingManaOfAnyType());
+                        .spendingManaAsThoughAnyColor());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

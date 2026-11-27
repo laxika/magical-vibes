@@ -374,7 +374,7 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
 **Permissions, restrictions and grants:**
 
 - `AllowPlayCardsFromExileEffect` over a `CardSubject` (`thisTurn`, `untilEndOfYourNextTurn`, `whileExiled`, `whileYouControlSource`,
-  `alsoCardsExiledLaterThisTurn()` (CR 611.2c); `playableByOwner()`, `playableOnlyIf`, `withAnyManaType`, `withoutPayingManaCost`,
+  `alsoCardsExiledLaterThisTurn()` (CR 611.2c); `playableByOwner()`, `playableOnlyIf`, `withAnyManaType` / `withManaAsThoughAnyColor`, `withoutPayingManaCost`,
   `exilingInsteadOfGraveyard`); `ExileTopCardMayPlayThisTurnEffect` (`fromLibraryOf`, `until`, `playableBy`, `choosingOne`, `upTo`,
   `mayOnlyCast`); `PlayFromAmongExiledCardsEffect`; `AllowCastFromTopOfLibraryEffect` (CR 118.9), `AllowCastMatchingCardsFromGraveyardThisTurnEffect`,
   `AllowCastTargetCardFromGraveyardThisTurnEffect` (CR 716.3); `SpendAnyManaTypeToCastEffect`, `SpendManaAsAnyColorEffect`,

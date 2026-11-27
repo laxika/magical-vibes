@@ -21,6 +21,6 @@ public class PredatorsHour extends Card {
         addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.triggeringPlayer())
-                        .exiledFaceDown().withAnyManaType().until(Duration.PERMANENT)), Subjects.creaturesYouControl()));
+                        .exiledFaceDown().withManaAsThoughAnyColor().until(Duration.PERMANENT)), Subjects.creaturesYouControl()));
     }
 }

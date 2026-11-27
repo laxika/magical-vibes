@@ -1114,8 +1114,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                    Duration duration, boolean anyManaType,
-                                   boolean withoutPayingManaCost)
+                                   boolean withoutPayingManaCost, boolean asThoughAnyColor)
             implements PendingInteraction {
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       Duration duration, boolean anyManaType, boolean withoutPayingManaCost) {
+            this(playerId, validCardIds, duration, anyManaType, withoutPayingManaCost, false);
+        }
+
+        /** How mana may be spent to cast the chosen card: any type, or as though any color. */
+        public AnyManaSpending manaSpending() {
+            return AnyManaSpending.of(anyManaType, asThoughAnyColor);
+        }
+
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        Duration duration) {
             this(playerId, validCardIds, duration, false, false);
@@ -2291,15 +2301,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Choose one nonland card from a target player's hand or graveyard to exile. */
+    /**
+     * Choose one nonland card from a target player's hand or graveyard to exile; with {@code grantPlayPermission} the
+     * chooser may cast it, spending mana of any type (as though any color with {@code manaAsThoughAnyColor}).
+     */
     record ExileNonlandCardFromTargetHandOrGraveyardChoice(
             UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds,
-            boolean grantPlayPermission)
+            boolean grantPlayPermission, boolean manaAsThoughAnyColor)
             implements PendingInteraction {
 
         public ExileNonlandCardFromTargetHandOrGraveyardChoice(
                 UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds) {
-            this(playerId, targetPlayerId, validCardIds, true);
+            this(playerId, targetPlayerId, validCardIds, true, false);
+        }
+
+        public ExileNonlandCardFromTargetHandOrGraveyardChoice(
+                UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds, boolean grantPlayPermission) {
+            this(playerId, targetPlayerId, validCardIds, grantPlayPermission, false);
         }
 
         @Override

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureWithManaEffect;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -34,6 +35,7 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
     private final PlayerInputService playerInputService;
+    private final PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,8 +60,10 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
             return;
         }
 
+        // The cost is paid as the ability resolves, so its controller may activate mana abilities while asked
+        // (CR 605.3a): the choice is bounded by the mana they could still make, and paid from their pool.
         int maxCount = Math.min(eligibleTargets.size(), affordableCount(
-                gameData.playerManaPools.get(entry.getControllerId()),
+                potentialManaService.buildVirtualManaPool(gameData, entry.getControllerId()),
                 new ManaCost(copyEffect.manaCost()), eligibleTargets.size()));
         if (maxCount == 0) {
             return;

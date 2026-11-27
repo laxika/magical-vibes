@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AnyManaSpending;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -65,8 +66,9 @@ public class ExileTargetPermanentAndGrantControllerCastPermissionUntilNextTurnEf
             if (exileOwnerId != null && !exiledCard.hasType(CardType.LAND)) {
                 exileSupport.grantPlayUntilNextTurnOfPlayer(
                         gameData, exiledCard.getId(), controllerId, controllerId);
-                if (exileEffect.anyManaType()) {
-                    gameData.grantExileAnyManaType(exiledCard.getId(), controllerId, Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
+                if (exileEffect.manaAsThoughAnyColor()) {
+                    gameData.grantExileManaSpending(exiledCard.getId(), controllerId,
+                            Duration.UNTIL_END_OF_YOUR_NEXT_TURN, AnyManaSpending.AS_THOUGH_ANY_COLOR);
                 }
                 String controllerName = gameData.playerIdToName.get(controllerId);
                 gameLogService.append(gameData, GameLog.builder()

@@ -25,7 +25,7 @@ public class TibaltCosmicImpostor extends Card {
         AllowCastFromCardsExiledWithSourceEffect permission =
                 new AllowCastFromCardsExiledWithSourceEffect(
                         true, null, false, false, 0, null,
-                        false, false, false, true);
+                        false, false, false, true).withManaAsThoughAnyColor();
         addStaticEffect(permission);
         addStaticEffect(new CreateEmblemAsEntersEffect(new CreateEmblemEffect(
                 List.of(permission),

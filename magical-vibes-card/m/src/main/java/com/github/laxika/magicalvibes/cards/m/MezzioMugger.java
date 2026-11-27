@@ -15,6 +15,6 @@ public class MezzioMugger extends Card {
         addCastingOption(AlternateHandCast.blitz("{2}{R}"));
 
         addTrigger(Triggers.attacks(),
-                new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.eachPlayer()).withAnyManaType());
+                new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.eachPlayer()).withManaAsThoughAnyColor());
     }
 }

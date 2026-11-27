@@ -62,7 +62,7 @@ public record LibrarySearchParams(
         boolean finalCardToHand,
         boolean allowCastFromLibraryWhileSearching,
         boolean grantExilePlayPermission,
-        boolean allowAnyManaType,
+        AnyManaSpending exileManaSpending,
         CardPredicate exilePlayPermissionFilter,
         boolean withoutPayingManaCost,
         Integer mayCastManaValueAtMost,
@@ -101,7 +101,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
-                grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
+                grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter, withoutPayingManaCost,
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
@@ -119,7 +119,7 @@ public record LibrarySearchParams(
                 sourceSideboard, battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
-                grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost, mayCastManaValueAtMost,
+                grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter, withoutPayingManaCost, mayCastManaValueAtMost,
                 returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
@@ -136,7 +136,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
-                grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
+                grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter, withoutPayingManaCost,
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, ids,
                 offeredFaces);
     }
@@ -153,7 +153,7 @@ public record LibrarySearchParams(
                 sourceSideboard, battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allow,
-                grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
+                grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter, withoutPayingManaCost,
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
@@ -168,7 +168,7 @@ public record LibrarySearchParams(
                 sourceSideboard, battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
-                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter,
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
@@ -183,7 +183,7 @@ public record LibrarySearchParams(
                 sourceSideboard, battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
-                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter,
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
@@ -198,7 +198,7 @@ public record LibrarySearchParams(
                 sourceSideboard, battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
-                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter,
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
@@ -214,7 +214,7 @@ public record LibrarySearchParams(
                 sourceSideboard, battlefieldIfChosenBeholdType,
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
-                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter,
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
@@ -268,7 +268,7 @@ public record LibrarySearchParams(
         private boolean finalCardToHand;
         private boolean allowCastFromLibraryWhileSearching;
         private boolean grantExilePlayPermission = true;
-        private boolean allowAnyManaType = true;
+        private AnyManaSpending exileManaSpending = AnyManaSpending.ANY_TYPE;
         private CardPredicate exilePlayPermissionFilter;
         private boolean withoutPayingManaCost;
         private Integer mayCastManaValueAtMost;
@@ -515,8 +515,14 @@ public record LibrarySearchParams(
             return this;
         }
 
+        /** Whether a granted exile play permission lets mana of any type be spent (the default) or none. */
         public Builder allowAnyManaType(boolean allowAnyManaType) {
-            this.allowAnyManaType = allowAnyManaType;
+            return exileManaSpending(allowAnyManaType ? AnyManaSpending.ANY_TYPE : AnyManaSpending.NONE);
+        }
+
+        /** How a granted exile play permission lets mana be spent to cast the card. */
+        public Builder exileManaSpending(AnyManaSpending exileManaSpending) {
+            this.exileManaSpending = exileManaSpending;
             return this;
         }
 
@@ -576,7 +582,7 @@ public record LibrarySearchParams(
                     battlefieldIfChosenBeholdType,
                     battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                     placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
-                    grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
+                    grantExilePlayPermission, exileManaSpending, exilePlayPermissionFilter, withoutPayingManaCost,
                     mayCastManaValueAtMost, returnToHandAtControllerEndStepId, requireSharedLandType, castOnlyCardIds, offeredFaces);
         }
     }

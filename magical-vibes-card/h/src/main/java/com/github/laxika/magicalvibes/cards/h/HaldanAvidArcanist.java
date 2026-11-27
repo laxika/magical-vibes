@@ -24,6 +24,7 @@ public class HaldanAvidArcanist extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
         addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forFetchCounters(
-                        true, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
+                        true, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
+                .withManaAsThoughAnyColor());
     }
 }

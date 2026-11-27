@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MatterReshaper;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HurlThroughHell.class, GrizzlyBears.class, Forest.class})
+@CardUsed({HurlThroughHell.class, GrizzlyBears.class, Forest.class, MatterReshaper.class})
 class HurlThroughHellTest extends BaseCardTest {
 
     @Test
@@ -82,5 +84,31 @@ class HurlThroughHellTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player2, bearsId))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(bearsId)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Mana spent as though it were any color pays the colored symbols but not the {C} symbol")
+    void anyColorManaDoesNotPayColorlessSymbol() {
+        Permanent reshaper = harness.addToBattlefieldAndReturn(player2, new MatterReshaper());
+        UUID reshaperId = reshaper.getOriginalCard().getId();
+        harness.setHand(player1, List.of(new HurlThroughHell()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, reshaper.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 3);
+        assertThatThrownBy(() -> harness.castFromExile(player1, reshaperId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(reshaperId)).isNotNull();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, reshaperId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Matter Reshaper");
     }
 }

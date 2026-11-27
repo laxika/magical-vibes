@@ -45,7 +45,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
-| PY Payments | PY-1, PY-2, PY-3 | PY-1 done 2026-11-27; PY-2, PY-3 open |
+| PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1 done 2026-11-27; TR-2, TR-3 open |
 | LS Library searches and reveals | LS-1, LS-2 | LS-1 done 2026-11-27; LS-2 open |
 | TK Tokens and copies | TK-1, TK-2 | open |
@@ -403,6 +403,11 @@ Avoid: FC-1.
 New line N11 (seen in FC-2): `ExileTopCardMayPlayThisTurnEffect`'s "you may cast that card" (`castOnly`: Ragavan, Daxos) gives
 a land card with an Adventure (the FIN towns) no permission, though the towns' rulings let such an effect cast the Adventure.
 
+New line N37 (seen in PY-2): the castability readers of the any-mana permissions (`GameViewProjectionFactory`'s exile
+`getAnyManaTypeExiledCardIds` and library-top checks, `GameActionAvailabilityService.canSpendAnyManaTypeToCast` with Xanathar's
+library-top grant) check `canPayAsGeneric`, so an "as though it were mana of any color" permission (`AnyManaSpending`) shows a {C}
+cost as castable with colored mana that the payment then refuses (CR 107.4c); read `CastingPermissionService.anyManaSpending`.
+
 Outcome:
 
 ### MP. Multiplayer opponent choices
@@ -633,7 +638,23 @@ a {0} equip or power-up), O25 (Caged Sun misses land mana abilities without {T})
 fallback adds mana for a tap that reported none), O37 (an `AwardAnyColorManaEffect` of amount 0 counts every colour), L14 (Kalain
 and Coin of Mastery read cast-time mana snapshots by card id), P4's Charmed Pendant and Thran Portal parts.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: P9 and P16 (one any-mana boolean served both wordings: a permission now carries `AnyManaSpending`,
+`ANY_TYPE` paying {C} with any mana, CR 118.14, `AS_THOUGH_ANY_COLOR` leaving {C} to colorless mana, CR 107.4c; read by
+`CastingPermissionService.anyManaSpending`, paid by the exile, graveyard and library-top paths; `.withManaAsThoughAnyColor()` on
+`ExileTopCardMayPlayThisTurnEffect`, `AllowPlayCardsFromExileEffect`, `AllowCastFromCardsExiledWithSourceEffect`,
+`ExileNonlandCardFromTargetHandOrGraveyardEffect`; Whispersteel's rider became `spendingManaAsThoughAnyColor()`, Hurl Through
+Hell's `manaAsThoughAnyColor`, Siphon Insight's, Opposition Agent's and Share the Spoils' grants any color; 25 any-color card classes edited), P2 (Feather's
+choice is bounded by the mana its controller could make and mana abilities may be activated while it asks, CR 605.3a), P15
+(activation reductions lower increases too, also under a {0} paid rather than the cost: CR 601.2f, 118.9d, 602.2b; Bruenor +
+Suppression Field + Nahiri, Fighter Class + Suppression Field), O37 (`ManaSourceColorSupport` skips an any-color ability that
+would add no mana, CR 106.7; reuses `LandManaTypeSupport.producesAnyMana`), L14 (a permanent entering uncast clears its card's
+Treasure and artifact cast snapshots, CR 400.7: a countered Kalain creature reanimated got its old counters). Dropped: L14's copy
+half (a copy is a fresh card), O26 (every land-tap event reports the pool difference; no tap reaches the fallback), P4's Charmed
+Pendant (fixed in D17, pinned) and Thran Portal (non-mana abilities cost no life; pinned with a chosen type). Left: O25 (Caged Sun
+needs a "a land's ability adds mana" event beside `LandTappedForMana`, a trigger key, the collector and `PotentialManaService`'s
+estimate; Calciform Pools and Rain of Filth are real cases). P4 edited down to Animation Module (PY-3). New lines N37 (CP-1), N38,
+N39 (MC-2). No effect class added or deleted (`AnyManaSpending` is a model enum), so no ledger or ratchet change; no
+`CONVERSION_VERSION` change.
 
 #### PY-3. Life and discard costs
 
@@ -998,6 +1019,19 @@ simultaneous snapshot, so a later one is judged after an earlier one left (the O
 `ExileTargetCreaturesUntilSourceLeavesEffectHandler`, `ExileSourceAndCreaturesAndPlaneswalkersWithManaValueAtMostSourceCountersEffectHandler`,
 `ExileTokensCreatedWithSourceEffectHandler`, `ReturnTargetPermanentsThenEffectHandler` and `FlickerEffectHandler` (17 handlers by a
 grep); route each through `PermanentRemovalService.removeTogether`; unverified.
+
+New line N38 (seen in PY-2): the cast-time mana snapshots keyed by card id (`GameData.spellCastTreasureManaSpent` and the other
+`spellCast*` maps) are cleared only when the spell resolves, and `add*` merges, so a spell that leaves the stack unresolved
+(countered into its owner's hand, Remand) and is cast again reads both casts' mana (Kalain, Coin of Mastery, converge); clear them
+as the card leaves the stack or as a new cast begins; unverified.
+
+New line N39 (seen in PY-2): `StackResolutionService.resolvePlaneswalkerSpell` and the battle path never call
+`Permanent.setCast`, so a planeswalker or battle that entered from its cast spell reads as not cast (`isCast()`) to "if it was
+cast" readers; unverified.
+
+O25 (Caged Sun, left by PY-2, see its Outcome): a land's mana ability without {T} (Calciform Pools, Rain of Filth) raises no
+"a land's ability causes you to add" event; needs that event beside `LandTappedForMana`, a trigger key, `TapTriggers` and
+`PotentialManaService`'s estimate.
 
 Outcome:
 

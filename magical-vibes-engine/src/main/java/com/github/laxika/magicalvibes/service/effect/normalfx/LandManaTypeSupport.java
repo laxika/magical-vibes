@@ -221,7 +221,11 @@ public class LandManaTypeSupport {
      * Whether an ability adding {@code amount} mana would add any now (CR 106.7). A fixed amount always does, and so
      * does an X its cost chooses, since whether the cost could be paid is ignored.
      */
-    private boolean producesAnyMana(GameData gameData, Permanent source, DynamicAmount amount) {
+    /**
+     * Whether an ability of {@code source} adding {@code amount} mana would add any if it resolved now; one that would add
+     * none gives the source no type of mana it could produce (CR 106.7). A fixed amount or an announced X counts.
+     */
+    public boolean producesAnyMana(GameData gameData, Permanent source, DynamicAmount amount) {
         if (amount == null || amount instanceof Fixed || amount instanceof XValue) {
             return true;
         }
