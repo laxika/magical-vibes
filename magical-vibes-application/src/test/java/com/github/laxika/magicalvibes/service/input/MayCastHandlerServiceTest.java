@@ -904,6 +904,7 @@ class MayCastHandlerServiceTest {
             when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(true);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER2_ID);
+            when(exileFreeCastQueueSupport.preparedCastCostsPayable(gd, PLAYER1_ID, card)).thenReturn(true);
 
             svc.handleCastFromSpecificGraveyardChoice(gd, player1, true, ability, PLAYER2_ID);
 
