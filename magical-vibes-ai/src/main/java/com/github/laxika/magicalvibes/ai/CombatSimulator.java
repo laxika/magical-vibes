@@ -492,10 +492,11 @@ public class CombatSimulator {
 
             boolean lure = lureAttackerIds.contains(attacker.id);
             boolean mustBlock = mustBlockAttackerIds.contains(attacker.id);
+            List<CreatureInfo> obeying = List.of();
             if (mustBlock) {
                 // "Must be blocked by an Eldrazi if able": only a matching blocker obeys it, and with none able
                 // nothing is required of this attacker.
-                List<CreatureInfo> obeying = candidates.stream()
+                obeying = candidates.stream()
                         .filter(candidate -> gameQueryService.obeysAMustBeBlockedRequirement(
                                 gameData, attacker.perm, candidate.perm))
                         .toList();
@@ -524,6 +525,7 @@ public class CombatSimulator {
                 if (chosen.size() < minimumBlockers) {
                     chosen = forceCheapestBlockers(candidates, minimumBlockers);
                 }
+                chosen = withAnObeyingBlocker(chosen, obeying);
             } else if (minimumBlockers > 1) {
                 chosen = minimumBlockers == 2
                         ? pickMenaceBlockers(attacker, candidates, lethalIncoming)
@@ -598,6 +600,25 @@ public class CombatSimulator {
             return List.of(sorted.get(0), sorted.get(1));
         }
         return List.of();
+    }
+
+    /**
+     * {@code chosen} made to obey a "must be blocked by [a matching creature] if able" requirement that needs several
+     * blockers (menace): one matching blocker obeys it, the others may be any creature (CR 509.1c), so when none of the
+     * chosen matches, the cheapest matching one replaces the cheapest chosen.
+     */
+    private static List<CreatureInfo> withAnObeyingBlocker(List<CreatureInfo> chosen, List<CreatureInfo> obeying) {
+        if (chosen.isEmpty() || chosen.stream().anyMatch(obeying::contains)) {
+            return chosen;
+        }
+        CreatureInfo obeyer = obeying.stream().min(Comparator.comparingDouble(CreatureInfo::creatureScore)).orElse(null);
+        if (obeyer == null) {
+            return chosen;
+        }
+        List<CreatureInfo> obeyed = new ArrayList<>(chosen);
+        obeyed.remove(obeyed.stream().min(Comparator.comparingDouble(CreatureInfo::creatureScore)).orElseThrow());
+        obeyed.add(obeyer);
+        return obeyed;
     }
 
     private List<CreatureInfo> forceCheapestBlockers(List<CreatureInfo> candidates, int count) {
@@ -728,20 +749,26 @@ public class CombatSimulator {
 
             int needed = AiUtils.minimumBlockersRequiredToBlock(
                     gameData, gameQueryService, mustBlockAttacker.perm);
-            List<CreatureInfo> scored = new ArrayList<>();
+            List<CreatureInfo> able = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
                 if (!canBlock(blockContext, blocker, mustBlockAttacker)) continue;
-                // "Must be blocked by an Eldrazi": only a matching blocker obeys it.
-                if (!gameQueryService.obeysAMustBeBlockedRequirement(gameData, mustBlockAttacker.perm, blocker.perm)) {
-                    continue;
-                }
-                scored.add(blocker);
+                able.add(blocker);
             }
-            if (scored.size() < needed) continue;
-            scored.sort(Comparator.comparingDouble((CreatureInfo b) -> CombatMath.evaluateBlock(mustBlockAttacker, b)).reversed());
-            for (int i = 0; i < needed; i++) {
-                CreatureInfo blocker = scored.get(i);
+            // "Must be blocked by an Eldrazi": a matching blocker obeys it; under menace the others may be any
+            // creature (CR 509.1c).
+            List<CreatureInfo> obeying = able.stream()
+                    .filter(blocker -> gameQueryService.obeysAMustBeBlockedRequirement(
+                            gameData, mustBlockAttacker.perm, blocker.perm))
+                    .toList();
+            if (obeying.isEmpty() || able.size() < needed) continue;
+            Comparator<CreatureInfo> byBlockValue = Comparator.comparingDouble(
+                    (CreatureInfo b) -> CombatMath.evaluateBlock(mustBlockAttacker, b)).reversed();
+            List<CreatureInfo> chosen = new ArrayList<>();
+            chosen.add(obeying.stream().sorted(byBlockValue).findFirst().orElseThrow());
+            able.stream().filter(blocker -> !chosen.contains(blocker)).sorted(byBlockValue)
+                    .limit(needed - 1L).forEach(chosen::add);
+            for (CreatureInfo blocker : chosen) {
                 forcedAssignments.get(ai).add(blocker);
                 blockerUsed[blocker.index] = true;
             }

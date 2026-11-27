@@ -1359,7 +1359,7 @@ Don't commit.
 - Journey for the Elixir: taking both cards from the graveyard doesn't shuffle, though its text says "search your library and graveyard … then shuffle". Sure of the code.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (19)
+#### Wrong targets and choices (17)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - `CardSubject.TriggeringCards` names a card only in the stay its event put it in, so `bindCardSubjects` reads no type for a discarded card that was exiled instead or has left the graveyard, where the text reads last-known characteristics (CR 608.2h; Diviner of Fates' fold). Sure of the code.
@@ -1374,11 +1374,9 @@ Don't commit.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
 - EyeForAnEye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle collect damage sources with their own lists, missing part of CR 609.7a's set (sources of waiting shields, cards stack objects refer to); move them onto `ChooseDamageSourceEffect`. Sure of the code.
 - The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Unverified.
-- The AI's filtered must-be-blocked choice with menace (two blockers needed) is approximate: the greedy simulator doesn't narrow, and Easy and the exhaustive phase may skip the block (CR 509.1c). Fairly sure.
 - `ExileGraveyardCardsEffect.defendingPlayerOnly` (Graven Abomination): the flag is never read, so any opponent's graveyard can be targeted (multiplayer). Sure of the code.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
 - Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Sure, low.
-- Avatar's Wrath's airbend is scored by `SpellEvaluator` as single-target exile removal (AI). Unverified.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
 #### Payments and costs (15)
@@ -1432,7 +1430,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (88)
+#### Other (82)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - The dying-creature return heads other than Lim-Dûl's (`ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect`, `ReturnDamagedCreaturesThatDiedUnderControlEffect`) put an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head goes through the entry batch since rules-fixes EB-1. Unverified.
@@ -1479,7 +1477,6 @@ Don't commit.
 - A borrowed "X is the mana value of the exiled card" ability (Prototype Portal) is dropped from exile borrowers instead of granted as one that does nothing. Unsure.
 - The spore-counter cards (the Thallids, Sporoloth Ancient, Fungal Bloom, Thelon of Havenwood, Propagator Primordium) use `CounterType.FUNGUS`, also the real fungus counters of Sporogenesis and Mindbender Spores, while Thallid Shell-Dweller uses `SPORE`: Thelon counts fungus counters as spore counters and Sporoloth's granted "remove two spore counters" can't use Shell-Dweller's (CR 122.1). Sure of the code.
 - Voracious Brood: "whenever one or more creature cards are put into your graveyard from anywhere, put that many +1/+1 counters" is one trigger per card outside the library path, not one per event (CR 603.2c). Fairly sure, minor.
-- Clash of the Eikons and Sigurd (lore counters off "target Saga you control"), Etched Host Doombringer and Portent Tracker (defense counters off a battle an opponent protects, which its caster controls): the AI scores a fixed-kind removal from a target by kind (owner's decision 2026-11-25), so these read HARMFUL and the AI prefers an opponent's permanent where the text wants its own. Sure of the code, minor.
 - `DistributeCountersAmongTargetsEffectHandler`'s delayed cleanup / end-step removals (Broodlord, Systems Override, The Earth Crystal, Vhal) are `RemoveCountersEffect.fromTarget` on the delayed ability's entry: the delayed ability refers to that permanent, which it still affects while it stays on the battlefield (CR 603.7c), and declares no target, so `Subjects.named(id)` would say it; whether a shroud or hexproof gained meanwhile stops today's removal was not checked. Unverified.
 - A "this creature or another [X] enters" ability that its own source triggers (Scourge of Valkas, Hawkeye) records no triggering permanent on its entry, so a `Subjects.triggering()` or `TriggeringPermanentPower` read in such an ability finds nothing; the damage carrier now falls back to the source (step 10 run Damage), other readers weren't checked. Fairly sure of the entry, unsure which cards read it.
 - Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.
@@ -1505,23 +1502,18 @@ Don't commit.
 - An exile cast of a "discard a card or pay {m}" spell (Lightning Axe, Pumpkin Bombardment, Titania) can't choose the discard: no discard index reaches the exile path (`playCardFromExile` takes only permanent ids), so it always pays the mana (CR 601.2b). Sure.
 - A free cast (`ExileFreeCastQueueSupport`) doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative: there is no free-cast graveyard picker, so a free Soaring Stoneglider or Feed the Cycle pays its mana alternative or is skipped (CR 601.2b). Sure.
 - Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone"; library top takes only sacrifice-or-mana. Sure.
-- `BoostEffect.targetPermanent` (Vehicle boosts: Fang Guardian, Captain America's Motorcycle, Blacksmith's Skill, Tributary Vaulter) declares a harmful target spec whatever the sign of the boost, so the AI's target prior treats a pump of its own creature or Vehicle as an attack; derive the prior from the sign as `BoostEffect.target` does.
 - Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
 - Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the mass boosts' set filters.
 - `TriggeredAbilityQueueService.triggerOrderLabel` names a source-reading boost with no target "target creature gets +N/+M" (Sigardian Zealot, Mirkwood Trapper's second trigger, Zenos yae Galvus); a label only.
 - `BoostEffectHandler`'s refresh of the boosted permanent's waiting abilities' snapshots changes nothing observable: a departing permanent refreshes every waiting entry's snapshot itself (`PermanentRemovalService`), and a live source is read live. Sure.
 - "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it.
-- The hard AI gives set damage no value: `DealDamageEffect.toEach` / `toEachTarget` answer `canDamageCreatures()` and `canDamagePlayers()` false (as the absorbed records were no `DamageDealingEffect`), so Simoon scores the same with or without an opposing creature (`SpellEvaluatorTest.setDamageSweeperIsNotScoredAsTargetedDamage` pins it) and no sweeper branch reads them; M2's `BoardWipeEffect` view could cover `toEach`. Sure.
 - `CloneService.exileCopiedCardAbility` (Superior Spider-Man, Activated Sleeper, The Mimeoplasm and the other "enter as a copy of a creature card in a graveyard; when you do, exile that card" cards) names the copied card by `setTriggeringCardId` with no graveyard stay, so a card that left the graveyard and came back before the reflexive ability resolves is still exiled; it is a new object (CR 400.7). Sure of the code, not tested.
 - `ActivatedAbilityExecutionService`'s inline mana-ability branch for `DrawCardEffect` / `ManaAbilityCardDrawingEffect` draws for the activating player only, ignoring `player()`; latent (an ability with a card draw is never a mana ability here, `AbilityActivationService.movesCardToOrFromLibrary`, CR 605.1a), so likely dead code to delete. Sure of the code.
 - `EachOtherPlayerDrawsCardEffectHandler` (the 11 gift cards) draws in seating order from the first seat, not in APNAP order (CR 101.4); fold with the gift opponent. Sure of the code.
-- The hard AI prices "each opponent draws" (`SpellEvaluator.drawScore`) as one opponent's cards, not one set per opponent in a multiplayer game. Sure.
-- `TargetPolarityClassifier` has no entry for `ChooseOneForTargetCreatureEffect` and reads `ChooseOneForTargetPermanentEffect` as NEUTRAL, though some modes harm the target (Urborg, Walking Sponge, one of Shaper Parasite's): the AI's targeting for these 15 cards ignores the modes. Sure of the code, not of the AI's resulting choices.
 - `TheGrimCaptainsLockerTest.doesNotGrantEscapeToNonCreatureCards` asserts a Grizzly Bears in a graveyard that holds only a Shock and never tries to cast the Shock with escape, so it doesn't test what its name says. Sure.
 - Rikku, Resourceful Guardian: "until end of turn, that creature can't be blocked by creatures your opponents control" floats a granted `CantBeBlockedByCreaturesMatchingPredicateEffect` ability (`MakeCreatureUnblockableEffect.byCreaturesYourOpponentsControl()`), so a later "loses all abilities" ends it, though the effect gives no ability (CR 611.2a, 613.11). Sure of the code and the rule.
 - Sarulf, Realm Eater: its exile (`ExileOtherNonlandPermanentsWithManaValueAtMostEffectHandler`) moves each permanent with its own `removePermanentToExile`, not as one leave batch, so "whenever one or more ... Sure of the code.
 - `ExileTargetPermanentEffectHandler`: a plain `target()` over several targets ("exile up to two target creatures") exiles them one by one with no leave batch, and a non-set several-permanent subject (`allOf(source(), target())`, `allTargets()`) gets the leave batch but not the one rules-event occurrence a set has since run K2 (CR 603.2c, 603.10a: one instruction, one event). Sure of the code.
-- The AI scores "destroy all [X] target player controls" (`DestroyTargetPermanentEffect.allTargetPlayerControls`) over both battlefields, its own included (`SpellEvaluator.evaluateDestroyAllValue`, parity with the old wipe record). Sure.
 
 ---
 

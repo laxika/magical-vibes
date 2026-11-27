@@ -56,7 +56,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | PP Perpetual changes | PP-1 | open |
 | PL Each player chooses, then all act | PL-1 | open |
 | MC Single cards | MC-1, MC-2 | open |
-| AI Hard / easy AI | AI-1, AI-2 | AI-1 done 2026-11-27; AI-2 open |
+| AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | open |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | open |
 | FT Missing features | FT-1, FT-2 | open |
@@ -814,6 +814,26 @@ New line N17 (seen in PY-1): a `SacrificeMultiplePermanentsCost` ransom paid at 
 still asks the pick when exactly that many permanents could be sacrificed; the one-permanent case is made unasked since PY-1 (the
 CR 608.2d convention), the multi one would need the same death-replacement-question guard.
 
+New line N19 (seen in AI-2): the AI picks a triggered ability's permanent target from the card's ETB and spell effects
+(`AiDecisionEngine.answerEtbTargetPrompt` sends an attack trigger's `AttackTriggerTarget` to `chooseTarget(card)`) or with
+`PermanentChoiceAiStrategy`'s "opponent's strongest creature first", never from the trigger's own effects, so Ballroom
+Brawlers, Inspirit, Manifold Mouse, Ketria and Shaper Parasite aim their modal triggers by the wrong polarity.
+
+New line N20 (seen in AI-2): the hard AI's MCTS is offered blocker declarations the engine rejects (`GameSimulator`'s
+`BlockerDeclaration` actions always include no block, and single blocks of a menace attacker), so under a block requirement
+(a menace attacker wearing Slayer's Cleaver) it can pick "no block" and fall back after the refusal; the candidates aren't
+checked against `CombatBlockService`'s validation (CR 509.1c).
+
+New line N21 (seen in AI-2): `SpellEvaluator.drawScore` gives "each player draws" no value whatever the player count, though
+in a multiplayer game the AI's opponents draw several sets to its one.
+
+New line N22 (seen in AI-2): the hard AI's damage board sweep (`DealDamageEffect.sweepsBoard()`,
+`SpellEvaluator.evaluateBoardWipeDamage`) ignores the set's filter, so "damage to each creature without flying" is scored
+over every creature on both battlefields.
+
+New line N23 (seen in AI-2): `TargetPolarityClassifier`'s `DistributeCountersAmongTargetsEffect` rule reads only +1/+1 and
+-1/-1 counters, not the other power/toughness kinds AI-2 gave the put-counter rule.
+
 Outcome:
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
@@ -850,7 +870,18 @@ case it must keep.
 New line N9 (seen in AI-1): an "unless" branch `SpellEvaluator` has no score for (Wand of Ith's `DiscardCardsEffect` of the
 revealed card) is worth 0 to the hard AI either way, so it never pays to keep the card; unverified by a test.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: O92, O103, O52, O108, O98, O102, T16, T21, N9 (deleted from entry 18). `BoostEffect`'s target
+spec is harmful only when an amount lowers power or toughness (both target forms). `TargetPolarityClassifier` classifies the
+two `ChooseOneFor…` records by their modes, reads every power/toughness counter kind (not only ±1/±1) and aims a branch
+conditioned on "an opponent protects it" at the AI's own battle; the hard AI's `chooseAbilityTarget` and the simulator's
+ability-target ranking now follow the classifier when it gives a direction, and a target filter that admits only the AI's own
+permanents (Sigurd's "Saga you control") is aimed at its own board (O52's by-kind removal rule, the owner's 2026-11-25
+decision, kept). `SpellEvaluator` scores a set an opponent controls (Simoon, "destroy all … target player controls") over
+the opponents' battlefield only, "damage to each of up to N targets" per target, "each opponent draws" once per opponent,
+Avatar's Wrath as a sweep sparing the AI's best creature (`AirbendTargetPermanentEffect.removalKind()` is EXILE only for a
+target subject), and Wand of Ith's discard as the payer's lost card. A filtered "must be blocked by [X] if able" under menace
+gets at least one matching blocker in the greedy pass, the exhaustive phase 1b and the Easy AI (CR 509.1c; Slayer's Cleaver
+ruling). New lines N19 to N23 in MC-2. No effect class added or deleted, so no ledger or ratchet change.
 
 ### UI. Frontend
 

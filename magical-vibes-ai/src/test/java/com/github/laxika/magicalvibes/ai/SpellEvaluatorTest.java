@@ -1761,16 +1761,98 @@ class SpellEvaluatorTest {
     }
 
     @Test
-    @DisplayName("Set damage is not scored as single-target creature damage: an opposing creature doesn't change its value")
-    void setDamageSweeperIsNotScoredAsTargetedDamage() {
+    @DisplayName("Damage to each creature target opponent controls (Simoon) is scored by the opposing creatures it kills")
+    void damageToEachCreatureOfTargetOpponentIsScored() {
         double empty = spellEvaluator.estimateSpellValue(gd, new com.github.laxika.magicalvibes.cards.s.Simoon(),
                 player1.getId());
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new LlanowarElves()));
         double withCreature = spellEvaluator.estimateSpellValue(gd,
                 new com.github.laxika.magicalvibes.cards.s.Simoon(), player1.getId());
 
-        assertThat(withCreature).isEqualTo(empty);
+        assertThat(withCreature).isGreaterThan(empty);
+    }
+
+    @Test
+    @DisplayName("Damage to each creature target opponent controls (Simoon) costs nothing for the AI's own creatures")
+    void damageToEachCreatureOfTargetOpponentSparesOwnBoard() {
+        double empty = spellEvaluator.estimateSpellValue(gd, new com.github.laxika.magicalvibes.cards.s.Simoon(),
+                player1.getId());
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
+        double withOwnCreature = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.s.Simoon(), player1.getId());
+
+        assertThat(withOwnCreature).isEqualTo(empty);
+    }
+
+    @Test
+    @DisplayName("Damage to each of up to three target creatures (Wrap in Flames) is worth more with more creatures to kill")
+    void damageToEachTargetIsScoredPerTarget() {
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new LlanowarElves()));
+        double oneKill = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.w.WrapInFlames(), player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new LlanowarElves()));
+        double twoKills = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.w.WrapInFlames(), player1.getId());
+
+        assertThat(oneKill).isGreaterThan(0);
+        assertThat(twoKills).isGreaterThan(oneKill);
+    }
+
+    @Test
+    @DisplayName("Avatar's Wrath is scored as a sweep of every opposing creature, not one exiled target")
+    void avatarsWrathIsScoredAsASweep() {
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+        double oneOpposing = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.a.AvatarsWrath(), player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+        double twoOpposing = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.a.AvatarsWrath(), player1.getId());
+
+        assertThat(twoOpposing).isGreaterThan(oneOpposing);
+    }
+
+    @Test
+    @DisplayName("Avatar's Wrath spares the AI's own creature as its target")
+    void avatarsWrathSparesTheAisCreature() {
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+        double withoutOwn = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.a.AvatarsWrath(), player1.getId());
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new SerraAngel()));
+        double withOwn = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.a.AvatarsWrath(), player1.getId());
+
+        assertThat(withOwn).isEqualTo(withoutOwn);
+    }
+
+    @Test
+    @DisplayName("Destroying all creatures target player controls costs nothing for the AI's own creatures")
+    void destroyAllTargetPlayerControlsSparesOwnBoard() {
+        com.github.laxika.magicalvibes.model.effect.CardEffect wipe =
+                com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect.allTargetPlayerControls(
+                        new PermanentIsCreaturePredicate());
+        double empty = spellEvaluator.evaluateAbilityEffects(gd, List.of(wipe), player1.getId());
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel);
+        double withOwnCreature = spellEvaluator.evaluateAbilityEffects(gd, List.of(wipe), player1.getId());
+
+        assertThat(withOwnCreature).isEqualTo(empty);
+    }
+
+    @Test
+    @DisplayName("\"Each opponent draws a card\" costs the AI one card for each opponent in the game")
+    void eachOpponentDrawsCostsOneCardPerOpponent() {
+        List<com.github.laxika.magicalvibes.model.effect.CardEffect> draw =
+                List.of(new DrawCardEffect(1, Subjects.eachOpponent()));
+        double twoPlayers = spellEvaluator.evaluateAbilityEffects(gd, draw, player1.getId());
+        java.util.UUID player3Id = java.util.UUID.randomUUID();
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        double threePlayers = spellEvaluator.evaluateAbilityEffects(gd, draw, player1.getId());
+
+        assertThat(twoPlayers).isNegative();
+        assertThat(threePlayers).isEqualTo(twoPlayers * 2);
     }
 
     @Test

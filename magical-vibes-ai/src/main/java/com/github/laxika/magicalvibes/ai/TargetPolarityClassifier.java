@@ -25,6 +25,9 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -68,6 +71,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEff
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentProtectedByOpponentOfSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
@@ -86,8 +91,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Map.entry;
@@ -138,7 +145,7 @@ public class TargetPolarityClassifier {
      * Group-level polarity for one multi-target group's effects, collapsed by the same
      * priority as {@link #classifyCard}. Returns null when no effect classifies.
      */
-    TargetPolarity classifyGroup(GameData gameData, List<? extends CardEffect> groupEffects, UUID aiPlayerId) {
+    public TargetPolarity classifyGroup(GameData gameData, List<? extends CardEffect> groupEffects, UUID aiPlayerId) {
         if (groupEffects.stream().anyMatch(TargetPolarityClassifier::replacesTheTargetForItsController)) {
             return TargetPolarity.NEUTRAL;
         }
@@ -170,8 +177,23 @@ public class TargetPolarityClassifier {
             return classifyGroup(gameData, modal.choice().options().stream()
                     .flatMap(option -> option.effects().stream()).toList(), aiPlayerId);
         }
+        // "Choose one" whose every mode acts on the one target (Walking Sponge's lost keyword, Nature's Blessing's
+        // counter or keyword, Hidden Strings' tap or untap): the modes decide; modes with no direction are NEUTRAL.
+        if (effect instanceof ChooseOneForTargetCreatureEffect modal) {
+            return modesPolarity(gameData, modal.options(), aiPlayerId);
+        }
+        if (effect instanceof ChooseOneForTargetPermanentEffect modal) {
+            return modesPolarity(gameData, modal.options(), aiPlayerId);
+        }
         // Wrappers: classify what actually happens to the target. Kicker-style replacements
         // use the base mode only — the AI never kicks (mirrors computeBaseAllowedTargets).
+        // "If an opponent protects it, remove defense counters from it" (Portent Tracker, Etched Host Doombringer): the
+        // battle an opponent protects is one its controller wants defeated, the AI's own.
+        if (effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof TargetPermanentMatches(var filter)
+                && filter instanceof PermanentProtectedByOpponentOfSourceControllerPredicate) {
+            return TargetPolarity.BENEFICIAL;
+        }
         if (effect instanceof ConditionalEffect conditional) {
             return classify(gameData, conditional.wrapped(), aiPlayerId);
         }
@@ -508,16 +530,17 @@ public class TargetPolarityClassifier {
             };
         }
 
-        // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction. Counters on the source go on no
-        // target: a target such an ability declares (a player it counts for, a permanent it reads) has no direction.
+        // Counters: a power/toughness counter that lowers either hurts, one that raises them helps (+1/+1, +0/+1,
+        // Dwarven Armorer's +1/+0), anything else carries no direction. Counters on the source go on no target: a
+        // target such an ability declares (a player it counts for, a permanent it reads) has no direction.
         if (effect instanceof PutCountersEffect counter) {
             if (counter.subject() instanceof PermanentSubject.Source) {
                 return TargetPolarity.NEUTRAL;
             }
-            if (counter.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+            if (LOWERING_COUNTERS.contains(counter.counterType())) {
                 return TargetPolarity.HARMFUL;
             }
-            return counter.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+            return RAISING_COUNTERS.contains(counter.counterType())
                     ? TargetPolarity.BENEFICIAL
                     : TargetPolarity.NEUTRAL;
         }
@@ -636,6 +659,13 @@ public class TargetPolarityClassifier {
         return FIXED_BY_CLASS_NAME.get(effect.getClass().getSimpleName());
     }
 
+    private TargetPolarity modesPolarity(GameData gameData, List<ChooseOneEffect.ChooseOneOption> options,
+                                         UUID aiPlayerId) {
+        TargetPolarity polarity = classifyGroup(gameData,
+                options.stream().flatMap(option -> option.effects().stream()).toList(), aiPlayerId);
+        return polarity == null ? TargetPolarity.NEUTRAL : polarity;
+    }
+
     /** "-1/-1 for each [counted thing]": a count scaled by a negative factor. */
     private static boolean negativePerCount(DynamicAmount amount) {
         return amount instanceof Scaled scaled && scaled.factor() < 0;
@@ -714,6 +744,16 @@ public class TargetPolarityClassifier {
      * for legibility, and {@code TargetPolarityGuardTest} makes the trade safe — a renamed
      * or newly added shape with no live entry here fails that test loudly.
      */
+    /** The power/toughness counters that lower power or toughness. */
+    private static final Set<CounterType> LOWERING_COUNTERS = EnumSet.of(CounterType.MINUS_ONE_MINUS_ONE,
+            CounterType.MINUS_ONE_MINUS_ZERO, CounterType.MINUS_TWO_MINUS_ONE, CounterType.MINUS_TWO_MINUS_TWO,
+            CounterType.MINUS_ZERO_MINUS_ONE, CounterType.MINUS_ZERO_MINUS_TWO);
+
+    /** The power/toughness counters that raise power or toughness. */
+    private static final Set<CounterType> RAISING_COUNTERS = EnumSet.of(CounterType.PLUS_ONE_PLUS_ONE,
+            CounterType.PLUS_ONE_PLUS_ZERO, CounterType.PLUS_ONE_PLUS_TWO, CounterType.PLUS_TWO_PLUS_TWO,
+            CounterType.PLUS_ZERO_PLUS_ONE, CounterType.PLUS_TWO_PLUS_ZERO, CounterType.PLUS_ZERO_PLUS_TWO);
+
     private static final Map<String, TargetPolarity> FIXED_BY_CLASS_NAME = Map.ofEntries(
             // The target leaves the battlefield (or the board position it holds).
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -864,7 +904,6 @@ public class TargetPolarityClassifier {
             entry("ShuffleTargetPermanentsThenEachControllerMayCastEffect", TargetPolarity.NEUTRAL),
             entry("MustBlockEachAttackingCreatureThisTurnEffect", TargetPolarity.NEUTRAL),
             entry("ChangeColorTextEffect", TargetPolarity.NEUTRAL),
-            entry("ChooseOneForTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),

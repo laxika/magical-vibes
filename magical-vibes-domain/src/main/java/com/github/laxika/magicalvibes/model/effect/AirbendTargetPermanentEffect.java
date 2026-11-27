@@ -51,8 +51,12 @@ public record AirbendTargetPermanentEffect(PermanentSubject subject, TargetSpec 
         return declaredTarget;
     }
 
+    /**
+     * Single-target removal only when it airbends its target; "airbend all other creatures" (Avatar's Wrath) is a
+     * sweep and "airbend that creature" (Monk Gyatso) names no target.
+     */
     @Override
     public RemovalKind removalKind() {
-        return RemovalKind.EXILE;
+        return subject.declaresTarget() ? RemovalKind.EXILE : null;
     }
 }

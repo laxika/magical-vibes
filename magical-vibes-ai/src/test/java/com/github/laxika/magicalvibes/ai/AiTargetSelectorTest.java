@@ -1,5 +1,12 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.s.SigurdJarlOfRavensthorpe;
+import com.github.laxika.magicalvibes.cards.u.UrzasSaga;
+import com.github.laxika.magicalvibes.cards.p.PortentTracker;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfKamigawa;
+import com.github.laxika.magicalvibes.cards.w.WalkingSponge;
+import com.github.laxika.magicalvibes.cards.d.DwarvenArmorer;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
@@ -1953,6 +1960,62 @@ class AiTargetSelectorTest {
 
             // Should target opponent's creature (harmful classification)
             assertThat(target).isEqualTo(oppCreature.getId());
+        }
+
+        @Test
+        @DisplayName("Portent Tracker's battle ability targets the AI's own battle an opponent protects, not the opponent's")
+        void defenseCounterAbilityTargetsOwnBattleAnOpponentProtects() {
+            Permanent ownBattle = harness.addToBattlefieldAndReturn(aiPlayer, new InvasionOfKamigawa());
+            ownBattle.setProtectorPlayerId(human.getId());
+            ownBattle.setCounterCount(CounterType.DEFENSE, 3);
+            Permanent opposingBattle = harness.addToBattlefieldAndReturn(human, new InvasionOfKamigawa());
+            opposingBattle.setProtectorPlayerId(aiPlayer.getId());
+            opposingBattle.setCounterCount(CounterType.DEFENSE, 3);
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new PortentTracker());
+
+            UUID target = targetSelector.chooseAbilityTarget(
+                    gd, source.getCard().getActivatedAbilities().get(1), aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(ownBattle.getId());
+        }
+
+        @Test
+        @DisplayName("Sigurd's boast, whose target must be a Saga the AI controls, targets the AI's own Saga")
+        void ownSagaOnlyAbilityTargetsOwnSaga() {
+            Permanent saga = harness.addToBattlefieldAndReturn(aiPlayer, new UrzasSaga());
+            harness.addToBattlefield(human, new UrzasSaga());
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new SigurdJarlOfRavensthorpe());
+
+            UUID target = targetSelector.chooseAbilityTarget(
+                    gd, source.getCard().getActivatedAbilities().getFirst(), aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(saga.getId());
+        }
+
+        @Test
+        @DisplayName("A modal ability whose every mode helps its target (Dwarven Armorer) targets the AI's own creature")
+        void beneficialModalAbilityTargetsOwnCreature() {
+            Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            harness.addToBattlefield(human, new AirElemental());
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new DwarvenArmorer());
+
+            UUID target = targetSelector.chooseAbilityTarget(
+                    gd, source.getCard().getActivatedAbilities().getFirst(), aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(ownBears.getId());
+        }
+
+        @Test
+        @DisplayName("A modal ability whose every mode harms its target (Walking Sponge) targets the opponent's creature")
+        void harmfulModalAbilityTargetsOpponentCreature() {
+            harness.addToBattlefield(aiPlayer, new SerraAngel());
+            Permanent opposing = harness.addToBattlefieldAndReturn(human, new AirElemental());
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new WalkingSponge());
+
+            UUID target = targetSelector.chooseAbilityTarget(
+                    gd, source.getCard().getActivatedAbilities().getFirst(), aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(opposing.getId());
         }
     }
 

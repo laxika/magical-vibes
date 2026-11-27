@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoardWipeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
@@ -101,6 +103,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
@@ -110,6 +113,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -431,6 +435,9 @@ public class SpellEvaluator {
         return 0;
     }
 
+    /** One card discarded from a hand, as the hard AI scores a discard aimed at an opponent. */
+    private static final double DISCARDED_CARD_VALUE = 4.0;
+
     /**
      * What paying the "unless" of {@code pending} gains {@code payerId}, who is asked it: the branch paid for over the
      * branch paid to avoid, each as the payer sees it (the ransom itself is weighed by the caller,
@@ -442,6 +449,7 @@ public class SpellEvaluator {
      *   <li>A branch that sacrifices, destroys, exiles, bounces or phases out the source (an upkeep "sacrifice this
      *       unless you pay", Vexing Devil): the source's value, the same way round.</li>
      *   <li>The payer losing life or being dealt damage: on the ransom's life scale.</li>
+     *   <li>The payer discarding the card revealed from their hand: one card's loss.</li>
      *   <li>Any other branch is written from its controller's side ("you" is the controller). Asked of the controller,
      *       it is scored as written; asked of another player (ward and "counter it unless" on the payer's spell, a
      *       discard aimed at the payer, a draw for the controller), it is scored from the controller's side, with the payer
@@ -474,6 +482,11 @@ public class SpellEvaluator {
         int lifeLost = payerLosesLife(gameData, branch, unless.payer(), payerId);
         if (lifeLost < 0) {
             return lifeLost * 1.5;
+        }
+        // "That player discards it unless they pay" (Wand of Ith): the card revealed from the payer's hand is theirs to
+        // lose, on the scale of a discard aimed at an opponent.
+        if (branch instanceof DiscardCardsEffect) {
+            return -DISCARDED_CARD_VALUE;
         }
         UUID controllerId = pending.sourceControllerId();
         if (controllerId == null || controllerId.equals(payerId)) {
@@ -710,8 +723,9 @@ public class SpellEvaluator {
     }
 
     /**
-     * A draw's worth to the AI: its own draw is card advantage, an opponents' draw the same as a cost, a draw for every
-     * player alike nothing; null for a draw whose players aren't known ahead (a target, an event's player).
+     * A draw's worth to the AI: its own draw is card advantage, an opponents' draw the same as a cost for each opponent
+     * still in the game, a draw for every player alike nothing; null for a draw whose players aren't known ahead (a
+     * target, an event's player).
      */
     private Double drawScore(GameData gameData, CardDrawingEffect draw, UUID aiPlayerId) {
         AiUtils.DrawRecipients recipients = AiUtils.drawRecipients(draw);
@@ -723,7 +737,11 @@ public class SpellEvaluator {
         }
         double cards = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                 AmountContext.forEstimation(aiPlayerId)) * 6.0;
-        return recipients == AiUtils.DrawRecipients.CONTROLLER ? cards : -cards;
+        if (recipients == AiUtils.DrawRecipients.CONTROLLER) {
+            return cards;
+        }
+        long opponents = gameData.playerIds.stream().filter(id -> !id.equals(aiPlayerId)).count();
+        return -cards * Math.max(1, opponents);
     }
 
     private boolean hasCardDrawEffect(Card card) {
@@ -1060,11 +1078,27 @@ public class SpellEvaluator {
             return -estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId) * 1.5;
         }
 
-        // Board wipes
+        // Board wipes; a set the AI's opponents control ("each creature target opponent controls", Simoon; "destroy all
+        // creatures target player controls", aimed at the opponent) spares the AI's own battlefield.
         if (effect instanceof DealDamageEffect aoe && aoe.sweepsBoard()) {
             int damage = estimateDamageAmount(gameData, card, aoe.damage(), aiPlayerId);
             return evaluateBoardWipeDamage(gameData, damage, aiPlayerId, opponentId,
                     aiBattlefield, oppBattlefield);
+        }
+        if (effect instanceof DealDamageEffect aoe && aoe.dealers() == null
+                && aoe.recipient() == DealDamageEffect.Recipient.EACH_PERMANENT
+                && aoe.subject() instanceof PermanentSubject.ControlledBy set && namesOpponentsOnly(set.players())) {
+            int damage = estimateDamageAmount(gameData, card, aoe.damage(), aiPlayerId);
+            FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
+            List<Permanent> dealt = oppBattlefield.stream()
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, set.filter(), filterContext))
+                    .toList();
+            return evaluateBoardWipeDamage(gameData, damage, aiPlayerId, opponentId, List.of(), dealt);
+        }
+        if (effect instanceof DealDamageEffect each && each.dealers() == null
+                && each.recipient() == DealDamageEffect.Recipient.EACH_TARGET) {
+            int damage = estimateDamageAmount(gameData, card, each.damage(), aiPlayerId);
+            return evaluateDamageToEachTarget(gameData, card, each, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof DestroyAllPermanentsEffect wipe) {
             return evaluateDestroyAllValue(gameData, wipe.filter(), aiPlayerId, opponentId,
@@ -1072,7 +1106,24 @@ public class SpellEvaluator {
         }
         if (effect instanceof DestroyTargetPermanentEffect wipe && wipe.sweepsBoard()) {
             return evaluateDestroyAllValue(gameData, wipe.setFilter(), aiPlayerId, opponentId,
-                    aiBattlefield, oppBattlefield);
+                    destroysOpponentsOnly(wipe) ? List.of() : aiBattlefield, oppBattlefield);
+        }
+
+        // "Choose up to one target creature, then airbend all other creatures" (Avatar's Wrath): a sweep that spares
+        // the AI's own best creature, its target.
+        if (effect instanceof AirbendTargetPermanentEffect airbend
+                && airbend.subject() instanceof PermanentSubject.Except except
+                && except.permanents() instanceof PermanentSubject.ControlledBy set
+                && set.players() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL) {
+            Permanent spared = except.excluded() instanceof PermanentSubject.TargetDeclaredElsewhere
+                    ? aiBattlefield.stream()
+                            .filter(p -> gameQueryService.isCreature(gameData, p))
+                            .max(Comparator.comparingDouble(
+                                    p -> boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId)))
+                            .orElse(null)
+                    : null;
+            List<Permanent> aiAirbent = aiBattlefield.stream().filter(p -> p != spared).toList();
+            return evaluateDestroyAllValue(gameData, set.filter(), aiPlayerId, opponentId, aiAirbent, oppBattlefield);
         }
 
         // Draw
@@ -1549,6 +1600,50 @@ public class SpellEvaluator {
                 .mapToDouble(p -> boardEvaluator.creatureThreatScore(gameData, p, opponentId, aiPlayerId))
                 .max()
                 .orElse(damage * 1.0);
+    }
+
+    /**
+     * "N damage to each of [up to] N targets": each target is the opponent's creature it kills, by threat, or the
+     * opponent when a player can be targeted, the best of them summed up to the card's target count.
+     */
+    private double evaluateDamageToEachTarget(GameData gameData, Card card, DealDamageEffect each, int damage,
+                                              List<Permanent> oppBattlefield, UUID opponentId, UUID aiPlayerId) {
+        List<Double> values = new ArrayList<>(oppBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) <= damage)
+                .map(p -> boardEvaluator.creatureThreatScore(gameData, p, opponentId, aiPlayerId))
+                .toList());
+        if (each.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            values.add(damage * 1.5);
+        }
+        if (values.isEmpty()) {
+            return damage * 1.0;
+        }
+        values.sort(Comparator.reverseOrder());
+        int targets = card == null ? 1 : Math.max(1, card.getMaxTargets());
+        return values.stream().limit(targets).mapToDouble(Double::doubleValue).sum();
+    }
+
+    /** "Destroy all [X] target player controls": the AI aims it at an opponent. */
+    private static boolean destroysOpponentsOnly(DestroyTargetPermanentEffect wipe) {
+        PermanentSubject set = wipe.subject() instanceof PermanentSubject.Except except
+                ? except.permanents() : wipe.subject();
+        return set instanceof PermanentSubject.ControlledBy controlledBy && namesOpponentsOnly(controlledBy.players());
+    }
+
+    /**
+     * Players the AI's set effect reaches only on its opponents' side: a target player (the AI targets an opponent),
+     * each opponent, or "that player or that planeswalker's controller" of a targeted player or planeswalker.
+     */
+    private static boolean namesOpponentsOnly(PlayerSubject players) {
+        return switch (players) {
+            case PlayerSubject.TargetPlayer ignored -> true;
+            case PlayerSubject.Each each -> each.relation() == PlayerSubject.Relation.OPPONENTS;
+            case PlayerSubject.OpponentsOf of -> of.player() instanceof PlayerSubject.You;
+            case PlayerSubject.ControllerOf of -> of.permanent() instanceof PermanentSubject.Target;
+            case PlayerSubject.AllOf all -> all.subjects().stream().allMatch(SpellEvaluator::namesOpponentsOnly);
+            default -> false;
+        };
     }
 
     private double evaluateBoardWipeDamage(GameData gameData, int damage,

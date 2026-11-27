@@ -769,10 +769,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             boolean lethalIncoming = totalIncomingDamage >= myLife;
 
             List<Integer> candidates = getAvailableBlockersForAttacker(gameData, battlefield, blockerUsed, attackingPerm);
+            List<Integer> obeying = List.of();
             if (mustBlock) {
                 // "Must be blocked by an Eldrazi if able": block it with a creature that obeys the requirement when one
                 // can; when none can, nothing is required of this attacker.
-                List<Integer> obeying = candidates.stream()
+                obeying = candidates.stream()
                         .filter(blockerIdx -> gameQueryService.obeysAMustBeBlockedRequirement(
                                 gameData, attackingPerm, battlefield.get(blockerIdx)))
                         .toList();
@@ -819,6 +820,14 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
 
             if (chosen.isEmpty()) continue;
+            if (mustBlock && !lure && chosen.stream().noneMatch(obeying::contains)) {
+                // Under menace one matching blocker obeys "must be blocked by an Eldrazi"; the others may be any
+                // creature (CR 509.1c).
+                List<Integer> obeyed = new ArrayList<>(chosen);
+                obeyed.removeLast();
+                obeyed.add(pickCheapestBlockers(battlefield, obeying, 1).getFirst());
+                chosen = obeyed;
+            }
 
             for (int blockerIdx : chosen) {
                 assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));

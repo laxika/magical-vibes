@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.Guile;
 import com.github.laxika.magicalvibes.cards.h.Hellrider;
 import com.github.laxika.magicalvibes.cards.h.HollowDogs;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.OgreResister;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.PrizedUnicorn;
@@ -2090,6 +2091,54 @@ class CombatSimulatorTest {
 
         assertThat(blockers).hasSize(2);
         assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @CardUsed({SlayersCleaver.class, CrawWurm.class, GrizzlyBears.class, SalvageDrone.class})
+    @DisplayName("Exhaustive: a menace attacker that must be blocked by an Eldrazi is blocked by the Eldrazi and another creature")
+    void exhaustiveMustBeBlockedByEldraziWithMenace() {
+        addMenaceAttackerThatMustBeBlockedByAnEldrazi();
+        gd.playerBattlefields.get(player1.getId()).add(untapped(new GrizzlyBears()));
+        gd.playerBattlefields.get(player1.getId()).add(untapped(new SalvageDrone()));
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).anyMatch(block -> block[0] == 1 && block[1] == 0);
+    }
+
+    @Test
+    @CardUsed({SlayersCleaver.class, CrawWurm.class, LlanowarElves.class, SalvageDrone.class})
+    @DisplayName("Greedy: a menace attacker that must be blocked by an Eldrazi is blocked by the Eldrazi among the pair")
+    void greedyMustBeBlockedByEldraziWithMenace() {
+        addMenaceAttackerThatMustBeBlockedByAnEldrazi();
+        gd.playerBattlefields.get(player1.getId()).add(untapped(new LlanowarElves()));
+        gd.playerBattlefields.get(player1.getId()).add(untapped(new LlanowarElves()));
+        gd.playerBattlefields.get(player1.getId()).add(untapped(new SalvageDrone()));
+
+        List<int[]> blockers = simulator.findBestBlockers(
+                gd, player1.getId(), List.of(0), List.of(0, 1, 2));
+
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).anyMatch(block -> block[0] == 2 && block[1] == 0);
+    }
+
+    private void addMenaceAttackerThatMustBeBlockedByAnEldrazi() {
+        Permanent wurm = new Permanent(new CrawWurm());
+        TestCards.mutableCard(wurm).setKeywords(EnumSet.of(Keyword.MENACE));
+        wurm.setSummoningSick(false);
+        wurm.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+        Permanent cleaver = new Permanent(new SlayersCleaver());
+        cleaver.setAttachedTo(wurm.getId());
+        gd.playerBattlefields.get(player2.getId()).add(cleaver);
+    }
+
+    private static Permanent untapped(com.github.laxika.magicalvibes.model.Card card) {
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 
     @Test

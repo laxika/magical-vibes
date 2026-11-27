@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.p.PlungeIntoDarkness;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.t.TaintedSpecter;
 import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
+import com.github.laxika.magicalvibes.cards.w.WandOfIth;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -74,6 +75,30 @@ class UnlessPayerScoringAiTest extends HardAiDecisionEngineTestSupport {
                 .noneMatch(card -> card.getName().equals("Noble Elephant"));
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Noble Elephant");
+    }
+
+    @Test
+    @DisplayName("Wand of Ith: the hard AI pays 1 life rather than discard its revealed land")
+    void paysLifeToKeepTheRevealedCard() {
+        HardAiDecisionEngine ai = createHardAi(player2);
+        Permanent wand = new Permanent(new WandOfIth());
+        gd.playerBattlefields.get(player1.getId()).add(wand);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        gd.status = GameStatus.RUNNING;
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        ai.handleEvent(AiDecisionKind.INTERACTION);
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Forest"));
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
     @Test

@@ -1500,12 +1500,21 @@ class AiTargetSelector {
                 : targetFilterAllowsPermanent(targetFilter)
                 && (effectsCanTargetPermanent || !effectsDeclareTarget);
 
-        // Classify: is this ability beneficial to the target or harmful?
-        boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
-                (CreatureBoostEffect.targetedBoost(e) instanceof CreatureBoostEffect boost
-                        && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
-                        || e instanceof RegenerationEffect
-                        || (e instanceof KeywordGrantingEffect grant && GrantSubjectShapes.grantsToItsTarget(grant)));
+        // Classify: is this ability beneficial to the target or harmful? The polarity classifier decides when it
+        // gives a direction (a modal ability's modes, an untap, a counter, a wrapped pump); otherwise a pump,
+        // regeneration or keyword grant is beneficial and anything else harmful. A target the filter keeps to the
+        // AI's own permanents ("target Saga you control", Sigurd) with no harm in the effects is its own.
+        TargetPolarity polarity = polarityClassifier.classifyGroup(gameData, nonCostEffects, aiPlayerId);
+        boolean isBeneficial = polarity != null && polarity != TargetPolarity.NEUTRAL
+                ? polarity == TargetPolarity.BENEFICIAL
+                : nonCostEffects.stream().anyMatch(e ->
+                        (CreatureBoostEffect.targetedBoost(e) instanceof CreatureBoostEffect boost
+                                && amountEvaluationService.evaluate(gameData, boost.powerBoost(),
+                                AmountContext.forEstimation(aiPlayerId)) >= 0)
+                                || e instanceof RegenerationEffect
+                                || (e instanceof KeywordGrantingEffect grant
+                                && GrantSubjectShapes.grantsToItsTarget(grant)))
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter;
 
         if (canTargetPermanent) {
             if (isBeneficial) {

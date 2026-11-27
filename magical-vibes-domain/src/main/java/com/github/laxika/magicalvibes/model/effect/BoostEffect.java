@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -291,8 +292,9 @@ public record BoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost
 
     /**
      * The self-targeting marker for the source (and the source-or-host) form; a target subject declares a creature
-     * target (benign), or a permanent target (harmful) for "target creature or Vehicle"; any other subject declares
-     * nothing, save the player target of "creatures target player controls".
+     * target, or a permanent target for "target creature or Vehicle", harmful when the boost lowers power or toughness
+     * (a negative fixed amount, or "-1/-1 for each ...") and benign otherwise; any other subject declares nothing, save
+     * the player target of "creatures target player controls".
      */
     @Override
     public TargetSpec targetSpec() {
@@ -305,8 +307,15 @@ public record BoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost
         if (!subject.declaresTarget()) {
             return TargetSpec.NONE;
         }
-        return targetsPermanent ? TargetSpec.harmful(TargetPredicates.permanent(), filter)
-                : TargetSpec.benign(TargetPredicates.creature(), filter);
+        TargetPredicate declared = targetsPermanent ? TargetPredicates.permanent() : TargetPredicates.creature();
+        return lowers(powerBoost) || lowers(toughnessBoost) ? TargetSpec.harmful(declared, filter)
+                : TargetSpec.benign(declared, filter);
+    }
+
+    /** A negative fixed amount, or a count scaled by a negative factor. */
+    private static boolean lowers(DynamicAmount amount) {
+        return amount instanceof Fixed fixed && fixed.value() < 0
+                || amount instanceof Scaled scaled && scaled.factor() < 0;
     }
 
     /**

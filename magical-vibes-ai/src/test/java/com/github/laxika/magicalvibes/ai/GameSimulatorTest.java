@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.g.GriffinCanyon;
+import com.github.laxika.magicalvibes.cards.g.GriffinSentinel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.t.TymaretTheMurderKing;
@@ -37,6 +39,7 @@ import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.v.ViolentOutburst;
+import com.github.laxika.magicalvibes.cards.w.WalkingSponge;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -437,6 +440,50 @@ class GameSimulatorTest {
 
         assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
                 .containsExactly(player2.getId());
+    }
+
+    @Test
+    @DisplayName("A permanent-target pump ability (Griffin Canyon) ranks the AI's own Griffin first")
+    void permanentTargetPumpAbilityPrefersOwnTarget() {
+        Permanent canyon = harness.addToBattlefieldAndReturn(player1, new GriffinCanyon());
+        Permanent ownGriffin = harness.addToBattlefieldAndReturn(player1, new GriffinSentinel());
+        harness.addToBattlefield(player2, new GriffinSentinel());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction.ActivateAbility> actions = simulator.getLegalActions(
+                        gd, player1.getId()).stream()
+                .filter(SimulationAction.ActivateAbility.class::isInstance)
+                .map(SimulationAction.ActivateAbility.class::cast)
+                .filter(action -> action.permanentId().equals(canyon.getId()))
+                .filter(action -> action.targetId() != null)
+                .toList();
+
+        assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
+                .first().isEqualTo(ownGriffin.getId());
+    }
+
+    @Test
+    @DisplayName("A modal ability whose every mode harms its target (Walking Sponge) ranks the opponent's creature first")
+    void harmfulModalAbilityPrefersOpposingTarget() {
+        Permanent sponge = harness.addToBattlefieldAndReturn(player1, new WalkingSponge());
+        sponge.setSummoningSick(false);
+        harness.addToBattlefield(player1, new SerraAngel());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction.ActivateAbility> actions = simulator.getLegalActions(
+                        gd, player1.getId()).stream()
+                .filter(SimulationAction.ActivateAbility.class::isInstance)
+                .map(SimulationAction.ActivateAbility.class::cast)
+                .filter(action -> action.permanentId().equals(sponge.getId()))
+                .toList();
+
+        assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
+                .first().isEqualTo(opposing.getId());
     }
 
     @Test

@@ -682,9 +682,12 @@ public class GameSimulator {
                                           ActivatedAbility ability,
                                           ValidTargetsResponse validTargets) {
         UUID opponentId = getOpponentId(gd, playerId);
-        boolean harmful = ability.getEffects().stream()
-                .anyMatch(effect -> effect.targetSpec().harmful()
-                        || isAimedDamage(effect));
+        TargetPolarity polarity = polarityClassifier.classifyGroup(gd, ability.getEffects().stream()
+                .filter(effect -> !(effect instanceof CostEffect)).toList(), playerId);
+        boolean harmful = polarity != null && polarity != TargetPolarity.NEUTRAL
+                ? polarity.isHarmful()
+                : ability.getEffects().stream()
+                        .anyMatch(effect -> effect.targetSpec().harmful() || isAimedDamage(effect));
 
         List<UUID> playerTargets = new ArrayList<>(validTargets.validPlayerIds());
         UUID preferredPlayer = harmful ? opponentId : playerId;
