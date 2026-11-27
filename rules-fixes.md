@@ -51,7 +51,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1 done 2026-11-27 |
-| DR Draws | DR-1 | open |
+| DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
 | CB Combat | CB-1 | open |
 | PP Perpetual changes | PP-1 | open |
 | PL Each player chooses, then all act | PL-1 | open |
@@ -1077,7 +1077,22 @@ a draw is replaced by drawing more), O101 (`EachOtherPlayerDrawsCardEffectHandle
 Likely touches: `DrawService`, `DrawCardEffectHandler`, `EachOtherPlayerDrawsCardEffectHandler`.
 Notes: O101 is the gift cards. The gift opponent is the owner's deferred question (entry 17), so fix only the draw order.
 
-Outcome:
+Outcome: 2026-11-27. Fixed, each with a test that failed first (deleted from entry 18): M13, F10, E4, E6, O101. Dropped: M1's
+draw part (fixed in defect run D12; the three-player third-seat tests of Notion Thief, Hullbreacher and Alms Collector pass).
+M13: with extra-draw replacements under different opponents (two Notion Thieves, a Thief and a Hullbreacher) the drawer chooses
+one (`ChoiceContext.ExtraDrawRedirectChoice`), and a Thief's new drawer repeats that among those not yet applied, a Hullbreacher
+included (CR 616.1, 616.1e, 616.1f, 614.5; Notion Thief's and Hullbreacher's rulings); Alms Collectors of different opponents
+are a `DrawReplacementSourceChoice` (its ruling). F10: every DrawService source finder that checked only lost abilities now skips
+a face-down source (`hasNoAbilities`; Alms Collector, Quantum Riddler, doublers, Zur's Weirding, the empty-library, first-extra
+-draw and Sages finders), Forbidden Crypt reads `hasActiveStaticEffect` (CR 708.2a, 613.1f); the Words part dropped: the Words of
+Worship / Wilding lookup by name only keys a floating replacement that doesn't depend on its source, and a face-down source
+changes nothing (N66 is the real defect there). E4/E6: a draw's modified event draws count as drawn by the instruction (the DRAW
+step and `CardsDrawnThisResolution`: The Royal Scions' and Ancient Excavation's rulings, CR 614.6), and only a draw no replacement
+changed is "that card" (`GameData.unreplacedDrawnCardIds`, written by `DrawService` with `drawEventDepth`; Pact Weapon's ruling,
+read by Pact Weapon and Jace, Mirror Mage). The entry 17 replaced-draw question is answered by those rulings; a new one asks about
+the plural "one of them" readers. O101: `EachOtherPlayerDrawsCardEffectHandler` draws in APNAP order with every amount fixed first
+(CR 101.4, 608.2h); the gift opponent stays the owner's. New lines N65, N66, N67 (MC-2). No effect class added or deleted, so no
+ledger or ratchet change.
 
 ### CB. Combat
 
@@ -1287,6 +1302,19 @@ ability or keyword (Wall Crawl's "Spiders you control ... can't be blocked by cr
 `CantBeBlockedByCreaturesMatchingPredicateEffect`, `AssignCombatDamageAsThoughUnblockedEffect` and `CantLoseGameEffect` grants
 among the 74 card files), is removed when the affected creature loses all abilities (CR 613.1f); each is a STATIC
 `GrantNonAbilityEffectEffect` (Zilortha, Garland). Sure of Wall Crawl's code and text.
+
+New line N65 (seen in DR-1): an Alms Collector draw instruction that starts while another draw choice is open
+(`DrawService.resolveDrawCards`' `drawChoicePending` branch) queues the first collector's controller by APNAP order instead of
+letting the drawer choose between collectors of different opponents (CR 616.1, Alms Collector's ruling). Sure of the code, rare.
+
+New line N66 (seen in DR-1): Words of Worship's and Words of Wilding's pending "next draw" replacements are keyed by their
+source permanent (`findBattlefieldPermanentNamed`), so once that source has left the battlefield the drawer is no longer asked to
+order them against another Words replacement (CR 616.1); they should take fixed ids like Words of Wind and Words of Waste.
+Sure of the code.
+
+New line N67 (seen in DR-1): the draw a Notion Thief gives its controller is performed with `performDrawCard` directly, so the
+new drawer's own draw replacements (Thought Reflection, Abundance, dredge) never see it, though the modified event is a draw
+(CR 614.6, 616.1f). Sure of the code.
 
 Outcome:
 

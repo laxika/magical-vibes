@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.CerebralDownload;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.t.ThoughtReflection;
@@ -241,5 +244,18 @@ class QuantumRiddlerTest extends BaseCardTest {
     private void addCerebralDownloadMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
+    }
+
+    @Test
+    @DisplayName("A face-down Quantum Riddler has no abilities, so a draw is not increased")
+    void faceDownRiddlerDoesNotAddACard() {
+        harness.addToBattlefieldAndReturn(player1, new QuantumRiddler()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new CerebralDownload(), new CerebralDownload()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

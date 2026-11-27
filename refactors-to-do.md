@@ -414,7 +414,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Boost: the `StaticBoostEffect` family (per-creature amounts, a layered set), the while-tapped record, the chosen-type and Hand of Vecna records (a choice at resolution); `BoostOpponentCreaturesByPoisonCountersEffect` and `BoostOwnCreaturesAttackingPlayersByDefendingPlayerCreatureCountEffect` fold onto `BoostEffect.each` once its `BOOSTED` amounts read per permanent of a set.
 - Counters: `RemoveAllCountersFromTargetPermanentEffect` (every kind and player counters: its own verb), `RemoveAllCountersAsCostEffect` (a cost), Bomb Squad's fused record, the as-enters removals (Thief of Blood, Sin), `PutCounterOnEachControlledPermanentOfChosenSubtypeEffect` (a choice at resolution, one card): stay.
 - Damage: `DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCountEffect` (an amount per recipient's controller), `DiscardRandomCardThenMassDamageEffect` (its own repeat loop), `EachCreatureDealsPowerDamageToItselfEffect`, the one-card dealer records (Mage Slayer, Aura Barbs, Grim Contest, Spinning Wheel Kick, the target-land, enchanted-creature and up-to-one-source records), `DealDividedDamageEffect` (divided at cast, CR 601.2d), fight (CR 701.14b): stay out of `DealDamageEffect` until a second user of each part.
-- Draw: `EachOpponentDrawsCardEffect` (Struggle for Project Purity counts a replaced draw's extra cards: the owner's replaced-draw question), `EachOtherPlayerDrawsCardEffect` (the gift files: the owner's gift opponent).
+- Draw: `EachOpponentDrawsCardEffect` (Struggle for Project Purity counts a replaced draw's extra cards: right, the replaced-draw question was settled in DR-1 by The Royal Scions' and Ancient Excavation's rulings; the move is unblocked), `EachOtherPlayerDrawsCardEffect` (the gift files: the owner's gift opponent).
 - Destroy and exile: `DestroyAllPermanentsEffect` (Seeds of Innocence's and Stench of Evil's per-destroyed riders), `ExileAllPermanentsEffect` (five one-card riders: source tracking, the upkeep return, perpetual changes, play permissions), `DestroyTargetPermanentThenEffect`, `ExileChosenPermanentsEffect`.
 - Conjure: `ConjureCardOntoBattlefieldEffect` (the `Supplier` draft path), `ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect` (one card), `ConjureCardToOpponentBattlefieldEffect` (gift), `ConjureDuplicateOntoBattlefieldEffect` (three cards).
 - Other: `SacrificeEachMatchingPermanentEffect` (7 cards), `RegenerateAllOwnCreaturesEffect` (6), the reveal heads, Mirrorform's copier set (`EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect`): not audited for a fold yet.
@@ -892,7 +892,7 @@ The payload is read inline by `DrawService`; unblocked by a "this draw was repla
 - `ArchmageAscensionDrawReplacementEffect`: Archmage Ascension: an optional draw replacement (search for any card) active at six quest counters, whose payload DrawService runs inline (DrawReplacementKind.ARCHMAGE_ASCENSION).
 - `BreathstealersCryptDrawReplacementEffect`: Breathstealer's Crypt: every player's draw is followed by a reveal and a pay-3-life-or-discard for a creature, run inline by DrawService and BreathstealersCryptDrawReplacementHandler.
 - `ChainsOfMephistophelesDrawReplacementEffect`: Chains of Mephistopheles, Magus of the Chains: a draw replacement (discard then draw, else mill) on every draw but the first of a draw step, run inline by DrawService with its per-player application count; run 32's DrawService replacement-pass redesign.
-- `DrawPerSourceCounterThenDamageEffect`: 'the number of cards they drew this way' is AmountThisWay(DRAW), but DrawCardEffectHandler records no cards when a draw is replaced by more draws (Alhammarret's Archive), so the damage would be 0 where the old cardsDrawnThisTurn count deals it.
+- `DrawPerSourceCounterThenDamageEffect`: 'the number of cards they drew this way' is AmountThisWay(DRAW), but DrawCardEffectHandler records no cards when a draw is replaced by more draws (Alhammarret's Archive), so the damage would be 0 where the old cardsDrawnThisTurn count deals it. Unblocked by DR-1: the DRAW step now records a replacement's draws.
 - `EachOpponentDrawsCardEffect`: 4 card files moved to DrawCardEffect(1, eachOpponent()); Struggle for Project Purity stays: its "for each card drawn this way" counts a replacement's extra cards here, the survivor records none for a replaced draw (the owner's replaced-draw question, D14 ….
 - `EachPlayerReturnsPermanentToHandEffect`: record unused but its handler's beginReplacement/completeChoice serve Words of Wind via DrawService, MultiPermanentChoiceHandlerService.
 - `IslandSanctuaryEffect`: Island Sanctuary: a draw-step 'instead you may skip that draw. If you do, [payload]' marker dispatched by DrawReplacementKind in MayMiscHandlerService (the payload: a floated CreaturesCantAttackControllerUnlessPredicateEffect, flying or islandwalk, ….
@@ -1198,7 +1198,7 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-25, the gift opponent (deferred by the owner; CR 702.174a, `missing-features-to-do.md` entry 80): no gift opponent is recorded, so every gift handler gives the gift to `getOpponentId`, every other player or the spell's target (right with two players only); Cruelclaw's Heist, Consumed by Greed and Perch Protection never raise the gift-given event (CR 702.174c). Two ledger rows wait (`EachOtherPlayerDrawsCardEffect`, `TargetOpponentCreatesTokenEffect`).
 - 2026-11-25, face-down board views (`missing-features-to-do.md` entry 81): a player can't tell their own face-down permanents apart on the board or in id-only prompts; needs a per-viewer permanent view and client work.
 - 2026-11-25, Tribute's reduced placement: a halved tribute (an opponent's Halving Season) reads as unpaid; CR 702.104b says "as specified".
-- 2026-11-25, "if you do" after a replaced draw (defect run D14, line 17): a draw replaced by drawing more (Alhammarret's Archive) records no cards, so `HappenedThisWay.drew()` and `AmountThisWay(DRAW)` read nothing; `EachOpponentDrawsCardEffect` waits for it.
+- 2026-11-25, "if you do" after a replaced draw (defect run D14, line 17): a draw replaced by drawing more (Alhammarret's Archive) records no cards, so `HappenedThisWay.drew()` and `AmountThisWay(DRAW)` read nothing; `EachOpponentDrawsCardEffect` waits for it. Answered by rulings in DR-1 (2026-11-27): The Royal Scions ("If replacement effects cause you to draw five or more cards ... still triggers") and Ancient Excavation ("The number of cards that you actually drew") count a replacement's draws, so the DRAW step and `CardsDrawnThisResolution` now record them; Pact Weapon's ruling keeps "that card" for a draw no replacement changed. Nothing left to decide unless the owner disagrees.
 - 2026-11-25, Nowhere to Run (D16, line 12): should its "hexproof doesn't apply" cover any player's spells and abilities (it is modelled as its controller's only)?
 - 2026-11-25, set exchanges (D19, line 22): Reins of Power, Twist Allegiance and Perplexing Chimera don't check "can't be controlled by other players"; the set reading of CR 701.12a is unsettled.
 - 2026-11-25, Reality Twist on unlisted land types and Boseiju's rider under a land-mana replacement (D21): the 2013 ruling is ambiguous; CR 106.6a for Boseiju.
@@ -1213,6 +1213,7 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-27, EB-3 (entry 18, line S19): CR 404.3 lets the owner arrange two or more cards put into their graveyard at once. The engine asks it only for the graveyard and library exchange; mill, discard, destroy-all and `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds' three revealed cards) keep their own order unasked. Should every multi-card move into one graveyard ask (a prompt in many places, and the AI answers it), or is the unasked order accepted? Dakra Mystic puts at most one card into each graveyard, so it needs no prompt.
 - 2026-11-27, TK-1 (entry 18, lines S16 and L5): Asinine Antics and Twisted Sewer-Witch create one Role "attached to" each creature; when a replacement creates fewer Roles than creatures (the caster's Halving Season), which creatures get them? The engine spreads the Roles over the creatures in battlefield order (`AttachCreatedTokensToHostsEffectHandler`: Role i goes to creature i × creatures / Roles); neither CR 616.1 nor the Asinine Antics rulings say whether the creating player chooses.
 - 2026-11-27, MP-2 (entry 18, lines M3 and H7): two multiplayer views the engine doesn't have. (1) A player who loses leaves the game while the others play on (CR 104.2a, 800.4a), but every loss ends the game (`GameOutcomeService.checkWinCondition`, `declareWinner` with `getOpponentId` of the loser), so Triskaidekaphobia's "each player with exactly 13 life loses" can't eliminate one of three players. (2) `GameViewProjectionFactory.getRevealedOpponentHand` (Zur's Weirding, Telepathy) shows one opponent's hand, since `GameStateMessage` and the frontend have one opponent hand slot. Both are infrastructure (a player-elimination model; a hand per opponent in the view and client): move them to `missing-features-to-do.md`, or keep them in entry 18?
+- 2026-11-27, DR-1 (entry 18, line E6): "draw N cards, then discard one of them" (Casting of Bones, Krovikan Sorcerer, Soldevi Sage: `DiscardEffect`'s `onlyCardsDrawnThisResolution`) and `MayCastAnySpellFromHandWithoutPayingManaCostEffect.drawnCardsOnly` now offer every card the instruction drew, a replacement's draws included (a doubled draw used to offer none). That follows the count rulings (The Royal Scions, Ancient Excavation) and CR 614.6; only the singular "that card" readers (Pact Weapon, Jace, Mirror Mage) leave a replaced draw out (Pact Weapon's ruling). Is "them" right that way?
 
 #### Orchestrator decisions for the owner to review
 
@@ -1292,23 +1293,20 @@ that turns out not to be a defect is removed with the reason in the report. Run 
 Don't commit.
 ```
 
-#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (4)
+#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (3)
 
 - `CreateTokenCopyOfCardEffect` over `cardsThisWay(EXILE)` would copy a face-down exiled card's hidden face (CR 406.3a); no card exiles face down and then copies (FD-2 fixed the filtered subject; the cast, entry and name / mana-value readers were already right). Latent.
 - Soulless Jailer: `canCastSpellFromZone` reads `card.hasType(CREATURE)`, not the spell (an Adventure, a modal back face). Unsure, low.
 - `CastingPermissionService` spell-limit, Ethersworn Canonist, most-recent-spell and global land-restriction readers skip lost abilities but not face-down sources (CR 708.2a). Sure of the code.
-- `DrawService` Alms Collector, Words-return and Quantum Riddler readers skip no face-down source (CR 708.2a). Sure of the code.
 
-#### Two-player assumptions (`getOpponentId`, first seat) (9)
+#### Two-player assumptions (`getOpponentId`, first seat) (7)
 
-- Notion Thief, Hullbreacher, Alms Collector (`DrawService`) look at one opponent. Sure.
 - Triskaidekaphobia declares the first survivor the winner: the engine ends the game at the first loss (`ControllerLosesGameEffectHandler`, `GameOutcomeService.checkWinCondition`), with no multiplayer elimination (CR 104.2a, 800.4a); owner question in entry 17 (MP-2). Sure.
 - Nahiri's `MustAttackPlayerEffect` count uses `getOpponentId`. Sure.
 - Stand or Fall serves only `getOpponentId` ("each defending player") and floats `OnlyChosenCreaturesCanBlockEffect` on every player. Sure.
 - `TargetOpponentCreatesTokenEffect`'s gift branch gives the gift to `getOpponentId`; waits for the owner's gift-opponent answer (entry 17). Sure of the code.
 - `MayEffect`'s `DEFENDING_PLAYER` doesn't read the recorded defending player (CR 508.5; Harbor Guardian's kind); Soldevi Heretic derives "target opponent" and targets nobody. Unverified.
 - `CombatBlockService.handleDeclareBlockersStep`, `getBlockableAttackerIndices` and `ConditionEvaluationService.defendingPlayerControlsMatchingPermanent` take the defending player as `getOpponentId` (CR 506.2, 508.5) (CR 509.1). Sure.
-- `DrawService`: two Notion Thief / Hullbreacher / Alms Collector sources under different opponents apply in seat order; the affected player should choose (CR 616.1). Sure, low.
 - `ReturnCardExiledWithSourceToBattlefieldEffectHandler` puts a creature onto the battlefield attacking with no attack target; its controller should choose one (CR 508.4). Fairly sure.
 
 #### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (9)
@@ -1323,11 +1321,9 @@ Don't commit.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 - `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (6)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (4)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
-- A draw replaced by exactly one draw of the same player (Enduring Renewal, Aladdin's Lamp) still reveals: `DrawService` reports no replacement. Unverified.
-- `DrawCardEffectHandler` records no cards (DRAW outcome amount 0) when a draw is replaced by drawing more (Alhammarret's Archive), so `AmountThisWay(DRAW)` and `HappenedThisWay.drew()` read nothing drawn where cards were drawn because of the instruction; it keeps Malignant Growth on its own handler (CR 614.6). Fairly sure.
 - An "and/or" search (`SearchLibraryAndOrGraveyardChoice`: Last Light of Durin's Day's "search your hand and/or library", every "library and/or graveyard" card) has no "do you search your library?": a pick of nothing counts as a library search (search triggers, shuffle) and a pick from another zone as none, so a player can't search only the hand or graveyard and find nothing, or search the library too and take a graveyard card. Needs the zones chosen before the pool is shown (CR 701.23a; `MaySearchLibraryChoice` asks it for a single library). Sure, low; LS-1 left it (about 48 cards' tests).
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
@@ -1368,7 +1364,7 @@ Don't commit.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
 
-#### Other (46)
+#### Other (45)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1415,7 +1411,6 @@ Don't commit.
 - Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
 - Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the mass boosts' set filters.
 - "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it.
-- `EachOtherPlayerDrawsCardEffectHandler` (the 11 gift cards) draws in seating order from the first seat, not in APNAP order (CR 101.4); fold with the gift opponent. Sure of the code.
 
 ---
 

@@ -2554,6 +2554,20 @@ public class GameData {
      *  identify the specific cards "drawn this turn" (e.g. Sylvan Library). Cleared each turn. */
     public final Map<UUID, List<UUID>> cardsDrawnThisTurnIds = new ConcurrentHashMap<>();
 
+    /**
+     * The cards whose latest draw was the draw an instruction asked for, with no replacement effect applied to it: a
+     * replaced draw never happens (CR 614.6), so a card drawn by its modified event is not "that card" of the
+     * instruction (Pact Weapon's ruling), though it was drawn. Written by {@code DrawService}; cleared each turn.
+     */
+    public final Set<UUID> unreplacedDrawnCardIds = ConcurrentHashMap.newKeySet();
+
+    /**
+     * How many draws are being performed one inside another right now: 1 while a draw an instruction asked for is
+     * performed, more while a draw a replacement effect made instead of it is (CR 614.6); 0 between draws. Written
+     * by {@code DrawService}.
+     */
+    public int drawEventDepth;
+
     /** Tracks how many cards each player has discarded this turn (any discard, any source). Used by
      *  "cards discarded this turn" effects, e.g. Dream Salvage. Cleared at the start of each turn. */
     public final Map<UUID, Integer> cardsDiscardedThisTurn = new ConcurrentHashMap<>();
@@ -10379,6 +10393,8 @@ public class GameData {
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
         copy.cardsDrawnLastTurn.putAll(this.cardsDrawnLastTurn);
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
+        copy.unreplacedDrawnCardIds.addAll(this.unreplacedDrawnCardIds);
+        copy.drawEventDepth = this.drawEventDepth;
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
         copy.nonlandCardsDiscardedThisTurn.putAll(this.nonlandCardsDiscardedThisTurn);
         copy.cardsCycledThisTurn.putAll(this.cardsCycledThisTurn);

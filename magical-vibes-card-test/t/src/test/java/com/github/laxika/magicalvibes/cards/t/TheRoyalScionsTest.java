@@ -159,4 +159,24 @@ class TheRoyalScionsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return scions;
     }
+
+    @Test
+    @CardUsed(ThoughtReflection.class)
+    @DisplayName("The ultimate still deals its damage when a replacement makes it draw more than four cards")
+    void ultimateTriggersWhenReplacementDrawsMore() {
+        addReadyScions(player1, 8);
+        harness.addToBattlefield(player1, new ThoughtReflection());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+    }
 }

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -173,4 +176,43 @@ class AlmsCollectorTest extends BaseCardTest {
         return player3;
     }
 
+    @Test
+    @DisplayName("With Alms Collectors under two opponents the drawing player chooses whose applies")
+    void drawingPlayerChoosesAmongOpponentsCollectors() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new AlmsCollector());
+        harness.addToBattlefield(player3, new AlmsCollector());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player3, List.of(new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        String charlie = gd.playerIdToName.get(player3.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.contains(charlie)).findFirst().orElseThrow());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player3.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A face-down Alms Collector has no abilities, so an opponent's two-card draw is not replaced")
+    void faceDownCollectorDoesNotReplaceDraws() {
+        harness.addToBattlefieldAndReturn(player1, new AlmsCollector()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
 }

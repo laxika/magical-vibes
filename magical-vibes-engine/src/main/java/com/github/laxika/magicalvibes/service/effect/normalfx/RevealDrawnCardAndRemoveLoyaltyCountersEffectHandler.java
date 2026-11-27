@@ -34,7 +34,7 @@ public class RevealDrawnCardAndRemoveLoyaltyCountersEffectHandler implements Nor
         List<UUID> drawnCardIds = entry.getDrawnCardIdsThisResolution();
         // A draw altered by a replacement effect (e.g. Teferi's Ageless Insight drawing two) is not
         // revealed and removes no loyalty, even when replaced by one or more draws.
-        if (drawnCardIds.size() != 1) {
+        if (drawnCardIds.size() != 1 || !gameData.unreplacedDrawnCardIds.contains(drawnCardIds.getLast())) {
             return;
         }
 

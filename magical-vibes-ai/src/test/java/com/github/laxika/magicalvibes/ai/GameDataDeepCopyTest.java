@@ -1307,4 +1307,17 @@ class GameDataDeepCopyTest {
 
         assertThat(gd.simulationCopy().graveyardTargetOperation.collectEvidenceAsResolutionCost).isTrue();
     }
+
+    @Test
+    @DisplayName("Deep copy keeps the cards drawn without a replacement in an independent set")
+    void deepCopyKeepsUnreplacedDrawnCardsIndependent() {
+        UUID cardId = UUID.randomUUID();
+        gd.unreplacedDrawnCardIds.add(cardId);
+
+        GameData copy = gd.simulationCopy();
+        copy.unreplacedDrawnCardIds.clear();
+
+        assertThat(gd.unreplacedDrawnCardIds).containsExactly(cardId);
+        assertThat(gd.simulationCopy().unreplacedDrawnCardIds).containsExactly(cardId);
+    }
 }

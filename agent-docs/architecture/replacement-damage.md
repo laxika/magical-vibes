@@ -41,6 +41,11 @@ An effect's damage and mills are journaled; when one prompts, the effect is reso
 Owner: `DamageJournalService`; `GraveyardService` (`resolveMillPlayer`) for mills.
 Why: "if it was dealt damage this way" reads the real result.
 
+### A replaced draw's cards are drawn, but none is "that card" (CR 614.6)
+The cards a draw's modified event draws count as drawn by the instruction (its DRAW step, `CardsDrawnThisResolution`); a "that card" reader also requires the card in `GameData.unreplacedDrawnCardIds`, which only a draw no replacement changed writes.
+Owner: `DrawService` (`drawEventDepth`, the plain-draw fallthrough), `DrawCardEffectHandler`.
+Why: The Royal Scions' and Ancient Excavation's rulings count replaced draws; Pact Weapon's ruling has no "that card".
+
 ### Combat damage is one event per recipient (CR 510.2)
 Each recipient's damage is one `DamageEvent` with a `DamagePortion` per source, run in APNAP order of choosers; a prompt parks the step. Prevention, lifelink and "deals combat damage to a player" abilities use each source's recorded player (`CombatDamageState.combatDamagePlayerRecipients`), not the defending player.
 Owner: `CombatDamageService` (`processCollectedCombatDamage`).

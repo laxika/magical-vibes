@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.a.Abundance;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
@@ -281,5 +283,20 @@ class ForbiddenCryptTest extends BaseCardTest {
         assertThat(gd.creatureDeathCountThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Wood"));
+    }
+
+    @Test
+    @DisplayName("A face-down Forbidden Crypt has no abilities, so a draw takes the top card of the library")
+    void faceDownCryptDoesNotReplaceDraws() {
+        harness.addToBattlefieldAndReturn(player1, new ForbiddenCrypt()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setGraveyard(player1, List.of(new IronTuskElephant()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Island");
+        harness.assertInGraveyard(player1, "Iron Tusk Elephant");
     }
 }

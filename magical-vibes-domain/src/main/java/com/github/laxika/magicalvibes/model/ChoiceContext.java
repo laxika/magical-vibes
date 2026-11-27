@@ -1392,6 +1392,19 @@ public sealed interface ChoiceContext {
         }
     }
     /**
+     * The player who would draw a card chooses which of the opponents' "instead" replacements of an extra draw
+     * (Notion Thief's draw, Hullbreacher's Treasure) applies to it (CR 616.1; Notion Thief's ruling).
+     * {@code originalDrawerId} is the player whose draw it first was, {@code appliedCardIds} the sources already
+     * applied to it (CR 614.5); keys are the option labels, values the source permanents.
+     */
+    record ExtraDrawRedirectChoice(UUID playerId, UUID originalDrawerId, java.util.Set<UUID> appliedCardIds,
+                                   java.util.Map<String, UUID> sourcePermanentIds) implements ChoiceContext {
+        public ExtraDrawRedirectChoice {
+            appliedCardIds = java.util.Set.copyOf(appliedCardIds);
+            sourcePermanentIds = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(sourcePermanentIds));
+        }
+    }
+    /**
      * The affected player chooses which of several Mangara's Tome replacements, each naming a different
      * exiled pile, applies to one draw (CR 616.1). {@code pileSourceIds} maps each option label to the
      * permanent the pile was exiled with.

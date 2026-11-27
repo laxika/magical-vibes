@@ -616,6 +616,17 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.ExtraDrawRedirectChoice choice) {
+            UUID sourceId = choice.sourcePermanentIds().get(colorName);
+            if (sourceId == null || !colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            drawService.resolveChosenExtraDrawRedirect(gameData, choice, sourceId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.DrawFromExiledPileChoice choice) {
             UUID pileSourceId = choice.pileSourceIds().get(colorName);
             if (pileSourceId == null || !colorChoice.options().contains(colorName)) {

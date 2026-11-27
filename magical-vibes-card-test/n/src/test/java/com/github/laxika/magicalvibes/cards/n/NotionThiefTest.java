@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.Player;
@@ -191,4 +192,52 @@ class NotionThiefTest extends BaseCardTest {
         return player3;
     }
 
+    @Test
+    @DisplayName("With Notion Thieves under two opponents the drawing player chooses which applies; the other then applies to the new draw")
+    void drawingPlayerChoosesAmongOpponentsThieves() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new NotionThief());
+        harness.addToBattlefield(player3, new NotionThief());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player3, List.of(new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        chooseReplacementControlledBy(player1, player3);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player3.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName).containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Choosing the first-seat opponent's Notion Thief lets the other opponent's Thief take the draw")
+    void choosingFirstSeatThiefHandsDrawToOtherOpponent() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new NotionThief());
+        harness.addToBattlefield(player3, new NotionThief());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player3, List.of(new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        chooseReplacementControlledBy(player1, player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player3.getId())).extracting(Card::getName).containsExactly("Forest");
+    }
+
+    private void chooseReplacementControlledBy(Player chooser, Player controller) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(chooser.getId());
+        String controllerName = gd.playerIdToName.get(controller.getId());
+        harness.handleListChoice(chooser, choice.options().stream()
+                .filter(option -> option.contains(controllerName)).findFirst().orElseThrow());
+    }
 }

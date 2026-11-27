@@ -31,8 +31,9 @@ public class RevealDrawnCardAndBoostEquippedCreatureByManaValueEffectHandler imp
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // A draw a replacement effect changed, even into one or more draws, has no "that card" (Pact Weapon's ruling).
         List<UUID> drawnCardIds = entry.getDrawnCardIdsThisResolution();
-        if (drawnCardIds.isEmpty()) {
+        if (drawnCardIds.size() != 1 || !gameData.unreplacedDrawnCardIds.contains(drawnCardIds.getLast())) {
             return;
         }
 

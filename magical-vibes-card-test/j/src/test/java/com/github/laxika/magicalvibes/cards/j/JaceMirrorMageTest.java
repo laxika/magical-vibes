@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.e.EnduringRenewal;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SagesOfTheAnima;
@@ -178,5 +180,22 @@ class JaceMirrorMageTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(putIntoHand);
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed(EnduringRenewal.class)
+    @DisplayName("A draw Enduring Renewal replaces with a draw is not revealed and removes no loyalty")
+    void drawReplacedByOneDrawRemovesNoLoyalty() {
+        Permanent jace = addReadyJace(player1, 5);
+        harness.addToBattlefield(player1, new EnduringRenewal());
+        TeferisAgelessInsight drawn = new TeferisAgelessInsight();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 }

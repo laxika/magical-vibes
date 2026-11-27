@@ -23,8 +23,8 @@ import java.util.UUID;
 /**
  * Resolves {@link DrawCardEffect}: the players its subject names (through {@link SubjectResolutionService}) each draw
  * the amount, evaluated once (or once per player for {@link DrawCardEffect#amountPerPlayer()}, every number fixed before
- * the first draw, CR 608.2h), in APNAP order. The cards each player actually drew from the library are recorded as
- * the step's result.
+ * the first draw, CR 608.2h), in APNAP order. The cards each player actually drew from the library, a replacement
+ * effect's draws included, are recorded as the step's result.
  */
 @Component
 public class DrawCardEffectHandler implements NormalEffectHandlerBean {
@@ -108,12 +108,10 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
             playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
         }
 
+        // A replacement's modified event occurs instead of the draw (CR 614.6): the cards it draws are drawn by this
+        // instruction too (The Royal Scions' and Ancient Excavation's rulings), but only a card whose draw no
+        // replacement changed is "that card" of it (GameData.unreplacedDrawnCardIds, Pact Weapon's ruling).
         List<Card> newlyDrawn = snapshot.cards(gameData);
-        // More cards than instructed means a draw was replaced by drawing extra cards (e.g. Alhammarret's
-        // Archive); those cards were not drawn by this effect's instruction, so "that card" does not exist.
-        if (newlyDrawn.size() > amount) {
-            return List.of();
-        }
         newlyDrawn.forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
         return newlyDrawn.stream().map(Card::getId).toList();
     }

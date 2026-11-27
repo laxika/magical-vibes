@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.n.NotionThief;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -207,4 +209,28 @@ class HullbreacherTest extends BaseCardTest {
         return player3;
     }
 
+    @Test
+    @CardUsed(NotionThief.class)
+    @DisplayName("With a Notion Thief and a Hullbreacher under different opponents the drawing player chooses, and Hullbreacher then replaces the Thief's draw")
+    void drawingPlayerChoosesBetweenThiefAndHullbreacher() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new NotionThief());
+        harness.addToBattlefield(player3, new Hullbreacher());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.contains("Notion Thief")).findFirst().orElseThrow());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player3.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Treasure"));
+    }
 }

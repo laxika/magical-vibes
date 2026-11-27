@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -112,5 +114,17 @@ class ThoughtReflectionTest extends BaseCardTest {
                 .isNotInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A face-down Thought Reflection has no abilities, so a draw is not doubled")
+    void faceDownReflectionDoesNotDouble() {
+        harness.addToBattlefieldAndReturn(player1, new ThoughtReflection()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

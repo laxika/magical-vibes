@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.EnduringRenewal;
 import com.github.laxika.magicalvibes.cards.a.AlhammarretsArchive;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -225,6 +226,26 @@ class PactWeaponTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(putIntoHand);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(EnduringRenewal.class)
+    @DisplayName("A draw Enduring Renewal replaces with a draw is not revealed, boosts nothing and costs no life")
+    void drawReplacedByOneDrawDoesNotApplyManaValueEffects() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent weapon = harness.addToBattlefieldAndReturn(player1, new PactWeapon());
+        weapon.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player1, new EnduringRenewal());
+        Card drawn = new PactWeapon();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }

@@ -9,10 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -48,14 +51,18 @@ public class EachOtherPlayerDrawsCardEffectHandler implements NormalEffectHandle
         }
         AmountContext base = AmountContext.forStackEntry(entry, source);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(entry.getControllerId())) {
-                continue;
-            }
+        // The other players draw in APNAP order (CR 101.4), every number fixed before the first draw (CR 608.2h).
+        List<UUID> players = SubjectResolutionService.apnapOpponents(gameData, entry.getControllerId()).stream()
+                .filter(gameData.playerIds::contains)
+                .toList();
+        List<Integer> amounts = new ArrayList<>();
+        for (UUID playerId : players) {
             AmountContext playerContext = new AmountContext(playerId, source, base.targetPermanentId(),
                     base.xValue(), base.eventValue());
-            int amount = amountEvaluationService.evaluate(gameData, e.amount(), playerContext);
-            playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
+            amounts.add(amountEvaluationService.evaluate(gameData, e.amount(), playerContext));
+        }
+        for (int i = 0; i < players.size(); i++) {
+            playerInteractionSupport.applyDrawCards(gameData, players.get(i), amounts.get(i));
         }
         if (entry.isGiftPromised()
                 && entry.getCard().getStaticEffects()
