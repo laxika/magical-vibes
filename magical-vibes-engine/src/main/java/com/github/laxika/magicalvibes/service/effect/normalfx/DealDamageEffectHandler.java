@@ -504,7 +504,8 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
      * own colours, lifelink, deathtouch, infect and wither, and every prevention and protection is an option of the
      * recipient's damage pool (CR 616.1); "damage this deals can't be prevented" is the dealer's (CR 615.12). "Its controller" / "its owner" of the dealers is each dealer's own. Each
      * dealer's damage is added to this step's DEAL_DAMAGE result; the excess over one target is tracked against the
-     * dealer's deathtouch (CR 120.4a).
+     * dealer's deathtouch (CR 120.4a). Several dealers deal their damage at once ({@link DamageSupport#dealAtOnce}):
+     * a recipient of them all is dealt it in one event.
      */
     private void damageByDealers(GameData gameData, StackEntry entry, DealDamageEffect e) {
         List<UUID> dealerIds = subjectResolutionService.permanentIds(gameData, entry, e, e.dealers());
@@ -541,6 +542,23 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             entry.setEventValue(0);
         }
 
+        List<UUID> recipientTargets = targets;
+        List<Permanent> recipientSet = set;
+        List<UUID> recipientPlayers = players;
+        Runnable deal = () -> dealEachDealersDamage(gameData, entry, e, dealerIds, targetDealers, perDealerPlayers,
+                recipientPlayers, recipientSet, recipientTargets, excess);
+        if (dealerIds.size() > 1) {
+            damageSupport.dealAtOnce(gameData, deal);
+        } else {
+            deal.run();
+        }
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /** Each dealer in turn deals its damage (see {@link #damageByDealers}). */
+    private void dealEachDealersDamage(GameData gameData, StackEntry entry, DealDamageEffect e, List<UUID> dealerIds,
+                                       boolean targetDealers, boolean perDealerPlayers, List<UUID> players,
+                                       List<Permanent> set, List<UUID> targets, boolean excess) {
         for (UUID dealerId : dealerIds) {
             Permanent dealer = targetDealers
                     ? gameQueryService.findPermanentById(gameData, dealerId)
@@ -569,7 +587,6 @@ public class DealDamageEffectHandler implements NormalEffectHandlerBean {
             }
             entry.addToStep(StepKind.DEAL_DAMAGE, dealing.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
         }
-        gameOutcomeService.checkWinCondition(gameData);
     }
 
     private void dealOneDealersDamage(GameData gameData, StackEntry entry, DealDamageEffect e, StackEntry dealing,

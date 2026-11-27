@@ -54,6 +54,67 @@ class DealDamageEffectHandlerTest extends AbstractDamageHandlerTest {
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
     }
 
+    @Nested
+    @DisplayName("Damage several sources deal at once")
+    class DealtAtOnce {
+
+        @Test
+        @DisplayName("A creature two sources damage at once is dealt it in one event for itself and one for each source")
+        void recipientOfTwoSourcesIsDealtOneRecipientEvent() {
+            Card spell = createCard("Brawl");
+            Permanent target = addPermanent(player2Id, createCreature("Giant", 3, 3));
+            Permanent first = addPermanent(player2Id, createCreature("Bear", 2, 2));
+            Permanent second = addPermanent(player2Id, createCreature("Cub", 2, 2));
+            StackEntry entry = createEntry(spell, player1Id, target.getId());
+            stubDamagePreventable();
+            stubNoDamageMultiplier();
+            stubCreatureDamageCore(target, 3);
+            lenient().when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+
+            damageSupport.dealAtOnce(gd, () -> {
+                damageSupport.dealCreatureDamage(gd, entry, target, 2, first);
+                damageSupport.dealCreatureDamage(gd, entry, target, 2, second);
+            });
+
+            assertThat(damageEvents()).filteredOn(DamageDealtEvent.ToPermanent.class::isInstance)
+                    .map(DamageDealtEvent.ToPermanent.class::cast)
+                    .extracting(DamageDealtEvent.ToPermanent::part, DamageDealtEvent.ToPermanent::damage,
+                            DamageDealtEvent.ToPermanent::excessDamage, DamageDealtEvent.ToPermanent::sourceId)
+                    .containsExactly(
+                            org.assertj.core.groups.Tuple.tuple(DamageDealtEvent.Part.RECIPIENT, 4, 1, null),
+                            org.assertj.core.groups.Tuple.tuple(DamageDealtEvent.Part.SOURCE, 2, 0, first.getId()),
+                            org.assertj.core.groups.Tuple.tuple(DamageDealtEvent.Part.SOURCE, 2, 1, second.getId()));
+            assertThat(target.getMarkedDamage()).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("A recipient only one source damages is dealt it as a whole event")
+        void recipientOfOneSourceIsDealtAWholeEvent() {
+            Card spell = createCard("Brawl");
+            Permanent firstTarget = addPermanent(player2Id, createCreature("Giant", 3, 3));
+            Permanent secondTarget = addPermanent(player2Id, createCreature("Ogre", 3, 3));
+            Permanent dealer = addPermanent(player2Id, createCreature("Bear", 2, 2));
+            StackEntry entry = createEntry(spell, player1Id, firstTarget.getId());
+            stubDamagePreventable();
+            stubNoDamageMultiplier();
+            stubCreatureDamageCore(firstTarget, 3);
+            stubCreatureDamageCore(secondTarget, 3);
+            lenient().when(gameQueryService.findPermanentById(gd, firstTarget.getId())).thenReturn(firstTarget);
+            lenient().when(gameQueryService.findPermanentById(gd, secondTarget.getId())).thenReturn(secondTarget);
+
+            damageSupport.dealAtOnce(gd, () -> {
+                damageSupport.dealCreatureDamage(gd, entry, firstTarget, 2, dealer);
+                damageSupport.dealCreatureDamage(gd, entry, secondTarget, 2, dealer);
+            });
+
+            assertThat(damageEvents()).filteredOn(DamageDealtEvent.ToPermanent.class::isInstance)
+                    .map(DamageDealtEvent.ToPermanent.class::cast)
+                    .extracting(DamageDealtEvent.ToPermanent::part)
+                    .containsExactly(DamageDealtEvent.Part.WHOLE, DamageDealtEvent.Part.WHOLE);
+            assertThat(gd.damageDealtAtOnce).isNull();
+        }
+    }
+
     private DealDamageEffectHandler handler;
 
     @Override

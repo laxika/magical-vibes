@@ -259,7 +259,9 @@ public class DamageTriggers {
      * watching the creature, "whenever this is dealt (noncombat) damage", "whenever a source you control deals
      * noncombat damage to a creature", the planeswalker abilities, the abilities that see a creature dealt damage (only
      * a creature: CR 603.2, the layers deciding what is one, CR 613.1d), "deals damage to you or a permanent you
-     * control", then the excess-damage abilities.
+     * control", then the excess-damage abilities. Of damage several sources dealt at once, the abilities that see the
+     * permanent dealt damage trigger on its {@link DamageDealtEvent.Part#RECIPIENT} event and those that see a source
+     * deal it on each {@link DamageDealtEvent.Part#SOURCE} one (CR 603.2c).
      */
     private void toPermanent(GameData gameData, DamageDealtEvent.ToPermanent dealt) {
         Permanent target = dealt.target();
@@ -267,31 +269,48 @@ public class DamageTriggers {
         UUID sourceControllerId = dealt.sourceControllerId();
         Permanent reflectionSource = dealt.reflectionSource();
         UUID damagedCreatureControllerId = dealt.damagedCreatureControllerId();
-        checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
-        checkDelayedCreatureDealtDamageBySourceTriggers(gameData, dealt.dealer(), target, damage);
-        checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId, dealt.sourceCard(),
-                dealt.sourceId());
-        checkNoncombatDamageToSelfTriggers(gameData, target, damage, sourceControllerId, dealt.sourceCard(),
-                dealt.sourceId());
-        checkAllySourceDealtNoncombatDamageToCreatureTriggers(gameData, sourceControllerId, target, damage);
-        if (gameQueryService.isPlaneswalker(gameData, target)) {
-            checkAllyDealtDamageToPlaneswalkerTriggers(gameData, reflectionSource, sourceControllerId,
-                    target.getId(), damage, false);
+        boolean recipient = dealt.part() != DamageDealtEvent.Part.SOURCE;
+        boolean source = dealt.part() != DamageDealtEvent.Part.RECIPIENT;
+        if (recipient) {
+            checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
+        }
+        if (source) {
+            checkDelayedCreatureDealtDamageBySourceTriggers(gameData, dealt.dealer(), target, damage);
+        }
+        if (recipient) {
+            checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId, dealt.sourceCard(),
+                    dealt.sourceId());
+            checkNoncombatDamageToSelfTriggers(gameData, target, damage, sourceControllerId, dealt.sourceCard(),
+                    dealt.sourceId());
+        }
+        if (source) {
+            checkAllySourceDealtNoncombatDamageToCreatureTriggers(gameData, sourceControllerId, target, damage);
+            if (gameQueryService.isPlaneswalker(gameData, target)) {
+                checkAllyDealtDamageToPlaneswalkerTriggers(gameData, reflectionSource, sourceControllerId,
+                        target.getId(), damage, false);
+            }
         }
         if (gameQueryService.isCreature(gameData, target)) {
-            if (damagedCreatureControllerId != null) {
-                checkOpponentCreatureDealtDamageTriggers(gameData, target, damagedCreatureControllerId, damage);
+            if (recipient) {
+                if (damagedCreatureControllerId != null) {
+                    checkOpponentCreatureDealtDamageTriggers(gameData, target, damagedCreatureControllerId, damage);
+                }
+                checkAnyCreatureDealtDamageTriggers(gameData, target, damage);
             }
-            checkAnyCreatureDealtDamageTriggers(gameData, target, damage);
-            queueEnchantedCreatureDealsDamageToCreatureTriggers(gameData, reflectionSource, target.getId(), damage);
-            checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId,
-                    damagedCreatureControllerId, target.getId(), target, damage, false);
+            if (source) {
+                queueEnchantedCreatureDealsDamageToCreatureTriggers(gameData, reflectionSource, target.getId(),
+                        damage);
+                checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId,
+                        damagedCreatureControllerId, target.getId(), target, damage, false);
+            }
         }
         // "Whenever a creature deals damage to you or a permanent you control" sees any damaged permanent; its
         // damaged-permanent filter narrows it.
-        checkCreatureDamageToYouOrYourPermanentTriggers(gameData, damagedCreatureControllerId, target,
-                reflectionSource, damage);
-        if (dealt.excessDamage() > 0) {
+        if (source) {
+            checkCreatureDamageToYouOrYourPermanentTriggers(gameData, damagedCreatureControllerId, target,
+                    reflectionSource, damage);
+        }
+        if (recipient && dealt.excessDamage() > 0) {
             checkOpponentPermanentDealtExcessDamageTriggers(gameData, target, dealt.targetControllerId(),
                     dealt.excessDamage(), dealt.noncombat());
             checkOpponentCreatureDealtExcessNoncombatDamageTriggers(gameData, dealt.entry(), target,
@@ -302,19 +321,30 @@ public class DamageTriggers {
     /**
      * Damage a spell or ability dealt to a player: the abilities of the Auras and Equipment of the creature that dealt
      * it, then those that see the player dealt damage, in the order below; the stack object's controller is the damage
-     * source's (its caster or activator).
+     * source's (its caster or activator). Of damage several sources dealt at once, "whenever enchanted player is dealt
+     * damage", "whenever you're dealt damage" and "whenever an opponent is dealt noncombat damage" trigger on the
+     * player's {@link DamageDealtEvent.Part#RECIPIENT} event, the others on each source's (CR 603.2c).
      */
     private void toPlayer(GameData gameData, DamageDealtEvent.ToPlayer dealt) {
         UUID playerId = dealt.playerId();
         int damage = dealt.damage();
         StackEntry entry = dealt.entry();
         UUID sourceControllerId = dealt.sourceControllerId();
+        if (dealt.part() == DamageDealtEvent.Part.RECIPIENT) {
+            checkEnchantedPlayerDealtDamageTriggers(gameData, playerId, damage);
+            checkControllerDealtDamageTriggers(gameData, playerId, null, damage, true);
+            checkNoncombatDamageToOpponentTriggers(gameData, playerId, sourceControllerId, damage);
+            return;
+        }
+        boolean whole = dealt.part() == DamageDealtEvent.Part.WHOLE;
         queueEnchantedCreatureDealsDamageTriggers(gameData, dealt.dealtByCreature(), damage);
-        checkEnchantedPlayerDealtDamageTriggers(gameData, playerId, damage);
+        if (whole) {
+            checkEnchantedPlayerDealtDamageTriggers(gameData, playerId, damage);
+        }
         checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
         checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId,
                 entry.getSourcePermanentId(), damage);
-        checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), damage);
+        checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), damage, whole);
         checkAllySourceDealtDamageToOpponentTriggers(gameData, playerId, entry.getControllerId(),
                 entry.getSourcePermanentId(), damage);
         if (dealt.creatureSource() != null) {
@@ -332,7 +362,9 @@ public class DamageTriggers {
             checkSourceDealsDamageToPlayerTriggers(gameData, dealt.dealingPermanent(), dealt.dealingControllerId(),
                     playerId, damage);
         }
-        checkNoncombatDamageToOpponentTriggers(gameData, playerId, sourceControllerId, damage);
+        if (whole) {
+            checkNoncombatDamageToOpponentTriggers(gameData, playerId, sourceControllerId, damage);
+        }
         checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(gameData, playerId, entry);
     }
 

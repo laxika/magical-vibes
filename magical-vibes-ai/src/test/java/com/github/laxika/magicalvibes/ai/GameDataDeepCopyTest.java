@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.DepartureSnapshot;
 import com.github.laxika.magicalvibes.model.DepartureStage;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
@@ -223,6 +224,23 @@ class GameDataDeepCopyTest {
         assertThat(gd.departedPermanentSnapshots.get(card.getId()).getLastKnownCard()).isSameAs(lastKnown);
         assertThat(gd.simulationCopy().departedPermanentSnapshots.get(card.getId()).getLastKnownCard())
                 .isSameAs(lastKnown);
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps the damage events held while several sources deal damage at once, in an independent list")
+    void deepCopyKeepsDamageDealtAtOnce() {
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, new GrizzlyBears(),
+                player1.getId(), "Damage", List.of());
+        gd.damageDealtAtOnce = new java.util.ArrayList<>(List.of(new DamageDealtEvent.ToPlayer(player2.getId(), 2,
+                entry, entry.getCard(), player1.getId(), null, null, null, null, null, null,
+                DamageDealtEvent.Part.WHOLE)));
+        gd.damageDealtAtOnceDepth = 1;
+
+        GameData copy = gd.simulationCopy();
+        copy.damageDealtAtOnce.clear();
+
+        assertThat(copy.damageDealtAtOnceDepth).isEqualTo(1);
+        assertThat(gd.damageDealtAtOnce).hasSize(1);
     }
 
     @Test

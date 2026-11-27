@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.k.KaerveksPurge;
 import com.github.laxika.magicalvibes.cards.t.TalruumMinotaur;
 import com.github.laxika.magicalvibes.cards.u.UrborgPanther;
+import com.github.laxika.magicalvibes.cards.v.VolcanicFallout;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,7 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         Incinerate.class,
         KaerveksPurge.class,
         SubterraneanSpirit.class,
-        DrainLife.class
+        DrainLife.class,
+        VolcanicFallout.class
 })
 class ShadowbaneTest extends BaseCardTest {
 
@@ -204,6 +206,29 @@ class ShadowbaneTest extends BaseCardTest {
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(second.getMarkedDamage()).isZero();
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents one event's damage to your creatures and then to you, as one \"next time\"")
+    void preventsOneEventsDamageToCreaturesAndThenToYou() {
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new VolcanicFallout(), new Shadowbane()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0);
+        StackEntry falloutEntry = gd.stack.getLast();
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, falloutEntry.getCard().getId());
+        harness.passBothPriorities();
+
+        assertThat(archers.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 
     @Test

@@ -127,6 +127,11 @@ One event's damage is held and dealt as one total per recipient and source; a ha
 Owner: `DamageSupport` (`endOpenDamageEvent`).
 Why: a prevention applies once, and no step sees what another dealt.
 
+### Damage several sources deal one recipient at once is one event for it (CR 603.2c)
+An effect's several dealers and a simultaneous event's sources deal through `dealAtOnce`: the recipient's "is dealt damage" abilities see one `Part.RECIPIENT` event (the total, the summed excess, CR 120.10), each source's abilities its own `Part.SOURCE` event.
+Owner: `DamageSupport` (`dealAtOnce`), `DamageTriggers` (`toPermanent`, `toPlayer`).
+Why: "whenever this is dealt damage" triggers once (the Boros Reckoner ruling), as in the combat damage step.
+
 ### Lifelink gains life once per source per damage event (CR 702.15b)
 Apply lifelink through `checkSpellLifelink`, never `LifeSupport.applyGainLife` directly.
 Owner: `DamageSupport` (`checkSpellLifelink`), `CombatDamageService` (`processLifelink`).

@@ -39,7 +39,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | Track | Runs | Status |
 |---|---|---|
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
-| DM Damage | DM-1, DM-2, DM-3 | DM-1 done 2026-11-27; DM-2, DM-3 open |
+| DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2 done 2026-11-27; DM-3 open |
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1 done 2026-11-27; FC-2, FC-3 open |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
@@ -234,7 +234,19 @@ Likely touches: `DamageSupport.beginDamageEvent`, `SequenceEffect.simultaneous` 
 carriers.
 Avoid: TK-2.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: S1 (an effect's several dealers, and the sources of a simultaneous event that share a recipient,
+deal through `DamageSupport.dealAtOnce`: the recipient is dealt one `DamageDealtEvent.Part.RECIPIENT` event with the total and
+the summed excess, each source a `Part.SOURCE` event, so "whenever this is dealt damage" / "whenever you're dealt damage" trigger
+once; CR 603.2c, 120.10, the Boros Reckoner ruling; Alpha Brawl, Rakdos Charm and Judgment of Alexander's retaliation), S9
+(Disorder's two steps are one simultaneous event; Shadowbane's player half now shares its shield with the creature half for the
+open event, either order). Deleted from entry 18. Dropped: S22 (none of the five excess-to-controller cards shares a damage event
+with another source, so no other source's damage is dealt at the same time; CR 120.4a), E5 (no reader can see it: the
+DEAL_DAMAGE step readers of a player hit, Play with Fire, Mishra's War Machine, Minion of Leshrac and Rite of Consumption, read
+one-event steps, and Chandra, Roaring Flame's −7 reads the entry's players-dealt-damage list, which a rerun keeps). Left: S3, S21
+(Ezuri's Predation needs a "for each of those creatures, a different one of those tokens" pairing prompt, the same work as entry
+16's `CreatedTokensFightDifferentOpponentCreaturesEffect` fold line; the choice is observable only when the tokens differ, e.g.
+Chatterfang's Squirrels, ruling "anything else specified ... applies to both"; one step that counts, creates and pairs from one
+list also settles S21). No effect class added or deleted, so no ledger or ratchet change. Tests: 528 XML files, 4,992 tests, 0 failures (312 card classes, 23 application classes with the architecture tests, the AI module).
 
 #### DM-3. Damage sources and multipliers
 
@@ -244,6 +256,10 @@ damage-source lists; move them onto `ChooseDamageSourceEffect`), S17 (recipient 
 can't be ordered against each other), O8 (Pestilent Spirit, Forethought Amulet: "the source is a spell"), O20
 (`PlayerDamageCandidateSource.context` ignores `explicitSource`), P18 (Gargantuan Gorilla, Bronze Bombshell, Elder Spawn: a
 sacrificed source loses its Aura-granted keywords, because the snapshot is read at trigger time).
+
+New line N10 (seen in DM-2): Shadowbane's "you and/or creatures you control" shield is shared between its player and creature
+halves only inside a resolution (`playerSourceShieldsUsedInOpenEvent`), so a combat damage step where one chosen trampler damages
+a blocker and its controller likely prevents only the first of the two (unverified).
 
 Outcome:
 

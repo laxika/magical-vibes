@@ -23,9 +23,10 @@ public class Disorder extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
-        // Damage the controllers first so a white creature dying to the mass damage does not
-        // spare its controller — the whole spell resolves simultaneously.
-        addSpellEffect(DealDamageEffect.to(Subjects.matching(Subjects.eachPlayer(), new PlayerControlsPermanentPredicate(whiteCreature)), 2));
-        addSpellEffect(DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), whiteCreature), 2));
+        // One sentence, one damage event: the players and the white creatures are dealt damage at once.
+        addSimultaneousSpellEffects(
+                DealDamageEffect.to(Subjects.matching(Subjects.eachPlayer(),
+                        new PlayerControlsPermanentPredicate(whiteCreature)), 2),
+                DealDamageEffect.toEach(Subjects.controlledBy(Subjects.eachPlayer(), whiteCreature), 2));
     }
 }

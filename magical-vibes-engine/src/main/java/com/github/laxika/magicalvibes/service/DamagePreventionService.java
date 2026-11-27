@@ -1673,8 +1673,18 @@ public class DamagePreventionService {
                                                   boolean sourceUnblocked) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
         if (damage <= 0 || playerId == null || sourcePermanentId == null
-                || !gameData.hasShields(PlayerSourceNextDamageShield.class)) {
+                || !gameData.hasShields(PlayerSourceNextDamageShield.class)
+                && gameData.playerSourceShieldsUsedInOpenEvent.isEmpty()) {
             return damage;
+        }
+        // Shadowbane's "you and/or creatures you control": one damage event is one "next time", so a shield its
+        // creature half used in the open event still prevents that event's damage to the player.
+        for (var shield : List.copyOf(gameData.playerSourceShieldsUsedInOpenEvent)) {
+            if (shield.playerId().equals(playerId)
+                    && shieldMatchesSource(gameData, shield, sourcePermanentId, sourceCard)) {
+                applyNextSourceShieldRiders(gameData, shield, damage, sourceCard);
+                return 0;
+            }
         }
         int remaining = damage;
         for (FloatingContinuousEffect fe : gameData.shieldEffects(PlayerSourceNextDamageShield.class)) {
@@ -1688,6 +1698,11 @@ public class DamagePreventionService {
                     continue;
                 }
                 gameData.endFloatingEffect(fe);
+                // The event's damage to the player's creatures is the same "next time" (Shadowbane).
+                if (shield.coversControlledCreatures() && !shield.preventAllButOne() && !shield.preventHalfDamage()
+                        && (gameData.openDamageEvent != null || gameData.effectResolutionDepth > 0)) {
+                    gameData.playerSourceShieldsUsedInOpenEvent.add(shield);
+                }
                 int prevented = shield.preventAllButOne()
                         ? Math.max(0, remaining - 1)
                         : shield.preventHalfDamage() ? remaining / 2 : remaining;
@@ -3152,7 +3167,10 @@ public class DamagePreventionService {
                 .anyMatch(shield -> shield.playerId().equals(playerId)
                         && shieldMatchesSource(gameData, shield, sourcePermanentId, sourceCard)
                         && (!shield.combatOnly() || combatDamage)
-                        && (!shield.unblockedOnly() || sourceUnblocked));
+                        && (!shield.unblockedOnly() || sourceUnblocked))
+                || gameData.playerSourceShieldsUsedInOpenEvent.stream()
+                .anyMatch(shield -> shield.playerId().equals(playerId)
+                        && shieldMatchesSource(gameData, shield, sourcePermanentId, sourceCard));
     }
 
     /**

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.j.JackalPup;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.d.DrogskolReaver;
 import com.github.laxika.magicalvibes.cards.p.PyromancersSwath;
@@ -21,8 +22,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AlphaBrawl.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class,
-        DrogskolReaver.class, PyromancersSwath.class})
+        DrogskolReaver.class, PyromancersSwath.class, JackalPup.class})
 class AlphaBrawlTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The creatures deal their damage back at once, so \"whenever this is dealt damage\" triggers once")
+    void damageBackFromSeveralCreaturesIsOneEvent() {
+        Permanent pup = harness.addToBattlefieldAndReturn(player2, new JackalPup());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new AlphaBrawl()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castAndResolveSorcery(player1, 0, pup.getId());
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Jackal Pup")).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
 
     @Test
     @DisplayName("Spell damage bonuses do not increase the creatures' damage")

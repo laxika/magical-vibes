@@ -8,8 +8,11 @@ import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeraldOfSerra;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Shadowbane;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfLaw;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -17,8 +20,28 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbsoluteGrace.class, AngelicPage.class, Disorder.class, EagerCadet.class, GloriousAnthem.class, GorillaWarrior.class, GrizzlyBears.class, HeraldOfSerra.class, SerraAngel.class, VoiceOfLaw.class})
+@CardUsed({AbsoluteGrace.class, AngelicPage.class, Disorder.class, EagerCadet.class, GloriousAnthem.class, GorillaWarrior.class, GrizzlyBears.class, HeraldOfSerra.class, SerraAngel.class, Shadowbane.class, VoiceOfLaw.class})
 class DisorderTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Its damage to players and to white creatures is one event, so Shadowbane prevents all of it")
+    void damageToPlayersAndCreaturesIsOneEvent() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Disorder(), new Shadowbane()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0);
+        StackEntry disorder = gd.stack.getLast();
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, disorder.getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(angel.getMarkedDamage()).isZero();
+    }
 
     private void castDisorder() {
         harness.setHand(player1, List.of(new Disorder()));

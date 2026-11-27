@@ -293,8 +293,8 @@ public class DamageSupport {
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(),
                     effectiveDamageSource, reflectionSource, damagedCreatureControllerId, targetControllerId,
-                    excessDamage, !event.combat());
-            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(dealt));
+                    excessDamage, !event.combat(), DamageDealtEvent.Part.WHOLE);
+            emitDamageDealt(gameData, dealt);
         }
 
         // CR 120.3c — damage dealt to a planeswalker removes that many loyalty counters
@@ -563,6 +563,116 @@ public class DamageSupport {
     }
 
     /**
+     * Deals the damage {@code dealing} deals as damage several sources deal at once (CR 603.2c): each permanent and
+     * player it damages is dealt it in one event, so "whenever this is dealt damage" and "whenever you're dealt
+     * damage" trigger once with the total, and an excess-damage ability sees the excess of all of it (CR 120.10;
+     * Boros Reckoner's ruling), while each source's own abilities see what that source dealt. Each source's damage
+     * still runs through its recipient's damage pool on its own. A replacement-order prompt in the middle keeps what
+     * was dealt until the damage is dealt again and finished.
+     */
+    public void dealAtOnce(GameData gameData, Runnable dealing) {
+        if (gameData.damageDealtAtOnce == null) {
+            gameData.damageDealtAtOnce = new ArrayList<>();
+        }
+        gameData.damageDealtAtOnceDepth++;
+        try {
+            dealing.run();
+        } finally {
+            gameData.damageDealtAtOnceDepth--;
+            if (gameData.damageDealtAtOnceDepth == 0 && !damageJournalService.isHoldingEvents(gameData)) {
+                List<DamageDealtEvent> dealt = gameData.damageDealtAtOnce;
+                gameData.damageDealtAtOnce = null;
+                emitDealtAtOnce(gameData, dealt);
+            }
+        }
+    }
+
+    /** Matches {@code dealt} as an occurrence of its own, or holds it while damage is dealt at once. */
+    private void emitDamageDealt(GameData gameData, DamageDealtEvent dealt) {
+        if (gameData.damageDealtAtOnceDepth > 0 && gameData.damageDealtAtOnce != null) {
+            gameData.damageDealtAtOnce.add(dealt);
+            return;
+        }
+        gameData.rulesEvents.occur(dealt);
+    }
+
+    /**
+     * Matches the damage dealt at once, recipient by recipient in the order they were first dealt damage: one
+     * source's damage to a recipient as a whole event, several sources' as one {@link DamageDealtEvent.Part#RECIPIENT}
+     * event with their total and then a {@link DamageDealtEvent.Part#SOURCE} event for each.
+     */
+    private void emitDealtAtOnce(GameData gameData, List<DamageDealtEvent> dealt) {
+        Map<UUID, List<DamageDealtEvent>> byRecipient = new LinkedHashMap<>();
+        for (DamageDealtEvent event : dealt) {
+            UUID recipient = switch (event) {
+                case DamageDealtEvent.ToPermanent toPermanent -> toPermanent.target().getId();
+                case DamageDealtEvent.ToPlayer toPlayer -> toPlayer.playerId();
+                default -> throw new IllegalStateException("Not damage to a recipient: " + event);
+            };
+            byRecipient.computeIfAbsent(recipient, ignored -> new ArrayList<>()).add(event);
+        }
+        for (List<DamageDealtEvent> events : byRecipient.values()) {
+            if (events.size() == 1) {
+                gameData.rulesEvents.occur(events.getFirst());
+                continue;
+            }
+            gameData.rulesEvents.occur(dealtToRecipient(events));
+            for (DamageDealtEvent event : events) {
+                gameData.rulesEvents.occur(switch (event) {
+                    case DamageDealtEvent.ToPermanent toPermanent -> toPermanent.withPart(DamageDealtEvent.Part.SOURCE);
+                    case DamageDealtEvent.ToPlayer toPlayer -> toPlayer.withPart(DamageDealtEvent.Part.SOURCE);
+                    default -> event;
+                });
+            }
+        }
+    }
+
+    /**
+     * The recipient's one event of the damage {@code events} dealt it at once: their total, the excess of the total
+     * (each event's excess counts the damage dealt before it, so the excesses add up to it, CR 120.10), and a source,
+     * its card and its controller only where every event names the same one.
+     */
+    private static DamageDealtEvent dealtToRecipient(List<DamageDealtEvent> events) {
+        int damage = 0;
+        int excess = 0;
+        for (DamageDealtEvent event : events) {
+            if (event instanceof DamageDealtEvent.ToPermanent toPermanent) {
+                damage += toPermanent.damage();
+                excess += toPermanent.excessDamage();
+            } else if (event instanceof DamageDealtEvent.ToPlayer toPlayer) {
+                damage += toPlayer.damage();
+            }
+        }
+        if (events.getFirst() instanceof DamageDealtEvent.ToPermanent first) {
+            List<DamageDealtEvent.ToPermanent> all = events.stream().map(DamageDealtEvent.ToPermanent.class::cast).toList();
+            UUID controllerId = shared(all, DamageDealtEvent.ToPermanent::sourceControllerId);
+            UUID sourceId = shared(all, DamageDealtEvent.ToPermanent::sourceId);
+            UUID sourceCardId = shared(all, event -> event.sourceCard() == null ? null : event.sourceCard().getId());
+            return new DamageDealtEvent.ToPermanent(first.target(), damage, first.entry(), controllerId,
+                    sourceCardId == null ? null : first.sourceCard(), sourceId,
+                    sourceId == null ? null : first.dealer(), sourceId == null ? null : first.reflectionSource(),
+                    first.damagedCreatureControllerId(), first.targetControllerId(), excess, first.noncombat(),
+                    DamageDealtEvent.Part.RECIPIENT);
+        }
+        DamageDealtEvent.ToPlayer first = (DamageDealtEvent.ToPlayer) events.getFirst();
+        List<DamageDealtEvent.ToPlayer> all = events.stream().map(DamageDealtEvent.ToPlayer.class::cast).toList();
+        UUID sourceCardId = shared(all, event -> event.source() == null ? null : event.source().getId());
+        return new DamageDealtEvent.ToPlayer(first.playerId(), damage, first.entry(),
+                sourceCardId == null ? null : first.source(), shared(all, DamageDealtEvent.ToPlayer::sourceControllerId),
+                null, null, null, null, null, null, DamageDealtEvent.Part.RECIPIENT);
+    }
+
+    private static <T> UUID shared(List<T> events, Function<T, UUID> read) {
+        UUID value = read.apply(events.getFirst());
+        for (T event : events) {
+            if (!Objects.equals(value, read.apply(event))) {
+                return null;
+            }
+        }
+        return value;
+    }
+
+    /**
      * Opens the damage event of the effect at {@code index} of {@code entry}, which is about to
      * resolve. When that is a new event, the open one ends first ({@link #endOpenDamageEvent}).
      * Returns {@code false} when ending it raised a prompt; the resolution then waits and comes
@@ -613,16 +723,24 @@ public class DamageSupport {
         List<FloatingContinuousEffect> shieldsAtStart = gameData.shieldEffects(SourceNextDamageToAnyTargetShield.class);
         List<FloatingContinuousEffect> restoredShields = new ArrayList<>();
         try {
-            for (PendingSimultaneousDamage combined : combineSimultaneousDamage(held)) {
-                restoreNextDamageShields(gameData, shieldsAtStart, restoredShields);
-                StackEntry entry = combined.damage().entry();
-                boolean previousExiles = entry.isExilesCreaturesDamaged();
-                entry.setExilesCreaturesDamaged(combined.exilesDamagedCreatures());
-                try {
-                    processDamageEvent(gameData, combined.damage());
-                } finally {
-                    entry.setExilesCreaturesDamaged(previousExiles);
+            List<PendingSimultaneousDamage> events = combineSimultaneousDamage(held);
+            Runnable deal = () -> {
+                for (PendingSimultaneousDamage combined : events) {
+                    restoreNextDamageShields(gameData, shieldsAtStart, restoredShields);
+                    StackEntry entry = combined.damage().entry();
+                    boolean previousExiles = entry.isExilesCreaturesDamaged();
+                    entry.setExilesCreaturesDamaged(combined.exilesDamagedCreatures());
+                    try {
+                        processDamageEvent(gameData, combined.damage());
+                    } finally {
+                        entry.setExilesCreaturesDamaged(previousExiles);
+                    }
                 }
+            };
+            if (hasRecipientOfSeveralSources(events)) {
+                dealAtOnce(gameData, deal);
+            } else {
+                deal.run();
             }
         } finally {
             restoredShields.forEach(gameData::endFloatingEffect);
@@ -649,6 +767,18 @@ public class DamageSupport {
                 restoredShields.add(fe);
             }
         }
+    }
+
+    /** Whether a permanent or player is dealt damage by more than one of {@code events}' sources. */
+    private static boolean hasRecipientOfSeveralSources(List<PendingSimultaneousDamage> events) {
+        Set<UUID> recipients = new HashSet<>();
+        for (PendingSimultaneousDamage pending : events) {
+            DamageEvent damage = pending.damage();
+            if (!recipients.add(damage.toPermanent() ? damage.recipientPermanentId() : damage.recipientPlayerId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<PendingSimultaneousDamage> combineSimultaneousDamage(List<PendingSimultaneousDamage> held) {
@@ -1717,8 +1847,8 @@ public class DamageSupport {
             }
             DamageDealtEvent.ToPlayer dealt = new DamageDealtEvent.ToPlayer(playerId, effectiveDamage, entry, source,
                     sourceControllerId, sourceCreature, creatureSource, opponentDamageDealer, stillOnBattlefield,
-                    dealingPermanent, dealingControllerId);
-            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(dealt));
+                    dealingPermanent, dealingControllerId, DamageDealtEvent.Part.WHOLE);
+            emitDamageDealt(gameData, dealt);
             checkSpellLifelink(gameData, entry, effectiveDamage);
             checkProliferatelink(gameData, entry, null, effectiveDamage);
         }

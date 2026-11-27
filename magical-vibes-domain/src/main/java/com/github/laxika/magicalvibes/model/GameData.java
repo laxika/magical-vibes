@@ -1457,6 +1457,11 @@ public class GameData {
     public final Map<UUID, Integer> pendingProliferateLinks = new java.util.LinkedHashMap<>();
     /** The damage event the resolving spell or ability is in, or null outside a resolution. */
     public ResolutionDamageEvent openDamageEvent;
+    /** The damage-dealt events of damage several sources are dealing at once ({@code DamageSupport.dealAtOnce}),
+     *  matched once all of it is dealt; kept while a replacement-order prompt of that damage waits, else null. */
+    public List<com.github.laxika.magicalvibes.model.rules.DamageDealtEvent> damageDealtAtOnce;
+    /** How many {@code DamageSupport.dealAtOnce} scopes are open. */
+    public int damageDealtAtOnceDepth;
     /** Suppresses re-offering an optional creature-damage redirect while a declined event resumes. */
     public boolean resolvingDeclinedAllCreatureDamageRedirect;
     /**
@@ -10100,6 +10105,8 @@ public class GameData {
         copy.pendingLifelinkGains.addAll(this.pendingLifelinkGains);
         copy.pendingProliferateLinks.putAll(this.pendingProliferateLinks);
         copy.openDamageEvent = this.openDamageEvent;
+        copy.damageDealtAtOnce = this.damageDealtAtOnce == null ? null : new ArrayList<>(this.damageDealtAtOnce);
+        copy.damageDealtAtOnceDepth = this.damageDealtAtOnceDepth;
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
 

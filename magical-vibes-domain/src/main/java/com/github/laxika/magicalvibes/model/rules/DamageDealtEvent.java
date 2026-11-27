@@ -18,6 +18,20 @@ import java.util.UUID;
 public sealed interface DamageDealtEvent extends RulesEvent {
 
     /**
+     * Which abilities a {@link ToPermanent} or {@link ToPlayer} triggers. Damage one recipient is dealt by several
+     * sources at once is one event for the recipient (CR 603.2c: "whenever this is dealt damage" triggers once, with
+     * the total; the Boros Reckoner ruling) and one for each source ("whenever a source you control deals damage").
+     */
+    enum Part {
+        /** The damage one source dealt the recipient, alone in its event: every ability it triggers. */
+        WHOLE,
+        /** All the damage the recipient was dealt at once: the abilities that see the recipient dealt damage. */
+        RECIPIENT,
+        /** One source's share of damage dealt at once: the abilities that see that source deal it. */
+        SOURCE
+    }
+
+    /**
      * Damage a spell or ability (or a fight) dealt to a permanent.
      *
      * @param target                      the damaged permanent
@@ -32,13 +46,23 @@ public sealed interface DamageDealtEvent extends RulesEvent {
      * @param targetControllerId          the damaged permanent's controller the damage was assigned against
      * @param excessDamage                the damage beyond lethal (CR 120.10), or 0
      * @param noncombat                   whether it is noncombat damage
+     * @param part                        which abilities it triggers; a {@link Part#RECIPIENT} event names a source
+     *                                    (card, permanent, controller) only when every source of its damage shares it
      */
     record ToPermanent(Permanent target, int damage, StackEntry entry, UUID sourceControllerId, Card sourceCard,
                        UUID sourceId, Permanent dealer, Permanent reflectionSource, UUID damagedCreatureControllerId,
-                       UUID targetControllerId, int excessDamage, boolean noncombat) implements DamageDealtEvent {
+                       UUID targetControllerId, int excessDamage, boolean noncombat, Part part)
+            implements DamageDealtEvent {
 
         public ToPermanent {
             Objects.requireNonNull(target, "target");
+            Objects.requireNonNull(part, "part");
+        }
+
+        /** This damage as {@code newPart} of damage dealt at once. */
+        public ToPermanent withPart(Part newPart) {
+            return new ToPermanent(target, damage, entry, sourceControllerId, sourceCard, sourceId, dealer,
+                    reflectionSource, damagedCreatureControllerId, targetControllerId, excessDamage, noncombat, newPart);
         }
 
         @Override
@@ -62,15 +86,24 @@ public sealed interface DamageDealtEvent extends RulesEvent {
      * @param sourcePermanent    the source permanent still on the battlefield, or {@code null}
      * @param dealingPermanent   the source permanent that dealt the damage itself, or {@code null}
      * @param dealingControllerId the controller of {@code dealingPermanent} as it dealt the damage
+     * @param part               which abilities it triggers; a {@link Part#RECIPIENT} event names the source's
+     *                           controller only when every source of its damage shares it
      */
     record ToPlayer(UUID playerId, int damage, StackEntry entry, Card source, UUID sourceControllerId,
                     Permanent dealtByCreature, Permanent creatureSource, Permanent opponentDealer,
-                    Permanent sourcePermanent, Permanent dealingPermanent, UUID dealingControllerId)
+                    Permanent sourcePermanent, Permanent dealingPermanent, UUID dealingControllerId, Part part)
             implements DamageDealtEvent {
 
         public ToPlayer {
             Objects.requireNonNull(playerId, "playerId");
             Objects.requireNonNull(entry, "entry");
+            Objects.requireNonNull(part, "part");
+        }
+
+        /** This damage as {@code newPart} of damage dealt at once. */
+        public ToPlayer withPart(Part newPart) {
+            return new ToPlayer(playerId, damage, entry, source, sourceControllerId, dealtByCreature, creatureSource,
+                    opponentDealer, sourcePermanent, dealingPermanent, dealingControllerId, newPart);
         }
 
         @Override

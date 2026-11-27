@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DaggerdromeImp;
+import com.github.laxika.magicalvibes.cards.d.DarienKingOfKjeldor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -17,7 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RakdosCharm.class, GrizzlyBears.class, HillGiant.class, Millstone.class, DaggerdromeImp.class})
+@CardUsed({RakdosCharm.class, GrizzlyBears.class, HillGiant.class, Millstone.class, DaggerdromeImp.class,
+        DarienKingOfKjeldor.class})
 class RakdosCharmTest extends BaseCardTest {
 
     private void addBR() {
@@ -128,8 +130,26 @@ class RakdosCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Each creature deals 1 damage to its controller")
-    @CardUsed({RakdosCharm.class, GrizzlyBears.class, HillGiant.class, DaggerdromeImp.class})
+    @CardUsed({RakdosCharm.class, GrizzlyBears.class, HillGiant.class, DaggerdromeImp.class,
+            DarienKingOfKjeldor.class})
     class DamageControllersMode {
+
+        @Test
+        @DisplayName("A player's creatures deal their damage at once, so \"whenever you're dealt damage\" triggers once")
+        void creaturesDamageTheirControllerAtOnce() {
+            harness.addToBattlefield(player2, new DarienKingOfKjeldor());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new RakdosCharm()));
+            addBR();
+
+            harness.castInstant(player1, 0, 2, null);
+            harness.passBothPriorities();
+
+            harness.assertLife(player2, 18);
+            assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Darien, King of Kjeldor"))
+                    .singleElement()
+                    .satisfies(entry -> assertThat(entry.getEventValue()).isEqualTo(2));
+        }
 
         @Test
         @DisplayName("Each creature damages its own controller")

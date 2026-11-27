@@ -1326,9 +1326,8 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (21)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (18)
 
-- Multi-dealer damage is dealt one dealer at a time: the bite (runs 37, 38), Rakdos Charm's third mode (T1, defect run 2: needs the open simultaneous event, `DamageSupport.beginDamageEvent`), Judgment of Alexander (P12). Sure.
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
 - Glimpse of Tomorrow, Morphic Tide put each Aura in its own continuation, not one batch.
@@ -1336,7 +1335,6 @@ Don't commit.
 - Kairi, Leadership Vacuum, Resounding Wave's cycling return one permanent at a time. Likely the same, untested.
 - Unfinished Business puts its two attachments onto the battlefield one after the other. Unverified.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
-- Disorder deals its damage as two events (the players first, then the white creatures) where its one sentence is one event; `addSimultaneousEffects` would join them. Fairly sure.
 - An additional time a triggered ability triggers (CR 603.2d) is made by `GameData.TriggerAwareStackList.add` copying the first entry (`copyForNewStackObject`) once it reaches the stack, so the copies keep the first instance's targets and any mode announced before it got there; each instance should choose its own (CR 603.3c, 603.3d). Unsure.
 - `ParleyEffect`'s token form (Cutthroat Negotiator, Innocuous Researcher) creates the tokens inside its own handler, so a token-creation prompt pauses it after the draws' order is set and a rerun would reveal and draw again; Storm Fleet Negotiator and Phabine now use the step form. Unsure (by reading).
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
@@ -1347,16 +1345,14 @@ Don't commit.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds, Dakra Mystic) gives no CR 404.3 order prompt. Sure, low.
 - Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Sure.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
-- Flame Spill, Pigment Storm, Ravenous Tyrannosaurus, Megatron, Ram Through: the excess ignores damage from other sources dealt at the same time (a simultaneous step's damage to the same creature, CR 120.4a); only `SequenceEffect.simultaneous` could combine them, and none of these cards does. Sure of the code, low.
 - `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (14)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (13)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
 - The queue's may-searches (New Frontiers, Natural Balance, ...) have no "do you search?", so a player can't search and find nothing (CR 701.23a, 701.23b). Unverified.
 - A same-name search with no match asks nothing (no look, CR 701.23a); Haunting Echoes with nothing exiled likewise. Unverified.
 - A draw replaced by exactly one draw of the same player (Enduring Renewal, Aladdin's Lamp) still reveals: `DrawService` reports no replacement. Unverified.
-- `DealDamageTo{AnyTarget,Players,TargetCreature}Effect` lose a player hit from the step result when a replacement-order prompt reruns them. Unverified.
 - `DrawCardEffectHandler` records no cards (DRAW outcome amount 0) when a draw is replaced by drawing more (Alhammarret's Archive), so `AmountThisWay(DRAW)` and `HappenedThisWay.drew()` read nothing drawn where cards were drawn because of the instruction; it keeps Malignant Growth on its own handler (CR 614.6). Fairly sure.
 - The library-search flows handled before the generic path (same-name, subtype and colour picks, basic-land queues, held-out pools, `HAND_OR_GRAVEYARD`) record no found cards in SEARCH. Sure of the code.
 - The selection-follow-up drafts (`LibraryRevealChoice`: Support Skyforge, Adaptive Armorer, Dragon Typhoon, Masterpiece Vault) record no CONJURE step.
