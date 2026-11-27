@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SupportSkyforgeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The new Servos can crew it, and it stops being a creature at end of turn")
     void newlyCreatedServosCanCrewAndAnimationExpiresAtEndOfTurn() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
@@ -70,6 +71,7 @@ class SupportSkyforgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Three untapped Servos are not enough to crew it")
     void threeUntappedServosAreNotEnoughToCrew() {
         Permanent skyforge = harness.enterBattlefieldAndReturn(player1, new SupportSkyforge());
         harness.passBothPriorities();
@@ -84,6 +86,7 @@ class SupportSkyforgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The draft offers distinct spellbook cards, and the creature change lasts on the battlefield past cleanup")
     void draftOffersDistinctSpellbookCardsAndCreatureChangeSurvivesEnteringBattlefieldAndCleanup() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
@@ -96,16 +99,16 @@ class SupportSkyforgeTest extends BaseCardTest {
         assertThat(skyforge.isTapped()).isFalse();
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.allCards()).hasSize(3);
-        assertThat(choice.allCards().stream().map(Card::getName).toList())
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards().stream().map(Card::getName).toList())
                 .doesNotHaveDuplicates()
                 .isSubsetOf("Heart of Kiran", "High-Speed Hoverbike", "Sky Skiff", "Smuggler's Copter",
                         "Aethersphere Harvester", "Air Response Unit", "Hulldrifter",
                         "Skysovereign, Consul Flagship");
-        Card selected = choice.allCards().getFirst();
+        Card selected = choice.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
@@ -154,12 +157,12 @@ class SupportSkyforgeTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.allCards()).hasSize(3);
+        assertThat(choice.cards()).hasSize(3);
 
-        Card selected = choice.allCards().getFirst();
+        Card selected = choice.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(selected);
@@ -179,8 +182,8 @@ class SupportSkyforgeTest extends BaseCardTest {
         harness.passBothPriorities();
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        Card selected = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)
-                .allCards().stream().filter(card -> !card.hasType(CardType.CREATURE)).findFirst().orElseThrow();
+        Card selected = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)
+                .cards().stream().filter(card -> !card.hasType(CardType.CREATURE)).findFirst().orElseThrow();
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
         gd.playerHands.get(player1.getId()).remove(selected);
         Permanent drafted = harness.addToBattlefieldAndReturn(player1, selected);
@@ -212,13 +215,39 @@ class SupportSkyforgeTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        Card selected = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)
-                .allCards().getFirst();
+        Card selected = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)
+                .cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(selected);
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(selected.getName()));
-        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
-                "Support Skyforge perpetually makes the drafted card an artifact creature."));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Each affected card in "
+                + player1.getUsername()
+                + "'s hand perpetually becomes an artifact creature in addition to its other types."));
+    }
+
+    @Test
+    @DisplayName("The two spellbook cards not drafted go nowhere: they are never exiled or named")
+    void undraftedCardsGoNowhere() {
+        addCreatureReady(player1, new SupportSkyforge());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        List<Card> offered = draftOffer();
+        Card selected = offered.getFirst();
+        List<Card> undrafted = offered.subList(1, offered.size());
+
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.gameLog).noneMatch(line -> undrafted.stream()
+                .anyMatch(card -> line.plainText().contains(card.getName())));
+    }
+
+    private List<Card> draftOffer() {
+        return gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class).cards();
     }
 }

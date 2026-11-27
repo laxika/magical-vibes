@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,7 +36,11 @@ public class SupportSkyforge extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(4, "Servo", 1, 1, null,
                         List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
-        addTrigger(Triggers.attacks(), DraftCardFromSpellbookEffect.withArtifactCreatureGrant(SPELLBOOK));
+        // "Becomes an artifact creature" keeps the card's other types (CR 205.1b).
+        addTrigger(Triggers.attacks(),
+                new DraftCardFromSpellbookEffect(SPELLBOOK),
+                new PerpetuallyGrantCardCharacteristicsEffect(Set.of(CardType.ARTIFACT, CardType.CREATURE), Set.of(),
+                        List.of()).to(Subjects.cardsThisWay(StepKind.CONJURE)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

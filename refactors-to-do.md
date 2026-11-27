@@ -426,7 +426,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
 - Eye for an Eye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle: their chosen-source handlers now ask `DamageSourceChoiceSupport.choosable` (rules-fixes DM-3); fold them onto `ChooseDamageSourceEffect` plus a step that reads the choice.
 
-#### Blocked records by cause (691)
+#### Blocked records by cause (690)
 
 #### The first half prompts mid-step (blocked-step-model) (127)
 
@@ -653,7 +653,7 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `ShuffleTargetPermanentsThenEachControllerMayCastEffect`: Guff Rewrites History: each player who controlled a shuffled permanent may cast the nonland card they exiled for free: a resolution cast offered to several players in turn, which no step does.
 - `TargetPlayerExilesFromHandEffect`: each has its own per-player choose-then-exile loop and riders (play permission, return on leave, face down).
 
-#### A subject or step result that does not exist yet (74)
+#### A subject or step result that does not exist yet (73)
 
 - `ActivePlayerReturnsCardFromGraveyardToHandEffect`: declares the player target the trigger restricts, but the recorded active player returns: no subject for that player, and another return path (Oath of Ghouls).
 - `AnimateChosenOwnPermanentEffect`: Turbocharged Escape's 'it perpetually becomes an artifact creature' needs a card subject naming a chosen permanent's card (cardsThisWay(CHOOSE) names chosen cards only); one user, no ledger row waits for that subject.
@@ -708,7 +708,6 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `OpponentChoosesOneOfTopTwoGraveyardCardsEffect`: Phyrexian Grimoire: no 'top two cards of your graveyard' card subject (TopOfGraveyard names one card; a count would be set by this card alone) and its harmful target opponent only chooses.
 - `OpponentChoosesPermanentToExileUntilSourceLeavesEffect`: Wormfang Crab: ChoosePlayerEffect.opponent() + ChoosePermanentsEffect.exactly(1, controlledBy(you(), other)).chosenBy(playersThisWay(CHOOSE)) fits, but no exile step links a chosen (non-target) permanent to its source for ReturnAllCardsExiledWithSourceEffect: ….
 - `PerpetuallyMakeMatchingHandAndLibraryCardsCreatureEffect`: the handler now records the changes in the perpetual stores (types and Treefolk through PerpetuallyGrantCardCharacteristicsEffectHandler.grant, base P/T, keywords) instead of exchanging cards, so a copy copies the printed Forest (CR 707.2).
-- `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect`: 'becomes an artifact creature' keeps the card's other types (CR 205.1b, not 205.1a as fold run 12e wrote); the handler now adds ARTIFACT and CREATURE in perpetualCardTypes instead of writing the card's printed types, so it waits only for a card-subject form ….
 - `PerpetualReduceRandomGreatestManaValueCreatureCardCostEffect`: Fuel Tank Feaster: 'a random creature card with the greatest mana value among creature cards in your hand' has no card predicate for the greatest mana value among the cards a subject names; one user.
 - `PhaseOutSelfAndCombatOpponentEffect`: source and combat opponent (Dream Fighter): folds into PhaseOutEffect(allOf(source(), ...)) once the block trigger records the opponent as a subject can read it; not checked here.
 - `PlayerChoosesUpToPermanentsThenSacrificesRestEffect`: Archfiend of Depravity: no verb sacrifices the set a subject names (SacrificeSelfEffect takes one permanent, SacrificeEachMatchingPermanentEffect a filter that reads no step result), so except(controlledBy(that player, creature), thisWay(CHOOSE)) has no ….
@@ -1337,22 +1336,19 @@ Don't commit.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 - `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (8)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (6)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
 - A draw replaced by exactly one draw of the same player (Enduring Renewal, Aladdin's Lamp) still reveals: `DrawService` reports no replacement. Unverified.
 - `DrawCardEffectHandler` records no cards (DRAW outcome amount 0) when a draw is replaced by drawing more (Alhammarret's Archive), so `AmountThisWay(DRAW)` and `HappenedThisWay.drew()` read nothing drawn where cards were drawn because of the instruction; it keeps Malignant Growth on its own handler (CR 614.6). Fairly sure.
-- The library-search flows handled before the generic path (same-name, subtype and colour picks, basic-land queues, held-out pools, `HAND_OR_GRAVEYARD`) record no found cards in SEARCH. Sure of the code.
-- The selection-follow-up drafts (`LibraryRevealChoice`: Support Skyforge, Adaptive Armorer, Dragon Typhoon, Masterpiece Vault) record no CONJURE step.
 - An "and/or" search (`SearchLibraryAndOrGraveyardChoice`: Last Light of Durin's Day's "search your hand and/or library", every "library and/or graveyard" card) has no "do you search your library?": a pick of nothing counts as a library search (search triggers, shuffle) and a pick from another zone as none, so a player can't search only the hand or graveyard and find nothing, or search the library too and take a graveyard card. Needs the zones chosen before the pool is shown (CR 701.23a; `MaySearchLibraryChoice` asks it for a single library). Sure, low; LS-1 left it (about 48 cards' tests).
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (14)
+#### Wrong targets and choices (13)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - Soundwave's "from their graveyard" is the damaged player's; the scope admits any opponent's. Unverified.
-- Opposition Agent's player can take a cast-only card as the find; the AI's search strategy answers only for the searcher. Unverified.
 - `beginAnyTargetChoice` and the permanent-or-player prompt don't drop what can't be chosen; about 400 counting callers unswept. Unverified.
 - A name prompt that requires a type offers a copy's name by the copy's types (CR 201.4a). Unverified.
 - The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Unverified.
@@ -1391,10 +1387,9 @@ Don't commit.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.
 
-#### Logs and hidden information (9)
+#### Logs and hidden information (8)
 
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
-- Found in D10: Support Skyforge's spellbook selection exiles the two cards not chosen face up and logs their names before the follow-up removes them (`LibraryChoiceHandlerService` rest-to-exile branch); a spellbook card not drafted goes nowhere.
 - `ChooseCardEffectHandler` logs a chosen card unnamed whenever it is in a hand (fold run 12e's zone check), even a revealed one; keep hidden-ness on the subject (fold run 20's note: a zone-based prompt check broke Addle and Intuition). Sure, low.
 - `SetBasePowerToughnessEffectHandler`'s set and player-target log lines print "null" for a null side. Sure.
 - Shadow of Doubt logs nothing since fold run 34: `GrantStaticEffectToPlayerEffect` has no log line. Sure, low.
@@ -1403,7 +1398,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (55)
+#### Other (54)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1424,7 +1419,6 @@ Don't commit.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
 - `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. Sure.
 - Bow of Nylea and The Moonbase wait in blocked-other for a subject naming every target card: the activation path (`AbilityActivationService`'s `TargetedGraveyardCardsEffect` keying) needs the `targetGraveyardCards` branch the cast path got in fold run 50c. Sure.
-- Panglacial Wurm can't be cast during the later picks of a multi-pick search; cast-only cards are offered only on the first prompt ("while you're searching"). Sure of the code.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): the copied return reads cards the copier exiled with its own abilities; it should read only cards its copied exile ability exiled (CR 607.1, 607.2a). Fairly sure.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.

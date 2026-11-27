@@ -415,6 +415,75 @@ class LibraryChoiceHandlerServiceTest {
                         player1Id, List.of(), true))));
     }
 
+    @Test
+    @DisplayName("A subtype-to-battlefield pick records its card as found by the search")
+    void subtypeToBattlefieldPickRecordsFoundCard() {
+        Card plains = createBasicLand("Plains");
+        gd.playerDecks.get(player1Id).add(plains);
+        StackEntry searching = parkSearchingEntry();
+        when(librarySearchSupport.startNextSubtypeToBattlefieldPick(eq(gd), eq(player1Id), any())).thenReturn(true);
+        beginSubtypeToBattlefieldPick(plains, List.of());
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(searching.getResolutionResults().outcome(StepKind.SEARCH).objectIds())
+                .containsExactly(plains.getId());
+    }
+
+    @Test
+    @DisplayName("A colour pick into the graveyard records its card as found, going to the graveyard")
+    void colourPickToGraveyardRecordsFoundCardAndZone() {
+        Card plains = createBasicLand("Plains");
+        gd.playerDecks.get(player1Id).add(plains);
+        StackEntry searching = parkSearchingEntry();
+        var queue = new LibrarySearchFollowUp.SubtypeToBattlefieldPickQueue(List.of(), null,
+                LibrarySearchDestination.GRAVEYARD, Set.of(plains.getId()), List.of(), List.of());
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(player1Id, List.of(plains))
+                        .canFailToFind(true)
+                        .destination(LibrarySearchDestination.GRAVEYARD)
+                        .shuffleAfterSelection(false)
+                        .followUp(LibrarySearchFollowUp.NONE.withSubtypeToBattlefieldPicks(queue))
+                        .build(), "Choose a white card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        var found = searching.getResolutionResults().outcome(StepKind.SEARCH);
+        assertThat(found.objectIds()).containsExactly(plains.getId());
+        assertThat(found.movedCards()).extracting(com.github.laxika.magicalvibes.model.MovedCard::zone)
+                .containsExactly(com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+    }
+
+    @Test
+    @DisplayName("A pick of the search for up to two basic lands before a d20 roll records its card as found")
+    void d20BasicLandPickRecordsFoundCard() {
+        Card forest = createBasicLand("Forest");
+        gd.playerDecks.get(player1Id).add(forest);
+        StackEntry searching = parkSearchingEntry();
+        var placement = new com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect(
+                com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect.Placement.TO_HAND);
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(player1Id, List.of(forest))
+                        .remainingCount(1)
+                        .reveals(true)
+                        .canFailToFind(true)
+                        .destination(LibrarySearchDestination.GIFTS_UNGIVEN_POOL)
+                        .followUp(LibrarySearchFollowUp.forD20BasicLandSearch(placement, placement, placement))
+                        .build(), "Search for up to two basic lands", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(searching.getResolutionResults().outcome(StepKind.SEARCH).objectIds())
+                .containsExactly(forest.getId());
+    }
+
+    private StackEntry parkSearchingEntry() {
+        StackEntry searching = TestStackDoor.triggered(createCard("Source", CardType.CREATURE), player1Id,
+                "Search", List.of());
+        gd.pendingEffectResolutionEntry = searching;
+        return searching;
+    }
+
     private void beginSubtypeToBattlefieldPick(Card offered, List<Card> alreadySelected) {
         var queue = new LibrarySearchFollowUp.SubtypeToBattlefieldPickQueue(List.of(), CardType.LAND,
                 LibrarySearchDestination.BATTLEFIELD, Set.of(offered.getId()), alreadySelected);

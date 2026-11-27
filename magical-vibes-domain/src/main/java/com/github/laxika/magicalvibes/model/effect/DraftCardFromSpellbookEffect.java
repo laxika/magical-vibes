@@ -20,7 +20,9 @@ import java.util.Objects;
  *
  * <p>The step pauses at its end on the choice and records {@code StepKind.CONJURE} as it is answered: the drafted card
  * in the zone it went to (a hand, or exile), or the permanent it became, so "that card perpetually gains ..." and "put
- * those cards onto the battlefield" are later steps over {@code Subjects.cardsThisWay(StepKind.CONJURE)}. "Draft a card
+ * those cards onto the battlefield" are later steps over {@code Subjects.cardsThisWay(StepKind.CONJURE)}. The cards
+ * offered and not drafted were never in the game and go nowhere. {@code battlefieldSelectionFollowUp} is what a draft
+ * onto the battlefield does next with the permanent ("when an Equipment enters this way, attach it ..."). "Draft a card
  * from [its] spellbook twice" is {@link #times}: one draft after another, each from three new random cards, recorded
  * together as one result. A drafted card going into a hand is named only to its drafter (CR 400.2).
  *
@@ -33,7 +35,6 @@ public record DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.Spellbo
                                            boolean putChosenCardOntoBattlefield,
                                            List<CardEffect> chosenCardEffects,
                                            LibrarySelectionFollowUp battlefieldSelectionFollowUp,
-                                           boolean makeSelectedArtifactCreature,
                                            boolean conjure,
                                            int drafts) implements CardEffect {
 
@@ -44,10 +45,9 @@ public record DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.Spellbo
                                         boolean putChosenCardOntoBattlefield,
                                         List<CardEffect> chosenCardEffects,
                                         LibrarySelectionFollowUp battlefieldSelectionFollowUp,
-                                        boolean makeSelectedArtifactCreature,
                                         boolean conjure) {
         this(spellbook, player, revealChosenCard, exileChosenCard, putChosenCardOntoBattlefield, chosenCardEffects,
-                battlefieldSelectionFollowUp, makeSelectedArtifactCreature, conjure, 1);
+                battlefieldSelectionFollowUp, conjure, 1);
     }
 
     public DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.SpellbookCard> spellbook) {
@@ -81,7 +81,7 @@ public record DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.Spellbo
                                         boolean putChosenCardOntoBattlefield,
                                         List<CardEffect> chosenCardEffects) {
         this(spellbook, player, revealChosenCard, exileChosenCard, putChosenCardOntoBattlefield,
-                chosenCardEffects, null, false, false);
+                chosenCardEffects, null, false);
     }
 
     public DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.SpellbookCard> spellbook,
@@ -89,7 +89,7 @@ public record DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.Spellbo
                                         LibrarySelectionFollowUp battlefieldSelectionFollowUp) {
         this(spellbook, Subjects.you(), false, false,
                 destination == LibrarySearchDestination.BATTLEFIELD, List.of(),
-                battlefieldSelectionFollowUp, false, false);
+                battlefieldSelectionFollowUp, false);
         if (destination != LibrarySearchDestination.HAND
                 && destination != LibrarySearchDestination.BATTLEFIELD) {
             throw new IllegalArgumentException("Spellbook drafts support only hand or battlefield destinations");
@@ -103,24 +103,17 @@ public record DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.Spellbo
                 spellbook, LibrarySearchDestination.BATTLEFIELD, battlefieldSelectionFollowUp);
     }
 
-    public static DraftCardFromSpellbookEffect withArtifactCreatureGrant(
-            List<DraftFromSpellbookEffect.SpellbookCard> spellbook) {
-        return new DraftCardFromSpellbookEffect(spellbook, Subjects.you(),
-                false, false, false, List.of(), null, true, false);
-    }
-
     /** "Draft a card from [this]'s spellbook {@code drafts} times": one draft after another, recorded together. */
     public DraftCardFromSpellbookEffect times(int drafts) {
         return new DraftCardFromSpellbookEffect(spellbook, player, revealChosenCard, exileChosenCard,
-                putChosenCardOntoBattlefield, chosenCardEffects, battlefieldSelectionFollowUp,
-                makeSelectedArtifactCreature, conjure, drafts);
+                putChosenCardOntoBattlefield, chosenCardEffects, battlefieldSelectionFollowUp, conjure, drafts);
     }
 
     /** "Conjure a card of your choice from … spellbook onto the battlefield." */
     public static DraftCardFromSpellbookEffect conjureToBattlefield(
             List<DraftFromSpellbookEffect.SpellbookCard> spellbook) {
         return new DraftCardFromSpellbookEffect(spellbook, Subjects.you(),
-                false, false, true, List.of(), null, false, true);
+                false, false, true, List.of(), null, true);
     }
 
     public DraftCardFromSpellbookEffect {
@@ -128,14 +121,14 @@ public record DraftCardFromSpellbookEffect(List<DraftFromSpellbookEffect.Spellbo
         if (exileChosenCard && putChosenCardOntoBattlefield) {
             throw new IllegalArgumentException("A drafted card cannot be exiled and put onto the battlefield");
         }
-        if (conjure && (battlefieldSelectionFollowUp != null || makeSelectedArtifactCreature)) {
+        if (conjure && battlefieldSelectionFollowUp != null) {
             throw new IllegalArgumentException("Conjuring from a spellbook does not support selection follow-ups");
         }
         if (drafts < 1) {
             throw new IllegalArgumentException("A draft step drafts at least once: " + drafts);
         }
         if (drafts > 1 && (exileChosenCard || putChosenCardOntoBattlefield || battlefieldSelectionFollowUp != null
-                || makeSelectedArtifactCreature || !chosenCardEffects.isEmpty())) {
+                || !chosenCardEffects.isEmpty())) {
             throw new IllegalArgumentException("Only drafts into a hand are repeated");
         }
         spellbook = List.copyOf(spellbook);

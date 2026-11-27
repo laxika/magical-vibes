@@ -357,7 +357,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | draw X, discard X, then create one flying Spirit for each distinct discarded card type | `o/OccultEpiphany.java` + `DrawCardEffect(XValue)` + `DiscardEffect(XValue, you())` + `CreateTokensForDistinctDiscardedCardTypesEffect` (reads the DISCARD step) |
 | each player may discard and draw an amount based on their own commander | `i/ImposingGrandeur.java` + `EachPlayerMayDiscardHandThenDrawEffect(new GreatestManaValueAmongOwnedCommanders())` |
 | each player may discard, then each discarder may search a basic land to hand | `b/BorderlandExplorer.java` + `EachPlayerMayDiscardThenSearchBasicLandToHandEffect` |
-| spellbook, draft from a spellbook, digital card offer | `DraftCardFromSpellbookEffect` + shared `LibraryRevealChoice` + `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` (`y/SupportSkyforge.java`, YDFT 26) |
+| spellbook, draft from a spellbook, digital card offer | `DraftCardFromSpellbookEffect` + `PerpetuallyGrantCardCharacteristicsEffect(...).to(cardsThisWay(CONJURE))` (`y/SupportSkyforge.java`, YDFT 26) |
 | seek one or more cards and discard those exact cards later | `SeekCardsToHandEffect(amount, filter) + RegisterDelayedStepTriggerEffect.aboutSought(step, DiscardSpecificCardEffect.of(cardsThisWay(SEEK)))` |
 | seek a card and exile that exact card at the next end step if it remains in hand | `SeekCardsToHandEffect(amount, filter) + RegisterDelayedStepTriggerEffect.aboutSought(step, ExileSpecificCardFromHandEffect(cardsThisWay(SEEK))).onlyIfStillInHand()` |
 | opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |

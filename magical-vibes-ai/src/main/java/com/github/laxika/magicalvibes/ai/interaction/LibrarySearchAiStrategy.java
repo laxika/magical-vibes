@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
- * Answers library search picks by taking the highest-value actual search result. Cards presented
- * only as optional cast offers are skipped, and a qualified search legally fails to find when no
- * search result remains.
+ * Answers library search picks by taking the highest-value actual search result, for the searcher or, under
+ * Opposition Agent, for the Agent's controller, who chooses the find and may play it. Cards presented only as
+ * optional cast offers are skipped, and a qualified search legally fails to find when no search result remains.
  */
 @Slf4j
 class LibrarySearchAiStrategy implements AiInteractionStrategy<PendingInteraction.LibrarySearch> {
@@ -26,7 +26,8 @@ class LibrarySearchAiStrategy implements AiInteractionStrategy<PendingInteractio
 
     @Override
     public void answer(PendingInteraction.LibrarySearch interaction, AiInteractionContext ctx) throws Exception {
-        if (!ctx.aiPlayerId().equals(interaction.params().playerId())) {
+        // Under Opposition Agent its controller chooses the find (decidingPlayerId), not the searcher.
+        if (!ctx.aiPlayerId().equals(interaction.decidingPlayerId())) {
             return;
         }
 

@@ -41,10 +41,10 @@ class AdaptiveArmorerTest extends BaseCardTest {
 
         castAndResolveArmorer();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.allCards()).hasSize(3);
+        assertThat(choice.cards()).hasSize(3);
         Card selected = selectEquipment(choice);
 
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
@@ -64,8 +64,8 @@ class AdaptiveArmorerTest extends BaseCardTest {
 
         castAndResolveArmorer();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         Card selected = selectEquipment(choice);
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
@@ -94,8 +94,8 @@ class AdaptiveArmorerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(source);
         resolveAllTriggers();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         Card selected = selectEquipment(choice);
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
         resolveAttachments(target);
@@ -112,8 +112,8 @@ class AdaptiveArmorerTest extends BaseCardTest {
     void attachmentUsesTheStack() {
         Permanent target = addCreatureReady(player1, new AdaptiveArmorer());
         castAndResolveArmorer();
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         Card selected = selectEquipment(choice);
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
@@ -126,8 +126,22 @@ class AdaptiveArmorerTest extends BaseCardTest {
         assertThat(drafted.getAttachedTo()).isEqualTo(target.getId());
     }
 
-    private Card selectEquipment(PendingInteraction.LibraryRevealChoice choice) {
-        return choice.allCards().stream()
+    @Test
+    @DisplayName("The two spellbook cards not drafted go nowhere: none is left in exile")
+    void undraftedCardsAreNotExiled() {
+        Permanent target = addCreatureReady(player1, new AdaptiveArmorer());
+        castAndResolveArmorer();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class).cards();
+        Card selected = offered.stream().filter(card -> !(card instanceof CitizensCrowbar)).findFirst().orElseThrow();
+
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        resolveAttachments(target);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    private Card selectEquipment(PendingInteraction.SpellbookDraftChoice choice) {
+        return choice.cards().stream()
                 .filter(card -> !(card instanceof CitizensCrowbar))
                 .findFirst().orElseThrow();
     }
@@ -137,8 +151,8 @@ class AdaptiveArmorerTest extends BaseCardTest {
     void equipmentCannotAttachToItself() {
         harness.addToBattlefield(player1, new MarchOfTheMachines());
         castAndResolveArmorer();
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         Card selected = selectEquipment(choice);
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
         Permanent drafted = gd.playerBattlefields.get(player1.getId()).stream()

@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -72,11 +70,6 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
                 ? spellbook
                 : new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
 
-        if (draft.makeSelectedArtifactCreature() || draft.battlefieldSelectionFollowUp() != null) {
-            beginSelectionWithFollowUp(gameData, draft, draftPlayerId, offeredCards);
-            return true;
-        }
-
         offeredCards.forEach(card -> card.setOwnerId(draftPlayerId));
 
         gameLogService.append(gameData, GameLog.text(
@@ -88,26 +81,5 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
                 draft.exileChosenCard(), draft.putChosenCardOntoBattlefield(), draft.chosenCardEffects(),
                 draft.conjure(), draft, draftsLeft));
         return true;
-    }
-
-    private void beginSelectionWithFollowUp(GameData gameData, DraftCardFromSpellbookEffect draft,
-                                            UUID playerId, List<Card> offeredCards) {
-        offeredCards.forEach(card -> card.setOwnerId(playerId));
-        List<UUID> offeredCardIds = offeredCards.stream().map(Card::getId).toList();
-        boolean selectedToBattlefield = draft.putChosenCardOntoBattlefield();
-        PendingInteraction.LibraryRevealChoice choice = new PendingInteraction.LibraryRevealChoice(
-                playerId, offeredCards, offeredCardIds,
-                false, !selectedToBattlefield, false, false, true,
-                0, null, 1, "Choose a card from this spellbook.",
-                false, 1, false, null,
-                false, false, false, draft.battlefieldSelectionFollowUp(),
-                false, false, false, false, null,
-                false, null).withRevealSelected(selectedToBattlefield || draft.revealChosenCard());
-        if (draft.makeSelectedArtifactCreature()) {
-            choice = choice.withSelectedCardFollowUp(
-                    new CardTruePredicate(),
-                    new PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect(offeredCardIds));
-        }
-        interactionHandlerRegistry.begin(gameData, choice);
     }
 }

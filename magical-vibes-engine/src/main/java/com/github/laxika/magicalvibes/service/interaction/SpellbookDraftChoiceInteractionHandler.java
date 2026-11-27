@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,7 @@ public class SpellbookDraftChoiceInteractionHandler
     private final ExileService exileService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final DraftCardFromSpellbookEffectHandler draftHandler;
+    private final LibraryChoiceHandlerService libraryChoiceHandlerService;
 
     @Override
     public Class<PendingInteraction.SpellbookDraftChoice> handledType() {
@@ -73,11 +75,16 @@ public class SpellbookDraftChoiceInteractionHandler
         if (interaction.putChosenCardOntoBattlefield()) {
             Permanent permanent = new Permanent(chosen);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, interaction.playerId(), permanent);
-            if (chosen.hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(
-                        gameData, interaction.playerId(), chosen, null, false);
-            }
+            // Every permanent's entry abilities, not only a creature's (an Equipment's, a Vehicle's).
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, interaction.playerId(), chosen, null, false);
             drafted = StepOutcome.ofObjects(List.of(permanent.getId()), List.of(interaction.playerId()));
+            if (interaction.draft() != null && interaction.draft().battlefieldSelectionFollowUp() != null
+                    && gameData.playerBattlefields.getOrDefault(interaction.playerId(), List.of()).contains(permanent)) {
+                // "When an Equipment enters this way, attach it to target creature you control."
+                libraryChoiceHandlerService.queueLibrarySelectionFollowUp(gameData,
+                        interaction.draft().battlefieldSelectionFollowUp(), List.of(permanent.getId()));
+            }
         } else if (interaction.exileChosenCard()) {
             exileService.exileCard(gameData, interaction.playerId(), chosen);
             gameData.grantExilePlayPermission(chosen.getId(), interaction.playerId(), Duration.UNTIL_END_OF_TURN);

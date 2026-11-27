@@ -376,6 +376,7 @@ public class LibraryChoiceHandlerService
                         gameData.playerDecks.get(deckOwnerId), deckOwnerId);
             } else if (cardIndex >= 0) {
                 queue = queue.withSelectedCard(searchCards.get(cardIndex));
+                recordFoundCard(gameData, searchCards.get(cardIndex), playerId, deckOwnerId, queue.destination());
             }
             if (librarySearchSupport.startNextSubtypeToBattlefieldPick(gameData, playerId,
                     followUp.withSubtypeToBattlefieldPicks(queue))) {
@@ -2654,6 +2655,8 @@ public class LibraryChoiceHandlerService
 
         if (cardIndex >= 0) {
             Card chosenCard = searchCards.get(cardIndex);
+            // Where the card goes is decided by the roll that follows, so it is recorded with no zone.
+            recordFoundCard(gameData, chosenCard, player.getId(), player.getId(), null);
             deck.removeIf(card -> card.getId().equals(chosenCard.getId()));
             accumulatedCards.add(chosenCard);
             gameLogService.append(gameData, GameLog.textCardText(
@@ -4121,7 +4124,12 @@ public class LibraryChoiceHandlerService
         }
     }
 
-    private void queueLibrarySelectionFollowUp(GameData gameData,
+    /**
+     * Queues what a library-to-battlefield effect, or a draft onto the battlefield, does next with the permanents it put
+     * onto the battlefield: an optional follow-up is a reflexive ability of its own, put on the stack; any other is the
+     * next step of the resolving entry, which records the permanents as its picks.
+     */
+    public void queueLibrarySelectionFollowUp(GameData gameData,
                                                LibrarySelectionFollowUp followUp,
                                                List<UUID> selectedPermanentIds) {
         if (followUp == null || selectedPermanentIds.isEmpty()

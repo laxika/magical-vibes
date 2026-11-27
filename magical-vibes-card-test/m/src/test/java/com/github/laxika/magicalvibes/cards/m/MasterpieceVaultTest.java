@@ -149,16 +149,16 @@ class MasterpieceVaultTest extends BaseCardTest {
     }
 
     private Card chooseDraftedCard() {
-        PendingInteraction.LibraryRevealChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.allCards()).hasSize(3);
-        assertThat(choice.allCards()).extracting(Card::getName)
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards()).extracting(Card::getName)
                 .doesNotHaveDuplicates()
                 .isSubsetOf("Champion's Helm", "Lightning Greaves", "Sword of Body and Mind",
                         "Sword of Feast and Famine", "Sword of Fire and Ice",
                         "Sword of Light and Shadow", "Sword of War and Peace");
-        Card selected = choice.allCards().getFirst();
+        Card selected = choice.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
         return selected;
     }

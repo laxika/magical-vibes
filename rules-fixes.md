@@ -47,7 +47,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2 done 2026-11-27; TR-3 open |
-| LS Library searches and reveals | LS-1, LS-2 | LS-1 done 2026-11-27; LS-2 open |
+| LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | open |
 | FD Face-down and hidden reads | FD-1, FD-2 | open |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | open |
@@ -161,7 +161,7 @@ line that needs the owner's answer is left and collected for the end.
 | 7 | FD-2, LY-1, DR-1, CB-1 | |
 | 8 | LY-2, LY-3, PP-1, CP-1 | |
 | 9 | LY-4, LY-5, PL-1, MC-1 | |
-| 10 | MC-2, FT-1, FT-2, FC-4 | |
+| 10 | MC-2, FT-1, FT-2, FC-4, LS-3 | |
 | 11 | Z | |
 
 ## Runs
@@ -780,6 +780,32 @@ E10 (left by LS-1, see its Outcome): every "and/or" search (Last Light of Durin'
 library-and/or-graveyard cards) chooses its zones before the pool is shown, so a pick of nothing isn't a library search and a pick
 from another zone is.
 
+Outcome: 2026-11-27. Fixed: E7, E8, H2, T4 (deleted from entry 18). Dropped: O32. Left: N35, E10. E7: the subtype and colour
+picks (Gaea's Balance, Lotuslight Dancers, Conflux, ...) and Druid of the Emerald Grove's basic-land picks now add each found
+card to the SEARCH outcome (a colour pick into the graveyard with that zone, CR 608.2c); the same-name, basic-land-queue and
+`HAND_OR_GRAVEYARD` searches already recorded (fold run 13b, the generic path), and the held-out pools (Selective Adaptation,
+the two-type looks) are looks, not searches. E8/H2: Adaptive Armorer and Masterpiece Vault draft through the plain
+`SpellbookDraftChoice`, which records CONJURE and queues their `LibrarySelectionFollowUp` (`queueLibrarySelectionFollowUp`, now
+public); Support Skyforge is the plain draft then `PerpetuallyGrantCardCharacteristicsEffect(artifact, creature)` over
+`cardsThisWay(CONJURE)` ("becomes an artifact creature" keeps the other types, CR 205.1b). The cards not drafted go nowhere:
+they were exiled face up and named (Armorer's and Vault's stayed in exile). Dragon Typhoon already drafted through the plain
+prompt. `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` and its handler and `makeSelectedArtifactCreature` are
+deleted (ledger row, ratchet 2853 / 2237). On the way: a permanent drafted onto the battlefield runs its entry abilities
+whatever its type, as the entry batch does (only a creature's did). T4: `LibrarySearchAiStrategy` answers for
+`decidingPlayerId()`, so an AI that controls Opposition Agent chooses an opponent's find (the Agent's cast-only half was fixed
+in D15). O32 dropped, not a defect: the Panglacial Wurm ruling "If you want to cast Panglacial Wurm while searching your
+library, you must do so before you find any cards with the search effect". N35 and E10 left, one change: an "and" search
+(Journey for the Elixir) searches the library whatever is found and, with its second sub-search, only once (CR 701.23h); an
+"and/or" one chooses its zones first. Both need the zones chosen on `SearchLibraryAndOrGraveyardChoice` (about 48 cards'
+tests) and a once-per-resolution search record. No owner question.
+
+#### LS-3. "And/or" searches choose their zones
+
+Depends on: LS-2.
+Lines: E10 and N35, left by LS-1 and LS-2 (read both Outcomes): a zone choice on `SearchLibraryAndOrGraveyardChoice` before the
+pool is shown (CR 701.23a; about 48 cards' tests answer the new prompt), and a library search recorded once per resolution for an
+"and" search (Journey for the Elixir; CR 701.23h). Also N41 and N42 if they fall out of the same change.
+
 Outcome:
 
 ### TK. Tokens and copies
@@ -1052,6 +1078,14 @@ New line N40 (seen in TR-2): `PermanentRemovalService` refreshes a departing tri
 toughness on the stack entries, trigger records and the parked entry, but not on `gameData.resolvingEntry`, so a triggering
 permanent that leaves while its own ability resolves, after a change since the trigger, keeps its trigger-time power for
 `TriggeringPermanentPower` (CR 608.2h); no card found that changes and then removes it mid-resolution; unverified.
+
+New line N41 (seen in LS-2): Nissa's Encouragement (`SearchLibraryAndGraveyardForNamedCardsToHandEffectHandler`) shuffles
+without recording a library search when every name is found in the graveyard, and with an empty library logs "Library is
+shuffled" but neither records nor shuffles, though "search your library and graveyard" searches the library (CR 701.23a).
+
+New line N42 (seen in LS-2): a card Opposition Agent's controller takes from a search (`handleOppositionAgentChoice`, before
+`recordFoundCard`) isn't in the search's SEARCH outcome, so a later step about "the card found" reads nothing; unverified
+whether a card exiled instead counts as found.
 
 Outcome:
 
