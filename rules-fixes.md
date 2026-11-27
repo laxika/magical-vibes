@@ -736,6 +736,10 @@ Lines: O5 (Limitless Rekindling's pool), O7 (`ConjureCardToBattlefieldEffectHand
 check that the handler still exists after run J), S8 (Mythweaver Poq's simultaneous duplicates: rulings first, else an owner
 question), the Behemoth of Vault 0 part of O79 (a reflexive ability about an earlier target).
 
+S3 and S21 (Ezuri's Predation, left by DM-2): build the "for each of those creatures, choose a different token" pairing prompt
+(the same piece entry 16's `CreatedTokensFightDifferentOpponentCreaturesEffect` line needs), one step that counts, creates and
+pairs from one list, and simultaneous fights.
+
 Outcome:
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
