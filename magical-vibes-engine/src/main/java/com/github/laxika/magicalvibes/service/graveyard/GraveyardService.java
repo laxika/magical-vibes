@@ -478,9 +478,14 @@ public class GraveyardService {
                 nativeCost ? choice.nativeCost() : choice.grantedCost());
     }
 
+    /**
+     * The permanent of {@code ownerId}'s whose {@link DiscardToTopOfLibraryInsteadEffect} applies to the discard in
+     * progress, or {@code null}. None applies to a discard paid as a cost ({@link GameData#discardPaidAsCost}): "if an
+     * effect causes you to discard" doesn't cover costs (Library of Leng's ruling).
+     */
     public Card findDiscardToLibraryReplacementSource(GameData gameData, UUID ownerId) {
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
-        if (bf == null) {
+        if (bf == null || gameData.discardPaidAsCost) {
             return null;
         }
         for (Permanent p : bf) {

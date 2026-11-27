@@ -89,7 +89,6 @@ public class ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffec
                 entry.getCard().getName(),
                 counterTypes,
                 false,
-                false,
                 targetId);
     }
 

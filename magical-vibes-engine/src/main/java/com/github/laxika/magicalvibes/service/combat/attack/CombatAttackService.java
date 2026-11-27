@@ -708,8 +708,9 @@ public class CombatAttackService {
                         simulatedPool, totalTax, phyrexianPayments, phyrexianTaxedAttackerCount);
             }
             phyrexianLifeCost = payPhyrexianAttackTax(simulatedPool, phyrexianPayments, phyrexianTaxedAttackerCount);
-            if (phyrexianLifeCost > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                throw new IllegalStateException("Life total can't change to pay Phyrexian attack tax");
+            // A player who can't lose life can't pay life (CR 119.8).
+            if (phyrexianLifeCost > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+                throw new IllegalStateException("Can't lose life to pay Phyrexian attack tax");
             }
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             if (currentLife < phyrexianLifeCost) {
@@ -718,8 +719,8 @@ public class CombatAttackService {
             }
         }
         if (attackLifeTaxTotal > 0) {
-            if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                throw new IllegalStateException("Life total can't change to pay attack life cost");
+            if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+                throw new IllegalStateException("Can't lose life to pay attack life cost");
             }
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             if (currentLife < attackLifeTaxTotal) {

@@ -3479,11 +3479,13 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        boolean poison = ChoiceContext.AddAnotherCounterTypeChoice.POISON.equals(choice);
-        if (poison || ChoiceContext.AddAnotherCounterTypeChoice.ENERGY.equals(choice)) {
+        PlayerCounterType playerCounterType = ctx.playerCounterTypes().stream()
+                .filter(kind -> ChoiceContext.AddAnotherCounterTypeChoice.playerCounterLabel(kind).equals(choice))
+                .findFirst()
+                .orElse(null);
+        if (playerCounterType != null) {
             UUID targetId = ctx.placementTargetId() != null ? ctx.placementTargetId() : ctx.targetId();
-            lifeSupport.givePlayerCounters(gameData, targetId,
-                    poison ? PlayerCounterType.POISON : PlayerCounterType.ENERGY, 1, ctx.sourceCardName(),
+            lifeSupport.givePlayerCounters(gameData, targetId, playerCounterType, 1, ctx.sourceCardName(),
                     gameData.pendingEffectResolutionEntry != null
                             ? gameData.pendingEffectResolutionEntry.getControllerId()
                             : gameData.currentlyResolvingControllerId);

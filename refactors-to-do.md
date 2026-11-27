@@ -1344,10 +1344,9 @@ Don't commit.
 - The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Unverified.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
 
-#### Payments and costs (6)
+#### Payments and costs (5)
 
 - Jaya Ballard's emblem grants flashback (an alternative cost, CR 702.34a, 118.9a) where the text permits casting for the mana cost. Fairly sure.
-- Animation Module offers only poison and energy player counters.
 - The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
@@ -1374,7 +1373,7 @@ Don't commit.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 
-#### Other (49)
+#### Other (47)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1406,8 +1405,6 @@ Don't commit.
 - A borrowed "X is the mana value of the exiled card" ability (Prototype Portal) is dropped from exile borrowers instead of granted as one that does nothing. Unsure.
 - Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.
 - "May pay" mana paid from the pool without the tax-paid event (Tax Taker): Reflect (`ReflectMayEffectHandler`) still pays with `payResolutionCost`; its only card, Mirrored Lotus, reflects for {0}, so no mana and no event. The others were fixed in PY-1 (`TaxTakerTest.EffectPromptTaxes`). Latent.
-- The morph face-up life cost (`SpellCastingService.validateMorphLifeCost`) and the attack / block life taxes (`CombatAttackService`, `CombatBlockService`) check `canPlayerLifeChange`, not `canPlayerLoseLife` (CR 119.8: a player who can't lose life can't pay life). Sure of the code.
-- Library of Leng's "if an effect causes you to discard a card" offers its top-of-library replacement for a discard paid as a cost (a ward or "unless" discard ransom, `ResolutionCostPaymentService`'s discard prompt); its ruling: "You can't use the Library of Leng ability  (CR 118.12). Sure of the ruling, fairly sure of the code.
 - Perplex's discard-hand ransom names the payer as the discard's cause, so an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege: not settled by the rules (an owner question in entry 17, CT-1). Unsure.
 - Gix, Yawgmoth Praetor: "whenever a creature deals combat damage to one of your opponents, its controller may pay 1 life. Sure of the Oracle text and the code.
 - Mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay` but can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a); no implemented card has one today. Sure, harmless today.

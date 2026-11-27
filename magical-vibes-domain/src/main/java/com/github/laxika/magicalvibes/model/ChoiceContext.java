@@ -2111,41 +2111,31 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Choice of a counter kind to add to the target. */
+    /**
+     * Choice of a counter kind to add to the target: one of {@code counterTypes} on a permanent, or one of
+     * {@code playerCounterTypes}, the kinds of counters a target player has (CR 122.1).
+     */
     record AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                       List<CounterType> counterTypes, boolean poisonCounters,
+                                       List<CounterType> counterTypes, List<PlayerCounterType> playerCounterTypes,
                                        boolean distributeToOtherControlledCreatures,
-                                       UUID placementTargetId, boolean energyCounters)
+                                       UUID placementTargetId)
             implements ChoiceContext {
 
-        public AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                           List<CounterType> counterTypes, boolean poisonCounters,
-                                           boolean distributeToOtherControlledCreatures, UUID placementTargetId) {
-            this(targetId, controllerId, sourceCardName, counterTypes, poisonCounters,
-                    distributeToOtherControlledCreatures, placementTargetId, false);
+        public AddAnotherCounterTypeChoice {
+            counterTypes = List.copyOf(counterTypes);
+            playerCounterTypes = List.copyOf(playerCounterTypes);
         }
-
-        public AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                           List<CounterType> counterTypes, boolean poisonCounters) {
-            this(targetId, controllerId, sourceCardName, counterTypes, poisonCounters, false, null);
-        }
-
-        public AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                           List<CounterType> counterTypes, boolean poisonCounters,
-                                           boolean distributeToOtherControlledCreatures) {
-            this(targetId, controllerId, sourceCardName, counterTypes, poisonCounters,
-                    distributeToOtherControlledCreatures, null);
-        }
-
-        public static final String POISON = "poison counters";
-        public static final String ENERGY = "energy counters";
 
         public List<String> options() {
             List<String> options = new ArrayList<>(counterTypes.stream()
                     .map(AddAnotherCounterTypeChoice::counterLabel).toList());
-            if (poisonCounters) options.add(POISON);
-            if (energyCounters) options.add(ENERGY);
+            playerCounterTypes.forEach(kind -> options.add(playerCounterLabel(kind)));
             return options;
+        }
+
+        /** The option naming {@code kind}, such as "poison counters". */
+        public static String playerCounterLabel(PlayerCounterType kind) {
+            return kind.name().toLowerCase() + " counters";
         }
 
         public static String counterLabel(CounterType counterType) {

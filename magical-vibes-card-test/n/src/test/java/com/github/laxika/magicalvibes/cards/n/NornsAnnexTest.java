@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -290,5 +294,22 @@ class NornsAnnexTest extends BaseCardTest {
         gs.declareAttackers(gd, player2, List.of(1), Map.of(1, battle.getId()));
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Opponent who can't lose life can't pay the Phyrexian life cost and can't attack without white mana")
+    void cannotPayPhyrexianLifeWhileUnableToLoseLife() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new NornsAnnex());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new PlayersCantLoseLifeThisTurnEffect(Subjects.you()), player2.getId(), Duration.UNTIL_END_OF_TURN));
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Can't lose life to pay Phyrexian attack tax");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(bears.isAttacking()).isFalse();
     }
 }

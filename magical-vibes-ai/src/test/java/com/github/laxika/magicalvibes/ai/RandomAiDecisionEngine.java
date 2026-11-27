@@ -1137,7 +1137,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         int blockTaxBudget = gameData.playerManaPools.get(aiPlayer.getId()).getTotal();
         // Board-wide block life costs (Heat Wave) come out of the AI's life total, and can't be
         // paid at all while its life total is locked.
-        int blockLifeTaxBudget = gameQueryService.canPlayerLifeChange(gameData, aiPlayer.getId())
+        int blockLifeTaxBudget = gameQueryService.canPlayerLoseLife(gameData, aiPlayer.getId())
                 ? gameData.getLife(aiPlayer.getId())
                 : 0;
         int teamMaxBlockers = teamMaxBlockersPerAttacker(opponentBattlefield);

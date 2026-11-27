@@ -955,7 +955,8 @@ public class SpellCastingService {
         for (int effectiveIndex : effectiveIndices) {
             Card toDiscard = hand.get(effectiveIndex);
             hand.remove(effectiveIndex);
-            graveyardService.discardCard(gameData, playerId, toDiscard);
+            // A cost isn't an effect: Library of Leng doesn't apply to it.
+            graveyardService.discardCard(gameData, playerId, toDiscard, false);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
@@ -3310,10 +3311,14 @@ public class SpellCastingService {
         gameData.discarded(playerId, toDiscard);
     }
 
-    /** Validates the life component of a morph face-up cost before any cost is paid. */
+    /**
+     * Validates the life component of a morph face-up cost before any cost is paid: a player who can't lose life can't
+     * pay life (CR 119.8). Turning a permanent face up is a special action, not a spell or an ability, so the "can't pay
+     * life to cast spells or activate abilities" prohibitions don't apply.
+     */
     public void validateMorphLifeCost(GameData gameData, Player player, LifeCastingCost cost) {
         UUID playerId = player.getId();
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             throw new IllegalStateException("Cannot pay life to turn the permanent face up");
         }
         if (gameData.getLife(playerId) < cost.amount()) {

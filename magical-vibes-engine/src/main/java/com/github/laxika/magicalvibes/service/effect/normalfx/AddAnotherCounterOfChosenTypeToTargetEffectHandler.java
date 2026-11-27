@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfChosenTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -71,17 +73,19 @@ public class AddAnotherCounterOfChosenTypeToTargetEffectHandler implements Norma
                 return;
             }
             playerInputService.beginAddAnotherCounterTypeChoice(gameData, entry.getControllerId(), targetId,
-                    entry.getCard().getName(), counterTypes, false);
+                    entry.getCard().getName(), counterTypes);
             return;
         }
 
         if (gameData.playerIds.contains(targetId)) {
-            boolean poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetId, 0) > 0;
-            boolean energyCounters = gameData.playerEnergyCounters.getOrDefault(targetId, 0) > 0;
-            if (!poisonCounters && !energyCounters) return;
+            // Any kind of counter the player has (CR 122.1).
+            List<PlayerCounterType> playerCounterTypes = Arrays.stream(PlayerCounterType.values())
+                    .filter(kind -> gameData.playerCounterCount(targetId, kind) > 0)
+                    .toList();
+            if (playerCounterTypes.isEmpty()) return;
             ChoiceContext.AddAnotherCounterTypeChoice context = new ChoiceContext.AddAnotherCounterTypeChoice(
                     targetId, entry.getControllerId(), entry.getCard().getName(), List.of(),
-                    poisonCounters, false, null, energyCounters);
+                    playerCounterTypes, false, null);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     entry.getControllerId(), null, null, context, context.options(),
                     entry.getCard().getName() + " — Choose a counter to add another of."));

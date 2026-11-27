@@ -1813,27 +1813,23 @@ public class PlayerInputService {
 
     /** Animation Module: choose a counter kind already present on the target, then add one more. */
     public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
-                                                  String sourceCardName, List<CounterType> counterTypes,
-                                                  boolean poisonCounters) {
-        beginAddAnotherCounterTypeChoice(gameData, playerId, targetId, sourceCardName, counterTypes,
-                poisonCounters, false);
+                                                  String sourceCardName, List<CounterType> counterTypes) {
+        beginAddAnotherCounterTypeChoice(gameData, playerId, targetId, sourceCardName, counterTypes, false);
     }
 
     public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
                                                   String sourceCardName, List<CounterType> counterTypes,
-                                                  boolean poisonCounters,
                                                   boolean distributeToOtherControlledCreatures) {
         beginAddAnotherCounterTypeChoice(gameData, playerId, targetId, sourceCardName, counterTypes,
-                poisonCounters, distributeToOtherControlledCreatures, null);
+                distributeToOtherControlledCreatures, null);
     }
 
     public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
                                                   String sourceCardName, List<CounterType> counterTypes,
-                                                  boolean poisonCounters,
                                                   boolean distributeToOtherControlledCreatures,
                                                   UUID placementTargetId) {
         ChoiceContext.AddAnotherCounterTypeChoice context = new ChoiceContext.AddAnotherCounterTypeChoice(
-                targetId, playerId, sourceCardName, new ArrayList<>(counterTypes), poisonCounters,
+                targetId, playerId, sourceCardName, counterTypes, List.of(),
                 distributeToOtherControlledCreatures, placementTargetId);
         List<String> options = context.options();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

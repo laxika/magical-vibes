@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
@@ -233,6 +237,25 @@ class HeatWaveTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
 
         assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("A player who can't lose life can't pay 1 life to block")
+    void cannotBlockWhileUnableToLoseLife() {
+        addHeatWave();
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new PantherWarriors());
+        int lifeBefore = gd.getLife(player2.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new PlayersCantLoseLifeThisTurnEffect(Subjects.you()), player2.getId(), Duration.UNTIL_END_OF_TURN));
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Can't lose life to pay block life cost");
+        assertThat(blocker.isBlocking()).isFalse();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
     }
 }

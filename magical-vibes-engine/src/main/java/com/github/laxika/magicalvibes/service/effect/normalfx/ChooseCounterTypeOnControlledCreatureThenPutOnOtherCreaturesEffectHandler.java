@@ -81,7 +81,6 @@ public class ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectH
                 reference.getId(),
                 sourceName,
                 counterTypes,
-                false,
                 true);
         return true;
     }

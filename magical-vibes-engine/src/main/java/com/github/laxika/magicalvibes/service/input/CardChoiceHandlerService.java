@@ -1344,6 +1344,8 @@ public class CardChoiceHandlerService {
                 .allMatch(id -> gameData.playerHands.getOrDefault(id, List.of()).isEmpty())) {
             discardTargetOpponentsChosenCards(gameData);
         }
+        // Every card of a discard paid as a cost is discarded now; what follows is the effect's.
+        gameData.discardPaidAsCost = false;
 
         // Apply counters before drawing for combined filtered-discard follow-ups. This preserves
         // the written order of effects such as "put counters on this creature and draw".

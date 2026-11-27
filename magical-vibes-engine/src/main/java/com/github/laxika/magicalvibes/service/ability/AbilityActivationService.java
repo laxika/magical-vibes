@@ -2687,7 +2687,8 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.discardCard(gameData, playerId, card);
+                // A cost isn't an effect: Library of Leng doesn't apply to it.
+                graveyardService.discardCard(gameData, playerId, card, false);
                 discarded = true;
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
@@ -9736,10 +9737,11 @@ public class AbilityActivationService {
         }
 
         gameData.discardCausedByOpponent = false;
-        // A discard replacement or madness (the card goes to exile and its trigger is queued) applies to
-        // the cost like any other discard; triggers it creates wait until the ability is on the stack.
+        // Madness (the card goes to exile and its trigger is queued) applies to the cost like any other discard;
+        // triggers it creates wait until the ability is on the stack. Library of Leng's "if an effect causes you to
+        // discard" doesn't: a cost isn't an effect.
         int stackBeforeDiscard = gameData.stack.size();
-        graveyardService.discardCard(gameData, player.getId(), paid);
+        graveyardService.discardCard(gameData, player.getId(), paid, false);
         if (gameData.stack.size() > stackBeforeDiscard) {
             gameData.pendingActivatedAbilityCostTriggers.addAll(
                     new ArrayList<>(gameData.stack.subList(stackBeforeDiscard, gameData.stack.size())));

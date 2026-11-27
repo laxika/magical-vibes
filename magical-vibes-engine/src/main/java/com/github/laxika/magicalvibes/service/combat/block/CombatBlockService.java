@@ -480,8 +480,9 @@ public class CombatBlockService {
             }
         }
         if (blockLifeTaxTotal > 0) {
-            if (!gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
-                throw new IllegalStateException("Life total can't change to pay block life cost");
+            // A player who can't lose life can't pay life (CR 119.8).
+            if (!gameQueryService.canPlayerLoseLife(gameData, defenderId)) {
+                throw new IllegalStateException("Can't lose life to pay block life cost");
             }
             int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 0);
             if (currentLife < blockLifeTaxTotal) {

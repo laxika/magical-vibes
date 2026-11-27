@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -197,5 +201,24 @@ class SivitriDragonMasterTest extends BaseCardTest {
 
     private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    }
+
+    @Test
+    @DisplayName("+1 prevents an attack by a player who can't lose life, as they can't pay its life cost")
+    void plusOneRejectsAttackByPlayerWhoCantLoseLife() {
+        Permanent sivitri = addReadySivitri(player1, 4);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 0, null, null);
+        harness.passBothPriorities();
+        harness.setLife(player2, 10);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new PlayersCantLoseLifeThisTurnEffect(Subjects.you()), player2.getId(), Duration.UNTIL_END_OF_TURN));
+
+        assertThatThrownBy(() -> declareAttackersAtPlayer(player2, attacker))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Can't lose life to pay attack life cost");
+
+        assertThat(attacker.isAttacking()).isFalse();
+        harness.assertLife(player2, 10);
     }
 }

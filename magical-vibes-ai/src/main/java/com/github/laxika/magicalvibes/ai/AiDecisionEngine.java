@@ -874,7 +874,7 @@ public abstract class AiDecisionEngine {
         // (e.g. Birds of Paradise) to avoid overwriting the ATTACKER_DECLARATION state.
         VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, actingPlayerId);
         int totalMana = virtualPool.getTotal();
-        int lifePaymentUnits = gameQueryService.canPlayerLifeChange(gameData, actingPlayerId)
+        int lifePaymentUnits = gameQueryService.canPlayerLoseLife(gameData, actingPlayerId)
                 ? Math.max(0, gameData.getLife(actingPlayerId) - 1) / 2
                 : 0;
 
@@ -971,7 +971,7 @@ public abstract class AiDecisionEngine {
 
         VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, actingPlayerId);
         int totalMana = virtualPool.getTotal();
-        int lifePaymentUnits = gameQueryService.canPlayerLifeChange(gameData, actingPlayerId)
+        int lifePaymentUnits = gameQueryService.canPlayerLoseLife(gameData, actingPlayerId)
                 ? Math.max(0, gameData.getLife(actingPlayerId) - 1) / 2
                 : 0;
         List<Integer> capped = new ArrayList<>();
@@ -1124,7 +1124,7 @@ public abstract class AiDecisionEngine {
         int manaBudget = canTapForTax
                 ? manaManager.buildSafeVirtualManaPool(gameData, defenderId).getTotal()
                 : gameData.playerManaPools.get(defenderId).getTotal();
-        int lifeBudget = gameQueryService.canPlayerLifeChange(gameData, defenderId)
+        int lifeBudget = gameQueryService.canPlayerLoseLife(gameData, defenderId)
                 ? gameData.getLife(defenderId)
                 : 0;
 

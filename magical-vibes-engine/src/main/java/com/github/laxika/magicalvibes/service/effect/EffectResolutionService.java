@@ -639,6 +639,7 @@ public class EffectResolutionService {
             gameData.pendingEffectResolutionEntry = null;
             gameData.pendingEffectResolutionIndex = 0;
         }
+        gameData.discardPaidAsCost = false;
         entry.setResolvingEffectIndex(-1);
         if (copySupport != null) copySupport.flushDeferredGraveyardCastCopies(gameData);
         entry.setResolvingEffectTargetGroup(null);

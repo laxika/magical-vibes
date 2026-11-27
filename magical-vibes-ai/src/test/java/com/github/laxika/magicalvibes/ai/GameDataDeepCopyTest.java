@@ -280,6 +280,7 @@ class GameDataDeepCopyTest {
         gd.activePlayerId = player1.getId();
         gd.playerLifeTotals.put(player1.getId(), 15);
         gd.playerLifeTotals.put(player2.getId(), 8);
+        gd.discardPaidAsCost = true;
 
         GameData copy = gd.simulationCopy();
 
@@ -288,6 +289,7 @@ class GameDataDeepCopyTest {
         assertThat(copy.activePlayerId).isEqualTo(player1.getId());
         assertThat(copy.playerLifeTotals.get(player1.getId())).isEqualTo(15);
         assertThat(copy.playerLifeTotals.get(player2.getId())).isEqualTo(8);
+        assertThat(copy.discardPaidAsCost).isTrue();
     }
 
     @Test

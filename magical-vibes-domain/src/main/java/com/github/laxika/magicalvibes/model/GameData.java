@@ -1350,6 +1350,13 @@ public class GameData {
      */
     public final Deque<PendingInteraction> pendingInteractions = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
+    /**
+     * Whether the discard in progress is paid as a cost of a resolving spell or ability ("unless [a player] discards",
+     * "you may discard. If you do", CR 118.12, 118.12a): Library of Leng's "if an effect causes you to discard" doesn't
+     * apply to it, as costs aren't effects. Set by {@code ResolutionCostPaymentService}; cleared once that discard
+     * finishes, and when the resolution ends.
+     */
+    public boolean discardPaidAsCost;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingGainLifeOnDiscardType pendingGainLifeOnDiscardType;
     public PendingConnive pendingConnive;
@@ -10071,6 +10078,7 @@ public class GameData {
         copy.endStepsThisTurn = this.endStepsThisTurn;
         copy.additionalEndStepsPending = this.additionalEndStepsPending;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
+        copy.discardPaidAsCost = this.discardPaidAsCost;
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatMainPhasePairsReturnStep = this.additionalCombatMainPhasePairsReturnStep;

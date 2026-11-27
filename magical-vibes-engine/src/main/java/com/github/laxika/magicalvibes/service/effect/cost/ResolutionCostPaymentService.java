@@ -140,7 +140,8 @@ import org.springframework.stereotype.Component;
  *   while the payer can lose life (CR 119.8, {@link #canPayLife}), recorded as the entry's {@code PAY_LIFE} step.</li>
  *   <li>{@link DiscardCardTypeCost} and {@link DiscardRandomCardCost}: the shared discard prompt or random discard, so
  *   madness and "whenever a player discards" see it; caused by the source's controller's ability when the payer is
- *   another player (CR 701.9).</li>
+ *   another player (CR 701.9); paid as a cost ({@link GameData#discardPaidAsCost}), so Library of Leng's "if an effect
+ *   causes you to discard" doesn't apply.</li>
  *   <li>{@link SacrificePermanentCost}: the shared sacrifice choice, through the sacrifice action (sacrifice triggers,
  *   death replacements); the one permanent that could be sacrificed is sacrificed unasked (CR 608.2d), unless its
  *   move to the graveyard has a death replacement question, which its pick's completion asks first (CR 616.1). The
@@ -584,6 +585,7 @@ public class ResolutionCostPaymentService {
                     yield Outcome.NOT_PAID;
                 }
                 gameData.discardCausedByOpponent = causedByOpponent(payerId, payment);
+                gameData.discardPaidAsCost = true;
                 playerInputService.beginDiscardChoice(gameData, payerId, indices,
                         discard.count() == 1 ? "Choose a card to discard." : "Choose " + discard.count()
                                 + " cards to discard.", discard.count());
@@ -594,8 +596,13 @@ public class ResolutionCostPaymentService {
                     yield Outcome.NOT_PAID;
                 }
                 gameData.discardCausedByOpponent = causedByOpponent(payerId, payment);
-                playerInteractionSupport.resolveRandomDiscardCards(gameData, payerId,
-                        payment.sourceCard().getName(), discard.count());
+                gameData.discardPaidAsCost = true;
+                try {
+                    playerInteractionSupport.resolveRandomDiscardCards(gameData, payerId,
+                            payment.sourceCard().getName(), discard.count());
+                } finally {
+                    gameData.discardPaidAsCost = false;
+                }
                 yield Outcome.PAID;
             }
             case SacrificePermanentCost sacrifice -> {
@@ -1097,6 +1104,7 @@ public class ResolutionCostPaymentService {
             case SourceControllerDrawsCost draw -> List.of(new DrawCardEffect(draw.count(), Subjects.you()));
             case DiscardCardTypeCost discard -> {
                 entry.setAcceptedPlayerIds(payers);
+                gameData.discardPaidAsCost = true;
                 yield List.of(discard.predicate() == null
                         ? new DiscardEffect(discard.count(), Subjects.acceptedPlayers(), false)
                         : DiscardEffect.matching(discard.count(), Subjects.acceptedPlayers(), discard.predicate()));
@@ -1677,7 +1685,12 @@ public class ResolutionCostPaymentService {
         DiscardHandEffect discard = new DiscardHandEffect(Subjects.targetPlayer());
         StackEntry carrier = StackEntry.carrier(sourceCard, payerId, sourceCard.getName() + " - discard hand",
                 List.of(discard), payerId, (UUID) null);
-        discardHandEffectHandler.resolve(gameData, carrier, discard);
+        gameData.discardPaidAsCost = true;
+        try {
+            discardHandEffectHandler.resolve(gameData, carrier, discard);
+        } finally {
+            gameData.discardPaidAsCost = false;
+        }
     }
 
     /** A payment made at once is paid, unless one of its actions stopped to ask (a replacement's choice). */

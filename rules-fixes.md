@@ -45,7 +45,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1, MP-2 done 2026-11-27 (Triskaidekaphobia, H7 for the owner) |
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
-| PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
+| PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2, PY-3 done 2026-11-27 |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2, TR-3 done 2026-11-27 (TR-3: T5's caller sweep left) |
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
@@ -385,6 +385,11 @@ Pactweaver's "removing a counter from a creature you control") by removing a -1/
 creature with only other kinds (Falco's own shield counter) it removes nothing, and with several kinds the caster never chooses;
 sure of the code, not tested.
 
+New line N58 (seen in PY-3): `SpellCastingService`'s random, discard-X, discard-hand, buyback-random and morph face-up discard
+costs move the card with `graveyardService.addCardToGraveyard`, not `discardCard`, so madness never exiles a card discarded for
+them (CR 702.35a, madness applies to any discard); the chosen additional discard and escalate costs use `discardCard`. Sure of the
+code, not tested.
+
 Outcome:
 
 ### CP. Casting permissions and cost readers
@@ -691,7 +696,20 @@ Lines: O61 (the morph face-up life cost and the attack / block life taxes check 
 O63 (Library of Leng's replacement is offered for a discard paid as a cost), P4's Animation Module part (offers only poison and
 energy player counters).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: O61 (a player who can't lose life can't pay life, CR 119.8: the morph face-up life cost, the attack
+life tax, the Phyrexian attack tax and the block life tax check `canPlayerLoseLife`; the AI's attack and block life budgets
+and the random test AI's read the same; Zombie Cutthroat, Sivitri, Norn's Annex and Heat Wave tests), O63 (no discard paid as a
+cost gets Library of Leng's replacement, its ruling "costs aren't effects", CR 118.12, 118.12a: the new
+`GameData.discardPaidAsCost`, set by `ResolutionCostPaymentService` for its discard prompt, random discard, discard-hand and
+paid-together discards, read by `GraveyardService.findDiscardToLibraryReplacementSource`, cleared when the chosen discard chain
+ends (`CardChoiceHandlerService.finishDiscardChoice`) and when the resolution ends; the activation discard cost, the
+discard-this-card cost (cycling) and escalate pass `applyDiscardToLibraryReplacement=false`, madness still applying; Wild
+Mongrel, cycling, Collective Brutality, Painful Quandary and Possessed Portal pins in `LibraryOfLengTest`), P4's Animation
+Module part (a player target offers every kind of counter that player has, `PlayerCounterType`, CR 122.1:
+`ChoiceContext.AddAnotherCounterTypeChoice.playerCounterTypes` replaces its poison and energy booleans). Deleted from entry 18:
+P4's last part (Animation Module), O61, O63. New lines N58 (FC-4: madness skips several cast-cost discards), N59 (MC-2:
+"may discard. If you do" built as a discard effect still offers Leng). No effect class added or deleted, so no ledger or
+ratchet change; no `CONVERSION_VERSION` change.
 
 ### TR. Triggers, subjects and targeting
 
@@ -1223,6 +1241,10 @@ colour-change effect later applied to it, dropping a colour Painter's Servant or
 New line N57 (seen in FD-1): `PermanentRemovalService` records a simultaneously dying permanent's last-known colours from its
 snapshot's card (`removalSnapshot.getCard().getColors()`), its printed colours, not the colours it had as it died (CR 608.2h).
 Unverified.
+
+New line N59 (seen in PY-3): a resolution-time "you may discard a card. If you do, ..." built as a discard effect (`MayEffect`
+over `DiscardEffect`, `DiscardFollowUp.thenEffect`: Pack Guardian and the like) rather than through `ResolutionCostPaymentService`
+is a cost too (CR 118.12), yet still offers Library of Leng's replacement; set `GameData.discardPaidAsCost` there. Unverified.
 
 Outcome:
 
