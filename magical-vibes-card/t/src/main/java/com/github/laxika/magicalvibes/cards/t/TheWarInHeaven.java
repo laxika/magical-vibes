@@ -28,8 +28,8 @@ public class TheWarInHeaven extends Card {
         addTrigger(Triggers.chapter(3),
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         new CardTypePredicate(CardType.CREATURE), 3, false, false, null, 8,
-                        null, null, CounterType.NECRODERMIS, 1),
-                new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                        Set.of(CardType.ARTIFACT), Subjects.returnedThisResolution(), Duration.PERMANENT, null));
+                        null, null, CounterType.NECRODERMIS, 1).withEntryAnimation(
+                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                                Set.of(CardType.ARTIFACT), Subjects.target(), Duration.PERMANENT, null), null));
     }
 }

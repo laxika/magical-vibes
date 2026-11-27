@@ -20,7 +20,7 @@ Owner: `BattlefieldEntryBatchSupport`; `GameData.pendingAnyNumberHandPutCardIds`
 Why: each entrant's triggers see the others, and zone indices stay stable while choosing.
 
 ### Batch members ask their as-enters choices in turn (CR 614.12)
-Once a batch is on the battlefield, each member's as-enters choices ("choose a color") are asked one member after another; the rest wait in `GameData.pendingEntryBatchAsEntersIds`, resumed by the input epilogue, and the batch's "one or more enter" event stays open until all are done.
+Once a batch is on the battlefield, each member's as-enters choices ("choose a color") are asked one member after another; the rest wait in `GameData.pendingEntryBatchAsEntersIds`, resumed by the input epilogue, and the batch's "one or more enter" event stays open until all are done. A mass graveyard return that places its cards itself hands them to `askAsEntersChoicesInTurn`.
 Owner: `BattlefieldEntryBatchSupport.continueAsEntersChoices`, `InputCompletionService`.
 Why: a member asked while another's prompt is open would enter without its choice.
 
@@ -55,6 +55,11 @@ Why: the copy choice is made as the card enters, before the rest moves.
 Riot, unleash, amplify and positioning are answered before physical placement; the paused `BattlefieldEntryRequest` resumes with its spell metadata. Positioning comes after devour.
 Owner: `BattlefieldPlacementService.place`, `CreaturePositioningSupport`.
 Why: the permanent enters with its counters, haste and slot already set.
+
+### "Return it and it's a [type]" applies as it enters (CR 611.2e)
+A return that says the permanent "is" or "has" a characteristic sets it before the permanent enters (pre-entry `battlefieldEffectGrants`, `withEntryAnimation`), so enter-tapped replacements and enter triggers see it; "becomes" applies after it is on the battlefield.
+Owner: `GraveyardReturnSupport`, `ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler`.
+Why: Brilliance Unleashed's returned Sol Ring enters as a creature (False Floor taps it); Tune Up's Vehicle does not.
 
 ### Entry-time effects travel with the request
 Reanimation with counters passes `EnterWithCountersEffect` in the `BattlefieldEntryRequest`; echo registration and a static `ChooseOpponentGainsControlOfSourceEffect` (choosing the entering controller) run during placement.

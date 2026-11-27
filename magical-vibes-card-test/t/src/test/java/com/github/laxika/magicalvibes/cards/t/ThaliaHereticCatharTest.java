@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.FieldOfRuin;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.s.SilentDeparture;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ThaliaHereticCathar.class, FieldOfRuin.class, Forest.class, GrizzlyBears.class,
-        TravelersAmulet.class, SilentDeparture.class})
+        TravelersAmulet.class, SilentDeparture.class, MarchOfTheMachines.class})
 class ThaliaHereticCatharTest extends BaseCardTest {
 
     @Test
@@ -99,6 +100,23 @@ class ThaliaHereticCatharTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Traveler's Amulet").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent's noncreature artifact that would be a creature on the battlefield enters tapped (CR 614.12)")
+    void opponentsArtifactAnimatedByMarchEntersTapped() {
+        harness.addToBattlefield(player1, new ThaliaHereticCathar());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new TravelersAmulet(), "{1}");
+        harness.passBothPriorities();
+
+        Permanent amulet = findPermanent(player2, "Traveler's Amulet");
+        assertThat(gqs.isCreature(gd, amulet)).isTrue();
+        assertThat(amulet.isTapped()).isTrue();
     }
 
     @Test

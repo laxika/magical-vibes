@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LiquimetalCoating;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NimDeathmantle.class, GrizzlyBears.class, Shock.class, TelJiladFallen.class})
+@CardUsed({NimDeathmantle.class, GrizzlyBears.class, Shock.class, TelJiladFallen.class,
+        MarchOfTheMachines.class, LiquimetalCoating.class, Pacifism.class})
 class NimDeathmantleTest extends BaseCardTest {
 
     @Test
@@ -107,6 +111,32 @@ class NimDeathmantleTest extends BaseCardTest {
         // Equipment should be attached to the returned creature
         assertThat(deathmantle.getAttachedTo())
                 .isEqualTo(harness.getPermanentId(player1, "Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("A returned Aura card that died animated is attached to what its controller chooses as it enters (CR 303.4f)")
+    void returnedAuraChoosesWhatItEnchants() {
+        Permanent deathmantle = harness.addToBattlefieldAndReturn(player1, new NimDeathmantle());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefieldAndReturn(player1, new LiquimetalCoating()).setSummoningSick(false);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent pacifism = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        pacifism.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 2, null, pacifism.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        Permanent returned = findPermanent(player1, "Pacifism");
+        assertThat(returned.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(deathmantle.getAttachedTo()).isNotEqualTo(returned.getId());
+        harness.assertNotInGraveyard(player1, "Pacifism");
     }
 
     @Test

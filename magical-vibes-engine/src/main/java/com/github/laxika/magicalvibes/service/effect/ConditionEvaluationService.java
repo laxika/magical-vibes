@@ -468,6 +468,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanS
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueEqualsStepAmount;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtMost;
 import com.github.laxika.magicalvibes.model.condition.TargetManaValueAtMostControllerGraveyardCount;
@@ -1720,6 +1721,7 @@ public class ConditionEvaluationService {
                     targetGraveyardCardManaValueAtMostControllerExperienceCounters(gameData, ctx);
             case TargetGraveyardCardManaValueAtLeast c ->
                     targetGraveyardCardManaValueAtLeast(gameData, ctx, c.minManaValue());
+            case TargetGraveyardCardMatches c -> targetGraveyardCardMatches(gameData, ctx, c);
             case TargetGraveyardCardManaValueEqualsStepAmount c ->
                     targetGraveyardCardManaValueEqualsStepAmount(gameData, ctx, c.kind());
             case ColorSpentToCast c ->
@@ -4132,6 +4134,16 @@ public class ConditionEvaluationService {
         }
         Card target = targetId == null ? null : gameQueryService.findCardInGraveyardById(gameData, targetId);
         return target != null && target.getManaValue() == ctx.resolutionResults().outcome(kind).amount();
+    }
+
+    private boolean targetGraveyardCardMatches(GameData gameData, ConditionContext ctx,
+                                               TargetGraveyardCardMatches condition) {
+        Card target = ctx.targetId() == null
+                ? null
+                : gameQueryService.findCardInGraveyardById(gameData, ctx.targetId());
+        UUID sourceCardId = ctx.sourceCard() != null ? ctx.sourceCard().getId() : null;
+        return target != null && predicateEvaluationService.matchesCardPredicate(
+                target, condition.filter(), sourceCardId, gameData, ctx.controllerId());
     }
 
     private boolean targetGraveyardCardManaValueAtLeast(GameData gameData, ConditionContext ctx, int minManaValue) {

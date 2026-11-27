@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AcademyRaider;
+import com.github.laxika.magicalvibes.cards.a.AdaptiveAutomaton;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.i.IntoTheWilds;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OgreBattledriver;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RiseOfTheDarkRealms.class, GiantSpider.class, AcademyRaider.class, IntoTheWilds.class,
-        Mountain.class, OgreBattledriver.class})
+        Mountain.class, OgreBattledriver.class, AdaptiveAutomaton.class})
 class RiseOfTheDarkRealmsTest extends BaseCardTest {
 
     private void castRiseOfTheDarkRealms() {
@@ -39,6 +42,24 @@ class RiseOfTheDarkRealmsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Giant Spider");
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Each returned creature is asked its as-enters choice in turn (CR 614.12)")
+    void asksEachReturnedCreaturesAsEntersChoiceInTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card first = new AdaptiveAutomaton();
+        Card second = new AdaptiveAutomaton();
+        gd.playerGraveyards.get(player1.getId()).addAll(List.of(first, second));
+
+        castRiseOfTheDarkRealms();
+        harness.handleListChoice(player1, "ELF");
+        harness.handleListChoice(player1, "GOBLIN");
+
+        List<Permanent> automatons = findPermanents(player1, "Adaptive Automaton");
+        assertThat(automatons).extracting(Permanent::getChosenSubtype)
+                .containsExactlyInAnyOrder(CardSubtype.ELF, CardSubtype.GOBLIN);
     }
 
     @Test

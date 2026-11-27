@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RadjanSpirit;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StarlitAngel;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LuminousBroodmoth.class, GrizzlyBears.class, StarlitAngel.class, RadjanSpirit.class, Shock.class})
+@CardUsed({LuminousBroodmoth.class, GrizzlyBears.class, StarlitAngel.class, RadjanSpirit.class, Shock.class,
+        MarchOfTheMachines.class, LiquimetalCoating.class, Pacifism.class})
 class LuminousBroodmothTest extends BaseCardTest {
 
     @Test
@@ -30,6 +34,30 @@ class LuminousBroodmothTest extends BaseCardTest {
         assertThat(returned.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A returned Aura card that died animated is attached to what its owner chooses as it enters (CR 303.4f)")
+    void returnedAuraChoosesWhatItEnchants() {
+        harness.addToBattlefield(player1, new LuminousBroodmoth());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefieldAndReturn(player1, new LiquimetalCoating()).setSummoningSick(false);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent pacifism = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        pacifism.setAttachedTo(bears.getId());
+
+        harness.activateAbility(player1, 2, null, pacifism.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        Permanent returned = findPermanent(player1, "Pacifism");
+        assertThat(returned.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(returned.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Pacifism");
     }
 
     @Test

@@ -2817,11 +2817,18 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the given card is barred from entering the battlefield from
      * {@code zone} by a {@link CardsCantEnterBattlefieldFromZonesEffect} on any battlefield
-     * (e.g. Grafdigger's Cage). The card is tested against each such effect's filter, and the
-     * effect must list {@code zone} in its {@code zones}, so only matching cards (e.g. creature
-     * cards) entering from a blocked zone are stopped.
+     * (e.g. Grafdigger's Cage) or floated for a duration (Bad Wolf Bay's "cards can't enter from
+     * exile this turn", a rule change that binds every card, CR 611.2c). The card is tested against
+     * each such effect's filter, and the effect must list {@code zone} in its {@code zones}, so only
+     * matching cards (e.g. creature cards) entering from a blocked zone are stopped.
      */
     public boolean isCardBlockedFromEnteringFromZone(GameData gameData, Card card, Zone zone) {
+        if (gameData.floatingEffectsOfTypes(CardsCantEnterBattlefieldFromZonesEffect.class).stream()
+                .map(floating -> (CardsCantEnterBattlefieldFromZonesEffect) floating.effect())
+                .anyMatch(e -> e.zones().contains(zone)
+                        && predicateEvaluationService.matchesCardPredicate(card, e.filter(), null))) {
+            return true;
+        }
         return gameData.anyPermanentMatches(p ->
                 !p.isFaceDown() && !hasLostAllAbilities(gameData, p)
                         && p.getCard().getStaticEffects().stream()

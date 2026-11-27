@@ -320,6 +320,9 @@ public class BattlefieldPlacementService {
         if (applyShuffleCreatureEnteringFromExile(gameData, controllerId, permanent, request.sourceStackEntry())) {
             return;
         }
+        if (keepCardThatCantEnterFromExile(gameData, controllerId, permanent)) {
+            return;
+        }
         if (!applyRequiredGraveyardExileReplacement(gameData, controllerId, permanent, xValue)) {
             return;
         }
@@ -1190,6 +1193,29 @@ public class BattlefieldPlacementService {
     }
 
     /**
+     * A card coming straight from exile that a {@code CardsCantEnterBattlefieldFromZonesEffect} bars from entering
+     * from exile (Bad Wolf Bay's "cards can't enter from exile this turn") stays in exile. A path that put the card
+     * aside before placing it gets it back in exile; a token is not a card, and a spell cast from exile enters from
+     * the stack.
+     */
+    private boolean keepCardThatCantEnterFromExile(GameData gameData, UUID controllerId, Permanent permanent) {
+        Card physicalCard = permanent.getOriginalCard() != null ? permanent.getOriginalCard() : permanent.getCard();
+        boolean fromExile = permanent.isEnteredFromExile() || permanent.getEnteredFromZone() == Zone.EXILE;
+        if (physicalCard.isToken() || !fromExile || permanent.isCast()
+                || !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, physicalCard, Zone.EXILE)) {
+            return false;
+        }
+        if (gameData.findExiledCard(physicalCard.getId()) == null) {
+            UUID ownerId = physicalCard.getOwnerId() != null ? physicalCard.getOwnerId() : controllerId;
+            gameData.addToExile(ownerId, physicalCard);
+        }
+        gameLogService.append(gameData, GameLog.cardThen(physicalCard,
+                " can't enter the battlefield from exile; it stays in exile."));
+        log.info("Game {} - {} can't enter the battlefield from exile", gameData.id, physicalCard.getName());
+        return true;
+    }
+
+    /**
      * CR 400.7a: a text change made to a spell (e.g. Glamerdye targeting a permanent spell) carries
      * onto the permanent that spell resolves into. The replacements were recorded keyed by the
      * spell's card id; the entering permanent shares that card id, so each becomes a layer-3 floating
@@ -1610,8 +1636,8 @@ public class BattlefieldPlacementService {
             if (enterUntapped != null
                     && SubjectResolutionService.namesPlayer(gameData, active.source(), active.controllerId(),
                     enteringControllerId, enterUntapped.players())
-                    && predicateEvaluationService.matchesPermanentPredicate(
-                    gameData, enteringPermanent, enterUntapped.filter())) {
+                    && entersMatching(gameData, enteringControllerId, enteringPermanent, enterUntapped.filter(),
+                    FilterContext.of(gameData))) {
                 enteringPermanent.enterUntapped();
                 return;
             }
@@ -1662,7 +1688,7 @@ public class BattlefieldPlacementService {
             return false;
         }
         if (enterTapped.filter() != null) {
-            return predicateEvaluationService.matchesPermanentPredicate(enteringPermanent, enterTapped.filter(),
+            return entersMatching(gameData, enteringControllerId, enteringPermanent, enterTapped.filter(),
                     filterContext);
         }
         if (enteringPermanent.isFaceDown()) {
@@ -1670,6 +1696,20 @@ public class BattlefieldPlacementService {
             return enterTapped.cardTypes().contains(CardType.CREATURE);
         }
         return entersWithAnyType(gameData, enteringControllerId, enteringPermanent, enterTapped.cardTypes());
+    }
+
+    /**
+     * Whether the entering permanent matches {@code filter} as it would exist on the battlefield under
+     * {@code controllerId}, the continuous effects that would apply to it counted (CR 614.12): a creature entering
+     * under Xenograft's controller with Phyrexian chosen is Phyrexian. One already on the battlefield is read as it is.
+     */
+    private boolean entersMatching(GameData gameData, UUID controllerId, Permanent enteringPermanent,
+                                   PermanentPredicate filter, FilterContext filterContext) {
+        if (controllerId == null || gameQueryService.findPermanentById(gameData, enteringPermanent.getId()) != null) {
+            return predicateEvaluationService.matchesPermanentPredicate(enteringPermanent, filter, filterContext);
+        }
+        return gameQueryService.withEnteringPermanent(gameData, controllerId, enteringPermanent,
+                () -> predicateEvaluationService.matchesPermanentPredicate(enteringPermanent, filter, filterContext));
     }
 
     private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, UUID controllerId, Permanent permanent) {

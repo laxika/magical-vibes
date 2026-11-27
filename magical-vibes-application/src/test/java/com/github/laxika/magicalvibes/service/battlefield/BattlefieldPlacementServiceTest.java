@@ -169,6 +169,24 @@ class BattlefieldPlacementServiceTest {
     }
 
     @Test
+    @DisplayName("A card barred from entering from exile stays in exile")
+    void cardBarredFromEnteringFromExileStaysInExile() {
+        Card artifact = new Card();
+        artifact.setName("Exiled artifact");
+        artifact.setType(CardType.ARTIFACT);
+        artifact.setOwnerId(player1Id);
+        Permanent entering = new Permanent(artifact);
+        entering.setEnteredFromExile(true);
+        when(gameQueryService.isCardBlockedFromEnteringFromZone(gd, artifact,
+                com.github.laxika.magicalvibes.model.Zone.EXILE)).thenReturn(true);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(gd.playerBattlefields.get(player1Id)).isEmpty();
+        assertThat(gd.findExiledCard(artifact.getId())).isNotNull();
+    }
+
+    @Test
     @DisplayName("Remembers the only opponent as the chosen player as the permanent enters")
     void remembersTheOpponentAsThePermanentEnters() {
         UUID opponentId = UUID.randomUUID();

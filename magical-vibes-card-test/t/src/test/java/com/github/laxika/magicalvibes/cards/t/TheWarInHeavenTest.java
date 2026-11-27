@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.RootMaze;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheWarInHeaven.class, GrizzlyBears.class, HillGiant.class, GiantGrowth.class})
+@CardUsed({TheWarInHeaven.class, GrizzlyBears.class, HillGiant.class, GiantGrowth.class, RootMaze.class})
 class TheWarInHeavenTest extends BaseCardTest {
 
     @Test
@@ -72,6 +74,22 @@ class TheWarInHeavenTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getName().equals("Grizzly Bears")
                         || card.getName().equals("Hill Giant"));
+    }
+
+    @Test
+    @DisplayName("Chapter III's creatures are artifacts as they enter, so Root Maze makes them enter tapped (CR 611.2e)")
+    void chapterThreeCreaturesEnterAsArtifacts() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addToBattlefield(player2, new RootMaze());
+
+        triggerChapter(3);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.isArtifact(gd, returned)).isTrue();
+        assertThat(returned.isTapped()).isTrue();
     }
 
     @Test

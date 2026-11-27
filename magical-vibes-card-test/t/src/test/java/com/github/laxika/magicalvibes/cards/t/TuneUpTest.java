@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
+import com.github.laxika.magicalvibes.cards.f.FalseFloor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TuneUp.class, DuskLegionDreadnought.class, GrizzlyBears.class, Spellbook.class})
+@CardUsed({TuneUp.class, DuskLegionDreadnought.class, GrizzlyBears.class, Spellbook.class, FalseFloor.class})
 class TuneUpTest extends BaseCardTest {
 
     @Test
@@ -34,6 +35,22 @@ class TuneUpTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, returned)).isFalse();
         harness.assertOnBattlefield(player1, "Spellbook");
         harness.assertNotInGraveyard(player1, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("A returned Vehicle becomes a creature only after it enters, so False Floor doesn't tap it (CR 611.2e)")
+    void returnedVehicleBecomesCreatureAfterEntering() {
+        harness.addToBattlefield(player2, new FalseFloor());
+        DuskLegionDreadnought vehicle = new DuskLegionDreadnought();
+        harness.setGraveyard(player1, List.of(vehicle));
+        harness.setHand(player1, List.of(new TuneUp()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, vehicle.getId());
+
+        Permanent returned = findPermanent(player1, "Dusk Legion Dreadnought");
+        assertThat(gqs.isCreature(gd, returned)).isTrue();
+        assertThat(returned.isTapped()).isFalse();
     }
 
     @Test

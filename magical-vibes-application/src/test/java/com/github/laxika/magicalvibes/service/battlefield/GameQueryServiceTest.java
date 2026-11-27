@@ -4529,6 +4529,25 @@ class GameQueryServiceTest {
     }
 
     @Nested
+    @DisplayName("isCardBlockedFromEnteringFromZone")
+    class IsCardBlockedFromEnteringFromZone {
+
+        @Test
+        @DisplayName("a floated 'cards can't enter from exile' bars every card from exile only")
+        void floatedRestrictionBarsEveryCardFromExileOnly() {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Bad Wolf Bay", null, player1Id,
+                    new com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect(
+                            null, Set.of(Zone.EXILE)), player1Id, Duration.UNTIL_END_OF_TURN));
+            Card land = new Card();
+            land.setName("Test Land");
+            land.setType(CardType.LAND);
+
+            assertThat(gqs.isCardBlockedFromEnteringFromZone(gd, land, Zone.EXILE)).isTrue();
+            assertThat(gqs.isCardBlockedFromEnteringFromZone(gd, land, Zone.GRAVEYARD)).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("Spend mana as though it were mana of any color")
     class SpendManaAsAnyColorPermissions {
 

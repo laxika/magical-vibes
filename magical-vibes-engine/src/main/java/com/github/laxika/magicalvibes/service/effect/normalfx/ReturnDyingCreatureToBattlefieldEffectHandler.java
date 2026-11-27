@@ -1,18 +1,23 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +36,7 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final EquipSupport equipSupport;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,10 +66,6 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
         }
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId());
 
-        // Remove from graveyard
-        permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCard.getId());
-
-        // Put onto the battlefield
         Permanent creature = new Permanent(dyingCard);
         CounterType enterWithCounter = e.enterWithCounter();
         if (enterWithCounter != null && e.enterWithCounterCount() > 0) {
@@ -71,6 +73,16 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
                     creature.getCounterCount(enterWithCounter) + e.enterWithCounterCount());
         }
         creature.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+        if (dyingCard.isAura()) {
+            // An Aura card (one that died animated) enters attached to what its new controller chooses, or stays in
+            // the graveyard with nothing to enchant (CR 303.4f, 303.4g); no Equipment can be attached to it.
+            battlefieldEntryBatchSupport.begin(gameData, List.of(new BattlefieldEntryCard(controllerId,
+                    graveyardOwnerId, dyingCard, Zone.GRAVEYARD, null, null, creature, List.of(), false,
+                    PutCardsOntoBattlefieldEffect.EnteringAs.NOTHING_ELSE, null, null)));
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCard.getId());
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, creature);
         if (graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
             graveyardReturnSupport.trackStolenCreature(gameData, creature.getId(), controllerId, graveyardOwnerId);

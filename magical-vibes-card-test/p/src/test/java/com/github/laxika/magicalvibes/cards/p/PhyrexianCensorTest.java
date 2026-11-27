@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EtaliPrimalConqueror;
 import com.github.laxika.magicalvibes.cards.e.EtaliPrimalSickness;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PhyrexianCensor.class, GrizzlyBears.class, TurnToFrog.class,
-        EtaliPrimalConqueror.class, EtaliPrimalSickness.class})
+        EtaliPrimalConqueror.class, EtaliPrimalSickness.class, Xenograft.class})
 class PhyrexianCensorTest extends BaseCardTest {
 
     @Test
@@ -76,6 +78,25 @@ class PhyrexianCensorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature that would be Phyrexian on the battlefield enters untapped (CR 614.12)")
+    void creatureMadePhyrexianByItsControllersEffectEntersUntapped() {
+        harness.addToBattlefield(player1, new PhyrexianCensor());
+        Permanent xenograft = harness.addToBattlefieldAndReturn(player2, new Xenograft());
+        xenograft.setChosenSubtype(CardSubtype.PHYREXIAN);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.PHYREXIAN)).isTrue();
+        assertThat(bears.isTapped()).isFalse();
     }
 
     @Test

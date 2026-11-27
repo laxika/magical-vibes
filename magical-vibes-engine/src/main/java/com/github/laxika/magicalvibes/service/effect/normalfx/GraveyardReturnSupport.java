@@ -1168,16 +1168,10 @@ public class GraveyardReturnSupport {
                     }
                 }
                 registerNextUpkeepExile(gameData, entry, exileAtNextUpkeep);
-                for (ReturnedPermanent returned : deferredEtbs) {
-                    handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(),
-                            returned.card());
-                }
+                askAsEntersChoicesInTurn(gameData, deferredEtbs, alreadyCollectingEntries);
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);
-                gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
-                if (!alreadyCollectingEntries) {
-                    gameData.simultaneousCreatureEntryTriggers.clear();
-                }
+                closeEntryWindowUnlessChoiceOpen(gameData, alreadyCollectingEntries);
             }
 
             String destinationLabel = toBattlefield ? " from graveyard to the battlefield." : " from graveyard to hand.";
@@ -1299,17 +1293,12 @@ public class GraveyardReturnSupport {
             registerNextUpkeepExile(gameData, entry, exileAtNextUpkeep);
             deferredEtbs.forEach(returned ->
                     gameData.permanentsEnteringSimultaneously.add(returned.permanent().getId()));
-            for (ReturnedPermanent returned : deferredEtbs) {
-                handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
-            }
+            askAsEntersChoicesInTurn(gameData, deferredEtbs, alreadyCollectingEntries);
         } finally {
             deferredEtbs.forEach(returned ->
                     gameData.permanentsEnteringSimultaneously.remove(returned.permanent().getId()));
             graveyardService.endGraveyardLeaveBatch(gameData);
-            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
-            if (!alreadyCollectingEntries) {
-                gameData.simultaneousCreatureEntryTriggers.clear();
-            }
+            closeEntryWindowUnlessChoiceOpen(gameData, alreadyCollectingEntries);
         }
 
         if (returnedCards.isEmpty()) {
@@ -1450,17 +1439,12 @@ public class GraveyardReturnSupport {
             registerNextUpkeepExile(gameData, entry, exileAtNextUpkeep);
             deferredEtbs.forEach(returned ->
                     gameData.permanentsEnteringSimultaneously.add(returned.permanent().getId()));
-            for (ReturnedPermanent returned : deferredEtbs) {
-                handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
-            }
+            askAsEntersChoicesInTurn(gameData, deferredEtbs, alreadyCollectingEntries);
         } finally {
             deferredEtbs.forEach(returned ->
                     gameData.permanentsEnteringSimultaneously.remove(returned.permanent().getId()));
             graveyardService.endGraveyardLeaveBatch(gameData);
-            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
-            if (!alreadyCollectingEntries) {
-                gameData.simultaneousCreatureEntryTriggers.clear();
-            }
+            closeEntryWindowUnlessChoiceOpen(gameData, alreadyCollectingEntries);
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -2939,6 +2923,31 @@ public class GraveyardReturnSupport {
             }
         }
         return false;
+    }
+
+    /**
+     * The enter handling of a mass return's permanents, which entered as one event: each member's as-enters choices
+     * are asked in turn, a later member waiting while an earlier one's prompt is open (CR 614.12;
+     * {@code BattlefieldEntryBatchSupport.askAsEntersChoicesInTurn}).
+     */
+    private void askAsEntersChoicesInTurn(GameData gameData, List<ReturnedPermanent> deferredEtbs,
+                                          boolean outerCollecting) {
+        if (deferredEtbs.isEmpty()) {
+            return;
+        }
+        battlefieldEntryBatchSupport.askAsEntersChoicesInTurn(gameData,
+                deferredEtbs.stream().map(ReturnedPermanent::permanent).toList(), outerCollecting);
+    }
+
+    /** Ends a mass return's "one or more enter" window, unless a member's as-enters choice still holds it open. */
+    private static void closeEntryWindowUnlessChoiceOpen(GameData gameData, boolean alreadyCollectingEntries) {
+        if (gameData.entryBatchAsEntersOpen) {
+            return;
+        }
+        gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+        if (!alreadyCollectingEntries) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
     }
 
     public void handleCreatureEtbAndLegendRule(GameData gameData, UUID controllerId, Permanent permanent, Card card) {

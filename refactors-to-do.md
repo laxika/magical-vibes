@@ -730,14 +730,13 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `TapAndPreventCombatDamageByTargetAndBlockersEffect`: Feint: needs a creatures-blocking-[subject] PermanentSubject and a prevent-all-combat-damage-dealt-by-[subject]-this-turn record.
 - `TurnSourceFaceUpOrExileAndMayCastEffect`: Etrata, Deadly Fugitive (granted ability): 'If you can't [turn it face up], exile it, then you may cast it' needs a turn-face-up step result (no StepKind records one) and the one turn-face-up path (this calls GameService's, Showstopping Surprise ….
 
-#### A parameter only one card would set (68)
+#### A parameter only one card would set (67)
 
 Folding would add a component only this card sets (the guard rail "never add a parameter only one card sets"); fold when a second user appears.
 
 - `AddOnePlusOneCountersToModularAbilityEffect`: Zabaz, the Glimmerwasp: a placement-source condition (only counters a modular triggered ability puts) threaded through the counter-placement paths for this one card.
 - `AjaniUltimateEffect`: LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect ties "reveals" (public log and prompt) to its bottom-random rest (Gishath); Ajani, Outland Chaperone only looks and shuffles; a look-vs-reveal option would be set by this card alone.
 - `AllowPlayFromAnyLibraryTopEffect`: a library-owner PlayerSubject on AllowCastFromTopOfLibraryEffect / PlayLandsFromTopOfLibraryEffect would be set by this card alone (eachPlayer(), read from a face-up plane) while Xanathar's record stays; folds with it.
-- `AnimateReturnedPermanentIfNotCreatureEffect`: Brilliance Unleashed's 'if it's an artifact creature card' judges the card, not the permanent: HappenedThisWay.toA(RETURN, filter) and the subjects judge the permanent as it is (a returned noncreature artifact under March of the Machines would not animate).
 - `AttachSourceAuraToRandomOpponentEffect`: left (Maddening Hex): ChoosePlayerAtRandomEffect(except(eachOpponent(), enchantedPlayer())) has no filter for the opponents the Aura could enchant, which the handler narrows to; a player filter with one user.
 - `AttachTargetEquipmentsToTargetCreatureThenEffect`: left (Thorin): the reflexive 'that creature deals damage equal to its power' is sourced at the host and fires only on a real attach; the attach verb's continuation is sourced at the entry's source and also counts an Equipment already attached.
 - `BecomeCopyOfTargetCreatureWhileTargetTappedEffect`: Zygon Infiltrator: the copy itself is BecomeCopyOfSubjectEffect.of(target()), but its duration ('for as long as that creature remains tapped') is anchored on the copied target (beginCopy with the target as the duration's source).
@@ -1393,24 +1392,21 @@ Don't commit.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
-#### Layers and copy values (18)
+#### Layers and copy values (15)
 
 - Wickerwing Effigy's "becomes a black Bird ... Fairly sure, low.
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
 - Step 10 run T1: `CreateTokenCopyOfSourceForEachOtherPlayerEffect` (Life of the Party) and `…ForTargetPlayerEffect` (Wedding Ring) offer no first-token-creation replacement to the players who create (another player's Mirrormind Crown, Moonlit Meditation; CR 701.7a). Sure of the code.
 - Step 10 run T1 (the plan's note): a token copy of a source reads `PermanentCopierService.cardToCopy`, not `copiableCard`, so a bestowed, Licid or became-a-creature source is copied with non-copiable values (CR 707.2). Unverified on a real card.
 - `CreateTokensAttachedToControlledCreaturesEffect` pairs tokens by `getTokenMultiplier`; an order prompt returns no ids. Unverified.
-- The returned-permanent animations (Brilliance Unleashed, Tune Up, The War in Heaven) apply after the permanent entered. Unsure.
 - Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
 - Starfield of Nyx: `isAnimatedByStarfield` makes a battlefield enchantment a creature ignoring later layer-4 type removals, and `wouldEnterAsCreature` ignores Starfield (Torpor Orb). Sure of the code, low.
-- `snapshotEnterTappedTypes` / `applyEnterTappedEffects` match printed card types, not the permanent as it would exist on the battlefield (CR 614.12; e.g. an artifact animated by March of the Machines vs Root Maze's type set). Sure of the code, untested.
 - Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order, so a three-borrower cycle can miss a lender's borrowed abilities. Sure of the code, rare.
 - `ProtectionFromColorsEffectHandler` gives a self-subject fixed protection to the host when its source is attached (a bestowed or reconfigured creature with printed protection); CR 702.16a makes it the object's own. Sure of the code.
 - Mask of Law and Grace, Shield of Duty and Reason, Strength of Isolation and Strength of Lunacy stay exempt from their own protection when recoloured, though they have no "doesn't remove" text (CR 702.16c). Fairly sure.
 - Kalain and Coin of Mastery read cast-time mana snapshots keyed by card id, so a copy of a permanent spell or a countered spell that later enters may read a stale amount (CR 707.10). Unverified.
 - `BecomeCreatureEffect` (Opal Acrolith, Hidden Stag, 24 cards) replaces the card instead of floating a layer-4 and layer-7b effect, so a later copy effect drops the type change (CR 613.1a, 613.1d). Sure of the code.
 - `PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler`, `PerpetuallyGrantStaticEffectToSourceEffectHandler`, `DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler`, `PerpetuallyBecomeCreatureEffectHandler` and `ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler` write perpetual changes into an exchanged card, which a copy then copies (CR 707.2). Sure of the code.
-- `EnterPermanentsOfTypesTappedEffect.matching` filters judge the entering permanent as it is, not as it would exist on the battlefield (CR 614.12). Unverified.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.
 
@@ -1426,11 +1422,10 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (77)
+#### Other (76)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
-- The dying-creature return heads other than Lim-Dûl's (`ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect`, `ReturnDamagedCreaturesThatDiedUnderControlEffect`) put an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head goes through the entry batch since rules-fixes EB-1. Unverified.
-- Bad Wolf Bay's chaos ability is Don't Blink's replacement: creature cards entering from exile are shuffled, others enter; `CardsCantEnterBattlefieldFromZonesEffect` enforces only graveyard and library. Sure.
+- Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
 - Limitless Rekindling's pool is seven YECL printings; its text names a random instant or sorcery card of the whole expansion. Fairly sure.
 - Cards with no printing identity: the `Supplier`-built conjures and spellbook drafts, the hand paths not marking a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn, Oracle of the Alpha built by hand, Juggernaut Peddler, Calim, Mephidross Slime by constructor or `Supplier`, Goblin Influx Array's Reckless Ringleader a blank `new Card()` (P16). Sure.
 - `ConjureCardToBattlefieldEffectHandler` gives a conjured land no land-enter handling. Unverified for a land with an enter ability (Mishra's Foundry and Forest have none).

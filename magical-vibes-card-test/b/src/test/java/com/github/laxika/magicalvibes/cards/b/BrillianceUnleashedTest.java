@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.FalseFloor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MyrRetriever;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrillianceUnleashed.class, GrizzlyBears.class, MyrRetriever.class, SolRing.class})
+@CardUsed({BrillianceUnleashed.class, GrizzlyBears.class, MyrRetriever.class, SolRing.class, FalseFloor.class})
 class BrillianceUnleashedTest extends BaseCardTest {
 
     @Test
@@ -44,6 +46,35 @@ class BrillianceUnleashedTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
         assertThat(gqs.getEffectiveSubtypes(gd, returned)).contains(CardSubtype.ROBOT);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A returned noncreature artifact is a creature as it enters, so False Floor makes it enter tapped (CR 611.2e)")
+    void returnedNoncreatureArtifactEntersAsCreature() {
+        harness.addToBattlefield(player2, new FalseFloor());
+        Card artifact = new SolRing();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        cast(1, artifact.getId());
+
+        Permanent returned = findPermanent(player1, "Sol Ring");
+        assertThat(gqs.isCreature(gd, returned)).isTrue();
+        assertThat(returned.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A returned artifact creature card keeps its own characteristics under False Floor")
+    void returnedArtifactCreatureIsNotAnimatedUnderFalseFloor() {
+        harness.addToBattlefield(player2, new FalseFloor());
+        Card artifactCreature = new MyrRetriever();
+        harness.setGraveyard(player1, List.of(artifactCreature));
+
+        cast(1, artifactCreature.getId());
+
+        Permanent returned = findPermanent(player1, "Myr Retriever");
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isFalse();
     }
 
     @Test

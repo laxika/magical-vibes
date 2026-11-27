@@ -13,13 +13,15 @@ import java.util.Set;
  * <p>
  * A {@code null} filter matches every card. Does not affect tokens (which are not cards).
  * <p>
- * <b>Caveat:</b> only {@link Zone#GRAVEYARD} and {@link Zone#LIBRARY} are actually enforced, because
- * those are the only zones with battlefield-entry gating sites wired up. Passing other zones
- * ({@link Zone#EXILE}, {@link Zone#BATTLEFIELD}, {@link Zone#STACK}) silently does nothing.
+ * {@link Zone#GRAVEYARD} and {@link Zone#LIBRARY} are checked by the put and return sites before the card
+ * leaves its zone; {@link Zone#EXILE} is checked by {@code BattlefieldPlacementService} as a card arriving
+ * from exile is placed, which leaves it in exile. {@link Zone#BATTLEFIELD} and {@link Zone#STACK} are not
+ * enforced.
  * <p>
  * Used by Grafdigger's Cage (DKA), which supplies a {@code CardTypePredicate(CREATURE)} filter and
  * {@code Set.of(GRAVEYARD, LIBRARY)} so only creature cards entering from a graveyard or library are
- * blocked.
+ * blocked. Floated on a player by {@link GrantStaticEffectToPlayerEffect} it is a rule change for its
+ * duration that binds every card (Bad Wolf Bay's "cards can't enter from exile this turn", CR 611.2c).
  */
 public record CardsCantEnterBattlefieldFromZonesEffect(CardPredicate filter, Set<Zone> zones) implements CardEffect {
 }

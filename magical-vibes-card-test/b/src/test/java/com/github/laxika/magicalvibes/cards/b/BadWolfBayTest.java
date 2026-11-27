@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.g.GhostlyFlicker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,11 +16,15 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BadWolfBay.class, GrizzlyBears.class, Panopticon.class})
+@CardUsed({BadWolfBay.class, GrizzlyBears.class, Panopticon.class, GhostlyFlicker.class, Island.class})
 class BadWolfBayTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -64,6 +71,7 @@ class BadWolfBayTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos keeps the exiled creature in exile at the delayed return, then planeswalks")
     void chaosPreventsTheDelayedReturnAndPlaneswalks() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
@@ -85,8 +93,28 @@ class BadWolfBayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(bear.getCard());
-        assertThat(gd.playerDecks.get(player2.getId())).contains(bear.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bear.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(bear.getCard());
+    }
+
+    @Test
+    @DisplayName("After chaos, no card enters from exile this turn: a flickered creature and land stay exiled")
+    void afterChaosFlickeredCardsStayInExile() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GhostlyFlicker()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.<UUID>of(bear.getId(), island.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bear.getCard(), island.getCard());
     }
 
     private void triggerBeginningOfCombat() {

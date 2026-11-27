@@ -161,6 +161,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @Mock
     private PermanentRemovalService permanentRemovalService;
     @Mock
     private LegendRuleService legendRuleService;

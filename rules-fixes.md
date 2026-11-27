@@ -44,7 +44,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | CT-1 done 2026-11-27; CT-2 open |
-| EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1 done 2026-11-27; EB-2, EB-3 open |
+| EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2 done 2026-11-27; EB-3 open |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1 done 2026-11-27; PY-2, PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | open |
 | LS Library searches and reveals | LS-1, LS-2 | open |
@@ -517,7 +517,24 @@ New line N14 (seen in EB-1): `GraveyardReturnSupport`'s mass returns (`handleCre
 returned permanent's as-enters choices in a loop that doesn't wait for an earlier one's open prompt, the O35 shape outside the
 entry batch (CR 614.12); unverified.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: L17, L7, O4, N14 and O3's two single-card heads (deleted from entry 18; O3 edited down to Krovikan
+Vampire). L17: an enters-tapped (and enters-untapped) filter is judged inside the entering-permanent layer pass
+(`BattlefieldPlacementService.entersMatching`, CR 614.12): Phyrexian Censor no longer taps a creature Xenograft makes Phyrexian.
+L7: CR 611.2e: "is/it's [characteristic]" applies as it enters, "becomes" after. Brilliance Unleashed is two returns gated by the
+new `TargetGraveyardCardMatches(CardPredicate, description)`, the noncreature one with Abuelo-style pre-entry
+`battlefieldEffectGrants` (False Floor now taps the returned Sol Ring); The War in Heaven uses `withEntryAnimation` (Root Maze taps
+its creatures); Tune Up ("becomes") is no defect, pinned. `AnimateReturnedPermanentIfNotCreatureEffect` and its handler deleted
+(ledger row, ratchet 2856 / 2240). O4: Bad Wolf Bay floats `CardsCantEnterBattlefieldFromZonesEffect(null, {EXILE})` for the turn
+(Oracle: "cards can't enter from exile this turn"); `isCardBlockedFromEnteringFromZone` reads floated ones and placement keeps a card
+arriving from exile in exile (`keepCardThatCantEnterFromExile`). O3: `ReturnDyingCreatureToOwnerBattlefieldEffect` and
+`ReturnDyingCreatureToBattlefieldEffect` send an Aura card through the entry batch with its riders (CR 303.4f, 303.4g; Luminous
+Broodmoth, Nim Deathmantle). N14: the three `deferredEtbs` mass returns ask as-enters choices in turn through
+`BattlefieldEntryBatchSupport.askAsEntersChoicesInTurn` (Rise of the Dark Realms, two Adaptive Automatons). Dropped: L10 (fixed in
+D18 by `entersWithCardType`, pinned by False Floor's March test). Left: O3's Krovikan Vampire head (a mass return with control and
+sacrifice links; needs the whole return moved onto the entry batch). New lines N27 (EB-3), N28, N31 (MC-2), N29 (LY-2), N30 (LG-1).
+Tests: 1,627 XML files, 14,659 tests, 3 failures: `ReturnCardFromGraveyardEffectHandlerTest` (missing mock, fixed and rerun green
+with the architecture tests, 11 files, 39 tests) and two `TergridGodOfFrightTest` cases that fail on HEAD too (N31).
+
 
 #### EB-3. Leave batches and departures
 
@@ -529,6 +546,10 @@ Ovinomancer), O27 (Reality Scramble: `PutTargetOnBottomOfLibraryEffect` records 
 
 Notes: For O78 and O75, first show that the difference is observable (a look-back trigger, a state check). If it isn't, drop
 the line with the reason.
+
+New line N27 (seen in EB-2): `GraveyardReturnSupport`'s other returns that place several cards themselves and then loop
+`handleCreatureEtbAndLegendRule` over them (the steal-from-graveyards and exile-and-graveyard returns) ask each permanent's
+as-enters choices without waiting for an earlier one's open prompt, the N14 shape (CR 614.12); unverified.
 
 Outcome:
 
@@ -724,6 +745,10 @@ removals, and `wouldEnterAsCreature` ignores Starfield).
 
 Avoid: LY-1, LY-5.
 
+New line N29 (seen in EB-2): a return's keyword grants ("it's a 3/3 Robot artifact creature with flying", Brilliance Unleashed,
+Abuelo's Awakening) apply after the permanent enters: `GraveyardReturnSupport`'s pre-entry `battlefieldEffectGrants` cover only
+colour, card types, subtypes and base P/T, though "has [characteristic]" applies as it enters (CR 611.2e); unverified.
+
 Outcome:
 
 #### LY-3. Protection
@@ -879,6 +904,14 @@ New line N26 (seen in FC-3): a graveyard cast through a flashback grant (`SpellC
 discard or sacrifice escalate or entwine payment ("not supported from this zone"; Blessed Alliance after Past in Flames), though
 CR 702.120a and 702.42a make it an additional cost paid with the alternative cost (read in the code, not tested).
 
+New line N28 (seen in EB-2): `ReturnDyingCreatureToBattlefieldEffectHandler` (Nim Deathmantle, Scythe of the Wretched,
+Oathkeeper, Meathook Massacre II) never asks `isCardBlockedFromEnteringFromZone`, so a Grafdigger's Cage doesn't stop its creature
+return; unverified.
+
+New line N31 (seen in EB-2): `TergridGodOfFrightTest`'s `lanternLetsTargetSacrificeInsteadOfLosingLife` and
+`lanternCanTargetItsControllerAndSacrificeItself` fail on `80c2994e284` ("Permanent not found" at `handlePermanentChosen`): a lone
+sacrifice ransom is now paid unasked (PY-1), so the tests' permanent choice comes after the sacrifice; the tests need updating.
+
 Outcome:
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
@@ -952,6 +985,9 @@ New line N2 (seen in DM-1): the Healing Grace shield's order-prompt label says "
 New line N18 (seen in PY-1): a tap ransom paid at once picks one permanent at a time with `MultiplePermanentTapCostHandler`'s
 "Choose an untapped permanent to tap" whatever the cost's `description` (Raff Weatherlight Stalwart's creatures, Thousand Moons
 Smithy's artifacts and/or creatures).
+
+New line N30 (seen in EB-2): `ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler.applyEntryAnimation` logs "becomes a X/X
+creature" for an animation that only adds a card type (The War in Heaven's "they're artifacts").
 
 Outcome:
 

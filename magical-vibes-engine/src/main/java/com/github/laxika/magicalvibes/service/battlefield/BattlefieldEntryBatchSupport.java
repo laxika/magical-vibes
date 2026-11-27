@@ -369,16 +369,26 @@ public class BattlefieldEntryBatchSupport {
         continueAsEntersChoices(gameData);
         // The batch is one event, so a "one or more … enter" ability triggers once for all of it.
         boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
-        gameData.collectingSimultaneousCreatureEntryTriggers = true;
         if (!alreadyCollectingEntries) {
             gameData.simultaneousCreatureEntryTriggers.clear();
         }
+        askAsEntersChoicesInTurn(gameData, entered, alreadyCollectingEntries);
+    }
+
+    /**
+     * Asks the as-enters choices of permanents that entered the battlefield as one event, one after the other
+     * ({@link #continueAsEntersChoices}), the event's "one or more enter" window held open until all are made. A caller
+     * that placed them itself (a mass graveyard return) passes whether a window was already open before its own, and
+     * leaves the window to this when {@code GameData.entryBatchAsEntersOpen} is still set after the call.
+     */
+    public void askAsEntersChoicesInTurn(GameData gameData, List<Permanent> entered, boolean outerCollecting) {
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
         for (Permanent permanent : entered) {
             gameData.pendingEntryBatchAsEntersIds.add(permanent.getId());
         }
         if (!gameData.entryBatchAsEntersOpen) {
             gameData.entryBatchAsEntersOpen = true;
-            gameData.entryBatchAsEntersOuterCollecting = alreadyCollectingEntries;
+            gameData.entryBatchAsEntersOuterCollecting = outerCollecting;
         }
         continueAsEntersChoices(gameData);
     }

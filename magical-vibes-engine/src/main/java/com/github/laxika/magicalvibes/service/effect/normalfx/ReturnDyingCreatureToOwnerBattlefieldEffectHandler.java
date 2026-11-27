@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,16 +12,19 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,6 +37,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameLogService gameLogService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,9 +66,11 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
-
         UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
+        boolean aura = cardToReturn.isAura();
+        if (!aura) {
+            permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
+        }
 
         Permanent permanent = new Permanent(cardToReturn);
         graveyardReturnSupport.applyPermanentGrants(gameData, battlefieldControllerId, permanent, null,
@@ -85,17 +92,19 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
             permanent.tap();
         }
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
+        if (aura) {
+            // An Aura card (one that died animated) enters attached to what its controller chooses, or stays in the
+            // graveyard with nothing to enchant (CR 303.4f, 303.4g).
+            addSubtypeOverride(gameData, entry, returnEffect, cardToReturn, permanent);
+            battlefieldEntryBatchSupport.begin(gameData, List.of(new BattlefieldEntryCard(battlefieldControllerId,
+                    ownerId, cardToReturn, Zone.GRAVEYARD, null, null, permanent, List.of(), permanent.isTapped(),
+                    PutCardsOntoBattlefieldEffect.EnteringAs.NOTHING_ELSE, null, null)));
+            return;
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(
                 gameData, battlefieldControllerId, permanent, enterTappedTypes);
 
-        boolean overriding = true;
-        for (var subtype : returnEffect.subtypeOverride()) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), cardToReturn.getName(), null, entry.getControllerId(),
-                    new GrantSubtypeEffect(subtype, Subjects.target(), overriding),
-                    permanent.getId(), null, null, Duration.PERMANENT, 0));
-            overriding = false;
-        }
+        addSubtypeOverride(gameData, entry, returnEffect, cardToReturn, permanent);
 
         if (!ownerId.equals(battlefieldControllerId)) {
             graveyardReturnSupport.trackStolenCreature(
@@ -109,5 +118,18 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
                 gameData.playerIdToName.get(battlefieldControllerId) + " returns ", cardToReturn, controlText));
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(
                 gameData, battlefieldControllerId, permanent, cardToReturn);
+    }
+
+    private void addSubtypeOverride(GameData gameData, StackEntry entry,
+                                    ReturnDyingCreatureToOwnerBattlefieldEffect returnEffect, Card cardToReturn,
+                                    Permanent permanent) {
+        boolean overriding = true;
+        for (var subtype : returnEffect.subtypeOverride()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), cardToReturn.getName(), null, entry.getControllerId(),
+                    new GrantSubtypeEffect(subtype, Subjects.target(), overriding),
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
+            overriding = false;
+        }
     }
 }
