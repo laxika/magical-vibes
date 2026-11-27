@@ -3597,6 +3597,13 @@ public class LayerSystemService {
                 });
                 touched = true;
             }
+            if (!harvested.getNonAbilityEffects().isEmpty()) {
+                harvested.getNonAbilityEffects().forEach(effect -> {
+                    state.addNonAbilityEffect(effect);
+                    board.recordGrantedEffect(target.permanent().getId(), provenanceSourceName(instance), effect);
+                });
+                touched = true;
+            }
             if (touched) {
                 board.l56Touched().add(target.permanent().getId());
             }
@@ -3606,7 +3613,7 @@ public class LayerSystemService {
     /**
      * Whether a handler's per-target result carries anything the layer-6 harvest in
      * {@link #applyL6Instance} writes: ability loss, tokenization, keyword grants and removals,
-     * protection, granted activated abilities or granted effects. A static handler runs against
+     * protection, granted activated abilities, granted effects or non-ability rules. A static handler runs against
      * every permanent and matches few of them, so the harvest skips the rest without touching
      * their states or provenance. A new output the harvest consumes is added here too.
      */
@@ -3616,7 +3623,8 @@ public class LayerSystemService {
                 || !harvested.getKeywords().isEmpty() || !harvested.getRemovedKeywords().isEmpty()
                 || !harvested.getProtectionColors().isEmpty()
                 || !harvested.getGrantedActivatedAbilities().isEmpty()
-                || !harvested.getGrantedEffects().isEmpty();
+                || !harvested.getGrantedEffects().isEmpty()
+                || !harvested.getNonAbilityEffects().isEmpty();
     }
 
     private void applyFloatingStaticGrant(GameData gameData, EffectInstance instance,
@@ -3685,6 +3693,10 @@ public class LayerSystemService {
         }
         for (CardEffect effect : harvested.getGrantedEffects()) {
             state.addStaticEffect(effect);
+            board.recordGrantedEffect(target.permanent().getId(), provenanceSourceName(instance), effect);
+        }
+        for (CardEffect effect : harvested.getNonAbilityEffects()) {
+            state.addNonAbilityEffect(effect);
             board.recordGrantedEffect(target.permanent().getId(), provenanceSourceName(instance), effect);
         }
         board.l56Touched().add(target.permanent().getId());

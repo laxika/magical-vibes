@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -59,6 +60,19 @@ class SlicerHiredMuscleTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gqs.findPermanentController(gd, slicer.getId())).isEqualTo(player1.getId());
         assertThat(gqs.cantBeSacrificed(gd, slicer)).isFalse();
+    }
+
+    @Test
+    @DisplayName("\"It can't be sacrificed this turn\" is no ability, so losing all abilities afterwards keeps it")
+    void cantBeSacrificedSurvivesLosingAllAbilities() {
+        Permanent slicer = harness.addToBattlefieldAndReturn(player1, new SlicerHiredMuscle());
+
+        advanceToOpponentUpkeep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, slicer);
+
+        assertThat(gqs.cantBeSacrificed(gd, slicer)).isTrue();
     }
 
     @Test

@@ -168,6 +168,21 @@ class VinesOfVastwoodTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 
+    @Test
+    @DisplayName("The targeting restriction is no ability, so losing all abilities afterwards keeps it")
+    void restrictionSurvivesLosingAllAbilities() {
+        Permanent target = addCreature(player1);
+        castVines(target, false);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, target);
+
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castVines(Permanent target, boolean kicked) {
         harness.setHand(player1, List.of(new VinesOfVastwood()));
         harness.addMana(player1, ManaColor.GREEN, kicked ? 2 : 1);

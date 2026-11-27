@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect.Action;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
@@ -18,7 +18,7 @@ import java.util.Set;
 public class StoicStarCaptain extends Card {
 
     public StoicStarCaptain() {
-        addStaticEffect(new GrantEffectEffect(
+        addStaticEffect(new GrantNonAbilityEffectEffect(
                 new PowerBoostForCrewAndSaddleEffect(2, Set.of(Action.CREW, Action.STATION)), Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(

@@ -3,11 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ApplyRuleToPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,7 +30,7 @@ public class SlicerHiredMuscle extends Card {
                         TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.source()),
                         new GoadCreaturesUntilNextTurnEffect(new PermanentIsSourcePermanentPredicate()),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new CantBeSacrificedEffect()), Subjects.source())),
+                        ApplyRuleToPermanentEffect.untilEndOfTurn(new CantBeSacrificedEffect(), Subjects.source())),
                 "Have that player gain control of Slicer until end of turn?",
                 new TransformSelfEffect()));
     }

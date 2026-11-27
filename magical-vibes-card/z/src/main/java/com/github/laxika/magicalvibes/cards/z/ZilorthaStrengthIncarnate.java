@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UsePowerForLethalDamageEffect;
 
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.UsePowerForLethalDamageEffect
 public class ZilorthaStrengthIncarnate extends Card {
 
     public ZilorthaStrengthIncarnate() {
-        addStaticEffect(new GrantEffectEffect(
+        addStaticEffect(new GrantNonAbilityEffectEffect(
                 new UsePowerForLethalDamageEffect(), Subjects.creaturesYouControl()));
     }
 }

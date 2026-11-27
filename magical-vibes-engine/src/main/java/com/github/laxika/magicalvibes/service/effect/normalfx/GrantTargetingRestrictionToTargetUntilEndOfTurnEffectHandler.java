@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -59,7 +58,7 @@ public class GrantTargetingRestrictionToTargetUntilEndOfTurnEffectHandler implem
                     entry.getCard().getName(),
                     entry.getSourcePermanentId(),
                     entry.getControllerId(),
-                    new GrantEffectEffect(restriction, Subjects.target()),
+                    new GrantNonAbilityEffectEffect(restriction, Subjects.target()),
                     targetId,
                     null,
                     null,

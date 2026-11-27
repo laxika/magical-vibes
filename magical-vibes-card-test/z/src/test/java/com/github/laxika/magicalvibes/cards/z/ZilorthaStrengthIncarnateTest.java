@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -167,5 +168,31 @@ class ZilorthaStrengthIncarnateTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spider);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spider.getCard());
+    }
+
+    @Test
+    @DisplayName("A creature that loses all abilities after Zilortha entered still uses its power for lethal damage")
+    void creatureLosingAllAbilitiesUntilEndOfTurnStillUsesPower() {
+        addCreatureReady(player1, new ZilorthaStrengthIncarnate());
+        Permanent piker = addCreatureReady(player1, new GoblinPiker());
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, piker);
+
+        piker.addMarkedDamage(null, 1);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(piker);
+    }
+
+    @Test
+    @DisplayName("Once Zilortha loses all abilities, creatures you control use toughness for lethal damage again")
+    void noEffectOnceZilorthaLosesAllAbilities() {
+        Permanent zilortha = addCreatureReady(player1, new ZilorthaStrengthIncarnate());
+        Permanent piker = addCreatureReady(player1, new GoblinPiker());
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, zilortha);
+
+        piker.addMarkedDamage(null, 1);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(piker);
     }
 }

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -55,6 +57,21 @@ class GarlandRoyalKidnapperTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, stolenGarland)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, stolenGarland)).isEqualTo(6);
         assertThat(gqs.cantBeSacrificed(gd, stolenGarland)).isTrue();
+    }
+
+    @Test
+    @DisplayName("\"Can't be sacrificed\" is Garland's rule, so a stolen creature that loses all abilities keeps it")
+    void stolenCreatureLosingAllAbilitiesStillCantBeSacrificed() {
+        harness.addToBattlefield(player1, new GarlandRoyalKidnapper());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        castThreaten(player1, bearsId);
+        Permanent stolenBears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.cantBeSacrificed(gd, stolenBears)).isTrue();
+
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, stolenBears);
+
+        assertThat(gqs.cantBeSacrificed(gd, stolenBears)).isTrue();
     }
 
     private void castGarland(com.github.laxika.magicalvibes.model.Player player, UUID targetPlayerId) {

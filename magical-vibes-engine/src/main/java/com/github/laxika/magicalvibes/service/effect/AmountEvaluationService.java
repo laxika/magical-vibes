@@ -1513,11 +1513,16 @@ public class AmountEvaluationService {
         return Math.max(0, power);
     }
 
+    /**
+     * The "stations as though its power were N greater" bonus: its own abilities unless it lost them, plus the
+     * layered granted effects, which keep another permanent's rule (Stoic Star-Captain) through a loss (CR 613.1f).
+     */
     private int stationPowerBonus(GameData gameData, Permanent permanent) {
-        int bonus = permanent.getCard().getStaticEffects().stream()
+        GameQueryService.StaticBonus layered = gameQueryService.computeStaticBonus(gameData, permanent);
+        int bonus = layered.losesAllAbilities() ? 0 : permanent.getCard().getStaticEffects().stream()
                 .mapToInt(AmountEvaluationService::stationPowerBonus)
                 .sum();
-        return bonus + gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects().stream()
+        return bonus + layered.grantedEffects().stream()
                 .mapToInt(AmountEvaluationService::stationPowerBonus)
                 .sum();
     }

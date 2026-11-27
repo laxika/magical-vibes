@@ -31,6 +31,7 @@ public class StaticBonusAccumulator {
     private boolean selfBecomeCreature;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedEffects = new ArrayList<>();
+    private final List<CardEffect> nonAbilityEffects = new ArrayList<>();
     private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
@@ -163,6 +164,19 @@ public class StaticBonusAccumulator {
 
     public List<CardEffect> getGrantedEffects() {
         return grantedEffects;
+    }
+
+    /**
+     * Adds a rule of another permanent's static ability that applies to this one without being its ability
+     * ({@code GrantNonAbilityEffectEffect}): the layer-6 harvest keeps it through a "loses all abilities".
+     */
+    public void addNonAbilityEffect(CardEffect effect) {
+        if (layeredOutputsSuppressed) return;
+        nonAbilityEffects.add(effect);
+    }
+
+    public List<CardEffect> getNonAbilityEffects() {
+        return nonAbilityEffects;
     }
 
     public void addGrantedColor(CardColor color) {

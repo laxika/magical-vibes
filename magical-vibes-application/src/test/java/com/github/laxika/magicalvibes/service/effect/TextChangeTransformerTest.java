@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -143,6 +144,18 @@ class TextChangeTransformerTest {
 
         assertThat(((GrantEffectEffect) result).effect())
                 .isEqualTo(new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
+    }
+
+    @Test
+    @DisplayName("A color word replacement recurses into a non-ability rule and keeps it a non-ability rule")
+    void colorReplacementRecursesIntoNonAbilityRule() {
+        GrantNonAbilityEffectEffect rule = new GrantNonAbilityEffectEffect(
+                new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)), Subjects.creaturesYouControl());
+
+        CardEffect result = TextChangeTransformer.transform(rule, List.of(BLACK_TO_BLUE));
+
+        assertThat(result).isEqualTo(new GrantNonAbilityEffectEffect(
+                new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)), Subjects.creaturesYouControl()));
     }
 
     @Test

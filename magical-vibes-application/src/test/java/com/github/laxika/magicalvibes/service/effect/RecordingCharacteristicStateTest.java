@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UsePowerForLethalDamageEffect;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.effect.DependencyFootprint.Characteristic;
 import org.junit.jupiter.api.DisplayName;
@@ -83,6 +84,18 @@ class RecordingCharacteristicStateTest {
 
         assertThat(writesEverything().mayChangeWhatIsReadBy(footprint)).isFalse();
         assertThat(footprint.mayChangeWhatIsReadBy(readsEverything())).isFalse();
+    }
+
+    @Test
+    @DisplayName("A non-ability rule is an operation, so a source losing its abilities changes what the rule does")
+    void nonAbilityRuleIsLoggedAsAnOperation() {
+        RecordingCharacteristicState state = new RecordingCharacteristicState(seedState(), PERMANENT_ID, null);
+        state.startRecording();
+        CardEffect rule = new UsePowerForLethalDamageEffect();
+
+        state.addNonAbilityEffect(rule);
+
+        assertThat(state.ops()).containsExactly("addNonAbilityEffect:" + rule);
     }
 
     private static List<Method> publicInstanceMethods() {

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
@@ -436,6 +437,10 @@ public final class TextChangeTransformer {
                 yield keywords == grant.keywords() && filter == grant.filter() && condition == grant.grantCondition()
                         ? grant
                         : new GrantKeywordEffect(keywords, grant.subject(), filter, grant.duration(), condition);
+            }
+            case GrantNonAbilityEffectEffect grant -> {
+                CardEffect wrapped = apply(grant.effect(), substitution);
+                yield wrapped == grant.effect() ? grant : new GrantNonAbilityEffectEffect(wrapped, grant.subject());
             }
             case GrantEffectEffect grant -> {
                 CardEffect wrapped = apply(grant.effect(), substitution);

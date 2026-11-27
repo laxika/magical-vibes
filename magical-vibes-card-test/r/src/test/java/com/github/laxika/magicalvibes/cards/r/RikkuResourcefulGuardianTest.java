@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -15,6 +18,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,6 +71,29 @@ class RikkuResourcefulGuardianTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(bls.canBlockAttacker(gd, blocker, target,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("\"Can't be blocked by creatures your opponents control\" is no ability, so losing all abilities keeps it")
+    void opponentBlockRestrictionSurvivesLosingAllAbilities() {
+        Player player3 = addThirdPlayer();
+        addCreatureReady(player1, new RikkuResourcefulGuardian());
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        Permanent opponentsBlocker = addCreatureReady(player3, new AirElemental());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Skinrender()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+        assertThat(bls.canBlockAttacker(gd, opponentsBlocker, target,
+                gd.playerBattlefields.get(player3.getId()))).isFalse();
+
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, target);
+
+        assertThat(bls.canBlockAttacker(gd, opponentsBlocker, target,
+                gd.playerBattlefields.get(player3.getId()))).isFalse();
     }
 
     @Test
@@ -245,4 +273,23 @@ class RikkuResourcefulGuardianTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
 }

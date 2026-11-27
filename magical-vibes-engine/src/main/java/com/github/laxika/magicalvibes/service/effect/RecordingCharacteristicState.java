@@ -465,6 +465,7 @@ final class RecordingCharacteristicState extends CharacteristicState {
 
     @Override
     public void addNonAbilityEffect(CardEffect effect) {
+        log("addNonAbilityEffect:" + effect);
         write(Characteristic.ABILITIES);
         super.addNonAbilityEffect(effect);
     }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -63,7 +63,8 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
     /**
      * The target can't be blocked by creatures controlled by the opponents of the resolving ability's
      * controller for {@code duration}. A creature that controller controls is blocked only by those opponents'
-     * creatures, so it simply can't be blocked.
+     * creatures, so it simply can't be blocked. Like "can't be blocked", it is a rule the effect makes, not an ability of
+     * the target (CR 611.2c), so it floats as a {@link GrantNonAbilityEffectEffect} that "loses all abilities" leaves.
      */
     private void makeUnblockableByOpponentsOf(GameData gameData, Permanent target, StackEntry entry, Duration duration) {
         UUID abilityControllerId = entry.getControllerId();
@@ -78,7 +79,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         if (opponentControlled.isEmpty()) return;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), null, abilityControllerId,
-                new GrantEffectEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
+                new GrantNonAbilityEffectEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentAnyOfPredicate(opponentControlled)), Subjects.target()),
                 target.getId(), null, null, duration, 0));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RapidHybridization;
@@ -184,6 +186,29 @@ class LockjawSlobberingTeleporterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(lockjaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, lockjaw)).isFalse();
+    }
+
+    @Test
+    @DisplayName("\"Can't be blocked this turn\" is no ability, so Lockjaw losing all abilities afterwards keeps it")
+    void unblockabilitySurvivesLosingAllAbilities() {
+        Permanent lockjaw = harness.addToBattlefieldAndReturn(player1, new LockjawSlobberingTeleporter());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, otherCreature.getId());
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, otherCreature.getId());
+        harness.passBothPriorities();
+
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, lockjaw);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, otherCreature);
+
+        assertThat(gqs.hasCantBeBlocked(gd, lockjaw)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherCreature)).isTrue();
     }
 
     private void advanceToBeginningOfCombat() {

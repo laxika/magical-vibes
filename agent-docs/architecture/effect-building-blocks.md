@@ -474,6 +474,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   `attackOrBlock(condition, text)` (CR 508.1c, 509.1b), `CreaturesCantAttackUnlessPredicateEffect.youControl(exemption)`, `EnchantedPermanentCantActivateAbilitiesEffect.includingManaAbilities()` (CR 602.5).
   Run U: `MakeCreatureUnblockableEffect` over one permanent subject (`()` target, `self([Duration])`, `of(subject[, Duration])`,
   `targetPermanent(filter)`, `.byCreaturesYourOpponentsControl()`; a set refused, CR 611.2c), a floating rule for every duration (CR 613.11).
+  Any other "it [rule] this turn" about one permanent: `ApplyRuleToPermanentEffect` (a non-ability `GrantNonAbilityEffectEffect`,
+  CR 611.2a); another permanent's static rule about your creatures ("lethal damage dealt to creatures you control …"): a STATIC
+  `GrantNonAbilityEffectEffect` over the set. Neither is lost when the affected permanent loses all abilities (CR 613.1f).
   Run G: `GoadTargetCreatureUntilNextTurnEffect.eachCreature(filter)` / `creaturesControlledBy(player)` / `creaturesTargetPlayerControls()` (a
   `controlledBy(targetPlayer(), …)` subject declares the harmful player target; the set found once, CR 608.2h; CR 701.15d).
 - Types, colours, names: `SetCardTypesEffect`, `LoseAllLandTypesEffect`, `GrantSubtypeEffect.chosenSubtype` (CR 305.7),

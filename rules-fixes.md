@@ -50,7 +50,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
-| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | open |
+| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1 done 2026-11-27 |
 | DR Draws | DR-1 | open |
 | CB Combat | CB-1 | open |
 | PP Perpetual changes | PP-1 | open |
@@ -1009,7 +1009,17 @@ blocked by" floated as a granted ability).
 
 Notes: One way to float a rule that is not an ability is the aim. Read `agent-docs/LAYER_SYSTEM.md`.
 
-Outcome:
+Outcome: done 2026-11-27. F1 fixed for Lockjaw, Slicer and Vines of Vastwood (Kappa Cannoneer was already fixed, Full Steam
+Ahead is no defect: its Oracle grants the ability): "can't be blocked this turn", "it can't be sacrificed this turn" and "can't
+be the target of spells or abilities your opponents control this turn" are rules the resolution makes (CR 611.2c), floated as
+`GrantNonAbilityEffectEffect`, which a later "loses all abilities" leaves; Lockjaw uses `MakeCreatureUnblockableEffect.self()`,
+Slicer the new `ApplyRuleToPermanentEffect`. O105 fixed: Rikku's "can't be blocked by creatures your opponents control" floats
+the same way. F5 fixed: Stoic Star-Captain's crew / station bonus and Zilortha's lethal-damage rule are STATIC
+`GrantNonAbilityEffectEffect`s over creatures you control (new static handler and self handler, `StaticBonusAccumulator`
+channel, a dependency operation so the rule ends as its source loses its abilities, CR 613.8a); the crew and station readers read
+the layered effects whatever the creature lost, and Zilortha's per-card reader fallback is gone. Garland, Royal Kidnapper's
+"can't be sacrificed" had the same defect and was fixed the same way. New line N64 (MC-2). One effect record and three
+handlers added (ledger row, ratchet moved to 2857 / 2243).
 
 #### LY-2. Type-changing effects as floating effects
 
@@ -1271,6 +1281,12 @@ New line N63 (seen in FD-2): hideaway's look belongs to the controller of the pe
 `FaceDownVisibility.exileViewers` gives it to the exiler and `CreatureControlService` adds viewers on a control change only for
 Bane Alley Broker's and `ExileTopCardsToSourceEffect`'s exiles, so a stolen hideaway permanent's new controller can't look.
 Sure of the code.
+
+New line N64 (seen in LY-1): a STATIC `GrantEffectEffect` over a set whose Oracle text states the source's rule, not a quoted
+ability or keyword (Wall Crawl's "Spiders you control ... can't be blocked by creatures with defender"; check the
+`CantBeBlockedByCreaturesMatchingPredicateEffect`, `AssignCombatDamageAsThoughUnblockedEffect` and `CantLoseGameEffect` grants
+among the 74 card files), is removed when the affected creature loses all abilities (CR 613.1f); each is a STATIC
+`GrantNonAbilityEffectEffect` (Zilortha, Garland). Sure of Wall Crawl's code and text.
 
 Outcome:
 

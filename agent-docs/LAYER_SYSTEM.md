@@ -518,7 +518,9 @@ timestamp order (CR 613.1f, 613.7): a triggered ability as `GrantTriggeredAbilit
 (`LosesAllAbilitiesEffect`) and the removal of one kind of static ability ("loses 'prevent all damage…'", "loses all
 'bands with other' abilities": the `SuppressStaticEffect…` records as payloads) are floating layer-6 effects too, so a
 grant older than a removal is gone and a newer one stays; a rules restriction added as a non-ability
-(`CharacteristicState.addNonAbilityEffect`) is never removed. Readers ask the layered state
+(`CharacteristicState.addNonAbilityEffect`, `GrantNonAbilityEffectEffect`: a resolution's "it can't be the target of …",
+"it can't be sacrificed this turn", or another permanent's static rule about it, Zilortha) is never removed by a loss on
+the permanent it applies to; a static one ends as its source loses its abilities (CR 613.8a). Readers ask the layered state
 (`computeStaticBonus(...).grantedEffects()`, `grantedActivatedAbilities()`, `losesAllAbilities()`,
 `GrantedTriggeredAbilitySupport`); the permanent's own abilities precede every effect, so readers of printed abilities
 may ask `GameData.losesAllAbilitiesByEffect` / `removesOwnStaticAbility` instead. "Then this creature loses this ability"
