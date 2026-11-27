@@ -777,7 +777,7 @@ Folding would add a component only this card sets (the guard rail "never add a p
 - `PerpetuallySetRandomLandInLibraryAsBasicIslandEffect`: Hydroponics Architect: no perpetual supertype store (basic) on PerpetuallyGrantCardCharacteristicsEffect; one user. It writes printed values into a runtime copy.
 - `ProtectionFromRingBearersEffect`: no Ring-bearer PermanentPredicate (only the SourceIsRingBearer condition), one user; wait for the ring batch's Ring-store merge, then fold as ProtectionFromPermanentsMatchingEffect(a Ring-bearer predicate).
 - `PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffect`: the head offers face-down cards one by one where this chooses a pile: that rule moves to the head first; one card (Ruin Processor).
-- `PutTargetCardsFromGraveyardOnBottomOfLibraryEffect`: targetCard names one target, this has up to four; one card (Bow of Nylea).
+- `PutTargetCardsFromGraveyardOnBottomOfLibraryEffect`: targetCard names one target, this has up to four; one card (Bow of Nylea). Prerequisite: the activation path (`AbilityActivationService`'s `TargetedGraveyardCardsEffect` keying) needs the `targetGraveyardCards` branch the cast path got in fold run 50c (moved from entry 18 by TR-3).
 - `PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffect`: PutCardsIntoLibraryEffect takes a targetCard; left: no amount of the moved card's power as it was in the graveyard; one card (Dead Reckoning).
 - `PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect`: targetExiledCard exists; left: an owner that is the damaged player, bound as the target is chosen; one card (Time Reaper).
 - `PutTargetPlayerHandOnLibraryThenSearchThatManyToHandEffect`: SearchLibraryEffect has no exact count from a step for another player's library and hand; one card (Jester's Mask).
@@ -788,7 +788,7 @@ Folding would add a component only this card sets (the guard rail "never add a p
 - `ReturnOpponentsCreaturesWithToughnessLessThanSacrificedEffect`: no predicate compares toughness with an amount (the exploited creature's); one card (Profaner of the Dead).
 - `ReturnOtherCreatureCardsWithTotalPowerFromGraveyardToBattlefieldEffect`: a resolution choice capped by the event power; the chosen-return head caps mana value only; one card (Moorland Rescuer).
 - `ReturnPermanentSharingTypeWithEnteringPermanentToHandEffect`: no shared permanent type quality, and the entered permanent is read as it last existed once it left; one card (Cloudstone Curio).
-- `ReturnTargetCreatureCardsFromGraveyardToBattlefieldFaceDownAsCybermenEffect`: the face-down entry exists; left: targetCard names one target and the put step declares none; one card (The Moonbase).
+- `ReturnTargetCreatureCardsFromGraveyardToBattlefieldFaceDownAsCybermenEffect`: the face-down entry exists; left: targetCard names one target and the put step declares none; one card (The Moonbase). Prerequisite: the same `targetGraveyardCards` branch on the activation and trigger paths as Bow of Nylea (moved from entry 18 by TR-3).
 - `ReturnTargetPermanentToHandAndReduceControllerSpeedEffect`: no reduce-speed step; one card (Spikeshell Harrier).
 - `RevealHandChooseCreatureGainLifeDiscardEffect`: "that creature card's toughness" of a chosen card: no amount reads the CHOOSE step's cards; one card (Talara's Bane).
 - `RevealUntilCreatureSharingTypeWithDyingCreatureToHandEffect`: no card predicate "shares a creature type with the triggering permanent" as it last was; one card (Heirloom Blade).
@@ -1339,21 +1339,16 @@ Don't commit.
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (13)
+#### Wrong targets and choices (8)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
-- Soundwave's "from their graveyard" is the damaged player's; the scope admits any opponent's. Unverified.
-- `beginAnyTargetChoice` and the permanent-or-player prompt don't drop what can't be chosen; about 400 counting callers unswept. Unverified.
-- A name prompt that requires a type offers a copy's name by the copy's types (CR 201.4a). Unverified.
+- The prompt callers (about 415 calls of `beginPermanentChoice`, `beginAnyTargetChoice`, `beginMultiPermanentChoice`, `beginMultiPermanentOrPlayerChoice`) that count or auto-pick candidates before prompting don't drop a permanent that can't be chosen (`GameQueryService.cantBeChosen`; the prompts themselves do since D15), so a lone such candidate can be taken or an empty prompt opened; only Glimpse the Unthinkable (playtest) has the ability. Unverified.
 - The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Unverified.
 - Kefnet, Reversal of Fortune, Spellweaver Volute: a copy of a card is created and cast in exile, not in the card's own zone (CR 707.12; Kefnet and Reversal rulings), so a "cast from hand / graveyard" trigger misses it. Sure.
 - The Clone Saga (SPM 28) chapter II offers new targets for the copy although the text doesn't say it may (CR 707.10, 707.10c). Fairly sure.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
 - The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Unverified.
-- `ExileGraveyardCardsEffect.defendingPlayerOnly` (Graven Abomination): the flag is never read, so any opponent's graveyard can be targeted (multiplayer). Sure of the code.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
-- Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Sure, low.
-- Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
 #### Payments and costs (6)
 
@@ -1385,7 +1380,7 @@ Don't commit.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 
-#### Other (52)
+#### Other (50)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1404,8 +1399,6 @@ Don't commit.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
-- `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. Sure.
-- Bow of Nylea and The Moonbase wait in blocked-other for a subject naming every target card: the activation path (`AbilityActivationService`'s `TargetedGraveyardCardsEffect` keying) needs the `targetGraveyardCards` branch the cast path got in fold run 50c. Sure.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): the copied return reads cards the copier exiled with its own abilities; it should read only cards its copied exile ability exiled (CR 607.1, 607.2a). Fairly sure.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.

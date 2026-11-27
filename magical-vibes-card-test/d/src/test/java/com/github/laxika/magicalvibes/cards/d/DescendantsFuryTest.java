@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DescendantsFuryTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Declining keeps the creature and reveals nothing")
     void mayDeclineSacrifice() {
         harness.addToBattlefield(player1, new DescendantsFury());
         Permanent attacker = addReadyCreature(new GrizzlyBears());
@@ -39,6 +40,7 @@ class DescendantsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices the chosen dealer and puts the first creature card sharing a type onto the battlefield")
     void sacrificesChosenDealerAndRevealsUntilSharedCreatureType() {
         harness.addToBattlefield(player1, new DescendantsFury());
         Permanent firstAttacker = addReadyCreature(new GrizzlyBears());
@@ -60,6 +62,7 @@ class DescendantsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A lone dealer that can't be sacrificed offers no sacrifice, so nothing is revealed")
     void cannotSacrificeDamageDealerProtectedByAssaultSuit() {
         harness.addToBattlefield(player1, new DescendantsFury());
         Permanent attacker = addReadyCreature(new GrizzlyBears());
@@ -69,13 +72,15 @@ class DescendantsFuryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(matching));
 
         dealUnblockedCombat(attacker);
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matching);
     }
 
     @Test
+    @DisplayName("Accepting with a lone dealer sacrifices it, and the cards not revealed stay above the rest")
     void singleDamageDealerIsSacrificedAndUnrevealedCardsStayAboveRest() {
         harness.addToBattlefield(player1, new DescendantsFury());
         Permanent attacker = addReadyCreature(new GrizzlyBears());
@@ -95,6 +100,7 @@ class DescendantsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no matching creature card the whole library is revealed and put back")
     void noMatchingCreatureReturnsEntireLibraryWithoutPuttingAnythingOntoBattlefield() {
         harness.addToBattlefield(player1, new DescendantsFury());
         Permanent attacker = addReadyCreature(new GrizzlyBears());
@@ -112,6 +118,7 @@ class DescendantsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty library still lets the creature be sacrificed")
     void emptyLibraryStillAllowsSacrifice() {
         harness.addToBattlefield(player1, new DescendantsFury());
         Permanent attacker = addReadyCreature(new GrizzlyBears());
@@ -124,6 +131,7 @@ class DescendantsFuryTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
+
     @Test
     @DisplayName("A dealer that can't be sacrificed is no choice: the other one is sacrificed unasked")
     void dealerThatCantBeSacrificedIsNotOffered() {
@@ -176,6 +184,25 @@ class DescendantsFuryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == matching);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatching);
+    }
+
+    @Test
+    @DisplayName("With no dealer that can be sacrificed, the sacrifice isn't offered and nothing is revealed")
+    void noSacrificeableDealerOffersNoSacrifice() {
+        harness.addToBattlefield(player1, new DescendantsFury());
+        Permanent first = addReadyCreature(new GrizzlyBears());
+        Permanent second = addReadyCreature(new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new AssaultSuit()).setAttachedTo(first.getId());
+        harness.addToBattlefieldAndReturn(player1, new AssaultSuit()).setAttachedTo(second.getId());
+        Card matching = new RuneclawBear();
+        harness.setLibrary(player1, List.of(matching));
+
+        dealUnblockedCombat(first, second);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matching);
     }
 
     private Permanent addReadyCreature(Card card) {

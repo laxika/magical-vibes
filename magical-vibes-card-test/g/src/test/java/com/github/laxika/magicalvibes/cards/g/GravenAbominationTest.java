@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -162,5 +164,43 @@ class GravenAbominationTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).contains(target);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With several opponents, only the defending player's graveyard cards can be targeted")
+    void onlyDefendingPlayersGraveyardInMultiplayer() {
+        Player player3 = harness.addOpponent("Charlie");
+        addReadyAttacker();
+        Card defenderCard = new FrilledSandwalla();
+        Card otherOpponentCard = new Forest();
+        harness.setGraveyard(player2, List.of(defenderCard));
+        harness.setGraveyard(player3, List.of(otherOpponentCard));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player2.getId()));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(defenderCard.getId());
+    }
+
+    @Test
+    @DisplayName("Attacking a player with an empty graveyard offers no other opponent's graveyard cards")
+    void emptyDefenderGraveyardOffersNoOtherOpponentsCards() {
+        Player player3 = harness.addOpponent("Charlie");
+        addReadyAttacker();
+        harness.setGraveyard(player2, List.of());
+        harness.setGraveyard(player3, List.of(new FrilledSandwalla()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player2.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player3.getId())).hasSize(1);
     }
 }

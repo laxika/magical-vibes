@@ -7,11 +7,15 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -231,6 +235,32 @@ class SoundwaveSonicSpyTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Laserbeak")).hasSize(1);
         assertThat(findPermanents(player1, "Ravage")).isEmpty();
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("With several opponents, only the damaged player's graveyard cards can be targeted")
+    void targetsOnlyTheDamagedPlayersGraveyard() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefieldAndReturn(player1, new SoundwaveSonicSpy());
+        LightningStrike damagedPlayersCard = new LightningStrike();
+        LightningStrike otherOpponentsCard = new LightningStrike();
+        harness.setGraveyard(player2, List.of(damagedPlayersCard));
+        harness.setGraveyard(player3, List.of(otherOpponentsCard));
+
+        GrizzlyBears tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        Permanent token = addCreatureReady(player1, tokenCard);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(token)),
+                Map.of(gd.playerBattlefields.get(player1.getId()).indexOf(token), player2.getId()));
+        resolveCombat();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(damagedPlayersCard.getId());
     }
 
     private Permanent addBearTokenReady() {

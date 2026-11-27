@@ -72,6 +72,9 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private ChoosePermanentsEffectHandler choosePermanentsEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -413,6 +416,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             cannotSacrifice = choicePlayerId.equals(sacrificingPlayerId)
                     && !sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
                     gameData, entry, sacrifice, sacrificingPlayerId);
+        }
+        if (optionalAction instanceof ChoosePermanentsEffect chooseToSacrifice && chooseToSacrifice.sacrificing()
+                && chooseToSacrifice.choosingPlayer() instanceof PlayerSubject.You
+                && choicePlayerId.equals(entry.getControllerId())) {
+            // "You may sacrifice one of them. If you do, ...": with none of them sacrificeable the player can't
+            // choose the sacrifice option (CR 608.2d), so neither the "may" nor a pick among them is offered.
+            cannotSacrifice = !choosePermanentsEffectHandler.couldSacrificeAny(gameData, entry, chooseToSacrifice);
         }
         if (cannotSacrifice) {
             gameData.resolvingMayEffectFromStack = false;

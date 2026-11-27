@@ -4,6 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -16,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -260,4 +265,41 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
             }
+
+    @Test
+    @DisplayName("Asks nothing for \"you may sacrifice one of them\" when none of them can be sacrificed")
+    void skipsSacrificeChoiceWithNothingSacrificeable() {
+        ChoosePermanentsEffectHandler chooser = mock(ChoosePermanentsEffectHandler.class);
+        ReflectionTestUtils.setField(registry.getHandler(new MayEffect(new GainLifeEffect(1), "x")),
+                "choosePermanentsEffectHandler", chooser);
+        ChoosePermanentsEffect choose = ChoosePermanentsEffect.exactly(1, Subjects.triggeringAll(), "one of them")
+                .toSacrifice();
+        MayEffect mayEffect = new MayEffect(SequenceEffect.of(choose,
+                new SacrificeSelfEffect(Subjects.thisWay(StepKind.CHOOSE))), "Sacrifice one of them?");
+        StackEntry entry = createEntry(createCard("Descendants' Fury"), player1Id, List.of(mayEffect));
+        when(chooser.couldSacrificeAny(gd, entry, choose)).thenReturn(false);
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.resolvingMayEffectFromStack).isFalse();
+    }
+
+    @Test
+    @DisplayName("Asks \"you may sacrifice one of them\" when one of them can be sacrificed")
+    void asksSacrificeChoiceWithASacrificeableCandidate() {
+        ChoosePermanentsEffectHandler chooser = mock(ChoosePermanentsEffectHandler.class);
+        ReflectionTestUtils.setField(registry.getHandler(new MayEffect(new GainLifeEffect(1), "x")),
+                "choosePermanentsEffectHandler", chooser);
+        ChoosePermanentsEffect choose = ChoosePermanentsEffect.exactly(1, Subjects.triggeringAll(), "one of them")
+                .toSacrifice();
+        MayEffect mayEffect = new MayEffect(SequenceEffect.of(choose,
+                new SacrificeSelfEffect(Subjects.thisWay(StepKind.CHOOSE))), "Sacrifice one of them?");
+        StackEntry entry = createEntry(createCard("Descendants' Fury"), player1Id, List.of(mayEffect));
+        when(chooser.couldSacrificeAny(gd, entry, choose)).thenReturn(true);
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+    }
 }

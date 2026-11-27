@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -42,6 +43,7 @@ class TheMoonbaseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Other creatures can pay {2} to gain flying until end of turn")
     void lowGravityLetsCreaturesGainFlyingUntilEndOfTurn() {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -64,6 +66,7 @@ class TheMoonbaseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos ensues returns up to one target creature card per opponent as a Cyberman")
     void chaosReturnsUpToOneTargetCreatureCardPerOpponentAsACyberman() {
         Card creature = new GrizzlyBears();
         Card noncreature = new Shock();

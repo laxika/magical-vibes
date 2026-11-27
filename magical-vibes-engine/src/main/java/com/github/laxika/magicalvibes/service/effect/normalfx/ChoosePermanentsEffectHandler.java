@@ -280,6 +280,20 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     /** The player who chooses: the controller, or the one the effect names as it resolves; {@code null} for none. */
+    /**
+     * Whether the chooser of a {@link ChoosePermanentsEffect#sacrificing()} choice controls a candidate they could
+     * sacrifice. "You may sacrifice one of them" with none of them sacrificeable offers no sacrifice option
+     * (CR 608.2d), so the "may" isn't asked.
+     */
+    public boolean couldSacrificeAny(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose) {
+        UUID chooserId = chooserId(gameData, entry, choose);
+        return chooserId != null && attachFits(gameData, entry, choose,
+                subjectResolutionService.permanents(gameData, entry, choose, choose.candidates())).stream()
+                .anyMatch(permanent -> !gameQueryService.cantBeChosen(gameData, permanent)
+                        && chooserId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()))
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
+    }
+
     private UUID chooserId(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose) {
         if (choose.chooser() == null) {
             return entry.getControllerId();

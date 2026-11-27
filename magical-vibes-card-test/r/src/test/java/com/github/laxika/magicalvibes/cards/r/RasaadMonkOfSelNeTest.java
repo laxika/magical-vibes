@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -284,5 +285,46 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
         Card exiled = gd.findExiledCard(paladin.getId()).card();
         assertThat(exiled.getPower()).isEqualTo(paladin.getPower());
         assertThat(exiled.getKeywords()).contains(Keyword.LIFELINK);
+    }
+
+    @Test
+    @DisplayName("The Radiant Monk's specialize trigger offers only creature cards exiled with this creature")
+    void radiantTriggerOffersOnlyCardsExiledWithIt() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
+        SteadfastPaladin otherExiled = new SteadfastPaladin();
+        gd.exiledCards.add(new ExiledCardEntry(otherExiled, player2.getId(), null));
+        harness.setHand(player1, List.of(new RasaadMonkOfSelNe(), new Plains()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(target.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("With no creature card exiled with it, the specialize trigger isn't put on the stack")
+    void radiantTriggerWithNoCardExiledWithItIsRemoved() {
+        SteadfastPaladin otherExiled = new SteadfastPaladin();
+        gd.exiledCards.add(new ExiledCardEntry(otherExiled, player2.getId(), null));
+        harness.setHand(player1, List.of(new RasaadMonkOfSelNe(), new Plains()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.findExiledCard(otherExiled.getId()).card().getPower()).isEqualTo(otherExiled.getPower());
     }
 }

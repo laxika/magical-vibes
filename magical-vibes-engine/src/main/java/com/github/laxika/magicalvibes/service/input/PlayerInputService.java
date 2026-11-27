@@ -2434,7 +2434,7 @@ public class PlayerInputService {
         for (UUID playerId : gameData.playerIds) {
             gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                     .filter(permanent -> !permanent.isFaceDown())
-                    .forEach(permanent -> offer.accept(permanent.getCard()));
+                    .forEach(permanent -> ownCardsOf(permanent).forEach(offer));
             gameData.playerGraveyards.getOrDefault(playerId, List.of()).forEach(offer);
             gameData.getPlayerExiledCards(playerId).stream()
                     .filter(card -> !gameData.isExiledFaceDown(card.getId()))
@@ -2446,6 +2446,24 @@ public class PlayerInputService {
                 .filter(entry -> FaceDownVisibility.showsNameOnStack(gameData, entry))
                 .forEach(entry -> offer.accept(entry.getCard()));
         return names;
+    }
+
+    /**
+     * The cards a face-up permanent is made of, judged by their own characteristics (CR 201.4a): its physical cards,
+     * and the face it shows when that face is one of theirs (a transformed back face, a Room, a bestowed Aura). A copy
+     * shows another card's name with the copy's types, so that name is left to the Oracle catalog.
+     */
+    private static List<Card> ownCardsOf(Permanent permanent) {
+        List<Card> physical = permanent.cardsLeavingBattlefield();
+        Card shown = permanent.getCard();
+        boolean ownFace = physical.stream().anyMatch(card -> card == shown || card.getBackFaceCard() == shown
+                || card.getNames().containsAll(shown.getNames()));
+        if (!ownFace || physical.contains(shown)) {
+            return physical;
+        }
+        List<Card> cards = new ArrayList<>(physical);
+        cards.add(shown);
+        return cards;
     }
 
     /** The names offered for "a card name other than a basic land card name". */
@@ -2514,8 +2532,9 @@ public class PlayerInputService {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
             gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
-                    .filter(p -> candidate.test(p.getCard()))
-                    .forEach(p -> names.addAll(p.getCard().getNames()));
+                    .flatMap(p -> ownCardsOf(p).stream())
+                    .filter(candidate)
+                    .forEach(c -> names.addAll(c.getNames()));
             gameData.playerHands.getOrDefault(pid, List.of()).stream()
                     .filter(candidate)
                     .forEach(c -> names.addAll(c.getNames()));

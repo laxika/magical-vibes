@@ -46,7 +46,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
-| TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2 done 2026-11-27; TR-3 open |
+| TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2, TR-3 done 2026-11-27 (TR-3: T5's caller sweep left) |
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 open |
 | FD Face-down and hidden reads | FD-1, FD-2 | open |
@@ -753,7 +753,22 @@ requires a type uses a copy's types), T20 (Descendants' Fury offers creatures th
 graveyard"), O29 (`CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts), O31 (Bow of
 Nylea and The Moonbase: the activation path needs the `targetGraveyardCards` branch the cast path got in fold run 50c).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: T20, T6 (deleted from entry 18). Dropped: T17, T22, T3, O29, O31. Left: T5 (edited down in entry
+18). T20: "you may sacrifice one of them" with none of them sacrificeable isn't asked (CR 608.2d's own example: a player who
+can't sacrifice can't choose that option); `MayEffectHandler` asks `ChoosePermanentsEffectHandler.couldSacrificeAny` for a
+"may" led by a `toSacrifice()` choice (Descendants' Fury, two dealers under Assault Suits; the old lone-dealer test that
+answered the "may" was rewritten). T6: a name prompt judges a face-up permanent by its own cards (its physical cards, and the
+face it shows only when that face is theirs), so a Phyrexian Metamorph copying Grizzly Bears doesn't make "Grizzly Bears" an
+artifact card name for Dispossess (CR 201.4a); `isNameExcludedByType` reads the same cards. T17: not a defect: the flag is read
+through `choosesFromEventPlayersGraveyard` (`TriggeredAbilityStackService.graveyardOwner`), pinned three-player in
+`GravenAbominationTest`. T22: not a defect: the trigger collector runs the effect's validator, which requires a card exiled with
+this permanent; pinned in `RasaadMonkOfSelNeTest` (another exiled creature card isn't offered; with none, no prompt). T3: not a
+defect: `graveyardOwner` narrows the opponent-graveyard target to the damaged player; pinned three-player in
+`SoundwaveSonicSpyTest`. O29: no implemented card combines several counter targets with `LIBRARY_TOP_OR_BOTTOM` (Hinder has one
+target), so nothing reaches it. O31: a fold prerequisite, not a rules defect: moved onto the Bow of Nylea and The Moonbase rows
+of entry 16. T5: the prompts drop "can't be chosen" since D15; the sweep of about 415 callers that count or auto-pick before
+prompting is left (only Glimpse the Unthinkable, a playtest card, has the ability). No effect class added or deleted, so no
+ledger or ratchet change.
 
 ### LS. Library searches and reveals
 

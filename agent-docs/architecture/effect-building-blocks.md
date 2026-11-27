@@ -78,8 +78,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   losing them; only its mana abilities under Blood Sun); a graveyard borrower asks `graveyardCardsHaveLostAllAbilities` first; a static
   replacement source asks `hasLostPrintedAbilities`, not only the floating `losesAllAbilitiesByEffect` (CR 613.1f).
 - A hand choice is shown to its chooser alone and its log names no card; a prompt over exiled cards masks a face-down card from a
-  player who may not look at it; a name prompt offers only the catalog's names and names of cards the chooser can know
-  (`PlayerInputService.cardNamesOfferedTo`, checked by `ChoiceHandlerService.isCardNameAllowed`); the AI answers from what it can know.
+  player who may not look at it; a name prompt offers only the catalog's names and names of cards the chooser can know, a
+  permanent judged by its own cards' types, not a copy's (CR 201.4a; `PlayerInputService.cardNamesOfferedTo`, checked by
+  `ChoiceHandlerService.isCardNameAllowed`); the AI answers from what it can know.
 - **The public log says only what the card's text makes public** (owner's decision 2026-11-23; CR 400.2). The game log is one list every
   player gets (`GameLogService` emits to all players; `GameLogEntry` has no audience), so nothing is logged for one player: the owner's
   hand shows the card. A conjure of a card the text names may name it; a random pick (a random spellbook card, a random library card,
@@ -302,7 +303,8 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
 
 - `ChooseCardEffect` (`oneOf`, `upTo`, `oneOfEach`, `atRandom`, `fromEachOwner()`, a chooser `.by(...)`) records CHOOSE over cards;
   `ChoosePermanentsEffect` (`exactly`, `upTo`, `anyNumber`, `atRandom`, `chosenBy(player)`, `oneForEach`, `forEachVote`, `toSacrifice()`
-  (only candidates the chooser could sacrifice, CR 608.2d, 701.21a), `thatCanBeAttachedTo` / `thatCanHost`,
+  (only candidates the chooser could sacrifice, CR 608.2d, 701.21a; a `MayEffect` it leads isn't asked when none could be,
+  `ChoosePermanentsEffectHandler.couldSacrificeAny`), `thatCanBeAttachedTo` / `thatCanHost`,
   `thatTheTriggeringSpellCouldTarget()`) over permanents; `ChoosePlayerEffect` (`opponent()`, `chosenBy(player)`) /
   `ChoosePlayerAtRandomEffect` (`playersThisWay(CHOOSE)`); in a bespoke handler or completion, "an opponent" after an exile or reveal is
   `ChosenOpponentSupport.chooseThen` (a `ChosenOpponentFollowUp` record and its `ChosenOpponentContinuation`; CR 608.2d); `ChooseCardNameAtResolutionEffect` + `CardHasNameChosenThisResolutionPredicate`;

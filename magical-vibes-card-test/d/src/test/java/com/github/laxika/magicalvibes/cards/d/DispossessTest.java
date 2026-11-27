@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianMetamorph;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Dispossess.class, Ornithopter.class, GrizzlyBears.class, CosisTrickster.class})
+@CardUsed({Dispossess.class, Ornithopter.class, GrizzlyBears.class, CosisTrickster.class, PhyrexianMetamorph.class})
 class DispossessTest extends BaseCardTest {
 
     @Test
@@ -59,6 +60,29 @@ class DispossessTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).contains("Ornithopter");
+        assertThat(choice.options()).doesNotContain("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A copy that is an artifact only by its copy effect doesn't make its name an artifact card name")
+    void copyWithAddedArtifactTypeDoesNotOfferCopiedName() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PhyrexianMetamorph()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        assertThat(gd.stack).isEmpty();
+
+        harness.setHand(player1, List.of(new Dispossess()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).contains("Phyrexian Metamorph");
         assertThat(choice.options()).doesNotContain("Grizzly Bears");
     }
 
