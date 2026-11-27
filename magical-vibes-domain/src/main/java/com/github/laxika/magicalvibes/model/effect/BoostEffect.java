@@ -278,13 +278,6 @@ public record BoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost
         return subject instanceof PermanentSubject.ControlledBy || subject instanceof PermanentSubject.TriggeringAttackers;
     }
 
-    /** This boost with {@code powerBoost}, {@code toughnessBoost}, {@code filter} and {@code castTimeXValue} replaced. */
-    public BoostEffect withAmounts(DynamicAmount powerBoost, DynamicAmount toughnessBoost, PermanentPredicate filter,
-                                   DynamicAmount castTimeXValue) {
-        return new BoostEffect(powerBoost, toughnessBoost, subject, amountsRead, duration, keywords, filter,
-                targetsPermanent, targetGroup, castTimeXValue);
-    }
-
     @Override
     public DynamicAmount castTimeXValue() {
         return castTimeXValue;

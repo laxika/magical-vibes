@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MagicalHack;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Nighthaze.class, NestInvader.class, Forest.class, Swamp.class})
+@CardUsed({Nighthaze.class, MagicalHack.class, NestInvader.class, Forest.class, Swamp.class})
 class NighthazeTest extends BaseCardTest {
 
     @Test
@@ -128,5 +129,25 @@ class NighthazeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A text change from Swamp to Island on the spell makes its target gain islandwalk")
+    void textChangeOnTheSpellReachesItsResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NestInvader());
+        harness.setHand(player1, List.of(new Nighthaze(), new MagicalHack()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        java.util.UUID spellId = gd.stack.getFirst().getCard().getId();
+        harness.castAndResolveInstant(player1, 0, spellId);
+        harness.handleListChoice(player1, "SWAMP");
+        harness.handleListChoice(player1, "ISLAND");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.ISLANDWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isFalse();
     }
 }

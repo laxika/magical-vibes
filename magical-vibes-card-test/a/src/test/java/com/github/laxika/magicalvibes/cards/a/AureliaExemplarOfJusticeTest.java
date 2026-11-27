@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -172,6 +174,23 @@ class AureliaExemplarOfJusticeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Changed from red to green, beginning of combat gives a green creature +2/+0 and trample")
+    void textChangedBeginningOfCombatReadsTheNewColorWord() {
+        Permanent aurelia = addCreatureReady(player1, new AureliaExemplarOfJustice());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        gd.addEffectOnPermanent(null, null, player1.getId(), new TextChangeEffect("red", "green"),
+                aurelia.getId(), Duration.PERMANENT);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
     }
 
     private void advanceToCombat(Player activePlayer) {

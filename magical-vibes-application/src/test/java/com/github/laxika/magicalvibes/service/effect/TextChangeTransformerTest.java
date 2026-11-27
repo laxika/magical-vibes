@@ -4,7 +4,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -18,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import org.junit.jupiter.api.DisplayName;
@@ -195,5 +200,37 @@ class TextChangeTransformerTest {
         AllLandsAreCreaturesEffect revolt = new AllLandsAreCreaturesEffect(2, 2);
         assertThat(TextChangeTransformer.transform(revolt, List.of(MOUNTAIN_TO_ISLAND, BLACK_TO_BLUE)))
                 .isSameAs(revolt);
+    }
+
+    @Test
+    @DisplayName("A land type replacement rewrites a self boost's count, through a scaling amount")
+    void replacementRewritesSelfBoostCount() {
+        PermanentCount mountains = new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
+                CountScope.CONTROLLER);
+        BoostEffect boost = BoostEffect.self(new Scaled(mountains, -1), mountains);
+
+        PermanentCount islands = new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ISLAND),
+                CountScope.CONTROLLER);
+        assertThat(TextChangeTransformer.transform(boost, List.of(MOUNTAIN_TO_ISLAND)))
+                .isEqualTo(BoostEffect.self(new Scaled(islands, -1), islands));
+    }
+
+    @Test
+    @DisplayName("A color word replacement rewrites a mass boost's set, keeping identity otherwise")
+    void replacementRewritesMassBoostSet() {
+        BoostEffect boost = BoostEffect.allCreatures(2, 0, new PermanentColorInPredicate(Set.of(CardColor.BLACK)));
+
+        assertThat(TextChangeTransformer.transform(boost, List.of(BLACK_TO_BLUE)))
+                .isEqualTo(BoostEffect.allCreatures(2, 0, new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
+        assertThat(TextChangeTransformer.transform(boost, List.of(MOUNTAIN_TO_ISLAND))).isSameAs(boost);
+    }
+
+    @Test
+    @DisplayName("A land type replacement rewrites a permanent-target boost's filter")
+    void replacementRewritesPermanentTargetBoostFilter() {
+        BoostEffect boost = BoostEffect.targetPermanent(1, 1, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN));
+
+        assertThat(TextChangeTransformer.transform(boost, List.of(MOUNTAIN_TO_ISLAND)))
+                .isEqualTo(BoostEffect.targetPermanent(1, 1, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)));
     }
 }

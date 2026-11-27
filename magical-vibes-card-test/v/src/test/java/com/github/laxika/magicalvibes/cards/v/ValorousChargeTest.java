@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.s.SleightOfMind;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KnightErrant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ValorousCharge.class, KnightErrant.class, GrizzlyBears.class})
+@CardUsed({ValorousCharge.class, SleightOfMind.class, KnightErrant.class, GrizzlyBears.class})
 class ValorousChargeTest extends BaseCardTest {
 
     @Test
@@ -109,5 +112,25 @@ class ValorousChargeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new ValorousCharge(), "{1}{W}{W}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Changed from white to green on the stack, it gives green creatures +2/+0 instead")
+    void textChangedSpellBoostsTheNewColor() {
+        Permanent whiteCreature = addCreatureReady(player1, new KnightErrant());
+        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new ValorousCharge(), "{1}{W}{W}");
+        java.util.UUID spellId = gd.stack.getFirst().getCard().getId();
+        harness.setHand(player1, List.of(new SleightOfMind()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, spellId);
+        harness.handleListChoice(player1, "WHITE");
+        harness.handleListChoice(player1, "GREEN");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(2);
     }
 }

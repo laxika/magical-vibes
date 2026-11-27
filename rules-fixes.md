@@ -50,7 +50,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
-| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1, LY-2, LY-3 done 2026-11-27 |
+| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1, LY-2, LY-3, LY-4 done 2026-11-27 |
 | DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
@@ -1109,7 +1109,18 @@ Lines: L18 (`TextChangeTransformer` rewrites change effect identity, so a target
 change on a spell on the stack, Sleight of Mind's `spellTextReplacements`), O94 (text changes reach only some boost amounts and
 filters).
 
-Outcome:
+Outcome: done 2026-11-27. O94 fixed (deleted from entry 18): `TextChangeTransformer` rewrites every `BoostEffect` form's
+amounts (`PermanentCount` through the scaling and gating amounts), target filter, set subject and landwalk keywords (CR 612.2):
+Sleight of Mind on Valorous Charge boosts green creatures, Magical Hack on Mutilate counts Islands; `BoostEffect.withAmounts` lost
+its last caller and was deleted. Attack and block triggers didn't read text changes at all (Magical Hack on Timbermaw Larva still
+counted Forests): `AttackTriggers` and `BlockTriggers` list `TriggerIndex.textChangedPermanentAbilities`, and the Equipment
+own-ability removals there and in `CombatDamageTriggers` match the text-changed abilities. Buccaneer's Bravado's "target Pirate"
+was already right (the spell's target restriction is read through its text change; pinned). L19 dropped: a text change on a spell
+reaches its resolution (Magical Hack on Nighthaze gives islandwalk; pinned). L18 dropped: a rewritten targeted effect is bound to
+no target group, but the single-group, effect-class and entry-target fallbacks find its target; a scan of every card class found
+15 with a text-changeable targeted spell or trigger effect, none in an ability of two target groups without an unchanged bound
+effect (Erhnam Djinn and Aurelia, Exemplar of Justice pinned; documented in `LAYER_SYSTEM.md`). New line N81 (MC-2). No effect
+class added or deleted, so no ledger or ratchet change.
 
 #### LY-5. Borrowed and linked abilities
 
@@ -1446,6 +1457,11 @@ Avatar's Wrath or Drannith ("anywhere other than their hands"); the zone owner m
 New line N80 (seen in CP-1): with Jaya Ballard's emblem, a card whose printed flashback cost can be paid is always cast with
 flashback: the graveyard request can't choose the emblem's cast for its mana cost (CR 601.2b, 118.9a). Needs a request field and
 the client.
+
+New line N81 (seen in LY-4): text changes (CR 612.2) reach a battlefield trigger's effects but not its trigger condition or
+intervening "if" (Sea Serpent's "when you control no Islands", Noggle Hedge-Mage's "if you control two or more Islands"), and not
+the effects of state-triggered abilities (`StateTriggerService`) or activation-watching ones (`SpellTriggers.activated`), which list
+`TriggerIndex.permanentAbilities` unchanged. Of the code, unverified by a test.
 
 Outcome:
 

@@ -340,7 +340,9 @@ subtypes, `AllLandsAreCreaturesEffect` required land type and colour — its two
 `matchesAnimateLand` in `GameQueryService`/`StaticEffectSupport` apply the source's own replacements too), landwalk keywords inside `StaticBoostEffect`/`GrantKeywordEffect` keyword sets
 (via the reverse of `Keyword.LANDWALK_MAP`), land-type and color predicates inside filters
 (`PermanentHasSubtypePredicate`, `PermanentHasAnySubtypePredicate`, `PermanentColorInPredicate`,
-recursing through AllOf/AnyOf/Not), stack-entry color predicates inside target-spell conditions,
+recursing through AllOf/AnyOf/Not), every `BoostEffect` form's amounts (`PermanentCount` filters, through
+`Scaled`/`Divided`/`HalvedRoundedUp`/`DeterminedOnce`/`DuringControllerTurn`/`IfSourceAttacking`), target filter, set
+subject (`ControlledBy`/`OwnedBy`/`Except` filters) and landwalk keywords, stack-entry color predicates inside target-spell conditions,
 and the wrappers `GrantEffectEffect`/`ConditionalEffect`/
 `EnchantedPermanentConditionalEffect` (recursing into what they wrap). An unchanged effect
 comes back as the SAME instance — the pass's managed/filter-verdict maps are identity-keyed.
@@ -357,7 +359,8 @@ setter simply overwrites the entry; (d) both handler loops in
 `GameQueryService.assembleStaticBonus` pass the transformed view to the legacy handlers (managed
 suppression still checks the original), so unmanaged outputs (7c boosts behind text-changed
 filters, self CDAs counting a text-changed land word) follow the rewritten text too;
-(e) the trigger pipeline (`EventAbilitySupport`, `ZoneChangeRequests`) transforms each battlefield triggered ability with the permanent's own and
+(e) the trigger pipeline (`EventAbilitySupport`, `ZoneChangeRequests`, and the step, attack and block listers through
+`TriggerIndex.textChangedPermanentAbilities`) transforms each battlefield triggered ability with the permanent's own and
 global replacements before matching, and `dispatchSpellWatch` a cast trigger's `SpellFilter`
 (`TextChangeTransformer.transformSpellFilter`, on `Triggers.youCastSpell().withFilter(...)`'s
 `CardColorPredicate`/`CardSubtypePredicate`, recursing through card AllOf/AnyOf/Not), so it
@@ -373,11 +376,14 @@ extend the transformer's visitor when a card needs them): `PreventDamageEffect.f
 `TargetingRestrictionEffect` (also inside a floating `GrantNonAbilityEffectEffect`),
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
 `BoostControllerDamageThisTurnEffect`'s `color`, a life-gain trigger's `causedBySpell` filter,
-`AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger effects other
-than a cast trigger's spell filter, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
+`AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger conditions and intervening "if"s
+other than a cast trigger's spell filter, the effects of state-triggered and activation-watching abilities, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their
 parameters at resolution and are never re-read from a permanent's text. Text changes applied to
 a spell on the stack instead rewrite that stack entry's frozen resolving effects immediately.
+A rewritten targeted effect is a new instance the card binds to no target group: the target fallbacks (a lone group,
+one bound effect of its class, the entry's own targets) find its target, which holds while every ability with two
+target groups keeps an unchanged effect bound to each (true of every implemented card).
 A text-changed filter that is shared across an ability's parts (CR 613.6 memo) gets
 its layer-4 verdict recorded under the TRANSFORMED filter instance; the legacy funnel asks with
 the original, misses, and re-evaluates — acceptable drift, no current card hits it.

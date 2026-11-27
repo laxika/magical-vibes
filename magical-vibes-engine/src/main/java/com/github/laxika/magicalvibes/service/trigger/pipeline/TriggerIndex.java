@@ -622,10 +622,11 @@ public class TriggerIndex {
     }
 
     /**
-     * {@code permanent}'s triggered abilities with its card's own read through its text changes (layer 3, CR 612.1),
-     * as the event abilities are ({@code EventAbilitySupport}).
+     * {@code permanent}'s triggered abilities ({@link #permanentAbilities}) with its card's own read through its text
+     * changes (layer 3, CR 612.1), as the event abilities are ({@code EventAbilitySupport}): the step, attack and block
+     * abilities.
      */
-    private List<TriggeredAbility> textChangedPermanentAbilities(GameData gameData, Permanent permanent) {
+    public List<TriggeredAbility> textChangedPermanentAbilities(GameData gameData, Permanent permanent) {
         List<TriggeredAbility> abilities = permanentAbilities(gameData, permanent);
         if (gameData.textReplacements(permanent.getId()).isEmpty()
                 && TextChangeTransformer.globalColorWordReplacements(gameData).isEmpty()) {

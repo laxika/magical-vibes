@@ -343,8 +343,12 @@ public class CombatDamageTriggers {
             if (creature.getAttachedTo() == null
                     && GameQueryService.permanentHasSubtype(creature, CardSubtype.EQUIPMENT)
                     && !creature.getCard().hasType(CardType.CREATURE)) {
+                // Its own abilities as its text changes leave them (CR 612.1): the same instance when unchanged.
                 List<TriggeredAbility> own = creature.getCard().getTriggeredAbilities();
-                triggered.removeIf(ability -> own.stream().anyMatch(printed -> printed == ability));
+                triggered.removeIf(ability -> own.stream().anyMatch(printed -> {
+                    TriggeredAbility read = EventAbilitySupport.textChanged(gameData, creature, printed);
+                    return read == ability || read != printed && read.equals(ability);
+                }));
             }
             TriggerCause combatDamageCause = new DamageTriggers.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause();

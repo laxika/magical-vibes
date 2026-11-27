@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -121,5 +122,24 @@ class BuccaneersBravadoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, mode, target.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Changed from Pirate to Elf on the stack, the double strike mode does nothing to its Pirate target")
+    void textChangedPirateModeFindsItsTargetIllegal() {
+        Permanent pirate = harness.addToBattlefieldAndReturn(player1, new SailorOfMeans());
+        int basePower = gqs.getEffectivePower(gd, pirate);
+        harness.setHand(player1, List.of(new BuccaneersBravado(), new ArtificialEvolution()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, 1, pirate.getId());
+        java.util.UUID spellId = gd.stack.getFirst().getCard().getId();
+        harness.castAndResolveInstant(player1, 0, spellId);
+        harness.handleListChoice(player1, "PIRATE");
+        harness.handleListChoice(player1, "ELF");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(basePower);
+        assertThat(gqs.hasKeyword(gd, pirate, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

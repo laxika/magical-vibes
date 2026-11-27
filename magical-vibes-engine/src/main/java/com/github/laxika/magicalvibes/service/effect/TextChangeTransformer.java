@@ -7,7 +7,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
+import com.github.laxika.magicalvibes.model.amount.Divided;
+import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
+import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -344,17 +350,20 @@ public final class TextChangeTransformer {
                 PermanentPredicate filter = apply(bounce.filter(), substitution);
                 yield filter == bounce.filter() ? bounce : bounce.withFilter(filter);
             }
-            // The amounts and target filter of a boost read against its source; a boost of the boosted permanent
-            // the creature-or-Vehicle target and a mass boost are left as they are (CR 612.2 would reach them too).
-            case BoostEffect boost when boost.amountsRead() == BoostEffect.AmountsRead.SOURCE
-                    && !boost.targetsPermanent() && !boost.isMassBoost() -> {
+            // Every word of a boost (CR 612.2): its amounts ("for each Forest you control"), its target filter ("target
+            // Pirate"), the set it boosts ("white creatures get") and the landwalk it grants.
+            case BoostEffect boost -> {
                 DynamicAmount power = apply(boost.powerBoost(), substitution);
                 DynamicAmount toughness = apply(boost.toughnessBoost(), substitution);
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 DynamicAmount castTimeXValue = apply(boost.castTimeXValue(), substitution);
+                PermanentSubject subject = apply(boost.subject(), substitution);
+                Set<Keyword> keywords = replaceLandwalk(boost.keywords(), substitution);
                 yield power == boost.powerBoost() && toughness == boost.toughnessBoost()
-                        && filter == boost.filter() && castTimeXValue == boost.castTimeXValue() ? boost
-                        : boost.withAmounts(power, toughness, filter, castTimeXValue);
+                        && filter == boost.filter() && castTimeXValue == boost.castTimeXValue()
+                        && subject == boost.subject() && keywords == boost.keywords() ? boost
+                        : new BoostEffect(power, toughness, subject, boost.amountsRead(), boost.duration(), keywords,
+                        filter, boost.targetsPermanent(), boost.targetGroup(), castTimeXValue);
             }
             case com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect protection -> {
                 CardColor color = protection.color() == substitution.fromColor()
@@ -511,13 +520,42 @@ public final class TextChangeTransformer {
         };
     }
 
+    /** A count's permanent filter with its words changed, through the amounts that scale or gate one. */
     private static DynamicAmount apply(DynamicAmount amount, Substitution substitution) {
-        if (amount instanceof PermanentCount count) {
-            PermanentPredicate filter = apply(count.filter(), substitution);
-            return filter == count.filter() ? count : new PermanentCount(filter, count.scope(),
-                    count.excludeSource(), count.declaredAttackersOnly());
-        }
-        return amount;
+        return switch (amount) {
+            case PermanentCount count -> {
+                PermanentPredicate filter = apply(count.filter(), substitution);
+                yield filter == count.filter() ? count : new PermanentCount(filter, count.scope(),
+                        count.excludeSource(), count.declaredAttackersOnly());
+            }
+            case Scaled scaled -> {
+                DynamicAmount inner = apply(scaled.amount(), substitution);
+                yield inner == scaled.amount() ? scaled : new Scaled(inner, scaled.factor());
+            }
+            case Divided divided -> {
+                DynamicAmount inner = apply(divided.amount(), substitution);
+                yield inner == divided.amount() ? divided : new Divided(inner, divided.divisor());
+            }
+            case HalvedRoundedUp halved -> {
+                DynamicAmount inner = apply(halved.amount(), substitution);
+                yield inner == halved.amount() ? halved : new HalvedRoundedUp(inner);
+            }
+            case DeterminedOnce once -> {
+                DynamicAmount inner = apply(once.amount(), substitution);
+                yield inner == once.amount() ? once : new DeterminedOnce(inner);
+            }
+            case DuringControllerTurn duringTurn -> {
+                DynamicAmount inner = apply(duringTurn.amount(), substitution);
+                yield inner == duringTurn.amount() ? duringTurn : new DuringControllerTurn(inner);
+            }
+            case IfSourceAttacking ifAttacking -> {
+                DynamicAmount whileAttacking = apply(ifAttacking.whileAttacking(), substitution);
+                DynamicAmount otherwise = apply(ifAttacking.otherwise(), substitution);
+                yield whileAttacking == ifAttacking.whileAttacking() && otherwise == ifAttacking.otherwise()
+                        ? ifAttacking : new IfSourceAttacking(whileAttacking, otherwise);
+            }
+            case null, default -> amount;
+        };
     }
 
     private static Condition apply(Condition condition, Substitution substitution) {
@@ -642,6 +680,10 @@ public final class TextChangeTransformer {
             case PermanentSubject.ControlledBy set -> {
                 PermanentPredicate filter = apply(set.filter(), substitution);
                 yield filter == set.filter() ? set : Subjects.controlledBy(set.players(), filter);
+            }
+            case PermanentSubject.OwnedBy set -> {
+                PermanentPredicate filter = apply(set.filter(), substitution);
+                yield filter == set.filter() ? set : new PermanentSubject.OwnedBy(set.players(), filter);
             }
             case PermanentSubject.Except except -> {
                 PermanentSubject permanents = apply(except.permanents(), substitution);

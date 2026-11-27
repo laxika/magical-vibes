@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WildMongrel;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mutilate.class, Swamp.class, WildMongrel.class})
+@CardUsed({Mutilate.class, MagicalHack.class, Island.class, Swamp.class, WildMongrel.class})
 class MutilateTest extends BaseCardTest {
 
     private void putMutilateOnStack() {
@@ -144,6 +147,28 @@ class MutilateTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player2, "Wild Mongrel");
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Changed from Swamp to Island on the stack, it counts the Islands you control")
+    void textChangedSpellCountsTheNewLandType() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent mongrel = addCreatureReady(player2, new WildMongrel());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        putMutilateOnStack();
+        java.util.UUID spellId = gd.stack.getFirst().getCard().getId();
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, spellId);
+        harness.handleListChoice(player1, "SWAMP");
+        harness.handleListChoice(player1, "ISLAND");
+        harness.passBothPriorities();
+
         assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(1);
     }

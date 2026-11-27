@@ -183,7 +183,7 @@ public class BlockTriggers {
 
     private List<TriggeredAbility> abilities(GameData gameData, Permanent permanent, CombatTrigger watched) {
         List<TriggeredAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : triggerIndex.permanentAbilities(gameData, permanent)) {
+        for (TriggeredAbility ability : triggerIndex.textChangedPermanentAbilities(gameData, permanent)) {
             if (TriggerMatcher.combatCondition(ability, watched, Zone.BATTLEFIELD) != null) {
                 abilities.add(ability);
             }

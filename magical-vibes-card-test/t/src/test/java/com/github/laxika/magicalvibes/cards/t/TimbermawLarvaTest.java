@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.m.MagicalHack;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TimbermawLarva.class, Forest.class, Island.class})
+@CardUsed({TimbermawLarva.class, MagicalHack.class, Forest.class, Island.class})
 class TimbermawLarvaTest extends BaseCardTest {
 
     @Test
@@ -97,5 +99,25 @@ class TimbermawLarvaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, nonattacker)).isEqualTo(2);
+    }
+
+    @DisplayName("Changed from Forest to Island, it gets +1/+1 for each Island you control")
+    @Test
+    void textChangedAmountCountsTheNewLandType() {
+        Permanent larva = addCreatureReady(player1, new TimbermawLarva());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, larva.getId());
+        harness.handleListChoice(player1, "FOREST");
+        harness.handleListChoice(player1, "ISLAND");
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, larva)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, larva)).isEqualTo(4);
     }
 }

@@ -1333,20 +1333,18 @@ Don't commit.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
-#### Layers and copy values (5)
+#### Layers and copy values (3)
 
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
 - Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
 - Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order, so a three-borrower cycle can miss a lender's borrowed abilities. Sure of the code, rare.
-- `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
-- Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.
 
 #### Logs and hidden information (2)
 
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (38)
+#### Other (37)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1384,7 +1382,6 @@ Don't commit.
 - A free cast (`ExileFreeCastQueueSupport`) doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative: there is no free-cast graveyard picker, so a free Soaring Stoneglider or Feed the Cycle pays its mana alternative or is skipped (CR 601.2b). Sure.
 - Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone"; library top takes only an "[A] or [B]" cost of sacrifice, mana, life and discard alternatives. Sure.
 - Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
-- Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the mass boosts' set filters.
 - "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it.
 
 ---

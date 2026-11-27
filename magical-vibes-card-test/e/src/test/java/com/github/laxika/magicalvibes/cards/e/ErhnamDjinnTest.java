@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.a.AnuridBarkripper;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfStone;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -167,5 +169,24 @@ class ErhnamDjinnTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FORESTWALK)).isFalse();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    @DisplayName("A text change from Forest to Island makes the trigger still target and grant islandwalk")
+    void textChangedTriggerKeepsItsTarget() {
+        Permanent djinn = addCreatureReady(player1, new ErhnamDjinn());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        gd.addEffectOnPermanent(null, null, player1.getId(), new TextChangeEffect("Forest", "Island"),
+                djinn.getId(), Duration.PERMANENT);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.ISLANDWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
     }
 }

@@ -170,7 +170,7 @@ public class AttackTriggers {
      */
     private List<TriggeredAbility> abilities(GameData gameData, Permanent permanent, CombatTrigger watched) {
         List<TriggeredAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : triggerIndex.permanentAbilities(gameData, permanent)) {
+        for (TriggeredAbility ability : triggerIndex.textChangedPermanentAbilities(gameData, permanent)) {
             if (TriggerMatcher.combatCondition(ability, watched, Zone.BATTLEFIELD) != null) {
                 abilities.add(ability);
             }
@@ -279,7 +279,9 @@ public class AttackTriggers {
                 && !gameQueryService.hasReconfigure(gameData, attacker);
         List<TriggeredAbility> abilities = new ArrayList<>(abilities(gameData, attacker, watched));
         if (equipmentAttacking) {
-            abilities.removeIf(ability -> attacker.getCard().getTriggeredAbilities().contains(ability));
+            List<TriggeredAbility> own = attacker.getCard().getTriggeredAbilities().stream()
+                    .map(printed -> EventAbilitySupport.textChanged(gameData, attacker, printed)).toList();
+            abilities.removeIf(own::contains);
         }
         putOwnAttackAbilities(attack, attacker, declaredSnapshots, Watcher.of(attacker, attack.playerId()), abilities);
         // The delayed "whenever that creature attacks this turn" abilities about it (Okoye, Mighty and Adored,
