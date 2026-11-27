@@ -22,7 +22,8 @@ import java.util.UUID;
 /**
  * Resolves {@link CantAttackThisTurnEffect}: each permanent a named subject finds gets the record as a floating effect
  * for its duration; a set becomes a rule on each of its players, found as it resolves, whose creatures matching the
- * set's filter can't attack whenever attackers are declared, those arriving later included (CR 611.2c; read by
+ * set's filter (its target and chosen values bound as it resolves, {@code SubjectResolutionService.lastingRule}) can't
+ * attack whenever attackers are declared, those arriving later included (CR 611.2c; read by
  * {@code AttackLegalityService}); a set but the permanents another subject names is that rule with those permanents,
  * found now, left out.
  */
@@ -44,9 +45,15 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
         var e = (CantAttackThisTurnEffect) effect;
         String period = e.duration() == Duration.UNTIL_END_OF_COMBAT ? "this combat" : "this turn";
         if (e.subject() instanceof PermanentSubject.ControlledBy set) {
+            PermanentPredicate rule = subjectResolutionService.lastingRule(gameData, entry, e, set);
+            if (rule == null) {
+                return;
+            }
+            CantAttackThisTurnEffect floated = new CantAttackThisTurnEffect(
+                    Subjects.controlledBy(set.players(), rule), e.duration());
             for (UUID playerId : subjectResolutionService.players(gameData, entry, e, set.players())) {
                 gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
-                        entry.getSourcePermanentId(), entry.getControllerId(), e, playerId, e.duration()));
+                        entry.getSourcePermanentId(), entry.getControllerId(), floated, playerId, e.duration()));
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(
                         "Creatures controlled by " + playerName + " can't attack " + period + "."));

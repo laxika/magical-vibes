@@ -76,9 +76,9 @@ class CardEffectTargetingConsistencyTest {
             // Piggyback: Shuriken's effect reads the creature target already chosen for the
             // activated ability's damage effect; it does not choose a second target.
             "TargetPermanentControllerGainsControlOfGrantingEquipmentEffect",
-            // Pre-resolved: in a two-player game the sole opponent of the resolving controller is
-            // derived rather than chosen (Phelddagrif, Soldevi Heretic), leaving the entry's target
-            // slot free for a sibling effect on the same spell that does target.
+            // Pre-resolved: the opponent is read from a target the ability's own target filters
+            // declare (Phelddagrif, Soldevi Heretic), leaving the entry's first target slot free for
+            // a sibling effect on the same ability that does target.
             "TargetOpponentCreatesTokenEffect",
             "TargetOpponentMayDrawCardEffect"
     );

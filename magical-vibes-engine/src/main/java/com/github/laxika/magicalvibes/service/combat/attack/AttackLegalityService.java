@@ -293,28 +293,49 @@ public class AttackLegalityService {
      * {@link CantAttackOrBlockUnlessEffect} (CR 508.1c): the creature can't attack while any such
      * condition is unmet. Each restriction's condition (controller controls a permanent, defending
      * player poisoned, N Islands on the battlefield, …) is routed through {@link ConditionEvaluationService} with the attacker as source.
+     * A condition naming the defending player is judged for each player, planeswalker or battle the creature could
+     * attack (CR 508.5, 802.2a: "can't attack unless defending player controls an Island" lets it attack a player who
+     * does), so the creature can attack when the conditions are all met for one of them.
      */
     private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
-        if (creature.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, creature)) {
+        List<Condition> conditions = cantAttackUnlessConditions(gameData, creature);
+        if (conditions.isEmpty()) {
             return false;
         }
-        ConditionContext ctx = null;
+        ConditionContext ctx = ConditionContext.forPermanent(creature, controllerId);
+        if (allMet(gameData, conditions, ctx)) {
+            return false;
+        }
+        return getValidAttackTargetIds(gameData, controllerId).stream()
+                .noneMatch(targetId -> allMet(gameData, conditions, ctx.withAttackedTargetId(targetId)));
+    }
+
+    /** {@link #isCantAttackUnlessConditionUnmet(GameData, Permanent, UUID)} for an attack on {@code targetId}. */
+    private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId,
+                                                     UUID targetId) {
+        List<Condition> conditions = cantAttackUnlessConditions(gameData, creature);
+        return !conditions.isEmpty() && !allMet(gameData, conditions,
+                ConditionContext.forPermanent(creature, controllerId).withAttackedTargetId(targetId));
+    }
+
+    private List<Condition> cantAttackUnlessConditions(GameData gameData, Permanent creature) {
+        if (creature.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, creature)) {
+            return List.of();
+        }
         List<CardEffect> restrictionSources = new ArrayList<>(creature.getCard().getStaticEffects());
         restrictionSources.addAll(gameQueryService.getGrantedEffects(gameData, creature));
+        List<Condition> conditions = new ArrayList<>();
         for (CardEffect effect : restrictionSources) {
-            Condition condition = effect instanceof AttackOrBlockRestrictionEffect restriction
-                    ? restriction.cantAttackUnless()
-                    : null;
-            if (condition != null) {
-                if (ctx == null) {
-                    ctx = ConditionContext.forPermanent(creature, controllerId);
-                }
-                if (!conditionEvaluationService.isMet(gameData, condition, ctx)) {
-                    return true;
-                }
+            if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                    && restriction.cantAttackUnless() != null) {
+                conditions.add(restriction.cantAttackUnless());
             }
         }
-        return false;
+        return conditions;
+    }
+
+    private boolean allMet(GameData gameData, List<Condition> conditions, ConditionContext ctx) {
+        return conditions.stream().allMatch(condition -> conditionEvaluationService.isMet(gameData, condition, ctx));
     }
 
     /**
@@ -327,6 +348,11 @@ public class AttackLegalityService {
      */
     public boolean canAttackDefender(GameData gameData, Permanent attacker, UUID targetId) {
         if (!canAttackInChosenDirection(gameData, attacker, targetId)) {
+            return false;
+        }
+        UUID attackerControllerId = gameData.findControllerOf(attacker);
+        if (attackerControllerId != null
+                && isCantAttackUnlessConditionUnmet(gameData, attacker, attackerControllerId, targetId)) {
             return false;
         }
         if (gameQueryService.hasKeyword(gameData, attacker, Keyword.DEFENDER)
@@ -635,7 +661,7 @@ public class AttackLegalityService {
                 for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, creature, restriction.exemptionPredicate())) {
+                            creature, restriction.exemptionPredicate(), context)) {
                         restricted[0] = true;
                     } else if (effect instanceof AttackOrBlockRestrictionEffect restriction
                             && restriction.globallyCantAttackOrBlock() != null
@@ -919,6 +945,15 @@ public class AttackLegalityService {
                     requirement.requiredAttackTargetIds(gameData, sourcePermanent));
             if (!legalTargets.isEmpty()) {
                 targetIds.add(legalTargets);
+            }
+        }
+        // "Attacks [that player] this turn if able" (Alluring Siren, Dulcet Sirens): obeyed only by attacking that
+        // player, so two of them naming different players are weighed against each other (CR 508.1d).
+        for (FloatingContinuousEffect requirement
+                : gameData.floatingEffectsOnPermanent(creature.getId(), MustAttackIfAbleEffect.class)) {
+            UUID defenderId = ((MustAttackIfAbleEffect) requirement.effect()).defenderId();
+            if (defenderId != null && canAttackRequiredTarget(gameData, creature, defenderId)) {
+                targetIds.add(Set.of(defenderId));
             }
         }
         return targetIds;

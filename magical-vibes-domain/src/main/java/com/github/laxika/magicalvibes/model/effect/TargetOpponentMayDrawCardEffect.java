@@ -1,21 +1,25 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.Objects;
+
 /**
- * "Target opponent may draw a card" on an activated ability that also targets a creature (Soldevi Heretic).
+ * "Target opponent may draw a card" on an activated ability that also targets a creature (Soldevi Heretic): the
+ * opponent is the ability's own player target, {@code opponent} (its target group, {@code Subjects.targetPlayer(1)}),
+ * which the ability's target filters declare. Declaring {@link TargetSpec#NONE} keeps the effect out of the entry's
+ * first target slot, which the prevention half's creature takes.
  * <p>
- * The opponent is derived rather than chosen: the resolving controller's opponent. Declaring {@link TargetSpec#NONE}
- * keeps the effect out of the entry's target slot, so it composes with the prevention half, which targets a creature.
- * A spell or ability whose only target is the opponent is
+ * {@code TargetOpponentMayDrawCardEffectHandler} offers the draw to that opponent as the ability resolves, so the "may"
+ * is theirs (CR 608.2d). As with any targets, an opponent who became an illegal target is offered nothing, and the
+ * ability still resolves for the other target (CR 608.2b). A spell or ability
+ * whose only target is the opponent is
  * {@code MayEffect(DrawCardEffect(1, targetPlayerDeclaredElsewhere()), ..., MayChoicePlayer.TARGET_PLAYER)}
  * (Phelddagrif, Tataru Taru).
- * <p>
- * {@code TargetOpponentMayDrawCardEffectHandler} queues the optional draw for that opponent, so the "may" is theirs.
+ *
+ * @param opponent the targeted opponent
  */
-public record TargetOpponentMayDrawCardEffect() implements CardEffect {
+public record TargetOpponentMayDrawCardEffect(PlayerSubject opponent) implements CardEffect {
 
-    /** The derived opponent stays legal even when the sibling creature target is gone (CR 608.2b). */
-    @Override
-    public boolean resolvesWhenTargetIllegal() {
-        return true;
+    public TargetOpponentMayDrawCardEffect {
+        Objects.requireNonNull(opponent, "opponent");
     }
 }

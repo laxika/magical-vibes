@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -58,6 +60,50 @@ class RobberOfTheRichTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(topCard));
 
         declareAttackers(List.of(0));
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("With two opponents, the hand compared is that of the opponent it attacks")
+    void comparesTheAttackedOpponentsHand() {
+        Player player3 = harness.addOpponent("Player3");
+        addCreatureReady(player1, new RobberOfTheRich());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setHand(player3, List.of(new Island(), new Island()));
+        Card topCard = new Divination();
+        harness.setLibrary(player3, List.of(topCard));
+        prepareAttackDeclaration(player1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId()));
+            resolveAllTriggers();
+        });
+
+        ExiledCardEntry entry = gd.findExiledCard(topCard.getId());
+        assertThat(entry).isNotNull();
+        assertThat(entry.ownerId()).isEqualTo(player3.getId());
+    }
+
+    @Test
+    @DisplayName("With two opponents, a larger hand of the opponent it doesn't attack doesn't count")
+    void ignoresTheOtherOpponentsHand() {
+        Player player3 = harness.addOpponent("Player3");
+        addCreatureReady(player1, new RobberOfTheRich());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Island(), new Island()));
+        harness.setHand(player3, List.of());
+        Card topCard = new Divination();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setLibrary(player3, List.of(new Divination()));
+        prepareAttackDeclaration(player1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId()));
+            resolveAllTriggers();
+        });
 
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).contains(topCard);
@@ -172,5 +218,12 @@ class RobberOfTheRichTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.findExiledCard(stolenCard.getId())).isNotNull();
         return stolenCard;
+    }
+
+    private void prepareAttackDeclaration(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
     }
 }

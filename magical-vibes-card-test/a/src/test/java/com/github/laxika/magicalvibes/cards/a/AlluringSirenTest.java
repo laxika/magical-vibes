@@ -242,7 +242,7 @@ class AlluringSirenTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0), Map.of(0, jace.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("must attack the specified player");
+                .hasMessageContaining("too few attack requirements");
     }
 
     @Test

@@ -1415,7 +1415,7 @@ public class ConditionEvaluationService {
             case DefendingPlayerHandAtMost c ->
                     defendingPlayerHandAtMost(gameData, ctx, c.threshold());
             case DefendingPlayerPoisoned ignored ->
-                    isDefendingPlayerPoisoned(gameData, ctx.controllerId());
+                    isDefendingPlayerPoisoned(gameData, defendingPlayer(gameData, ctx));
             case OpponentPoisoned c ->
                     isAnyOpponentPoisoned(gameData, ctx.controllerId(), c.minimumPoisonCounters());
             case OpponentGraveyardAtLeast c ->
@@ -3741,9 +3741,27 @@ public class ConditionEvaluationService {
         return false;
     }
 
+    /**
+     * The defending player a condition of an attacking creature names (CR 508.5, 802.2a): the player the attack it is
+     * judged for is aimed at ({@link ConditionContext#withAttackedTargetId}: an attack trigger's event, or the target an
+     * attack restriction is checked against), else the one the source creature is attacking, the attacked
+     * planeswalker's controller or battle's protector; with neither (an activation condition of a creature that isn't
+     * attacking, Kjeldoran Guard), the active player's first opponent.
+     */
+    private UUID defendingPlayer(GameData gameData, ConditionContext ctx) {
+        UUID attacked = ctx.attackedTargetId();
+        if (attacked == null && ctx.sourcePermanent() != null && ctx.sourcePermanent().isAttacking()) {
+            attacked = ctx.sourcePermanent().getAttackTarget();
+        }
+        if (attacked != null) {
+            return gameQueryService.defendingPlayerOfAttackTarget(gameData, attacked);
+        }
+        UUID attackingPlayerId = gameData.activePlayerId != null ? gameData.activePlayerId : ctx.controllerId();
+        return attackingPlayerId == null ? null : gameQueryService.getOpponentId(gameData, attackingPlayerId);
+    }
+
     private boolean defendingPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
-        if (gameData.activePlayerId == null) return false;
-        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+        UUID defendingPlayerId = defendingPlayer(gameData, ctx);
         if (defendingPlayerId == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(defendingPlayerId);
         if (battlefield == null) return false;
@@ -3752,25 +3770,26 @@ public class ConditionEvaluationService {
 
     private boolean defendingPlayerHandAtMost(GameData gameData, ConditionContext ctx, int threshold) {
         if (ctx.controllerId() == null) return false;
-        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, ctx.controllerId());
-        return countCardsInHand(gameData, defendingPlayerId) <= threshold;
+        UUID defendingPlayerId = defendingPlayer(gameData, ctx);
+        return defendingPlayerId != null && countCardsInHand(gameData, defendingPlayerId) <= threshold;
     }
 
     private boolean defendingPlayerHasMoreCardsInHandThanController(GameData gameData,
                                                                      ConditionContext ctx) {
         if (ctx.controllerId() == null) return false;
-        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, ctx.controllerId());
-        return countCardsInHand(gameData, defendingPlayerId) > countCardsInHand(gameData, ctx.controllerId());
+        UUID defendingPlayerId = defendingPlayer(gameData, ctx);
+        return defendingPlayerId != null
+                && countCardsInHand(gameData, defendingPlayerId) > countCardsInHand(gameData, ctx.controllerId());
     }
 
     private boolean defendingPlayerControlsMoreLandsThanController(GameData gameData,
                                                                     ConditionContext ctx) {
-        if (ctx.controllerId() == null || ctx.sourcePermanent() == null) return false;
-        UUID attackedTargetId = ctx.sourcePermanent().getAttackTarget();
-        if (attackedTargetId == null) return false;
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        if (ctx.controllerId() == null
+                || ctx.attackedTargetId() == null && (ctx.sourcePermanent() == null
+                || ctx.sourcePermanent().getAttackTarget() == null)) {
+            return false;
+        }
+        UUID defendingPlayerId = defendingPlayer(gameData, ctx);
         return defendingPlayerId != null
                 && gameQueryService.controlsMoreLandsThan(gameData, defendingPlayerId, ctx.controllerId());
     }
@@ -4663,9 +4682,7 @@ public class ConditionEvaluationService {
         return gameData.spellsCastLastTurn.values().stream().mapToInt(Integer::intValue).sum() == 0;
     }
 
-    private boolean isDefendingPlayerPoisoned(GameData gameData, UUID attackingPlayerId) {
-        if (attackingPlayerId == null) return false;
-        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+    private boolean isDefendingPlayerPoisoned(GameData gameData, UUID defendingPlayerId) {
         if (defendingPlayerId == null) return false;
         return gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0) > 0;
     }

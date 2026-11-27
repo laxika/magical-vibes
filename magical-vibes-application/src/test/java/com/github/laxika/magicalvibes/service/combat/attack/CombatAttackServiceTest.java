@@ -629,9 +629,25 @@ class CombatAttackServiceTest extends BaseCardTest {
             assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index(bears)),
                     Map.of(index(bears), planeswalker.getId())))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("must attack the specified player");
+                    .hasMessageContaining("too few attack requirements");
 
             assertThatCode(() -> declare(List.of(index(bears)))).doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("Two requirements to attack different players are each obeyed by attacking either one")
+        void requirementsNamingDifferentPlayersAreWeighed() {
+            var player3 = harness.addOpponent("Player3");
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new MustAttackIfAbleEffect(player2.getId()), bears.getId(), Duration.UNTIL_END_OF_TURN));
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new MustAttackIfAbleEffect(player3.getId()), bears.getId(), Duration.UNTIL_END_OF_TURN));
+            enterDeclareAttackers();
+
+            assertThatCode(() -> declare(List.of(index(bears)), Map.of(index(bears), player2.getId())))
+                    .doesNotThrowAnyException();
+            assertThat(bears.getAttackTarget()).isEqualTo(player2.getId());
         }
 
         @Test

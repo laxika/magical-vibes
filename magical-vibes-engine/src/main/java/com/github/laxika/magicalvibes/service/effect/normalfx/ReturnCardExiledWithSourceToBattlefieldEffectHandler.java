@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -20,13 +19,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.ArrayList;
@@ -56,7 +53,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
     private final GameMutationCoordinator mutationCoordinator;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GrantKeywordEffectHandler grantKeywordEffectHandler;
-    private final PlayerInputService playerInputService;
+    private final ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetChooser;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -258,7 +255,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
                     permanent, Set.of(Keyword.HASTE));
         }
         if (enterAttacking) {
-            permanent.setAttacking(true);
+            // Put onto the battlefield attacking, it never attacked (CR 508.4).
+            permanent.enterAttacking(true);
         }
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(controllerId) + " returns ", card,
@@ -267,28 +265,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
                 gameData.id, card.getName(), sourceName);
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         if (enterAttacking && !gameData.interaction.isAwaitingInput()) {
-            chooseAttackTarget(gameData, controllerId, permanent);
+            attackTargetChooser.chooseAttackTargets(gameData, controllerId, List.of(permanent.getId()));
         }
-    }
-
-    /**
-     * CR 508.4: the controller of a creature put onto the battlefield attacking chooses which player or
-     * planeswalker it is attacking. With a single opposing player and no planeswalkers there is no choice.
-     */
-    private void chooseAttackTarget(GameData gameData, UUID controllerId, Permanent attacker) {
-        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(controllerId)).toList();
-        List<UUID> planeswalkerIds = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId).toList();
-        if (opponentIds.size() <= 1 && planeswalkerIds.isEmpty()) {
-            return;
-        }
-        gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.TokenAttackTargetChoice(controllerId, List.of(attacker.getId())));
-        playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for " + FaceDownVisibility.publicName(gameData, attacker) + " to attack.");
     }
 
     private boolean matches(StackEntry entry, ReturnCardExiledWithSourceToBattlefieldEffect e, Card card) {

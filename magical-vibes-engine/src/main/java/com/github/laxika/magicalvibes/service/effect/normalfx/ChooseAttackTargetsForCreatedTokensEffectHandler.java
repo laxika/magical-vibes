@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAttackTargetsForCreatedTokensEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -94,9 +95,10 @@ public class ChooseAttackTargetsForCreatedTokensEffectHandler implements NormalE
     }
 
     /**
-     * Assigns each token in {@code tokenIds} its attack target in turn: a token with a single defending player,
-     * planeswalker or battle to attack attacks it, one with none isn't attacking (CR 508.4a), and the first one
-     * with a choice prompts {@code controllerId} through {@link PermanentChoiceContext.TokenAttackTargetChoice}.
+     * Assigns each creature in {@code tokenIds} put onto the battlefield attacking (a token, or a card an effect returns
+     * attacking) its attack target in turn (CR 508.4): one with a single defending player, planeswalker or battle to
+     * attack attacks it, one with none isn't attacking (CR 508.4a), and the first one with a choice prompts
+     * {@code controllerId} through {@link PermanentChoiceContext.TokenAttackTargetChoice}.
      * Returns whether a prompt is pending.
      */
     public boolean chooseAttackTargets(GameData gameData, UUID controllerId, List<UUID> tokenIds) {
@@ -126,7 +128,8 @@ public class ChooseAttackTargetsForCreatedTokensEffectHandler implements NormalE
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.TokenAttackTargetChoice(
                     controllerId, tokenIds.subList(i, tokenIds.size())));
             playerInputService.beginAnyTargetChoice(gameData, controllerId, permanentTargetIds, opponentIds,
-                    "Choose the player, planeswalker, or battle for the token to attack.");
+                    "Choose the player, planeswalker, or battle for " + FaceDownVisibility.publicName(gameData, token)
+                            + " to attack.");
             return true;
         }
         return false;

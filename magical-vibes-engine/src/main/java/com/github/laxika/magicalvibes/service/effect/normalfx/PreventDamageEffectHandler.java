@@ -439,6 +439,15 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
 
     private void nextToTarget(GameData gameData, StackEntry entry, PreventDamageEffect e) {
         UUID targetId = entry.getTargetId();
+        if (targetId == null) {
+            // An ability with several targets (Soldevi Heretic): the prevention's is its first, unless it became
+            // illegal (CR 608.2b).
+            List<UUID> firstGroup = entry.targetsForGroup(0);
+            if (firstGroup.isEmpty()) {
+                return;
+            }
+            targetId = firstGroup.getFirst();
+        }
         int amount = evaluate(gameData, entry, e);
 
         if (e.gainLife()) {

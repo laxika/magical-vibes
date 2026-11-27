@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -95,6 +98,32 @@ class VodalianSerpentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With two opponents, it can attack the one who controls an Island")
+    void canAttackTheOpponentWhoControlsAnIsland() {
+        Player player3 = harness.addOpponent("Player3");
+        harness.addToBattlefield(player3, new Island());
+        addCreatureReady(player1, new VodalianSerpent());
+        prepareAttackDeclaration(player1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId())));
+
+        assertThat(findPermanent(player1, "Vodalian Serpent").getAttackTarget()).isEqualTo(player3.getId());
+    }
+
+    @Test
+    @DisplayName("With two opponents, it can't attack the one who controls no Island")
+    void cannotAttackTheOpponentWhoControlsNoIsland() {
+        Player player3 = harness.addOpponent("Player3");
+        harness.addToBattlefield(player3, new Island());
+        addCreatureReady(player1, new VodalianSerpent());
+        prepareAttackDeclaration(player1);
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Vodalian Serpent cannot attack when defending player controls no Island")
     void cannotAttackWhenDefenderControlsNoIsland() {
         addCreatureReady(player1, new VodalianSerpent());
@@ -121,5 +150,12 @@ class VodalianSerpentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void prepareAttackDeclaration(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
     }
 }

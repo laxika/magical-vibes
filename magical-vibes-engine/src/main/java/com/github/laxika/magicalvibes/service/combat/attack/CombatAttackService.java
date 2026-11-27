@@ -618,21 +618,9 @@ public class CombatAttackService {
             if (pending.choosingForOpponent() && !targetId.equals(defenderId)) {
                 throw new IllegalStateException("Only the active player can choose what an attacker attacks");
             }
-            // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
+            // A requirement to attack a specific player (Alluring Siren) is weighed with the others by the
+            // requirement count (CR 508.1d, validateMaximumAttackRequirements).
             Permanent attacker = battlefield.get(idx);
-            // CR 508.1d: a must-attack requirement is only "able" to be obeyed without paying an attack
-            // tax, since the controller is not required to pay that cost.
-            UUID requiredDefenderId = gameData.mustAttackDefender(attacker.getId());
-            if (requiredDefenderId != null
-                    && validTargetIds.contains(requiredDefenderId)
-                    && attackLegalityService.canAttackDefender(gameData, attacker, requiredDefenderId)
-                    && castingCostService.getAttackPaymentPerCreature(gameData, playerId,
-                    requiredDefenderId, attacker) == 0
-                    && castingCostService.getAttackLifePaymentPerCreature(gameData, playerId,
-                    requiredDefenderId, attacker) == 0
-                    && !requiredDefenderId.equals(targetId)) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " must attack the specified player");
-            }
             if (gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects().stream()
                     .anyMatch(MustAttackPlayerEffect.class::isInstance)
                     && attackLegalityService.canAttackAPlayer(gameData, attacker, playerId)
@@ -659,14 +647,19 @@ public class CombatAttackService {
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
         // {3}, and self AttackCostEffect taxes like Phyrexian Marauder {1} per +1/+1 counter)
         int selfTaxTotal = 0;
-        int defenderTaxTotal = 0;
+        Map<UUID, Integer> defenderTaxByTaxingPlayer = new LinkedHashMap<>();
         int totalTax = 0;
         int attackLifeTaxTotal = 0;
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             int defenderTax = castingCostService.getAttackPaymentPerCreature(
                     gameData, playerId, resolvedTargets.get(idx), attacker);
-            defenderTaxTotal += defenderTax;
+            if (defenderTax > 0) {
+                // The attacked player's (or the attacked battle's protector's) objects impose it (CR 508.1h).
+                defenderTaxByTaxingPlayer.merge(
+                        gameQueryService.defendingPlayerOfAttackTarget(gameData, resolvedTargets.get(idx)),
+                        defenderTax, Integer::sum);
+            }
             totalTax += defenderTax;
             selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, attacker);
             attackLifeTaxTotal += castingCostService.getAttackLifePaymentPerCreature(
@@ -751,10 +744,8 @@ public class CombatAttackService {
             payGenericManaPreservingPhyrexianColors(
                     gameData.playerManaPools.get(playerId), totalTax, phyrexianPayments, phyrexianTaxedAttackerCount);
         }
-        if (defenderTaxTotal > 0) {
-            ActionEvents.taxPaid(
-                    gameData, playerId, gameQueryService.getOpponentId(gameData, playerId), defenderTaxTotal);
-        }
+        defenderTaxByTaxingPlayer.forEach((taxingPlayerId, manaPaid) ->
+                ActionEvents.taxPaid(gameData, playerId, taxingPlayerId, manaPaid));
 
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
         if (!phyrexianPayments.isEmpty()) {

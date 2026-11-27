@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.v.VitosInquisitor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -103,6 +105,49 @@ class ThroneOfTheGrimCaptainTest extends BaseCardTest {
         Permanent returnedPermanent = findPermanent(player1, returned.getName());
         assertThat(returnedPermanent.isTapped()).isTrue();
         harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("The creature put onto the battlefield attacking attacks the lone opponent but never attacked")
+    void returnedCreatureAttacksTheLoneOpponent() {
+        Permanent captain = addReadyCaptain();
+        Card returned = new MerfolkLooter();
+        gd.addToExile(player1.getId(), returned, captain.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+        });
+
+        Permanent returnedPermanent = findPermanent(player1, returned.getName());
+        assertThat(returnedPermanent.isAttacking()).isTrue();
+        assertThat(returnedPermanent.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(returnedPermanent.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With two opponents, its controller chooses which one the returned creature attacks")
+    void controllerChoosesTheReturnedCreaturesDefendingPlayer() {
+        Player player3 = harness.addOpponent("Player3");
+        Permanent captain = addReadyCaptain();
+        Card returned = new MerfolkLooter();
+        gd.addToExile(player1.getId(), returned, captain.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player2.getId()));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, player3.getId());
+        });
+
+        Permanent returnedPermanent = findPermanent(player1, returned.getName());
+        assertThat(returnedPermanent.isAttacking()).isTrue();
+        assertThat(returnedPermanent.getAttackTarget()).isEqualTo(player3.getId());
     }
 
     @Test

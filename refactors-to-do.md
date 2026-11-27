@@ -1299,17 +1299,13 @@ Don't commit.
 - Soulless Jailer: `canCastSpellFromZone` reads `card.hasType(CREATURE)`, not the spell (an Adventure, a modal back face). Unsure, low.
 - `CastingPermissionService` spell-limit, Ethersworn Canonist, most-recent-spell and global land-restriction readers skip lost abilities but not face-down sources (CR 708.2a). Sure of the code.
 
-#### Two-player assumptions (`getOpponentId`, first seat) (7)
+#### Two-player assumptions (`getOpponentId`, first seat) (3)
 
 - Triskaidekaphobia declares the first survivor the winner: the engine ends the game at the first loss (`ControllerLosesGameEffectHandler`, `GameOutcomeService.checkWinCondition`), with no multiplayer elimination (CR 104.2a, 800.4a); owner question in entry 17 (MP-2). Sure.
-- Nahiri's `MustAttackPlayerEffect` count uses `getOpponentId`. Sure.
-- Stand or Fall serves only `getOpponentId` ("each defending player") and floats `OnlyChosenCreaturesCanBlockEffect` on every player. Sure.
 - `TargetOpponentCreatesTokenEffect`'s gift branch gives the gift to `getOpponentId`; waits for the owner's gift-opponent answer (entry 17). Sure of the code.
-- `MayEffect`'s `DEFENDING_PLAYER` doesn't read the recorded defending player (CR 508.5; Harbor Guardian's kind); Soldevi Heretic derives "target opponent" and targets nobody. Unverified.
-- `CombatBlockService.handleDeclareBlockersStep`, `getBlockableAttackerIndices` and `ConditionEvaluationService.defendingPlayerControlsMatchingPermanent` take the defending player as `getOpponentId` (CR 506.2, 508.5) (CR 509.1). Sure.
-- `ReturnCardExiledWithSourceToBattlefieldEffectHandler` puts a creature onto the battlefield attacking with no attack target; its controller should choose one (CR 508.4). Fairly sure.
+- `CombatBlockService.handleDeclareBlockersStep`, `declareBlockers` and `getBlockableAttackerIndices` take the defending player as `getOpponentId`: only the first opponent declares blockers, against every attacker; each attacked player should declare in APNAP order against only the creatures attacking them (CR 802.4, 802.4a, 802.4b). First `CombatDamageService` must read more than one defending battlefield (`buildBlockerMap` and its index-keyed damage state use `getOpponentId`'s), then the AI and the frontend; whether several defenders' blocks are one block event ("one or more creatures become blocked") is unsettled. CB-1 fixed the `DefendingPlayer…` conditions. Sure.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (9)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (8)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
@@ -1319,13 +1315,11 @@ Don't commit.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
 - Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Sure.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
-- `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (4)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (3)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
 - An "and/or" search (`SearchLibraryAndOrGraveyardChoice`: Last Light of Durin's Day's "search your hand and/or library", every "library and/or graveyard" card) has no "do you search your library?": a pick of nothing counts as a library search (search triggers, shuffle) and a pick from another zone as none, so a player can't search only the hand or graveyard and find nothing, or search the library too and take a graveyard card. Needs the zones chosen before the pool is shown (CR 701.23a; `MaySearchLibraryChoice` asks it for a single library). Sure, low; LS-1 left it (about 48 cards' tests).
-- `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
 #### Wrong targets and choices (5)
@@ -1358,13 +1352,12 @@ Don't commit.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.
 
-#### Logs and hidden information (3)
+#### Logs and hidden information (2)
 
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
-- `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
 
-#### Other (45)
+#### Other (44)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1385,7 +1378,6 @@ Don't commit.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): the copied return reads cards the copier exiled with its own abilities; it should read only cards its copied exile ability exiled (CR 607.1, 607.2a). Fairly sure.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
-- `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.
 - `PerpetuallyGrantKeywordToSourceEffect` (6 cards): on the battlefield the keyword goes onto a copy of the permanent's card, so it is lost when the permanent changes zones (not perpetual); off the battlefield it is granted by card id in any zone (CR 400.7).
 - `PerpetuallyGrantStaticEffectToSourceEffect` (Craving of Yeenoghu, Gale): the same card swap, not perpetual. Fairly sure.
 - `PerpetuallyBoostSourceEffect`: the graveyard path rewrites the card's printed P/T instead of using the perpetual store, so a later perpetual base-P/T change overrides the boost. Fairly sure.

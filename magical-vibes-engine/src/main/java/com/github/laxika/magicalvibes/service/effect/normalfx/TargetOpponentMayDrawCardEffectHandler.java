@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TargetOpponentMayDrawCardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -32,21 +32,14 @@ public class TargetOpponentMayDrawCardEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (controllerId == null) {
-            return;
+        var draw = (TargetOpponentMayDrawCardEffect) effect;
+        for (UUID opponentId : subjectResolutionService.players(gameData, entry, effect, draw.opponent())) {
+            // The opponent chooses while the ability resolves (CR 608.2d), not as an ability of its own.
+            gameData.queueMayAbilityForPlayer(entry.getCard(), entry.getControllerId(),
+                    new MayEffect(new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()), "Draw a card?"),
+                    opponentId, entry.getSourcePermanentId(), opponentId, entry.getSourcePermanentSnapshot());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    "", entry.getCard(), " offers " + gameData.playerIdToName.get(opponentId) + " a card."));
         }
-
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        if (opponentId == null) {
-            return;
-        }
-
-        // The opponent chooses while the ability resolves (CR 608.2d), not as an ability of its own.
-        gameData.queueMayAbilityForPlayer(entry.getCard(), entry.getControllerId(),
-                new MayEffect(new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()), "Draw a card?"), opponentId,
-                entry.getSourcePermanentId(), opponentId, entry.getSourcePermanentSnapshot());
-        gameLogService.append(gameData, GameLog.textCardText(
-                "", entry.getCard(), " offers " + gameData.playerIdToName.get(opponentId) + " a card."));
     }
 }

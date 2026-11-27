@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,8 +17,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoldeviHeretic.class})
+@CardUsed({SoldeviHeretic.class, LeylineOfSanctity.class})
 class SoldeviHereticTest extends BaseCardTest {
+
+    private void activate(UUID creatureId, Player opponent) {
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(creatureId, opponent.getId()));
+    }
 
     private Permanent addHereticReady() {
         Permanent heretic = addCreatureReady(player1, new SoldeviHeretic());
@@ -32,7 +38,7 @@ class SoldeviHereticTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new SoldeviHeretic()));
 
         UUID targetId = harness.getPermanentId(player2, "Soldevi Heretic");
-        harness.activateAbility(player1, 0, null, targetId);
+        activate(targetId, player2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -55,7 +61,7 @@ class SoldeviHereticTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new SoldeviHeretic()));
 
         UUID targetId = harness.getPermanentId(player2, "Soldevi Heretic");
-        harness.activateAbility(player1, 0, null, targetId);
+        activate(targetId, player2);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -71,7 +77,7 @@ class SoldeviHereticTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new SoldeviHeretic()));
 
         UUID targetId = harness.getPermanentId(player2, "Soldevi Heretic");
-        harness.activateAbility(player1, 0, null, targetId);
+        activate(targetId, player2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -89,7 +95,7 @@ class SoldeviHereticTest extends BaseCardTest {
 
         int controllerHandBefore = gd.playerHands.get(player1.getId()).size();
         UUID targetId = harness.getPermanentId(player2, "Soldevi Heretic");
-        harness.activateAbility(player1, 0, null, targetId);
+        activate(targetId, player2);
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
@@ -98,12 +104,54 @@ class SoldeviHereticTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a player")
-    void cannotTargetPlayer() {
+    @DisplayName("Cannot target a player with the prevention half")
+    void cannotTargetPlayerWithPrevention() {
         addHereticReady();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+        assertThatThrownBy(() -> activate(player2.getId(), player2))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target its controller as the opponent")
+    void cannotTargetControllerAsOpponent() {
+        Permanent heretic = addHereticReady();
+
+        assertThatThrownBy(() -> activate(heretic.getId(), player1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("With two opponents, the targeted opponent is the one offered the card")
+    void targetedOpponentIsOfferedTheCard() {
+        Player player3 = harness.addOpponent("Player3");
+        Permanent heretic = addHereticReady();
+        harness.setLibrary(player2, List.of(new SoldeviHeretic()));
+        harness.setLibrary(player3, List.of(new SoldeviHeretic()));
+
+        activate(heretic.getId(), player3);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        int handBefore = gd.playerHands.get(player3.getId()).size();
+        harness.handleMayAbilityChosen(player3, true);
+        assertThat(gd.playerHands.get(player3.getId())).hasSize(handBefore + 1);
+        assertThat(gd.permanentDamagePreventionShield(heretic.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent who became an illegal target is offered nothing, and the creature is still shielded")
+    void illegalOpponentTargetIsOfferedNothing() {
+        Permanent heretic = addHereticReady();
+        harness.setLibrary(player2, List.of(new SoldeviHeretic()));
+
+        activate(heretic.getId(), player2);
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.permanentDamagePreventionShield(heretic.getId())).isEqualTo(2);
     }
 
     @Test
@@ -113,7 +161,7 @@ class SoldeviHereticTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SoldeviHeretic());
 
         UUID targetId = harness.getPermanentId(player2, "Soldevi Heretic");
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+        assertThatThrownBy(() -> activate(targetId, player2))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -124,7 +172,7 @@ class SoldeviHereticTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new SoldeviHeretic());
         Permanent target = addCreatureReady(player2, new SoldeviHeretic());
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        activate(target.getId(), player2);
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -148,7 +196,7 @@ class SoldeviHereticTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SoldeviHeretic());
         harness.setLibrary(player2, List.of(new SoldeviHeretic()));
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        activate(target.getId(), player2);
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.setGraveyard(player2, List.of(target.getCard()));
         resolveAllTriggers();
@@ -168,7 +216,7 @@ class SoldeviHereticTest extends BaseCardTest {
         Permanent heretic = addHereticReady();
         harness.setLibrary(player2, List.of(new SoldeviHeretic()));
 
-        harness.activateAbility(player1, 0, null, heretic.getId());
+        activate(heretic.getId(), player2);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, false);
 
@@ -182,7 +230,7 @@ class SoldeviHereticTest extends BaseCardTest {
         Permanent heretic = harness.addToBattlefieldAndReturn(player1, new SoldeviHeretic());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, heretic.getId()))
+        assertThatThrownBy(() -> activate(heretic.getId(), player2))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

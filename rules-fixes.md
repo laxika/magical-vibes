@@ -52,7 +52,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1 done 2026-11-27 |
 | DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
-| CB Combat | CB-1 | open |
+| CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | open |
 | PL Each player chooses, then all act | PL-1 | open |
 | MC Single cards | MC-1, MC-2 | open |
@@ -1115,7 +1115,22 @@ New line N48 (seen in MP-2): `CombatAttackService.declareAttackers` raises the g
 Prison, Windborn Muse) toward `getOpponentId`, not the attacked player whose permanent imposed it (CR 508.1h; matters with Tax
 Taker); MP-2 made the Phyrexian part (Norn's Annex) per attacked player.
 
-Outcome:
+Outcome: 2026-11-27. Fixed, each with a test that failed first: M10's Soldevi Heretic (the opponent is the ability's second
+target, `TargetOpponentMayDrawCardEffect(Subjects.targetPlayer(1))`, offered nothing once it became an illegal target, CR 608.2b;
+`PreventDamageEffectHandler.nextToTarget` reads an ability's first target group), M14 (the returned creature attacks the lone
+defender, else its controller chooses, through `ChooseAttackTargetsForCreatedTokensEffectHandler.chooseAttackTargets`, and it never
+"attacked", CR 508.4), E14 (a `MustAttackIfAbleEffect(defenderId)` is a per-target requirement in `getRequiredAttackTargetIds`,
+weighed by the CR 508.1d search; the per-creature "must attack the specified player" throw is gone), N48 (each attack tax's
+tax-paid event goes to the player whose objects imposed it, CR 508.1h), and M11's condition part (every `DefendingPlayer…`
+condition reads the player the creature attacks or is checked against attacking, and "can't attack unless defending player …" is
+judged per attack target, CR 508.5, 802.2a: Vodalian Serpent, Robber of the Rich). Fixed, latent (no card, so no failing test):
+H8's binding half (the set branch floats `lastingRule`) and S23 (the plane's filter context). Dropped: M5 (Stand or Fall, fixed
+in fold run 14b, three-player test exists), M4's Nahiri part (fixed in D12, three-player test exists), M10's `DEFENDING_PLAYER`
+half (fold run 5), O36 (the requirement readers already count one goad per goading player, CR 701.15d: a pin passes on HEAD; The
+Beamtown Bullies' creature is a new object, CR 400.7), H8's redaction half (D12), O39 (TR-1). Left: M11's block half (each
+attacked player declares blocks in APNAP order against only the creatures attacking them, CR 802.4, 802.4a, 802.4b), which needs
+`CombatDamageService` to read more than one defending battlefield first, then the AI and the frontend; entry 18's line says what.
+New lines N68 to N70 (MC-2). No effect class added or deleted, so no ledger or ratchet change.
 
 ### PP. Perpetual changes
 
@@ -1315,6 +1330,18 @@ Sure of the code.
 New line N67 (seen in DR-1): the draw a Notion Thief gives its controller is performed with `performDrawCard` directly, so the
 new drawer's own draw replacements (Thought Reflection, Abundance, dredge) never see it, though the modified event is a draw
 (CR 614.6, 616.1f). Sure of the code.
+
+New line N68 (seen in CB-1): Sphinx's Tutelage's "target opponent mills two cards" takes the opponent as `getOpponentId`
+(`MillOpponentRepeatOnSharedColorEffectHandler`) instead of a target, so with two opponents its controller can't choose and a
+hexproof opponent is milled. Sure of the code.
+
+New line N69 (seen in CB-1): `ConditionEvaluationService`'s `ControllerControlsMoreLandsThanOpponent` and
+`ControlsMoreCreaturesThanOpponent` compare with `getOpponentId` only, not with each opponent. Unverified against the cards' Oracle
+text.
+
+New line N70 (seen in CB-1): `ReturnCardExiledWithSourceToBattlefieldEffectHandler` skips the attack-target choice of a creature it
+returns attacking while another prompt is open (an entry prompt), so with two or more possible targets it stays attacking nothing
+(CR 508.4). Sure of the code, rare.
 
 Outcome:
 

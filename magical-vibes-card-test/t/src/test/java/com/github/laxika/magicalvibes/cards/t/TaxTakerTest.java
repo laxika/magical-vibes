@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.c.CrystalShard;
 import com.github.laxika.magicalvibes.cards.c.CutTheTethers;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.e.Erosion;
+import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsolationCell;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -53,6 +55,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -168,6 +171,30 @@ class TaxTakerTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({GhostlyPrison.class, GrizzlyBears.class})
+    @DisplayName("With two opponents, paying Ghostly Prison's {2} to attack its controller makes that player two Treasures")
+    void attackTaxGoesToTheAttackedPlayersTaxTaker() {
+        Player player3 = harness.addOpponent("Player3");
+        harness.addToBattlefield(player3, new TaxTaker());
+        harness.addToBattlefield(player3, new GhostlyPrison());
+        harness.addToBattlefield(player2, new TaxTaker());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId())));
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(countPermanents(player3, "Treasure")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Treasure")).isZero();
     }
 
     @Test

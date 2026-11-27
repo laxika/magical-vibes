@@ -7,12 +7,16 @@ import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -84,6 +88,82 @@ class DulcetSirensTest extends BaseCardTest {
 
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("Grizzly Bears must attack "
                 + gd.playerIdToName.get(player2.getId()) + " this turn if able."));
+    }
+
+    @Nested
+    @DisplayName("With two opponents, each named by one requirement")
+    class TwoRequirementsNamingDifferentOpponents {
+
+        private Player player3;
+        private Permanent creature;
+
+        @BeforeEach
+        void forceTheCreatureToAttackEachOpponent() {
+            player3 = harness.addOpponent("Player3");
+            Permanent first = addCreatureReady(player1, new DulcetSirens());
+            Permanent second = addCreatureReady(player1, new DulcetSirens());
+            creature = addCreatureReady(player1, new GrizzlyBears());
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(first), 0,
+                    List.of(creature.getId(), player2.getId()));
+            harness.passBothPriorities();
+            harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(second), 0,
+                    List.of(creature.getId(), player3.getId()));
+            harness.passBothPriorities();
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+        }
+
+        @Test
+        @DisplayName("Attacking the opponent the first requirement names obeys as many requirements as possible")
+        void attackingTheFirstNamedOpponentIsLegal() {
+            int index = battlefieldIndex(creature);
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                    () -> gs.declareAttackers(gd, player1, List.of(index), Map.of(index, player2.getId())));
+
+            assertThat(creature.getAttackTarget()).isEqualTo(player2.getId());
+        }
+
+        @Test
+        @DisplayName("Attacking the opponent the second requirement names is legal too")
+        void attackingTheSecondNamedOpponentIsLegal() {
+            int index = battlefieldIndex(creature);
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                    () -> gs.declareAttackers(gd, player1, List.of(index), Map.of(index, player3.getId())));
+
+            assertThat(creature.getAttackTarget()).isEqualTo(player3.getId());
+        }
+
+        @Test
+        @DisplayName("The creature still can't stay home")
+        void creatureCannotStayHome() {
+            assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(), Map.of()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("must attack");
+        }
+    }
+
+    @Test
+    @DisplayName("With two opponents, attacking the opponent who isn't named obeys too few requirements")
+    void attackingTheUnnamedOpponentIsIllegal() {
+        Player player3 = harness.addOpponent("Player3");
+        Permanent sirens = addCreatureReady(player1, new DulcetSirens());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,
+                List.of(creature.getId(), player2.getId()));
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        int index = battlefieldIndex(creature);
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index), Map.of(index, player3.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too few attack requirements");
     }
 
     @Test

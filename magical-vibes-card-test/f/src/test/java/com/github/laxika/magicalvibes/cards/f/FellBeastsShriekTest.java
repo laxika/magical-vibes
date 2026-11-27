@@ -57,6 +57,20 @@ class FellBeastsShriekTest extends BaseCardTest {
                 .first().isInstanceOf(FellBeastsShriek.class);
     }
 
+    @Test
+    @DisplayName("Goading a creature its caster already goaded adds no attack requirement")
+    void goadingAgainAddsNoRequirement() {
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        castShriek();
+        int requirementsAfterFirstGoad = als.getMustAttackRequirementCount(gd, bear);
+        bear.untap();
+
+        castShriek();
+
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, bear)).isEqualTo(requirementsAfterFirstGoad);
+    }
+
     private void castShriek() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new FellBeastsShriek()));
