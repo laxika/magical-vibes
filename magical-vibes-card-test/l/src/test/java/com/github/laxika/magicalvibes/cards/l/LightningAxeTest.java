@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.h.HavenwoodWurm;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,6 +33,28 @@ class LightningAxeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Ashcoat Bear");
         harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
         harness.assertInGraveyard(player2, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Cast from exile, discards the announced card instead of paying {5}")
+    void castFromExileDiscardsTheAnnouncedCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        LightningAxe axe = new LightningAxe();
+        AshcoatBear discarded = new AshcoatBear();
+        harness.setExile(player1, List.of(axe));
+        gd.grantExilePlayPermission(axe.getId(), player1.getId(), Duration.PERMANENT);
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        gs.playCardFromExile(gd, player1, axe.getId(), null, target.getId(), List.of(), List.of(), List.of(),
+                false, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
     }
 
     @Test

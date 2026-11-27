@@ -860,6 +860,40 @@ public class ExileFreeCastQueueSupport {
     }
 
     /**
+     * Whether a free cast of {@code card} can pay its additional costs through {@link #beginSacrificeCostIfNeeded}:
+     * it has none, or only costs that method asks for and pays, and the caster could pay them now (CR 601.2f, 601.2h).
+     * A cast path that prepares its entry with {@code card}'s costs asks this before the card leaves its zone, so a
+     * cost the path can't take is refused rather than skipped.
+     */
+    public boolean preparedCastCostsPayable(GameData gameData, UUID playerId, Card card) {
+        List<CostEffect> costs = card.getCastingCosts();
+        if (costs.isEmpty()) {
+            return true;
+        }
+        if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, card)) {
+            return false;
+        }
+        if (costs.stream().allMatch(SacrificeCreatureCost.class::isInstance)) {
+            return true;
+        }
+        if (costs.size() != 1) {
+            return false;
+        }
+        return switch (costs.getFirst()) {
+            case AnyOfCost anyOf -> !freeCastPayableAlternatives(gameData, playerId, card, anyOf).isEmpty();
+            case com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost ignored -> true;
+            case DiscardCardTypeCost ignored -> true;
+            case PayManaCost ignored -> true;
+            case PutCounterOnControlledCreatureCost ignored -> true;
+            case TapMultiplePermanentsCost ignored -> true;
+            case ReturnPermanentToHandCost ignored -> true;
+            case SacrificePermanentCost ignored -> true;
+            case SacrificeAllMatchingPermanentsCost ignored -> true;
+            default -> false;
+        };
+    }
+
+    /**
      * The most modes a free cast of an escalate spell may choose: one, plus one for each escalate
      * payment the caster can still make (CR 702.120a); for an entwine spell every mode when the caster
      * can pay entwine, else the number specified (CR 702.42a). The spell is cast from exile, so every

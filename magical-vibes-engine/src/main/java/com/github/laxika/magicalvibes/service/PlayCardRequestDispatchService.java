@@ -64,6 +64,14 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
+            if (request.discardHandCardIndex() != null) {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.additionalCostSacrificePermanentIds()),
+                        Boolean.TRUE.equals(request.morph()), Boolean.TRUE.equals(request.adventure()),
+                        request.libraryOwnerId(), request.discardHandCardIndex());
+                return;
+            }
             if (request.libraryOwnerId() != null) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
                         listOrEmpty(request.exileCounterCostPermanentIds()),
@@ -129,7 +137,13 @@ public class PlayCardRequestDispatchService {
                         request.targetId(), true);
                 return;
             }
-            if (request.waterbendPaid() != null
+            if (request.discardHandCardIndex() != null) {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()),
+                        listOrEmpty(request.additionalCostSacrificePermanentIds()), waterbendPaid(request),
+                        request.discardHandCardIndex());
+            } else if (request.waterbendPaid() != null
                     || request.additionalCostSacrificePermanentIds() != null
                     && !request.additionalCostSacrificePermanentIds().isEmpty()) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),

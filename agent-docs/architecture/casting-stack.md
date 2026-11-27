@@ -55,6 +55,11 @@ Why: a mid-payment question cannot be undone; separate sacrifices miss each othe
 Owner: `ActivatedAbilityExecutionService`.
 Why: Ashnod the Uncaring's ruling: a Treasure sacrificed for mana doesn't count.
 
+### A resolution cast pays its additional costs after its targets (CR 601.2f, 601.2h)
+A cast made while something resolves that builds its own stack entry asks `preparedCastCostsPayable` before the card leaves its zone, then pays through `beginSacrificeCostIfNeeded`; a cost that path can't take refuses the cast.
+Owner: `ExileFreeCastQueueSupport`.
+Why: a cast "without paying its mana cost" still pays its mandatory additional costs; hand-rolled casts skipped them.
+
 ### A queued exile cast waits for its discard
 The spell stays off the stack (`DiscardFollowUp.pendingSpellCast`) until its mandatory discard is paid.
 Owner: `CardChoiceHandlerService`.

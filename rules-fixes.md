@@ -40,7 +40,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 |---|---|---|
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
 | DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2, DM-3 done 2026-11-27 |
-| FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1, FC-2 done 2026-11-27; FC-3 open |
+| FC Free casts and casting from other zones | FC-1, FC-2, FC-3, FC-4 | FC-1, FC-2, FC-3 done 2026-11-27 |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | CT-1 done 2026-11-27; CT-2 open |
@@ -161,7 +161,7 @@ line that needs the owner's answer is left and collected for the end.
 | 7 | FD-2, LY-1, DR-1, CB-1 | |
 | 8 | LY-2, LY-3, PP-1, CP-1 | |
 | 9 | LY-4, LY-5, PL-1, MC-1 | |
-| 10 | MC-2, FT-1, FT-2 | |
+| 10 | MC-2, FT-1, FT-2, FC-4 | |
 | 11 | Z | |
 
 ## Runs
@@ -359,6 +359,26 @@ and `PlarggAndNassariCardChoiceInteractionHandler` (CR 716.3).
 
 New line N13 (seen in FC-2): `ExileTopCardsAndMayCastSpellsEffectHandler` judges a modal double-faced card by its front face only,
 and the total cap counts the front's mana value, though Primeval Spawn's ruling lets its back face be cast and counted (CR 712.8b).
+
+Outcome: 2026-11-27. Fixed: P19, P17, O87, O88, O89 (deleted from entry 18); O91 edited down (library top now takes an
+"[A] or [B]" cost of sacrifice, mana, life and discard alternatives; tap, blight and graveyard-exile alternatives are still
+refused from exile and library top). A flashback-granted graveyard cast validates and taps a tap escalate's permanents for each
+mode beyond the first (CR 702.120a). A graveyard play without paying its mana cost (`handlePlayFromGraveyardChoice`: Horde of
+Notions, Kaya, Jetsam) asks `ExileFreeCastQueueSupport.preparedCastCostsPayable` and pays through `beginSacrificeCostIfNeeded`
+after the targets, permanent spells too (CR 601.2f, 601.2h; Jetsam's ruling); P17's CR 118.9d was the wrong citation. The
+library-top and exile casts take `discardHandCardIndex` (`PlayCardRequest` already carried it; new `GameService` overloads,
+the dispatch, `LibraryTopCastReplay`, `ExileCastReplay`), and the library top picks its alternative with
+`chosenAlternative` (CR 601.2b, 119.4). Left, not reached: O86, O90, O91's rest, N4, N5, N12, N13, and N6 (only the declined
+cost-increase case remains: the ruling keeps the uncast card in exile and lets the caster choose the hand card, which needs a
+continuation after the cast attempt). No effect class added or deleted, so no ledger or ratchet change. New line N26 (MC-2).
+
+#### FC-4. What FC-3 didn't reach
+
+Depends on: FC-3.
+Lines: O86 (the free-cast additional-cost chooser is asked after the targets), O90 (a free cast doesn't offer an `AnyOfCost`'s
+graveyard-exile or forage alternative), O91's rest (exile and library-top casts refuse tap, blight and graveyard-exile options),
+N4, N5, N6 (the declined-payment half: the uncast card stays in exile and the caster chooses the hand card), N12, N13. Read
+FC-3's Outcome first. If a line needs client work, do the server part and add the client part to UI-1.
 
 Outcome:
 
@@ -854,6 +874,10 @@ New line N23 (seen in AI-2): `TargetPolarityClassifier`'s `DistributeCountersAmo
 New line N25 (seen in DM-3): the "have it dealt to you instead" choice (`DamageSupport.queueCreatureDamageRedirectChoice`, the
 `AllCreatureDamageRedirectChoice` rule) builds its prompt and redirected damage from the stack entry's source, not the event's
 `explicitSource`, so a fought creature's damage accepted this way is dealt as the fight's source's (unverified).
+
+New line N26 (seen in FC-3): a graveyard cast through a flashback grant (`SpellCastingService` graveyard path) refuses a mana,
+discard or sacrifice escalate or entwine payment ("not supported from this zone"; Blessed Alliance after Past in Flames), though
+CR 702.120a and 702.42a make it an additional cost paid with the alternative cost (read in the code, not tested).
 
 Outcome:
 

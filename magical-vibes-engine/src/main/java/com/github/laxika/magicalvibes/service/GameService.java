@@ -2056,11 +2056,23 @@ public class GameService {
                                   UUID targetId, List<UUID> exileCounterCostPermanentIds,
                                   List<UUID> convokeCreatureIds, List<UUID> waterbendPermanentIds,
                                   boolean waterbendPaid) {
+        playCardFromExile(gameData, player, exileCardId, xValue, targetId, exileCounterCostPermanentIds,
+                convokeCreatureIds, waterbendPermanentIds, waterbendPaid, null);
+    }
+
+    /**
+     * Casts a card from exile; {@code discardHandCardIndex} is the hand card discarded for a "discard a card or [B]"
+     * additional cost, null for the other alternative.
+     */
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, List<UUID> exileCounterCostPermanentIds,
+                                  List<UUID> convokeCreatureIds, List<UUID> waterbendPermanentIds,
+                                  boolean waterbendPaid, Integer discardHandCardIndex) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardFromExile(gameData, actionPlayer, exileCardId, xValue, targetId,
                         exileCounterCostPermanentIds, convokeCreatureIds, waterbendPermanentIds,
-                        waterbendPaid))) return;
+                        waterbendPaid, discardHandCardIndex))) return;
         synchronized (gameData) {
             requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
@@ -2068,7 +2080,8 @@ public class GameService {
             spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetId,
                     exileCounterCostPermanentIds != null ? exileCounterCostPermanentIds : List.of(),
                     convokeCreatureIds != null ? convokeCreatureIds : List.of(),
-                    waterbendPermanentIds != null ? waterbendPermanentIds : List.of(), waterbendPaid);
+                    waterbendPermanentIds != null ? waterbendPermanentIds : List.of(), waterbendPaid,
+                    discardHandCardIndex);
         }
     }
 
@@ -2131,11 +2144,23 @@ public class GameService {
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
                                        boolean castAsAdventure, UUID libraryOwnerId) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds,
+                additionalCostSacrificePermanentIds, castFaceDown, castAsAdventure, libraryOwnerId, null);
+    }
+
+    /**
+     * As {@link #playCardFromLibraryTop(GameData, Player, Integer, UUID, List, List, boolean, boolean, UUID)}, with
+     * {@code discardHandCardIndex} the hand card discarded for a "discard a card or [B]" additional cost.
+     */
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds,
+                                       List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
+                                       boolean castAsAdventure, UUID libraryOwnerId, Integer discardHandCardIndex) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
                         counterCostPermanentIds, additionalCostSacrificePermanentIds, castFaceDown,
-                        castAsAdventure, libraryOwnerId))) return;
+                        castAsAdventure, libraryOwnerId, discardHandCardIndex))) return;
         synchronized (gameData) {
             requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
@@ -2143,7 +2168,7 @@ public class GameService {
             spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
                     counterCostPermanentIds != null ? counterCostPermanentIds : List.of(),
                     additionalCostSacrificePermanentIds != null ? additionalCostSacrificePermanentIds : List.of(),
-                    castFaceDown, castAsAdventure, libraryOwnerId);
+                    castFaceDown, castAsAdventure, libraryOwnerId, discardHandCardIndex);
         }
     }
 

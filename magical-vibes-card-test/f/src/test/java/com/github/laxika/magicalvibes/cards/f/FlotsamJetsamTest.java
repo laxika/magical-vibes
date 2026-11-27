@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BoneShards;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Deduce;
 import com.github.laxika.magicalvibes.cards.d.DemandAnswers;
+import com.github.laxika.magicalvibes.cards.d.DuskMangler;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -20,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FlotsamJetsam.class, CounselOfTheSoratami.class, Island.class, Deduce.class, DemandAnswers.class,
-        BoneShards.class, GrizzlyBears.class})
+        BoneShards.class, GrizzlyBears.class, DuskMangler.class})
 class FlotsamJetsamTest extends BaseCardTest {
 
     @Test
@@ -180,5 +182,53 @@ class FlotsamJetsamTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(shards);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == shards);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Jetsam casts Bone Shards from an opponent's graveyard by sacrificing its caster's creature")
+    void jetsamCastsBoneShardsPayingTheSacrifice() {
+        BoneShards shards = new BoneShards();
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player2, List.of(shards));
+        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(new FlotsamJetsam()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == shards);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
+        assertThat(gd.findExiledCard(shards.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Jetsam casts a creature spell from an opponent's graveyard only after its caster pays its additional cost")
+    void jetsamCastsDuskManglerPayingItsAdditionalCost() {
+        DuskMangler mangler = new DuskMangler();
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(mangler));
+        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(new FlotsamJetsam(), discarded));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Discard a card");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == mangler);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 }

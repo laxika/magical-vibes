@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BitterTriumph.class, FutureSight.class, Forest.class, QuintoriusKand.class, ArmoredKincaller.class, Plains.class})
@@ -53,6 +54,51 @@ class BitterTriumphTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player2, "Armored Kincaller");
+    }
+
+    @Test
+    @DisplayName("Cast from the top of the library with cards in hand, discards the announced card")
+    void castFromLibraryTopDiscardsTheAnnouncedCard() {
+        harness.addToBattlefield(player1, new FutureSight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
+        Forest kept = new Forest();
+        Plains discarded = new Plains();
+        harness.setLibrary(player1, List.of(new BitterTriumph()));
+        harness.setHand(player1, List.of(kept, discarded));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        gs.playCardFromLibraryTop(gd, player1, null, target.getId(), List.of(), List.of(), false, false, null, 1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        harness.assertInGraveyard(player2, "Armored Kincaller");
+    }
+
+    @Test
+    @DisplayName("Cast from the top of the library with cards in hand and no discard named, pays 3 life")
+    void castFromLibraryTopWithCardsInHandMayPayLife() {
+        harness.addToBattlefield(player1, new FutureSight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
+        harness.setLibrary(player1, List.of(new BitterTriumph()));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromLibraryTop(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player2, "Armored Kincaller");
     }
 

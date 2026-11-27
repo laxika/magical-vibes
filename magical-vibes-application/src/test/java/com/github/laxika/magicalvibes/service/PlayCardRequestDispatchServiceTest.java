@@ -164,6 +164,19 @@ class PlayCardRequestDispatchServiceTest {
     }
 
     @Test
+    @DisplayName("Cast from library top naming a discard routes to playCardFromLibraryTop with the discarded card")
+    void fromLibraryTopWithDiscardRoutesWithTheDiscard() {
+        PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, true, null, 1, null, null, null);
+
+        dispatchService.dispatch(gameData, player, request);
+
+        verify(gameService).playCardFromLibraryTop(eq(gameData), eq(player), isNull(), isNull(),
+                eq(List.of()), eq(List.of()), eq(false), eq(false), isNull(), eq(1));
+        verifyNoMoreInteractions(gameService);
+    }
+
+    @Test
     @DisplayName("Adventure cast from library top routes to playCardFromLibraryTop as an Adventure")
     void adventureFromLibraryTopRoutes() {
         UUID targetId = UUID.randomUUID();
@@ -192,6 +205,20 @@ class PlayCardRequestDispatchServiceTest {
 
         verify(gameService).playCardFromLibraryTop(eq(gameData), eq(player), isNull(), isNull(),
                 eq(List.of()), eq(List.of()), eq(false), eq(false), eq(libraryOwnerId));
+        verifyNoMoreInteractions(gameService);
+    }
+
+    @Test
+    @DisplayName("Cast from exile naming a discard routes to playCardFromExile with the discarded card")
+    void fromExileWithDiscardRoutesWithTheDiscard() {
+        UUID exileCardId = UUID.randomUUID();
+        PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
+                null, null, exileCardId, null, null, null, null, null, null, null, 2, null, null, null);
+
+        dispatchService.dispatch(gameData, player, request);
+
+        verify(gameService).playCardFromExile(eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(),
+                eq(List.of()), eq(List.of()), eq(List.of()), eq(false), eq(2));
         verifyNoMoreInteractions(gameService);
     }
 

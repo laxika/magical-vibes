@@ -7,9 +7,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -1514,14 +1511,11 @@ public class MayCastHandlerService {
             return;
         }
 
-        // A mandatory additional cast cost (sacrifice a permanent or discard a card) is part of the total
-        // cost even when the mana cost is not paid (CR 601.2f), and it must be paid (CR 601.2h). This path can't take that
-        // payment, so the card stays where it is rather than being cast with the cost skipped.
-        if (cardToPlay.getCastingCosts().stream()
-                .anyMatch(effect -> effect instanceof AnyOfCost anyOf && anyOf.alternatives().stream()
-                        .allMatch(alternative -> alternative instanceof DiscardCardTypeCost
-                                || alternative instanceof SacrificePermanentCost)
-                        || effect instanceof DiscardCardTypeCost)) {
+        // A mandatory additional cast cost is part of the total cost even when the mana cost is not paid (CR 601.2f),
+        // and it must be paid (CR 601.2h): it is asked for after the targets, and a card whose cost can't be paid
+        // that way stays where it is rather than being cast with the cost skipped.
+        if (!cardToPlay.hasType(CardType.LAND)
+                && !exileFreeCastQueueSupport.preparedCastCostsPayable(gameData, player.getId(), cardToPlay)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                     " can't be cast without paying its additional cost."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1606,7 +1600,7 @@ public class MayCastHandlerService {
                 || cardToPlay.hasType(CardType.PLANESWALKER)
                 || cardToPlay.hasType(CardType.BATTLE);
         List<CardEffect> spellEffects = isPermanentSpell
-                ? List.of()
+                ? new ArrayList<>(cardToPlay.getCastingCosts())
                 : new ArrayList<>(cardToPlay.getCastingCostsAndSpellEffects());
 
         if (EffectResolution.needsTarget(cardToPlay) || EffectResolution.needsSpellTarget(cardToPlay)) {
@@ -1654,12 +1648,15 @@ public class MayCastHandlerService {
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         stackEntry.setOwnerIdOverride(graveyardOwnerId);
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        gameLogService.append(gameData, GameLog.playerPlays(playerName, cardToPlay,
+                " from their graveyard without paying its mana cost."));
+        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, stackEntry)) {
+            return;
+        }
         gameData.stack.add(stackEntry);
         gameData.recordSpellCast(player.getId(), cardToPlay);
         gameData.priorityPassedBy.clear();
 
-        gameLogService.append(gameData, GameLog.playerPlays(playerName, cardToPlay,
-                " from their graveyard without paying its mana cost."));
         log.info("Game {} - {} casts {} from graveyard without paying mana", gameData.id, playerName, cardToPlay.getName());
 
         spellEvents.cast(gameData, cardToPlay, player.getId(), false);

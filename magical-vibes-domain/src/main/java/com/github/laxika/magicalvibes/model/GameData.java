@@ -2234,7 +2234,7 @@ public class GameData {
                                   boolean waterbendPaid, java.util.List<UUID> targetIds, boolean autoPass,
                                   boolean copy, boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard,
                                   boolean flashforwardCast, Zone sourceZoneOverride, boolean fromBattlefield,
-                                  java.util.List<CounterType> chosenCounterTypes)
+                                  java.util.List<CounterType> chosenCounterTypes, Integer discardHandCardIndex)
             implements DeathReplacementChoiceReplay {
     }
 
@@ -2343,7 +2343,8 @@ public class GameData {
     public record LibraryTopCastReplay(Player player, Integer xValue, UUID targetId,
                                        java.util.List<UUID> counterCostPermanentIds,
                                        java.util.List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
-                                       boolean castAsAdventure, UUID castCardId, UUID libraryOwnerId)
+                                       boolean castAsAdventure, UUID castCardId, UUID libraryOwnerId,
+                                       Integer discardHandCardIndex)
             implements DeathReplacementChoiceReplay {
     }
 

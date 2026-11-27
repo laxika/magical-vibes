@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PastInFlames;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CollectiveEffort.class, GrizzlyBears.class, CampaignOfVengeance.class})
+@CardUsed({CollectiveEffort.class, GrizzlyBears.class, CampaignOfVengeance.class, PastInFlames.class})
 class CollectiveEffortTest extends BaseCardTest {
 
     @Test
@@ -254,6 +256,46 @@ class CollectiveEffortTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(line -> line.contains("taps Grizzly Bears to escalate Collective Effort."));
+    }
+
+    @Test
+    @DisplayName("Cast through a granted flashback, each extra mode still taps a creature")
+    void grantedFlashbackCastPaysEscalateTaps() {
+        Permanent tapper = addCreatureReady(player1, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new CampaignOfVengeance());
+        harness.setGraveyard(player1, List.of(new CollectiveEffort()));
+        harness.setHand(player1, List.of(new PastInFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        addMana();
+
+        gs.playFlashbackSpell(gd, player1, 0, ChooseOneEffect.encodeModeSelection(1, 3, new int[]{1, 2}),
+                null, List.of(enchantment.getId(), player1.getId()), null, null, List.of(), null, null,
+                List.of(tapper.getId()), (java.util.Map<java.util.UUID, Integer>) null);
+        harness.passBothPriorities();
+
+        assertThat(tapper.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Campaign of Vengeance");
+        assertThat(tapper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cast through a granted flashback, an extra mode with no creature tapped is rejected")
+    void grantedFlashbackCastRejectsUnpaidEscalate() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new CampaignOfVengeance());
+        harness.setGraveyard(player1, List.of(new CollectiveEffort()));
+        harness.setHand(player1, List.of(new PastInFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        addMana();
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0,
+                ChooseOneEffect.encodeModeSelection(1, 3, new int[]{1, 2}),
+                null, List.of(enchantment.getId(), player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addMana() {

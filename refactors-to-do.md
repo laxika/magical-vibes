@@ -1378,7 +1378,7 @@ Don't commit.
 - Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Sure, low.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
-#### Payments and costs (14)
+#### Payments and costs (12)
 
 - Moxite Refinery's `CounterType.ANY` cost removes kinds in enum order; the player should choose (the kind prompt serves one counter only).
 - Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
@@ -1389,8 +1389,6 @@ Don't commit.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
 - `AbilityActivationService.getActivatedAbilityAdditionalGenericCost`: with a {0} equip or power-up cost, the tax is returned without cost reductions applied (CR 601.2f). Fairly sure of the code.
 - "Mana of any type" exile and graveyard permissions (`withAnyManaType`, `spendingManaOfAnyType`: Mnemonic Betrayal, Gonti, Dire Fleet Daredevil and others) are paid as any colour when the cost has {C} (`SpellCastingService` `anyColorForColoredSymbols`), so coloured mana can't pay {C} (CR 106.1b, 609.4b). Sure.
-- Flotsam // Jetsam (Jetsam) refuses Bone Shards, Minion Missile and Souls of the Lost instead of letting their sacrifice-or-discard cost be paid (CR 118.9d); before fold run 49b it cast them with the cost skipped. Sure of the code.
-- Collective Effort and other tap-escalate spells cast from a graveyard through a flashback grant pay no escalate taps (CR 702.120a). Fairly sure.
 - Chisei, Heart of Oceans' `ForcedCostOrElseEffect` counter removal may take the first kind of counter instead of letting the payer choose. Unverified.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
@@ -1428,7 +1426,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (80)
+#### Other (77)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - The dying-creature return heads other than Lim-Dûl's (`ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect`, `ReturnDamagedCreaturesThatDiedUnderControlEffect`) put an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head goes through the entry batch since rules-fixes EB-1. Unverified.
@@ -1493,11 +1491,8 @@ Don't commit.
 - Varchild's War-Riders and Wall of Shards pay their cumulative upkeep to `getOpponentId` (the first opponent); their rulings let each age counter's token or life go to any opponent, chosen separately. Sure of the rulings and the code.
 - Missing feature (owner): no client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`) (CR 601.2b).
 - The free-cast additional-cost chooser ("Choose how to pay the additional cost.") is asked after the targets, not as the spell is announced (CR 601.2b, before 601.2c).
-- A spell played from a graveyard without paying its mana cost (`MayCastHandlerService.handlePlayFromGraveyardChoice`: Horde of Notions and the other users) pays no additional cast cost: it refuses a discard-or-sacrifice one (Bone Shards' shape) and casts Bitter Triumph, Final Payment and Dusk Mangler with theirs skipped (CR 601.2f, 601.2h). Sure of the code.
-- A library-top cast of Bitter Triumph with cards in hand is refused: the library-top request carries no discard choice, so only the empty-hand life payment is accepted (CR 601.2b). Sure of the code.
-- An exile cast of a "discard a card or pay {m}" spell (Lightning Axe, Pumpkin Bombardment, Titania) can't choose the discard: no discard index reaches the exile path (`playCardFromExile` takes only permanent ids), so it always pays the mana (CR 601.2b). Sure.
 - A free cast (`ExileFreeCastQueueSupport`) doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative: there is no free-cast graveyard picker, so a free Soaring Stoneglider or Feed the Cycle pays its mana alternative or is skipped (CR 601.2b). Sure.
-- Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone"; library top takes only sacrifice-or-mana. Sure.
+- Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone"; library top takes only an "[A] or [B]" cost of sacrifice, mana, life and discard alternatives. Sure.
 - Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
 - Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the mass boosts' set filters.
 - `TriggeredAbilityQueueService.triggerOrderLabel` names a source-reading boost with no target "target creature gets +N/+M" (Sigardian Zealot, Mirkwood Trapper's second trigger, Zenos yae Galvus); a label only.
