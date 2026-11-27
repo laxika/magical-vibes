@@ -9401,7 +9401,11 @@ public class GameData {
         return viewers;
     }
 
-    /** Whether {@code playerId} may look at the face-down exiled card {@code cardId}. */
+    /**
+     * Whether a resolution or control change granted {@code playerId} a look at the face-down exiled card
+     * {@code cardId}. Only the granted looks: whether that player may look at it is the engine's
+     * {@code FaceDownVisibility.mayLookAtExiledCard}.
+     */
     public boolean mayLookAtExiledCard(UUID cardId, UUID playerId) {
         return exileLookViewers(cardId).contains(playerId);
     }

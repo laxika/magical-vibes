@@ -1292,11 +1292,10 @@ that turns out not to be a defect is removed with the reason in the report. Run 
 Don't commit.
 ```
 
-#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (7)
+#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (6)
 
 - Kappa Cannoneer, Lockjaw, Slicer, Full Steam Ahead, Vines of Vastwood: "can't be blocked / sacrificed / the target" are granted abilities "loses all abilities" removes, but are rules of the game (CR 611.2c). Unverified.
-- `cardsThisWay(kind, filter)`, the copy, cast and name / mana-value readers, the entry batch's "can't enter" filter read a face-down exiled card's hidden face (CR 406.3a). Unverified.
-- Token copies of face-down permanents, other consumers of a face-down object's real characteristics, opaque card ids: not looked at. Unverified.
+- `CreateTokenCopyOfCardEffect` over `cardsThisWay(EXILE)` would copy a face-down exiled card's hidden face (CR 406.3a); no card exiles face down and then copies (FD-2 fixed the filtered subject; the cast, entry and name / mana-value readers were already right). Latent.
 - Soulless Jailer: `canCastSpellFromZone` reads `card.hasType(CREATURE)`, not the spell (an Adventure, a modal back face). Unsure, low.
 - Stoic Star-Captain and Zilortha model their source's rule as a granted ability, which "loses all abilities" on the creature removes (CR 613.1f). Fairly sure.
 - `CastingPermissionService` spell-limit, Ethersworn Canonist, most-recent-spell and global land-restriction readers skip lost abilities but not face-down sources (CR 708.2a). Sure of the code.
@@ -1335,13 +1334,12 @@ Don't commit.
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (6)
+#### Wrong targets and choices (5)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - The prompt callers (about 415 calls of `beginPermanentChoice`, `beginAnyTargetChoice`, `beginMultiPermanentChoice`, `beginMultiPermanentOrPlayerChoice`) that count or auto-pick candidates before prompting don't drop a permanent that can't be chosen (`GameQueryService.cantBeChosen`; the prompts themselves do since D15), so a lone such candidate can be taken or an empty prompt opened; only Glimpse the Unthinkable (playtest) has the ability. Unverified.
 - The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Unverified.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
-- The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Unverified.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
 
 #### Payments and costs (5)
@@ -1366,12 +1364,11 @@ Don't commit.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.
 
-#### Logs and hidden information (4)
+#### Logs and hidden information (3)
 
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
-- `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 
 #### Other (47)
 

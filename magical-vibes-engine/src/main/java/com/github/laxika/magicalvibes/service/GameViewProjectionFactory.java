@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
@@ -194,7 +193,7 @@ public class GameViewProjectionFactory {
                     gameData.planechase == null ? null : planarViews.create(gameData, playerId),
                     gameData.monarchPlayerId, commanderView(gameData, playerId),
                     gameData.exiledCards.stream()
-                            .filter(entry -> gameData.mayLookAtExiledCard(entry.card().getId(), playerId))
+                            .filter(entry -> FaceDownVisibility.mayLookAtExiledCard(gameData, entry.card().getId(), playerId))
                             .map(entry -> cardViewFactory.create(entry.card()))
                             .toList(),
                     List.of(),
@@ -318,9 +317,9 @@ public class GameViewProjectionFactory {
     }
 
     /**
-     * Face-down exiled cards (hideaway lands, Grimoire Thief, ...) keyed by their permanent's id.
-     * The shared battlefield views carry only a card-back count for these; the actual cards are
-     * swapped into the controller's copy by {@link #applyFaceDownReveals}.
+     * Face-down exiled cards (hideaway lands, Grimoire Thief, ...) keyed by their permanent's id, shown to the
+     * players {@link FaceDownVisibility#exileViewers} names. The shared battlefield views carry only a card-back
+     * count for these; the actual cards are swapped into each viewer's copy by {@link #applyFaceDownReveals}.
      */
     Map<UUID, FaceDownReveal> collectFaceDownReveals(GameData data) {
         Map<UUID, FaceDownReveal> reveals = new HashMap<>();
@@ -331,42 +330,9 @@ public class GameViewProjectionFactory {
                 Map<UUID, List<CardView>> cardsByViewer = new LinkedHashMap<>();
                 for (ExiledCardEntry entry : data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId())) {
                     if (!entry.faceDown()) continue;
-                    if (p.getCard().getStaticEffects().stream().anyMatch(
-                            com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
-                        continue;
-                    }
-                    if (p.getCard().getOwnEntryEffects().stream().anyMatch(
-                            com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileFaceDownPileEffect.class::isInstance)) {
-                        continue;
-                    }
-                    boolean exiledFaceDownFromHandOnEnter = p.getCard().getOwnEntryEffects().stream()
-                            .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
-                                    && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect imprint
-                                    && imprint.faceDown());
-                    boolean grantsImplicitLookPermission = !exiledFaceDownFromHandOnEnter
-                            && !data.exiledCardHasCounter(entry.card().getId(), CounterType.INTEL)
-                            && java.util.stream.Stream.concat(
-                                    java.util.stream.Stream.concat(
-                                            java.util.stream.Stream.concat(p.getCard().getCastingCostsAndSpellEffects().stream(),
-                                                    p.getCard().getStaticEffects().stream()),
-                                            p.getCard().getTriggeredEffects().stream()),
-                                    p.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
-                                            .flatMap(ability -> ability.getEffects().stream()))
-                            .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)
-                            .map(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::cast)
-                            .noneMatch(effect -> effect.faceDown() && !effect.mayLookAtFaceDownCards());
-                    UUID viewerId = grantsImplicitLookPermission && !exilesHandsFaceDown(p.getCard())
-                            ? entry.exilerId() != null ? entry.exilerId() : pid
-                            : data.exileLookViewers(entry.card().getId()).stream().findFirst().orElse(null);
-                    if (viewerId != null) {
-                        cardsByViewer.computeIfAbsent(viewerId, ignored -> new ArrayList<>())
+                    for (UUID viewer : FaceDownVisibility.exileViewers(data, p, pid, entry)) {
+                        cardsByViewer.computeIfAbsent(viewer, ignored -> new ArrayList<>())
                                 .add(cardViewFactory.create(entry.card()));
-                    }
-                    for (UUID additionalViewer : data.exileLookViewers(entry.card().getId())) {
-                        if (!additionalViewer.equals(viewerId)) {
-                            cardsByViewer.computeIfAbsent(additionalViewer, ignored -> new ArrayList<>())
-                                    .add(cardViewFactory.create(entry.card()));
-                        }
                     }
                 }
                 if (!cardsByViewer.isEmpty()) {
@@ -382,21 +348,6 @@ public class GameViewProjectionFactory {
             }
         }
         return reveals;
-    }
-
-    /**
-     * Whether {@code card}'s abilities exile whole hands face down, which lets nobody look at those cards (CR 406.3;
-     * Induced Amnesia's ruling: "No player may look at the exiled cards").
-     */
-    private static boolean exilesHandsFaceDown(com.github.laxika.magicalvibes.model.Card card) {
-        return java.util.stream.Stream.concat(card.getTriggeredEffects().stream(),
-                        card.getActivatedAbilities(Zone.BATTLEFIELD).stream()
-                                .flatMap(ability -> ability.getEffects().stream()))
-                .flatMap(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
-                        ? sequence.steps().stream() : java.util.stream.Stream.of(effect))
-                .anyMatch(effect -> effect
-                        instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect hand
-                        && hand.faceDown());
     }
 
     /** The battlefields as seen by {@code viewerId}: permanents they control get their face-down

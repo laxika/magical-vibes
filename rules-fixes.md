@@ -49,7 +49,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2, TR-3 done 2026-11-27 (TR-3: T5's caller sweep left) |
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
-| FD Face-down and hidden reads | FD-1, FD-2 | FD-1 done 2026-11-27 |
+| FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | open |
 | DR Draws | DR-1 | open |
 | CB Combat | CB-1 | open |
@@ -987,7 +987,17 @@ names a card that a later step reordered), H9 (`GameViewProjectionFactory.collec
 
 Avoid: TR-2.
 
-Outcome:
+Outcome: done 2026-11-27. T15 fixed: a masked creature (Illusionary Mask) that can't be turned face up (Unable to Scream,
+Karlov Watchdog) stays face down when tapped or dealt damage and assigns combat damage as the face-down 2/2 (CR 101.2): the
+state-based-action pass puts the domain's automatic flip back face down and asks `isTurnFaceUpPrevented`, and the combat flip
+asks it first. H9 fixed: `FaceDownVisibility.exileViewers` / `mayLookAtExiledCard` are the one look rule (granted looks plus the
+source's implicit look, a "you may" and a sequence looked into); the view, the prompts, the logs and the legendary-cast offers ask
+it (Kayla's Music Box's card reached the music-box view but not `lookedAtExileCards` or prompts). F2 partly fixed: a filtered
+`cardsThisWay` judges a card exiled face down as one with no characteristics (CR 406.3a); the cast, entry-batch and name /
+mana-value readers were already right; the token-copy reader is left as a latent line. F3 dropped after the sweep: token copies
+of face-down permanents already read copiable values (Clone Legion, Doppelgang, Helm of the Host pin it); the opaque-id half is
+N62. H1 left: latent, no card; it needs a library-order stay across about 280 shuffle and reorder sites. New lines N60 to N63
+(MC-2). No effect classes added or deleted.
 
 ### LY. Layers, protection, text changes, linked abilities
 
@@ -1245,6 +1255,22 @@ Unverified.
 New line N59 (seen in PY-3): a resolution-time "you may discard a card. If you do, ..." built as a discard effect (`MayEffect`
 over `DiscardEffect`, `DiscardFollowUp.thenEffect`: Pack Guardian and the like) rather than through `ResolutionCostPaymentService`
 is a cost too (CR 118.12), yet still offers Library of Leng's replacement; set `GameData.discardPaidAsCost` there. Unverified.
+
+New line N60 (seen in FD-2): a masked creature (Illusionary Mask) dealt damage by a wither or infect source isn't turned face up:
+`DamageSupport`'s counter-damage branch and `CombatDamageService`'s infect branch put -1/-1 counters without
+`Permanent.addMarkedDamage`, the only place the flip happens. Sure of the code.
+
+New line N61 (seen in FD-2): a masked creature that can't be turned face up is face up in the domain from the tap or damage until
+the next state-based-action pass puts it back face down, so its face-up card's own "becomes tapped" or "is dealt damage"
+abilities can trigger in that window (only Karlov Watchdog's case; Unable to Scream removes them). Sure of the code, low.
+
+New line N62 (seen in FD-2): a face-down permanent's view carries its card's real id (`PermanentViewFactory.createFaceDownCardView`),
+the same id the card had in a reveal or a public zone, so an opponent can tell which card it is (CR 708.5). Sure of the code.
+
+New line N63 (seen in FD-2): hideaway's look belongs to the controller of the permanent that exiled the card (CR 702.75a), but
+`FaceDownVisibility.exileViewers` gives it to the exiler and `CreatureControlService` adds viewers on a control change only for
+Bane Alley Broker's and `ExileTopCardsToSourceEffect`'s exiles, so a stolen hideaway permanent's new controller can't look.
+Sure of the code.
 
 Outcome:
 

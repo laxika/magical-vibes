@@ -56,9 +56,9 @@ Why: "a permanent you put a +1/+1 counter on this turn" must not match another p
 ## Exile
 
 ### Face-down exile: look and play permissions are separate and bound to a player
-Each is granted to the player named by the exiling resolution and does not follow the source's controller; a looked-at card is shown only to that viewer, also when it cannot be cast or its source has left, and leaving exile clears the permission.
-Owner: floating `ExileLookPermissionEffect` / `ExilePlayPermissionEffect` on the card (`GameData.grantExileLookPermission`, `mayLookAtExiledCard`, `exilePlayPermission`); `GameViewProjectionFactory` (`GameStateMessage.lookedAtExileCards`).
-Why: hidden information must reach exactly the players the card text names.
+Each is granted to the player named by the exiling resolution and does not follow the source's controller; a looked-at card is shown only to that viewer, also when it cannot be cast or its source has left, and leaving exile clears the permission. Who may look is one answer, `FaceDownVisibility.exileViewers` (granted looks, plus the exiler of a card its source's abilities let be looked at): the view, prompts, logs and casting ask `FaceDownVisibility.mayLookAtExiledCard`, never `GameData.mayLookAtExiledCard` (granted looks only).
+Owner: floating `ExileLookPermissionEffect` / `ExilePlayPermissionEffect` on the card (`GameData.grantExileLookPermission`, `exilePlayPermission`); `FaceDownVisibility.exileViewers`; `GameViewProjectionFactory` (`GameStateMessage.lookedAtExileCards`).
+Why: hidden information must reach exactly the players the card text names, and the same players in every place it is shown.
 
 ### A source that lets its controller look adds viewers as it changes control
 For a source such as Bane Alley Broker, each player who gains control of it becomes a viewer of the cards exiled with it and remains one until the card leaves exile, also after the source is gone.

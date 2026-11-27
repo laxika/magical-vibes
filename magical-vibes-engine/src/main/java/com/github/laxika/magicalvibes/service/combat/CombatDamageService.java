@@ -1160,10 +1160,11 @@ public class CombatDamageService {
 
     /**
      * Turns face up every face-down creature that would assign combat damage in {@code phase} and
-     * turns face up when it assigns damage (Illusionary Mask). The turn-up triggers are collected by
+     * turns face up when it assigns damage (Illusionary Mask), unless it can't be turned face up: then
+     * it assigns damage as the face-down creature (CR 101.2). The turn-up triggers are collected by
      * the next state-based-action pass. Returns whether any creature was turned face up.
      */
-    private boolean turnMaskedCombatantsFaceUp(CombatDamageState state, DamagePhase phase,
+    private boolean turnMaskedCombatantsFaceUp(GameData gameData, CombatDamageState state, DamagePhase phase,
                                                DamagePhaseSnapshot snap,
                                                Map<Integer, List<Integer>> blockerMap,
                                                List<Permanent> atkBf, List<Permanent> defBf) {
@@ -1171,20 +1172,22 @@ public class CombatDamageService {
         for (var entry : blockerMap.entrySet()) {
             int atkIdx = entry.getKey();
             if (!(phase == DamagePhase.REGULAR && state.deadAttackerIndices.contains(atkIdx))) {
-                turnedUp |= turnMaskedCombatantFaceUp(atkBf.get(atkIdx), snap.attackerStats().get(atkIdx), phase);
+                turnedUp |= turnMaskedCombatantFaceUp(gameData, atkBf.get(atkIdx), snap.attackerStats().get(atkIdx), phase);
             }
             for (int blkIdx : entry.getValue()) {
                 if (phase == DamagePhase.REGULAR && state.deadDefenderIndices.contains(blkIdx)) continue;
-                turnedUp |= turnMaskedCombatantFaceUp(defBf.get(blkIdx), snap.defenderStats().get(blkIdx), phase);
+                turnedUp |= turnMaskedCombatantFaceUp(gameData, defBf.get(blkIdx), snap.defenderStats().get(blkIdx), phase);
             }
         }
         return turnedUp;
     }
 
-    private static boolean turnMaskedCombatantFaceUp(Permanent combatant, CombatantStats stats, DamagePhase phase) {
+    private boolean turnMaskedCombatantFaceUp(GameData gameData, Permanent combatant, CombatantStats stats,
+                                              DamagePhase phase) {
         if (!combatant.isFaceDown() || !combatant.isTurnsFaceUpOnDamageOrTap() || stats == null
                 || stats.combatDamage() <= 0 || stats.preventedFromDealingCombatDamage()
-                || !stats.participatesInDamagePhase(phase)) {
+                || !stats.participatesInDamagePhase(phase)
+                || gameQueryService.isTurnFaceUpPrevented(gameData, combatant)) {
             return false;
         }
         combatant.turnFaceUp();
@@ -1210,7 +1213,7 @@ public class CombatDamageService {
         // Illusionary Mask: a masked face-down creature that would assign combat damage is turned
         // face up first and assigns damage as the face-up creature, so re-snapshot after turning up.
         DamagePhaseSnapshot snap = turnMaskedCombatantsFaceUp(
-                state, phase, initialSnap, blockerMap, atkBf, defBf)
+                gameData, state, phase, initialSnap, blockerMap, atkBf, defBf)
                 ? snapshotDamagePhase(gameData, blockerMap, atkBf, defBf)
                 : initialSnap;
         if (phase == DamagePhase.FIRSTEST_STRIKE) {

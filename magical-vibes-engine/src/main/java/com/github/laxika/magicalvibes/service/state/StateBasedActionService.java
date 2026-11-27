@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureCause;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -133,16 +135,25 @@ public class StateBasedActionService {
     public void performStateBasedActions(GameData gameData) {
         if (gameData.waitingForSubgame) return;
         // Damage and tapping can turn a masked creature face up in the domain model. Collect
-        // its turn-up triggers before lethal damage can remove it from the battlefield.
-        List<Permanent> automaticallyTurnedFaceUp = new ArrayList<>();
+        // its turn-up triggers before lethal damage can remove it from the battlefield. The domain
+        // can't ask "can't be turned face up", so the creature is put back face down (a plain 2/2,
+        // CR 708.2a) and asked here: when it can't be turned face up it stays face down (CR 101.2).
+        Map<Permanent, UUID> automaticallyTurnedFaceUp = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (permanent.isPendingAutomaticTurnFaceUp()) {
-                gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
-                automaticallyTurnedFaceUp.add(permanent);
+                automaticallyTurnedFaceUp.put(permanent, controllerId);
             }
         });
-        for (Permanent permanent : automaticallyTurnedFaceUp) {
+        for (Map.Entry<Permanent, UUID> turnedUp : automaticallyTurnedFaceUp.entrySet()) {
+            Permanent permanent = turnedUp.getKey();
             permanent.setPendingAutomaticTurnFaceUp(false);
+            if (!permanent.isFaceDown()) {
+                permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            }
+            if (gameQueryService.isTurnFaceUpPrevented(gameData, permanent)) {
+                continue;
+            }
+            gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(turnedUp.getValue());
             turnFaceUpCopyService.turnFaceUpWithoutCost(gameData, permanent);
             if (gameData.interaction.isAwaitingInput()) return;
         }

@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -115,5 +118,28 @@ class KaylasMusicBoxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Its controller may look at the card it exiled face down, in the exile list as on the music box")
+    void controllerMayLookAtTheFaceDownCard() throws Exception {
+        Permanent musicBox = harness.addToBattlefieldAndReturn(player1, new KaylasMusicBox());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.publishState();
+
+        GameStateMessage state = new JacksonConfig().objectMapper().readValue(
+                harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        var view = state.battlefields().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.id().equals(musicBox.getId())).findFirst().orElseThrow();
+        assertThat(view.faceDownExiledCards()).extracting(CardView::id).containsExactly(topCard.getId());
+        assertThat(state.lookedAtExileCards()).extracting(CardView::id).containsExactly(topCard.getId());
+        GameStateMessage opponentState = new JacksonConfig().objectMapper().readValue(
+                harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(opponentState.lookedAtExileCards()).isEmpty();
     }
 }

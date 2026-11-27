@@ -60,8 +60,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
 
 - `FaceDownVisibility` is the one rule for whether a spell, ability or permanent gives away a face-down card: `nameShownTo` /
   `descriptionShownTo` (per viewer), `publicName` (what every player may read), `sourceName(entry)` (a stack entry's source),
-  `maySee` / `maySeeOnStack`. Every prompt, log line, option label and text that names a source or permanent asks it, never
-  `getCard().getName()` (text built from a name bypasses the log's redaction; a card segment is redacted by `GameLogService`).
+  `maySee` / `maySeeOnStack`, `mayLookAtExiledCard` (a card exiled face down, CR 406.3). Every prompt, log line, option label
+  and text that names a source or permanent asks it, never `getCard().getName()` (text built from a name bypasses the log's
+  redaction; a card segment is redacted by `GameLogService`).
 - `Permanent.displayName(card)`: a nameless card's description for text; the card keeps no name for rules that compare names
   (CR 201.2a).
 - A copy of a permanent reads `PermanentCopierService.cardToCopy` (face-down copiable values while face down: a nameless 2/2,

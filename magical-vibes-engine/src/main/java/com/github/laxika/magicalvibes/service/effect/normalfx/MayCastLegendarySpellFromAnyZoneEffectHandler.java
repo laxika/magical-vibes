@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLegendarySpellFromAnyZoneEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class MayCastLegendarySpellFromAnyZoneEffectHandler implements NormalEffe
         for (ExiledCardEntry exiled : List.copyOf(gameData.exiledCards)) {
             if (controllerId.equals(exiled.ownerId())
                     && (!exiled.faceDown() || gameData.foretoldCardIds.contains(exiled.card().getId())
-                    || gameData.mayLookAtExiledCard(exiled.card().getId(), controllerId))
+                    || FaceDownVisibility.mayLookAtExiledCard(gameData, exiled.card().getId(), controllerId))
                     && matches(exiled.card(), castEffect)) {
                 eligible.add(exiled.card());
             }

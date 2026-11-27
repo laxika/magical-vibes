@@ -1959,6 +1959,19 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     class CardSubjects {
 
         @Test
+        @DisplayName("A filter over the cards an exile step exiled face down sees no characteristics")
+        void faceDownExiledCardMatchesNoFilter() {
+            Card bears = new GrizzlyBears();
+            gd.addToExile(player2.getId(), bears, null, true);
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(bears.getId()), List.of(player2.getId())));
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.EXILE))).containsExactly(bears);
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.EXILE,
+                    new CardTypePredicate(CardType.CREATURE)))).isEmpty();
+        }
+
+        @Test
         @DisplayName("The cards an exile step recorded are named while they are in exile, and not once they left")
         void exiledCardsWhileInExile() {
             Card bears = new GrizzlyBears();

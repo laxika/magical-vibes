@@ -1855,7 +1855,7 @@ public class InteractionPromptProjectionRegistry {
 
     private boolean maySee(GameData gameData, UUID viewerId, Card card) {
         ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
-        return exiled == null || !exiled.faceDown() || gameData.mayLookAtExiledCard(card.getId(), viewerId);
+        return exiled == null || !exiled.faceDown() || FaceDownVisibility.mayLookAtExiledCard(gameData, card.getId(), viewerId);
     }
 
     private List<CardView> cardViews(List<Card> cards) {

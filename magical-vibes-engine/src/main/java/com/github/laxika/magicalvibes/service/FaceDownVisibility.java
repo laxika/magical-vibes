@@ -1,17 +1,30 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameLogSegment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileFaceDownPileEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -89,10 +102,89 @@ public final class FaceDownVisibility {
         }
         UUID cardId = entry.getCard().getId();
         if (gameData.isExiledFaceDown(cardId)) {
-            return gameData.mayLookAtExiledCard(cardId, playerId);
+            return mayLookAtExiledCard(gameData, cardId, playerId);
         }
         Permanent source = faceDownSource(gameData, entry);
         return source != null && controls(gameData, playerId, source);
+    }
+
+    /**
+     * Whether {@code playerId} may look at the card {@code cardId} that is exiled face down (CR 406.3): one of
+     * {@link #exileViewers(GameData, UUID)}. Every view, prompt and log line that may show such a card asks this.
+     */
+    public static boolean mayLookAtExiledCard(GameData gameData, UUID cardId, UUID playerId) {
+        return playerId != null && exileViewers(gameData, cardId).contains(playerId);
+    }
+
+    /**
+     * The players who may look at the face-down exiled card {@code cardId}, or none when it isn't exiled face down:
+     * see {@link #exileViewers(GameData, Permanent, UUID, ExiledCardEntry)}, with the permanent it was exiled with
+     * found on the battlefield.
+     */
+    public static Set<UUID> exileViewers(GameData gameData, UUID cardId) {
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled == null || !exiled.faceDown()) {
+            return Set.of();
+        }
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+                if (permanent.getId().equals(exiled.sourcePermanentId())
+                        || gameData.imprintedCards.get(permanent.getCard().getId()) == exiled.card()) {
+                    return exileViewers(gameData, permanent, controllerId, exiled);
+                }
+            }
+        }
+        return exileViewers(gameData, null, null, exiled);
+    }
+
+    /**
+     * The players who may look at {@code exiled}, a card exiled face down (CR 406.3), the one answer the game view and
+     * every prompt read: each player a resolution or control change granted a look ({@code GameData.exileLookViewers}),
+     * and, while {@code source} (the permanent it was exiled with, controlled by {@code sourceControllerId}) is on the
+     * battlefield, the player who exiled it or else that controller, unless the source's abilities exile it so that
+     * nobody may look: a draw replaced by a face-down exile, a face-down pile, a face-down imprint from the hand, an
+     * intel counter, a face-down library exile without "you may look", or a hand exiled face down.
+     */
+    public static Set<UUID> exileViewers(GameData gameData, Permanent source, UUID sourceControllerId,
+                                         ExiledCardEntry exiled) {
+        Set<UUID> viewers = new LinkedHashSet<>();
+        if (source != null && grantsImplicitLook(gameData, source.getCard(), exiled)) {
+            viewers.add(exiled.exilerId() != null ? exiled.exilerId() : sourceControllerId);
+        }
+        viewers.addAll(gameData.exileLookViewers(exiled.card().getId()));
+        return viewers;
+    }
+
+    private static boolean grantsImplicitLook(GameData gameData, Card source, ExiledCardEntry exiled) {
+        if (source.getStaticEffects().stream().anyMatch(ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)
+                || source.getOwnEntryEffects().stream()
+                .anyMatch(SearchLibraryForCardsToExileFaceDownPileEffect.class::isInstance)
+                || gameData.exiledCardHasCounter(exiled.card().getId(), CounterType.INTEL)) {
+            return false;
+        }
+        List<CardEffect> effects = Stream.of(source.getCastingCostsAndSpellEffects().stream(),
+                        source.getStaticEffects().stream(), source.getTriggeredEffects().stream(),
+                        source.getOwnEntryEffects().stream(),
+                        source.getActivatedAbilities(Zone.BATTLEFIELD).stream()
+                                .flatMap(ability -> ability.getEffects().stream()))
+                .flatMap(stream -> stream)
+                .flatMap(FaceDownVisibility::unwrapped)
+                .toList();
+        return effects.stream().noneMatch(effect -> effect instanceof ExileFromHandToImprintEffect imprint
+                        && imprint.faceDown()
+                        || effect instanceof ExileTopCardsToSourceEffect exile
+                        && exile.faceDown() && !exile.mayLookAtFaceDownCards()
+                        || effect instanceof ExileTargetPlayerHandEffect hand && hand.faceDown());
+    }
+
+    /** {@code effect} and the steps it wraps: a "you may" choice's effect, a sequence's steps. */
+    private static Stream<CardEffect> unwrapped(CardEffect effect) {
+        return switch (effect) {
+            case MayEffect may -> Stream.concat(Stream.of(effect), unwrapped(may.wrapped()));
+            case SequenceEffect sequence -> Stream.concat(Stream.of(effect),
+                    sequence.steps().stream().flatMap(FaceDownVisibility::unwrapped));
+            default -> Stream.of(effect);
+        };
     }
 
     /** Whether {@code playerId} controls {@code permanent}, on the battlefield or phased out. */

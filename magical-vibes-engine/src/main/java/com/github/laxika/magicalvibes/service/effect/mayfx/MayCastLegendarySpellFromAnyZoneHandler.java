@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLegendarySpellFromAnyZoneEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -63,7 +64,7 @@ public class MayCastLegendarySpellFromAnyZoneHandler implements MayEffectHandler
         ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
         if (exiled != null && player.getId().equals(exiled.ownerId())
                 && (!exiled.faceDown() || gameData.foretoldCardIds.contains(card.getId())
-                || gameData.mayLookAtExiledCard(card.getId(), player.getId()))) {
+                || FaceDownVisibility.mayLookAtExiledCard(gameData, card.getId(), player.getId()))) {
             if (accepted) {
                 removeRemainingOffers(gameData);
                 exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, card.getId());

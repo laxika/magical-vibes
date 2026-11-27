@@ -3,7 +3,12 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.k.KarlovWatchdog;
 import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
+import com.github.laxika.magicalvibes.cards.u.UnableToScream;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,14 +16,16 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({IllusionaryMask.class, GrizzlyBears.class, CrawWurm.class,
-        LightningBolt.class, SphereOfResistance.class})
+        LightningBolt.class, SphereOfResistance.class, UnableToScream.class, KarlovWatchdog.class})
 class IllusionaryMaskTest extends BaseCardTest {
 
     @Test
@@ -131,5 +138,58 @@ class IllusionaryMaskTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         harness.passBothPriorities();
         assertThat(findPermanent(player1, "Grizzly Bears").isFaceDown()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A masked creature that can't be turned face up becomes tapped and stays face down")
+    void tappedMaskedCreatureThatCantTurnFaceUpStaysFaceDown() {
+        Permanent masked = addMaskedCreature(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new UnableToScream());
+        aura.setAttachedTo(masked.getId());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(masked.isTapped()).isTrue();
+        assertThat(masked.isFaceDown()).isTrue();
+        assertThat(gd.playersWhoTurnedPermanentsFaceUpThisTurn).doesNotContain(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A masked creature that can't be turned face up is dealt damage as the face-down 2/2")
+    void damagedMaskedCreatureThatCantTurnFaceUpStaysFaceDown() {
+        Permanent masked = addMaskedCreature(player1, new CrawWurm());
+        harness.addToBattlefield(player2, new KarlovWatchdog());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, masked.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(masked);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(masked.getCard());
+    }
+
+    @Test
+    @DisplayName("A masked blocker that can't be turned face up assigns combat damage as the face-down 2/2")
+    void maskedBlockerThatCantTurnFaceUpDealsFaceDownDamage() {
+        Permanent masked = addMaskedCreature(player1, new CrawWurm());
+        harness.addToBattlefield(player2, new KarlovWatchdog());
+        Permanent attacker = addCreatureReady(player2, new CrawWurm());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(1));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat(player2);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(masked.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    private Permanent addMaskedCreature(Player player, Card card) {
+        Permanent permanent = addCreatureReady(player, card);
+        permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        permanent.setTurnsFaceUpOnDamageOrTap(true);
+        return permanent;
     }
 }

@@ -238,8 +238,10 @@ public class SubjectResolutionService {
             case CardSubject.CardsThisWay thisWay -> thisWay.filter() == null
                     ? cardsThisWay(gameData, entry, thisWay.kind())
                     : cardsThisWay(gameData, entry, thisWay.kind()).stream()
-                    .filter(located -> cardMatches(gameData, entry, located.card(), located.ownerId(),
-                            thisWay.filter()))
+                    .filter(located -> cardMatches(gameData, entry, located.zone() == Zone.EXILE
+                                    && gameData.isExiledFaceDown(located.card().getId())
+                                    ? Card.namedRuntimePlaceholder("") : located.card(),
+                            located.ownerId(), thisWay.filter()))
                     .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
             case CardSubject.TargetGraveyardCards targets -> targetGraveyardCards(gameData, entry, effect, targets);
@@ -816,7 +818,7 @@ public class SubjectResolutionService {
      * exiled instead, in exile). Only
      * a card still in that zone is named, and, for a delayed ability's step, in the stay it was bound to
      * ({@link MovedCard#entryVersion()}, CR 603.7c); the subject's filter, when it has one, is then judged on each card
-     * as it is there.
+     * as it is there (a card exiled face down as a card with no characteristics, CR 406.3a).
      */
     private List<LocatedCard> cardsThisWay(GameData gameData, StackEntry entry, StepKind kind) {
         StepOutcome outcome = entry.getResolutionResults().outcome(kind);
