@@ -20,10 +20,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                      (set this when the ability also has {@code requiresTap = true})
  * @param tracksChosenPermanents whether the chosen permanents are retained on the ability's stack
  *                                entry for a later effect in that ability
+ * @param description   the kind of permanent tapped as the text names it, read with the count ("creature",
+ *                      "artifacts and/or creatures"), for the prompts and log lines of a cost paid as an effect
+ *                      resolves; {@code null} reads "permanent"
  */
 public record TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate filter, boolean excludeSource,
-                                        boolean tracksChosenPermanents)
+                                        boolean tracksChosenPermanents, String description)
         implements CostEffect {
+
+    public TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate filter, boolean excludeSource,
+                                     boolean tracksChosenPermanents) {
+        this(count, filter, excludeSource, tracksChosenPermanents, null);
+    }
 
     public TapMultiplePermanentsCost(int count, PermanentPredicate filter) {
         this(new Fixed(count), filter, false, false);
@@ -40,6 +48,11 @@ public record TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate 
 
     public TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate filter, boolean excludeSource) {
         this(count, filter, excludeSource, false);
+    }
+
+    /** This cost naming the kind of permanent it taps ({@link #description()}). */
+    public TapMultiplePermanentsCost withDescription(String description) {
+        return new TapMultiplePermanentsCost(count, filter, excludeSource, tracksChosenPermanents, description);
     }
 
     @Override

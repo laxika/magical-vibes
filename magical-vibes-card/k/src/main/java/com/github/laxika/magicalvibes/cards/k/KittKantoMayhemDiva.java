@@ -40,7 +40,7 @@ public class KittKantoMayhemDiva extends Card {
                 new PermanentControlledByActivePlayerPredicate()));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 UnlessPaysEffect.youMayPay(
-                        new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
+                        new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()).withDescription("creatures"),
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 BoostEffect.target(2, 2, activePlayerCreature),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),

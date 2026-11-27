@@ -75,7 +75,8 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, actingPlayerId, tappedMatchingIds, maxCount,
-                new MultiPermanentChoiceContext.PayManaPerCreatureUntap(actingPlayerId, e.manaCost()),
+                new MultiPermanentChoiceContext.PayManaPerCreatureUntap(actingPlayerId, e.manaCost(),
+                        entry.getControllerId()),
                 "Choose any number of tapped creatures to untap (pay " + e.manaCost() + " each).");
     }
 

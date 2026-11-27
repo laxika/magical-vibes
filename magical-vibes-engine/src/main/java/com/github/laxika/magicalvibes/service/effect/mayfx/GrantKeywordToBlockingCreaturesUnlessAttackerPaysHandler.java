@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect;
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -25,6 +25,7 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysHandler implements
     private final GameLogService gameLogService;
     private final GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffectHandler normalHandler;
     private final InputCompletionService inputCompletionService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,10 +42,9 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysHandler implements
 
         boolean paid = false;
         if (accepted) {
-            ManaCost cost = new ManaCost(effect.manaCost());
-            ManaPool pool = gameData.playerManaPools.get(ability.controllerId());
-            if (pool != null && cost.canPayResolutionCost(pool)) {
-                cost.payResolutionCost(pool);
+            // A tax paid to the ability's controller (Tax Taker).
+            if (costPayment.payManaFromPool(gameData, ability.controllerId(), new ManaCost(effect.manaCost()),
+                    ability.sourceControllerId())) {
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));

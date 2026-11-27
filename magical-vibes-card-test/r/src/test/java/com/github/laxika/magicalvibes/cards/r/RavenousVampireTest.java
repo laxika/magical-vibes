@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.i.IgneousGolem;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -56,7 +58,7 @@ class RavenousVampireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Artifact creatures can't be sacrificed, so the Vampire itself is the only legal choice")
+    @DisplayName("Artifact creatures can't be sacrificed, so the Vampire itself, the only legal choice, is sacrificed unasked")
     void artifactCreatureIsNotALegalSacrifice() {
         harness.addToBattlefield(player1, new RavenousVampire());
         harness.addToBattlefield(player1, new IgneousGolem());
@@ -64,16 +66,14 @@ class RavenousVampireTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
-                .containsExactly(harness.getPermanentId(player1, "Ravenous Vampire"));
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ravenous Vampire"));
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
         harness.assertOnBattlefield(player1, "Igneous Golem");
     }
 
     @Test
-    @DisplayName("The Vampire may sacrifice itself, but cannot sacrifice an opponent's creature")
+    @DisplayName("The Vampire may sacrifice itself, unasked as the only choice, but cannot sacrifice an opponent's creature")
     void selfSacrificeDoesNotUseOpponentsCreature() {
         harness.addToBattlefield(player1, new RavenousVampire());
         harness.addToBattlefield(player2, new FeralShadow());
@@ -81,12 +81,35 @@ class RavenousVampireTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ravenous Vampire"));
 
         harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
         harness.assertInGraveyard(player1, "Ravenous Vampire");
         harness.assertOnBattlefield(player2, "Feral Shadow");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @DisplayName("A lone choice whose death needs a replacement choice is still picked, and the replacement asked first")
+    void loneChoiceWithADeathReplacementQuestionIsPicked() {
+        harness.addToBattlefield(player1, new RavenousVampire());
+        harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon()).setAttachedTo(player1.getId());
+        harness.addToBattlefield(player2, new LeylineOfTheVoid());
+        UUID vampire = harness.getPermanentId(player1, "Ravenous Vampire");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(vampire);
+        harness.handlePermanentChosen(player1, vampire);
+        harness.assertOnBattlefield(player1, "Ravenous Vampire");
+        harness.handleListChoice(player1, "Exile it");
+
+        harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getName())
+                .contains("Ravenous Vampire");
     }
 
     @Test

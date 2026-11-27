@@ -35,7 +35,7 @@ public class ThousandMoonsSmithy extends Card {
         PermanentAnyOfPredicate artifactsOrCreatures = artifactsOrCreatures();
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 UnlessPaysEffect.youMayPay(
-                        new TapMultiplePermanentsCost(5, artifactsOrCreatures),
+                        new TapMultiplePermanentsCost(5, artifactsOrCreatures).withDescription("artifacts and/or creatures"),
                         new TransformSelfEffect())
                         .withPrompt("Tap five untapped artifacts and/or creatures to transform Thousand Moons Smithy?"));
     }

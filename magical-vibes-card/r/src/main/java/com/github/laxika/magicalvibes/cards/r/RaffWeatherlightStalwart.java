@@ -31,7 +31,7 @@ public class RaffWeatherlightStalwart extends Card {
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
                 UnlessPaysEffect.youMayPay(
-                        new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
+                        new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()).withDescription("creatures"),
                         new DrawCardEffect(1))
                         .withPrompt("Tap two untapped creatures you control to draw a card?"));
 

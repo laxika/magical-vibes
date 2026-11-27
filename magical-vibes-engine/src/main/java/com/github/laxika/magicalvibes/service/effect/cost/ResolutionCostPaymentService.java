@@ -142,7 +142,9 @@ import org.springframework.stereotype.Component;
  *   madness and "whenever a player discards" see it; caused by the source's controller's ability when the payer is
  *   another player (CR 701.9).</li>
  *   <li>{@link SacrificePermanentCost}: the shared sacrifice choice, through the sacrifice action (sacrifice triggers,
- *   death replacements).</li>
+ *   death replacements); the one permanent that could be sacrificed is sacrificed unasked (CR 608.2d), unless its
+ *   move to the graveyard has a death replacement question, which its pick's completion asks first (CR 616.1). The
+ *   permanent is recorded on the entry as it was ("this way", CR 608.2h).</li>
  *   <li>{@link SacrificeMultiplePermanentsCost}: exactly that many chosen permanents, sacrificed together with their
  *   death replacements asked first (CR 616.1).</li>
  *   <li>{@link DiscardHandCost}: the discard-hand action; payable with an empty hand.</li>
@@ -231,11 +233,23 @@ public class ResolutionCostPaymentService {
      *                        {@code null} when the payment isn't an answer to a "may" prompt
      * @param entry           the resolving entry that asks for the payment: the dealer of a damage cost (CR 608.2h)
      *                        and the entry a blight's counters are put through, or {@code null}
+     * @param replay          the answer this payment completes when it isn't a "may" answer (an X chosen while
+     *                        paying), completed again after a death replacement question, or {@code null}
      */
-    public record Payment(Card sourceCard, UUID sourceControllerId, PendingMayAbility answering, StackEntry entry) {
+    public record Payment(Card sourceCard, UUID sourceControllerId, PendingMayAbility answering, StackEntry entry,
+                          GameData.DeathReplacementChoiceReplay replay) {
+
+        public Payment(Card sourceCard, UUID sourceControllerId, PendingMayAbility answering, StackEntry entry) {
+            this(sourceCard, sourceControllerId, answering, entry, null);
+        }
 
         public Payment(Card sourceCard, UUID sourceControllerId, PendingMayAbility answering) {
-            this(sourceCard, sourceControllerId, answering, null);
+            this(sourceCard, sourceControllerId, answering, null, null);
+        }
+
+        /** The answer {@code payer} completes again after a death replacement question, or {@code null} for none. */
+        GameData.DeathReplacementChoiceReplay answerReplay(Player payer) {
+            return answering != null ? new GameData.MayAnswerReplay(payer, answering, true) : replay;
         }
     }
 
@@ -592,6 +606,17 @@ public class ResolutionCostPaymentService {
                         sacrifice.excludeSource(), payment.entry());
                 if (candidates.isEmpty()) {
                     yield Outcome.NOT_PAID;
+                }
+                Permanent only = candidates.size() == 1
+                        ? gameQueryService.findPermanentById(gameData, candidates.getFirst()) : null;
+                if (only != null && !permanentRemovalService.hasDeathReplacementQuestion(gameData, only)) {
+                    // The one possible answer is made unasked (CR 608.2d); one with a death replacement question
+                    // is picked, as the pick's completion asks the question before it leaves (CR 616.1).
+                    if (payment.entry() != null) {
+                        destructionSupport.recordSacrificedOn(gameData, payment.entry(), only);
+                    }
+                    destructionSupport.sacrificeAndLog(gameData, only, payerId);
+                    yield afterImmediatePayment(gameData);
                 }
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.SacrificePermanentThen(payerId, payment.sourceCard(), null));
@@ -989,7 +1014,7 @@ public class ResolutionCostPaymentService {
         return switch (cost) {
             case SacrificePermanentCost sacrifice -> pick(gameData, payerId,
                     sacrificeCandidates(gameData, payerId, sacrifice.filter(), sacrifice.excludeSource(), entry), 1,
-                    "Choose " + (sacrifice.description() == null ? "a permanent" : "a " + sacrifice.description())
+                    "Choose " + (sacrifice.description() == null ? "a permanent" : withArticle(sacrifice.description()))
                             + " to sacrifice.");
             case SacrificeMultiplePermanentsCost sacrifice -> pick(gameData, payerId,
                     sacrificeCandidates(gameData, payerId, sacrifice.filter(), false, entry), sacrifice.count(),
@@ -1002,7 +1027,10 @@ public class ResolutionCostPaymentService {
                         .filter(id -> !gameQueryService.cantBeChosen(gameData,
                                 gameQueryService.findPermanentById(gameData, id)))
                         .toList();
-                yield pick(gameData, payerId, candidates, count, count == 1 ? "Choose a permanent to tap." : "Choose " + count + " permanents to tap.");
+                String kind = tap.description() != null ? tap.description() : count == 1 ? "permanent" : "permanents";
+                yield pick(gameData, payerId, candidates, count,
+                        "Choose " + (count == 1 ? tap.excludeSource() ? "another " + kind : withArticle(kind)
+                                : count + " " + kind) + " to tap.");
             }
             case DamageFromSourceCost ignored -> Choice.chosen(List.of());
             case SourceControllerDrawsCost ignored -> Choice.chosen(List.of());
@@ -1907,21 +1935,21 @@ public class ResolutionCostPaymentService {
     }
 
     /**
-     * Runs {@code payment}; paying life is losing it (CR 119.4), so when the payment answers a prompt, a Lich's Duel
-     * Mastery sacrifice it would cause has its death replacements asked first (CR 616.1), and the answer is completed
-     * again once they are chosen ({@link Outcome#ASKING}).
+     * Runs {@code payment}; paying life is losing it (CR 119.4), so when the payment answers a prompt (a "may" or the
+     * X chosen while paying), a Lich's Duel Mastery sacrifice it would cause has its death replacements asked first
+     * (CR 616.1), and the answer is completed again once they are chosen ({@link Outcome#ASKING}).
      */
     private Outcome payAskingDeathReplacementsFirst(GameData gameData, Player payer, int life, Payment payment,
                                                     Runnable pay) {
-        if (life <= 0 || payment.answering() == null || permanentChoiceHandlerService == null) {
+        GameData.DeathReplacementChoiceReplay replay = payment.answerReplay(payer);
+        if (life <= 0 || replay == null || permanentChoiceHandlerService == null) {
             pay.run();
             return Outcome.PAID;
         }
-        boolean stopped = permanentChoiceHandlerService.answerAskingDeathReplacementsFirst(
-                gameData, payer, payment.answering(), true, () -> {
-                    lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, Map.of(payer.getId(), life));
-                    pay.run();
-                });
+        boolean stopped = permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData, () -> {
+            lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, Map.of(payer.getId(), life));
+            pay.run();
+        }, replay);
         return stopped ? Outcome.ASKING : Outcome.PAID;
     }
 

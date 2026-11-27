@@ -45,7 +45,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | CT-1 done 2026-11-27; CT-2 open |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1 done 2026-11-27; EB-2, EB-3 open |
-| PY Payments | PY-1, PY-2, PY-3 | open |
+| PY Payments | PY-1, PY-2, PY-3 | PY-1 done 2026-11-27; PY-2, PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | open |
 | LS Library searches and reveals | LS-1, LS-2 | open |
 | TK Tokens and copies | TK-1, TK-2 | open |
@@ -515,7 +515,22 @@ prompt; latent, fix only if cheap).
 Likely touches: `ResolutionCostPaymentService`, `UnlessPaysEffectHandler`, `WaterbendPaymentService`.
 Avoid: MP-2.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: P22 and O73 (the one permanent a sacrifice ransom paid at once could take is sacrificed unasked,
+CR 608.2d, unless its move to the graveyard has a death replacement question, whose pick still asks it first, CR 616.1; it is
+recorded on the entry through the new `DestructionSupport.recordSacrificedOn`, so Three Dog's reflexive copy still reads it), P23
+(`TapMultiplePermanentsCost.withDescription`: "taps an untapped creature", "another" for a source-excluding tap; 15 tap-ransom
+cards), P24 (an X chosen while paying asks a Lich's Duel Mastery sacrifice's death replacements before its {B} is paid with life
+under K'rrik, CR 119.4, 616.1: `Payment.replay`, an `InteractionAnswerReplay` of the X answer, `nextStep` waits as `PAYING`), O60
+(Tariff, Winter's Chill, Fade Away, Tidal Flats, Heroism, Power Leak / Errant Minion and the per-creature untap of Magnetic
+Mountain, Thelon's Curse, Mudslide and Dream Tides pay through `payManaFromPool` with the asking effect's controller as the taxing
+player; `MultiPermanentChoiceContext.PayManaPerCreatureUntap.taxingPlayerId`; edited down to Reflect, latent). Deleted from entry 18:
+P22, P23, P24, O73. Dropped (tests pass on HEAD, kept as pins): O59 (a K'rrik payer with only untapped Swamps is asked and pays,
+`couldPossiblyPayMana` asks anyone with a mana source), O64 (likewise for ward—waterbend), O69 (Ice Cave: {G/P} paid with 2 life,
+{R/W} with either colour; CR 107.4e, 107.4f), O70 (the pay path already reads "an Aura"; the paid-together `choose` prompt now uses
+the article too); Forgotten Lore's payment is its own controller's, never a tax. Left: O71 (latent, not cheap), O72 (already in
+entry 17 as U3b Q5; Tax Taker's text "pays a tax from a spell or permanent you control" doesn't define "tax"), O76 (latent: no card
+has both), P25 (waits on the owner). `answerForcedPick` no longer throws when the one-permanent sacrifice was made unasked. No effect
+class added or deleted, so no ledger or ratchet change; no `CONVERSION_VERSION` change.
 
 #### PY-2. Mana: spending and producing
 
@@ -791,6 +806,14 @@ S3 and S21 (Ezuri's Predation, left by DM-2): build the "for each of those creat
 (the same piece entry 16's `CreatedTokensFightDifferentOpponentCreaturesEffect` line needs), one step that counts, creates and
 pairs from one list, and simultaneous fights.
 
+New line N16 (seen in PY-1): Heroism's "prevent all combat damage that would be dealt by that creature" is registered with the
+attacking creature's controller as the prevention's controller (`PreventCombatDamageFromAttackingCreaturesUnlessPaysHandler` passes
+`ability.controllerId()`), not Heroism's controller (`ability.sourceControllerId()`, set since PY-1).
+
+New line N17 (seen in PY-1): a `SacrificeMultiplePermanentsCost` ransom paid at once (Valgavoth, `counterUnlessSacrifices(n, ...)`)
+still asks the pick when exactly that many permanents could be sacrificed; the one-permanent case is made unasked since PY-1 (the
+CR 608.2d convention), the multi one would need the same death-replacement-question guard.
+
 Outcome:
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
@@ -849,6 +872,10 @@ Addle and Intuition before), H5 (`SetBasePowerToughnessEffectHandler` prints "nu
 Avoid: CB-1 (H8 is there).
 
 New line N2 (seen in DM-1): the Healing Grace shield's order-prompt label says "(Healing Grace)" for Errant Minion's shield too.
+
+New line N18 (seen in PY-1): a tap ransom paid at once picks one permanent at a time with `MultiplePermanentTapCostHandler`'s
+"Choose an untapped permanent to tap" whatever the cost's `description` (Raff Weatherlight Stalwart's creatures, Thousand Moons
+Smithy's artifacts and/or creatures).
 
 Outcome:
 

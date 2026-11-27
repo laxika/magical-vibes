@@ -99,9 +99,6 @@ class VeinRipperTest extends BaseCardTest {
         harness.castInstant(player2, 0, rippersId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player2, fodder.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());

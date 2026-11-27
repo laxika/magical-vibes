@@ -264,8 +264,9 @@ public abstract class BaseCardTest {
      */
     /**
      * Answers the pick of a ransom {@code payer} accepted to pay when the permanents it takes are all the candidates (one
-     * creature for "sacrifice a creature" or "put a -1/-1 counter on a creature", exactly two Swamps for "sacrifice two
-     * Swamps"): the shared prompt still asks it.
+     * creature for "put a -1/-1 counter on a creature", exactly two Swamps for "sacrifice two Swamps"): the shared prompt
+     * still asks it. The one permanent a sacrifice could take is taken unasked (CR 608.2d), so with no such pick open
+     * nothing is answered.
      */
     protected void answerForcedPick(Player payer) {
         PendingInteraction.PermanentChoice single = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -279,7 +280,10 @@ public abstract class BaseCardTest {
             harness.handleMultiplePermanentsChosen(payer, multi.validIds());
             return;
         }
-        throw new IllegalStateException(payer.getUsername() + " isn't asked a pick with one possible answer");
+        if (single != null && payer.getId().equals(single.playerId())
+                || multi != null && payer.getId().equals(multi.playerId())) {
+            throw new IllegalStateException(payer.getUsername() + " is asked a pick with more than one possible answer");
+        }
     }
 
     protected void payUnlessAlternative(Player payer, String action) {

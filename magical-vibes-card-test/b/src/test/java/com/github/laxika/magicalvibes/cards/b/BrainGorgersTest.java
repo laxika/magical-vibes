@@ -38,7 +38,6 @@ class BrainGorgersTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, creature.getId());
 
         harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertInGraveyard(player2, "Blood Knight");
@@ -55,7 +54,6 @@ class BrainGorgersTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, casterCreature.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
@@ -80,7 +78,6 @@ class BrainGorgersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, opponentCreature.getId());
 
         harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertInGraveyard(player2, "Blood Knight");
@@ -145,7 +142,6 @@ class BrainGorgersTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, first.getId());
 
         harness.assertInGraveyard(player1, "Blood Knight");
         harness.assertOnBattlefield(player2, "Blood Knight");
@@ -153,7 +149,6 @@ class BrainGorgersTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, second.getId());
 
         harness.assertInGraveyard(player2, "Blood Knight");
         harness.assertInGraveyard(player1, "Brain Gorgers");
@@ -190,7 +185,6 @@ class BrainGorgersTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Blood Knight"));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Brain Gorgers");

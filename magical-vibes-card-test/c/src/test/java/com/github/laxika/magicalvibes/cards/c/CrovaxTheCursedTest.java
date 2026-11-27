@@ -76,7 +76,6 @@ class CrovaxTheCursedTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, crovax.getId());
 
         harness.assertNotOnBattlefield(player1, "Crovax the Cursed");
         harness.assertInGraveyard(player1, "Crovax the Cursed");
@@ -166,7 +165,6 @@ class CrovaxTheCursedTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Craven Giant"));
 
         harness.assertInGraveyard(player1, "Crovax the Cursed");
         harness.assertInGraveyard(player1, "Craven Giant");

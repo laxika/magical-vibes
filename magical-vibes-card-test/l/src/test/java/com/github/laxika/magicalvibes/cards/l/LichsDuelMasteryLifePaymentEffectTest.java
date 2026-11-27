@@ -33,7 +33,9 @@ import com.github.laxika.magicalvibes.cards.b.BronzeTablet;
 import com.github.laxika.magicalvibes.cards.c.Cleansing;
 import com.github.laxika.magicalvibes.cards.c.CityOfShadows;
 import com.github.laxika.magicalvibes.cards.d.DashHopes;
+import com.github.laxika.magicalvibes.cards.e.ElendaAndAzor;
 import com.github.laxika.magicalvibes.cards.e.EmberwildeDjinn;
+import com.github.laxika.magicalvibes.cards.k.KrrikSonOfYawgmoth;
 import com.github.laxika.magicalvibes.cards.f.FearMyAuthority;
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -421,6 +423,35 @@ class LichsDuelMasteryLifePaymentEffectTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(controls(player2, djinnId)).isTrue();
+    }
+
+    @Test
+    @CardUsed({ElendaAndAzor.class, KrrikSonOfYawgmoth.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("An X chosen while paying, its {B} paid with 2 life under K'rrik, asks the Mastery's sacrifice first")
+    void xPaymentWithLifeForBlackAsksTheMasteryFirst() {
+        Permanent mastery = shieldlessMasteryBetweenWheelAndLeyline(player1);
+        harness.addToBattlefield(player1, new KrrikSonOfYawgmoth());
+        Permanent elenda = addCreatureReady(player1, new ElendaAndAzor());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(List.of(indexOf(player1, elenda)));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+
+        assertMasteryAsked(player1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+
+        answerExile(player1, mastery);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test

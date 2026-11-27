@@ -842,14 +842,11 @@ public sealed interface MultiPermanentChoiceContext {
      * whose upkeep it is) chose any number of their tapped matching creatures (up to what they can
      * afford). They pay {@code manaCost} for each chosen creature from their mana pool, then those
      * creatures untap. The choice was already capped at begin time by the mana available, so
-     * payment always succeeds; the empty selection means "untap none".
+     * payment always succeeds; the empty selection means "untap none". The mana is a tax paid to
+     * {@code taxingPlayerId}, the controller of the ability asking for it, when that is another player.
      */
-    record PayManaPerCreatureUntap(UUID actingPlayerId, String manaCost)
+    record PayManaPerCreatureUntap(UUID actingPlayerId, String manaCost, UUID taxingPlayerId)
             implements MultiPermanentChoiceContext {
-
-        public PayManaPerCreatureUntap(UUID actingPlayerId, int manaPerCreature) {
-            this(actingPlayerId, "{" + manaPerCreature + "}");
-        }
     }
 
     /** Feather, Radiant Arbiter: choose creatures to receive spell copies and pay per creature. */

@@ -81,7 +81,6 @@ class ManaVortexTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mana Vortex");
@@ -184,7 +183,6 @@ class ManaVortexTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Scavenger Folk");
@@ -206,7 +204,6 @@ class ManaVortexTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mana Vortex");

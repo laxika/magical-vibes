@@ -90,7 +90,6 @@ class DreamshaperShamanTest extends BaseCardTest {
 
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, shaman.getId());
 
         harness.assertInGraveyard(player1, "Dreamshaper Shaman");
         harness.assertNotOnBattlefield(player1, "Dreamshaper Shaman");
@@ -108,7 +107,6 @@ class DreamshaperShamanTest extends BaseCardTest {
 
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, shaman.getId());
 
         harness.assertOnBattlefield(player1, "Bronze Sword");
         harness.assertNotOnBattlefield(player1, "Nyxborn Colossus");
@@ -128,7 +126,6 @@ class DreamshaperShamanTest extends BaseCardTest {
 
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, shaman.getId());
 
         harness.assertInGraveyard(player1, "Dreamshaper Shaman");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -175,9 +172,8 @@ class DreamshaperShamanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new SetessanTraining(), new FinalFlare()));
 
         resolveEndStepTrigger();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.END_STEP,
-                () -> harness.handlePermanentChosen(player1, shaman.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertNotOnBattlefield(player1, "Setessan Training");
         harness.assertNotInGraveyard(player1, "Setessan Training");
@@ -220,9 +216,8 @@ class DreamshaperShamanTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         resolveEndStepTrigger();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handlePermanentChosen(player1, shaman.getId());
+            harness.handleMayAbilityChosen(player1, true);
             harness.passBothPriorities();
         });
 

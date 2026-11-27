@@ -2597,7 +2597,9 @@ public class MultiPermanentChoiceHandlerService {
             }
             if (canPay) {
                 for (int i = 0; i < permanentIds.size(); i++) {
-                    cost.payResolutionCost(pool);
+                    // A tax paid to the ability's controller (Tax Taker).
+                    resolutionCostPaymentService.payManaFromPool(gameData, actingPlayerId, cost,
+                            context.taxingPlayerId());
                 }
                 List<Card> untappedCards = new ArrayList<>();
                 for (UUID permId : permanentIds) {

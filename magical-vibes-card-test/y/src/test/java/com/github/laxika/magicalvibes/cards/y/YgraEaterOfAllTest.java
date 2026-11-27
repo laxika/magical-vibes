@@ -135,7 +135,6 @@ class YgraEaterOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, food.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Daggerfang Duo");

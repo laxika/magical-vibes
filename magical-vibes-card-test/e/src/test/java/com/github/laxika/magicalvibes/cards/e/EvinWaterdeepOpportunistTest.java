@@ -107,7 +107,6 @@ class EvinWaterdeepOpportunistTest extends BaseCardTest {
         harness.castInstant(player2, 0, evin.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, bear.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");

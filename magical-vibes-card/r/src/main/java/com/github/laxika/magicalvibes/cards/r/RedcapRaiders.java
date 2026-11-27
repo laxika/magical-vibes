@@ -25,7 +25,7 @@ public class RedcapRaiders extends Card {
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
                 new TapMultiplePermanentsCost(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))))),
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))))).withDescription("non-Human creature"),
                 SequenceEffect.of(
                         BoostEffect.self(1, 1),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())))

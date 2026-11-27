@@ -100,7 +100,6 @@ class IndulgentTormentorTest extends BaseCardTest {
 
         resolveTormentorTrigger();
         payUnlessAlternative(player2, "Sacrifice");
-        harness.handlePermanentChosen(player2, bear.getId());
 
         harness.assertInGraveyard(player2, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player2, "Runeclaw Bear");

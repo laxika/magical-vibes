@@ -415,6 +415,67 @@ class ResolutionCostPaymentServiceTest {
     }
 
     @Nested
+    @DisplayName("A one-permanent sacrifice paid as the payer answers")
+    class SacrificePaidAtOnce {
+
+        private UUID otherId;
+        private StackEntry entry;
+        private Permanent bears;
+        private DestructionSupport destruction;
+        private com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService removal;
+        private PlayerInputService input;
+
+        @BeforeEach
+        void withOneCreature() {
+            otherId = UUID.randomUUID();
+            gd.playerIds.add(otherId);
+            gd.playerBattlefields.put(payerId, new ArrayList<>());
+            bears = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(payerId).add(bears);
+            Card source = new Card();
+            source.setName("Ravenous Vampire");
+            entry = com.github.laxika.magicalvibes.testutil.TestStackDoor.triggered(source, otherId, source.getName(),
+                    List.of());
+            destruction = org.mockito.Mockito.mock(DestructionSupport.class);
+            removal = org.mockito.Mockito.mock(
+                    com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService.class);
+            input = org.mockito.Mockito.mock(PlayerInputService.class);
+            ReflectionTestUtils.setField(service, "destructionSupport", destruction);
+            ReflectionTestUtils.setField(service, "permanentRemovalService", removal);
+            ReflectionTestUtils.setField(service, "playerInputService", input);
+            when(gameQueryService.canEffectCauseSacrifice(gd, payerId, otherId)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+        }
+
+        @Test
+        @DisplayName("The one permanent that could be sacrificed is sacrificed unasked and recorded on the entry (CR 608.2d)")
+        void loneCandidateIsSacrificedUnasked() {
+            ResolutionCostPaymentService.Outcome outcome = service.pay(gd, new Player(payerId, "Payer"),
+                    new SacrificePermanentCost(null, "creature", false),
+                    new ResolutionCostPaymentService.Payment(entry.getCard(), otherId, null, entry));
+
+            assertThat(outcome).isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            verify(destruction).recordSacrificedOn(gd, entry, bears);
+            verify(destruction).sacrificeAndLog(gd, bears, payerId);
+            org.mockito.Mockito.verifyNoInteractions(input);
+        }
+
+        @Test
+        @DisplayName("A lone candidate whose death has a replacement question is picked, so the question comes first (CR 616.1)")
+        void loneCandidateWithADeathReplacementQuestionIsPicked() {
+            when(removal.hasDeathReplacementQuestion(gd, bears)).thenReturn(true);
+
+            ResolutionCostPaymentService.Outcome outcome = service.pay(gd, new Player(payerId, "Payer"),
+                    new SacrificePermanentCost(null, "creature", false),
+                    new ResolutionCostPaymentService.Payment(entry.getCard(), otherId, null, entry));
+
+            assertThat(outcome).isEqualTo(ResolutionCostPaymentService.Outcome.ASKING);
+            verify(input).beginPermanentChoice(eq(gd), eq(payerId), eq(List.of(bears.getId())), any(String.class));
+            verify(destruction, org.mockito.Mockito.never()).sacrificeAndLog(any(), any(), any());
+        }
+    }
+
+    @Nested
     @DisplayName("Returning, putting on top, giving up a land drop and sacrificing for total power")
     class OtherRansoms {
 

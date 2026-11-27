@@ -30,6 +30,18 @@ import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.s.SmotheringTithe;
 import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
+import com.github.laxika.magicalvibes.cards.b.BrassclawOrcs;
+import com.github.laxika.magicalvibes.cards.c.Crusade;
+import com.github.laxika.magicalvibes.cards.f.FadeAway;
+import com.github.laxika.magicalvibes.cards.f.FarrelitePriest;
+import com.github.laxika.magicalvibes.cards.h.Heroism;
+import com.github.laxika.magicalvibes.cards.m.MagneticMountain;
+import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
+import com.github.laxika.magicalvibes.cards.p.PowerLeak;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
+import com.github.laxika.magicalvibes.cards.w.WintersChill;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -414,6 +426,153 @@ class TaxTakerTest extends BaseCardTest {
             resolveAllTriggers();
 
             assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("Mana an opponent pays at a prompt your spell's or permanent's own effect asks")
+    class EffectPromptTaxes {
+
+        @Test
+        @CardUsed(Tariff.class)
+        @DisplayName("Paying Tariff's {1}{G} for an opponent's Grizzly Bears makes two Treasures")
+        void tariffPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.addMana(player2, ManaColor.GREEN, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.castFromHand(player1, new Tariff(), "{1}{W}");
+            harness.passBothPriorities();
+
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @CardUsed({WintersChill.class, SnowCoveredIsland.class})
+        @DisplayName("Paying Winter's Chill's {2} for an attacking creature makes two Treasures")
+        void wintersChillPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player1, new SnowCoveredIsland());
+            Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1.getId());
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.setHand(player1, List.of(new WintersChill()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+            harness.castInstantForX(player1, 0, 1, List.of(attacker.getId()));
+
+            harness.passBothPriorities();
+            harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @CardUsed({FadeAway.class, RagingGoblin.class})
+        @DisplayName("Paying Fade Away's {1} for an opponent's creature makes one Treasure")
+        void fadeAwayPayment() {
+            Permanent taxTaker = harness.addToBattlefieldAndReturn(player1, new TaxTaker());
+            Permanent goblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.castFromHand(player1, new FadeAway(), "{2}{U}");
+            harness.passBothPriorities();
+
+            harness.handleMultiplePermanentsChosen(player1, List.of(taxTaker.getId()));
+            harness.handleMultiplePermanentsChosen(player2, List.of(goblin.getId()));
+            resolveAllTriggers();
+
+            harness.assertOnBattlefield(player2, "Raging Goblin");
+            assertThat(countPermanents(player1, "Treasure")).isOne();
+        }
+
+        @Test
+        @CardUsed(TidalFlats.class)
+        @DisplayName("Paying Tidal Flats's {1} for an attacking creature makes one Treasure")
+        void tidalFlatsPayment() {
+            harness.addToBattlefield(player1, new TidalFlats());
+            harness.addToBattlefield(player1, new TaxTaker());
+            Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1.getId());
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isOne();
+        }
+
+        @Test
+        @CardUsed({Heroism.class, FarrelitePriest.class, BrassclawOrcs.class})
+        @DisplayName("Paying Heroism's {2}{R} for an attacking red creature makes three Treasures")
+        void heroismPayment() {
+            harness.addToBattlefield(player1, new Heroism());
+            Permanent priest = harness.addToBattlefieldAndReturn(player1, new FarrelitePriest());
+            harness.addToBattlefield(player1, new TaxTaker());
+            Permanent attacker = addCreatureReady(player2, new BrassclawOrcs());
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1.getId());
+            harness.addMana(player2, ManaColor.RED, 3);
+
+            harness.activateAbility(player1, 0, null, null);
+            if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+                harness.handlePermanentChosen(player1, priest.getId());
+            }
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
+        }
+
+        @Test
+        @CardUsed({PowerLeak.class, Crusade.class})
+        @DisplayName("Paying {2} against Power Leak's damage makes two Treasures")
+        void powerLeakPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            Permanent crusade = harness.addToBattlefieldAndReturn(player2, new Crusade());
+            harness.addToBattlefieldAndReturn(player1, new PowerLeak()).setAttachedTo(crusade.getId());
+
+            advanceToUpkeep(player2);
+            harness.addMana(player2, ManaColor.BLUE, 2);
+            harness.passBothPriorities();
+            harness.handleXValueChosen(player2, 2);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        }
+
+        @Test
+        @CardUsed({MagneticMountain.class, MerfolkOfThePearlTrident.class})
+        @DisplayName("Paying Magnetic Mountain's {4} to untap a blue creature makes four Treasures")
+        void magneticMountainPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.addToBattlefield(player1, new MagneticMountain());
+            Permanent merfolk = addCreatureReady(player2, new MerfolkOfThePearlTrident());
+            merfolk.tap();
+
+            advanceToUpkeep(player2);
+            harness.addMana(player2, ManaColor.COLORLESS, 4);
+            harness.passBothPriorities();
+            harness.handleMultiplePermanentsChosen(player2, List.of(merfolk.getId()));
+            resolveAllTriggers();
+
+            assertThat(merfolk.isTapped()).isFalse();
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(4);
         }
     }
 

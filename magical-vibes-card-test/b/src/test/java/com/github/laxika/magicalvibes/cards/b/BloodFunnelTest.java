@@ -37,7 +37,6 @@ class BloodFunnelTest extends BaseCardTest {
         harness.castFromHand(player1, new Sunforger(), "{1}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Sunforger");
@@ -111,7 +110,6 @@ class BloodFunnelTest extends BaseCardTest {
         harness.castFromHand(player1, new SupremeVerdict(), "{W}{W}{U}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.assertInGraveyard(player1, "Boros Recruit");
         harness.assertNotInGraveyard(player1, "Supreme Verdict");
@@ -133,7 +131,6 @@ class BloodFunnelTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Boros Recruit");
@@ -153,7 +150,6 @@ class BloodFunnelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

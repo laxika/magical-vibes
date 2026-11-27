@@ -40,7 +40,6 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, bears.getId());
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);

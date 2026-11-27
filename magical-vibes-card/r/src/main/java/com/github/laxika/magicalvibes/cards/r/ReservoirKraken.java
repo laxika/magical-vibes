@@ -30,7 +30,7 @@ public class ReservoirKraken extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
                 UnlessPaysEffect.mayPay(Subjects.eachOpponent(),
                         new TapMultiplePermanentsCost(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(), new PermanentCanBecomeTappedPredicate()))),
+                                new PermanentIsCreaturePredicate(), new PermanentCanBecomeTappedPredicate()))).withDescription("creature"),
                         SequenceEffect.of(new TapPermanentsEffect(Subjects.source()), fishToken()))
                         .withPrompt("Tap an untapped creature you control? If a player does, Reservoir Kraken becomes tapped"
                                 + " and its controller creates a 1/1 Fish.")

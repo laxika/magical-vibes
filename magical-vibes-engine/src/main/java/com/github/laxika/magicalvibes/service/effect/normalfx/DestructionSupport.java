@@ -343,6 +343,29 @@ public class DestructionSupport {
         return sacrificeTogether(gameData, List.of(permanent), playerId).results().getFirst();
     }
 
+    /**
+     * Records {@code toSacrifice} as it is now on {@code entry}, the resolution it is about to be sacrificed for: its
+     * power, toughness and colour count, and a snapshot with its card types and subtypes, which "the sacrificed
+     * creature's power" and a reflexive "when you sacrifice [it] this way" read once it is gone (CR 608.2h). Changes
+     * nothing on the battlefield.
+     */
+    public void recordSacrificedOn(GameData gameData, StackEntry entry, Permanent toSacrifice) {
+        Permanent snapshot = new Permanent(toSacrifice);
+        Set<com.github.laxika.magicalvibes.model.CardType> types =
+                gameQueryService.getEffectiveCardTypes(gameData, toSacrifice);
+        Card characteristics = toSacrifice.getCard().createRuntimeCopy();
+        characteristics.setType(types.stream().findFirst().orElse(null));
+        characteristics.setAdditionalTypes(Set.copyOf(types));
+        characteristics.setSubtypes(
+                permanentRemovalService.snapshotEffectivePermanentCard(gameData, toSacrifice).getSubtypes());
+        characteristics.freeze();
+        snapshot.setCard(characteristics);
+        entry.setSacrificedPermanentSnapshot(snapshot);
+        entry.setSacrificedPower(gameQueryService.getEffectivePower(gameData, toSacrifice));
+        entry.setSacrificedColorCount(gameQueryService.getEffectiveColors(gameData, toSacrifice).size());
+        entry.setSacrificedToughness(gameQueryService.getEffectiveToughness(gameData, toSacrifice));
+    }
+
     private void logSacrifice(GameData gameData, Card sacrificedCard, UUID playerId, boolean sacrificedCreature) {
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
         String playerName = gameData.playerIdToName.get(playerId);

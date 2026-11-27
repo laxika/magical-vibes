@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachCreatureControllerSacrifi
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,6 +44,7 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -197,9 +199,9 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
                 .toList());
         for (Map.Entry<UUID, Integer> payments : paymentCounts.entrySet()) {
             UUID playerId = payments.getKey();
-            ManaPool pool = gameData.playerManaPools.get(playerId);
             for (int i = 0; i < payments.getValue(); i++) {
-                new ManaCost(manaCost).payResolutionCost(pool);
+                // A tax paid to Fade Away's controller (Tax Taker).
+                costPayment.payManaFromPool(gameData, playerId, new ManaCost(manaCost), sourceControllerId);
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(playerId) + " pays " + manaCost + " for "
                                 + sourceName + "."));

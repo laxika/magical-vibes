@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AvenLiberator;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MutagenicGrowth;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -47,6 +50,47 @@ class IceCaveTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Gaea's Skyfolk");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @CardUsed({MutagenicGrowth.class, GrizzlyBears.class})
+    @DisplayName("A Phyrexian symbol in the spell's mana cost can be paid with 2 life (CR 107.4f)")
+    void phyrexianSymbolCanBePaidWithLife() {
+        harness.addToBattlefield(player1, new IceCave());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new MutagenicGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, bears.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player2, "Mutagenic Growth");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(BorosRecruit.class)
+    @DisplayName("A hybrid symbol in the spell's mana cost can be paid with either of its colors (CR 107.4e)")
+    void hybridSymbolCanBePaidWithEitherColor() {
+        harness.addToBattlefield(player1, new IceCave());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BorosRecruit()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castCreature(player2, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Boros Recruit");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
     @Test

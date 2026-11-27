@@ -17,7 +17,7 @@ public class KoskunFalls extends Card {
         // At the beginning of your upkeep, sacrifice this enchantment unless you tap an untapped
         // creature you control (CR 118.12a). Tapping is the whole payment, so there is no "if you do" effect.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay(
-                new TapMultiplePermanentsCost(1, new PermanentIsCreaturePredicate()), new SacrificeSelfEffect())
+                new TapMultiplePermanentsCost(1, new PermanentIsCreaturePredicate()).withDescription("creature"), new SacrificeSelfEffect())
                 .withPrompt("Tap an untapped creature you control?"));
 
         // Creatures can't attack you unless their controller pays {2} for each creature they

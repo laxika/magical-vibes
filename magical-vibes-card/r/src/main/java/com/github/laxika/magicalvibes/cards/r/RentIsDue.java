@@ -24,7 +24,7 @@ public class RentIsDue extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), UnlessPaysEffect.youMayPay(
                 new TapMultiplePermanentsCost(2, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.TREASURE)))),
+                        new PermanentHasSubtypePredicate(CardSubtype.TREASURE)))).withDescription("creatures and/or Treasures"),
                 new DrawCardEffect(1))
                 .ifNotPaid(new SacrificeSelfEffect())
                 .withPrompt("Tap two untapped creatures and/or Treasures you control?"));

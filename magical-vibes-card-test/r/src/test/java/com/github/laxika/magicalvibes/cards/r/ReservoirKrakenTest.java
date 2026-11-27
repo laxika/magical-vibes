@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BrokersVeteran;
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -54,6 +55,21 @@ class ReservoirKrakenTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, fish)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, fish)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, fish)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The log names the creature kind the payer chooses to tap, not \"an untapped permanent\"")
+    void logNamesTheCreatureKind() {
+        harness.addToBattlefield(player1, new ReservoirKraken());
+        harness.addToBattlefield(player2, new BrokersVeteran());
+        int logStart = gd.gameLog.size();
+
+        resolveBeginningOfCombat(player1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        List<String> lines = gd.gameLog.stream().skip(logStart).map(GameLogEntry::plainText).toList();
+        assertThat(lines).anyMatch(line -> line.contains("chooses to tap an untapped creature"));
+        assertThat(lines).noneMatch(line -> line.contains("untapped permanent"));
     }
 
     @Test

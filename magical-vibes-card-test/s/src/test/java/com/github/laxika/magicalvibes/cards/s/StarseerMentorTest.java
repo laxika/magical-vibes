@@ -67,7 +67,6 @@ class StarseerMentorTest extends BaseCardTest {
         chooseOpponentTarget();
         harness.passBothPriorities();
         payUnlessAlternative(player2, "Sacrifice");
-        harness.handlePermanentChosen(player2, bears.getId());
 
         harness.assertLife(player2, 20);
         harness.assertInGraveyard(player2, "Grizzly Bears");

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerMayPayToPreventDamageEffect;
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -42,6 +43,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
     private final PotentialManaService potentialManaService;
     private final GameQueryService gameQueryService;
     private final DamageJournalService damageJournalService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -86,7 +88,8 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
                     beginPayPrompt(gameData, playerId, e.amount(), cardName);
                     return;
                 }
-                new ManaCost("{" + paid + "}").payResolutionCost(pool);
+                // A tax paid to the Aura's controller (Tax Taker).
+                costPayment.payManaFromPool(gameData, playerId, new ManaCost("{" + paid + "}"), entry.getControllerId());
                 gameLogService.append(gameData, GameLog.text(preventable
                         ? playerName + " pays {" + paid + "} to prevent " + paid + " damage from " + cardName + "."
                         : playerName + " pays {" + paid + "}, but the damage from " + cardName + " can't be prevented."));

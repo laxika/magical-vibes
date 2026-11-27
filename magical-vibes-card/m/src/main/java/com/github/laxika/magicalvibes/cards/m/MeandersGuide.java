@@ -23,7 +23,7 @@ public class MeandersGuide extends Card {
     public MeandersGuide() {
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
                 new TapMultiplePermanentsCost(1,
-                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), true),
+                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), true).withDescription("Merfolk"),
                 new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(

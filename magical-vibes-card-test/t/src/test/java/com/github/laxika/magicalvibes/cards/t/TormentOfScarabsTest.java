@@ -83,7 +83,6 @@ class TormentOfScarabsTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         payUnlessAlternative(player2, "Sacrifice");
-        harness.handlePermanentChosen(player2, bearsId);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -183,7 +182,6 @@ class TormentOfScarabsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         payUnlessAlternative(player1, "Sacrifice");
-        harness.handlePermanentChosen(player1, curse.getId());
 
         harness.assertLife(player1, 20);
         harness.assertNotOnBattlefield(player1, "Torment of Scarabs");

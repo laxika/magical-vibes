@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PotentialManaService potentialManaService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -123,7 +125,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = gameData.findControllerOf(target);
 
         if (ChoiceContext.WintersChillPaymentChoice.PAY_TWO.equals(mode)) {
-            if (!pay(gameData, controllerId, "{2}")) {
+            if (!pay(gameData, entry, controllerId, "{2}")) {
                 // Can't pay — treat as pay nothing.
                 scheduleDestroy(gameData, entry, target);
                 return;
@@ -134,7 +136,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (ChoiceContext.WintersChillPaymentChoice.PAY_ONE.equals(mode)) {
-            if (!pay(gameData, controllerId, "{1}")) {
+            if (!pay(gameData, entry, controllerId, "{1}")) {
                 scheduleDestroy(gameData, entry, target);
                 return;
             }
@@ -175,13 +177,8 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
         return options;
     }
 
-    private boolean pay(GameData gameData, UUID playerId, String costString) {
-        ManaPool pool = gameData.playerManaPools.get(playerId);
-        ManaCost cost = new ManaCost(costString);
-        if (pool == null || !cost.canPayResolutionCost(pool)) {
-            return false;
-        }
-        cost.payResolutionCost(pool);
-        return true;
+    /** Pays from the creature's controller's pool, a tax paid to the spell's controller (Tax Taker). */
+    private boolean pay(GameData gameData, StackEntry entry, UUID playerId, String costString) {
+        return costPayment.payManaFromPool(gameData, playerId, new ManaCost(costString), entry.getControllerId());
     }
 }

@@ -20,7 +20,7 @@ public class CaparoctiSunborn extends Card {
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
                 new TapMultiplePermanentsCost(2, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate()))),
+                        new PermanentIsCreaturePredicate()))).withDescription("artifacts and/or creatures"),
                 new DiscoverEffect(3))
                 .withPrompt("Tap two untapped artifacts and/or creatures you control?"));
     }

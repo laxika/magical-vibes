@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHand
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -68,6 +69,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -318,8 +320,9 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         }
         if (state != null && state.currentPayer() != null && gameData.chosenXValue != null
                 && unless.ransom() instanceof PayXManaCost) {
-            if (answerX(gameData, entry, unless, state)) {
-                return Step.ASK;
+            Step asked = answerX(gameData, entry, unless, state);
+            if (asked != null) {
+                return asked;
             }
             state = entry.unlessAnswer(index);
         }
@@ -391,11 +394,14 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
      * an X above its limit or one their pool can't pay now is asked again, the payer having been able to tap for it
      * while asked (CR 605.3a, 118.3); otherwise the cost with that X is paid through the resolution-time payment (the
      * {@code PAY_MANA} step, K'rrik's life, Powerstone mana: not a spell) and that X becomes the ability's X (CR 107.3f),
-     * read by the branch and by a reflexive "when you do" it makes (CR 603.12).
+     * read by the branch and by a reflexive "when you do" it makes (CR 603.12). Paying {B} with life is losing it
+     * (CR 119.4): a Lich's Duel Mastery sacrifice it would cause has its death replacements chosen first (CR 616.1),
+     * and the X answer is then completed again.
      *
-     * @return {@code true} when the payer is asked again
+     * @return {@link Step#ASK} when the payer is asked again, {@link Step#PAYING} while a death replacement is chosen
+     *         first, {@code null} when the answer is recorded
      */
-    private boolean answerX(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UnlessAnswer state) {
+    private Step answerX(GameData gameData, StackEntry entry, UnlessPaysEffect unless, UnlessAnswer state) {
         int x = gameData.chosenXValue;
         gameData.chosenXValue = null;
         UUID payerId = state.currentPayer();
@@ -405,17 +411,23 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         if (x <= 0) {
             gameLogService.append(gameData, GameLog.text(payerName + " declines to " + ransom.declined() + "."));
             entry.setUnlessAnswer(state.answered(false));
-            return false;
+            return null;
         }
         PayManaCost paid = ResolutionCostPaymentService.paidWith(xCost, x);
         if (x > ResolutionCostPaymentService.maximumX(xCost)
                 || !costPayment.canPayNow(gameData, payerId, paid, entry.getCard(), entry)) {
             gameLogService.append(gameData, GameLog.text(payerName + " can't pay " + xCost.withX(x)
                     + " (tap mana sources, then choose X again)."));
-            return true;
+            return Step.ASK;
         }
-        costPayment.pay(gameData, new Player(payerId, payerName), paid,
-                new ResolutionCostPaymentService.Payment(entry.getCard(), entry.getControllerId(), null, entry));
+        Player payer = new Player(payerId, payerName);
+        GameData.InteractionAnswerReplay replay = new GameData.InteractionAnswerReplay(payer,
+                new PendingInteraction.XValueChoice(payerId, 0, x, "", FaceDownVisibility.sourceName(gameData, entry),
+                        true, xCost.manaCost()), new InteractionAnswer.NumberChosen(x));
+        if (costPayment.pay(gameData, payer, paid, new ResolutionCostPaymentService.Payment(entry.getCard(),
+                entry.getControllerId(), null, entry, replay)) == ResolutionCostPaymentService.Outcome.ASKING) {
+            return Step.PAYING;
+        }
         // The text defines no other X for the ability, so this one replaces what the entry kept there (an attack
         // trigger keeps the number of attackers).
         entry.setXValue(x);
@@ -424,7 +436,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(payerName + " pays " + xCost.withX(x) + "."));
         log.info("Game {} - {} pays {} ({})", gameData.id, payerName, xCost.withX(x), entry.getCard().getName());
         entry.setUnlessAnswer(state.answered(true));
-        return false;
+        return null;
     }
 
     /**
@@ -773,7 +785,9 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             }
             case TapMultiplePermanentsCost tap -> {
                 int count = tap.count() instanceof Fixed fixed ? fixed.value() : 1;
-                String what = count == 1 ? "an untapped permanent" : count + " untapped permanents";
+                String what = (count == 1 ? tap.excludeSource() ? "another " : "an " : countWord(count) + " ")
+                        + "untapped "
+                        + (tap.description() != null ? tap.description() : count == 1 ? "permanent" : "permanents");
                 yield new Ransom(cost, "Tap " + what + " you control", "taps " + what,
                         "tap " + what);
             }

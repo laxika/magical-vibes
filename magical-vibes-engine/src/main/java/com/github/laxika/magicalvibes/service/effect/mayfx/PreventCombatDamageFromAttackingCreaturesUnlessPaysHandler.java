@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -29,6 +29,7 @@ public class PreventCombatDamageFromAttackingCreaturesUnlessPaysHandler implemen
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,10 +47,9 @@ public class PreventCombatDamageFromAttackingCreaturesUnlessPaysHandler implemen
         UUID payingPlayerId = ability.controllerId();
         boolean paid = false;
         if (accepted) {
-            ManaCost cost = new ManaCost(effect.manaCost());
-            ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
-            if (cost.canPayResolutionCost(pool)) {
-                cost.payResolutionCost(pool);
+            // A tax paid to the ability's controller (Tax Taker).
+            if (costPayment.payManaFromPool(gameData, payingPlayerId, new ManaCost(effect.manaCost()),
+                    ability.sourceControllerId())) {
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));

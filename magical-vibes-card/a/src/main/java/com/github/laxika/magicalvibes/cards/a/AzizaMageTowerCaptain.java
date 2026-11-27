@@ -22,7 +22,7 @@ public class AzizaMageTowerCaptain extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))),
-                UnlessPaysEffect.youMayPay(new TapMultiplePermanentsCost(3, new PermanentIsCreaturePredicate()),
+                UnlessPaysEffect.youMayPay(new TapMultiplePermanentsCost(3, new PermanentIsCreaturePredicate()).withDescription("creatures"),
                                 new CopyTriggeringSpellEffect())
                         .withPrompt("Tap three untapped creatures you control to copy that spell?"));
     }

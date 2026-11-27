@@ -57,7 +57,14 @@ public class PreventCombatDamageFromAttackingCreaturesUnlessPaysEffectHandler im
                                 + " deal combat damage this turn? (" + sourceCard.getName() + ")",
                         attacker.getId(),
                         e.manaCost(),
-                        entry.getSourcePermanentId()
+                        entry.getSourcePermanentId(),
+                        0,
+                        0,
+                        null,
+                        null,
+                        null,
+                        null,
+                        entry.getControllerId()
                 ));
             }
         }

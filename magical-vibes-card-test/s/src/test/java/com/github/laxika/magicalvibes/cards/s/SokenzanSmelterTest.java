@@ -29,11 +29,6 @@ class SokenzanSmelterTest extends BaseCardTest {
         resolveBeginningOfCombatTrigger();
 
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(artifact.getId());
-
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Automated Artificer");
@@ -69,12 +64,12 @@ class SokenzanSmelterTest extends BaseCardTest {
         Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new AutomatedArtificer());
 
         resolveBeginningOfCombatTrigger();
+        // The artifact is the one permanent that can pay, so it is sacrificed unasked (CR 608.2d).
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(artifact.getId())
-                .doesNotContain(creature.getId(), opposingArtifact.getId());
+        harness.assertInGraveyard(player1, "Automated Artificer");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingArtifact);
     }
 
     @Test
@@ -83,9 +78,8 @@ class SokenzanSmelterTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AutomatedArtificer());
 
         resolveBeginningOfCombatTrigger();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT,
-                () -> harness.handlePermanentChosen(player1, artifact.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertInGraveyard(player1, "Automated Artificer");
         harness.assertOnBattlefield(player1, "Construct");
@@ -159,7 +153,6 @@ class SokenzanSmelterTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mountain));
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Automated Artificer");

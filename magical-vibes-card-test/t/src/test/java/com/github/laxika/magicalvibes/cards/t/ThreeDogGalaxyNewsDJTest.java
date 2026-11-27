@@ -37,7 +37,6 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, aura.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Holy Strength");
@@ -45,6 +44,32 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         assertThat(copiedAuras).hasSize(2);
         assertThat(copiedAuras).extracting(Permanent::getAttachedTo)
                 .containsExactlyInAnyOrder(firstAttacker.getId(), secondAttacker.getId());
+    }
+
+    @Test
+    @DisplayName("With two Auras on Three Dog, the payer picks one: \"Choose an Aura attached to Three Dog to sacrifice.\"")
+    void picksAmongTwoAurasWithAnAuraPrompt() {
+        Permanent dog = addCreatureReady(player1, new ThreeDogGalaxyNewsDJ());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        first.setAttachedTo(dog.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        second.setAttachedTo(dog.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice pick = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(pick.prompt()).isEqualTo("Choose an Aura attached to Three Dog to sacrifice.");
+        assertThat(pick.validPermanentIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(findPermanents(player1, "Holy Strength")).extracting(Permanent::getAttachedTo)
+                .contains(attacker.getId());
     }
 
     @Test
@@ -76,7 +101,6 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, aura.getId());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Holy Strength"))
@@ -94,7 +118,6 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, aura.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Holy Strength");
@@ -167,7 +190,6 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, aura.getId());
         resolveAllTriggers();
 
         Permanent copy = findPermanents(player1, "Holy Strength").getFirst();
@@ -222,7 +244,6 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, aura.getId());
 
         harness.assertInGraveyard(player1, "Holy Strength");
         assertThat(findPermanents(player1, "Holy Strength")).isEmpty();
@@ -247,7 +268,6 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, aura.getId());
         harness.passBothPriorities();
         return new Permanent[] {firstAttacker, secondAttacker};
     }

@@ -25,7 +25,7 @@ public class AGoldenOpportunity extends Card {
 
     private static UnlessPaysEffect chapterTwoOrThreeEffect() {
         return UnlessPaysEffect.youMayPay(AllOfCost.of(
-                        new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
+                        new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)).withDescription("Bird"),
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "artifact", false)),
                 ConjureCardsEffect.named("ELD", "220", ConjureDestination.ontoBattlefield()))
                 .withPrompt("Tap an untapped Bird you control and sacrifice an artifact?");

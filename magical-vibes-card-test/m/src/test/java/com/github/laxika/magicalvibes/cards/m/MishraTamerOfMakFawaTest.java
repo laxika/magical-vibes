@@ -72,9 +72,6 @@ class MishraTamerOfMakFawaTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, spider.getId());
         harness.handleMayAbilityChosen(player2, true);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player2, artifact.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Icy Manipulator");
@@ -99,7 +96,6 @@ class MishraTamerOfMakFawaTest extends BaseCardTest {
         harness.castInstant(player2, 0, artifact.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, sacrifice.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Icy Manipulator");

@@ -41,12 +41,7 @@ class AGoldenOpportunityTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(sacrificeChoice.validPermanentIds()).containsExactly(artifact.getId());
         assertThat(bird.isTapped()).isTrue();
-
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
@@ -148,7 +143,6 @@ class AGoldenOpportunityTest extends BaseCardTest {
         triggerChapter();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 
         assertThat(bird.isTapped()).isTrue();
@@ -180,7 +174,6 @@ class AGoldenOpportunityTest extends BaseCardTest {
         assertThat(tapChoice.validPermanentIds()).containsExactlyInAnyOrder(
                 firstBird.getId(), secondBird.getId());
         harness.handlePermanentChosen(player1, secondBird.getId());
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 
         assertThat(firstBird.isTapped()).isFalse();

@@ -68,7 +68,6 @@ class TormentOfVenomTest extends BaseCardTest {
         castTormentOfVenom(target.getId());
 
         payUnlessAlternative(player2, "Sacrifice");
-        harness.handlePermanentChosen(player2, bearsId);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         harness.assertInGraveyard(player2, "Grizzly Bears");

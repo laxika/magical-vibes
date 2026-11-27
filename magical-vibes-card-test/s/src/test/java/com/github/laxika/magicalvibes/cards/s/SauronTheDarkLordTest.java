@@ -33,10 +33,6 @@ class SauronTheDarkLordTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(validFodder.getId());
-        harness.handlePermanentChosen(player2, validFodder.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(sauron);

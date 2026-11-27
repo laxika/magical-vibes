@@ -23,7 +23,7 @@ public class PublicThoroughfare extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.unlessYouPay(
                 new TapMultiplePermanentsCost(1, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
-                        new PermanentIsLandPredicate()))),
+                        new PermanentIsLandPredicate()))).withDescription("artifact or land"),
                 new SacrificeSelfEffect())
                 .withPrompt("Tap an untapped artifact or land you control?"));
         addActivatedAbility(ManaAbilities.tapForAnyColor());

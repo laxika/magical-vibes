@@ -57,11 +57,9 @@ class UlamogsDreadsireTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        // The Forest (mana value 0) can't pay it, so the Bears, the one permanent that can, is sacrificed unasked.
         harness.handleMayAbilityChosen(player2, true);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(bears.getId())
-                .doesNotContain(harness.getPermanentId(player2, "Forest"));
-        harness.handlePermanentChosen(player2, bears.getId());
+        harness.assertOnBattlefield(player2, "Forest");
         harness.passBothPriorities();
         harness.passBothPriorities();
 

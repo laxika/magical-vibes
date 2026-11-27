@@ -248,11 +248,13 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   finishes it); `Payment` carries the resolving `entry`. Cases: `PayManaCost` (already read: no reduction, increase or source cost;
   `announcedX`, `lifeAmount`; `PayManaCost.x()`, `PayManaCost.ofTriggeringSpell()`: live spell, else its snapshot, face-down or no mana
   cost unpayable, CR 708.2, 118.6), fixed `PayLifeCost`, `DiscardCardTypeCost`, `DiscardRandomCardCost`, `DiscardHandCost`,
-  `SacrificePermanentCost` (candidates judged from the entry's source, `excludeSource`), `SacrificeMultiplePermanentsCost` (exactly N,
+  `SacrificePermanentCost` (candidates judged from the entry's source, `excludeSource`; a lone candidate is sacrificed unasked unless it has
+  a death replacement question, `PermanentRemovalService.hasDeathReplacementQuestion`, and recorded on the entry,
+  `DestructionSupport.recordSacrificedOn`), `SacrificeMultiplePermanentsCost` (exactly N,
   death replacements first, CR 616.1), `SacrificeSelfCost`, blight (`PutCounterOnControlledCreatureCost.blight`, CR 701.68), plain
   `CollectEvidenceCost` (CR 701.59), `ExileGraveyardCost`, `ExileNCardsFromGraveyardCost`, `ExileCardsCost`, `GetPoisonCountersCost`,
   `DamageFromSourceCost` (dealt by `Payment.entry`, CR 608.2h), fixed `WaterbendCost` (CR 701.67a; its mana is a tax),
-  `TapMultiplePermanentsCost` (`MultiplePermanentTapCostHandler`), `SourceControllerDrawsCost`, `AnyOfCost`, `AllOfCost`. A sacrifice
+  `TapMultiplePermanentsCost` (`MultiplePermanentTapCostHandler`; `withDescription` names the kind in its text), `SourceControllerDrawsCost`, `AnyOfCost`, `AllOfCost`. A sacrifice
   offers only what the payer could sacrifice for that entry (U3c): none while an opponent's effect can't make them sacrifice (Sigarda,
   `canEffectCauseSacrifice`), never a permanent that can't be sacrificed or chosen (`cantBeChosenToSacrifice`), nor a creature token the
   asking triggered ability can't make its controller sacrifice (`GameQueryService.isCreatureTokenProtectedFromTriggeredAbility`, The
@@ -260,7 +262,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   prompts, opponent-caused when the payer isn't the source's controller; one context pair, `PermanentChoiceContext.ResolutionCostPayment`
   / `MultiPermanentChoiceContext.ResolutionCostPayment`, completed by `completePermanentChoice` / `completeMultiPermanentChoice`. Mana
   raises `ActionEvents.taxPaid` for the mana spent when the payer isn't `sourceControllerId`; `payManaFromPool` is the hand-rolled pool
-  payment; static `canPayLife(GameQueryService, gd, player, amount)` is the one resolution-time life check (CR 119.4, 119.8). A mana
+  payment, with the asking effect's controller as the taxing player (Tariff, Winter's Chill, Fade Away, Tidal Flats, Heroism, Power Leak,
+  the per-creature untap of Magnetic Mountain); a life payment answering a prompt asks a Lich's Duel Mastery sacrifice's death
+  replacements first (`Payment.replay`: the X chosen while paying is completed again through an `InteractionAnswerReplay`); static `canPayLife(GameQueryService, gd, player, amount)` is the one resolution-time life check (CR 119.4, 119.8). A mana
   ability that works from the hand may be activated while a may-pay mana prompt is open (`GameService.activateHandAbility`,
   `AbilityActivationService.isHandManaAbilityAt`, CR 605.3a).
 - Ransom cost types (`model/effect`): `AnyOfCost(List<CostEffect>)` / `AnyOfCost.of(a, b[, c])` (at least two alternatives, none nested;

@@ -33,7 +33,7 @@ public class SaheeliFiligreeMaster extends Card {
                 List.of(
                         new ScryEffect(1),
                         UnlessPaysEffect.youMayPay(
-                                        new TapMultiplePermanentsCost(1, new PermanentIsArtifactPredicate()),
+                                        new TapMultiplePermanentsCost(1, new PermanentIsArtifactPredicate()).withDescription("artifact"),
                                         new DrawCardEffect(1))
                                 .withPrompt("Tap an untapped artifact you control?")),
                 "+1: Scry 1. You may tap an untapped artifact you control. If you do, draw a card."

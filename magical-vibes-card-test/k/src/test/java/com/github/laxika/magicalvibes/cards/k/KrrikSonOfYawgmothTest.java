@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.b.BeseechTheQueen;
 import com.github.laxika.magicalvibes.cards.b.BlindObedience;
 import com.github.laxika.magicalvibes.cards.n.NihilSpellbomb;
+import com.github.laxika.magicalvibes.cards.s.ScreechingBat;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.z.ZofShade;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -239,5 +242,28 @@ class KrrikSonOfYawgmothTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @CardUsed({ScreechingBat.class, Swamp.class})
+    @DisplayName("A {2}{B}{B} \"you may pay\" payable only with untapped Swamps and 2 life is asked, and paid that way")
+    void asksARansomPayableOnlyWithManaNotYetMadeAndLife() {
+        harness.addToBattlefield(player1, new KrrikSonOfYawgmoth());
+        Permanent bat = harness.addToBattlefieldAndReturn(player1, new ScreechingBat());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new Swamp());
+        }
+        harness.setLife(player1, 3);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bat.isTransformed()).isTrue();
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

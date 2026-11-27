@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.s.SphinxOfTheFinalWord;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -82,6 +83,30 @@ class TheUnagiOfKyoshiIslandTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Shock");
         assertThat(unagi.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed(Forest.class)
+    @DisplayName("A payer with only untapped lands and an empty pool is asked the ward, and pays it with their mana")
+    void wardIsAskedOfAPayerWhoseLandsCouldMakeTheMana() {
+        Permanent unagi = harness.addToBattlefieldAndReturn(player1, new TheUnagiOfKyoshiIsland());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new Forest());
+        }
+
+        beginOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, unagi.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(unagi.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     @Test

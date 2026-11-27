@@ -32,7 +32,6 @@ class ThornplateIntimidatorTest extends BaseCardTest {
         castIntimidator(player2.getId());
 
         payUnlessAlternative(player2, "Sacrifice");
-        harness.handlePermanentChosen(player2, bears.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         harness.assertInGraveyard(player2, "Grizzly Bears");

@@ -18,7 +18,7 @@ public class CivilServant extends Card {
 
     public CivilServant() {
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
-                new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.CITIZEN), true),
+                new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.CITIZEN), true).withDescription("Citizen"),
                 SequenceEffect.of(
                         BoostEffect.self(1, 0),
                         new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())))

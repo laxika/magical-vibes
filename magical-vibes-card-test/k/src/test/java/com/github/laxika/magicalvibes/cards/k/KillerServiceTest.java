@@ -35,8 +35,6 @@ class KillerServiceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, food.getId());
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
@@ -74,7 +72,6 @@ class KillerServiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, food.getId());
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(countPermanents(player1, "Rhino Warrior")).isOne();
@@ -139,14 +136,12 @@ class KillerServiceTest extends BaseCardTest {
         advanceToEndStep();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, food.getId());
         harness.passBothPriorities();
         Permanent originalRhino = findPermanent(player1, "Rhino Warrior");
 
         advanceToEndStep();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, originalRhino.getId());
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
